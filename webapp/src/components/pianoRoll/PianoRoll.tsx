@@ -13,6 +13,8 @@ import { MeasureHeader } from "./MeasureHeader"
 import { VelocityEditor } from "./VelocityEditor"
 import { EditControls } from "../musicEditor/EditControls"
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown"
+import { Scrollbar } from "./Scrollbar"
+import { classList } from "../../../../react-common/components/util"
 
 interface PianoRollProps {
     onStateChanged?: (state: PianoRollState) => void;
@@ -417,7 +419,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const showHeader = !fieldEditorParams?.hideHeader;
 
     return (
-        <div className="piano-roll">
+        <div className={classList("piano-roll", showHeader ? "show-header" : "hide-header", velocityEditorVisible ? "show-velocity-editor" : "hide-velocity-editor")}>
             {modal?.type === "delete-track" &&
                 <DeleteTrackModal trackId={modal.trackId!} onClose={closeModal} onDelete={deleteTrack} />
             }
@@ -467,8 +469,10 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             newNoteDuration={fieldEditorParams?.showSnapControls ? snapTicks : 1}
                             bpm={song.tempo}
                         />
+                        <Scrollbar horizontal />
                     </div>
                 </div>
+                <Scrollbar />
             </div>
             {velocityEditorVisible &&
                 <VelocityEditor notes={track.events} onNotesChange={onVelocityChange} />

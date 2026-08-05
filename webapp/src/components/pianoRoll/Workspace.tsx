@@ -48,16 +48,23 @@ export const Workspace = (props: Props) => {
         cursor.style.display = "none";
         workspaceRef.current?.appendChild(cursor);
 
+        const onSroll = () => {
+            const scrollLeft = horizontalScroller?.scrollLeft || 0;
+
+            if (measureScroller) {
+                measureScroller.scrollLeft = scrollLeft;
+            }
+            if (velocityEditor) {
+                velocityEditor.scrollLeft = scrollLeft;
+            }
+        }
+
+        horizontalScroller?.addEventListener("scroll", onSroll);
+
         const changeHorizontalScroll = (delta: number) => {
             const scroll = gestureState.current.startScrollX - delta;
             if (horizontalScroller) {
                 horizontalScroller.scrollLeft = scroll;
-            }
-            if (measureScroller) {
-                measureScroller.scrollLeft = scroll;
-            }
-            if (velocityEditor) {
-                velocityEditor.scrollLeft = scroll;
             }
         }
 
@@ -215,6 +222,7 @@ export const Workspace = (props: Props) => {
             workspaceRef.current?.removeEventListener("pointercancel", onPointerUp);
             workspaceRef.current?.removeEventListener("pointerleave", onPointerUp);
             workspaceRef.current?.removeChild(cursor);
+            horizontalScroller?.removeEventListener("scroll", onSroll);
         }
     }, [track, onEdit, theme.minOctave, theme.maxOctave, isDrumTrack, snapTicks, maxTicks])
 
@@ -263,12 +271,16 @@ export const Workspace = (props: Props) => {
     }, [theme, bpm])
 
     return (
-        <div className="workspace" style={{
-            backgroundImage: bg,
-            backgroundSize: `${theme.tickWidth * theme.ticksPerBeat}px ${7 * theme.whiteKeyHeight}px`,
-            width: workspaceWidth(theme),
-            height: workspaceHeight(theme)
-        }} ref={workspaceRef}>
+        <div
+            className="workspace"
+            id="piano-roll-workspace"
+            style={{
+                backgroundImage: bg,
+                backgroundSize: `${theme.tickWidth * theme.ticksPerBeat}px ${7 * theme.whiteKeyHeight}px`,
+                width: workspaceWidth(theme),
+                height: workspaceHeight(theme)
+            }}
+            ref={workspaceRef}>
             <div className="playhead" ref={playheadRef}></div>
             {track.events.map((e, i) => <NoteEventView key={i} event={e} isDrumTrack={isDrumTrack} />)}
         </div>

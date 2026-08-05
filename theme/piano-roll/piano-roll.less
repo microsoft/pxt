@@ -125,6 +125,47 @@
     }
 }
 
+.scrollbar.horizontal {
+    height: 0.75rem;
+    width: 100%;
+    position: absolute;
+    bottom: var(--header-height);
+    left: var(--sidebar-width);
+    right: 0;
+
+    .scrollbar-thumb {
+        height: 100%;
+    }
+}
+
+.scrollbar.vertical {
+    width: 0.75rem;
+    height: 100%;
+    position: absolute;
+    top: var(--timeline-height);
+    bottom: 0;
+    right: 0;
+
+    .scrollbar-thumb {
+        width: 100%;
+    }
+}
+
+.piano-roll.show-header .scrollbar.vertical {
+    top: calc(var(--header-height) + var(--timeline-height));
+}
+
+.scrollbar .scrollbar-thumb {
+    position: absolute;
+    background-color: black;
+    border-radius: 0.375rem;
+    opacity: 0.5;
+
+    &:hover {
+        opacity: 0.75;
+    }
+}
+
 .measure-header {
     height: var(--timeline-height);
     display: flex;
@@ -214,9 +255,10 @@
 
 .piano-roll .workspace-container {
     flex: 1;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: hidden;
     touch-action: none;
+    scrollbar-width: none;
 }
 
 .piano-roll .workspace {
@@ -260,6 +302,7 @@
     max-height: 100%;
     width: 100%;
     overflow-y: auto;
+    scrollbar-width: none;
     flex-grow: 1;
 }
 
