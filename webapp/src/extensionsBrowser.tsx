@@ -10,20 +10,29 @@ import { useState, useEffect, useMemo } from "react";
 import { ImportModal } from "../../react-common/components/extensions/ImportModal";
 import { ExtensionCard } from "../../react-common/components/extensions/ExtensionCard";
 import { Modal } from "../../react-common/components/controls/Modal";
-import { classList } from "../../react-common/components/util";
 import { TabList, TabListProps } from "../../react-common/components/controls/TabList";
 import { Link } from "../../react-common/components/controls/Link";
 
-type ExtensionMeta = pxtc.service.ExtensionMeta & { installed?: boolean };
+type ExtensionMeta = pxtc.service.ExtensionMeta & {
+    dependencyName?: string;
+    installed?: boolean;
+};
 const ExtensionType = pxtc.service.ExtensionType;
 type EmptyCard = { name: string, loading?: boolean }
 const emptyCard: EmptyCard = { name: "", loading: true }
+
+interface InstalledDependency {
+    name: string;
+    version: string;
+}
 
 interface ExtensionsProps {
     hideExtensions: () => void;
     importExtensionCallback: () => void;
     header: pxt.workspace.Header;
+    hasBlocksFromExtensionAsync: (dependencyName: string) => Promise<boolean>;
     reloadHeaderAsync: () => Promise<void>;
+    saveProjectAsync: () => Promise<void>;
 }
 
 const RECOMMENDED_TAG_ID = "extensions-recommended";
@@ -85,24 +94,40 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         return a.slug.toLowerCase() === b.slug.toLowerCase();
     }
 
-    function isGithubExtensionInstalled(extensionInfo: ExtensionMeta): boolean {
+    function installedDependency(extensionInfo: ExtensionMeta): InstalledDependency | undefined {
+        const dependencies = currentProjectDependencies();
+        const namedCandidates = [
+            extensionInfo.dependencyName,
+            extensionInfo.pkgConfig?.name,
+            extensionInfo.name
+        ];
+
+        for (const name of namedCandidates) {
+            if (isDependencyInstalled(name)) {
+                return { name, version: dependencies[name] };
+            }
+        }
+
         const extensionRepos: pxt.github.ParsedRepo[] = [];
         const repoIds = [extensionInfo.repo?.fullName, extensionInfo.fullRepo];
         repoIds.forEach(repoId => {
             const parsed = repoId && pxt.github.parseRepoId(repoId);
             if (parsed) extensionRepos.push(parsed);
         });
-        if (!extensionRepos.length) return false;
 
-        return dependencyVersions().some(version => {
+        for (const name of Object.keys(dependencies)) {
+            const version = dependencies[name];
             const dependencyRepo = pxt.github.parseRepoId(version);
-            return extensionRepos.some(repo => githubReposMatch(repo, dependencyRepo));
-        });
-    }
+            if (extensionRepos.some(repo => githubReposMatch(repo, dependencyRepo))) {
+                return { name, version };
+            }
+            if (extensionInfo.scriptInfo?.id
+                && normalizedPublishedScriptId(version) === extensionInfo.scriptInfo.id) {
+                return { name, version };
+            }
+        }
 
-    function isShareScriptInstalled(scriptInfo?: pxt.Cloud.JsonScript): boolean {
-        if (!scriptInfo?.id) return false;
-        return dependencyVersions().some(version => normalizedPublishedScriptId(version) === scriptInfo.id);
+        return undefined;
     }
 
     function isLocalExtensionInstalled(header: pxt.workspace.Header): boolean {
@@ -110,23 +135,50 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
     }
 
     function isExtensionInstalled(extensionInfo: ExtensionMeta): boolean {
-        switch (extensionInfo.type) {
-            case ExtensionType.Bundled:
-                return isDependencyInstalled(extensionInfo.pkgConfig?.name || extensionInfo.name);
-            case ExtensionType.Github:
-                return isGithubExtensionInstalled(extensionInfo) || isDependencyInstalled(extensionInfo.name);
-            case ExtensionType.ShareScript:
-                return isShareScriptInstalled(extensionInfo.scriptInfo) || isDependencyInstalled(extensionInfo.name);
-            default:
-                return isDependencyInstalled(extensionInfo.name);
-        }
+        return !!installedDependency(extensionInfo);
     }
 
     function withInstalledFlag<T extends ExtensionMeta>(extensionInfo: T): T {
+        const dependency = installedDependency(extensionInfo);
         return {
             ...extensionInfo,
-            installed: isExtensionInstalled(extensionInfo)
+            dependencyName: extensionInfo.dependencyName || dependency?.name,
+            installed: !!dependency
         };
+    }
+
+    function prioritizeInstalledExtensions(extensions: (ExtensionMeta & EmptyCard)[]): (ExtensionMeta & EmptyCard)[] {
+        const extensionsWithStatus = extensions.map(extension => withInstalledFlag(extension));
+        return [
+            ...extensionsWithStatus.filter(extension => extension.installed),
+            ...extensionsWithStatus.filter(extension => !extension.installed)
+        ];
+    }
+
+    function extensionIdentities(extension: ExtensionMeta): string[] {
+        const result: string[] = [];
+        const packageNames = [extension.dependencyName, extension.pkgConfig?.name];
+        packageNames.forEach(name => {
+            if (name) result.push(`package:${name.toLowerCase()}`);
+        });
+        const repo = pxt.github.parseRepoId(extension.repo?.fullName || extension.fullRepo);
+        if (repo) result.push(`github:${repo.fullName.toLowerCase()}`);
+        if (!result.length) result.push(`package:${extension.name.toLowerCase()}`);
+        return result;
+    }
+
+    function mergeUniqueExtensions(...extensionGroups: ExtensionMeta[][]): ExtensionMeta[] {
+        const result: ExtensionMeta[] = [];
+        const seen = new Set<string>();
+
+        extensionGroups.forEach(extensions => extensions.forEach(extension => {
+            const identities = extensionIdentities(extension);
+            if (identities.some(identity => seen.has(identity))) return;
+            identities.forEach(identity => seen.add(identity));
+            result.push(extension);
+        }));
+
+        return result;
     }
 
     /**
@@ -209,9 +261,22 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         try {
             props.hideExtensions();
             core.showLoading("installingextension", lf("Adding extension..."));
+            await props.saveProjectAsync();
+            const beforeText = await workspace.getTextAsync(props.header.id, true);
             const added = await pkg.mainEditorPkg()
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
+                const displayName = config.displayName || config.name;
+                await workspace.saveSnapshotAsync(props.header.id, {
+                    type: "extension-added",
+                    phase: "before",
+                    extensionName: displayName
+                }, beforeText);
+                await workspace.saveSnapshotAsync(props.header.id, {
+                    type: "extension-added",
+                    phase: "after",
+                    extensionName: displayName
+                });
                 await pxt.Util.delay(200);
                 await props.reloadHeaderAsync();
             }
@@ -347,7 +412,163 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             })
     }
 
+    async function showInstalledExtensionDialog(scr: ExtensionMeta): Promise<void> {
+        const dependency = installedDependency(scr);
+        if (!dependency) return;
+
+        await props.saveProjectAsync();
+
+        const displayName = scr.displayName || scr.name || dependency.name;
+        const hasExtensionBlocks = await props.hasBlocksFromExtensionAsync(dependency.name);
+        let restrictionReason: string;
+        if (hasExtensionBlocks || pkg.mainPkg.isPackageInUse(dependency.name)) {
+            restrictionReason = lf("This extension cannot be updated or removed because blocks or code from it are used in your project. Remove them and try again.");
+        }
+
+        const transitiveDependents = getTransitiveDependents(dependency.name);
+        if (!restrictionReason && transitiveDependents.length) {
+            const dependentNames = transitiveDependents.map(dependent =>
+                dependent.config?.displayName || dependent.config?.name || dependent.id
+            );
+            restrictionReason = dependentNames.length === 1
+                ? lf("This extension cannot be updated or removed because {0} also depends on it. Remove {0} first.", dependentNames[0])
+                : lf("This extension cannot be updated or removed because these extensions also depend on it: {0}. Remove them first.", dependentNames.join(", "));
+        }
+
+        const latestVersion = await getAvailableExtensionUpdateAsync(dependency.name);
+        const canChangeExtension = !restrictionReason;
+        const updateLabel = latestVersion ? lf("Update extension") : lf("Up to date");
+        const updateUnavailableReason = restrictionReason || !latestVersion && lf("This extension is up to date.");
+
+        await core.dialogAsync({
+            header: lf("{0} extension", displayName),
+            jsx: <>
+                {latestVersion && <p>{lf("A newer version ({0}) is available.", latestVersion)}</p>}
+                <p>{restrictionReason || (latestVersion
+                    ? lf("Choose whether to update or remove this extension.")
+                    : lf("This extension is up to date. You can remove it if you no longer need it."))}</p>
+            </>,
+            buttons: [{
+                label: updateLabel,
+                icon: latestVersion ? "refresh" : "check",
+                disabled: !latestVersion || !canChangeExtension,
+                title: updateUnavailableReason || lf("Update {0} to {1}", displayName, latestVersion),
+                ariaLabel: updateUnavailableReason
+                    ? lf("{0}. {1}", updateLabel, updateUnavailableReason)
+                    : lf("Update {0} extension to {1}", displayName, latestVersion),
+                onclick: () => updateExtensionAsync(dependency.name, displayName, latestVersion)
+            }, {
+                label: lf("Remove extension"),
+                icon: "trash",
+                className: "delete red",
+                disabled: !canChangeExtension,
+                title: restrictionReason || lf("Remove {0} extension", displayName),
+                ariaLabel: restrictionReason
+                    ? lf("Remove extension unavailable. {0}", restrictionReason)
+                    : lf("Remove {0} extension", displayName),
+                onclick: () => removeExtensionAsync(dependency.name, displayName)
+            }],
+            hasCloseIcon: true
+        });
+    }
+
+    async function removeExtensionAsync(dependencyName: string, displayName: string): Promise<void> {
+        props.hideExtensions();
+        core.showLoading("removingextension", lf("Removing extension..."));
+        try {
+            await workspace.saveSnapshotAsync(props.header.id, {
+                type: "extension-removed",
+                phase: "before",
+                extensionName: displayName
+            });
+            await pkg.mainEditorPkg().removeDepAsync(dependencyName);
+            await workspace.saveSnapshotAsync(props.header.id, {
+                type: "extension-removed",
+                phase: "after",
+                extensionName: displayName
+            });
+            await props.reloadHeaderAsync();
+        }
+        finally {
+            core.hideLoading("removingextension");
+        }
+    }
+
+    async function getAvailableExtensionUpdateAsync(dependencyName: string): Promise<string | undefined> {
+        const extensionPackage = pkg.mainPkg?.resolveDep(dependencyName);
+        if (!extensionPackage || extensionPackage.verProtocol() !== "github") return undefined;
+
+        const currentRepo = pxt.github.parseRepoId(extensionPackage.installedVersion || extensionPackage.version());
+        const currentVersion = pxt.semver.tryParse(currentRepo?.tag)
+            || pxt.semver.tryParse(extensionPackage.config?.version);
+        if (!currentRepo || !currentVersion) return undefined;
+
+        try {
+            const packagesConfig = await pxt.packagesConfigAsync();
+            const latestTag = await pxt.github.latestVersionAsync(currentRepo.slug, packagesConfig, true /* use proxy */, true /* no cache */);
+            const latestVersion = pxt.semver.tryParse(latestTag);
+            return latestVersion && pxt.semver.cmp(currentVersion, latestVersion) < 0
+                ? latestTag
+                : undefined;
+        }
+        catch {
+            return undefined;
+        }
+    }
+
+    async function updateExtensionAsync(dependencyName: string, displayName: string, latestVersion: string): Promise<void> {
+        pxt.tickEvent("extensions.update", { name: dependencyName, version: latestVersion });
+        props.hideExtensions();
+        core.showLoading("updatingextension", lf("Updating extension..."));
+        try {
+            await workspace.saveSnapshotAsync(props.header.id, {
+                type: "extension-updated",
+                phase: "before",
+                extensionName: displayName
+            });
+            await pkg.mainEditorPkg().updateDepAsync(dependencyName, latestVersion);
+            await workspace.saveSnapshotAsync(props.header.id, {
+                type: "extension-updated",
+                phase: "after",
+                extensionName: displayName
+            });
+            await props.reloadHeaderAsync();
+        }
+        finally {
+            core.hideLoading("updatingextension");
+        }
+    }
+
+    function getTransitiveDependents(dependencyName: string): pxt.Package[] {
+        const extensionPackage = pkg.mainPkg?.resolveDep(dependencyName);
+        if (!extensionPackage) return [];
+
+        const directDependencies = currentProjectDependencies();
+        const result: pxt.Package[] = [];
+        const visited = new Set<pxt.Package>();
+
+        const visit = (dependent: pxt.Package) => {
+            if (!dependent || dependent === pkg.mainPkg || visited.has(dependent)) return;
+            visited.add(dependent);
+
+            if (dependent.id !== dependencyName && directDependencies[dependent.id]) {
+                result.push(dependent);
+                return;
+            }
+
+            dependent.addedBy?.forEach(visit);
+        };
+
+        extensionPackage.addedBy?.forEach(visit);
+        return result;
+    }
+
     function installExtension(scr: ExtensionMeta) {
+        if (isExtensionInstalled(scr)) {
+            showInstalledExtensionDialog(scr).catch(core.handleNetworkError);
+            return;
+        }
+
         switch (scr.type) {
             case ExtensionType.Bundled:
                 pxt.tickEvent("extensions.bundled", { name: scr.name });
@@ -453,6 +674,56 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         })
     }
 
+    function installedExtensions(packagesConfig: pxt.PackagesConfig): ExtensionMeta[] {
+        const dependencies = currentProjectDependencies();
+        const result: ExtensionMeta[] = [];
+
+        Object.keys(dependencies).forEach(dependencyName => {
+            const version = dependencies[dependencyName];
+            const resolvedPackage = pkg.mainPkg?.resolveDep(dependencyName);
+            const config = resolvedPackage?.config;
+            if (!config || config.hidden || config.searchOnly) return;
+
+            const githubRepo = pxt.github.parseRepoId(version);
+            if (githubRepo) {
+                if (pxt.github.isRepoHidden(githubRepo, packagesConfig)) return;
+
+                const repo: pxt.github.GitRepo = {
+                    ...githubRepo,
+                    name: githubRepo.project,
+                    displayName: config.displayName,
+                    description: config.description || "",
+                    defaultBranch: "",
+                    status: pxt.github.repoStatus(githubRepo, packagesConfig)
+                };
+                result.push(withInstalledFlag({
+                    dependencyName,
+                    name: config.name || dependencyName,
+                    displayName: config.displayName,
+                    type: ExtensionType.Github,
+                    imageUrl: config.icon || pxt.github.repoIconUrl(repo),
+                    repo,
+                    description: config.description,
+                    fullRepo: githubRepo.fullName
+                }));
+                return;
+            }
+
+            if (normalizedPublishedScriptId(version) || /^workspace:/.test(version)) {
+                result.push(withInstalledFlag({
+                    dependencyName,
+                    name: config.name || dependencyName,
+                    displayName: config.displayName,
+                    imageUrl: config.icon,
+                    type: normalizedPublishedScriptId(version) ? ExtensionType.ShareScript : undefined,
+                    description: config.description
+                }));
+            }
+        });
+
+        return result;
+    }
+
     function fetchBundled(): Map<string, ExtensionMeta> {
         const bundled = pxt.appTarget.bundledpkgs;
         const extensionsMap = new Map<string, ExtensionMeta>();
@@ -489,17 +760,16 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
 
     async function updatePreferredExts() {
         const bundled = fetchBundled();
-        const repos: ExtensionMeta[] = [];
-        bundled.forEach(e => {
-            repos.push(e)
-        })
         let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
+        const packagesConfig = await pxt.packagesConfigAsync();
+        const repos = installedExtensions(packagesConfig);
+        bundled.forEach(e => repos.push(e));
 
         const toBeFetched: string[] = [];
         if (trgConfig?.packages?.approvedRepoLib) {
             Object.keys(trgConfig.packages.approvedRepoLib).forEach(repoSlug => {
                 const repoData = trgConfig.packages.approvedRepoLib[repoSlug];
-                if (!repoData.preferred)
+                if (!repoData.preferred || repoData.hidden)
                     return;
                 const fetched = getExtensionFromFetched(repoSlug);
                 if (fetched) {
@@ -513,10 +783,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         for (let i = 0; i < toBeFetched.length; i++) {
             loadingCards.push(emptyCard)
         }
-        setPreferredExts([...repos, ...loadingCards])
+        const uniqueRepos = mergeUniqueExtensions(repos);
+        setPreferredExts(prioritizeInstalledExtensions([...uniqueRepos, ...loadingCards]))
 
         const exts = await fetchGithubDataAndAddAsync(toBeFetched);
-        setPreferredExts([...repos, ...exts])
+        setPreferredExts(prioritizeInstalledExtensions(mergeUniqueExtensions(repos, exts)))
     }
 
     async function handleImportUrl(url: string) {
@@ -687,7 +958,13 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                                         description={lf("Local copy of {0} hosted on github.com", p.githubId)}
                                         imageUrl={p.icon}
                                         extension={p}
-                                        onClick={addLocal}
+                                        onClick={installed
+                                            ? () => showInstalledExtensionDialog({
+                                                name: p.name,
+                                                dependencyName: Object.keys(currentProjectDependencies())
+                                                    .find(name => currentProjectDependencies()[name] === `workspace:${p.id}`)
+                                            }).catch(core.handleNetworkError)
+                                            : addLocal}
                                         installed={installed}
                                     />;
                                 })

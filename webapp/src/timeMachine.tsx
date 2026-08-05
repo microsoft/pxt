@@ -2,10 +2,11 @@ import * as React from "react";
 import * as workspace from "./workspace";
 import { Tree, TreeItem } from "../../react-common/components/controls/Tree";
 import { Button } from "../../react-common/components/controls/Button";
+import { Link } from "../../react-common/components/controls/Link";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
 import { classList } from "../../react-common/components/util";
-import { HistoryFile, applySnapshot, patchConfigEditorVersion } from "../../pxteditor/history";
+import { HistoryFile, ShareEntry, SnapshotEvent, applySnapshot, patchConfigEditorVersion } from "../../pxteditor/history";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import ScriptText = pxt.workspace.ScriptText;
@@ -31,8 +32,13 @@ interface TimelineEntry {
 
 interface TimeEntry {
     label: string;
+    timeLabel: string;
+    description?: string;
     timestamp: number;
     kind: "snapshot" | "diff" | "share";
+    event?: SnapshotEvent;
+    shareId?: string;
+    shareType?: pxt.workspace.PublishVersion["type"];
 }
 
 interface Project {
@@ -251,6 +257,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
     const argString = queryParams.map(p => p.indexOf("=") === -1 ? `${p}=1` : p).join("&");
 
     const url = `${window.location.origin + window.location.pathname}?${argString}`;
+    const selectedShareUrl = getShareUrl(selected);
 
     const initialSelection = entries.length ? dayEntryId(entries[0], 0) : undefined;
 
@@ -271,6 +278,22 @@ export const TimeMachine = (props: TimeMachineProps) => {
                         <div className="time-machine-label">
                             {selected ? formatFullDate(selected.timestamp) : lf("Now")}
                         </div>
+                        {selectedShareUrl &&
+                            <Link
+                                className="common-button square-on-mobile"
+                                href={selectedShareUrl}
+                                target="_blank"
+                                title={lf("Open shared version")}
+                                ariaLabel={lf("Open shared version in a new tab")}
+                            >
+                                <span className="common-button-flex">
+                                    <i className="fas fa-external-link-alt mobile-only" aria-hidden={true} />
+                                    <span className="common-button-label mobile-hidden">
+                                        {lf("Open shared version")}
+                                    </span>
+                                </span>
+                            </Link>
+                        }
                         <Button
                             className="square-on-mobile"
                             labelClassName="mobile-hidden"
@@ -326,12 +349,17 @@ export const TimeMachine = (props: TimeMachineProps) => {
                                 >
                                     {e.entries.map((entry, index) => {
                                         const isSelected = (!selected && entry.timestamp === -1) ||
-                                            (selected?.kind === entry.kind && selected?.timestamp === entry.timestamp);
+                                            (selected?.kind === entry.kind
+                                                && selected?.timestamp === entry.timestamp
+                                                && (entry.kind !== "share" || selected.shareId === entry.shareId));
 
                                         let title: string;
 
                                         if (entry.kind === "share") {
-                                            title = lf("Select shared version from {0} at {1}", e.label, entry.label);
+                                            title = lf("Select shared version from {0} at {1}", e.label, entry.timeLabel);
+                                        }
+                                        else if (entry.event) {
+                                            title = entry.description;
                                         }
                                         else {
                                             title = lf("Select project version from {0} at {1}", e.label, entry.label);
@@ -342,10 +370,15 @@ export const TimeMachine = (props: TimeMachineProps) => {
                                                 key={index}
                                                 id={timeEntryId(entry, index)}
                                                 onClick={() => onTimeSelected(entry)}
-                                                className={classList(isSelected && "selected", entry.kind)}
+                                                className={classList(isSelected && "selected", entry.kind, entry.event && "extension-event")}
                                                 title={title}
+                                                ariaLabel={entry.event ? entry.description : undefined}
                                                 label={entry.label}
-                                                leftIcon={entry.kind === "share" ? "fas fa-share-alt" : undefined}
+                                                leftIcon={entry.event
+                                                    ? snapshotEventIcon(entry.event)
+                                                    : entry.kind === "share"
+                                                        ? "fas fa-share-alt"
+                                                        : undefined}
                                             />
                                         );
                                     }
@@ -378,7 +411,7 @@ async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, t
         return patchConfigEditorVersion(applySnapshot(text, snapshot.text), snapshot.editorVersion);
     }
     else if (time.kind === "share") {
-        const share = history.shares.find(s => s.timestamp === time.timestamp);
+        const share = history.shares.find(s => time.shareId ? s.id === time.shareId : s.timestamp === time.timestamp);
         const files = await pxt.Cloud.downloadScriptFilesAsync(share.id);
         const meta = await pxt.Cloud.downloadScriptMetaAsync(share.id);
 
@@ -475,18 +508,28 @@ function isToday(time: number) {
 function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
     const buckets: { [index: string]: TimeEntry[] } = {};
 
-    const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share") => {
+    const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share", event?: SnapshotEvent, share?: ShareEntry) => {
         const date = new Date(timestamp);
         const key = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+        const timeLabel = formatTime(timestamp);
 
         if (!buckets[key]) {
             buckets[key] = [];
         }
 
         buckets[key].push({
-            label: formatTime(timestamp),
+            label: event
+                ? snapshotEventLabel(event)
+                : share
+                    ? lf("Shared version ({0})", timeLabel)
+                    : timeLabel,
+            timeLabel,
+            description: event ? snapshotEventDescription(event, timeLabel) : undefined,
             timestamp,
-            kind
+            kind,
+            event,
+            shareId: share?.id,
+            shareType: share?.type
         });
     }
 
@@ -495,7 +538,11 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
     }
 
     for (const entry of history.snapshots) {
-        createTimeEntry(entry.timestamp, "snapshot");
+        createTimeEntry(entry.timestamp, "snapshot", entry.event);
+    }
+
+    for (const entry of history.shares) {
+        createTimeEntry(entry.timestamp, "share", undefined, entry);
     }
 
     const sortedBuckets = Object.keys(buckets).sort((a, b) => parseInt(b) - parseInt(a));
@@ -505,7 +552,12 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
 
         // Deduplicate entries that exist in the same minute
         for (const entry of bucket) {
-            const eIndex = deduped.findIndex(e => e.label === entry.label);
+            if (entry.event || entry.kind === "share") {
+                deduped.push(entry);
+                continue;
+            }
+
+            const eIndex = deduped.findIndex(e => !e.event && e.timeLabel === entry.timeLabel);
             const existing = deduped[eIndex];
 
             if (existing) {
@@ -530,11 +582,6 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
         buckets[bucketKey] = deduped;
     }
 
-    // Always show all of the shares, don't dedupe these
-    for (const entry of history.shares) {
-        createTimeEntry(entry.timestamp, "share");
-    }
-
     // Sort all of the buckets
     for (const bucketKey of sortedBuckets) {
         buckets[bucketKey].sort((a, b) => b.timestamp - a.timestamp);
@@ -543,6 +590,7 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
     // Always add an entry for "now"
     const nowEntry: TimeEntry = {
         label: lf("Now"),
+        timeLabel: lf("Now"),
         timestamp: -1,
         kind: "snapshot"
     };
@@ -561,4 +609,48 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
             entries: buckets[key]
         } as TimelineEntry
     ))
+}
+
+function getShareUrl(entry?: TimeEntry): string | undefined {
+    if (entry?.kind !== "share" || !entry.shareId) return undefined;
+
+    const targetTheme = pxt.appTarget.appTheme;
+    let rootUrl = (entry.shareType === "permalink" ? targetTheme.homeUrl : targetTheme.shareUrl)
+        || targetTheme.shareUrl
+        || "https://makecode.com/";
+    if (!/\/$/.test(rootUrl)) rootUrl += "/";
+    return `${rootUrl}${entry.shareId}`;
+}
+
+function snapshotEventLabel(event: SnapshotEvent): string {
+    return event.phase === "before"
+        ? lf("{0} (before)", event.extensionName)
+        : event.extensionName;
+}
+
+function snapshotEventIcon(event: SnapshotEvent): string {
+    switch (event.type) {
+        case "extension-added": return "fas fa-plus";
+        case "extension-removed": return "fas fa-minus";
+        case "extension-updated": return "fas fa-sync";
+        default: return "fas fa-history";
+    }
+}
+
+function snapshotEventDescription(event: SnapshotEvent, timeLabel: string): string {
+    if (event.type === "extension-removed") {
+        return event.phase === "before"
+            ? lf("Before removing {0} extension ({1})", event.extensionName, timeLabel)
+            : lf("{0} extension removed ({1})", event.extensionName, timeLabel);
+    }
+    else if (event.type === "extension-updated") {
+        return event.phase === "before"
+            ? lf("Before updating {0} extension ({1})", event.extensionName, timeLabel)
+            : lf("{0} extension updated ({1})", event.extensionName, timeLabel);
+    } else if (event.type === "extension-added") {
+        return event.phase === "before"
+            ? lf("Before adding {0} extension ({1})", event.extensionName, timeLabel)
+            : lf("{0} extension added ({1})", event.extensionName, timeLabel);
+    }
+    return lf("Unknown event ({0})", timeLabel);
 }

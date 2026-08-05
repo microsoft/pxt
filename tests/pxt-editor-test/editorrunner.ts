@@ -346,6 +346,26 @@ describe("updateHistory", () => {
         }
     });
 
+    it("should preserve extension event snapshots when collapsing", () => {
+        let prevText = { ...testVersions[0] };
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-updated",
+            phase: "after",
+            extensionName: "test-extension"
+        };
+        pxteditor.history.pushSnapshotOnHistory(prevText, 1, event);
+
+        const period = ONE_HOUR * 7;
+        for (let i = 1; i < testVersions.length; i++) {
+            const nextText = { ...testVersions[i] };
+            pxteditor.history.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
+            prevText = nextText;
+        }
+
+        const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots.some(snapshot => snapshot.event?.extensionName === "test-extension")).to.equal(true);
+    });
+
     it("should restore to the version on the timestamp", () => {
         const project = { ...testProject };
         const history = JSON.parse(project[pxt.HISTORY_FILE]) as HistoryFile;
@@ -463,6 +483,64 @@ describe("collapseHistory", () => {
         checkTimestamp(entries[2], 200);
         checkTimestamp(entries[3], 400);
         checkTimestamp(entries[4], 700);
+    });
+});
+
+describe("pushSnapshotOnHistory", () => {
+    it("should preserve snapshot event metadata", () => {
+        const text = { ...testProject };
+        delete text[pxt.HISTORY_FILE];
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-removed",
+            phase: "before",
+            extensionName: "test-extension"
+        };
+        const snapshotText = {
+            ...text,
+            [pxt.MAIN_BLOCKS]: "before extension change"
+        };
+
+        pxteditor.history.pushSnapshotOnHistory(text, 100, event, snapshotText);
+        pxteditor.history.pushSnapshotOnHistory(text, 100, {
+            ...event,
+            phase: "after"
+        });
+
+        const history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots).to.have.length(2);
+        chai.expect(history.snapshots[0].event).to.deep.equal(event);
+        chai.expect(history.snapshots[0].text[pxt.HISTORY_FILE]).to.equal(undefined);
+        chai.expect(history.snapshots[0].text[pxt.MAIN_BLOCKS]).to.equal("before extension change");
+        chai.expect(history.snapshots[1].timestamp).to.equal(101);
+        chai.expect(history.snapshots[1].event.phase).to.equal("after");
+    });
+});
+
+describe("updateShareHistory", () => {
+    it("should preserve the type of shared versions", () => {
+        const text = { ...testVersions[0] };
+        pxteditor.history.updateShareHistory(text, 100, [{
+            id: "snapshot-id",
+            type: "snapshot"
+        }]);
+        pxteditor.history.updateShareHistory(text, 200, [{
+            id: "snapshot-id",
+            type: "snapshot"
+        }, {
+            id: "permalink-id",
+            type: "permalink"
+        }]);
+
+        const history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        chai.expect(history.shares).to.deep.equal([{
+            id: "snapshot-id",
+            type: "snapshot",
+            timestamp: 100
+        }, {
+            id: "permalink-id",
+            type: "permalink",
+            timestamp: 200
+        }]);
     });
 });
 

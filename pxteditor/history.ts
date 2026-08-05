@@ -17,11 +17,19 @@ export interface SnapshotEntry {
     timestamp: number;
     editorVersion: string;
     text: ScriptText;
+    event?: SnapshotEvent;
+}
+
+export interface SnapshotEvent {
+    type: "extension-added" | "extension-removed" | "extension-updated";
+    phase: "before" | "after";
+    extensionName: string;
 }
 
 export interface ShareEntry {
     timestamp: number;
     id: string;
+    type?: pxt.workspace.PublishVersion["type"];
 }
 
 export type FileChange = FileAddedChange | FileRemovedChange | FileEditedChange;
@@ -319,14 +327,7 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
     const previousSaveTime = history.lastSaveTime;
 
     // First save any new project shares
-    for (const share of shares) {
-        if (!history.shares.some(s => s.id === share.id)) {
-            history.shares.push({
-                id: share.id,
-                timestamp: currentTime,
-            });
-        }
-    }
+    updateShareEntries(history, shares, currentTime);
 
     // If no source changed, we can bail at this point
     if (scriptEquals(previousText, toWrite)) {
@@ -401,7 +402,10 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
 
         for (let i = 0; i < history.snapshots.length; i++) {
             const current = history.snapshots[history.snapshots.length - 1 - i];
-            if (currentTime - current.timestamp < ONE_DAY || i === history.snapshots.length - 1) {
+            if (current.event) {
+                trimmed.unshift(current);
+            }
+            else if (currentTime - current.timestamp < ONE_DAY || i === history.snapshots.length - 1) {
                 trimmed.unshift(current);
             }
             else if (current.timestamp < currentDay) {
@@ -424,7 +428,7 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
     toWrite[pxt.HISTORY_FILE] = JSON.stringify(history);
 }
 
-export function pushSnapshotOnHistory(text: ScriptText, currentTime: number) {
+export function pushSnapshotOnHistory(text: ScriptText, currentTime: number, event?: SnapshotEvent, snapshotText = text) {
     let history: HistoryFile;
 
     if (text[pxt.HISTORY_FILE]) {
@@ -439,7 +443,12 @@ export function pushSnapshotOnHistory(text: ScriptText, currentTime: number) {
         };
     }
 
-    history.snapshots.push(takeSnapshot(text, currentTime));
+    if (event && history.snapshots.length) {
+        const latestTimestamp = history.snapshots[history.snapshots.length - 1].timestamp;
+        currentTime = Math.max(currentTime, latestTimestamp + 1);
+    }
+
+    history.snapshots.push(takeSnapshot(snapshotText, currentTime, event));
 
     text[pxt.HISTORY_FILE] = JSON.stringify(history);
 }
@@ -459,16 +468,25 @@ export function updateShareHistory(text: ScriptText, currentTime: number, shares
         };
     }
 
+    updateShareEntries(history, shares, currentTime);
+
+    text[pxt.HISTORY_FILE] = JSON.stringify(history);
+}
+
+function updateShareEntries(history: HistoryFile, shares: pxt.workspace.PublishVersion[], currentTime: number) {
     for (const share of shares) {
-        if (!history.shares.some(s => s.id === share.id)) {
+        const existing = history.shares.find(entry => entry.id === share.id);
+        if (existing) {
+            if (!existing.type) existing.type = share.type;
+        }
+        else {
             history.shares.push({
                 id: share.id,
+                type: share.type,
                 timestamp: currentTime,
             });
         }
     }
-
-    text[pxt.HISTORY_FILE] = JSON.stringify(history);
 }
 
 export function getTextAtTime(text: ScriptText, history: HistoryFile, time: number, patch: (p: unknown, text: string) => string) {
@@ -507,11 +525,12 @@ export function patchConfigEditorVersion(text: ScriptText, editorVersion: string
     };
 }
 
-function takeSnapshot(text: ScriptText, time: number) {
+function takeSnapshot(text: ScriptText, time: number, event?: SnapshotEvent) {
     return {
         timestamp: time,
         editorVersion: pxt.appTarget.versions.target,
-        text: createSnapshot(text)
+        text: createSnapshot(text),
+        event
     };
 }
 
