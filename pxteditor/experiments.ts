@@ -178,6 +178,13 @@ export function all(): Experiment[] {
             feedbackUrl: "https://github.com/microsoft/pxt/issues/10694",
             enableOnline: true
         },
+        {
+            id: "jacdacUI",
+            name: lf("New Jacdac UI"),
+            description: lf("Simplified Jacdac UI"),
+            // feedbackUrl: "https://github.com/microsoft/pxt/issues/10694",
+            enableOnline: true
+        },
     ];
 
     return exps.filter(experiment => ids.indexOf(experiment.id) > -1)
