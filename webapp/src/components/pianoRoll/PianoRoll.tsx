@@ -2,7 +2,7 @@ import { PianoRollTheme, PianoRollThemeProvider, usePianoRollThemeContext } from
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
 import { useEffect, useRef, useState, useCallback, useMemo } from "react"
-import { applyFloatingLayer, changeMeasures, changeOctaves, changeTimeSignature, changeTrackInstrument, deleteFloatingLayer, deleteSelection, fromPXTSong, getEmptySong, isDrumInstrument, moveFloatingLayer, moveSelection, newTrack, NoteEvent, selectionToFloatingLayer, Song, TIME_SIGNATURES, toPXTSong, Track, transposeFloatingLayer, transposeSelection, updateNoteEvent, updateNoteEvents, updateTrack, WorkspaceSelection } from "./types"
+import { applyFloatingLayer, changeMeasures, changeOctaves, changeTimeSignature, changeTrackInstrument, deleteFloatingLayer, deleteSelection, fromPXTSong, getEmptySong, isDrumInstrument, moveFloatingLayer, moveSelection, newTrack, NoteEvent, NOTE_RANGES, selectionToFloatingLayer, Song, TIME_SIGNATURES, toPXTSong, Track, transposeFloatingLayer, transposeSelection, updateNoteEvent, updateNoteEvents, updateTrack, WorkspaceSelection } from "./types"
 import { Header } from "./Header"
 import { DeleteTrackModal } from "./DeleteTrackModal"
 import { DeleteErrorModal } from "./DeleteErrorModal"
@@ -15,6 +15,9 @@ import { EditControls } from "../musicEditor/EditControls"
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown"
 import { Scrollbar } from "./Scrollbar"
 import { classList } from "../../../../react-common/components/util"
+import { getCopiedData, setCopiedData } from "./clipboard"
+import { xToTick } from "./utils"
+import { OctaveWarningModal } from "./OctaveWarningModal"
 
 interface PianoRollProps {
     onStateChanged?: (state: PianoRollState) => void;
@@ -29,7 +32,7 @@ interface PianoRollProps {
     fieldEditorParams?: FieldEditorParams;
 }
 
-type modalType = "delete-track" | "delete-error" | "drum-warning";
+type modalType = "delete-track" | "delete-error" | "drum-warning" | "octave-paste-warning";
 
 export const PianoRoll = (props: PianoRollProps) => {
     useEffect(() => {
@@ -97,6 +100,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
 
     const [snapTicks, setSnapTicks] = useState(4);
     const [velocityEditorVisible, setVelocityEditorVisible] = useState(initialVelocityEditorVisible || false);
+
+    const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (asset) {
@@ -217,11 +222,107 @@ const PianoRollInternal = (props: PianoRollProps) => {
                 }
             }
         }
+
+        const onCopy = (e: ClipboardEvent) => {
+            if (song.floatingLayer) {
+                const floatingLayer = song.floatingLayer;
+                const track = song.tracks.find(t => t.id === song.floatingLayer!.trackId)!;
+                setCopiedData({
+                    events: floatingLayer.events,
+                    startTick: floatingLayer.startTick,
+                    endTick: floatingLayer.endTick,
+                    isDrumTrack: isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId)!),
+                    minOctave: track.minOctave,
+                    maxOctave: track.maxOctave
+                });
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }
+
+        const onPaste = (e: ClipboardEvent) => {
+            const track = song.tracks[selectedTrackIndex]!;
+            const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
+
+            const copiedData = getCopiedData(track.instrumentId === undefined ? false : isDrumInstrument(instrument));
+            if (!copiedData) return;
+
+            // we want to paste the copied data at the closest measure to where we are scrolled
+            // in the workspace
+            const workspaceContainer = workspaceContainerRef.current;
+            if (!workspaceContainer) return;
+
+            const leftTick = xToTick(theme, workspaceContainer.scrollLeft);
+            const ticksPerMeasure = song.beatsPerMeasure * song.ticksPerBeat;
+            const measureStart = Math.ceil(leftTick / ticksPerMeasure) * ticksPerMeasure;
+
+            if (!copiedData.isDrumTrack) {
+                const copiedMinOctave = Math.floor(copiedData.events.reduce((min, e) => Math.min(min, e.note), Infinity) / 12);
+                const copiedMaxOctave = Math.floor(copiedData.events.reduce((max, e) => Math.max(max, e.note), -Infinity) / 12);
+
+                // if the copied data is outside of the current track's octave range, first try to transpose up
+                // or down three octaves (the difference between the treble and bass) ranges
+                if (copiedMinOctave < track.minOctave) {
+                    if (
+                        copiedMinOctave + 2 <= track.maxOctave  &&
+                        copiedMinOctave + 2 >= track.minOctave &&
+                        copiedMaxOctave + 2 <= track.maxOctave
+                    ) {
+                        for (const event of copiedData.events) {
+                            event.note += 24;
+                        }
+                    }
+                    else {
+                        setModal({ type: "octave-paste-warning", trackId: track.id });
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                }
+                else if (copiedMaxOctave > track.maxOctave) {
+                    if (
+                        copiedMaxOctave - 2 >= track.minOctave &&
+                        copiedMaxOctave - 2 <= track.maxOctave &&
+                        copiedMinOctave - 2 >= track.minOctave
+                    ) {
+                        for (const event of copiedData.events) {
+                            event.note -= 24;
+                        }
+                    }
+                    else {
+                        setModal({ type: "octave-paste-warning", trackId: track.id });
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                }
+            }
+
+            const newFloatingLayer: Song["floatingLayer"] = {
+                trackId: track.id,
+                startTick: measureStart,
+                endTick: measureStart + (copiedData.endTick - copiedData.startTick),
+                events: copiedData.events.map(e => ({
+                    ...e,
+                    id: track.nextId++,
+                    start: measureStart + (e.start - copiedData.startTick)
+                }))
+            };
+
+            let newSong = applyFloatingLayer(song);
+            newSong.floatingLayer = newFloatingLayer;
+            updateSong(newSong);
+        }
+
         window.addEventListener("keydown", onKeydown);
+        window.addEventListener("copy", onCopy);
+        window.addEventListener("paste", onPaste);
         return () => {
             window.removeEventListener("keydown", onKeydown);
+            window.removeEventListener("copy", onCopy);
+            window.removeEventListener("paste", onPaste);
         };
-    }, [updateSong, song]);
+    }, [updateSong, song, selectedTrackIndex]);
 
     const onTrackEdit = (updatedTrack: Track) => {
         updateSong(updateTrack(updatedTrack, applyFloatingLayer(song)));
@@ -440,6 +541,39 @@ const PianoRollInternal = (props: PianoRollProps) => {
         fireStateChange({ name: newName });
     }
 
+    const onForcePaste = (trackId: number) => {
+        const track = song.tracks.find(t => t.id === trackId)!;
+        const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
+
+        const copiedData = getCopiedData(isDrumInstrument(instrument));
+        if (!copiedData || copiedData.isDrumTrack) return;
+
+        const workspaceContainer = workspaceContainerRef.current;
+        if (!workspaceContainer) return;
+
+
+        const leftTick = xToTick(theme, workspaceContainer.scrollLeft);
+        const ticksPerMeasure = song.beatsPerMeasure * song.ticksPerBeat;
+        const measureStart = Math.ceil(leftTick / ticksPerMeasure) * ticksPerMeasure;
+        const newRange = NOTE_RANGES.find(r => r.id === "full")!;
+
+        const newFloatingLayer: Song["floatingLayer"] = {
+            trackId,
+            startTick: measureStart,
+            endTick: measureStart + (copiedData.endTick - copiedData.startTick),
+            events: copiedData.events.map(e => ({
+                ...e,
+                id: track.nextId++,
+                start: measureStart + (e.start - copiedData.startTick)
+            }))
+        };
+
+        let newSong = applyFloatingLayer(song);
+        newSong = changeOctaves(trackId, newRange.minOctave, newRange.maxOctave, newSong);
+        newSong.floatingLayer = newFloatingLayer;
+        updateSong(newSong);
+    }
+
     const timeSignatures: DropdownItem[] = TIME_SIGNATURES.map(ts => ({
         label: ts.name,
         title: ts.name,
@@ -494,7 +628,13 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const showHeader = !fieldEditorParams?.hideHeader;
 
     return (
-        <div className={classList("piano-roll", showHeader ? "show-header" : "hide-header", velocityEditorVisible ? "show-velocity-editor" : "hide-velocity-editor")}>
+        <div
+            className={classList(
+                "piano-roll",
+                showHeader ? "show-header" : "hide-header",
+                velocityEditorVisible ? "show-velocity-editor" : "hide-velocity-editor"
+            )}
+        >
             {modal?.type === "delete-track" &&
                 <DeleteTrackModal trackId={modal.trackId!} onClose={closeModal} onDelete={deleteTrack} />
             }
@@ -503,6 +643,9 @@ const PianoRollInternal = (props: PianoRollProps) => {
             }
             {modal?.type === "drum-warning" &&
                 <DrumWarningModal trackId={modal.trackId!} instrumentId={modal.instrumentId!} onClose={closeModal} onConfirm={setTrackInstrument} />
+            }
+            {modal?.type === "octave-paste-warning" &&
+                <OctaveWarningModal trackId={modal.trackId!} onClose={closeModal} onPaste={onForcePaste} />
             }
             {showHeader &&
                 <div className="header-container">
@@ -522,7 +665,12 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     />
                 </div>
             }
-            <MeasureHeader selection={song.floatingLayer} onSelectionChange={onSelectionChange} />
+            <MeasureHeader
+                selection={song.floatingLayer}
+                onSelectionChange={onSelectionChange}
+                snapTicks={fieldEditorParams?.showSnapControls ? snapTicks : 1}
+                onKeyDown={() => {}}
+            />
             <div className="scroll-container">
                 <div className="content-container">
                     <div className="sidebar-container">
@@ -533,7 +681,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             maxOctave={maxOctave}
                         />
                     </div>
-                    <div className="workspace-container">
+                    <div ref={workspaceContainerRef} className="workspace-container">
                         <Workspace
                             track={track}
                             onEdit={onTrackEdit}

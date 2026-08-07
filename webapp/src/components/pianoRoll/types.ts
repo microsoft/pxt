@@ -59,6 +59,8 @@ export interface CopyData {
     endTick: number;
     events: NoteEvent[];
     isDrumTrack: boolean;
+    minOctave?: number;
+    maxOctave?: number;
 }
 
 export const lf = pxt.U.lf;
@@ -719,7 +721,9 @@ export function getCopyData(song: Song, trackId: number, selection: WorkspaceSel
         startTick: selection.startTick,
         endTick: selection.endTick,
         events,
-        isDrumTrack: isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId))
+        isDrumTrack: isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId)),
+        minOctave: track.minOctave,
+        maxOctave: track.maxOctave,
     };
 }
 

@@ -5,14 +5,17 @@ import { WorkspaceSelection } from "./types";
 
 interface Props {
     selection?: WorkspaceSelection;
+    onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void;
+    snapTicks: number;
     onSelectionChange: (selection: WorkspaceSelection) => void;
 }
 
-export const MeasureHeader = ({ selection, onSelectionChange }: Props) => {
+export const MeasureHeader = ({ selection, onSelectionChange, onKeyDown, snapTicks }: Props) => {
     const { measures, tickWidth, ticksPerBeat, beatsPerMeasure } = usePianoRollTheme();
 
     const ref = React.useRef<HTMLDivElement>(null);
     const theme = usePianoRollTheme();
+    const [pendingSelection, setPendingSelection] = React.useState<WorkspaceSelection>(undefined);
 
     React.useEffect(() => {
         if (!ref.current) return undefined;
@@ -33,6 +36,10 @@ export const MeasureHeader = ({ selection, onSelectionChange }: Props) => {
 
             const tick = clientToTick(e.clientX);
             selectionEndTick = tick;
+            setPendingSelection({
+                startTick: Math.min(selectionStartTick, selectionEndTick),
+                endTick: Math.max(selectionStartTick, selectionEndTick)
+            });
         };
 
         const onPointerUp = (e: PointerEvent) => {
@@ -48,6 +55,8 @@ export const MeasureHeader = ({ selection, onSelectionChange }: Props) => {
                 onSelectionChange({ startTick, endTick });
             }
 
+            setPendingSelection(undefined);
+
             selectionStartTick = undefined;
             selectionEndTick = undefined;
             document.removeEventListener("pointermove", onPointerMove);
@@ -60,6 +69,10 @@ export const MeasureHeader = ({ selection, onSelectionChange }: Props) => {
             dragging = true;
             document.addEventListener("pointermove", onPointerMove);
             document.addEventListener("pointerup", onPointerUp);
+            setPendingSelection({
+                startTick: selectionStartTick,
+                endTick: selectionStartTick
+            });
         };
 
 
@@ -72,18 +85,20 @@ export const MeasureHeader = ({ selection, onSelectionChange }: Props) => {
         };
     }, [onSelectionChange, theme]);
 
+    const displaySelection = pendingSelection || selection;
+
     return (
-        <div className="measure-header" id="measure-header" ref={ref}>
+        <div className="measure-header" id="measure-header" ref={ref} tabIndex={0} onKeyDown={onKeyDown}>
             {range(0, measures).map(m =>
                 <div key={m + 1} className="measure" style={{ width: tickWidth * ticksPerBeat * beatsPerMeasure }}>{m + 1}</div>
             )}
-            {selection &&
+            {displaySelection &&
                 <div
                     id="measure-header-selection"
                     className="selection"
                     style={{
-                        left: noteLeft(theme, selection.startTick),
-                        width: noteWidth(theme, selection.endTick - selection.startTick)
+                        left: noteLeft(theme, displaySelection.startTick),
+                        width: noteWidth(theme, displaySelection.endTick - displaySelection.startTick)
                     }}
                 ></div>
             }
