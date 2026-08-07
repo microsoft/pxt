@@ -998,6 +998,7 @@ declare namespace pxt.editor {
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
         restartSimulator(): void;
         startSimulator(opts?: SimulatorStartOptions): void;
+        reinitializeSimulatorAsync(): Promise<void>;
         runSimulator(): void;
         isSimulatorRunning(): boolean;
         expandSimulator(): void;

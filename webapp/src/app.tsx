@@ -1130,7 +1130,25 @@ export class ProjectView
 
     public async componentDidMount() {
         this.allEditors.forEach(e => e.prepare())
-        await simulator.initAsync({
+        await simulator.initAsync(this.createSimulatorInitOptions());
+
+        // we now have editors prepared
+        this.forceUpdate();
+        // start blockly load
+        this.loadBlocklyAsync();
+
+        // subscribe to user preference changes (for simulator or non-render subscriptions)
+        data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
+        data.subscribe(this.headerChangeSubscriber, "header:*");
+        this.editorMountComplete.resolve(undefined);
+    }
+
+    public async reinitializeSimulatorAsync() {
+        await simulator.initAsync(this.createSimulatorInitOptions());
+    }
+
+    private createSimulatorInitOptions(): Parameters<typeof simulator.initAsync>[0] {
+        return {
             orphanException: brk => {
                 // TODO: start debugging session
                 // TODO: user friendly error message
@@ -1194,17 +1212,7 @@ export class ProjectView
                 pkg.mainEditorPkg().setSimState(k, v)
             },
             editor: this.state.header ? this.state.header.editor : ''
-        });
-
-        // we now have editors prepared
-        this.forceUpdate();
-        // start blockly load
-        this.loadBlocklyAsync();
-
-        // subscribe to user preference changes (for simulator or non-render subscriptions)
-        data.subscribe(this.cloudStatusSubscriber, `${cloud.HEADER_CLOUDSTATE}:*`);
-        data.subscribe(this.headerChangeSubscriber, "header:*");
-        this.editorMountComplete.resolve(undefined);
+        };
     }
 
     public componentWillUnmount() {
