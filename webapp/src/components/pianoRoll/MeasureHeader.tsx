@@ -1,23 +1,23 @@
-import * as React from "react";
 import { noteLeft, noteWidth, range, xToTick } from "./utils";
 import { usePianoRollTheme } from "./context";
 import { WorkspaceSelection } from "./types";
+import { useEffect, useRef, useState } from "react";
 
 interface Props {
     selection?: WorkspaceSelection;
-    onKeyDown(e: React.KeyboardEvent<HTMLDivElement>): void;
     snapTicks: number;
     onSelectionChange: (selection: WorkspaceSelection) => void;
+    addEventListeners: (el: HTMLElement) => void;
 }
 
-export const MeasureHeader = ({ selection, onSelectionChange, onKeyDown, snapTicks }: Props) => {
+export const MeasureHeader = ({ selection, onSelectionChange, addEventListeners, snapTicks }: Props) => {
     const { measures, tickWidth, ticksPerBeat, beatsPerMeasure } = usePianoRollTheme();
 
-    const ref = React.useRef<HTMLDivElement>(null);
+    const ref = useRef<HTMLDivElement>(null);
     const theme = usePianoRollTheme();
-    const [pendingSelection, setPendingSelection] = React.useState<WorkspaceSelection>(undefined);
+    const [pendingSelection, setPendingSelection] = useState<WorkspaceSelection>(undefined);
 
-    React.useEffect(() => {
+    useEffect(() => {
         if (!ref.current) return undefined;
 
         const header = ref.current;
@@ -25,6 +25,13 @@ export const MeasureHeader = ({ selection, onSelectionChange, onKeyDown, snapTic
         let selectionStartTick: number = undefined;
         let selectionEndTick: number = undefined;
         let dragging = false;
+
+        const updateSelection = (startTick: number, endTick: number) => {
+            setPendingSelection({
+                startTick: Math.floor(Math.min(startTick, endTick) / snapTicks) * snapTicks,
+                endTick: Math.ceil(Math.max(startTick, endTick) / snapTicks) * snapTicks
+            });
+        };
 
         const clientToTick = (clientX: number) => {
             const bounds = header.getBoundingClientRect();
@@ -36,10 +43,7 @@ export const MeasureHeader = ({ selection, onSelectionChange, onKeyDown, snapTic
 
             const tick = clientToTick(e.clientX);
             selectionEndTick = tick;
-            setPendingSelection({
-                startTick: Math.min(selectionStartTick, selectionEndTick),
-                endTick: Math.max(selectionStartTick, selectionEndTick)
-            });
+            updateSelection(selectionStartTick, selectionEndTick);
         };
 
         const onPointerUp = (e: PointerEvent) => {
@@ -69,10 +73,9 @@ export const MeasureHeader = ({ selection, onSelectionChange, onKeyDown, snapTic
             dragging = true;
             document.addEventListener("pointermove", onPointerMove);
             document.addEventListener("pointerup", onPointerUp);
-            setPendingSelection({
-                startTick: selectionStartTick,
-                endTick: selectionStartTick
-            });
+            updateSelection(selectionStartTick, selectionStartTick);
+
+            document.getElementById("piano-roll-workspace")?.focus();
         };
 
 
@@ -85,10 +88,16 @@ export const MeasureHeader = ({ selection, onSelectionChange, onKeyDown, snapTic
         };
     }, [onSelectionChange, theme]);
 
+
+    useEffect(() => {
+        if (!ref.current) return undefined;
+
+        return addEventListeners(ref.current);
+    }, [addEventListeners]);
     const displaySelection = pendingSelection || selection;
 
     return (
-        <div className="measure-header" id="measure-header" ref={ref} tabIndex={0} onKeyDown={onKeyDown}>
+        <div className="measure-header" id="measure-header" ref={ref}>
             {range(0, measures).map(m =>
                 <div key={m + 1} className="measure" style={{ width: tickWidth * ticksPerBeat * beatsPerMeasure }}>{m + 1}</div>
             )}

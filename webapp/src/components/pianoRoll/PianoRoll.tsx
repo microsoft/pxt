@@ -190,7 +190,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
         }
     }
 
-    useEffect(() => {
+    const addEventListeners = useCallback((el: HTMLElement) => {
         const onKeydown = (e: KeyboardEvent) => {
             if (e.key === "Escape") {
                 if (song.floatingLayer) {
@@ -221,7 +221,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     e.stopPropagation();
                 }
             }
-        }
+        };
 
         const onCopy = (e: ClipboardEvent) => {
             if (song.floatingLayer) {
@@ -238,7 +238,25 @@ const PianoRollInternal = (props: PianoRollProps) => {
                 e.preventDefault();
                 e.stopPropagation();
             }
-        }
+        };
+
+        const onCut = (e: ClipboardEvent) => {
+            if (song.floatingLayer) {
+                const floatingLayer = song.floatingLayer;
+                const track = song.tracks.find(t => t.id === song.floatingLayer!.trackId)!;
+                setCopiedData({
+                    events: floatingLayer.events,
+                    startTick: floatingLayer.startTick,
+                    endTick: floatingLayer.endTick,
+                    isDrumTrack: isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId)!),
+                    minOctave: track.minOctave,
+                    maxOctave: track.maxOctave
+                });
+                e.preventDefault();
+                e.stopPropagation();
+                updateSong(deleteFloatingLayer(song));
+            }
+        };
 
         const onPaste = (e: ClipboardEvent) => {
             const track = song.tracks[selectedTrackIndex]!;
@@ -312,15 +330,17 @@ const PianoRollInternal = (props: PianoRollProps) => {
             let newSong = applyFloatingLayer(song);
             newSong.floatingLayer = newFloatingLayer;
             updateSong(newSong);
-        }
+        };
 
-        window.addEventListener("keydown", onKeydown);
-        window.addEventListener("copy", onCopy);
-        window.addEventListener("paste", onPaste);
+        el.addEventListener("keydown", onKeydown);
+        el.addEventListener("copy", onCopy);
+        el.addEventListener("paste", onPaste);
+        el.addEventListener("cut", onCut);
         return () => {
-            window.removeEventListener("keydown", onKeydown);
-            window.removeEventListener("copy", onCopy);
-            window.removeEventListener("paste", onPaste);
+            el.removeEventListener("keydown", onKeydown);
+            el.removeEventListener("copy", onCopy);
+            el.removeEventListener("paste", onPaste);
+            el.removeEventListener("cut", onCut);
         };
     }, [updateSong, song, selectedTrackIndex]);
 
@@ -669,7 +689,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                 selection={song.floatingLayer}
                 onSelectionChange={onSelectionChange}
                 snapTicks={fieldEditorParams?.showSnapControls ? snapTicks : 1}
-                onKeyDown={() => {}}
+                addEventListeners={addEventListeners}
             />
             <div className="scroll-container">
                 <div className="content-container">
@@ -694,6 +714,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             floatingLayer={song.floatingLayer}
                             updateFloatingLayer={updateFloatingLayerCB}
                             applyFloatingLayer={applyFloatingLayerCB}
+                            addEventListeners={addEventListeners}
                         />
                         <Scrollbar horizontal />
                     </div>

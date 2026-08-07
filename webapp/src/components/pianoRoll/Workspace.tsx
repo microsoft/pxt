@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener } from "../musicEditor/playback";
 import { usePianoRollTheme } from "./context";
 import { NoteEventView } from "./NoteEvent"
-import { changeNoteEventDuration, getMaxDuration, isInSelection, newNoteEvent, NoteEvent, Song, Track, WorkspaceSelection } from "./types";
-import { noteLeft, noteTop, noteWidth, range, workspaceHeight, workspaceWidth, xToTick, yToNote } from "./utils";
+import { changeNoteEventDuration, getMaxDuration, newNoteEvent, NoteEvent, Song, Track } from "./types";
+import { noteLeft, noteTop, noteWidth, workspaceHeight, workspaceWidth, xToTick, yToNote } from "./utils";
 import { useWorkspaceBackground } from "./workspaceBackground";
 
 interface Props {
@@ -19,6 +19,7 @@ interface Props {
 
     updateFloatingLayer: (deltaTicks: number, deltaNotes: number) => void;
     applyFloatingLayer: () => void;
+    addEventListeners: (el: HTMLElement) => void;
 }
 
 interface GestureState {
@@ -44,7 +45,8 @@ export const Workspace = (props: Props) => {
         newNoteDuration,
         floatingLayer,
         updateFloatingLayer,
-        applyFloatingLayer
+        applyFloatingLayer,
+        addEventListeners
     } = props;
 
     const bg = useWorkspaceBackground();
@@ -324,6 +326,11 @@ export const Workspace = (props: Props) => {
         setDeltaTicks(0);
     }, [floatingLayer])
 
+    useEffect(() => {
+        if (!workspaceRef.current) return;
+        return addEventListeners(workspaceRef.current!)
+    }, [addEventListeners])
+
     return (
         <div
             className="workspace"
@@ -335,6 +342,7 @@ export const Workspace = (props: Props) => {
                 height: workspaceHeight(theme)
             }}
             ref={workspaceRef}
+            tabIndex={0}
         >
             <div className="playhead" ref={playheadRef}></div>
             {track.events.map((e, i) =>
