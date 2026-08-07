@@ -5,6 +5,10 @@
     --note-event-border: 2px solid darken(#03adfc, 20%);
     --note-event-text-color: darken(#03adfc, 30%);
 
+    --selected-note-event-color: #03fca9;
+    --selected-note-event-border: 2px solid darken(#03fca9, 20%);
+    --selected-note-event-text-color: darken(#03fca9, 30%);
+
     --note-event-text-color-hover: #ffffff;
     --note-event-border-hover: 2px solid #ffffff;
 
@@ -80,6 +84,7 @@
 
     .music-playback-controls {
         padding: 0;
+
         .common-button {
             height: calc(var(--header-height) - 0.3rem)
         }
@@ -95,7 +100,7 @@
         }
     }
 
-    & > .common-dropdown {
+    &>.common-dropdown {
         .common-button {
             min-width: 4.75rem;
         }
@@ -120,7 +125,7 @@
         }
     }
 
-    & > .common-dropdown #snap-select {
+    &>.common-dropdown #snap-select {
         min-width: 4.75rem;
     }
 }
@@ -167,6 +172,7 @@
 }
 
 .measure-header {
+    position: relative;
     height: var(--timeline-height);
     display: flex;
     flex-direction: row;
@@ -189,6 +195,15 @@
         padding-left: 0.25rem;
         user-select: none;
     }
+}
+
+.selection {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-color: var(--selected-note-event-color);
+    opacity: 0.3;
+    pointer-events: none;
 }
 
 .piano-roll .sidebar-container {
@@ -267,7 +282,9 @@
 }
 
 .piano-roll .workspace {
-    .note-event, .cursor {
+
+    .note-event,
+    .cursor {
         height: calc(var(--grid-cell-height) + 1px);
         position: absolute;
         display: flex;
@@ -286,13 +303,21 @@
         color: var(--note-event-text-color);
     }
 
+    .note-event.selected, .note-event.floating {
+        border: var(--selected-note-event-border);
+        background-color: var(--selected-note-event-color);
+        color: var(--selected-note-event-text-color);
+    }
+
     .cursor {
         border: var(--note-event-border-hover);
     }
 }
 
 .piano-roll .workspace {
-    .note-event:hover, .note-event.highlighted {
+
+    .note-event:hover,
+    .note-event.highlighted {
         border: var(--note-event-border-hover);
         color: var(--note-event-text-color-hover);
     }
@@ -378,7 +403,9 @@
             background-color: var(--note-event-color);
         }
 
-        &:focus-within, &:hover, &.highlighted {
+        &:focus-within,
+        &:hover,
+        &.highlighted {
             .velocity-slider-view {
                 border: var(--note-event-border-hover);
             }

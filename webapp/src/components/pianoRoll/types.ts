@@ -25,6 +25,13 @@ export interface Song {
 
     beatsPerMeasure: number;
     ticksPerBeat: number;
+
+    floatingLayer?: {
+        events: NoteEvent[];
+        startTick: number;
+        endTick: number;
+        trackId: number;
+    }
 }
 
 interface BaseInstrument {
@@ -41,6 +48,18 @@ export interface DrumInstrument extends BaseInstrument {
 }
 
 export type Instrument = MelodicInstrument | DrumInstrument;
+
+export interface WorkspaceSelection {
+    startTick: number;
+    endTick: number;
+}
+
+export interface CopyData {
+    startTick: number;
+    endTick: number;
+    events: NoteEvent[];
+    isDrumTrack: boolean;
+}
 
 export const lf = pxt.U.lf;
 
@@ -355,14 +374,15 @@ export function changeTrackInstrument(trackId: number, instrumentId: number, son
 }
 
 export function changeMeasures(measures: number, song: Song): Song {
+    const maxTicks = measures * song.beatsPerMeasure * song.ticksPerBeat;
     return {
         ...song,
         measures,
         tracks: song.tracks.map(track => ({
             ...track,
-            events: track.events.filter(e => e.start < measures * 4 * 4).map(e => ({
+            events: track.events.filter(e => e.start < maxTicks).map(e => ({
                 ...e,
-                duration: Math.min(e.duration, measures * 4 * 4 - e.start)
+                duration: Math.min(e.duration, maxTicks - e.start)
             }))
         }))
     }
@@ -396,6 +416,8 @@ export function isMelodicInstrument(instrument: Instrument): instrument is Melod
 }
 
 export function toPXTSong(song: Song): pxt.assets.music.Song {
+    song = applyFloatingLayer(song);
+
     return {
         ticksPerBeat: song.ticksPerBeat,
         beatsPerMeasure: song.beatsPerMeasure,
@@ -500,6 +522,17 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
         }
     }
 
+    if (result.tracks.length === 0) {
+        result.tracks.push({
+            id: 0,
+            instrumentId: result.instruments[0].id,
+            events: [],
+            nextId: 0,
+            minOctave: NOTE_RANGES[0].minOctave,
+            maxOctave: NOTE_RANGES[0].maxOctave
+        })
+    }
+
     return result;
 }
 
@@ -564,4 +597,210 @@ function lfosEqual(a: pxt.assets.music.LFO | undefined, b: pxt.assets.music.LFO 
     if (a.amplitude !== b.amplitude) return false;
 
     return true;
+}
+
+export function applyFloatingLayer(song: Song): Song {
+    if (!song.floatingLayer) return song;
+
+    const track = song.tracks.find(t => t.id === song.floatingLayer!.trackId);
+    if (!track) return song;
+
+    const copyData: CopyData = {
+        startTick: song.floatingLayer.startTick,
+        endTick: song.floatingLayer.endTick,
+        events: song.floatingLayer.events,
+        isDrumTrack: isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId)!)
+    };
+
+    const result = pasteCopyData(song, song.floatingLayer.trackId, copyData, song.floatingLayer.startTick);
+    result.floatingLayer = undefined;
+
+    return result;
+}
+
+export function deleteFloatingLayer(song: Song): Song {
+    if (!song.floatingLayer) return song;
+
+    const result = cloneSong(song);
+    result.floatingLayer = undefined;
+
+    return result;
+}
+
+export function selectionToFloatingLayer(song: Song, trackId: number, selection: WorkspaceSelection): Song {
+    const result = applyFloatingLayer(song);
+    const copyData = getCopyData(result, trackId, selection);
+
+    result.floatingLayer = {
+        events: copyData.events,
+        startTick: copyData.startTick,
+        endTick: copyData.endTick,
+        trackId
+    };
+
+    return deleteSelection(result, trackId, selection);
+}
+
+export function transposeFloatingLayer(song: Song, deltaNotes: number): Song {
+    if (!song.floatingLayer || !deltaNotes) return song;
+
+    const result = cloneSong(song);
+    result.floatingLayer.events = result.floatingLayer.events.map(e => ({ ...e, note: e.note + deltaNotes }));
+
+    return result;
+}
+
+export function moveFloatingLayer(song: Song, deltaTicks: number): Song {
+    if (!song.floatingLayer || !deltaTicks) return song;
+
+    const result = cloneSong(song);
+    result.floatingLayer.startTick += deltaTicks;
+    result.floatingLayer.endTick += deltaTicks;
+    result.floatingLayer.events = result.floatingLayer.events.map(e => ({ ...e, start: e.start + deltaTicks }));
+
+    return result;
+}
+
+export function isInSelection(event: NoteEvent, selection: WorkspaceSelection): boolean {
+    return event.start >= selection.startTick && event.start + event.duration <= selection.endTick;
+}
+
+export function deleteSelection(song: Song, trackId: number, selection: WorkspaceSelection): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const track = song.tracks[trackIndex];
+
+    const updatedTrack: Track = {
+        ...track,
+        events: track.events.filter(e => !isInSelection(e, selection))
+    };
+
+    return updateTrack(updatedTrack, song);
+}
+
+export function transposeSelection(song: Song, trackId: number, selection: WorkspaceSelection, deltaNotes: number): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const track = song.tracks[trackIndex];
+
+    const updatedTrack: Track = {
+        ...track,
+        events: track.events.map(e => {
+            if (isInSelection(e, selection)) {
+                return { ...e, note: e.note + deltaNotes };
+            }
+            else {
+                return e;
+            }
+        })
+    };
+
+    return updateTrack(updatedTrack, song);
+}
+
+export function moveSelection(song: Song, trackId: number, selection: WorkspaceSelection, deltaTicks: number): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const copyData = getCopyData(song, trackId, selection);
+    const newSong = deleteSelection(song, trackId, selection);
+    return pasteCopyData(newSong, trackId, copyData, selection.startTick + deltaTicks);
+}
+
+export function getCopyData(song: Song, trackId: number, selection: WorkspaceSelection): CopyData {
+    const track = song.tracks.find(t => t.id === trackId);
+    if (!track) return undefined;
+
+    const events = track.events.filter(e => isInSelection(e, selection)).map(e => ({ ...e }));
+
+    return {
+        startTick: selection.startTick,
+        endTick: selection.endTick,
+        events,
+        isDrumTrack: isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId))
+    };
+}
+
+export function pasteCopyData(song: Song, trackId: number, copyData: CopyData, pasteStartTick: number): Song {
+    const trackIndex = song.tracks.findIndex(t => t.id === trackId);
+    if (trackIndex === -1) return song;
+
+    const track = song.tracks[trackIndex];
+
+    const maxTicks = song.measures * song.beatsPerMeasure * song.ticksPerBeat;
+    const deltaTicks = pasteStartTick - copyData.startTick;
+    let selectedEvents = copyData.events.map(e => ({ ...e, start: e.start + deltaTicks, id: track.nextId++ }));
+    for (const event of selectedEvents) {
+        event.duration = Math.min(event.duration, maxTicks - event.start);
+        event.start = Math.max(0, event.start);
+    }
+
+    selectedEvents = selectedEvents.filter(e => e.start < maxTicks && e.start + e.duration > 0);
+
+    const resultTrack = { ...song.tracks[trackIndex], events: track.events.map(e => ({ ...e })) };
+
+    for (const selectedEvent of selectedEvents) {
+        for (const event of resultTrack.events) {
+            if (event.note !== selectedEvent.note) continue;
+            if (event.start + event.duration <= selectedEvent.start) continue;
+            if (event.start >= selectedEvent.start + selectedEvent.duration) break;
+
+            if (event.start <= selectedEvent.start && event.start + event.duration > selectedEvent.start) {
+                event.duration = selectedEvent.start - event.start;
+            }
+            else if (event.start > selectedEvent.start) {
+                event.duration = event.start + event.duration - (selectedEvent.start + selectedEvent.duration);
+                event.start = selectedEvent.start + selectedEvent.duration;
+            }
+        }
+    }
+
+    resultTrack.events = resultTrack.events.filter(e => e.duration > 0);
+
+    let pasteIndex = 0;
+    for (let i = 0; i < resultTrack.events.length; i++) {
+        const toPaste = selectedEvents[pasteIndex];
+        if (!toPaste) break;
+
+        if (toPaste.start < resultTrack.events[i].start) {
+            resultTrack.events.splice(i, 0, toPaste);
+            pasteIndex++;
+            i++;
+        }
+    }
+
+    if (pasteIndex < selectedEvents.length) {
+        resultTrack.events.push(...selectedEvents.slice(pasteIndex));
+    }
+
+    return updateTrack(resultTrack, song);
+}
+
+export function pasteToFloatingLayer(song: Song, trackId: number, copyData: CopyData, pasteStartTick: number): Song {
+    const result = cloneSong(song);
+
+    const deltaTicks = pasteStartTick - copyData.startTick;
+    const selectedEvents = copyData.events.map(e => ({ ...e, start: e.start + deltaTicks }));
+
+    result.floatingLayer = {
+        events: selectedEvents,
+        startTick: pasteStartTick,
+        endTick: pasteStartTick + (copyData.endTick - copyData.startTick),
+        trackId
+    };
+
+    return result;
+}
+
+function cloneSong(song: Song): Song {
+    return {
+        ...song,
+        tracks: song.tracks.map(t => ({
+            ...t,
+            events: t.events.map(e => ({ ...e }))
+        })),
+        floatingLayer: song.floatingLayer ? { ...song.floatingLayer, events: song.floatingLayer.events.map(e => ({ ...e })) } : undefined
+    };
 }

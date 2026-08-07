@@ -1,8 +1,8 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { addPlaybackStateListener, addTickListener, removePlaybackStateListener, removeTickListener } from "../musicEditor/playback";
 import { usePianoRollTheme } from "./context";
 import { NoteEventView } from "./NoteEvent"
-import { changeNoteEventDuration, getMaxDuration, newNoteEvent, NoteEvent, Track } from "./types";
+import { changeNoteEventDuration, getMaxDuration, isInSelection, newNoteEvent, NoteEvent, Song, Track, WorkspaceSelection } from "./types";
 import { noteLeft, noteTop, noteWidth, range, workspaceHeight, workspaceWidth, xToTick, yToNote } from "./utils";
 import { useWorkspaceBackground } from "./workspaceBackground";
 
@@ -15,6 +15,10 @@ interface Props {
     snapTicks: number;
     newNoteDuration: number;
     bpm: number;
+    floatingLayer?: Song["floatingLayer"];
+
+    updateFloatingLayer: (deltaTicks: number, deltaNotes: number) => void;
+    applyFloatingLayer: () => void;
 }
 
 interface GestureState {
@@ -24,10 +28,24 @@ interface GestureState {
     startScrollY: number;
     noteEvent?: NoteEvent;
     isScrolling?: boolean
-    noteElement?: HTMLDivElement;}
+    isMove?: boolean;
+    noteElement?: HTMLDivElement;
+}
 
 export const Workspace = (props: Props) => {
-    const { track, onEdit, isDrumTrack, playNote, maxTicks, bpm, snapTicks, newNoteDuration } = props;
+    const {
+        track,
+        onEdit,
+        isDrumTrack,
+        playNote,
+        maxTicks,
+        bpm,
+        snapTicks,
+        newNoteDuration,
+        floatingLayer,
+        updateFloatingLayer,
+        applyFloatingLayer
+    } = props;
 
     const bg = useWorkspaceBackground();
     const theme = usePianoRollTheme();
@@ -35,6 +53,8 @@ export const Workspace = (props: Props) => {
     const workspaceRef = useRef<HTMLDivElement>(null);
     const playheadRef = useRef<HTMLDivElement>(null);
     const gestureState = useRef<GestureState | null>(null);
+
+    const [deltaTicks, setDeltaTicks] = useState(0);
 
     useEffect(() => {
         const horizontalScroller = workspaceRef.current?.parentElement;
@@ -48,7 +68,20 @@ export const Workspace = (props: Props) => {
         cursor.style.display = "none";
         workspaceRef.current?.appendChild(cursor);
 
-        const onSroll = () => {
+        const moveSelection = (deltaTicks: number) => {
+            if (!floatingLayer) return;
+
+            const headerSelection = document.getElementById("measure-header-selection");
+            const newStart = floatingLayer.startTick + deltaTicks;
+
+            if (headerSelection) {
+                headerSelection.style.left = `${noteLeft(theme, newStart)}px`;
+            }
+
+            setDeltaTicks(deltaTicks);
+        }
+
+        const onScroll = () => {
             const scrollLeft = horizontalScroller?.scrollLeft || 0;
 
             if (measureScroller) {
@@ -59,7 +92,7 @@ export const Workspace = (props: Props) => {
             }
         }
 
-        horizontalScroller?.addEventListener("scroll", onSroll);
+        horizontalScroller?.addEventListener("scroll", onScroll);
 
         const changeHorizontalScroll = (delta: number) => {
             const scroll = gestureState.current.startScrollX - delta;
@@ -143,7 +176,11 @@ export const Workspace = (props: Props) => {
             }
 
             if (gestureState.current.isScrolling) {
-                if (!gestureState.current.noteEvent || isDrumTrack) {
+                if (gestureState.current.isMove) {
+                    const deltaTicks = Math.round(deltaX / noteWidth(theme, 1));
+                    moveSelection(deltaTicks);
+                }
+                else if (!gestureState.current.noteEvent || isDrumTrack) {
                     changeHorizontalScroll(deltaX);
                     changeVerticalScroll(deltaY);
                 }
@@ -162,13 +199,19 @@ export const Workspace = (props: Props) => {
         }
 
         const onPointerDown = (e: PointerEvent) => {
+            const { time } = clientToNoteCoordinates(e.clientX, e.clientY) || {};
             gestureState.current = {
                 startX: e.clientX,
                 startY: e.clientY,
                 startScrollX: horizontalScroller?.scrollLeft || 0,
                 startScrollY: verticalScroller?.scrollTop || 0,
-                noteEvent: getNoteEventAtPosition(e.clientX, e.clientY)
+                noteEvent: getNoteEventAtPosition(e.clientX, e.clientY),
+                isMove: floatingLayer && time > floatingLayer.startTick && time < floatingLayer.endTick
             };
+
+            if (floatingLayer && !gestureState.current.isMove) {
+                applyFloatingLayer();
+            }
 
             updateGesture(e);
         }
@@ -178,6 +221,7 @@ export const Workspace = (props: Props) => {
         }
 
         const onPointerUp = (e: PointerEvent) => {
+            setDeltaTicks(0);
             if (!gestureState.current) {
                 cursor.style.display = "none";
                 return;
@@ -185,7 +229,10 @@ export const Workspace = (props: Props) => {
             updateGesture(e);
 
             if (!gestureState.current.isScrolling) {
-                if (gestureState.current.noteEvent) {
+                if (gestureState.current.isMove) {
+                    applyFloatingLayer();
+                }
+                else if (gestureState.current.noteEvent) {
                     onEdit({
                         ...track,
                         events: track.events.filter(e => e !== gestureState.current?.noteEvent)
@@ -201,6 +248,9 @@ export const Workspace = (props: Props) => {
                         playNote(coords.note);
                     }
                 }
+            }
+            else if (gestureState.current.isMove) {
+                updateFloatingLayer(Math.round((e.clientX - gestureState.current.startX) / noteWidth(theme, 1)), 0);
             }
             else if (gestureState.current.noteEvent && !isDrumTrack) {
                 onEdit(changeNoteEventDuration(gestureState.current.noteEvent.id, getNewNoteDuration(e.clientX, e.clientY), track, maxTicks, theme.maxPolyphony));
@@ -222,9 +272,9 @@ export const Workspace = (props: Props) => {
             workspaceRef.current?.removeEventListener("pointercancel", onPointerUp);
             workspaceRef.current?.removeEventListener("pointerleave", onPointerUp);
             workspaceRef.current?.removeChild(cursor);
-            horizontalScroller?.removeEventListener("scroll", onSroll);
+            horizontalScroller?.removeEventListener("scroll", onScroll);
         }
-    }, [track, onEdit, theme.minOctave, theme.maxOctave, isDrumTrack, snapTicks, maxTicks])
+    }, [track, onEdit, theme.minOctave, theme.maxOctave, isDrumTrack, snapTicks, maxTicks, floatingLayer, updateFloatingLayer, applyFloatingLayer])
 
 
     useEffect(() => {
@@ -270,6 +320,10 @@ export const Workspace = (props: Props) => {
         }
     }, [theme, bpm])
 
+    useEffect(() => {
+        setDeltaTicks(0);
+    }, [floatingLayer])
+
     return (
         <div
             className="workspace"
@@ -280,9 +334,34 @@ export const Workspace = (props: Props) => {
                 width: workspaceWidth(theme),
                 height: workspaceHeight(theme)
             }}
-            ref={workspaceRef}>
+            ref={workspaceRef}
+        >
             <div className="playhead" ref={playheadRef}></div>
-            {track.events.map((e, i) => <NoteEventView key={i} event={e} isDrumTrack={isDrumTrack} />)}
+            {track.events.map((e, i) =>
+                <NoteEventView
+                    key={i}
+                    event={e}
+                    isDrumTrack={isDrumTrack}
+                />
+            )}
+            {floatingLayer?.events?.map((e, i) =>
+                <NoteEventView
+                    key={`floating-${i}`}
+                    event={{ ...e, start: e.start + deltaTicks }}
+                    isDrumTrack={isDrumTrack}
+                    type="floating"
+                />
+            )}
+            {floatingLayer &&
+                <div
+                    id="workspace-selection"
+                    className="selection"
+                    style={{
+                        left: noteLeft(theme, floatingLayer.startTick + deltaTicks),
+                        width: noteWidth(theme, floatingLayer.endTick - floatingLayer.startTick)
+                    }}
+                ></div>
+            }
         </div>
     );
 }

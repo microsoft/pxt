@@ -1,8 +1,8 @@
 import { PianoRollTheme, PianoRollThemeProvider, usePianoRollThemeContext } from "./context"
 import { Workspace } from "./Workspace"
 import { Sidebar } from "./Sidebar"
-import { useEffect, useRef, useState } from "react"
-import { changeMeasures, changeOctaves, changeTimeSignature, changeTrackInstrument, fromPXTSong, getEmptySong, isDrumInstrument, newTrack, NoteEvent, Song, TIME_SIGNATURES, toPXTSong, Track, updateNoteEvent, updateNoteEvents, updateTrack } from "./types"
+import { useEffect, useRef, useState, useCallback, useMemo } from "react"
+import { applyFloatingLayer, changeMeasures, changeOctaves, changeTimeSignature, changeTrackInstrument, deleteFloatingLayer, deleteSelection, fromPXTSong, getEmptySong, isDrumInstrument, moveFloatingLayer, moveSelection, newTrack, NoteEvent, selectionToFloatingLayer, Song, TIME_SIGNATURES, toPXTSong, Track, transposeFloatingLayer, transposeSelection, updateNoteEvent, updateNoteEvents, updateTrack, WorkspaceSelection } from "./types"
 import { Header } from "./Header"
 import { DeleteTrackModal } from "./DeleteTrackModal"
 import { DeleteErrorModal } from "./DeleteErrorModal"
@@ -96,7 +96,6 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const [name, setName] = useState(initialName || undefined);
 
     const [snapTicks, setSnapTicks] = useState(4);
-
     const [velocityEditorVisible, setVelocityEditorVisible] = useState(initialVelocityEditorVisible || false);
 
     useEffect(() => {
@@ -150,7 +149,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
         }
 
         updateTheme(newTheme);
-    }, [fieldEditorParams, updateTheme])
+    }, [fieldEditorParams, updateTheme]);
 
     const fireStateChange = (newState: Partial<PianoRollState>) => {
         if (onStateChanged) {
@@ -186,18 +185,57 @@ const PianoRollInternal = (props: PianoRollProps) => {
         }
     }
 
+    useEffect(() => {
+        const onKeydown = (e: KeyboardEvent) => {
+            if (e.key === "Escape") {
+                if (song.floatingLayer) {
+                    updateSong(applyFloatingLayer(song));
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+            else if (e.key === "Delete" || e.key === "Backspace") {
+                if (song.floatingLayer) {
+                    updateSong(deleteFloatingLayer(song));
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+            else if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                if (song.floatingLayer) {
+                    updateSong(transposeFloatingLayer(song, e.key === "ArrowUp" ? 1 : -1));
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+            else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                if (song.floatingLayer) {
+                    const deltaTicks = e.key === "ArrowLeft" ? -1 : 1;
+                    updateSong(moveFloatingLayer(song, deltaTicks));
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+            }
+        }
+        window.addEventListener("keydown", onKeydown);
+        return () => {
+            window.removeEventListener("keydown", onKeydown);
+        };
+    }, [updateSong, song]);
+
     const onTrackEdit = (updatedTrack: Track) => {
-        updateSong(updateTrack(updatedTrack, song));
+        updateSong(updateTrack(updatedTrack, applyFloatingLayer(song)));
     }
 
     const onTrackSelected = (trackId: number) => {
+        updateSong(applyFloatingLayer(song));
         const index = song.tracks.findIndex(t => t.id === trackId);
         setSelectedTrackIndex(index);
         fireStateChange({ selectedTrackIndex: index });
     }
 
     const onTrackCreated = () => {
-        const newSong = newTrack(song.instruments[0].id, song);
+        const newSong = newTrack(song.instruments[0].id, applyFloatingLayer(song));
         updateSong(newSong);
 
         const newTrackIndex = newSong.tracks.length - 1;
@@ -238,14 +276,16 @@ const PianoRollInternal = (props: PianoRollProps) => {
 
     const deleteTrack = (trackId: number) => {
         setSelectedTrackIndex(0);
+        let newSong = applyFloatingLayer(song);
         updateSong({
-            ...song,
-            tracks: song.tracks.filter(t => t.id !== trackId)
+            ...newSong,
+            tracks: newSong.tracks.filter(t => t.id !== trackId)
         });
     }
 
     const setTrackInstrument = (trackId: number, instrumentId: number) => {
-        updateSong(changeTrackInstrument(trackId, instrumentId, song));
+        let newSong = applyFloatingLayer(song);
+        updateSong(changeTrackInstrument(trackId, instrumentId, newSong));
     }
 
     const playNote = (note: number) => {
@@ -274,7 +314,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
     }
 
     const onMeasuresChanged = (newMeasures: number) => {
-        updateSong(changeMeasures(newMeasures, song));
+        let newSong = applyFloatingLayer(song);
+        updateSong(changeMeasures(newMeasures, newSong));
 
         updateTheme({ measures: newMeasures });
     }
@@ -284,7 +325,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
         if (!signature) return;
 
         const { beatsPerMeasure, ticksPerBeat } = signature;
-        updateSong(changeTimeSignature(beatsPerMeasure, ticksPerBeat, song));
+        let newSong = applyFloatingLayer(song);
+        updateSong(changeTimeSignature(beatsPerMeasure, ticksPerBeat, newSong));
 
         updateTheme({ beatsPerMeasure, ticksPerBeat });
     }
@@ -297,26 +339,49 @@ const PianoRollInternal = (props: PianoRollProps) => {
     }
 
     const onOctavesChanged = (minOctave: number, maxOctave: number) => {
-        const track = song.tracks[selectedTrackIndex]!;
+        let newSong = applyFloatingLayer(song);
+        const track = newSong.tracks[selectedTrackIndex]!;
 
         if (track.minOctave === minOctave && track.maxOctave === maxOctave) return;
 
-        if (isDrumInstrument(song.instruments.find(i => i.id === track.instrumentId)!)) {
+        if (isDrumInstrument(newSong.instruments.find(i => i.id === track.instrumentId)!)) {
             return;
         }
 
         updateTheme({ minOctave, maxOctave });
-        updateSong(changeOctaves(track.id, minOctave, maxOctave, song));
+        updateSong(changeOctaves(track.id, minOctave, maxOctave, newSong));
     }
 
     const onVelocityChange = (notes: NoteEvent[]) => {
-        updateSong(updateNoteEvents(song, song.tracks[selectedTrackIndex]!.id, notes));
+        let newSong = applyFloatingLayer(song);
+        updateSong(updateNoteEvents(newSong, newSong.tracks[selectedTrackIndex]!.id, notes));
     }
 
     const onVelocityEditorToggle = () => {
         setVelocityEditorVisible(!velocityEditorVisible);
         fireStateChange({ velocityEditorVisible: !velocityEditorVisible });
     }
+
+    const onSelectionChange = useCallback((selection: WorkspaceSelection | undefined) => {
+        let newSong = song;
+        if (song.floatingLayer) {
+            newSong = applyFloatingLayer(song);
+        }
+
+        if (!selection) {
+            setSong(newSong);
+            return;
+        }
+
+        const newSelection = { ...selection };
+
+        if (fieldEditorParams?.showSnapControls) {
+            newSelection.startTick = Math.floor(selection.startTick / snapTicks) * snapTicks;
+            newSelection.endTick = Math.ceil(selection.endTick / snapTicks) * snapTicks;
+        }
+
+        setSong(selectionToFloatingLayer(newSong, selectedTrackIndex, newSelection));
+    }, [snapTicks, fieldEditorParams?.showSnapControls, song]);
 
     const undo = () => {
         if (!undoStack.length) return;
@@ -416,6 +481,16 @@ const PianoRollInternal = (props: PianoRollProps) => {
         }
     }, [minOctave, maxOctave, theme.minOctave, theme.maxOctave, updateTheme, song.measures, song.beatsPerMeasure, song.ticksPerBeat])
 
+    const applyFloatingLayerCB = useCallback(() => {
+        updateSong(applyFloatingLayer(song));
+    }, [song, updateSong]);
+
+    const updateFloatingLayerCB = useCallback((deltaTicks: number, deltaNotes: number) => {
+        if (song.floatingLayer) {
+            updateSong(moveFloatingLayer(transposeFloatingLayer(song, deltaNotes), deltaTicks));
+        }
+    }, [song, updateSong]);
+
     const showHeader = !fieldEditorParams?.hideHeader;
 
     return (
@@ -447,7 +522,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     />
                 </div>
             }
-            <MeasureHeader />
+            <MeasureHeader selection={song.floatingLayer} onSelectionChange={onSelectionChange} />
             <div className="scroll-container">
                 <div className="content-container">
                     <div className="sidebar-container">
@@ -468,6 +543,9 @@ const PianoRollInternal = (props: PianoRollProps) => {
                             snapTicks={fieldEditorParams?.showSnapControls ? snapTicks : 1}
                             newNoteDuration={fieldEditorParams?.showSnapControls ? snapTicks : 1}
                             bpm={song.tempo}
+                            floatingLayer={song.floatingLayer}
+                            updateFloatingLayer={updateFloatingLayerCB}
+                            applyFloatingLayer={applyFloatingLayerCB}
                         />
                         <Scrollbar horizontal />
                     </div>
@@ -500,7 +578,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                     />
                 }
                 <div className="spacer" />
-                { showEditControls &&
+                {showEditControls &&
                     <EditControls
                         assetName={name}
                         onAssetNameChanged={onNameChange}
