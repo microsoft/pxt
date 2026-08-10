@@ -425,29 +425,90 @@ export function toPXTSong(song: Song): pxt.assets.music.Song {
         beatsPerMeasure: song.beatsPerMeasure,
         beatsPerMinute: song.tempo,
         measures: song.measures,
-        tracks: song.tracks.map(track => {
+        tracks: song.tracks.reduce((acc, track) => {
             const instrument = song.instruments.find(i => i.id === track.instrumentId)!;
-            const isDrums = isDrumInstrument(instrument);
+            acc.push(...toPXTTrack(track, instrument));
 
-            const pxtTrack: pxt.assets.music.Track = {
+            return acc;
+        }, [] as pxt.assets.music.Track[])
+    }
+}
+
+function toPXTTrack(track: Track, instrument: Instrument): pxt.assets.music.Track[] {
+    if (isDrumInstrument(instrument)) {
+        return [
+            {
                 id: track.id,
                 name: instrument.name,
                 notes: track.events.map(e => ({
                     startTick: e.start,
                     endTick: (e.start + e.duration),
                     notes: [{
-                        note: isDrums ? e.note : e.note + 1,
+                        note: e.note,
                         enharmonicSpelling: "normal"
                     }],
                     velocity: e.velocity
                 })),
-                instrument: isDrums ? undefined : (instrument as MelodicInstrument).instrument,
-                drums: isDrums ? (instrument as DrumInstrument).drums : undefined
+                instrument: undefined,
+                drums: (instrument as DrumInstrument).drums
             }
-
-            return pxtTrack;
-        })
+        ];
     }
+
+    /**
+     * note encoding (1 byte)
+     *     lower six bits = note - (instrumentOctave - 2) * 12
+     *     upper two bits are the enharmonic spelling:
+     *          0 = normal
+     *          1 = flat
+     *          2 = sharp
+     *
+     * to ensure our notes are in range, we need to split the track into multiple tracks if
+     * the range of notes exceeds 64 (6 bits)
+     */
+
+    let minNote = track.events[0]?.note || 0;
+    let maxNote = track.events[0]?.note || 0;
+
+    for (const event of track.events) {
+        minNote = Math.min(minNote, event.note);
+        maxNote = Math.max(maxNote, event.note);
+    }
+
+    minNote++;
+    maxNote++;
+
+    const result: pxt.assets.music.Track[] = [];
+    const minOctave = Math.floor(minNote / 12);
+
+    if (maxNote - (minOctave * 12) >= 64) {
+        result.push(...toPXTTrack({ ...track, events: track.events.filter(e => e.note < 64) }, instrument));
+        result.push(...toPXTTrack({ ...track, events: track.events.filter(e => e.note >= 64) }, instrument));
+        return result;
+    }
+
+    const instrumentOctave = minOctave + 2;
+
+    const pxtTrack: pxt.assets.music.Track = {
+        id: track.id,
+        name: instrument.name,
+        notes: track.events.map(e => ({
+            startTick: e.start,
+            endTick: (e.start + e.duration),
+            notes: [{
+                note: e.note + 1,
+                enharmonicSpelling: "normal"
+            }],
+            velocity: e.velocity
+        })),
+        instrument: {
+            ...(instrument as MelodicInstrument).instrument,
+            octave: instrumentOctave
+        },
+        drums: undefined
+    }
+
+    return [pxtTrack];
 }
 
 export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
@@ -464,38 +525,39 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
 
     let instrumentIdCounter = 0;
     for (const track of pxtSong.tracks) {
-        const newTrack: Track = {
+        const existingTrack = result.tracks.find(t => t.id === track.id);
+        const resultTrack: Track = existingTrack || {
             id: track.id,
             instrumentId: 0,
             events: [],
             nextId: 0,
             minOctave: 7,
             maxOctave: 0
-        }
+        };
 
         const newNoteEvent = (note: number, startTick: number, endTick: number, velocity: number): void => {
             const newEvent: NoteEvent = {
-                id: newTrack.nextId++,
+                id: resultTrack.nextId++,
                 note: track.drums?.length ? note : note - 1,
                 start: Math.round(startTick / ticksPerSixteenth),
                 duration: Math.max(1, Math.round((endTick - startTick) / ticksPerSixteenth)),
                 velocity: velocity ?? 128
             };
 
-            newTrack.events.push(newEvent);
+            resultTrack.events.push(newEvent);
 
-            const octave = Math.floor(note / 12);
-            newTrack.minOctave = Math.min(newTrack.minOctave, octave);
-            newTrack.maxOctave = Math.max(newTrack.maxOctave, octave);
+            const octave = Math.floor(newEvent.note / 12);
+            resultTrack.minOctave = Math.min(resultTrack.minOctave, octave);
+            resultTrack.maxOctave = Math.max(resultTrack.maxOctave, octave);
         };
 
         if (track.drums?.length) {
-            newTrack.instrumentId = result.instruments.find(i => isDrumInstrument(i))!.id;
+            resultTrack.instrumentId = result.instruments.find(i => isDrumInstrument(i))!.id;
         }
         else {
             const instrument = result.instruments.find(i => !isDrumInstrument(i) && instrumentsEqual(i.instrument, track.instrument));
 
-            if (instrument) newTrack.instrumentId = instrument.id;
+            if (instrument) resultTrack.instrumentId = instrument.id;
             else {
                 const newInstrument: MelodicInstrument = {
                     id: result.nextInstrumentId++,
@@ -503,7 +565,7 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
                     instrument: track.instrument,
                 };
                 result.instruments.push(newInstrument);
-                newTrack.instrumentId = newInstrument.id;
+                resultTrack.instrumentId = newInstrument.id;
             }
         }
 
@@ -513,14 +575,14 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
             }
         }
 
-        const range = NOTE_RANGES.find(r => r.minOctave <= newTrack.minOctave && r.maxOctave >= newTrack.maxOctave);
+        const range = NOTE_RANGES.find(r => r.minOctave <= resultTrack.minOctave && r.maxOctave >= resultTrack.maxOctave);
         if (range) {
-            newTrack.minOctave = range.minOctave;
-            newTrack.maxOctave = range.maxOctave;
+            resultTrack.minOctave = range.minOctave;
+            resultTrack.maxOctave = range.maxOctave;
         }
 
-        if (newTrack.events.length > 0 || result.tracks.length === 0) {
-            result.tracks.push(newTrack);
+        if (!existingTrack && resultTrack.events.length > 0 || result.tracks.length === 0) {
+            result.tracks.push(resultTrack);
         }
     }
 
@@ -552,7 +614,6 @@ export function changeTimeSignature(beatsPerMeasure: number, ticksPerBeat: numbe
 
 function instrumentsEqual(a: pxt.assets.music.Instrument, b: pxt.assets.music.Instrument) {
     if (a.waveform !== b.waveform) return false;
-    if (a.octave !== b.octave) return false;
 
     if (!envelopesEqual(a.ampEnvelope, b.ampEnvelope)) return false;
     if (!envelopesEqual(a.pitchEnvelope, b.pitchEnvelope)) return false;
