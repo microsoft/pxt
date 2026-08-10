@@ -21,7 +21,7 @@ interface SidepanelState {
     height?: number;
     lastResizeHeight?: number;
     shouldResize?: boolean;
-    jacdacView?: "simulator" | "twins";
+    jacdacView?: "simulator" | "devices";
 }
 
 interface SidepanelProps extends ISettingsProps {
@@ -88,7 +88,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             this.props.setEditorOffset();
         }
 
-        if (this.state.jacdacView === "simulator" && state.jacdacView === "twins") {
+        if (this.state.jacdacView === "simulator" && state.jacdacView === "devices") {
             void this.props.parent.reinitializeSimulatorAsync()
                 .then(() => this.props.parent.restartSimulator());
         }
@@ -149,9 +149,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    protected setJacdacView = (jacdacView: "simulator" | "twins") => {
+    protected setJacdacView = (jacdacView: "simulator" | "devices") => {
         if (this.state.jacdacView !== jacdacView) {
-            if (jacdacView === "twins") {
+            if (jacdacView === "devices") {
                 this.props.parent.stopSimulator(true);
                 this.setState({ jacdacView });
                 return;
@@ -290,18 +290,18 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         onClick={() => this.setJacdacView("simulator")}
                     />
                     <Button
-                        className={jacdacView === "twins" ? "active" : undefined}
-                        text={lf("Twins")}
-                        title={lf("Show Twins")}
-                        ariaLabel={lf("Show Twins")}
-                        onClick={() => this.setJacdacView("twins")}
+                        className={jacdacView === "devices" ? "active" : undefined}
+                        text={lf("Devices")}
+                        title={lf("Show Devices")}
+                        ariaLabel={lf("Show Devices")}
+                        onClick={() => this.setJacdacView("devices")}
                     />
                 </div>}
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
-                        {jacdacUI && jacdacView === "twins" ?
-                            <div className="ui vertical editorFloat jacdac-twins-placeholder" role="region" aria-label={lf("Twins")} tabIndex={-1}>
-                                {lf("Twins placeholder")}
+                        {jacdacUI && jacdacView === "devices" ?
+                            <div className="ui vertical editorFloat jacdac-devices-placeholder" role="region" aria-label={lf("Devices")} tabIndex={-1}>
+                                {lf("Devices placeholder")}
                             </div> :
                             <>
                                 <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={-1} />
