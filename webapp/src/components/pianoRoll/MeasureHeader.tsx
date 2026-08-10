@@ -52,7 +52,7 @@ export const MeasureHeader = ({ selection, onSelectionChange, addEventListeners,
             const startTick = Math.min(selectionStartTick, selectionEndTick);
             const endTick = Math.max(selectionStartTick, selectionEndTick);
 
-            if (startTick === endTick || endTick === undefined) {
+            if (startTick === endTick || endTick === undefined || Number.isNaN(startTick) || Number.isNaN(endTick)) {
                 onSelectionChange(undefined);
             }
             else {
