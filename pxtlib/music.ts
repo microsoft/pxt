@@ -261,8 +261,20 @@ namespace pxt.assets.music {
     }
 
     export function decodeSongFromHex(hex: string) {
-        const bytes = pxt.U.fromHex(hex);
+        let isBase64 = false;
+        for (let i = 0; i < hex.length; i++) {
+            const c = hex[i];
+            if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F'))) {
+                isBase64 = true;
+                break;
+            }
+        }
 
+        if (isBase64) {
+            return decodeSong(pxt.Util.stringToUint8Array(atob(hex)));
+        }
+
+        const bytes = pxt.U.fromHex(hex);
         return decodeSong(bytes);
     }
 
