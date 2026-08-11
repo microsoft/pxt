@@ -11,6 +11,7 @@ export interface HistoryEntry {
     timestamp: number;
     editorVersion: string;
     changes: FileChange[];
+    event?: SnapshotEvent;
 }
 
 export interface SnapshotEntry {
@@ -22,7 +23,7 @@ export interface SnapshotEntry {
 
 export interface SnapshotEvent {
     type: "extension-added" | "extension-removed" | "extension-updated";
-    phase: "before" | "after";
+    phase?: "before" | "after";
     extensionName: string;
 }
 
@@ -116,9 +117,17 @@ function collapseHistoryCore(history: HistoryFile, text: ScriptText, options: Co
 
     while (entries.length) {
         const entry = entries.pop();
+        const newerText = current;
         current = applyDiff(current, entry, patch);
 
-        if (entry.timestamp > maxTime) {
+        if (entry.event) {
+            const pending = diffScriptText(newerText, lastHistoryEntry, entry.timestamp + 1, diff);
+            if (pending) newHistory.unshift(pending);
+            newHistory.unshift(entry);
+            lastHistoryEntry = {...current};
+            lastTime = entry.timestamp;
+        }
+        else if (entry.timestamp > maxTime) {
             newHistory.unshift(entry);
             lastHistoryEntry = {...current};
             lastTime = entry.timestamp;
@@ -341,15 +350,20 @@ export function updateHistory(previousText: ScriptText, toWrite: ScriptText, cur
     let shouldCombine = false;
     if (history.entries.length === 1) {
         const topTime = history.entries[history.entries.length - 1].timestamp;
-        if (currentTime - topTime < diffInterval()) {
+        if (!history.entries[history.entries.length - 1].event
+            && currentTime - topTime < diffInterval()) {
             shouldCombine = true;
         }
     }
     else if (history.entries.length > 1) {
-        const topTime = history.entries[history.entries.length - 1].timestamp;
-        const prevTime = history.entries[history.entries.length - 2].timestamp;
+        const top = history.entries[history.entries.length - 1];
+        const prev = history.entries[history.entries.length - 2];
+        const topTime = top.timestamp;
+        const prevTime = prev.timestamp;
 
-        if (currentTime - topTime < diffInterval() && topTime - prevTime < diffInterval()) {
+        if (!top.event && !prev.event
+            && currentTime - topTime < diffInterval()
+            && topTime - prevTime < diffInterval()) {
             shouldCombine = true;
         }
     }
@@ -453,6 +467,56 @@ export function pushSnapshotOnHistory(text: ScriptText, currentTime: number, eve
     text[pxt.HISTORY_FILE] = JSON.stringify(history);
 }
 
+export function pushExtensionEventOnHistory(text: ScriptText, previousText: ScriptText, currentTime: number, event: SnapshotEvent, diff: (a: string, b: string) => unknown) {
+    // Replace the mutation's automatic history entry with explicit event boundaries,
+    // while retaining all history that existed before the extension changed.
+    const historyBeforeChange: HistoryFile = previousText[pxt.HISTORY_FILE]
+        ? parseHistoryFile(previousText[pxt.HISTORY_FILE])
+        : {
+            entries: [],
+            snapshots: [],
+            shares: [],
+            lastSaveTime: currentTime
+        };
+    const historyAfterChange = text[pxt.HISTORY_FILE]
+        ? parseHistoryFile(text[pxt.HISTORY_FILE])
+        : historyBeforeChange;
+    const history: HistoryFile = {
+        ...historyBeforeChange,
+        snapshots: historyAfterChange.snapshots,
+        shares: historyAfterChange.shares
+    };
+    const latestTimestamp = Math.max(
+        history.lastSaveTime || 0,
+        ...history.entries.map(entry => entry.timestamp),
+        ...history.snapshots.map(snapshot => snapshot.timestamp),
+        ...history.shares.map(share => share.timestamp)
+    );
+    const beforeTimestamp = Math.max(currentTime, latestTimestamp + 1);
+    const afterTimestamp = beforeTimestamp + 1;
+    const diffEntry = diffScriptText(
+        { [pxt.CONFIG_NAME]: previousText[pxt.CONFIG_NAME] },
+        { [pxt.CONFIG_NAME]: text[pxt.CONFIG_NAME] },
+        afterTimestamp,
+        diff
+    );
+    if (!diffEntry) return;
+
+    history.entries.push({
+        timestamp: beforeTimestamp,
+        editorVersion: pxt.appTarget.versions.target,
+        changes: [],
+        event: { ...event, phase: "before" }
+    });
+    history.entries.push({
+        ...diffEntry,
+        event: { ...event, phase: "after" }
+    });
+    history.lastSaveTime = afterTimestamp + 1;
+
+    text[pxt.HISTORY_FILE] = JSON.stringify(history);
+}
+
 export function updateShareHistory(text: ScriptText, currentTime: number, shares: pxt.workspace.PublishVersion[]) {
     let history: HistoryFile;
 
@@ -495,6 +559,9 @@ export function getTextAtTime(text: ScriptText, history: HistoryFile, time: numb
     for (let i = 0; i < history.entries.length; i++) {
         const index = history.entries.length - 1 - i;
         const entry = history.entries[index];
+        if (entry.timestamp === time && entry.event?.phase === "after") {
+            return patchConfigEditorVersion(currentText, entry.editorVersion);
+        }
         currentText = applyDiff(currentText, entry, patch);
         if (entry.timestamp === time) {
             const version = index > 0 ? history.entries[index - 1].editorVersion : entry.editorVersion;

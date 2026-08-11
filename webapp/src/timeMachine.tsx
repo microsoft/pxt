@@ -408,7 +408,9 @@ async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, t
 
     if (time.kind === "snapshot") {
         const snapshot = history.snapshots.find(s => s.timestamp === time.timestamp)
-        return patchConfigEditorVersion(applySnapshot(text, snapshot.text), snapshot.editorVersion);
+        if (snapshot) {
+            return patchConfigEditorVersion(applySnapshot(text, snapshot.text), snapshot.editorVersion);
+        }
     }
     else if (time.kind === "share") {
         const share = history.shares.find(s => time.shareId ? s.id === time.shareId : s.timestamp === time.timestamp);
@@ -526,7 +528,7 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
             timeLabel,
             description: event ? snapshotEventDescription(event, timeLabel) : undefined,
             timestamp,
-            kind,
+            kind: event ? "snapshot" : kind,
             event,
             shareId: share?.id,
             shareType: share?.type
@@ -534,7 +536,7 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
     }
 
     for (const entry of history.entries) {
-        createTimeEntry(entry.timestamp, "diff");
+        createTimeEntry(entry.timestamp, "diff", entry.event);
     }
 
     for (const entry of history.snapshots) {

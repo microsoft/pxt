@@ -267,14 +267,8 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 .addDependencyAsync({ ...config, isExtension: true }, version, false)
             if (added) {
                 const displayName = config.displayName || config.name;
-                await workspace.saveSnapshotAsync(props.header.id, {
+                await workspace.saveExtensionHistoryAsync(props.header.id, beforeText, {
                     type: "extension-added",
-                    phase: "before",
-                    extensionName: displayName
-                }, beforeText);
-                await workspace.saveSnapshotAsync(props.header.id, {
-                    type: "extension-added",
-                    phase: "after",
                     extensionName: displayName
                 });
                 await pxt.Util.delay(200);
@@ -476,15 +470,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         props.hideExtensions();
         core.showLoading("removingextension", lf("Removing extension..."));
         try {
-            await workspace.saveSnapshotAsync(props.header.id, {
-                type: "extension-removed",
-                phase: "before",
-                extensionName: displayName
-            });
+            const beforeText = await workspace.getTextAsync(props.header.id, true);
             await pkg.mainEditorPkg().removeDepAsync(dependencyName);
-            await workspace.saveSnapshotAsync(props.header.id, {
+            await workspace.saveExtensionHistoryAsync(props.header.id, beforeText, {
                 type: "extension-removed",
-                phase: "after",
                 extensionName: displayName
             });
             await props.reloadHeaderAsync();
@@ -521,15 +510,10 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         props.hideExtensions();
         core.showLoading("updatingextension", lf("Updating extension..."));
         try {
-            await workspace.saveSnapshotAsync(props.header.id, {
-                type: "extension-updated",
-                phase: "before",
-                extensionName: displayName
-            });
+            const beforeText = await workspace.getTextAsync(props.header.id, true);
             await pkg.mainEditorPkg().updateDepAsync(dependencyName, latestVersion);
-            await workspace.saveSnapshotAsync(props.header.id, {
+            await workspace.saveExtensionHistoryAsync(props.header.id, beforeText, {
                 type: "extension-updated",
-                phase: "after",
                 extensionName: displayName
             });
             await props.reloadHeaderAsync();
