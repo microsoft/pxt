@@ -73,6 +73,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     }
 
     init() {
+        if (this.fieldGroup_) return;
         super.init();
         this.onInit();
     }

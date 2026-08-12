@@ -5,6 +5,10 @@
     --note-event-border: 2px solid darken(#03adfc, 20%);
     --note-event-text-color: darken(#03adfc, 30%);
 
+    --selected-note-event-color: #03fca9;
+    --selected-note-event-border: 2px solid darken(#03fca9, 20%);
+    --selected-note-event-text-color: darken(#03fca9, 30%);
+
     --note-event-text-color-hover: #ffffff;
     --note-event-border-hover: 2px solid #ffffff;
 
@@ -38,7 +42,7 @@
     --octave-height: calc(var(--white-key-height) * 7);
 
     --grid-cell-height: calc(var(--octave-height) / 12);
-    --grid-cell-width: calc(var(--octave-width) / 16);
+    --tick-width: 30px;
 
     --header-height: 2.5rem;
     --timeline-height: 1.5rem;
@@ -80,6 +84,7 @@
 
     .music-playback-controls {
         padding: 0;
+
         .common-button {
             height: calc(var(--header-height) - 0.3rem)
         }
@@ -92,6 +97,16 @@
             &.disabled {
                 opacity: 0.5;
             }
+        }
+    }
+
+    &>.common-dropdown {
+        .common-button {
+            min-width: 4.75rem;
+        }
+
+        .common-menu-dropdown-pane {
+            bottom: 2.25rem
         }
     }
 }
@@ -109,9 +124,55 @@
             max-width: 2rem;
         }
     }
+
+    &>.common-dropdown #snap-select {
+        min-width: 4.75rem;
+    }
+}
+
+.scrollbar.horizontal {
+    height: 0.75rem;
+    width: 100%;
+    position: absolute;
+    bottom: var(--header-height);
+    left: var(--sidebar-width);
+    right: 0;
+
+    .scrollbar-thumb {
+        height: 100%;
+    }
+}
+
+.scrollbar.vertical {
+    width: 0.75rem;
+    height: 100%;
+    position: absolute;
+    top: var(--timeline-height);
+    bottom: 0;
+    right: 0;
+
+    .scrollbar-thumb {
+        width: 100%;
+    }
+}
+
+.piano-roll.show-header .scrollbar.vertical {
+    top: calc(var(--header-height) + var(--timeline-height));
+}
+
+.scrollbar .scrollbar-thumb {
+    position: absolute;
+    background-color: black;
+    border-radius: 0.375rem;
+    opacity: 0.5;
+
+    &:hover {
+        opacity: 0.75;
+    }
 }
 
 .measure-header {
+    position: relative;
     height: var(--timeline-height);
     display: flex;
     flex-direction: row;
@@ -130,11 +191,19 @@
     }
 
     .measure {
-        width: var(--octave-width);
         flex-shrink: 0;
         padding-left: 0.25rem;
         user-select: none;
     }
+}
+
+.selection {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background-color: var(--selected-note-event-color);
+    opacity: 0.25;
+    pointer-events: none;
 }
 
 .piano-roll .sidebar-container {
@@ -201,36 +270,54 @@
 
 .piano-roll .workspace-container {
     flex: 1;
-    overflow-x: hidden;
+    overflow-x: auto;
     overflow-y: hidden;
     touch-action: none;
+    scrollbar-width: none;
 }
 
 .piano-roll .workspace {
-    background-size: var(--octave-width) var(--octave-height);
     background-repeat: repeat;
     position: relative;
 }
 
-.piano-roll .workspace .note-event {
-    height: calc(var(--grid-cell-height) + 1px);
-    position: absolute;
-    display: flex;
-    align-items: center;
-    user-select: none;
+.piano-roll .workspace {
 
-    padding-left: 0.25rem;
+    .note-event,
+    .cursor {
+        height: calc(var(--grid-cell-height) + 1px);
+        position: absolute;
+        display: flex;
+        align-items: center;
+        user-select: none;
 
-    font-size: calc(var(--grid-cell-height) * 0.6);
-    background-color: var(--note-event-color);
-    border: var(--note-event-border);
-    color: var(--note-event-text-color);
+        padding-left: 0.25rem;
 
-    cursor: pointer;
+        font-size: calc(var(--grid-cell-height) * 0.6);
+        cursor: pointer;
+    }
+
+    .note-event {
+        border: var(--note-event-border);
+        background-color: var(--note-event-color);
+        color: var(--note-event-text-color);
+    }
+
+    .note-event.selected, .note-event.floating {
+        border: var(--selected-note-event-border);
+        background-color: var(--selected-note-event-color);
+        color: var(--selected-note-event-text-color);
+    }
+
+    .cursor {
+        border: var(--note-event-border-hover);
+    }
 }
 
 .piano-roll .workspace {
-    .note-event:hover, .note-event.highlighted {
+
+    .note-event:hover,
+    .note-event.highlighted {
         border: var(--note-event-border-hover);
         color: var(--note-event-text-color-hover);
     }
@@ -240,6 +327,7 @@
     max-height: 100%;
     width: 100%;
     overflow-y: auto;
+    scrollbar-width: none;
     flex-grow: 1;
 }
 
@@ -283,14 +371,14 @@
 
     .velocity-slider {
         height: var(--velocity-editor-height);
-        width: var(--grid-cell-width);
+        width: var(--tick-width);
         position: absolute;
         cursor: grab;
 
         .velocity-slider-inner {
             position: relative;
             height: var(--velocity-editor-height);
-            width: var(--grid-cell-width);
+            width: var(--tick-width);
         }
 
         input[type="range"] {
@@ -315,7 +403,9 @@
             background-color: var(--note-event-color);
         }
 
-        &:focus-within, &:hover, &.highlighted {
+        &:focus-within,
+        &:hover,
+        &.highlighted {
             .velocity-slider-view {
                 border: var(--note-event-border-hover);
             }

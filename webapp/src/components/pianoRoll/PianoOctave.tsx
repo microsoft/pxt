@@ -14,6 +14,7 @@ export const PianoOctave = (props: Props) => {
     const { octave, selectedTrack, instrument } = props;
 
     const containerRef = useRef<HTMLDivElement>(null);
+    const isDrum = isDrumInstrument(instrument);
 
     useEffect(() => {
         const container = containerRef.current;
@@ -21,6 +22,12 @@ export const PianoOctave = (props: Props) => {
 
         const handleNoteChange = (track: number, note: number, on: boolean) => {
             if (track !== selectedTrack) return;
+
+            if (!isDrum) {
+                // the pxt format for melodic instruments is 1-based, but the piano roll is 0 based
+                note--;
+            }
+
             if (note < octave * 12 || note >= (octave + 1) * 12) return;
 
             const key = container.querySelector(`#key-${note}`) as HTMLDivElement | null;
@@ -42,7 +49,7 @@ export const PianoOctave = (props: Props) => {
         return () => {
             removeNoteChangeListener(handleNoteChange);
         };
-    }, [octave, selectedTrack]);
+    }, [octave, selectedTrack, isDrum]);
 
     const playNote = useCallback(async (note: number) => {
         const ref = containerRef.current?.querySelector(`#key-${note}`) as HTMLDivElement | null;
@@ -65,7 +72,6 @@ export const PianoOctave = (props: Props) => {
         }
     }, [instrument]);
 
-    const isDrum = isDrumInstrument(instrument);
 
     return (
         <div className="octave-sidebar" ref={containerRef}>

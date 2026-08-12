@@ -505,8 +505,13 @@ export class EditorPackage {
         if (!this.tilemapProject?.needsRebuild) return;
         this.tilemapProject.needsRebuild = false;
 
-        await this.buildTilemapsAsync();
-        await this.buildImagesAsync();
+        try {
+            await this.buildTilemapsAsync();
+            await this.buildImagesAsync();
+        } catch (e) {
+            this.tilemapProject.needsRebuild = true;
+            throw e;
+        }
     }
 
     buildTilemapsAsync() {
