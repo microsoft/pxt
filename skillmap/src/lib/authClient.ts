@@ -165,7 +165,7 @@ export async function setColorThemeIdAsync(themeId: string): Promise<void> {
             op: 'replace',
             path: ['colorThemeIds'],
             value: newColorThemePref
-        });
+        }, { immediate: true });
     }
 }
 

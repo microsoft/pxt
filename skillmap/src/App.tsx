@@ -372,18 +372,19 @@ class AppImpl extends React.Component<AppProps, AppState> {
             authClient.getHighContrastPrefAsync()
         ]);
 
+        let initialTheme = (prefThemeId && this.themeManager.isKnownTheme(prefThemeId))
+            ? prefThemeId
+            : pxt.appTarget?.appTheme?.defaultColorTheme;
+
         // We have a legacy preference stored if the user has enabled high contrast.
         // Respect it here by switching to the high contrast color theme.
-        let initialTheme = highContrastPref
-            ? pxt.appTarget?.appTheme?.highContrastColorTheme
-            : (prefThemeId && this.themeManager.isKnownTheme(prefThemeId))
-                ? prefThemeId
-                : pxt.appTarget?.appTheme?.defaultColorTheme;
+        const highContrastTheme = pxt.appTarget?.appTheme?.highContrastColorTheme;
+        if (highContrastPref && highContrastTheme) {
+            initialTheme = highContrastTheme;
+        }
 
-        if (initialTheme) {
-            if (initialTheme !== this.themeManager.getCurrentColorTheme()?.id) {
-                this.themeManager.switchColorTheme(initialTheme);
-            }
+        if (initialTheme && initialTheme !== this.themeManager.getCurrentColorTheme()?.id) {
+            this.themeManager.switchColorTheme(initialTheme);
         }
     }
 
