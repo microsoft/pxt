@@ -350,6 +350,10 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
+        public setMode(mode: "simulator" | "devices") {
+            console.log(`SimulatorDriver.setMode(${mode})`);
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
@@ -732,6 +736,8 @@ namespace pxsim {
                 });
         }
 
+        // TODO: we can use this to hide everything except the device view with jacdac
+        // TODO: probably better not to overload this
         public hide(completeHandler?: () => void) {
             this.suspend();
             if (!this.options.removeElement) return;

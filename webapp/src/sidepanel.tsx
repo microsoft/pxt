@@ -88,11 +88,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             this.props.setEditorOffset();
         }
 
-        if (this.state.jacdacView === "simulator" && state.jacdacView === "devices") {
-            void this.props.parent.reinitializeSimulatorAsync()
-                .then(() => this.props.parent.restartSimulator());
-        }
-
         this.updateShouldResize();
     }
 
@@ -151,12 +146,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     protected setJacdacView = (jacdacView: "simulator" | "devices") => {
         if (this.state.jacdacView !== jacdacView) {
-            if (jacdacView === "devices") {
-                this.props.parent.stopSimulator(true);
-                this.setState({ jacdacView });
-                return;
-            }
             this.setState({ jacdacView });
+            // let the simdriver switch between the virtual and physical jacdac bus
+            simulator?.driver?.setMode(jacdacView)
         }
     }
 
@@ -299,34 +291,28 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </div>}
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
-                        {jacdacUI && jacdacView === "devices" ?
-                            <div className="ui vertical editorFloat jacdac-devices-placeholder" role="region" aria-label={lf("Devices")} tabIndex={-1}>
-                                {lf("Devices placeholder")}
-                            </div> :
-                            <>
-                                <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={-1} />
-                                {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
-                                    <SimulatorPresenceBar />
-                                </div>}
-                                <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
-                                {showKeymap && <keymap.Keymap parent={parent} />}
-                                <div className="ui item portrait hide hidefullscreen">
-                                    {pxt.options.debug && <Button key="hwdebugbtn" className="tertiary" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
-                                </div>
-                                <div className="ui item grid centered portrait hide hidefullscreen">
-                                    {showOpenInVscodeButton && <Button className={"secondary hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
-                                </div>
-                                <div className="ui item grid centered portrait hide hidefullscreen">
-                                    {showHostMultiplayerGameButton && <Button className={"secondary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
-                                </div>
-                                {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
-                                    <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
-                                    <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
-                                </div>}
+                        <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={-1} />
+                        {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
+                            <SimulatorPresenceBar />
+                        </div>}
+                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
+                        {showKeymap && <keymap.Keymap parent={parent} />}
+                        <div className="ui item portrait hide hidefullscreen">
+                            {pxt.options.debug && <Button key="hwdebugbtn" className="tertiary" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}
+                        </div>
+                        <div className="ui item grid centered portrait hide hidefullscreen">
+                            {showOpenInVscodeButton && <Button className={"secondary hostmultiplayergame-button"} icon={"icon share"} text={lf("Open in VS Code")} ariaLabel={lf("Open in Visual Studio Code for Web")} onClick={this.onOpenInVSCodeClick} />}
+                        </div>
+                        <div className="ui item grid centered portrait hide hidefullscreen">
+                            {showHostMultiplayerGameButton && <Button className={"secondary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
+                        </div>
+                        {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
+                            <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
+                            <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
+                        </div>}
 
-                                {showFileList && <filelist.FileList parent={parent} />}
-                                {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
-                            </>}
+                        {showFileList && <filelist.FileList parent={parent} />}
+                        {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
                     </div>
                 </div>
             </div>}
