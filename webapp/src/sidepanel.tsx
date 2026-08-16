@@ -295,6 +295,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
                             <SimulatorPresenceBar />
                         </div>}
+                        {jacdacUI && jacdacView === "devices" ? <></> : (
+                        <>
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
@@ -313,6 +315,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
                         {showFileList && <filelist.FileList parent={parent} />}
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
+                        </>)}
                     </div>
                 </div>
             </div>}

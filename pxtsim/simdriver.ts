@@ -350,8 +350,45 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
+        private removedElements: HTMLElement[] = [];
+        private removedIndices: number[] = [];
+        private jacdacIndex: number = -1;
         public setMode(mode: "simulator" | "devices") {
-            console.log(`SimulatorDriver.setMode(${mode})`);
+            if (this.jacdacIndex != -1 && mode === "simulator") {
+                // add frames back to the DOM
+                const jacdacFrame = this.simFrames()[0];
+                this.removedElements.forEach((elem, index) => {
+                    if (index < this.jacdacIndex) {
+                        this.container.insertBefore(elem, jacdacFrame.parentElement);
+                    } else {
+                        this.container.appendChild(elem);
+                    }
+                });
+                this.removedElements = [];
+                this.removedIndices = [];
+                this.jacdacIndex = -1;
+                this.postMessageCore(jacdacFrame, {
+                            type: "simulatorMode",
+                            source: MESSAGE_SOURCE,
+                });
+                this.start();
+            } else if (this.jacdacIndex === -1 && mode === "devices") {
+                this.suspend();
+                const frames = this.simFrames();
+                frames.forEach((frame,index) => {
+                    if (frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] !== "jacdac/pxt-jacdac") {
+                       this.removedElements.push(frame.parentElement);
+                       this.removedIndices.push(index);
+                    } else {
+                        this.jacdacIndex = index;
+                        this.postMessageCore(frame, {
+                            type: "devicesMode",
+                            source: MESSAGE_SOURCE,
+                        });
+                    }
+                });
+                this.removedElements.forEach(elem => this.container.removeChild(elem));
+            }
         }
 
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
@@ -736,8 +773,6 @@ namespace pxsim {
                 });
         }
 
-        // TODO: we can use this to hide everything except the device view with jacdac
-        // TODO: probably better not to overload this
         public hide(completeHandler?: () => void) {
             this.suspend();
             if (!this.options.removeElement) return;
