@@ -350,10 +350,12 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
+        private mode: "simulator" | "devices" = "simulator"
         private removedElements: HTMLElement[] = [];
         private removedIndices: number[] = [];
         private jacdacIndex: number = -1;
         public setMode(mode: "simulator" | "devices") {
+            this.mode = mode
             if (this.jacdacIndex != -1 && mode === "simulator") {
                 // add frames back to the DOM
                 const jacdacFrame = this.simFrames()[0];
@@ -396,6 +398,12 @@ namespace pxsim {
                 this.hwdbg.postMessage(msg)
                 return
             }
+            if (this.mode === "simulator" && (msg as any)?.sender === "packetio") {
+                const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
+                if (messageChannel === "jacdac") {
+                    return; // don't send packetio jacdac messages to sims when in simulator mode
+                }
+            }
 
             const depEditors = this.dependentEditors();
             let frames = this.simFrames();
@@ -411,7 +419,8 @@ namespace pxsim {
                 broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source);
                 const sourceFrame = broadcastmsg.srcFrameIndex >= 0 ? this.simFrames()[broadcastmsg.srcFrameIndex] : undefined;
                 // jacdac messages from a board sim other than first should be dropped
-                if (broadcastmsg.srcFrameIndex > 0 && mkcdFrames.find(f => f === sourceFrame) && messageChannel === "jacdac")
+                if (broadcastmsg.srcFrameIndex > 0 && mkcdFrames.find(f => f === sourceFrame)
+                    && messageChannel === "jacdac")
                     return;
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
@@ -518,7 +527,8 @@ namespace pxsim {
                 if (source && frame.contentWindow == source) continue;
                 // if jacdac message, don't send to other (board) simulator frames
                 if (i > 0 && !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] &&
-                    msg.type === "messagepacket" && (msg as pxsim.SimulatorControlMessage).channel === "jacdac") continue;
+                    msg.type === "messagepacket" &&
+                    (msg as pxsim.SimulatorControlMessage).channel === "jacdac") continue;
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
 

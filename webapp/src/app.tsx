@@ -5773,7 +5773,7 @@ function initPacketIO() {
                 broadcast: false,
                 channel: type,
                 data: payload,
-                sender: "packetio",
+                sender: "packetio",   // QUESTION: shouldn't this be 'source' instead of 'sender'?
             }, "*")
         });
 
