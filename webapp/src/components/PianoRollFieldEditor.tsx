@@ -44,7 +44,8 @@ export class PianoRollAssetEditor extends React.Component<PianoRollAssetEditorPr
     }
 
     openGalleryAsset(asset: pxt.Asset): void {
-        // TODO
+        const song = pxt.cloneAsset(asset as pxt.Song);
+        pxt.assets.music.inflateSong(song.song);
     }
 
     getJres(): string {
