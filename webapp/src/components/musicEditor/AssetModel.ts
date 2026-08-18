@@ -5,12 +5,20 @@ interface UpdateOptions {
     pushUndo?: boolean;
 }
 
-export abstract class AssetModel<T> {
+interface RestoreStateOptions {
+    overwriteValue?: boolean;
+    includeRedoStack?: boolean;
+}
+
+export abstract class AssetModel<T, U> {
     protected currentValue: T;
     protected undoStack: T[] = [];
     protected redoStack: T[] = [];
 
+    protected extraState: U;
+
     protected abstract cloneValue(value: T): T;
+    protected abstract cloneExtraState(value: U): U;
 
     protected listeners: (() => void)[] = [];
 
@@ -48,6 +56,11 @@ export abstract class AssetModel<T> {
         this.notifyChange();
     }
 
+    public updateExtraState(newExtraState: U) {
+        this.extraState = this.cloneExtraState(newExtraState);
+        this.notifyChange();
+    }
+
     public undo() {
         if (this.undoStack.length > 0) {
             this.redoStack.push(this.currentValue);
@@ -68,18 +81,30 @@ export abstract class AssetModel<T> {
         return this.cloneValue(this.currentValue);
     }
 
-    public getState(): { currentValue: T; undoStack: T[]; redoStack: T[] } {
+    public getExtraState(): U {
+        return this.cloneExtraState(this.extraState);
+    }
+
+    public getState(): { currentValue: T; undoStack: T[]; redoStack: T[]; extraState: U } {
         return {
             currentValue: this.cloneValue(this.currentValue),
             undoStack: this.undoStack.map(v => this.cloneValue(v)),
-            redoStack: this.redoStack.map(v => this.cloneValue(v))
+            redoStack: this.redoStack.map(v => this.cloneValue(v)),
+            extraState: this.cloneExtraState(this.extraState)
         };
     }
 
-    public restoreState(state: { currentValue: T; undoStack: T[]; redoStack: T[] }) {
-        this.currentValue = this.cloneValue(state.currentValue);
+    public restoreState(state: { currentValue: T; undoStack: T[]; redoStack: T[]; extraState: U }, options: RestoreStateOptions = {}) {
+        if (options.overwriteValue) {
+            this.currentValue = this.cloneValue(state.currentValue);
+        }
+
+        if (options.includeRedoStack) {
+            this.redoStack = state.redoStack.map(v => this.cloneValue(v));
+        }
+
         this.undoStack = state.undoStack.map(v => this.cloneValue(v));
-        this.redoStack = state.redoStack.map(v => this.cloneValue(v));
+        this.extraState = this.cloneExtraState(state.extraState);
         this.notifyChange();
     }
 
@@ -92,34 +117,17 @@ export abstract class AssetModel<T> {
     }
 }
 
-export class SongModel extends AssetModel<pxt.Song> {
+export class SongModel extends AssetModel<pxt.Song, {}> {
     protected cloneValue(value: pxt.Song): pxt.Song {
         return pxt.cloneAsset(value);
     }
+
+    protected cloneExtraState(value: {}): {} {
+        return value;
+    }
 }
 
-export const useSongModel = (initialValue: pxt.Song) => {
-    const [model] = React.useState(() => new SongModel());
-    const [editRef, setEditRef] = React.useState(0);
-
-    React.useEffect(() => {
-        const handleChange = () => {
-            setEditRef(ref => ref + 1);
-        };
-        model.addChangeListener(handleChange);
-        return () => {
-            model.removeChangeListener(handleChange);
-        };
-    }, []);
-
-    React.useEffect(() => {
-        model.updateValue(initialValue, { preserveUndo: false });
-    }, [initialValue]);
-
-    return model;
-}
-
-export const useModelValue = <T,>(model: AssetModel<T>) => {
+export const useModelValue = <T, U>(model: AssetModel<T, U>) => {
     const [value, setValue] = React.useState(model.getCurrentValue());
 
     React.useEffect(() => {
@@ -132,5 +140,5 @@ export const useModelValue = <T,>(model: AssetModel<T>) => {
         };
     }, [model]);
 
-    return { value, hasUndo: model.hasUndo(), hasRedo: model.hasRedo() };
+    return { value, hasUndo: model.hasUndo(), hasRedo: model.hasRedo(), extraState: model.getExtraState() };
 }
