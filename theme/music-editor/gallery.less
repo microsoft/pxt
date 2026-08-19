@@ -1,0 +1,97 @@
+.image-editor-gallery.song {
+    display: flex;
+    flex-direction: column;
+    align-content: center;
+    justify-content: unset;
+    padding: 0.5rem;
+
+    gap: 0.5rem;
+}
+
+.song-gallery-item {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 0.5rem;
+    width: 100%;
+    height: 4rem;
+
+    background-color: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    border-radius: 0.25rem;
+    max-width: 500px;
+    gap: 1rem;
+
+    .song-gallery-item-name {
+        flex-shrink: 0;
+        width: 7rem;
+        font-weight: 600;
+        font-size: 18px;
+
+        overflow-x: hidden;
+        overflow-y: hidden;
+        text-overflow: ellipsis;
+
+        height: 3rem;
+        line-height: 3rem;
+    }
+
+    .song-gallery-item-preview {
+        flex-grow: 1;
+        flex-shrink: 1;
+        position: relative;
+        overflow-x: hidden;
+        overflow-y: hidden;
+        height: 3rem;
+
+        img {
+            image-rendering: pixelated;
+            width: 100%;
+            height: 3rem;
+            object-fit: fill;
+        }
+    }
+
+    .common-button.play-button {
+        flex-shrink: 0;
+        width: 3rem;
+        height: 3rem;
+        padding: 0;
+        border-radius: 2rem;
+        background-color: var(--pxt-neutral-foreground2);
+        color: var(--pxt-neutral-background2);
+
+        .fas.fa-play, .fas.fa-stop {
+            margin: 0 0 0 0.25rem;
+            color: var(--pxt-neutral-background2);
+        }
+
+        .fas.fa-stop {
+            margin: 0;
+        }
+
+        &:focus-visible:after {
+            outline: solid var(--pxt-focus-border) 3px;
+            outline-offset: 5px;
+        }
+    }
+
+    .common-button.song-gallery-item-button {
+        flex-grow: 1;
+        height: 3rem;
+        padding: 0;
+        background-color: var(--pxt-neutral-background1);
+
+        .common-button-label {
+            display: flex;
+            flex-direction: row;
+            height: 3rem;
+            align-items: center;
+        }
+
+        &:focus-visible:after {
+            outline: solid var(--pxt-focus-border) 3px;
+            outline-offset: 5px;
+        }
+    }
+}
