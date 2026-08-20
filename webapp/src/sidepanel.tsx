@@ -22,6 +22,7 @@ interface SidepanelState {
     lastResizeHeight?: number;
     shouldResize?: boolean;
     jacdacView?: "simulator" | "devices";
+    showSimulatorDevicesToggle?: boolean;
 }
 
 interface SidepanelProps extends ISettingsProps {
@@ -80,6 +81,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     componentDidMount(): void {
+        window.addEventListener("message", this.setActive.bind(this))
         this.updateShouldResize();
     }
 
@@ -87,17 +89,25 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if ((this.state.height || state.height) && this.state.height != state.height) {
             this.props.setEditorOffset();
         }
-
         this.updateShouldResize();
     }
 
     componentWillUnmount(): void {
+        window.removeEventListener("message", this.setActive.bind(this))
         if (this.simResizeObserver && this.simRef) {
             this.simResizeObserver.unobserve(this.simRef);
         }
 
         if (this.simPanelResizeObserver && this.simPanelRef) {
             this.simPanelResizeObserver.unobserve(this.simPanelRef);
+        }
+    }
+
+    private setActive(ev: MessageEvent) {
+        // check for packetio jacdac messages and show the jacdacUI toggle if so
+        const msg = ev.data;
+        if (msg?.type === "messagepacket" && msg?.sender === "packetio" && msg?.channel === "jacdac") {
+            this.setState({ showSimulatorDevicesToggle: true });
         }
     }
 
@@ -218,10 +228,11 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const showHostMultiplayerGameButton = isMultiplayerGame
             && !pxt.shell.isTimeMachineEmbed();
 
-        // TODO: for now, we show the jacdacUI even if we've received no jacdac messages over WebUSB
         const jacdacUI = hasSimulator &&
             pxt.appTarget?.appTheme?.experiments?.some(e => e === "jacdacUI")
-            && !pxt.shell.isTimeMachineEmbed();
+            && !pxt.shell.isTimeMachineEmbed() && this.state.showSimulatorDevicesToggle ||
+            true; // TODO, for now always show the toggle - not clear we want to show it only when jacdac messages are received, 
+
         const jacdacView = this.state.jacdacView || "simulator";
 
         const simContainerClassName = classList(
