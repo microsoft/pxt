@@ -831,6 +831,7 @@ declare namespace pxt.editor {
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
         errorListNote?: string;
+        showJacdac?: boolean;
     }
 
     export interface EditorState {

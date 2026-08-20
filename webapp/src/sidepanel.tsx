@@ -8,10 +8,11 @@ import * as serialindicator from "./serialindicator"
 import * as simtoolbar from "./simtoolbar";
 import * as simulator from "./simulator";
 
-import { Button } from "./sui";
+import { Button, Icon } from "./sui";
 import { SimulatorPresenceBar } from "./components/SimulatorPresenceBar"
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { VerticalResizeContainer } from '../../react-common/components/controls/VerticalResizeContainer'
+import { fireClickOnEnter } from "./util"
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import { classList } from "../../react-common/components/util";
@@ -29,6 +30,7 @@ interface SidepanelProps extends ISettingsProps {
     inHome: boolean;
     showKeymap?: boolean;
     showSerialButtons?: boolean;
+    showJacdacButton?: boolean;
     showFileList?: boolean;
     showFullscreenButton?: boolean;
     isMultiplayerGame?: boolean;
@@ -43,6 +45,7 @@ interface SidepanelProps extends ISettingsProps {
     setEditorOffset?: () => void;
     showMiniSim: (visible?: boolean) => void;
     openSerial: (isSim: boolean) => void;
+    openJacdac: () => void;
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
 }
@@ -145,6 +148,10 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.openSerial(false);
     }
 
+    protected handleJacdacClick = () => {
+        this.props.openJacdac();
+    }
+
     protected handleSimOverlayClick = () => {
         const { tutorialOptions, handleFullscreenButtonClick } = this.props;
         if (!tutorialOptions || pxt.BrowserUtils.useOldTutorialLayout()) {
@@ -216,7 +223,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     renderCore() {
-        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, isMultiplayerGame,
+        const { parent, inHome, showKeymap, showSerialButtons, showJacdacButton, showFileList, showFullscreenButton, isMultiplayerGame,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
 
@@ -319,6 +326,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         <div className="ui item grid centered portrait hide hidefullscreen">
                             {showHostMultiplayerGameButton && <Button className={"secondary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
                         </div>
+                        {showJacdacButton && <div id="jacdacPreview" className="ui editorFloat portrait hide hidefullscreen">
+                            <div role="button" title={lf("Show Jacdac")} className="ui label circular" tabIndex={0} onClick={this.handleJacdacClick} onKeyDown={fireClickOnEnter}>
+                                <div className="detail">
+                                    <Icon icon="xicon jacdac" />
+                                </div>
+                                <span>{lf("Show Jacdac Simulators/Devices")}</span>
+                            </div>
+                        </div>}
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
                             <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />

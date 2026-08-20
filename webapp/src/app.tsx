@@ -52,6 +52,7 @@ import * as monaco from "./monaco"
 import * as toolboxHelpers from "./toolboxHelpers"
 import * as pxtjson from "./pxtjson"
 import * as serial from "./serial"
+import * as jacdac from "./jacdac"
 import * as blocks from "./blocks"
 import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
@@ -137,6 +138,7 @@ export class ProjectView
     textEditor: monaco.Editor;
     pxtJsonEditor: pxtjson.Editor;
     serialEditor: serial.Editor;
+    jacdacEditor: jacdac.Editor;
     blocksEditor: blocks.Editor;
     gitjsonEditor: gitjson.Editor;
     assetEditor: assetEditor.AssetEditor;
@@ -208,7 +210,8 @@ export class ProjectView
             activeTourConfig: undefined,
             mute: pxt.editor.MuteState.Unmuted,
             feedback: {showing: false, kind: "generic"}, // state that tracks if the feedback modal is showing and what kind
-            errorListCollapsed: true // error pane is collapsed by default
+            errorListCollapsed: true, // error pane is collapsed by default
+            showJacdac: pxt.appTarget.appTheme.showJacdac || false, // show jacdac button in the sidebar
         };
         if (!this.settings.editorFontSize) this.settings.editorFontSize = /mobile/i.test(navigator.userAgent) ? 15 : 19;
         if (!this.settings.fileHistory) this.settings.fileHistory = [];
@@ -222,6 +225,7 @@ export class ProjectView
         this.openSimSerial = this.openSimSerial.bind(this);
         this.openDeviceSerial = this.openDeviceSerial.bind(this);
         this.openSerial = this.openSerial.bind(this);
+        this.openJacdac = this.openJacdac.bind(this);
         this.toggleGreenScreen = this.toggleGreenScreen.bind(this);
         this.toggleScreenReaderModeAsync = this.toggleScreenReaderModeAsync.bind(this);
         this.toggleSimulatorFullscreen = this.toggleSimulatorFullscreen.bind(this);
@@ -843,6 +847,20 @@ export class ProjectView
         this.setFile(mainEditorPkg.lookupFile("this/" + pxt.SERIAL_EDITOR_FILE))
     }
 
+    openJacdac() {
+        if (this.editor == this.jacdacEditor)
+            return; // already showing
+
+        const mainEditorPkg = pkg.mainEditorPkg()
+        if (!mainEditorPkg) return; // no project loaded
+
+        if (!mainEditorPkg.lookupFile("this/" + pxt.JACDAC_EDITOR_FILE)) {
+            mainEditorPkg.setFile(pxt.JACDAC_EDITOR_FILE, "jacdac\n", true)
+        }
+        pxt.tickEvent("jacdac.editorOpened")
+        this.setFile(mainEditorPkg.lookupFile("this/" + pxt.JACDAC_EDITOR_FILE))
+    }
+
     openPreviousEditor() {
         this.preserveUndoStack = true;
         const id = this.state.header.id;
@@ -1097,6 +1115,7 @@ export class ProjectView
         this.textEditor = new monaco.Editor(this);
         this.pxtJsonEditor = new pxtjson.Editor(this);
         this.serialEditor = new serial.Editor(this);
+        this.jacdacEditor = new jacdac.Editor(this);
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
         this.assetEditor = new assetEditor.AssetEditor(this);
@@ -1118,7 +1137,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.jacdacEditor, this.assetEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -5568,7 +5587,7 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const { lightbox, greenScreen } = this.state;
+        const { lightbox, greenScreen, showJacdac } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
@@ -5621,6 +5640,7 @@ export class ProjectView
             sandbox && this.isEmbedSimActive() ? 'simView' : '',
             isApp ? "app" : "",
             greenScreen ? "greenscreen" : "",
+            showJacdac ? "showJacdac" : "",
             logoWide ? "logo-wide" : "",
             isHeadless ? "headless" : "",
             flyoutOnly ? "flyoutOnly" : "",
@@ -5677,6 +5697,7 @@ export class ProjectView
                 <sidepanel.Sidepanel parent={this} inHome={inHome}
                     showKeymap={this.state.keymap && simOpts.keymap}
                     showSerialButtons={useSerialEditor}
+                    showJacdacButton={showJacdac}
                     showFileList={showFileList}
                     showFullscreenButton={!isHeadless}
                     isMultiplayerGame={isMultiplayerSupported && isMultiplayerGame}
@@ -5685,6 +5706,7 @@ export class ProjectView
                     devSerialActive={this.state.deviceSerialActive}
                     showMiniSim={this.showMiniSim}
                     openSerial={this.openSerial}
+                    openJacdac={this.openJacdac}
                     handleHardwareDebugClick={this.hwDebug}
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
