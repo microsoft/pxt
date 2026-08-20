@@ -350,10 +350,59 @@ namespace pxsim {
             this.singleSimulator = true
         }
 
+        private mode: "simulator" | "devices" = "simulator"
+        private removedElements: HTMLElement[] = [];
+        private removedIndices: number[] = [];
+        private jacdacIndex: number = -1;
+        public setMode(mode: "simulator" | "devices") {
+            this.mode = mode
+            if (this.jacdacIndex != -1 && mode === "simulator") {
+                // add frames back to the DOM
+                const jacdacFrame = this.simFrames()[0];
+                this.removedElements.forEach((elem, index) => {
+                    if (index < this.jacdacIndex) {
+                        this.container.insertBefore(elem, jacdacFrame.parentElement);
+                    } else {
+                        this.container.appendChild(elem);
+                    }
+                });
+                this.removedElements = [];
+                this.removedIndices = [];
+                this.jacdacIndex = -1;
+                this.postMessageCore(jacdacFrame, {
+                            type: "simulatorMode",
+                            source: MESSAGE_SOURCE,
+                });
+                this.start();
+            } else if (this.jacdacIndex === -1 && mode === "devices") {
+                this.suspend();
+                const frames = this.simFrames();
+                frames.forEach((frame,index) => {
+                    if (frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] !== "jacdac/pxt-jacdac") {
+                       this.removedElements.push(frame.parentElement);
+                       this.removedIndices.push(index);
+                    } else {
+                        this.jacdacIndex = index;
+                        this.postMessageCore(frame, {
+                            type: "devicesMode",
+                            source: MESSAGE_SOURCE,
+                        });
+                    }
+                });
+                this.removedElements.forEach(elem => this.container.removeChild(elem));
+            }
+        }
+
         public postMessage(msg: pxsim.SimulatorMessage, source?: Window, frameID?: string) {
             if (this.hwdbg) {
                 this.hwdbg.postMessage(msg)
                 return
+            }
+            if (this.mode === "simulator" && (msg as any)?.sender === "packetio") {
+                const messageChannel = msg.type === "messagepacket" && (msg as SimulatorControlMessage).channel;
+                if (messageChannel === "jacdac") {
+                    return; // don't send packetio jacdac messages to sims when in simulator mode
+                }
             }
 
             const depEditors = this.dependentEditors();
@@ -370,7 +419,8 @@ namespace pxsim {
                 broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source);
                 const sourceFrame = broadcastmsg.srcFrameIndex >= 0 ? this.simFrames()[broadcastmsg.srcFrameIndex] : undefined;
                 // jacdac messages from a board sim other than first should be dropped
-                if (broadcastmsg.srcFrameIndex > 0 && mkcdFrames.find(f => f === sourceFrame) && messageChannel === "jacdac")
+                if (broadcastmsg.srcFrameIndex > 0 && mkcdFrames.find(f => f === sourceFrame)
+                    && messageChannel === "jacdac")
                     return;
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
@@ -483,7 +533,8 @@ namespace pxsim {
                 if (source && frame.contentWindow == source) continue;
                 // if jacdac message, don't send to other (board) simulator frames
                 if (i > 0 && !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] &&
-                    msg.type === "messagepacket" && (msg as pxsim.SimulatorControlMessage).channel === "jacdac") continue;
+                    msg.type === "messagepacket" &&
+                    (msg as pxsim.SimulatorControlMessage).channel === "jacdac") continue;
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
 

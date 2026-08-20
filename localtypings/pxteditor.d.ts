@@ -831,6 +831,7 @@ declare namespace pxt.editor {
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
         errorListNote?: string;
+        showJacdac?: boolean;
     }
 
     export interface EditorState {
@@ -998,6 +999,7 @@ declare namespace pxt.editor {
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
         restartSimulator(): void;
         startSimulator(opts?: SimulatorStartOptions): void;
+        reinitializeSimulatorAsync(): Promise<void>;
         runSimulator(): void;
         isSimulatorRunning(): boolean;
         expandSimulator(): void;
