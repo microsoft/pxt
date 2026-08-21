@@ -431,6 +431,17 @@ namespace pxsim {
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
+        public setBoardVariable(name: string, value: number) {
+        }
+
+        public getBoardVariables(): pxsim.Variables {
+            return {}
+        }
+
+        public onEveryYield () {
+
+        }
+
         public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) return;
@@ -1286,14 +1297,14 @@ namespace pxsim {
                 __this.cleanScheduledExpired()
                 yieldReset();
                 let now = Date.now()
-                if (now - lastYield >= 20) {
+                //if (now - lastYield >= 20) {
                     lastYield = now
                     s.pc = pc;
                     s.r0 = r0;
-                    setTimeout(loopForSchedule(s), yieldDelay)
+                    setTimeout(loopForSchedule(s), 2)
                     return true
-                }
-                return false
+                //}
+                //return false
             }
 
             function setupDebugger(numBreakpoints: number, userCodeGlobals?: string[]) {
@@ -1324,6 +1335,7 @@ namespace pxsim {
                 const { msg, heap } = getBreakpointMsg(s, brkId, userGlobals);
                 dbgHeap = heap;
                 injectEnvironmentGlobals(msg, heap);
+                injectEnergyVariables(msg, heap, __this.board);
                 Runtime.postMessage(msg)
                 breakpoints[0] = 0;
                 breakFrame = null;
@@ -1449,6 +1461,7 @@ namespace pxsim {
                         __this.currFrame = p;
                         __this.currFrame.overwrittenPC = false;
                         p = p.fn(p)
+                        __this.board.onEveryYield()
                         //if (yieldSteps-- < 0 && maybeYield(p, p.pc, 0)) break;
                         __this.maybeUpdateDisplay()
                         if (__this.currFrame.overwrittenPC)
@@ -1466,7 +1479,8 @@ namespace pxsim {
                     else {
                         pxsim.error("Simulator crashed, no error handler", e.stack)
                         const { msg, heap } = getBreakpointMsg(p, p.lastBrkId, userGlobals)
-                        injectEnvironmentGlobals(msg, heap);
+                        injectEnergyVariables(msg,heap,__this.board)
+                        injectEnvironmentGlobals(msg, heap)
                         msg.exceptionMessage = e.message
                         msg.exceptionStack = e.stack
                         Runtime.postMessage(msg)
