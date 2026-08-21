@@ -70,37 +70,37 @@ export const TIME_SIGNATURES = [
         name: lf("4/4"),
         id: "ts4-4",
         beatsPerMeasure: 4,
-        ticksPerBeat: 4
+        ticksPerBeat: 8
     },
     {
         name: lf("3/4"),
         id: "ts3-4",
         beatsPerMeasure: 3,
-        ticksPerBeat: 4
+        ticksPerBeat: 8
     },
     {
         name: lf("2/4"),
         id: "ts2-4",
         beatsPerMeasure: 2,
-        ticksPerBeat: 4
+        ticksPerBeat: 8
     },
     {
         name: lf("3/8"),
         id: "ts3-8",
         beatsPerMeasure: 3,
-        ticksPerBeat: 2
+        ticksPerBeat: 4
     },
     {
         name: lf("6/8"),
         id: "ts6-8",
         beatsPerMeasure: 6,
-        ticksPerBeat: 2
+        ticksPerBeat: 4
     },
     {
         name: lf("12/8"),
         id: "ts12-8",
         beatsPerMeasure: 12,
-        ticksPerBeat: 2
+        ticksPerBeat: 4
     }
 ]
 
@@ -108,16 +108,21 @@ export const SNAP_OPTIONS = [
     {
         name: lf("1/4"),
         id: "quarter",
-        ticksPerSnap: 4
+        ticksPerSnap: 8
     },
     {
         name: lf("1/8"),
         id: "eighth",
-        ticksPerSnap: 2
+        ticksPerSnap: 4
     },
     {
         name: lf("1/16"),
         id: "sixteenth",
+        ticksPerSnap: 2
+    },
+    {
+        name: lf("1/32"),
+        id: "thirty-second",
         ticksPerSnap: 1
     }
 ];
@@ -175,7 +180,7 @@ export function getEmptySong(): Song {
         nextInstrumentId,
         instruments,
         beatsPerMeasure: 4,
-        ticksPerBeat: 4,
+        ticksPerBeat: 8,
         tracks: [{
             instrumentId: 0,
             events: [],
@@ -518,13 +523,11 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
 
     result.tracks = [];
 
-    const ticksPerSixteenth = pxtSong.ticksPerBeat === 8 ? 2 : 1;
-
     result.beatsPerMeasure = pxtSong.beatsPerMeasure;
-    result.ticksPerBeat = pxtSong.ticksPerBeat === 8 ? 4 : pxtSong.ticksPerBeat;
+    result.ticksPerBeat = pxtSong.ticksPerBeat;
 
     let instrumentIdCounter = 0;
-    for (const track of pxtSong.tracks) {
+    for (const track of pxtSong.tracks.filter(t => t.notes.length > 0)) {
         const existingTrack = result.tracks.find(t => t.id === track.id);
         const resultTrack: Track = existingTrack || {
             id: track.id,
@@ -538,9 +541,9 @@ export function fromPXTSong(pxtSong: pxt.assets.music.Song): Song {
         const newNoteEvent = (note: number, startTick: number, endTick: number, velocity: number): void => {
             const newEvent: NoteEvent = {
                 id: resultTrack.nextId++,
-                note: track.drums?.length ? note : note - 1,
-                start: Math.round(startTick / ticksPerSixteenth),
-                duration: Math.max(1, Math.round((endTick - startTick) / ticksPerSixteenth)),
+                note: track.drums?.length ? note : Math.max(note - 1, 0),
+                start: startTick,
+                duration: endTick - startTick,
                 velocity: velocity ?? 128
             };
 
@@ -859,7 +862,7 @@ export function pasteToFloatingLayer(song: Song, trackId: number, copyData: Copy
     return result;
 }
 
-function cloneSong(song: Song): Song {
+export function cloneSong(song: Song): Song {
     return {
         ...song,
         tracks: song.tracks.map(t => ({

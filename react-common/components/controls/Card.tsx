@@ -5,7 +5,7 @@ export interface CardProps extends ContainerProps {
     onClick?: () => void;
     tabIndex?: number;
     ariaLabelledBy?: string;
-    label?: string;
+    label?: React.ReactNode;
     labelClass?: string;
 }
 

@@ -346,6 +346,39 @@ describe("updateHistory", () => {
         }
     });
 
+    it("should preserve extension event diffs when collapsing", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        const afterConfig = JSON.parse(beforeText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        afterConfig.dependencies["test-extension"] = "github:test/test-extension#v2.0.0";
+        let prevText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.CONFIG_NAME]: JSON.stringify(afterConfig, null, 4)
+        };
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        };
+        pxteditor.history.pushExtensionEventOnHistory(prevText, beforeText, 1, event, diffText);
+
+        const period = ONE_HOUR * 7;
+        for (let i = 2; i < testVersions.length; i++) {
+            const nextText = { ...testVersions[i] };
+            pxteditor.history.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
+            prevText = nextText;
+        }
+
+        const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
+        const eventEntries = history.entries.filter(entry => entry.event?.extensionName === "test-extension");
+        chai.expect(eventEntries).to.have.length(2);
+
+        const before = getTextAtTime(prevText, history, eventEntries[0].timestamp, patchText);
+        const after = getTextAtTime(prevText, history, eventEntries[1].timestamp, patchText);
+        const restoredBeforeConfig = JSON.parse(before.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        const restoredAfterConfig = JSON.parse(after.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        chai.expect(restoredBeforeConfig.dependencies["test-extension"]).to.equal(undefined);
+        chai.expect(restoredAfterConfig.dependencies["test-extension"]).to.equal("github:test/test-extension#v2.0.0");
+    });
+
     it("should restore to the version on the timestamp", () => {
         const project = { ...testProject };
         const history = JSON.parse(project[pxt.HISTORY_FILE]) as HistoryFile;
@@ -463,6 +496,146 @@ describe("collapseHistory", () => {
         checkTimestamp(entries[2], 200);
         checkTimestamp(entries[3], 400);
         checkTimestamp(entries[4], 700);
+    });
+});
+
+describe("pushSnapshotOnHistory", () => {
+    it("should preserve snapshot event metadata", () => {
+        const text = { ...testProject };
+        delete text[pxt.HISTORY_FILE];
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-removed",
+            phase: "before",
+            extensionName: "test-extension"
+        };
+        const snapshotText = {
+            ...text,
+            [pxt.MAIN_BLOCKS]: "before extension change"
+        };
+
+        pxteditor.history.pushSnapshotOnHistory(text, 100, event, snapshotText);
+        pxteditor.history.pushSnapshotOnHistory(text, 100, {
+            ...event,
+            phase: "after"
+        });
+
+        const history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots).to.have.length(2);
+        chai.expect(history.snapshots[0].event).to.deep.equal(event);
+        chai.expect(history.snapshots[0].text[pxt.HISTORY_FILE]).to.equal(undefined);
+        chai.expect(history.snapshots[0].text[pxt.MAIN_BLOCKS]).to.equal("before extension change");
+        chai.expect(history.snapshots[1].timestamp).to.equal(101);
+        chai.expect(history.snapshots[1].event.phase).to.equal("after");
+    });
+});
+
+describe("pushExtensionEventOnHistory", () => {
+    it("should store extension changes as a pxt.json diff with before and after markers", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        const afterConfig = JSON.parse(beforeText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        afterConfig.dependencies["test-extension"] = "github:test/test-extension#v2.0.0";
+        const afterText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.CONFIG_NAME]: JSON.stringify(afterConfig, null, 4)
+        };
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        };
+
+        pxteditor.history.updateHistory(beforeText, afterText, 99, [], diffText, patchText);
+        pxteditor.history.pushExtensionEventOnHistory(afterText, beforeText, 100, event, diffText);
+
+        const history = pxteditor.history.parseHistoryFile(afterText[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots).to.have.length(1);
+        chai.expect(history.snapshots[0].event).to.equal(undefined);
+        chai.expect(history.entries).to.have.length(2);
+        chai.expect(history.entries[0].event.phase).to.equal("before");
+        chai.expect(history.entries[0].changes).to.have.length(0);
+        chai.expect(history.entries[1].event.phase).to.equal("after");
+        chai.expect(history.entries[1].changes).to.have.length(1);
+        chai.expect(history.entries[1].changes[0].filename).to.equal(pxt.CONFIG_NAME);
+
+        const after = pxteditor.history.getTextAtTime(afterText, history, history.entries[1].timestamp, patchText);
+        const before = pxteditor.history.getTextAtTime(afterText, history, history.entries[0].timestamp, patchText);
+        chai.expect(after.files[pxt.CONFIG_NAME]).to.equal(afterText[pxt.CONFIG_NAME]);
+        chai.expect(before.files[pxt.CONFIG_NAME]).to.equal(beforeText[pxt.CONFIG_NAME]);
+
+        const nextText: pxt.workspace.ScriptText = {
+            ...afterText,
+            [pxt.MAIN_TS]: "changed after extension event"
+        };
+        pxteditor.history.updateHistory(afterText, nextText, 200, [], diffText, patchText);
+        const nextHistory = pxteditor.history.parseHistoryFile(nextText[pxt.HISTORY_FILE]);
+        const timestamps = nextHistory.entries.map(entry => entry.timestamp);
+        chai.expect(new Set(timestamps).size).to.equal(timestamps.length);
+    });
+
+    it("should preserve timed snapshots that predate the extension change", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        pxteditor.history.pushSnapshotOnHistory(beforeText, 50);
+        const afterConfig = JSON.parse(beforeText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        afterConfig.dependencies["test-extension"] = "github:test/test-extension#v2.0.0";
+        const afterText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.CONFIG_NAME]: JSON.stringify(afterConfig, null, 4)
+        };
+
+        pxteditor.history.updateHistory(beforeText, afterText, 99, [], diffText, patchText);
+        pxteditor.history.pushExtensionEventOnHistory(afterText, beforeText, 100, {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        }, diffText);
+
+        const history = pxteditor.history.parseHistoryFile(afterText[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots).to.have.length(1);
+        chai.expect(history.snapshots[0].timestamp).to.equal(50);
+        chai.expect(history.entries.filter(entry => entry.event)).to.have.length(2);
+    });
+
+    it("should preserve automatic history when pxt.json did not change", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        const afterText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.MAIN_TS]: "non-extension change"
+        };
+        pxteditor.history.updateHistory(beforeText, afterText, 99, [], diffText, patchText);
+        const automaticHistory = afterText[pxt.HISTORY_FILE];
+
+        pxteditor.history.pushExtensionEventOnHistory(afterText, beforeText, 100, {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        }, diffText);
+
+        chai.expect(afterText[pxt.HISTORY_FILE]).to.equal(automaticHistory);
+    });
+});
+
+describe("updateShareHistory", () => {
+    it("should preserve the type of shared versions", () => {
+        const text = { ...testVersions[0] };
+        pxteditor.history.updateShareHistory(text, 100, [{
+            id: "snapshot-id",
+            type: "snapshot"
+        }]);
+        pxteditor.history.updateShareHistory(text, 200, [{
+            id: "snapshot-id",
+            type: "snapshot"
+        }, {
+            id: "permalink-id",
+            type: "permalink"
+        }]);
+
+        const history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        chai.expect(history.shares).to.deep.equal([{
+            id: "snapshot-id",
+            type: "snapshot",
+            timestamp: 100
+        }, {
+            id: "permalink-id",
+            type: "permalink",
+            timestamp: 200
+        }]);
     });
 });
 
