@@ -1897,7 +1897,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     colour: c.color,
                     contents: [] as Blockly.utils.toolbox.ToolboxItemInfo[]
                 }));
-                (Blockly.getMainWorkspace() as Blockly.WorkspaceSvg).getToolbox().render({contents: allCategoriesToToolboxItemInfo});
+                this.editor.getToolbox().render({contents: allCategoriesToToolboxItemInfo});
             } else {
                 this.showFlyoutOnlyToolbox();
             }
