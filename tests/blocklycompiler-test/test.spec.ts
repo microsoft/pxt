@@ -505,6 +505,10 @@ describe("blockly compiler", function () {
             blockTestAsync("function_output").then(done, done);
         });
 
+        it("should ignore nullish types when inferring function return types", (done: () => void) => {
+            blockTestAsync("function_nullish_return").then(done, done);
+        });
+
         it("should output a return type for recursive functions", (done: () => void) => {
             blockTestAsync("function_recursion").then(done, done);
         });

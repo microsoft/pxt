@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import { FieldEditorComponent } from '../blocklyFieldView';
 import { AssetEditorCore } from "./ImageFieldEditor";
+import { SongModel } from "./musicEditor/AssetModel";
 import { MusicEditor } from "./musicEditor/MusicEditor";
 
 interface MusicFieldEditorProps {
@@ -10,31 +10,26 @@ interface MusicFieldEditorProps {
 }
 
 interface MusicFieldEditorState {
-    editingSong?: pxt.Song;
-    editRef: number;
+    model?: SongModel;
 }
 
 export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, MusicFieldEditorState> implements AssetEditorCore {
-    protected mostRecentValue: pxt.assets.music.Song;
+    protected openedAsset: pxt.Song;
 
     constructor(props: MusicFieldEditorProps) {
         super(props);
-        this.state = {
-            editRef: 0
-        }
+        this.state = {};
     }
 
     render() {
         const { onDoneClicked } = this.props;
-        const { editingSong } = this.state;
+        const { model } = this.state;
 
         return <div className="music-field-editor">
-            { editingSong &&
+            { model &&
                 <MusicEditor
-                    asset={editingSong}
-                    onSongChanged={this.onSongChanged}
+                    model={model}
                     onAssetNameChanged={this.onAssetNameChanged}
-                    editRef={this.state.editRef}
                     onDoneClicked={onDoneClicked}
                     hideDoneButton={this.props.hideDoneButton} />
             }
@@ -42,23 +37,29 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
     }
 
     getAsset(): pxt.Song {
-        if (!this.state.editingSong) return undefined;
-        return {
-            ...this.state.editingSong,
-            song: this.mostRecentValue || this.state.editingSong.song
-        }
+        const current = this.state.model?.getCurrentValue();
+        return current || this.openedAsset;
     }
 
     openAsset(value: pxt.Song) {
-        pxt.assets.music.inflateSong(value.song)
-        this.setState({
-            editingSong: value,
-            editRef: this.state.editRef + 1
-        })
+        pxt.assets.music.inflateSong(value.song);
+        this.openedAsset = value;
+
+        if (this.state.model) {
+            this.state.model.updateValue(value);
+        }
+        else {
+            this.setState({
+                model: new SongModel(value),
+            });
+        }
     }
 
     openGalleryAsset(asset: pxt.Asset): void {
-        // TODO
+        const song = pxt.cloneAsset(asset as pxt.Song);
+        pxt.assets.music.inflateSong(song.song);
+
+        this.state.model!.updateValue(song);
     }
 
     getJres(): string {
@@ -78,26 +79,30 @@ export class MusicFieldEditor extends React.Component<MusicFieldEditorProps, Mus
     }
 
     getPersistentData(): any {
-
+        if (this.state.model) {
+            return this.state.model.getState();
+        }
+        return undefined;
     }
 
     restorePersistentData(value: any): void {
+        if (value) {
+            let model = this.state.model;
+            if (!model) {
+                model = new SongModel();
+                this.setState({ model });
+            }
 
-    }
-
-    protected onSongChanged = (newSong: pxt.assets.music.Song) => {
-        this.mostRecentValue = newSong;
+            model.restoreState(value);
+        }
     }
 
     protected onAssetNameChanged = (newName: string) => {
-        this.setState({
-            editingSong: {
-                ...this.state.editingSong,
-                meta: {
-                    ...this.state.editingSong.meta,
-                    displayName: newName
-                }
-            }
-        })
+        const currentValue = this.state.model?.getCurrentValue();
+
+        if (currentValue) {
+            currentValue.meta.displayName = newName;
+            this.state.model!.updateValue(currentValue);
+        }
     }
 }

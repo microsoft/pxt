@@ -16,7 +16,7 @@ export interface PianoRollTheme {
 }
 
 const defaultTheme: PianoRollTheme = {
-    tickWidth: 30,
+    tickWidth: 15,
     whiteKeyHeight: 40,
     ticksPerBeat: 4,
     beatsPerMeasure: 4,

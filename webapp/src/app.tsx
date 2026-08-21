@@ -4826,6 +4826,16 @@ export class ProjectView
         })
     }
 
+    async hasBlocksFromExtensionAsync(dependencyName: string): Promise<boolean> {
+        const blocksInfo = await compiler.getBlocksAsync();
+        const workspaceBlocks = this.blocksEditor?.editor?.getAllBlocks(false) || [];
+
+        return workspaceBlocks.some(block => {
+            const symbol = blocksInfo.blocksById[block.type] || pxtblockly.blockSymbol(block.type);
+            return symbol?.pkg === dependencyName;
+        });
+    }
+
     showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
         return this.scriptSearch.showBoardsAsync(features, closeIcon);
     }
@@ -5648,6 +5658,8 @@ export class ProjectView
                         hideExtensions={this.hidePackageDialog}
                         importExtensionCallback={() => this.showImportFileDialog({ extension: true })}
                         header={this.state.header}
+                        hasBlocksFromExtensionAsync={dependencyName => this.hasBlocksFromExtensionAsync(dependencyName)}
+                        saveProjectAsync={() => this.saveProjectAsync()}
                         reloadHeaderAsync={async () => {
                             await this.reloadHeaderAsync()
                             this.shouldFocusToolbox = true;

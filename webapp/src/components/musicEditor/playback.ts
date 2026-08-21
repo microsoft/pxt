@@ -105,10 +105,12 @@ export class NoteTracker {
             const oldNotes = this.activeNotes[i] || [];
             const newNotes = newActiveNotes[i] || [];
 
+            const trackId = playbackSong.tracks[i]?.id;
+
             for (const note of oldNotes) {
                 if (!newNotes.includes(note)) {
                     for (const listener of this.noteChangeListeners) {
-                        listener(i, note, false);
+                        listener(trackId, note, false);
                     }
                 }
             }
@@ -116,7 +118,7 @@ export class NoteTracker {
             for (const note of newNotes) {
                 if (!oldNotes.includes(note)) {
                     for (const listener of this.noteChangeListeners) {
-                        listener(i, note, true);
+                        listener(trackId, note, true);
                     }
                 }
             }

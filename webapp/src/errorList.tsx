@@ -66,7 +66,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: !this.props.errors?.length,
+            isCollapsed: props.collapsedByUser ? true : !props.errors?.length,
             isLoadingHelp: false,
         };
 

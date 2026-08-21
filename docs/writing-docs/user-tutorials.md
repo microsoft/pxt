@@ -100,7 +100,7 @@ Again, to be clear, you need to make the release through the [Github integration
 ### Localization
 
 Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 
-where ``filename`` is the name of the tutorial in the default locale. ``icocode`` can be the 
+where ``filename`` is the name of the tutorial in the default locale. ``isocode`` can be the 
 region specific language code or language neutral. MakeCode will pick the best match.
 
 #### #youtubeloc
