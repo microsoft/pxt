@@ -148,6 +148,11 @@ export async function getColorThemeIdAsync(): Promise<string | undefined> {
     }
 }
 
+export async function getHighContrastPrefAsync(): Promise<boolean | undefined> {
+    const prefs = await userPreferencesAsync();
+    return prefs?.highContrast;
+}
+
 export async function setColorThemeIdAsync(themeId: string): Promise<void> {
     const cli = await clientAsync();
     if (cli) {
@@ -160,7 +165,7 @@ export async function setColorThemeIdAsync(themeId: string): Promise<void> {
             op: 'replace',
             path: ['colorThemeIds'],
             value: newColorThemePref
-        });
+        }, { immediate: true });
     }
 }
 
