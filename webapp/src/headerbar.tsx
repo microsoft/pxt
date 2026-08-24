@@ -104,7 +104,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     }
 
     getOrganizationLogo(targetTheme: pxt.AppTheme, highContrast?: boolean, view?: string) {
-        if (view === "time-machine") {
+        if (view === "time-machine" || pxt.shell.hideOrganizationLogos()) {
             return <></>;
         }
 
@@ -127,7 +127,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
     }
 
     getTargetLogo(targetTheme: pxt.AppTheme, highContrast?: boolean, view?: string) {
-        if (view === "time-machine") {
+        if (view === "time-machine" || pxt.shell.hideOrganizationLogos()) {
             return <></>;
         }
 
