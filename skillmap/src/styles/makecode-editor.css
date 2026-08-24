@@ -31,7 +31,7 @@
 .makecode-frame-loader img {
     max-width: 200px;
     vertical-align: middle;
-    filter: hue-rotate(290deg);
+    filter: hue-rotate(290deg); /* Convert target orange to MakeCode magenta */
 
    -webkit-animation: loader-pxt 2s infinite linear;
    animation: loader-pxt  2s infinite linear;
