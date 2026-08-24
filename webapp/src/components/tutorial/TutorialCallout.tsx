@@ -52,9 +52,12 @@ export function TutorialCallout(props: TutorialCalloutProps) {
             }
         };
 
-        document.addEventListener("click", closeOnOutsideClick);
+        const outsideClickTimeout = window.setTimeout(() => {
+            document.addEventListener("click", closeOnOutsideClick);
+        }, 0);
 
         return () => {
+            window.clearTimeout(outsideClickTimeout);
             observer.disconnect();
             document.removeEventListener("click", closeOnOutsideClick);
         }
