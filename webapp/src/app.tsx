@@ -4829,11 +4829,37 @@ export class ProjectView
     async hasBlocksFromExtensionAsync(dependencyName: string): Promise<boolean> {
         const blocksInfo = await compiler.getBlocksAsync();
         const workspaceBlocks = this.blocksEditor?.editor?.getAllBlocks(false) || [];
+        const removedPackageIds = this.getPackageIdsRemovedWithDependency(dependencyName);
 
         return workspaceBlocks.some(block => {
             const symbol = blocksInfo.blocksById[block.type] || pxtblockly.blockSymbol(block.type);
-            return symbol?.pkg === dependencyName;
+            return removedPackageIds.has(symbol?.pkg);
         });
+    }
+
+    private getPackageIdsRemovedWithDependency(dependencyName: string): Set<string> {
+        const removedPackageIds = new Set<string>([dependencyName]);
+        const dependency = pkg.mainPkg?.resolveDep(dependencyName);
+        if (!dependency) return removedPackageIds;
+
+        const dependencyPackages = new Set<pxt.Package>();
+        const retainedPackages = new Set<pxt.Package>();
+        const visit = (pack: pxt.Package, visited: Set<pxt.Package>) => {
+            if (!pack || visited.has(pack)) return;
+            visited.add(pack);
+            pack.resolvedDependencies().forEach(child => visit(child, visited));
+        };
+
+        visit(dependency, dependencyPackages);
+        Object.keys(pkg.mainPkg.dependencies())
+            .filter(name => name !== dependencyName)
+            .map(name => pkg.mainPkg.resolveDep(name))
+            .forEach(pack => visit(pack, retainedPackages));
+
+        dependencyPackages.forEach(pack => {
+            if (!retainedPackages.has(pack)) removedPackageIds.add(pack.id);
+        });
+        return removedPackageIds;
     }
 
     showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void> {
