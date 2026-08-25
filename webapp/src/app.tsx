@@ -2286,17 +2286,24 @@ export class ProjectView
         const header = mainPkg.header;
         if (!header?.tutorial?.templateCode) return;
 
-        if (keepAssets) {
-            // Convert all temporary assets to named assets before we load in the template
-            let currentText = await workspace.getTextAsync(header.id);
-            const imageJres = appendTemporaryAssets(currentText[pxt.MAIN_BLOCKS], currentText[pxt.IMAGES_JRES]);
-            pkg.mainEditorPkg().setFile(pxt.IMAGES_JRES, imageJres);
-            await mainPkg.saveFilesAsync();
-        }
+        try {
+            core.showLoading("reset-tutorial", lf("Replacing tutorial code..."));
 
-        header.tutorial.templateLoaded = false;
-        delete header.tutorial.mergeHeaderId;
-        await this.reloadHeaderAsync();
+            if (keepAssets) {
+                // Convert all temporary assets to named assets before we load in the template
+                let currentText = await workspace.getTextAsync(header.id);
+                const imageJres = appendTemporaryAssets(currentText[pxt.MAIN_BLOCKS], currentText[pxt.IMAGES_JRES]);
+                pkg.mainEditorPkg().setFile(pxt.IMAGES_JRES, imageJres);
+                await mainPkg.saveFilesAsync();
+            }
+
+            header.tutorial.templateLoaded = false;
+            delete header.tutorial.mergeHeaderId;
+            await this.reloadHeaderAsync();
+        }
+        finally {
+            core.hideLoading("reset-tutorial");
+        }
     }
 
     removeProject() {
