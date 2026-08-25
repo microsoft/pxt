@@ -222,11 +222,13 @@
     margin: 0 !important;
 }
 
-#serialPreview {
+#serialPreview,
+#jacdacPreview {
     cursor: pointer;
 }
 
-#serialPreview .label {
+#serialPreview .label,
+#jacdacPreview .label {
     width: 100%;
     background-color: var(--pxt-target-background2);
     font-size: 0.85em;
@@ -245,16 +247,20 @@
     }
 }
 
-#serialPreview .label:hover {
+#serialPreview .label:hover,
+#jacdacPreview .label:hover {
     opacity: 0.8;
 }
 
-#serialPreview .label:focus {
+#serialPreview .label:focus,
+#jacdacPreview .label:focus {
     outline: none;
 }
 
 .fullscreensim #serialPreview,
-.simView #serialPreview {
+.fullscreensim #jacdacPreview,
+.simView #serialPreview,
+.simView #jacdacPreview {
     display: none !important;
     z-index: -10 !important;
 }

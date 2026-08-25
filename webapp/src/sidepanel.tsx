@@ -8,10 +8,11 @@ import * as serialindicator from "./serialindicator"
 import * as simtoolbar from "./simtoolbar";
 import * as simulator from "./simulator";
 
-import { Button } from "./sui";
+import { Button, Icon } from "./sui";
 import { SimulatorPresenceBar } from "./components/SimulatorPresenceBar"
 import { TutorialContainer } from "./components/tutorial/TutorialContainer";
 import { VerticalResizeContainer } from '../../react-common/components/controls/VerticalResizeContainer'
+import { fireClickOnEnter } from "./util"
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import { classList } from "../../react-common/components/util";
@@ -21,12 +22,15 @@ interface SidepanelState {
     height?: number;
     lastResizeHeight?: number;
     shouldResize?: boolean;
+    jacdacView?: "simulator" | "devices";
+    showSimulatorDevicesToggle?: boolean;
 }
 
 interface SidepanelProps extends ISettingsProps {
     inHome: boolean;
     showKeymap?: boolean;
     showSerialButtons?: boolean;
+    showJacdacButton?: boolean;
     showFileList?: boolean;
     showFullscreenButton?: boolean;
     isMultiplayerGame?: boolean;
@@ -41,6 +45,7 @@ interface SidepanelProps extends ISettingsProps {
     setEditorOffset?: () => void;
     showMiniSim: (visible?: boolean) => void;
     openSerial: (isSim: boolean) => void;
+    openJacdac: () => void;
     handleHardwareDebugClick: () => void;
     handleFullscreenButtonClick: () => void;
 }
@@ -79,6 +84,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     componentDidMount(): void {
+        window.addEventListener("message", this.setActive.bind(this))
         this.updateShouldResize();
     }
 
@@ -86,17 +92,25 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         if ((this.state.height || state.height) && this.state.height != state.height) {
             this.props.setEditorOffset();
         }
-
         this.updateShouldResize();
     }
 
     componentWillUnmount(): void {
+        window.removeEventListener("message", this.setActive.bind(this))
         if (this.simResizeObserver && this.simRef) {
             this.simResizeObserver.unobserve(this.simRef);
         }
 
         if (this.simPanelResizeObserver && this.simPanelRef) {
             this.simPanelResizeObserver.unobserve(this.simPanelRef);
+        }
+    }
+
+    private setActive(ev: MessageEvent) {
+        // check for packetio jacdac messages and show the jacdacUI toggle if so
+        const msg = ev.data;
+        if (msg?.type === "messagepacket" && msg?.sender === "packetio" && msg?.channel === "jacdac") {
+            this.setState({ showSimulatorDevicesToggle: true });
         }
     }
 
@@ -134,12 +148,30 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.openSerial(false);
     }
 
+    protected handleJacdacClick = () => {
+        this.props.openJacdac();
+    }
+
+    protected handleJacdacExpandClick = () => {
+        // loans the jacdac sim frame to the jacdac editor for a larger view;
+        // the microbit simulator stays put and keeps running
+        this.props.openJacdac();
+    }
+
     protected handleSimOverlayClick = () => {
         const { tutorialOptions, handleFullscreenButtonClick } = this.props;
         if (!tutorialOptions || pxt.BrowserUtils.useOldTutorialLayout()) {
             handleFullscreenButtonClick();
         } else {
             this.tryShowSimulator();
+        }
+    }
+
+    protected setJacdacView = (jacdacView: "simulator" | "devices") => {
+        if (this.state.jacdacView !== jacdacView) {
+            this.setState({ jacdacView });
+            // let the simdriver switch between the virtual and physical jacdac bus
+            simulator?.driver?.setMode(jacdacView)
         }
     }
 
@@ -197,7 +229,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     }
 
     renderCore() {
-        const { parent, inHome, showKeymap, showSerialButtons, showFileList, showFullscreenButton, isMultiplayerGame,
+        const { parent, inHome, showKeymap, showSerialButtons, showJacdacButton, showFileList, showFullscreenButton, isMultiplayerGame,
             collapseEditorTools, simSerialActive, deviceSerialActive, tutorialOptions,
             handleHardwareDebugClick, onTutorialStepChange, onTutorialComplete } = this.props;
 
@@ -208,6 +240,13 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         const showHostMultiplayerGameButton = isMultiplayerGame
             && !pxt.shell.isTimeMachineEmbed();
+
+        const jacdacUI = hasSimulator &&
+            pxt.appTarget?.appTheme?.experiments?.some(e => e === "jacdacUI")
+            && !pxt.shell.isTimeMachineEmbed() && this.state.showSimulatorDevicesToggle ||
+            true; // TODO, for now always show the toggle - not clear we want to show it only when jacdac messages are received, 
+
+        const jacdacView = this.state.jacdacView || "simulator";
 
         const simContainerClassName = classList(
             "simulator-container",
@@ -242,6 +281,8 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             onTutorialComplete={onTutorialComplete}
             setParentHeight={newSize => this.setComponentHeight(newSize, false)} /> : undefined;
 
+        // TODO: this is where we check if jacdacUI experiment is enabled and add switch
+        // TODO: to toggle between the simulator view and the twin view
         return <div id="simulator" className="simulator" ref={this.handleSimRef}>
             {!hasSimulator && <>
                 <div id="boardview" className="headless-sim" role="region" aria-label={lf("Simulator")} tabIndex={-1} />
@@ -252,12 +293,43 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </div>}
             </>}
             {hasSimulator && <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
+                {jacdacUI && <div className="jacdac-view-toolbar">
+                    <div
+                        className="ui mini buttons jacdac-view-toggle"
+                        role="group"
+                        aria-label={lf("Jacdac view")}
+                    >
+                        <Button
+                            className={jacdacView === "simulator" ? "active" : undefined}
+                            text={lf("Simulators")}
+                            title={lf("Show Simulators")}
+                            ariaLabel={lf("Show Simulators")}
+                            onClick={() => this.setJacdacView("simulator")}
+                        />
+                        <Button
+                            className={jacdacView === "devices" ? "active" : undefined}
+                            text={lf("Devices")}
+                            title={lf("Show Devices")}
+                            ariaLabel={lf("Show Devices")}
+                            onClick={() => this.setJacdacView("devices")}
+                        />
+                    </div>
+                    <Button
+                        className="mini icon jacdac-view-expand"
+                        icon="expand arrows alternate"
+                        title={lf("Expand Jacdac simulator")}
+                        ariaLabel={lf("Expand Jacdac simulator")}
+                        onClick={this.handleJacdacExpandClick}
+                    />
+                </div>}
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={-1} />
                         {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
                             <SimulatorPresenceBar />
                         </div>}
+                        {jacdacUI && jacdacView === "devices" ? <></> : (
+                        <>
                         <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
@@ -269,6 +341,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                         <div className="ui item grid centered portrait hide hidefullscreen">
                             {showHostMultiplayerGameButton && <Button className={"secondary hostmultiplayergame-button"} icon={"xicon multiplayer"} text={lf("Host multiplayer game")} ariaLabel={lf("Host multiplayer game")} onClick={this.onHostMultiplayerGameClick} />}
                         </div>
+                        {showJacdacButton && <div id="jacdacPreview" className="ui editorFloat portrait hide hidefullscreen">
+                            <div role="button" title={lf("Show Jacdac")} className="ui label circular" tabIndex={0} onClick={this.handleJacdacClick} onKeyDown={fireClickOnEnter}>
+                                <div className="detail">
+                                    <Icon icon="xicon jacdac" />
+                                </div>
+                                <span>{lf("Show Jacdac Simulators/Devices")}</span>
+                            </div>
+                        </div>}
                         {showSerialButtons && <div id="serialPreview" className="ui editorFloat portrait hide hidefullscreen">
                             <serialindicator.SerialIndicator ref="simIndicator" isSim={true} onClick={this.handleSimSerialClick} parent={parent} />
                             <serialindicator.SerialIndicator ref="devIndicator" isSim={false} onClick={this.handleDeviceSerialClick} parent={parent} />
@@ -276,6 +356,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
                         {showFileList && <filelist.FileList parent={parent} />}
                         {showFullscreenButton && <div id="miniSimOverlay" role="button" title={lf("Open in fullscreen")} onClick={this.handleSimOverlayClick} />}
+                        </>)}
                     </div>
                 </div>
             </div>}

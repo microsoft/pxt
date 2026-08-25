@@ -454,6 +454,51 @@
     &.ui.items { margin-top: 0; }
 }
 
+.jacdac-view-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0.75rem 0.75rem 0.25rem 0.75rem;
+}
+
+.jacdac-view-toggle {
+    display: inline-flex;
+    align-self: flex-start;
+    gap: 0.35rem;
+    margin: 0;
+    padding: 0.35rem;
+    border: 1px solid var(--pxt-target-foreground0);
+    border-radius: 0.75rem;
+    background: var(--pxt-target-background1);
+
+    > .ui.button {
+        border: 1px solid var(--pxt-target-foreground0) !important;
+        border-radius: 0.5rem !important;
+        box-shadow: none !important;
+        margin: 0 !important;
+        color: var(--pxt-button-secondary-foreground) !important;
+
+        &:not(.active) {
+            background: transparent !important;
+        }
+
+        &.active {
+            background: var(--pxt-colors-blue-background) !important;
+            border-color: var(--pxt-colors-blue-background) !important;
+            color: var(--pxt-colors-blue-foreground) !important;
+            box-shadow: 0 0 0 1px var(--pxt-colors-blue-background), 0 0.15rem 0.35rem rgba(0, 0, 0, 0.18) !important;
+        }
+    }
+}
+
+.jacdac-view-expand {
+    border: 1px solid var(--pxt-target-foreground0) !important;
+    border-radius: 0.5rem !important;
+    box-shadow: none !important;
+    background: var(--pxt-target-background1) !important;
+    color: var(--pxt-button-secondary-foreground) !important;
+}
+
 // Mini sim is visible when tab is hidden
 #root.tabTutorial {
     &:not(.fullscreensim) .simulator-container.hidden {

@@ -28,7 +28,7 @@ export class SerialIndicator extends data.Component<SerialIndicatorProps, Serial
     }
 
     componentWillUnmount() {
-        window.addEventListener("message", this.setActive.bind(this))
+        window.removeEventListener("message", this.setActive.bind(this))
     }
 
     setActive(ev: MessageEvent) {
