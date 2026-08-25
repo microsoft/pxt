@@ -46,11 +46,14 @@ export function TutorialCallout(props: TutorialCalloutProps) {
             const availableBottom = window.innerHeight - lowerBuffer;
             const availableHeight = Math.max(availableBottom - upperBuffer, 0);
             const inlineLeft = content.style.left;
+            const inlineRight = content.style.right;
             const inlineWidth = content.style.width;
             content.style.left = "";
+            content.style.right = "";
             content.style.width = "";
             const contentRect = content.getBoundingClientRect();
             content.style.left = inlineLeft;
+            content.style.right = inlineRight;
             content.style.width = inlineWidth;
             const clampedLeft = Math.min(
                 Math.max(contentRect.left, upperBuffer),
