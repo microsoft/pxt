@@ -4827,8 +4827,7 @@ export class ProjectView
     }
 
     async hasBlocksFromExtensionAsync(dependencyName: string): Promise<boolean> {
-        const apisInfo = await compiler.getApisInfoAsync();
-        const blocksInfo = pxtc.getBlocksInfo(apisInfo, pkg.mainPkg.resolveBannedCategories());
+        const blocksInfo = await compiler.getBlocksAsync();
         const workspaceBlocks = this.blocksEditor?.editor?.getAllBlocks(false) || [];
 
         return workspaceBlocks.some(block => {
