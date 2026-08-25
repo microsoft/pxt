@@ -759,7 +759,7 @@ namespace pxt.auth {
     }
 
     export function hasIdentity(): boolean {
-        return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
+        return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0 && !pxt.shell.isTimeMachineEmbed();
     }
 
     function idpEnabled(idp: pxt.IdentityProviderId): boolean {
