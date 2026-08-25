@@ -718,6 +718,60 @@ namespace pxsim {
                 && this.loanedSimulator.querySelector("iframe");
         }
 
+        // the jacdac simulator frame, visually relocated on top of another element
+        private jacdacOverlayWrapper: HTMLElement;
+        private jacdacOverlayTarget: HTMLElement;
+        private jacdacOverlayResizeObserver: ResizeObserver;
+        private jacdacOverlayReposition = () => {
+            if (!this.jacdacOverlayWrapper || !this.jacdacOverlayTarget) return;
+            const rect = this.jacdacOverlayTarget.getBoundingClientRect();
+            const style = this.jacdacOverlayWrapper.style;
+            style.position = "fixed";
+            style.top = `${rect.top}px`;
+            style.left = `${rect.left}px`;
+            style.width = `${rect.width}px`;
+            style.height = `${rect.height}px`;
+            style.zIndex = "1000";
+        }
+
+        // visually relocates the jacdac simulator frame on top of `target`, without
+        // reparenting its iframe: reparenting an iframe forces the browser to tear down
+        // and reload its nested browsing context, which wipes out all the running
+        // jacdac module simulators inside it
+        public showJacdacSimulator(target: HTMLElement): boolean {
+            this.hideJacdacSimulator();
+
+            const wrapper = pxsim.util.toArray(this.container.children)
+                .find(el => (el.querySelector("iframe") as HTMLIFrameElement)?.dataset[FRAME_DATA_MESSAGE_CHANNEL] === "jacdac/pxt-jacdac") as HTMLElement;
+            if (!wrapper) return false;
+
+            this.jacdacOverlayWrapper = wrapper;
+            this.jacdacOverlayTarget = target;
+            this.jacdacOverlayReposition();
+
+            if (typeof ResizeObserver !== "undefined") {
+                this.jacdacOverlayResizeObserver = new ResizeObserver(this.jacdacOverlayReposition);
+                this.jacdacOverlayResizeObserver.observe(target);
+            }
+            window.addEventListener("resize", this.jacdacOverlayReposition);
+            window.addEventListener("scroll", this.jacdacOverlayReposition, true);
+            return true;
+        }
+
+        public hideJacdacSimulator() {
+            if (!this.jacdacOverlayWrapper) return;
+
+            const style = this.jacdacOverlayWrapper.style;
+            style.position = style.top = style.left = style.width = style.height = style.zIndex = "";
+
+            window.removeEventListener("resize", this.jacdacOverlayReposition);
+            window.removeEventListener("scroll", this.jacdacOverlayReposition, true);
+            this.jacdacOverlayResizeObserver?.disconnect();
+            this.jacdacOverlayResizeObserver = undefined;
+            this.jacdacOverlayWrapper = undefined;
+            this.jacdacOverlayTarget = undefined;
+        }
+
         private frameCleanupTimeout: any = undefined;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {

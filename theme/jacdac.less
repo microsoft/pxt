@@ -1,0 +1,29 @@
+/* Import all components */
+@import 'themes/default/globals/site.variables';
+@import 'themes/pxt/globals/site.variables';
+
+/* Reference import */
+@import (reference) "semantic.less";
+
+/*-------------------
+   Jacdac editor
+--------------------*/
+
+#jacdacEditor {
+    background-color: var(--pxt-target-background2);
+    color: var(--pxt-target-foreground2);
+}
+
+#jacdacArea {
+    height: 90%;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+}
+
+#jacdacSimulator {
+    // placeholder box: the actual jacdac sim iframe is positioned on top of
+    // this element (see SimulatorDriver.showJacdacSimulator), it is not a child of it
+    flex: 1;
+    min-height: 20rem;
+}

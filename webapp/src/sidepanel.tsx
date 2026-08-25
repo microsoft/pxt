@@ -152,6 +152,12 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.props.openJacdac();
     }
 
+    protected handleJacdacExpandClick = () => {
+        // loans the jacdac sim frame to the jacdac editor for a larger view;
+        // the microbit simulator stays put and keeps running
+        this.props.openJacdac();
+    }
+
     protected handleSimOverlayClick = () => {
         const { tutorialOptions, handleFullscreenButtonClick } = this.props;
         if (!tutorialOptions || pxt.BrowserUtils.useOldTutorialLayout()) {
@@ -287,24 +293,33 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                 </div>}
             </>}
             {hasSimulator && <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
-                {jacdacUI && <div
-                    className="ui mini buttons jacdac-view-toggle"
-                    role="group"
-                    aria-label={lf("Jacdac view")}
-                >
+                {jacdacUI && <div className="jacdac-view-toolbar">
+                    <div
+                        className="ui mini buttons jacdac-view-toggle"
+                        role="group"
+                        aria-label={lf("Jacdac view")}
+                    >
+                        <Button
+                            className={jacdacView === "simulator" ? "active" : undefined}
+                            text={lf("Simulators")}
+                            title={lf("Show Simulators")}
+                            ariaLabel={lf("Show Simulators")}
+                            onClick={() => this.setJacdacView("simulator")}
+                        />
+                        <Button
+                            className={jacdacView === "devices" ? "active" : undefined}
+                            text={lf("Devices")}
+                            title={lf("Show Devices")}
+                            ariaLabel={lf("Show Devices")}
+                            onClick={() => this.setJacdacView("devices")}
+                        />
+                    </div>
                     <Button
-                        className={jacdacView === "simulator" ? "active" : undefined}
-                        text={lf("Simulators")}
-                        title={lf("Show Simulators")}
-                        ariaLabel={lf("Show Simulators")}
-                        onClick={() => this.setJacdacView("simulator")}
-                    />
-                    <Button
-                        className={jacdacView === "devices" ? "active" : undefined}
-                        text={lf("Devices")}
-                        title={lf("Show Devices")}
-                        ariaLabel={lf("Show Devices")}
-                        onClick={() => this.setJacdacView("devices")}
+                        className="mini icon jacdac-view-expand"
+                        icon="expand arrows alternate"
+                        title={lf("Expand Jacdac simulator")}
+                        ariaLabel={lf("Expand Jacdac simulator")}
+                        onClick={this.handleJacdacExpandClick}
                     />
                 </div>}
                 <div className={simContainerClassName}>
