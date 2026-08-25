@@ -259,3 +259,16 @@ input[type=range].blocklyFieldSlider::-moz-range-track {
 .blocklyFieldSliderDropdown input[type=range].blocklyFieldSlider:hover::-moz-range-track, .blocklyFieldSliderDropdown input[type=range].blocklyFieldSlider:focus-visible::-moz-range-track {
     outline: solid 3px var(--pxt-focus-border) !important;
 }
+
+/*
+ * Music editor gallery
+ */
+.song-gallery-item .common-button.play-button {
+    background-color: var(--pxt-neutral-background1) !important;
+    color: var(--pxt-neutral-foreground1) !important;
+    border: solid 2px var(--pxt-neutral-foreground1) !important;
+}
+
+.song-gallery-item .common-button.play-button i.fas {
+    color: var(--pxt-neutral-foreground1) !important;
+}
