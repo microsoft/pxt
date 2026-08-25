@@ -10,12 +10,18 @@ interface TutorialCalloutProps extends React.PropsWithChildren<{}> {
     onClick?: (visible: boolean) => void;
 }
 
+interface HorizontalPosition {
+    left?: string;
+    width?: string;
+}
+
 export function TutorialCallout(props: TutorialCalloutProps) {
     const { children, className, buttonIcon, buttonLabel, onClick } = props;
     const [ visible, setVisible ] = React.useState(false);
     const [ maxHeight, setMaxHeight ] = React.useState("unset");
     const [ top, setTop ] = React.useState("unset");
     const [ bottom, setBottom ] = React.useState("unset");
+    const [ horizontalPosition, setHorizontalPosition ] = React.useState<HorizontalPosition>({});
     const popupRef = React.useRef<HTMLDivElement>(null);
     const contentRef = React.useRef<HTMLDivElement>(null);
 
@@ -39,6 +45,26 @@ export function TutorialCallout(props: TutorialCalloutProps) {
             const popupHeight = content.scrollHeight + borderHeight;
             const availableBottom = window.innerHeight - lowerBuffer;
             const availableHeight = Math.max(availableBottom - upperBuffer, 0);
+            const inlineLeft = content.style.left;
+            const inlineWidth = content.style.width;
+            content.style.left = "";
+            content.style.width = "";
+            const contentRect = content.getBoundingClientRect();
+            content.style.left = inlineLeft;
+            content.style.width = inlineWidth;
+            const clampedLeft = Math.min(
+                Math.max(contentRect.left, upperBuffer),
+                Math.max(window.innerWidth - upperBuffer - contentRect.width, upperBuffer)
+            );
+            const isHorizontallyClamped = Math.abs(clampedLeft - contentRect.left) > 0.5;
+            const nextHorizontalPosition = isHorizontallyClamped
+                ? { left: `${clampedLeft}px`, width: `${contentRect.width}px` }
+                : {};
+            setHorizontalPosition(current =>
+                current.left === nextHorizontalPosition.left && current.width === nextHorizontalPosition.width
+                    ? current
+                    : nextHorizontalPosition
+            );
 
             if (triggerBottom + verticalOffset + popupHeight > availableBottom) {
                 setTop("unset");
@@ -112,7 +138,7 @@ export function TutorialCallout(props: TutorialCalloutProps) {
             ariaLabel={buttonTitle}
             disabled={!children}
             onClick={children ? handleButtonClick : undefined} />
-        {visible && <div ref={contentRef} className={`tutorial-callout no-select`} onClick={captureEvent} style={{top: top, bottom: bottom, maxHeight: maxHeight, overflowY: maxHeight === "unset" ? "visible" : "auto"}}>
+        {visible && <div ref={contentRef} className={`tutorial-callout no-select`} onClick={captureEvent} style={{top: top, right: horizontalPosition.left === undefined ? undefined : "auto", bottom: bottom, left: horizontalPosition.left, width: horizontalPosition.width, maxHeight: maxHeight, overflowY: maxHeight === "unset" ? "visible" : "auto"}}>
             <Button icon="close" className="tutorial-callout-close" onClick={closeCallout} />
             {children}
         </div>}
