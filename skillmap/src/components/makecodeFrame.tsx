@@ -1,7 +1,7 @@
 /// <reference path="../../../localtypings/pxteditor.d.ts" />
 import * as React from "react";
 import { connect } from 'react-redux';
-import { isLocal, resolvePath, getEditorUrl, tickEvent, cloudLocalStoreKey } from "../lib/browserUtils";
+import { isLocal, getEditorUrl, tickEvent, cloudLocalStoreKey } from "../lib/browserUtils";
 import { lookupActivityProgress } from "../lib/skillMapUtils";
 
 import { SkillMapState } from '../store/reducer';
@@ -13,6 +13,7 @@ import '../styles/makecode-editor.css'
 import { ShareData } from "react-common/components/share/Share";
 import { ProgressBar } from "react-common/components/controls/ProgressBar";
 import { ThemeManager } from "react-common/components/theming/themeManager";
+import { LoaderLogo } from "./LoaderLogo";
 interface MakeCodeFrameProps {
     save: boolean;
     mapId: string;
@@ -130,7 +131,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         /* eslint-disable @microsoft/sdl/react-iframe-missing-sandbox */
         return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
             <div className={`makecode-frame-loader ${showLoader ? "" : "hidden"}`}>
-                <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
+                <LoaderLogo alt={imageAlt} />
                 {openingProject && <ProgressBar className="makecode-frame-loader-bar" value={loadPercent!} />}
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>

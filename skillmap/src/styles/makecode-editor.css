@@ -28,14 +28,44 @@
     display: none;
 }
 
-.makecode-frame-loader img {
+.makecode-frame-loader-logo {
+    position: relative;
+    display: inline-block;
     max-width: 200px;
     vertical-align: middle;
-    filter: hue-rotate(290deg); /* Convert target orange to MakeCode magenta */
 
-   -webkit-animation: loader-pxt 2s infinite linear;
-   animation: loader-pxt  2s infinite linear;
- }
+    -webkit-animation: loader-pxt 2s infinite linear;
+    animation: loader-pxt 2s infinite linear;
+}
+
+.makecode-frame-loader-logo img {
+    display: block;
+    max-width: 100%;
+}
+
+/*
+ * Paints the logo shape in --pxt-loader-logo-color on top of the logo image,
+ * allowing targets with a single-color logo to recolor it. Targets that leave
+ * --pxt-loader-logo-color unset (e.g. those with a full color logo) get a
+ * transparent overlay and the image is shown unmodified.
+ */
+.makecode-frame-loader-logo-color {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--pxt-loader-logo-color, transparent);
+
+    -webkit-mask-image: var(--pxt-loader-logo-image);
+    mask-image: var(--pxt-loader-logo-image);
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+}
 
 .makecode-frame-loader-bar {
     --progress-bar-filled-color: var(--pxt-primary-background);
@@ -62,8 +92,15 @@
 
 .high-contrast .makecode-frame-loader img {
   filter: grayscale(100%) brightness(60%) contrast(400%);
+}
+
+.high-contrast .makecode-frame-loader-logo {
   animation: none;
   -webkit-animation: none;
+}
+
+.high-contrast .makecode-frame-loader-logo-color {
+  display: none;
 }
 
 .high-contrast .makecode-frame-loader-fill {

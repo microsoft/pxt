@@ -37,12 +37,13 @@ import { InfoPanel } from './components/InfoPanel';
 
 import { parseSkillMap } from './lib/skillMapParser';
 import { parseHash, getMarkdownAsync, MarkdownSource, parseQuery,
-    setPageTitle, setPageSourceUrl, ParsedHash, resolvePath } from './lib/browserUtils';
+    setPageTitle, setPageSourceUrl, ParsedHash } from './lib/browserUtils';
 
 import { MakeCodeFrame } from './components/makecodeFrame';
 import { getLocalUserStateAsync, getUserStateAsync, saveUserStateAsync } from './lib/workspaceProvider';
 import { Unsubscribe } from 'redux';
 import { UserProfile } from './components/UserProfile';
+import { LoaderLogo } from './components/LoaderLogo';
 import { ReadyResources, ReadyPromise } from './lib/readyResources';
 import { LanguageSelector } from '../../react-common/components/language/LanguageSelector';
 import { ThemePickerModal } from '../../react-common/components/theming/ThemePickerModal';
@@ -452,7 +453,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
                 {showingSyncLoader && <div className={"makecode-frame-loader"}>
-                    <img src={resolvePath("assets/logo.svg")} alt={lf("MakeCode Logo")} />
+                    <LoaderLogo alt={lf("MakeCode Logo")} />
                 <div className="makecode-frame-loader-text">{lf("Saving to cloud...")}</div>
                 </div>}
                 <div className={`skill-map-container ${activityOpen ? "hidden" : ""}`} style={{ backgroundColor: theme.backgroundColor }}>
