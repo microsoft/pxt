@@ -2708,7 +2708,11 @@ button.ui.button.hostmultiplayergame-button {
         input {
             border-radius: 500rem;
             height: 3rem;
-            background-color: transparent;
+
+            .high-contrast &,
+            .hc & {
+                background-color: transparent;
+            }
         }
 
         &:focus-within:after, &:focus:after {
