@@ -1240,14 +1240,11 @@ namespace pxt {
             }
 
             function cleanupCollection<U extends Asset>(collection: AssetCollection<U>) {
-                const inactiveAssets = collection.getSnapshot(asset => !asset.meta.displayName && asset.meta.blockIDs?.some(id => activeBlockIDs.indexOf(id) === -1));
+                const inactiveAssets = collection.getSnapshot(asset => asset.meta.blockIDs?.some(id => activeBlockIDs.indexOf(id) === -1));
                 const toRemove: Asset[] = [];
                 for (const asset of inactiveAssets) {
-                    if (asset.meta.blockIDs.length === 1) toRemove.push(asset)
-                    else {
-                        asset.meta.blockIDs = asset.meta.blockIDs.filter(id => activeBlockIDs.indexOf(id) !== -1);
-                        if (asset.meta.blockIDs.length === 0) toRemove.push(asset);
-                    }
+                    asset.meta.blockIDs = asset.meta.blockIDs.filter(id => activeBlockIDs.indexOf(id) !== -1);
+                    if (!asset.meta.displayName && asset.meta.blockIDs.length === 0) toRemove.push(asset);
                 }
                 for (const asset of toRemove) {
                     collection.removeByID(asset.id);
