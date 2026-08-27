@@ -1,11 +1,10 @@
 import * as React from "react";
 
-import { Button } from "../../../react-common/components/controls/Button";
-import { Dropdown } from "../../../react-common/components/controls/Dropdown";
 import { Input } from "../../../react-common/components/controls/Input";
 import { Modal } from "../../../react-common/components/controls/Modal";
+import { ThemePickerToggle } from "../../../react-common/components/theming/ThemePickerModal";
 import * as simulator from "../simulator";
-import { SimulatorThemePreference } from "../simulatorTheme";
+import { getSimulatorThemePresetId, SimulatorThemePreference } from "../simulatorTheme";
 
 type SimulatorThemeColor =
     | "background-color"
@@ -17,10 +16,12 @@ type SimulatorThemeColor =
 export interface SimulatorThemePickerModalProps {
     presets: pxt.SimulatorThemePreset[];
     initialPreference?: SimulatorThemePreference;
+    onEditorThemeClicked: () => void;
     onSave: (preference: SimulatorThemePreference) => void;
-    onReset: () => void;
     onClose: () => void;
 }
+
+const CUSTOM_PRESET_ID = "custom";
 
 const themeColors: { id: SimulatorThemeColor; label: string }[] = [
     { id: "background-color", label: lf("Console") },
@@ -35,11 +36,16 @@ function copyTheme(theme: pxt.SimulatorTheme): pxt.SimulatorTheme {
 }
 
 export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps) => {
-    const { presets, initialPreference, onSave, onReset, onClose } = props;
-    const initialPreset = presets.find(preset => preset.id === initialPreference?.presetId) || presets[0];
-    const [presetId, setPresetId] = React.useState(initialPreset.id);
+    const { presets, initialPreference, onEditorThemeClicked, onSave, onClose } = props;
+    const storedPresetId = getSimulatorThemePresetId(initialPreference?.theme, presets);
+    const initialPresetId = initialPreference
+        ? storedPresetId
+            ? storedPresetId
+            : CUSTOM_PRESET_ID
+        : presets[0].id;
+    const [presetId, setPresetId] = React.useState(initialPresetId);
     const [theme, setTheme] = React.useState<pxt.SimulatorTheme>(
-        copyTheme(initialPreference?.theme || initialPreset.theme)
+        copyTheme(initialPreference?.theme || presets[0].theme)
     );
     const previewContainer = React.useRef<HTMLDivElement>();
     const currentTheme = React.useRef(theme);
@@ -82,6 +88,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
             ...theme,
             [part]: normalized.toUpperCase(),
         };
+        setPresetId(CUSTOM_PRESET_ID);
         setTheme(nextTheme);
         applyPreviewTheme(nextTheme);
     };
@@ -92,25 +99,29 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         className="simulator-theme-picker-modal"
         onClose={onClose}
         actions={[
-            { label: lf("Cancel"), onClick: onClose },
             { label: lf("Save"), className: "primary", onClick: () => onSave({ presetId, theme }) },
         ]}>
+        <ThemePickerToggle
+            selected="simulator"
+            onEditorThemeClicked={onEditorThemeClicked}
+            onSimulatorThemeClicked={() => {}} />
         <div className="simulator-theme-picker">
             <div className="simulator-theme-preview" role="group" aria-label={lf("Simulator theme preview")}>
                 <div ref={previewContainer} />
             </div>
             <div className="simulator-theme-controls">
                 <label htmlFor="simulator-theme-preset">{lf("Built-in theme")}</label>
-                <Dropdown
+                <select
                     id="simulator-theme-preset"
-                    ariaLabel={lf("Built-in simulator theme")}
-                    selectedId={presetId}
-                    items={presets.map(preset => ({
-                        id: preset.id,
-                        label: pxt.Util.rlf(preset.name),
-                        title: pxt.Util.rlf(preset.name),
-                    }))}
-                    onItemSelected={selectPreset} />
+                    aria-label={lf("Built-in simulator theme")}
+                    className="simulator-theme-preset-select"
+                    value={presetId}
+                    onChange={event => selectPreset(event.target.value)}>
+                    {presetId === CUSTOM_PRESET_ID && <option value={CUSTOM_PRESET_ID} disabled>{lf("Custom")}</option>}
+                    {presets.map(preset => <option key={preset.id} value={preset.id}>
+                        {pxt.Util.rlf(`{id:simulator-theme-name}${preset.name}`)}
+                    </option>)}
+                </select>
                 <div className="simulator-theme-color-list">
                     {themeColors.map(part => <div className="simulator-theme-color" key={part.id}>
                         <span>{part.label}</span>
@@ -131,14 +142,8 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
                                     ? normalized.toUpperCase()
                                     : previousValue;
                             }} />
-                                </div>)}
+                    </div>)}
                 </div>
-                <Button
-                    className="secondary simulator-theme-reset"
-                    label={lf("Use Default")}
-                    title={lf("Use the default simulator theme")}
-                    leftIcon="fas fa-undo"
-                    onClick={onReset} />
             </div>
         </div>
     </Modal>;

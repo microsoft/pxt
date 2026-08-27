@@ -2,6 +2,7 @@ import * as React from "react";
 import * as pkg from "./package";
 import * as srceditor from "./srceditor"
 import * as core from "./core";
+import * as simulatorTheme from "./simulatorTheme";
 
 import Util = pxt.Util;
 
@@ -145,6 +146,13 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private applySimulatorTheme = (presetId: string) => {
+        const preset = pxt.appTarget.simulator?.themePresets?.find(candidate => candidate.id === presetId);
+        if (preset) this.config.theme = { ...preset.theme };
+        else delete this.config.theme;
+        this.save(true);
+    }
+
     private showEditSettingsDialogAsync = async () => {
         pxt.tickEvent("pxtjson.editsettingsdialog", undefined, { interactiveConsent: true });
 
@@ -181,6 +189,9 @@ export class Editor extends srceditor.Editor {
             .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
 
         const pxtJsonOptions = pxt.appTarget.appTheme?.pxtJsonOptions || [];
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets || [];
+        const simulatorThemePresetId = simulatorTheme.getSimulatorThemePresetId(c.theme, simulatorThemePresets);
+        const hasCustomSimulatorTheme = !!c.theme && !simulatorThemePresetId;
 
         return (
             <div className="ui content">
@@ -216,6 +227,20 @@ export class Editor extends srceditor.Editor {
                             resize="vertical"
                         />
                     }
+                    {!!simulatorThemePresets.length && <div className="pxt-json-simulator-theme">
+                        <label htmlFor="projectSimulatorTheme">{lf("Simulator theme")}</label>
+                        <select
+                            id="projectSimulatorTheme"
+                            aria-label={lf("Project simulator theme")}
+                            value={hasCustomSimulatorTheme ? "custom" : simulatorThemePresetId || ""}
+                            onChange={event => this.applySimulatorTheme(event.target.value)}>
+                            <option value="">{lf("Use my simulator theme")}</option>
+                            {hasCustomSimulatorTheme && <option value="custom" disabled>{lf("Custom")}</option>}
+                            {simulatorThemePresets.map(preset => <option key={preset.id} value={preset.id}>
+                                {pxt.Util.rlf(`{id:simulator-theme-name}${preset.name}`)}
+                            </option>)}
+                        </select>
+                    </div>}
                     {userConfigs.map(uc =>
                         <UserConfigCheckbox
                             key={`userconfig-${uc.description}`}

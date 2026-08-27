@@ -32,8 +32,36 @@ export function setSimulatorThemePreference(preference: SimulatorThemePreference
     pxt.storage.setLocal(storageKey(), JSON.stringify(preference));
 }
 
-export function clearSimulatorThemePreference(): void {
-    pxt.storage.removeLocal(storageKey());
+export function getSimulatorThemePresetId(
+    theme: string | pxt.Map<string> | undefined,
+    presets: pxt.SimulatorThemePreset[]
+): string | undefined {
+    if (!theme) return undefined;
+    if (typeof theme === "string") {
+        return presets.find(preset => preset.id.toLowerCase() === theme.toLowerCase())?.id;
+    }
+    return presets.find(preset => themesEqual(preset.theme, theme))?.id;
+}
+
+export function removeSimulatorThemeFromFiles(files: pxt.workspace.ScriptText): pxt.workspace.ScriptText {
+    if (!files?.[pxt.CONFIG_NAME]) return files;
+
+    try {
+        const config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        if (config.theme === undefined) return files;
+        delete config.theme;
+        return {
+            ...files,
+            [pxt.CONFIG_NAME]: pxt.Package.stringifyConfig(config),
+        };
+    } catch {
+        return files;
+    }
+}
+
+function themesEqual(left: pxt.Map<string>, right: pxt.Map<string>): boolean {
+    return Object.keys(left).length === Object.keys(right).length
+        && Object.keys(left).every(key => left[key] === right[key]);
 }
 
 export function addSimulatorThemeToFiles(

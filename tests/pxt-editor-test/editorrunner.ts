@@ -6,7 +6,12 @@ import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
-import { addSimulatorThemeToFiles, resolveSimulatorTheme } from "../../webapp/src/simulatorTheme";
+import {
+    addSimulatorThemeToFiles,
+    getSimulatorThemePresetId,
+    removeSimulatorThemeFromFiles,
+    resolveSimulatorTheme,
+} from "../../webapp/src/simulatorTheme";
 
 pxt.appTarget = {
     versions: {
@@ -35,6 +40,12 @@ const simulatorTheme: pxt.SimulatorTheme = {
 };
 
 describe("simulator themes", () => {
+    const presets: pxt.SimulatorThemePreset[] = [{
+        id: "test",
+        name: "Test",
+        theme: simulatorTheme,
+    }];
+
     it("uses the user theme only when project and device themes are absent", () => {
         chai.expect(resolveSimulatorTheme(undefined, undefined, simulatorTheme, false)).equals(simulatorTheme);
         chai.expect(resolveSimulatorTheme("project", undefined, simulatorTheme, false)).equals("project");
@@ -54,6 +65,33 @@ describe("simulator themes", () => {
 
         chai.expect(JSON.parse(sharedFiles[pxt.CONFIG_NAME]).theme).deep.equals(simulatorTheme);
         chai.expect(JSON.parse(files[pxt.CONFIG_NAME]).theme).equals("project");
+    });
+
+    it("matches project themes to built-in presets", () => {
+        chai.expect(getSimulatorThemePresetId("TEST", presets)).equals("test");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme }, presets)).equals("test");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, "button-fill": "#666666" }, presets)).equals(undefined);
+    });
+
+    it("removes a simulator theme from an editable shared-project copy", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", theme: simulatorTheme }),
+            [pxt.MAIN_TS]: "",
+        };
+        const importedFiles = removeSimulatorThemeFromFiles(files);
+
+        chai.expect(JSON.parse(importedFiles[pxt.CONFIG_NAME]).theme).equals(undefined);
+        chai.expect(JSON.parse(files[pxt.CONFIG_NAME]).theme).deep.equals(simulatorTheme);
+        chai.expect(importedFiles).not.equals(files);
+    });
+
+    it("leaves shared-project files without a simulator theme unchanged", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test" }),
+            [pxt.MAIN_TS]: "",
+        };
+
+        chai.expect(removeSimulatorThemeFromFiles(files)).equals(files);
     });
 });
 

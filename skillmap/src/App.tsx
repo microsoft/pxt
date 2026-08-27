@@ -441,6 +441,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         if (!this.themeManager.isHighContrast(theme.id) && await authClient.getHighContrastPrefAsync()) {
             await authClient.setHighContrastPrefAsync(false);
         }
+        this.props.dispatchCloseSelectTheme();
     }
 
     render() {
@@ -469,7 +470,11 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     onLanguageChanged={this.changeLanguage}
                     onClose={this.props.dispatchCloseSelectLanguage}
                 />}
-                {this.props.showSelectTheme && this.themeManager && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={this.changeTheme} onClose={this.props.dispatchCloseSelectTheme} />}
+                {this.props.showSelectTheme && this.themeManager && <ThemePickerModal
+                    themes={this.themeManager.getAllColorThemes()}
+                    selectedThemeId={this.themeManager.getCurrentColorTheme()?.id}
+                    onThemeClicked={this.changeTheme}
+                    onClose={this.props.dispatchCloseSelectTheme} />}
                 { feedbackEnabled && this.props.showFeedback && <FeedbackModal kind="rating" onClose={this.props.dispatchCloseFeedback} />}
             </div>);
     }
