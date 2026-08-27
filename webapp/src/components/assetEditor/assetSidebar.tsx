@@ -55,7 +55,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             const canEdit = !isGalleryAsset;
             const canCopy = asset?.type != pxt.AssetType.Tilemap && asset?.type != pxt.AssetType.Animation;
             const blocksEditor = getBlocksEditor();
-            blocksEditor?.editor && project.removeInactiveBlockAssets(blocksEditor.editor.getAllBlocks(false).map(block => block.id));
+            if (blocksEditor?.editor) {
+                project.removeInactiveBlockAssets(blocksEditor.editor.getAllBlocks(false).map(block => block.id));
+            }
             const canDelete = !isGalleryAsset && !project.isAssetUsed(asset, pkg.mainEditorPkg().files);
 
             this.setState({ canEdit, canCopy, canDelete });
