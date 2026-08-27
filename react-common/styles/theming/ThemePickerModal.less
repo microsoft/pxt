@@ -3,6 +3,100 @@
     max-width: 60rem;
 }
 
+.simulator-theme-picker-modal>.common-modal {
+    width: 90%;
+    max-width: 64rem;
+}
+
+.simulator-theme-picker {
+    display: grid;
+    grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 1fr);
+    gap: 2rem;
+    align-items: center;
+}
+
+.simulator-theme-preview {
+    min-width: 0;
+
+    .simframe {
+        margin: 0;
+    }
+
+    .simframe > .ui.loader {
+        display: none;
+    }
+}
+
+.simulator-theme-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+
+    .common-dropdown,
+    .common-dropdown > .common-button {
+        width: 100%;
+    }
+
+    .common-dropdown > .common-menu-dropdown-pane {
+        max-height: 18rem;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+
+        .common-dropdown-item {
+            box-sizing: border-box;
+            margin-right: 0;
+        }
+    }
+}
+
+.simulator-theme-color-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.simulator-theme-reset {
+    align-self: flex-start;
+}
+
+.simulator-theme-color {
+    display: grid;
+    grid-template-columns: minmax(7rem, 1fr) 3rem minmax(8rem, 1fr);
+    gap: 0.5rem;
+    align-items: center;
+
+    .common-input-wrapper {
+        min-width: 0;
+    }
+
+    input[type="color"] {
+        width: 3rem;
+        height: 2.25rem;
+        padding: 0.125rem;
+        cursor: pointer;
+        border: 1px solid var(--pxt-neutral-stencil1);
+        background: var(--pxt-neutral-background1);
+    }
+}
+
+@media only screen and (max-width: 50rem) {
+    .simulator-theme-picker {
+        grid-template-columns: 1fr;
+    }
+
+    .simulator-theme-preview {
+        max-width: 28rem;
+        width: 100%;
+        justify-self: center;
+    }
+
+    .simulator-theme-color {
+        grid-template-columns: minmax(5.5rem, 1fr) 3rem minmax(6.5rem, 1fr);
+    }
+}
+
 .theme-picker {
     display: flex;
     flex-direction: row;

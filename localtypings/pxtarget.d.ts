@@ -262,6 +262,21 @@ declare namespace pxt {
         order?: number;     // Sort order
     }
 
+    interface SimulatorTheme extends Map<string> {
+        "background-color": string;
+        "button-stroke": string;
+        "text-color": string;
+        "button-fill": string;
+        "dpad-fill": string;
+        skin?: string;
+    }
+
+    interface SimulatorThemePreset {
+        id: string;
+        name: string;
+        theme: SimulatorTheme;
+    }
+
     interface AppSimulator {
         autoRun?: boolean; // enable autoRun in regular mode, not light mode
         autoRunLight?: boolean; // force autorun in light mode
@@ -286,6 +301,7 @@ declare namespace pxt {
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
+        themePresets?: SimulatorThemePreset[]; // customizable simulator themes offered by the editor
 
         // a map of allowed simulator channel to URL to handle specific control messages
         // DEPRECATED. Use `simx` in targetconfig.json approvedRepoLib instead.

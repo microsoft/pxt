@@ -420,7 +420,7 @@ function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screens
 }
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string, markCurrent = true) {
     checkHeaderSession(h);
 
     const saveId = {}
@@ -433,7 +433,7 @@ export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: S
     h.pubVersions.push({ id: inf.id, type: "snapshot" });
     if (inf.shortid) inf.id = inf.shortid;
     h.pubId = inf.shortid
-    h.pubCurrent = h.saveId === saveId
+    h.pubCurrent = markCurrent && h.saveId === saveId
     h.meta = inf.meta;
     pxt.debug(`published; id /${h.pubId}`)
 
@@ -442,7 +442,7 @@ export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: S
     return inf;
 }
 
-export async function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+export async function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string, markCurrent = true) {
     checkHeaderSession(h);
 
     const saveId = {}
@@ -454,7 +454,7 @@ export async function persistentPublishAsync(h: Header, text: ScriptText, meta: 
     if (!h.pubVersions) h.pubVersions = [];
     h.pubVersions.push({ id: script.id, type: "permalink" });
     h.pubId = shareID
-    h.pubCurrent = h.saveId === saveId
+    h.pubCurrent = markCurrent && h.saveId === saveId
     h.pubPermalink = shareID;
     h.meta = script.meta;
     pxt.debug(`published; id /${h.pubId}`)

@@ -284,6 +284,11 @@ namespace pxsim {
         color: string;
     }
 
+    export interface SetSimulatorThemeMessage extends SimulatorMessage {
+        type: "setsimtheme";
+        theme: string | pxt.Map<string>;
+    }
+
     export interface SetMuteButtonStateMessage extends SimulatorMessage {
         type: "setmutebuttonstate";
         state: "muted" | "unmuted" | "disabled";

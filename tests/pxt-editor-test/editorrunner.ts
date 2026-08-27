@@ -6,6 +6,7 @@ import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
+import { addSimulatorThemeToFiles, resolveSimulatorTheme } from "../../webapp/src/simulatorTheme";
 
 pxt.appTarget = {
     versions: {
@@ -24,6 +25,37 @@ function patchText(patch: unknown, a: string) {
 }
 
 const filename = "main.ts";
+
+const simulatorTheme: pxt.SimulatorTheme = {
+    "background-color": "#111111",
+    "button-stroke": "#222222",
+    "text-color": "#333333",
+    "button-fill": "#444444",
+    "dpad-fill": "#555555",
+};
+
+describe("simulator themes", () => {
+    it("uses the user theme only when project and device themes are absent", () => {
+        chai.expect(resolveSimulatorTheme(undefined, undefined, simulatorTheme, false)).equals(simulatorTheme);
+        chai.expect(resolveSimulatorTheme("project", undefined, simulatorTheme, false)).equals("project");
+        chai.expect(resolveSimulatorTheme(undefined, "device", simulatorTheme, false)).equals("device");
+    });
+
+    it("lets multiplayer override all other simulator themes", () => {
+        chai.expect(resolveSimulatorTheme("project", "device", simulatorTheme, true)).equals(undefined);
+    });
+
+    it("adds a simulator theme to a copied share config", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", theme: "project" }),
+            [pxt.MAIN_TS]: "",
+        };
+        const sharedFiles = addSimulatorThemeToFiles(files, simulatorTheme);
+
+        chai.expect(JSON.parse(sharedFiles[pxt.CONFIG_NAME]).theme).deep.equals(simulatorTheme);
+        chai.expect(JSON.parse(files[pxt.CONFIG_NAME]).theme).equals("project");
+    });
+});
 
 const versions = [
     "Here is some text",

@@ -7,6 +7,7 @@ import * as data from "./data";
 import U = pxt.U
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Milestones } from "./constants";
+import * as simulatorTheme from "./simulatorTheme";
 
 
 
@@ -29,6 +30,7 @@ export const SLOW_TRACE_INTERVAL = 500;
 export let driver: pxsim.SimulatorDriver;
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
+let previewSimulatorTheme: pxt.SimulatorTheme;
 let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 
@@ -344,7 +346,15 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         }
     }
 
-    const theme = pkg.config.theme || (pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected() && pxt.packetio.deviceVariant());
+    const deviceTheme = pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected()
+        ? pxt.packetio.deviceVariant()
+        : undefined;
+    const theme = previewSimulatorTheme || simulatorTheme.resolveSimulatorTheme(
+            pkg.config.theme,
+            deviceTheme,
+            simulatorTheme.getSimulatorThemePreference()?.theme,
+            !!playerNumber
+        );
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -411,6 +421,20 @@ export function setTraceInterval(intervalMs: number) {
 export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
     driver.postMessage(message);
+}
+
+export function setPreviewSimulatorTheme(theme: pxt.SimulatorTheme) {
+    previewSimulatorTheme = theme;
+    if (!driver) return;
+    const message: pxsim.SetSimulatorThemeMessage = {
+        type: "setsimtheme",
+        theme,
+    };
+    driver.postMessage(message);
+}
+
+export function clearPreviewSimulatorTheme() {
+    previewSimulatorTheme = undefined;
 }
 
 export function dbgPauseResume() {

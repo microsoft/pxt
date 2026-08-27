@@ -4,6 +4,7 @@ import { ThemeCard } from "./ThemeCard";
 export interface ThemePickerModalProps {
     themes: pxt.ColorThemeInfo[];
     onThemeClicked(them: pxt.ColorThemeInfo): void;
+    onSimulatorThemeClicked?: () => void;
     onClose(): void;
 }
 export const ThemePickerModal = (props: ThemePickerModalProps) => {
@@ -13,6 +14,11 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
             title={lf("Choose a Theme")}
             onClose={props.onClose}
             className="theme-picker-modal"
+            actions={props.onSimulatorThemeClicked ? [{
+                label: lf("Simulator Theme"),
+                leftIcon: "fas fa-gamepad",
+                onClick: props.onSimulatorThemeClicked,
+            }] : undefined}
         >
             <div
                 className="theme-picker"

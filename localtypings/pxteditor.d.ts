@@ -830,6 +830,7 @@ declare namespace pxt.editor {
         areaMenuOpen?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
+        simulatorThemePickerOpen?: boolean;
         errorListNote?: string;
     }
 
@@ -991,8 +992,8 @@ declare namespace pxt.editor {
         setEditorOffset(): void;
 
         anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<ShareData>;
-        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
-        publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<ShareData>;
+        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string, simulatorTheme?: pxt.SimulatorTheme): Promise<string>;
+        publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean, simulatorTheme?: pxt.SimulatorTheme): Promise<ShareData>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
