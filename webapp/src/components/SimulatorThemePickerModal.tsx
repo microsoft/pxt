@@ -42,6 +42,7 @@ const WebappSimulatorThemePreview = (props: WebappSimulatorThemePreviewProps) =>
         return () => {
             frame?.removeEventListener("load", onLoad);
             simulator.driver?.unloanSimulator();
+            simulator.clearPreviewSimulatorTheme();
         };
     }, []);
 
