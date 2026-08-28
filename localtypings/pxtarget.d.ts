@@ -1186,6 +1186,7 @@ declare namespace ts.pxtc {
         usedBuiltinParts?: string[];
         allParts?: string[];
         breakpoints?: number[];
+        theme?: string | pxt.Map<string>;
     }
 
     interface UpgradePolicy {
