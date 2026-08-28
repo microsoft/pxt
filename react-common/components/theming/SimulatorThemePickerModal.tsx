@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { Input } from "../controls/Input";
 import { Modal } from "../controls/Modal";
+import { getSimulatorThemeForSkin } from "./simulatorThemeDefaults";
 import { ThemePickerToggle } from "./ThemePickerModal";
 
 type SimulatorThemeColor =
@@ -13,6 +14,7 @@ type SimulatorThemeColor =
 
 export interface SimulatorThemePickerModalProps {
     presets: pxt.SimulatorThemePreset[];
+    skins?: pxt.SimulatorThemeSkin[];
     initialPreference?: pxt.auth.SimulatorThemePreference;
     defaultTheme?: pxt.SimulatorTheme;
     accountTheme?: pxt.SimulatorTheme;
@@ -26,6 +28,7 @@ export interface SimulatorThemePickerModalProps {
 
 const CUSTOM_PRESET_ID = "custom";
 const ACCOUNT_PRESET_ID = "account";
+const DEFAULT_SKIN_ID = "default";
 
 function getThemeColors(): { id: SimulatorThemeColor; label: string }[] {
     return [
@@ -49,9 +52,22 @@ function getPresetId(theme: pxt.SimulatorTheme, presets: pxt.SimulatorThemePrese
     })?.id;
 }
 
+function getVisibleSkinId(
+    theme: pxt.SimulatorTheme,
+    presets: pxt.SimulatorThemePreset[],
+    skins: pxt.SimulatorThemeSkin[] | undefined
+): string {
+    if (!theme.skin) return DEFAULT_SKIN_ID;
+    const isSelectable = skins?.some(skin => skin.id === theme.skin);
+    return !isSelectable && getPresetId(theme, presets)
+        ? DEFAULT_SKIN_ID
+        : theme.skin;
+}
+
 export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps) => {
     const {
         presets,
+        skins,
         initialPreference,
         defaultTheme,
         accountTheme,
@@ -77,6 +93,8 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
             ? defaultTheme || initialPreference?.theme || savedPreset?.theme
             : savedPreset?.theme || initialPreference?.theme || accountTheme || presets[0].theme)
     );
+    const skinId = getVisibleSkinId(theme, presets, skins);
+    const skinIsKnown = skinId === DEFAULT_SKIN_ID || skins?.some(skin => skin.id === skinId);
 
     const selectPreset = (id: string) => {
         if (id === ACCOUNT_PRESET_ID && onUseAccountTheme) {
@@ -99,9 +117,22 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
             ...theme,
             [part]: normalized.toUpperCase(),
         };
+        if (skinId === DEFAULT_SKIN_ID) delete nextTheme.skin;
         setPresetId(CUSTOM_PRESET_ID);
         setTheme(nextTheme);
         onThemeChanged?.({ presetId: CUSTOM_PRESET_ID, theme: nextTheme });
+    };
+
+    const selectSkin = (id: string) => {
+        const nextTheme = getSimulatorThemeForSkin(
+            theme,
+            id === DEFAULT_SKIN_ID ? undefined : id,
+            presets
+        );
+        const nextPresetId = getPresetId(nextTheme, presets) || CUSTOM_PRESET_ID;
+        setPresetId(nextPresetId);
+        setTheme(nextTheme);
+        onThemeChanged?.({ presetId: nextPresetId, theme: nextTheme });
     };
 
     return <Modal
@@ -126,21 +157,38 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         <div className="simulator-theme-picker">
             {renderPreview(theme)}
             <div className="simulator-theme-controls">
-                <label htmlFor="simulator-theme-preset">
-                    {onUseAccountTheme ? lf("Theme") : lf("Built-in theme")}
-                </label>
-                <select
-                    id="simulator-theme-preset"
-                    aria-label={onUseAccountTheme ? lf("Project simulator theme") : lf("Built-in simulator theme")}
-                    className="simulator-theme-preset-select"
-                    value={presetId}
-                    onChange={event => selectPreset(event.target.value)}>
-                    {onUseAccountTheme && <option value={ACCOUNT_PRESET_ID}>{lf("Use account theme")}</option>}
-                    {presetId === CUSTOM_PRESET_ID && <option value={CUSTOM_PRESET_ID} disabled>{lf("Custom")}</option>}
-                    {presets.map(preset => <option key={preset.id} value={preset.id}>
-                        {pxt.Util.rlf(`{id:simulator-theme-name}${preset.name}`)}
-                    </option>)}
-                </select>
+                <div className="simulator-theme-select-field">
+                    <label htmlFor="simulator-theme-preset">
+                        {onUseAccountTheme ? lf("Theme") : lf("Built-in theme")}
+                    </label>
+                    <select
+                        id="simulator-theme-preset"
+                        aria-label={onUseAccountTheme ? lf("Project simulator theme") : lf("Built-in simulator theme")}
+                        className="simulator-theme-select"
+                        value={presetId}
+                        onChange={event => selectPreset(event.target.value)}>
+                        {onUseAccountTheme && <option value={ACCOUNT_PRESET_ID}>{lf("Use account theme")}</option>}
+                        {presetId === CUSTOM_PRESET_ID && <option value={CUSTOM_PRESET_ID} disabled>{lf("Custom")}</option>}
+                        {presets.map(preset => <option key={preset.id} value={preset.id}>
+                            {pxt.Util.rlf(`{id:simulator-theme-name}${preset.name}`)}
+                        </option>)}
+                    </select>
+                </div>
+                {!!skins?.length && <div className="simulator-theme-select-field">
+                    <label htmlFor="simulator-theme-skin">{lf("Skin")}</label>
+                    <select
+                        id="simulator-theme-skin"
+                        aria-label={lf("Simulator skin")}
+                        className="simulator-theme-select"
+                        value={skinId}
+                        onChange={event => selectSkin(event.target.value)}>
+                        <option value={DEFAULT_SKIN_ID}>{lf("Default")}</option>
+                        {!skinIsKnown && <option value={skinId} disabled>{lf("Custom ({0})", skinId)}</option>}
+                        {skins.map(skin => <option key={skin.id} value={skin.id}>
+                            {pxt.Util.rlf(`{id:simulator-skin-name}${skin.name}`)}
+                        </option>)}
+                    </select>
+                </div>}
                 <div className="simulator-theme-color-list">
                     {themeColors.map(part => <div className="simulator-theme-color" key={part.id}>
                         <span>{part.label}</span>

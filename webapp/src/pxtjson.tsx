@@ -309,6 +309,7 @@ export class Editor extends srceditor.Editor {
             </div>
             {this.simulatorThemePickerOpen && !!accountSimulatorTheme && <SimulatorThemePickerModal
                 presets={simulatorThemePresets}
+                skins={pxt.appTarget.simulator?.themeSkins}
                 initialPreference={this.getProjectSimulatorThemePreference(simulatorThemePresets, accountSimulatorTheme)}
                 accountTheme={accountSimulatorTheme}
                 onUseAccountTheme={this.useAccountSimulatorTheme}

@@ -5921,6 +5921,7 @@ export class ProjectView
                     onClose={this.hideThemePicker} />}
                 {this.state.simulatorThemePickerOpen && <SimulatorThemePickerModal
                     presets={pxt.appTarget.simulator.themePresets}
+                    skins={pxt.appTarget.simulator.themeSkins}
                     initialPreference={this.themePickerSimulatorThemePreference}
                     defaultTheme={getDefaultSimulatorThemePreference(
                         pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId],

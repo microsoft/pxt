@@ -40,6 +40,20 @@ export function getDefaultSimulatorThemePreference(
     };
 }
 
+export function getSimulatorThemeForSkin(
+    theme: pxt.SimulatorTheme,
+    skinId: string | undefined,
+    presets: pxt.SimulatorThemePreset[] | undefined
+): pxt.SimulatorTheme {
+    const skinPreset = skinId
+        ? presets?.find(preset => preset.theme.skin === skinId)
+        : undefined;
+    const nextTheme = { ...(skinPreset?.theme || theme) };
+    if (skinId) nextTheme.skin = skinId;
+    else delete nextTheme.skin;
+    return nextTheme;
+}
+
 function simulatorThemesEqual(left: pxt.SimulatorTheme, right: pxt.SimulatorTheme): boolean {
     const leftKeys = Object.keys(left);
     const rightKeys = Object.keys(right);

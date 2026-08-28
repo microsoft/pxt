@@ -12,7 +12,10 @@ import {
     removeSimulatorThemeFromFiles,
     resolveSimulatorTheme,
 } from "../../webapp/src/simulatorTheme";
-import { getSimulatorThemePreferenceForColorThemeChange } from "../../react-common/components/theming/simulatorThemeDefaults";
+import {
+    getSimulatorThemeForSkin,
+    getSimulatorThemePreferenceForColorThemeChange,
+} from "../../react-common/components/theming/simulatorThemeDefaults";
 
 pxt.appTarget = {
     versions: {
@@ -64,6 +67,11 @@ describe("simulator themes", () => {
             id: "teal",
             name: "Teal",
             theme: { ...simulatorTheme, skin: "teal" },
+        },
+        {
+            id: "retro",
+            name: "Retro",
+            theme: { ...simulatorTheme, "background-color": "#FCF7E4", skin: "retro" },
         },
     ];
     const lightTheme = { id: "light", name: "Light", colors: {} };
@@ -240,6 +248,24 @@ describe("simulator themes", () => {
             darkTheme,
             presets
         )).equals(defaultPreference);
+    });
+
+    it("uses a skin's canonical preset theme", () => {
+        chai.expect(getSimulatorThemeForSkin(simulatorTheme, "retro", presets))
+            .deep.equals(presets[4].theme);
+    });
+
+    it("removes a skin without changing its colors", () => {
+        const expectedTheme = { ...presets[4].theme };
+        delete expectedTheme.skin;
+
+        chai.expect(getSimulatorThemeForSkin(presets[4].theme, undefined, presets))
+            .deep.equals(expectedTheme);
+    });
+
+    it("preserves colors for a target-specific skin without a preset", () => {
+        chai.expect(getSimulatorThemeForSkin(simulatorTheme, "target-skin", presets))
+            .deep.equals({ ...simulatorTheme, skin: "target-skin" });
     });
 
     it("removes a simulator theme from an editable shared-project copy", () => {

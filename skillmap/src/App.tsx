@@ -610,6 +610,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     onClose={this.closeThemePicker} />}
                 {this.props.showSelectTheme && this.state.simulatorThemePickerOpen && !!simulatorThemePresets.length && <SimulatorThemePickerModal
                     presets={simulatorThemePresets}
+                    skins={pxt.appTarget.simulator?.themeSkins}
                     initialPreference={this.state.simulatorThemePreference}
                     defaultTheme={getDefaultSimulatorThemePreference(
                         selectedColorTheme,
