@@ -2523,6 +2523,7 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
             id: themeData.id,
             name: themeData.name,
             weight: themeData.weight,
+            defaultSimulatorTheme: themeData.defaultSimulatorTheme,
             monacoBaseTheme: themeData.monacoBaseTheme,
             colors: themeData.colors
         };

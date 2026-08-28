@@ -89,6 +89,10 @@ import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import {
+    getDefaultSimulatorThemePreference,
+    getSimulatorThemePreferenceForColorThemeChange,
+} from "../../react-common/components/theming/simulatorThemeDefaults";
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import { ariaAnnounce } from "./util";
@@ -167,6 +171,7 @@ export class ProjectView
 
     private runToken: pxt.Util.CancellationToken;
     private simulatorWasRunningBeforeThemePicker: boolean;
+    private themePickerInitialColorThemeId: string;
     private themePickerColorThemeId: string;
     private themePickerSimulatorThemePreference: pxt.auth.SimulatorThemePreference;
     private updatingEditorFile: boolean;
@@ -248,6 +253,7 @@ export class ProjectView
         this.showSimulatorThemePicker = this.showSimulatorThemePicker.bind(this);
         this.showEditorThemePicker = this.showEditorThemePicker.bind(this);
         this.hideSimulatorThemePicker = this.hideSimulatorThemePicker.bind(this);
+        this.previewColorTheme = this.previewColorTheme.bind(this);
         this.saveEditorTheme = this.saveEditorTheme.bind(this);
         this.saveSimulatorTheme = this.saveSimulatorTheme.bind(this);
         this.onThemeChanged = this.onThemeChanged.bind(this);
@@ -4755,19 +4761,18 @@ export class ProjectView
 
     showThemePicker() {
         const simulatorPreference = simulatorThemePreference.getSimulatorThemePreference();
-        const defaultSimulatorPreset = pxt.appTarget.simulator?.themePresets?.[0];
-        this.themePickerColorThemeId = this.themeManager.getCurrentColorTheme()?.id;
+        const currentColorTheme = this.themeManager.getCurrentColorTheme();
+        this.themePickerInitialColorThemeId = currentColorTheme?.id;
+        this.themePickerColorThemeId = currentColorTheme?.id;
         this.themePickerSimulatorThemePreference = simulatorPreference
             ? { presetId: simulatorPreference.presetId, theme: { ...simulatorPreference.theme } }
-            : defaultSimulatorPreset
-                ? { presetId: defaultSimulatorPreset.id, theme: { ...defaultSimulatorPreset.theme } }
-                : undefined;
+            : getDefaultSimulatorThemePreference(currentColorTheme, pxt.appTarget.simulator?.themePresets);
         this.simulatorWasRunningBeforeThemePicker = undefined;
         this.setState({ themePickerOpen: true, simulatorThemePickerOpen: false });
     }
 
     hideThemePicker() {
-        this.resetThemePickerDrafts();
+        this.resetThemePickerDrafts(true);
         this.setState({ themePickerOpen: false });
     }
 
@@ -4786,12 +4791,12 @@ export class ProjectView
     }
 
     showEditorThemePicker() {
-        this.closeSimulatorThemePicker(true, false);
+        this.closeSimulatorThemePicker(true, false, false);
     }
 
-    closeSimulatorThemePicker(showEditorThemePicker: boolean, resetDrafts = true) {
+    closeSimulatorThemePicker(showEditorThemePicker: boolean, resetDrafts = true, restoreColorTheme = true) {
         const shouldRestartSimulator = this.simulatorWasRunningBeforeThemePicker;
-        if (resetDrafts) this.resetThemePickerDrafts();
+        if (resetDrafts) this.resetThemePickerDrafts(restoreColorTheme);
         simulator.clearPreviewSimulatorTheme();
         this.setState({
             simulatorThemePickerOpen: false,
@@ -4803,7 +4808,13 @@ export class ProjectView
         });
     }
 
-    private resetThemePickerDrafts() {
+    private resetThemePickerDrafts(restoreColorTheme: boolean) {
+        if (restoreColorTheme
+            && this.themePickerInitialColorThemeId
+            && this.themeManager.getCurrentColorTheme()?.id !== this.themePickerInitialColorThemeId) {
+            this.themeManager.switchColorTheme(this.themePickerInitialColorThemeId);
+        }
+        this.themePickerInitialColorThemeId = undefined;
         this.themePickerColorThemeId = undefined;
         this.themePickerSimulatorThemePreference = undefined;
         this.simulatorWasRunningBeforeThemePicker = undefined;
@@ -4813,17 +4824,30 @@ export class ProjectView
         const shouldRestartSimulator = !this.state.simulatorThemePickerOpen
             && this.simulatorWasRunningBeforeThemePicker;
         if (this.themePickerColorThemeId) {
-            this.setColorThemeById(this.themePickerColorThemeId, true);
+            this.setColorThemeById(this.themePickerColorThemeId, true, false);
         }
         if (this.themePickerSimulatorThemePreference) {
             await simulatorThemePreference.setSimulatorThemePreference(this.themePickerSimulatorThemePreference);
         }
 
-        if (this.state.simulatorThemePickerOpen) this.hideSimulatorThemePicker();
+        if (this.state.simulatorThemePickerOpen) this.closeSimulatorThemePicker(false, true, false);
         else {
-            this.hideThemePicker();
+            this.resetThemePickerDrafts(false);
+            this.setState({ themePickerOpen: false });
             if (shouldRestartSimulator) this.restartSimulator();
         }
+    }
+
+    previewColorTheme(theme: pxt.ColorThemeInfo) {
+        const previousColorTheme = pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId];
+        this.themePickerSimulatorThemePreference = getSimulatorThemePreferenceForColorThemeChange(
+            this.themePickerSimulatorThemePreference,
+            previousColorTheme,
+            theme,
+            pxt.appTarget.simulator?.themePresets
+        );
+        this.themePickerColorThemeId = theme.id;
+        this.themeManager.switchColorTheme(theme.id);
     }
 
     async saveEditorTheme(theme: pxt.ColorThemeInfo) {
@@ -5497,8 +5521,10 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    setColorThemeById(colorThemeId: string, savePreference: boolean) {
-        if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
+    setColorThemeById(colorThemeId: string, savePreference: boolean, updateSimulatorDefault = true) {
+        const previousColorTheme = this.themeManager.getCurrentColorTheme();
+        if (previousColorTheme?.id === colorThemeId) {
+            if (savePreference) this.updateThemePreference();
             return;
         }
 
@@ -5511,6 +5537,18 @@ export class ProjectView
 
         if (savePreference) {
             this.updateThemePreference();
+            if (updateSimulatorDefault) {
+                const currentPreference = simulatorThemePreference.getSimulatorThemePreference();
+                const nextPreference = getSimulatorThemePreferenceForColorThemeChange(
+                    currentPreference,
+                    previousColorTheme,
+                    this.themeManager.getCurrentColorTheme(),
+                    pxt.appTarget.simulator?.themePresets
+                );
+                if (nextPreference && nextPreference !== currentPreference) {
+                    this.setSimulatorThemePreference(nextPreference);
+                }
+            }
         }
     }
 
@@ -5867,7 +5905,7 @@ export class ProjectView
                 {this.state.themePickerOpen && <ThemePickerModal
                     themes={this.themeManager.getAllColorThemes()}
                     selectedThemeId={this.themePickerColorThemeId}
-                    onThemeSelected={theme => this.themePickerColorThemeId = theme.id}
+                    onThemeSelected={this.previewColorTheme}
                     onThemeClicked={this.saveEditorTheme}
                     onSimulatorThemeClicked={pxt.appTarget.simulator?.themePresets?.length
                         ? this.showSimulatorThemePicker
@@ -5876,6 +5914,10 @@ export class ProjectView
                 {this.state.simulatorThemePickerOpen && <SimulatorThemePickerModal
                     presets={pxt.appTarget.simulator.themePresets}
                     initialPreference={this.themePickerSimulatorThemePreference}
+                    defaultTheme={getDefaultSimulatorThemePreference(
+                        pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId],
+                        pxt.appTarget.simulator.themePresets
+                    )?.theme}
                     onThemeChanged={preference => this.themePickerSimulatorThemePreference = {
                         presetId: preference.presetId,
                         theme: { ...preference.theme },

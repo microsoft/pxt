@@ -14,6 +14,7 @@ type SimulatorThemeColor =
 export interface SimulatorThemePickerModalProps {
     presets: pxt.SimulatorThemePreset[];
     initialPreference?: pxt.auth.SimulatorThemePreference;
+    defaultTheme?: pxt.SimulatorTheme;
     accountTheme?: pxt.SimulatorTheme;
     renderPreview: (theme: pxt.SimulatorTheme) => React.ReactNode;
     onEditorThemeClicked?: () => void;
@@ -52,6 +53,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
     const {
         presets,
         initialPreference,
+        defaultTheme,
         accountTheme,
         renderPreview,
         onEditorThemeClicked,
@@ -71,7 +73,9 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
             : presets[0].id;
     const [presetId, setPresetId] = React.useState(initialPresetId);
     const [theme, setTheme] = React.useState<pxt.SimulatorTheme>(
-        copyTheme(savedPreset?.theme || initialPreference?.theme || accountTheme || presets[0].theme)
+        copyTheme(initialPresetId === "default"
+            ? defaultTheme || initialPreference?.theme || savedPreset?.theme
+            : savedPreset?.theme || initialPreference?.theme || accountTheme || presets[0].theme)
     );
 
     const selectPreset = (id: string) => {
@@ -82,7 +86,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         }
         const preset = presets.find(candidate => candidate.id === id);
         if (!preset) return;
-        const nextTheme = copyTheme(preset.theme);
+        const nextTheme = copyTheme(id === "default" ? defaultTheme || preset.theme : preset.theme);
         setPresetId(id);
         setTheme(nextTheme);
         onThemeChanged?.({ presetId: id, theme: nextTheme });

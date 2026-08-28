@@ -1,10 +1,10 @@
-.theme-picker-modal>.common-modal {
-    width: 80%;
-    max-width: 60rem;
-}
-
 .theme-picker-modal,
 .simulator-theme-picker-modal {
+    >.common-modal {
+        width: 90%;
+        max-width: 64rem;
+    }
+
     .common-modal-header {
         padding-left: 0;
 
@@ -14,6 +14,29 @@
             min-width: 0;
             margin-left: 4rem;
         }
+    }
+
+    .common-modal-footer {
+        grid-template-columns: 1fr auto;
+
+        button:only-child {
+            justify-self: end;
+            min-width: 8rem;
+        }
+    }
+}
+
+.theme-picker-modal>.common-modal,
+.simulator-theme-picker-modal:not(.standalone)>.common-modal {
+    height: 90%;
+    max-height: 48rem;
+    display: flex;
+    flex-direction: column;
+
+    .common-modal-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
     }
 }
 
@@ -41,11 +64,6 @@
         overflow: hidden;
         text-overflow: ellipsis;
     }
-}
-
-.simulator-theme-picker-modal>.common-modal {
-    width: 90%;
-    max-width: 64rem;
 }
 
 .simulator-theme-picker-modal.standalone .common-modal-header {

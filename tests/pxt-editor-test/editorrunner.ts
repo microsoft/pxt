@@ -12,6 +12,7 @@ import {
     removeSimulatorThemeFromFiles,
     resolveSimulatorTheme,
 } from "../../webapp/src/simulatorTheme";
+import { getSimulatorThemePreferenceForColorThemeChange } from "../../react-common/components/theming/simulatorThemeDefaults";
 
 pxt.appTarget = {
     versions: {
@@ -43,11 +44,45 @@ const simulatorTheme: pxt.SimulatorTheme = {
 };
 
 describe("simulator themes", () => {
-    const presets: pxt.SimulatorThemePreset[] = [{
-        id: "test",
-        name: "Test",
-        theme: simulatorTheme,
-    }];
+    const presets: pxt.SimulatorThemePreset[] = [
+        {
+            id: "default",
+            name: "Default",
+            theme: simulatorTheme,
+        },
+        {
+            id: "purple",
+            name: "Purple",
+            theme: { ...simulatorTheme, "background-color": "#660066" },
+        },
+        {
+            id: "red",
+            name: "Red",
+            theme: { ...simulatorTheme, "background-color": "#660000" },
+        },
+        {
+            id: "teal",
+            name: "Teal",
+            theme: { ...simulatorTheme, skin: "teal" },
+        },
+    ];
+    const lightTheme = { id: "light", name: "Light", colors: {} };
+    const darkTheme = { id: "dark", name: "Dark", colors: {} };
+    const tokyoNightTheme = {
+        id: "tokyo-night",
+        name: "Tokyo Night",
+        defaultSimulatorTheme: "purple",
+        colors: {},
+    };
+    const inlineSimulatorTheme = {
+        id: "inline",
+        name: "Inline",
+        defaultSimulatorTheme: {
+            "background-color": "#123456",
+            skin: "inline",
+        },
+        colors: {},
+    };
 
     it("loads shared and target translations for skillmaps", async () => {
         const requestedUrls: string[] = [];
@@ -102,9 +137,109 @@ describe("simulator themes", () => {
     });
 
     it("matches project themes to built-in presets", () => {
-        chai.expect(getSimulatorThemePresetId("TEST", presets)).equals("test");
-        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme }, presets)).equals("test");
+        chai.expect(getSimulatorThemePresetId("DEFAULT", presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme }, presets)).equals("default");
         chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, "button-fill": "#666666" }, presets)).equals(undefined);
+    });
+
+    it("uses a color theme's simulator default when no preference is set", () => {
+        const result = getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        );
+
+        chai.expect(result).deep.equals({ presetId: "default", theme: presets[1].theme });
+    });
+
+    it("merges an inline color theme simulator default over Default", () => {
+        const result = getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            inlineSimulatorTheme,
+            presets
+        );
+
+        chai.expect(result).deep.equals({
+            presetId: "default",
+            theme: {
+                ...presets[0].theme,
+                "background-color": "#123456",
+                skin: "inline",
+            },
+        });
+    });
+
+    it("moves between color theme simulator defaults", () => {
+        const defaultPreference = { presetId: "default", theme: presets[0].theme };
+        const purplePreference = getSimulatorThemePreferenceForColorThemeChange(
+            defaultPreference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        );
+        const restoredPreference = getSimulatorThemePreferenceForColorThemeChange(
+            purplePreference,
+            tokyoNightTheme,
+            lightTheme,
+            presets
+        );
+
+        chai.expect(purplePreference).deep.equals({ presetId: "default", theme: presets[1].theme });
+        chai.expect(restoredPreference).deep.equals(defaultPreference);
+    });
+
+    it("preserves user-selected simulator themes when the color theme changes", () => {
+        const redPreference = { presetId: "red", theme: presets[2].theme };
+        const purplePreference = { presetId: "purple", theme: presets[1].theme };
+        const tealPreference = { presetId: "teal", theme: presets[3].theme };
+        const customPreference = { presetId: "custom", theme: { ...simulatorTheme } };
+
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            redPreference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        )).equals(redPreference);
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            purplePreference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        )).equals(purplePreference);
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            tealPreference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        )).equals(tealPreference);
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            customPreference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        )).equals(customPreference);
+    });
+
+    it("does not create a simulator preference between unpinned color themes", () => {
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            darkTheme,
+            presets
+        )).equals(undefined);
+    });
+
+    it("keeps the existing default between unpinned color themes", () => {
+        const defaultPreference = { presetId: "default", theme: presets[0].theme };
+
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            defaultPreference,
+            lightTheme,
+            darkTheme,
+            presets
+        )).equals(defaultPreference);
     });
 
     it("removes a simulator theme from an editable shared-project copy", () => {

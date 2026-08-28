@@ -657,6 +657,7 @@ declare namespace pxt {
         id: string; // Unique identifier
         name: string; // Human-readable name
         weight?: number; // Lower weights appear first in theme list, no value = go to end
+        defaultSimulatorTheme?: string | Partial<SimulatorTheme>; // Simulator preset id or partial inline theme used by Default
         overrideCss?: string; // Special css to apply for the theme
         monacoBaseTheme?: string; // Theme for monaco editor, see https://code.visualstudio.com/docs/getstarted/themes
         colors: { [key: string]: string }; // Values for theme variables
