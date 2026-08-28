@@ -4,7 +4,7 @@
 
 August 31st, 2026 by [Jaqster](https://github.com/jaqster)
 
-Two updates in one year?!  Well, what was supposed to be a simple default theme change turned into  a full version update!
+Two updates in one year?! Well, what was supposed to be a simple default theme change turned into  a full version update!
 
 **[Continue reading this blog post](/blog/arcade/update-aug-2026)**
 

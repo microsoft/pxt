@@ -2,7 +2,7 @@
 
 **Posted on August 31st, 2026 by [Jaqster](https://github.com/jaqster)**
 
-Two updates in one year?!  Well, what was supposed to be a simple default theme change turned into a "might as well cherry-pick this, and this..." and here we are at a full version update!
+Two updates in one year?! Well, what was supposed to be a simple default theme change turned into a "might as well cherry-pick this, and this..." and here we are at a full version update!
 
 We’ve got some nice things on the menu for this late summer release –
 
