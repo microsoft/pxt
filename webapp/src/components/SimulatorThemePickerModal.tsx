@@ -36,11 +36,20 @@ const WebappSimulatorThemePreview = (props: WebappSimulatorThemePreviewProps) =>
         container.appendChild(loanedSimulator);
         const frame = loanedSimulator.querySelector("iframe");
         const onLoad = () => simulator.setPreviewSimulatorTheme(currentTheme.current);
+        const onMessage = (event: MessageEvent) => {
+            if (event.source === frame?.contentWindow
+                && event.data?.type === "status"
+                && event.data?.state === "running") {
+                simulator.setPreviewSimulatorTheme(currentTheme.current);
+            }
+        };
         frame?.addEventListener("load", onLoad);
+        window.addEventListener("message", onMessage);
         simulator.setPreviewSimulatorTheme(currentTheme.current);
 
         return () => {
             frame?.removeEventListener("load", onLoad);
+            window.removeEventListener("message", onMessage);
             simulator.driver?.unloanSimulator();
             simulator.clearPreviewSimulatorTheme();
         };

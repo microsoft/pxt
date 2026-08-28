@@ -4781,7 +4781,15 @@ export class ProjectView
         if (this.simulatorWasRunningBeforeThemePicker === undefined) {
             this.simulatorWasRunningBeforeThemePicker = this.state.simState !== SimState.Stopped;
         }
-        const preference = this.themePickerSimulatorThemePreference;
+        const defaultPreference = getDefaultSimulatorThemePreference(
+            pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId],
+            pxt.appTarget.simulator?.themePresets
+        );
+        const preference = this.themePickerSimulatorThemePreference?.presetId === defaultPreference?.presetId
+            ? defaultPreference
+            : this.themePickerSimulatorThemePreference || defaultPreference;
+        if (!preference) return;
+        this.themePickerSimulatorThemePreference = preference;
         simulator.setPreviewSimulatorTheme(preference.theme);
         this.setState({ themePickerOpen: false, simulatorThemePickerOpen: true }, () => this.startSimulator());
     }
