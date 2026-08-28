@@ -3,14 +3,42 @@
     max-width: 60rem;
 }
 
+.theme-picker-modal,
+.simulator-theme-picker-modal {
+    .common-modal-header {
+        padding-left: 0;
+
+        .common-modal-right-menu {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+            margin-left: 4rem;
+        }
+    }
+}
+
 .theme-picker-toggle {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 1rem;
+    width: 20rem;
+    max-width: 40vw;
 
     .common-editor-toggle-outer {
-        width: 22rem;
-        max-width: 100%;
+        width: 100%;
+    }
+
+    .common-editor-toggle {
+        overflow: hidden;
+    }
+
+    .common-editor-toggle .common-editor-toggle-item > .common-button {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .common-button-flex,
+    .common-button-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }
 
@@ -91,6 +119,31 @@
 }
 
 @media only screen and (max-width: 50rem) {
+    .theme-picker-modal>.common-modal {
+        width: 90%;
+    }
+
+    .theme-picker-modal,
+    .simulator-theme-picker-modal {
+        .common-modal-header .common-modal-right-menu {
+            margin-left: clamp(0rem, calc(90vw - 16rem), 4rem);
+        }
+    }
+
+    .theme-picker-toggle {
+        width: 10rem;
+        max-width: 100%;
+
+        .common-editor-toggle .common-editor-toggle-item > .common-button {
+            padding-left: 0.2rem;
+            padding-right: 0.2rem;
+
+            i {
+                display: none;
+            }
+        }
+    }
+
     .simulator-theme-picker {
         grid-template-columns: 1fr;
     }

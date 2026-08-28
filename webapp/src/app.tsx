@@ -14,6 +14,7 @@ import * as core from "./core";
 import * as sui from "./sui";
 import * as simulator from "./simulator";
 import * as simulatorTheme from "./simulatorTheme";
+import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as cmds from "./cmds"
@@ -4760,7 +4761,7 @@ export class ProjectView
     showSimulatorThemePicker() {
         pxt.tickEvent("simulator.theme.open", undefined, { interactiveConsent: true });
         this.simulatorWasRunningBeforeThemePicker = this.state.simState !== SimState.Stopped;
-        const preference = simulatorTheme.getSimulatorThemePreference();
+        const preference = simulatorThemePreference.getSimulatorThemePreference();
         const initialTheme = preference?.theme || pxt.appTarget.simulator.themePresets[0].theme;
         simulator.setPreviewSimulatorTheme(initialTheme);
         this.setState({ themePickerOpen: false, simulatorThemePickerOpen: true }, () => this.startSimulator());
@@ -4788,10 +4789,16 @@ export class ProjectView
         });
     }
 
-    saveSimulatorTheme(preference: simulatorTheme.SimulatorThemePreference) {
+    async saveSimulatorTheme(preference: simulatorTheme.SimulatorThemePreference) {
         pxt.tickEvent("simulator.theme.save", { preset: preference.presetId }, { interactiveConsent: true });
-        simulatorTheme.setSimulatorThemePreference(preference);
+        await simulatorThemePreference.setSimulatorThemePreference(preference);
         this.hideSimulatorThemePicker();
+    }
+
+    async setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference, savePreference = true) {
+        if (savePreference) await simulatorThemePreference.setSimulatorThemePreference(preference);
+        else simulatorThemePreference.setSessionSimulatorThemePreference(preference);
+        if (this.state.header) this.restartSimulator();
     }
 
     showImportUrlDialog() {
@@ -5825,7 +5832,7 @@ export class ProjectView
                     onClose={this.hideThemePicker} />}
                 {this.state.simulatorThemePickerOpen && <SimulatorThemePickerModal
                     presets={pxt.appTarget.simulator.themePresets}
-                    initialPreference={simulatorTheme.getSimulatorThemePreference()}
+                    initialPreference={simulatorThemePreference.getSimulatorThemePreference()}
                     onEditorThemeClicked={this.showEditorThemePicker}
                     onSave={this.saveSimulatorTheme}
                     onClose={this.hideSimulatorThemePicker} />}

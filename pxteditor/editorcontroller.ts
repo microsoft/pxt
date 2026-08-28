@@ -253,6 +253,10 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                 return Promise.resolve()
                                     .then(() => projectView.setHighContrast(hcmsg.on));
                             }
+                            case "setsimulatortheme": {
+                                const themeMsg = data as pxt.editor.EditorMessageSetSimulatorThemeRequest;
+                                return projectView.setSimulatorThemePreference(themeMsg.preference, themeMsg.savePreference);
+                            }
                             case "togglegreenscreen": {
                                 return Promise.resolve()
                                     .then(() => projectView.toggleGreenScreen());

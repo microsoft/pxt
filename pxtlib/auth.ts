@@ -51,6 +51,24 @@ namespace pxt.auth {
         [targetId: string]: string;
     }
 
+    export type SimulatorThemePreference = {
+        presetId: string;
+        theme: Map<string> & {
+            "background-color": string;
+            "button-stroke": string;
+            "text-color": string;
+            "button-fill": string;
+            "dpad-fill": string;
+            skin?: string;
+        };
+    }
+
+    export type SimulatorThemesState = {
+        [targetId: string]: SimulatorThemePreference;
+    }
+
+    export const SIMULATOR_THEMES_LOCAL_STORAGE_KEY = "user-pref:simulatorThemes";
+
     export type SetPrefResult = {
         success: boolean;
         res: UserPreferences;
@@ -64,6 +82,7 @@ namespace pxt.auth {
         highContrast?: boolean;
         screenReaderMode?: boolean;
         colorThemeIds?: ColorThemeIdsState;
+        simulatorThemes?: SimulatorThemesState;
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;
@@ -75,6 +94,7 @@ namespace pxt.auth {
         highContrast: false,
         screenReaderMode: false,
         colorThemeIds: {}, // Will lookup pxt.appTarget.appTheme.defaultColorTheme for active target
+        simulatorThemes: {},
         reader: "",
         skillmap: { mapProgress: {}, completedTags: {} },
         email: false

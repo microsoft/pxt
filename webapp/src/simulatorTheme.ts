@@ -1,13 +1,4 @@
-const SIMULATOR_THEME_STORAGE_KEY = "simulator-theme";
-
-export interface SimulatorThemePreference {
-    presetId: string;
-    theme: pxt.SimulatorTheme;
-}
-
-function storageKey(): string {
-    return `${SIMULATOR_THEME_STORAGE_KEY}:${pxt.appTarget.id}`;
-}
+export type SimulatorThemePreference = pxt.auth.SimulatorThemePreference;
 
 function isColor(value: string): boolean {
     return /^#[0-9a-f]{6}$/i.test(value || "");
@@ -20,16 +11,6 @@ export function isValidSimulatorTheme(theme: pxt.SimulatorTheme): boolean {
         && isColor(theme["text-color"])
         && isColor(theme["button-fill"])
         && isColor(theme["dpad-fill"]);
-}
-
-export function getSimulatorThemePreference(): SimulatorThemePreference | undefined {
-    const preference = pxt.Util.jsonTryParse(pxt.storage.getLocal(storageKey())) as SimulatorThemePreference;
-    return preference?.presetId && isValidSimulatorTheme(preference.theme) ? preference : undefined;
-}
-
-export function setSimulatorThemePreference(preference: SimulatorThemePreference): void {
-    if (!preference?.presetId || !isValidSimulatorTheme(preference.theme)) return;
-    pxt.storage.setLocal(storageKey(), JSON.stringify(preference));
 }
 
 export function getSimulatorThemePresetId(

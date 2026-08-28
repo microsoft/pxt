@@ -16,6 +16,9 @@ import {
 pxt.appTarget = {
     versions: {
         target: "1"
+    },
+    appTheme: {
+        defaultLocale: "en"
     }
 } as any
 
@@ -45,6 +48,37 @@ describe("simulator themes", () => {
         name: "Test",
         theme: simulatorTheme,
     }];
+
+    it("loads shared and target translations for skillmaps", async () => {
+        const requestedUrls: string[] = [];
+        const originalHttpGetJsonAsync = pxt.Util.httpGetJsonAsync;
+        pxt.Util.httpGetJsonAsync = <T>(url: string) => {
+            requestedUrls.push(url);
+            return Promise.resolve({} as T);
+        };
+
+        try {
+            await pxt.Util.downloadTranslationsAsync(
+                "arcade",
+                "https://example.com/",
+                "fr",
+                false,
+                ts.pxtc.Util.TranslationsKind.SkillMap
+            );
+        } finally {
+            pxt.Util.httpGetJsonAsync = originalHttpGetJsonAsync;
+        }
+
+        chai.expect(requestedUrls).deep.equals([
+            "https://example.com/locales/fr/strings.json",
+            "https://example.com/locales/fr/target-strings.json",
+            "https://example.com/locales/fr/skillmap-strings.json",
+        ]);
+    });
+
+    it("initializes an empty cloud-synced simulator theme map", () => {
+        chai.expect(pxt.auth.DEFAULT_USER_PREFERENCES().simulatorThemes).deep.equals({});
+    });
 
     it("uses the user theme only when project and device themes are absent", () => {
         chai.expect(resolveSimulatorTheme(undefined, undefined, simulatorTheme, false)).equals(simulatorTheme);

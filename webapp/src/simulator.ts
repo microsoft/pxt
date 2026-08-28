@@ -8,6 +8,7 @@ import U = pxt.U
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
+import * as simulatorThemePreference from "./simulatorThemePreference";
 
 
 
@@ -352,7 +353,7 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     const theme = previewSimulatorTheme || simulatorTheme.resolveSimulatorTheme(
             pkg.config.theme,
             deviceTheme,
-            simulatorTheme.getSimulatorThemePreference()?.theme,
+            simulatorThemePreference.getSimulatorThemePreference()?.theme,
             !!playerNumber
         );
 

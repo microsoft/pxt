@@ -52,6 +52,7 @@ import './App.css';
 
 import { ThemeManager } from 'react-common/components/theming/themeManager';
 import { FeedbackModal } from 'react-common/components/controls/Feedback/Feedback';
+import { SimulatorThemePickerModal } from './components/SimulatorThemePickerModal';
 
 /* eslint-enable import/no-unassigned-import */
 interface AppProps {
@@ -92,6 +93,8 @@ interface AppState {
     badgeSyncLock: boolean;
     showingSyncLoader?: boolean;
     forcelang?: string;
+    simulatorThemePickerOpen?: boolean;
+    simulatorThemePreference?: pxt.auth.SimulatorThemePreference;
 }
 
 class AppImpl extends React.Component<AppProps, AppState> {
@@ -105,6 +108,10 @@ class AppImpl extends React.Component<AppProps, AppState> {
         super(props);
         this.changeLanguage = this.changeLanguage.bind(this);
         this.changeTheme = this.changeTheme.bind(this);
+        this.showSimulatorThemePicker = this.showSimulatorThemePicker.bind(this);
+        this.showEditorThemePicker = this.showEditorThemePicker.bind(this);
+        this.closeThemePicker = this.closeThemePicker.bind(this);
+        this.saveSimulatorTheme = this.saveSimulatorTheme.bind(this);
 
         this.state = {
             cloudSyncCheckHasFinished: false,
@@ -390,6 +397,15 @@ class AppImpl extends React.Component<AppProps, AppState> {
 
     protected onMakeCodeFrameLoaded = async (sendMessageAsync: (message: any) => Promise<any>) => {
         this.readyPromise.setSendMessageAsync(sendMessageAsync);
+        const preference = await authClient.getSimulatorThemePreferenceAsync();
+        if (preference) {
+            await sendMessageAsync({
+                type: "pxteditor",
+                action: "setsimulatortheme",
+                preference,
+                savePreference: false,
+            } as pxt.editor.EditorMessageSetSimulatorThemeRequest);
+        }
     }
 
     async componentDidMount() {
@@ -441,7 +457,34 @@ class AppImpl extends React.Component<AppProps, AppState> {
         if (!this.themeManager.isHighContrast(theme.id) && await authClient.getHighContrastPrefAsync()) {
             await authClient.setHighContrastPrefAsync(false);
         }
+        this.closeThemePicker();
+    }
+
+    async showSimulatorThemePicker() {
+        const simulatorThemePreference = await authClient.getSimulatorThemePreferenceAsync();
+        this.setState({ simulatorThemePickerOpen: true, simulatorThemePreference });
+    }
+
+    showEditorThemePicker() {
+        this.setState({ simulatorThemePickerOpen: false });
+    }
+
+    closeThemePicker() {
+        this.setState({ simulatorThemePickerOpen: false });
         this.props.dispatchCloseSelectTheme();
+    }
+
+    async saveSimulatorTheme(preference: pxt.auth.SimulatorThemePreference) {
+        pxt.tickEvent("skillmap.simulator.theme.save", { preset: preference.presetId }, { interactiveConsent: true });
+        await authClient.setSimulatorThemePreferenceAsync(preference);
+        const resources = await this.ready();
+        await resources.sendMessageAsync?.({
+            type: "pxteditor",
+            action: "setsimulatortheme",
+            preference,
+            savePreference: false,
+        } as pxt.editor.EditorMessageSetSimulatorThemeRequest);
+        this.closeThemePicker();
     }
 
     render() {
@@ -449,6 +492,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         const { error, showingSyncLoader, forcelang } = this.state;
         const maps = Object.keys(skillMaps).map((id: string) => skillMaps[id]);
         const feedbackEnabled = pxt.U.ocvEnabled();
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets || [];
 
         return (<div className={`app-container ${pxt.appTarget.id}`}>
                 <HeaderBar />
@@ -470,11 +514,20 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     onLanguageChanged={this.changeLanguage}
                     onClose={this.props.dispatchCloseSelectLanguage}
                 />}
-                {this.props.showSelectTheme && this.themeManager && <ThemePickerModal
+                {this.props.showSelectTheme && this.themeManager && !this.state.simulatorThemePickerOpen && <ThemePickerModal
                     themes={this.themeManager.getAllColorThemes()}
                     selectedThemeId={this.themeManager.getCurrentColorTheme()?.id}
                     onThemeClicked={this.changeTheme}
-                    onClose={this.props.dispatchCloseSelectTheme} />}
+                    onSimulatorThemeClicked={simulatorThemePresets.length
+                        ? this.showSimulatorThemePicker
+                        : undefined}
+                    onClose={this.closeThemePicker} />}
+                {this.props.showSelectTheme && this.state.simulatorThemePickerOpen && !!simulatorThemePresets.length && <SimulatorThemePickerModal
+                    presets={simulatorThemePresets}
+                    initialPreference={this.state.simulatorThemePreference}
+                    onEditorThemeClicked={this.showEditorThemePicker}
+                    onSave={this.saveSimulatorTheme}
+                    onClose={this.closeThemePicker} />}
                 { feedbackEnabled && this.props.showFeedback && <FeedbackModal kind="rating" onClose={this.props.dispatchCloseFeedback} />}
             </div>);
     }

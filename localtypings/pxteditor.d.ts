@@ -83,6 +83,7 @@ declare namespace pxt.editor {
         | "showthemepicker"
         | "togglehighcontrast"
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
+        | "setsimulatortheme" // EditorMessageSetSimulatorThemeRequest
         | "togglegreenscreen"
         | "togglekeyboardcontrols"
         | "togglescreenreadermode"
@@ -404,6 +405,12 @@ declare namespace pxt.editor {
     export interface EditorMessageSetHighContrastRequest extends EditorMessageRequest {
         action: "sethighcontrast";
         on: boolean;
+    }
+
+    export interface EditorMessageSetSimulatorThemeRequest extends EditorMessageRequest {
+        action: "setsimulatortheme";
+        preference: pxt.auth.SimulatorThemePreference;
+        savePreference?: boolean;
     }
 
     export interface EditorMessageStartActivity extends EditorMessageRequest {
@@ -1123,6 +1130,7 @@ declare namespace pxt.editor {
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
         setColorThemeById(colorThemeId: string, savePreference: boolean): void;
+        setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference, savePreference?: boolean): Promise<void>;
     }
 
     export interface IHexFileImporter {

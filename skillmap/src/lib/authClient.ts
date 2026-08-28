@@ -23,8 +23,11 @@ class AuthClient extends pxt.auth.AuthClient {
         }
         store.dispatch(dispatchSetUserProfile(state.profile));
     }
-    protected onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
-        // TODO: Dispatch individual preference fields individually (if changed): language, highContrast, etc.
+    protected async onUserPreferencesChanged(diff: ts.pxtc.jsonPatch.PatchOperation[]): Promise<void> {
+        if (diff.some(op => op.path[0] === "simulatorThemes")) {
+            const state = await pxt.auth.getUserStateAsync();
+            store.dispatch(dispatchSetUserPreferences(state.preferences));
+        }
         return Promise.resolve();
     }
     protected onStateCleared(): Promise<void> {
@@ -166,6 +169,41 @@ export async function setColorThemeIdAsync(themeId: string): Promise<void> {
             path: ['colorThemeIds'],
             value: newColorThemePref
         }, { immediate: true });
+    }
+}
+
+export async function getSimulatorThemePreferenceAsync(): Promise<pxt.auth.SimulatorThemePreference | undefined> {
+    const prefs = await userPreferencesAsync();
+    const cloudPreference = prefs?.simulatorThemes?.[pxt.appTarget.id];
+    if (cloudPreference) return cloudPreference;
+
+    const localPrefs = pxt.U.jsonTryParse(
+        pxt.storage.getLocal(pxt.auth.SIMULATOR_THEMES_LOCAL_STORAGE_KEY)
+    ) as pxt.auth.SimulatorThemesState;
+    return localPrefs?.[pxt.appTarget.id];
+}
+
+export async function setSimulatorThemePreferenceAsync(preference: pxt.auth.SimulatorThemePreference): Promise<void> {
+    const cli = await clientAsync();
+    const targetId = pxt.appTarget.id;
+    if (cli) {
+        const currentPrefs = await cli.userPreferencesAsync();
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['simulatorThemes'],
+            value: {
+                ...currentPrefs?.simulatorThemes,
+                [targetId]: preference
+            }
+        }, { immediate: true });
+    } else {
+        const currentPrefs = pxt.U.jsonTryParse(
+            pxt.storage.getLocal(pxt.auth.SIMULATOR_THEMES_LOCAL_STORAGE_KEY)
+        ) as pxt.auth.SimulatorThemesState ?? {};
+        pxt.storage.setLocal(pxt.auth.SIMULATOR_THEMES_LOCAL_STORAGE_KEY, JSON.stringify({
+            ...currentPrefs,
+            [targetId]: preference
+        }));
     }
 }
 

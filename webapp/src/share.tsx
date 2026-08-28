@@ -2,7 +2,7 @@ import * as React from "react";
 import * as auth from "./auth";
 import * as screenshot from "./screenshot";
 import * as pkg from "./package";
-import * as simulatorTheme from "./simulatorTheme";
+import * as simulatorThemePreference from "./simulatorThemePreference";
 
 import { Modal } from "../../react-common/components/controls/Modal";
 import { Share } from "../../react-common/components/share/Share";
@@ -217,7 +217,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
                     setAnonymousSharePreference={setSharePreference}
                     isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
-                    simulatorTheme={simulatorTheme.getSimulatorThemePreference()?.theme}
+                    simulatorTheme={simulatorThemePreference.getSimulatorThemePreference()?.theme}
                     kind={this.state.kind}
                     onClose={this.hide}
                 />
