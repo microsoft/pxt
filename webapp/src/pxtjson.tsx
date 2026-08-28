@@ -273,6 +273,7 @@ export class Editor extends srceditor.Editor {
                         <label htmlFor="projectSimulatorTheme">{lf("Simulator theme")}</label>
                         <Button
                             id="projectSimulatorTheme"
+                            className="primary"
                             title={lf("Choose simulator theme")}
                             label={selectedSimulatorThemeName}
                             ariaHasPopup="dialog"

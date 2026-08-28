@@ -213,6 +213,7 @@ export async function initAsync(cfg: SimulatorConfig) {
                 postSimEditorEvent("stopped");
             } else if (state === pxsim.SimulatorState.Running) {
                 this.onDebuggerResume();
+                postPreviewSimulatorTheme();
             }
             cfg.onStateChanged(state);
         },
@@ -426,10 +427,15 @@ export function proxy(message: pxsim.SimulatorCustomMessage) {
 
 export function setPreviewSimulatorTheme(theme: pxt.SimulatorTheme) {
     previewSimulatorTheme = theme;
+    postPreviewSimulatorTheme();
+}
+
+function postPreviewSimulatorTheme() {
+    if (!previewSimulatorTheme) return;
     if (!driver) return;
     const message: pxsim.SetSimulatorThemeMessage = {
         type: "setsimtheme",
-        theme,
+        theme: previewSimulatorTheme,
     };
     driver.postMessage(message);
 }

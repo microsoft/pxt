@@ -42,6 +42,7 @@ export interface ThemePickerModalProps {
     themes: pxt.ColorThemeInfo[];
     selectedThemeId?: string;
     onThemeClicked(them: pxt.ColorThemeInfo): void;
+    onThemeSelected?: (theme: pxt.ColorThemeInfo) => void;
     onSimulatorThemeClicked?: () => void;
     onClose(): void;
 }
@@ -79,7 +80,10 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
                         key={theme.id}
                         theme={theme}
                         selected={theme.id === selectedThemeId}
-                        onClick={selected => setSelectedThemeId(selected.id)}
+                        onClick={selected => {
+                            setSelectedThemeId(selected.id);
+                            props.onThemeSelected?.(selected);
+                        }}
                     />
                 )}
             </div>

@@ -18,6 +18,7 @@ export interface SimulatorThemePickerModalProps {
     renderPreview: (theme: pxt.SimulatorTheme) => React.ReactNode;
     onEditorThemeClicked?: () => void;
     onUseAccountTheme?: () => void | Promise<void>;
+    onThemeChanged?: (preference: pxt.auth.SimulatorThemePreference) => void;
     onSave: (preference: pxt.auth.SimulatorThemePreference) => void | Promise<void>;
     onClose: () => void;
 }
@@ -55,18 +56,22 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         renderPreview,
         onEditorThemeClicked,
         onUseAccountTheme,
+        onThemeChanged,
         onSave,
         onClose,
     } = props;
     const themeColors = getThemeColors();
-    const initialPresetId = initialPreference
-        ? getPresetId(initialPreference.theme, presets) || CUSTOM_PRESET_ID
+    const savedPreset = presets.find(preset => preset.id === initialPreference?.presetId);
+    const initialPresetId = savedPreset
+        ? savedPreset.id
+        : initialPreference
+            ? getPresetId(initialPreference.theme, presets) || CUSTOM_PRESET_ID
         : onUseAccountTheme
             ? ACCOUNT_PRESET_ID
             : presets[0].id;
     const [presetId, setPresetId] = React.useState(initialPresetId);
     const [theme, setTheme] = React.useState<pxt.SimulatorTheme>(
-        copyTheme(initialPreference?.theme || accountTheme || presets[0].theme)
+        copyTheme(savedPreset?.theme || initialPreference?.theme || accountTheme || presets[0].theme)
     );
 
     const selectPreset = (id: string) => {
@@ -77,18 +82,22 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         }
         const preset = presets.find(candidate => candidate.id === id);
         if (!preset) return;
+        const nextTheme = copyTheme(preset.theme);
         setPresetId(id);
-        setTheme(copyTheme(preset.theme));
+        setTheme(nextTheme);
+        onThemeChanged?.({ presetId: id, theme: nextTheme });
     };
 
     const updateColor = (part: SimulatorThemeColor, color: string) => {
         const normalized = color.startsWith("#") ? color : `#${color}`;
         if (!/^#[0-9a-f]{6}$/i.test(normalized)) return;
-        setPresetId(CUSTOM_PRESET_ID);
-        setTheme({
+        const nextTheme = {
             ...theme,
             [part]: normalized.toUpperCase(),
-        });
+        };
+        setPresetId(CUSTOM_PRESET_ID);
+        setTheme(nextTheme);
+        onThemeChanged?.({ presetId: CUSTOM_PRESET_ID, theme: nextTheme });
     };
 
     return <Modal

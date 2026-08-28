@@ -94,6 +94,7 @@ interface AppState {
     showingSyncLoader?: boolean;
     forcelang?: string;
     simulatorThemePickerOpen?: boolean;
+    editorThemeId?: string;
     simulatorThemePreference?: pxt.auth.SimulatorThemePreference;
 }
 
@@ -457,12 +458,21 @@ class AppImpl extends React.Component<AppProps, AppState> {
         if (!this.themeManager.isHighContrast(theme.id) && await authClient.getHighContrastPrefAsync()) {
             await authClient.setHighContrastPrefAsync(false);
         }
+
+        if (this.state.simulatorThemePreference) {
+            await this.persistSimulatorTheme(this.state.simulatorThemePreference);
+        }
         this.closeThemePicker();
     }
 
     async showSimulatorThemePicker() {
-        const simulatorThemePreference = await authClient.getSimulatorThemePreferenceAsync();
-        this.setState({ simulatorThemePickerOpen: true, simulatorThemePreference });
+        const simulatorThemePreference = this.state.simulatorThemePreference
+            || await authClient.getSimulatorThemePreferenceAsync();
+        this.setState({
+            simulatorThemePickerOpen: true,
+            editorThemeId: this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id,
+            simulatorThemePreference,
+        });
     }
 
     showEditorThemePicker() {
@@ -470,12 +480,31 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     closeThemePicker() {
-        this.setState({ simulatorThemePickerOpen: false });
+        this.setState({
+            simulatorThemePickerOpen: false,
+            editorThemeId: undefined,
+            simulatorThemePreference: undefined,
+        });
         this.props.dispatchCloseSelectTheme();
     }
 
     async saveSimulatorTheme(preference: pxt.auth.SimulatorThemePreference) {
         pxt.tickEvent("skillmap.simulator.theme.save", { preset: preference.presetId }, { interactiveConsent: true });
+        const editorThemeId = this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id;
+        const editorTheme = this.themeManager.getAllColorThemes().find(theme => theme.id === editorThemeId);
+        if (editorTheme) {
+            pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: editorTheme.id });
+            this.themeManager.switchColorTheme(editorTheme.id);
+            await authClient.setColorThemeIdAsync(editorTheme.id);
+            if (!this.themeManager.isHighContrast(editorTheme.id) && await authClient.getHighContrastPrefAsync()) {
+                await authClient.setHighContrastPrefAsync(false);
+            }
+        }
+        await this.persistSimulatorTheme(preference);
+        this.closeThemePicker();
+    }
+
+    private async persistSimulatorTheme(preference: pxt.auth.SimulatorThemePreference) {
         await authClient.setSimulatorThemePreferenceAsync(preference);
         const resources = await this.ready();
         await resources.sendMessageAsync?.({
@@ -484,7 +513,6 @@ class AppImpl extends React.Component<AppProps, AppState> {
             preference,
             savePreference: false,
         } as pxt.editor.EditorMessageSetSimulatorThemeRequest);
-        this.closeThemePicker();
     }
 
     render() {
@@ -516,7 +544,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 />}
                 {this.props.showSelectTheme && this.themeManager && !this.state.simulatorThemePickerOpen && <ThemePickerModal
                     themes={this.themeManager.getAllColorThemes()}
-                    selectedThemeId={this.themeManager.getCurrentColorTheme()?.id}
+                    selectedThemeId={this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id}
+                    onThemeSelected={theme => this.setState({ editorThemeId: theme.id })}
                     onThemeClicked={this.changeTheme}
                     onSimulatorThemeClicked={simulatorThemePresets.length
                         ? this.showSimulatorThemePicker
@@ -525,6 +554,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 {this.props.showSelectTheme && this.state.simulatorThemePickerOpen && !!simulatorThemePresets.length && <SimulatorThemePickerModal
                     presets={simulatorThemePresets}
                     initialPreference={this.state.simulatorThemePreference}
+                    onThemeChanged={simulatorThemePreference => this.setState({ simulatorThemePreference })}
                     onEditorThemeClicked={this.showEditorThemePicker}
                     onSave={this.saveSimulatorTheme}
                     onClose={this.closeThemePicker} />}
