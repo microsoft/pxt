@@ -2,7 +2,7 @@ import * as React from "react";
 
 import { Input } from "../controls/Input";
 import { Modal } from "../controls/Modal";
-import { getSimulatorThemeForSkin } from "./simulatorThemeDefaults";
+import { copySimulatorTheme, getSimulatorThemeForLayout, simulatorThemeColorsEqual } from "./simulatorThemeDefaults";
 import { ThemePickerToggle } from "./ThemePickerModal";
 
 type SimulatorThemeColor =
@@ -10,11 +10,12 @@ type SimulatorThemeColor =
     | "button-stroke"
     | "text-color"
     | "button-fill"
-    | "dpad-fill";
+    | "dpad-fill"
+    | "joystick-handle-stroke";
 
 export interface SimulatorThemePickerModalProps {
     presets: pxt.SimulatorThemePreset[];
-    skins?: pxt.SimulatorThemeSkin[];
+    layouts?: pxt.SimulatorThemeLayout[];
     initialPreference?: pxt.auth.SimulatorThemePreference;
     defaultTheme?: pxt.SimulatorTheme;
     accountTheme?: pxt.SimulatorTheme;
@@ -28,7 +29,7 @@ export interface SimulatorThemePickerModalProps {
 
 const CUSTOM_PRESET_ID = "custom";
 const ACCOUNT_PRESET_ID = "account";
-const DEFAULT_SKIN_ID = "default";
+const DEFAULT_LAYOUT_ID = "default";
 
 function getThemeColors(): { id: SimulatorThemeColor; label: string }[] {
     return [
@@ -37,37 +38,18 @@ function getThemeColors(): { id: SimulatorThemeColor; label: string }[] {
         { id: "text-color", label: lf("Button labels") },
         { id: "button-fill", label: lf("Buttons") },
         { id: "dpad-fill", label: lf("D-pad") },
+        { id: "joystick-handle-stroke", label: lf("Joystick handle outline") },
     ];
 }
 
-function copyTheme(theme: pxt.SimulatorTheme): pxt.SimulatorTheme {
-    return { ...theme };
-}
-
 function getPresetId(theme: pxt.SimulatorTheme, presets: pxt.SimulatorThemePreset[]): string | undefined {
-    return presets.find(preset => {
-        const presetKeys = Object.keys(preset.theme);
-        return presetKeys.length === Object.keys(theme).length
-            && presetKeys.every(key => preset.theme[key] === theme[key]);
-    })?.id;
-}
-
-function getVisibleSkinId(
-    theme: pxt.SimulatorTheme,
-    presets: pxt.SimulatorThemePreset[],
-    skins: pxt.SimulatorThemeSkin[] | undefined
-): string {
-    if (!theme.skin) return DEFAULT_SKIN_ID;
-    const isSelectable = skins?.some(skin => skin.id === theme.skin);
-    return !isSelectable && getPresetId(theme, presets)
-        ? DEFAULT_SKIN_ID
-        : theme.skin;
+    return presets.find(preset => simulatorThemeColorsEqual(preset.theme, theme))?.id;
 }
 
 export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps) => {
     const {
         presets,
-        skins,
+        layouts,
         initialPreference,
         defaultTheme,
         accountTheme,
@@ -87,24 +69,27 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         : onUseAccountTheme
             ? ACCOUNT_PRESET_ID
             : presets[0].id;
+    const initialThemeSource = defaultTheme || initialPreference?.theme || savedPreset?.theme || presets[0].theme;
+    const initialTheme = initialPresetId === "default"
+        ? getSimulatorThemeForLayout(
+            initialThemeSource,
+            initialPreference?.theme.layout || initialThemeSource.layout || DEFAULT_LAYOUT_ID
+        )
+        : copySimulatorTheme(initialPreference?.theme || savedPreset?.theme || accountTheme || presets[0].theme);
     const [presetId, setPresetId] = React.useState(initialPresetId);
-    const [theme, setTheme] = React.useState<pxt.SimulatorTheme>(
-        copyTheme(initialPresetId === "default"
-            ? defaultTheme || initialPreference?.theme || savedPreset?.theme
-            : savedPreset?.theme || initialPreference?.theme || accountTheme || presets[0].theme)
-    );
-    const skinId = getVisibleSkinId(theme, presets, skins);
-    const skinIsKnown = skinId === DEFAULT_SKIN_ID || skins?.some(skin => skin.id === skinId);
+    const [theme, setTheme] = React.useState<pxt.SimulatorTheme>(initialTheme);
+    const layoutId = theme.layout || DEFAULT_LAYOUT_ID;
+    const layoutIsKnown = layoutId === DEFAULT_LAYOUT_ID || layouts?.some(layout => layout.id === layoutId);
 
     const selectPreset = (id: string) => {
         if (id === ACCOUNT_PRESET_ID && onUseAccountTheme) {
             setPresetId(id);
-            setTheme(copyTheme(accountTheme || presets[0].theme));
+            setTheme(copySimulatorTheme(accountTheme || presets[0].theme));
             return;
         }
         const preset = presets.find(candidate => candidate.id === id);
         if (!preset) return;
-        const nextTheme = copyTheme(id === "default" ? defaultTheme || preset.theme : preset.theme);
+        const nextTheme = copySimulatorTheme(id === "default" ? defaultTheme || preset.theme : preset.theme);
         setPresetId(id);
         setTheme(nextTheme);
         onThemeChanged?.({ presetId: id, theme: nextTheme });
@@ -117,19 +102,17 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
             ...theme,
             [part]: normalized.toUpperCase(),
         };
-        if (skinId === DEFAULT_SKIN_ID) delete nextTheme.skin;
         setPresetId(CUSTOM_PRESET_ID);
         setTheme(nextTheme);
         onThemeChanged?.({ presetId: CUSTOM_PRESET_ID, theme: nextTheme });
     };
 
-    const selectSkin = (id: string) => {
-        const nextTheme = getSimulatorThemeForSkin(
+    const selectLayout = (id: string) => {
+        const nextTheme = getSimulatorThemeForLayout(
             theme,
-            id === DEFAULT_SKIN_ID ? undefined : id,
-            presets
+            id
         );
-        const nextPresetId = getPresetId(nextTheme, presets) || CUSTOM_PRESET_ID;
+        const nextPresetId = presetId === ACCOUNT_PRESET_ID ? CUSTOM_PRESET_ID : presetId;
         setPresetId(nextPresetId);
         setTheme(nextTheme);
         onThemeChanged?.({ presetId: nextPresetId, theme: nextTheme });
@@ -174,18 +157,18 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
                         </option>)}
                     </select>
                 </div>
-                {!!skins?.length && <div className="simulator-theme-select-field">
-                    <label htmlFor="simulator-theme-skin">{lf("Skin")}</label>
+                {!!layouts?.length && <div className="simulator-theme-select-field">
+                    <label htmlFor="simulator-theme-layout">{lf("Layout")}</label>
                     <select
-                        id="simulator-theme-skin"
-                        aria-label={lf("Simulator skin")}
+                        id="simulator-theme-layout"
+                        aria-label={lf("Simulator layout")}
                         className="simulator-theme-select"
-                        value={skinId}
-                        onChange={event => selectSkin(event.target.value)}>
-                        <option value={DEFAULT_SKIN_ID}>{lf("Default")}</option>
-                        {!skinIsKnown && <option value={skinId} disabled>{lf("Custom ({0})", skinId)}</option>}
-                        {skins.map(skin => <option key={skin.id} value={skin.id}>
-                            {pxt.Util.rlf(`{id:simulator-skin-name}${skin.name}`)}
+                        value={layoutId}
+                        onChange={event => selectLayout(event.target.value)}>
+                        <option value={DEFAULT_LAYOUT_ID}>{lf("Default")}</option>
+                        {!layoutIsKnown && <option value={layoutId} disabled>{lf("Custom ({0})", layoutId)}</option>}
+                        {layouts.map(layout => <option key={layout.id} value={layout.id}>
+                            {pxt.Util.rlf(`{id:simulator-layout-name}${layout.name}`)}
                         </option>)}
                     </select>
                 </div>}

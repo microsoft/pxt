@@ -1997,8 +1997,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     for (const preset of cfg.simulator?.themePresets ?? []) {
         targetStrings[`{id:simulator-theme-name}${preset.name}`] = preset.name;
     }
-    for (const skin of cfg.simulator?.themeSkins ?? []) {
-        targetStrings[`{id:simulator-skin-name}${skin.name}`] = skin.name;
+    for (const layout of cfg.simulator?.themeLayouts ?? []) {
+        targetStrings[`{id:simulator-layout-name}${layout.name}`] = layout.name;
     }
     if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
         const heroBannerCard = theme.homeScreenHero;

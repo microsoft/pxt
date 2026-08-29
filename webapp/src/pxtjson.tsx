@@ -178,13 +178,13 @@ export class Editor extends srceditor.Editor {
     ): pxt.auth.SimulatorThemePreference | undefined {
         if (!this.config.theme) return undefined;
 
+        const projectTheme = typeof this.config.theme === "string"
+            ? { ...accountTheme, layout: this.config.theme }
+            : { ...accountTheme, ...this.config.theme } as pxt.SimulatorTheme;
         const presetId = simulatorTheme.getSimulatorThemePresetId(this.config.theme, presets);
         const preset = presets.find(candidate => candidate.id === presetId);
-        if (preset) return { presetId, theme: { ...preset.theme } };
+        if (preset) return { presetId, theme: projectTheme };
 
-        const projectTheme = typeof this.config.theme === "string"
-            ? { ...accountTheme, skin: this.config.theme }
-            : { ...accountTheme, ...this.config.theme } as pxt.SimulatorTheme;
         return { presetId: "custom", theme: projectTheme };
     }
 
@@ -309,7 +309,7 @@ export class Editor extends srceditor.Editor {
             </div>
             {this.simulatorThemePickerOpen && !!accountSimulatorTheme && <SimulatorThemePickerModal
                 presets={simulatorThemePresets}
-                skins={pxt.appTarget.simulator?.themeSkins}
+                layouts={pxt.appTarget.simulator?.themeLayouts}
                 initialPreference={this.getProjectSimulatorThemePreference(simulatorThemePresets, accountSimulatorTheme)}
                 accountTheme={accountSimulatorTheme}
                 onUseAccountTheme={this.useAccountSimulatorTheme}

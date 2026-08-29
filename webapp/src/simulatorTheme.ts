@@ -1,3 +1,5 @@
+import { simulatorThemeColorsEqual } from "../../react-common/components/theming/simulatorThemeDefaults";
+
 export type SimulatorThemePreference = pxt.auth.SimulatorThemePreference;
 
 function isColor(value: string): boolean {
@@ -10,7 +12,9 @@ export function isValidSimulatorTheme(theme: pxt.SimulatorTheme): boolean {
         && isColor(theme["button-stroke"])
         && isColor(theme["text-color"])
         && isColor(theme["button-fill"])
-        && isColor(theme["dpad-fill"]);
+        && isColor(theme["dpad-fill"])
+        && isColor(theme["joystick-handle-stroke"])
+        && !!theme.layout;
 }
 
 export function getSimulatorThemePresetId(
@@ -21,7 +25,7 @@ export function getSimulatorThemePresetId(
     if (typeof theme === "string") {
         return presets.find(preset => preset.id.toLowerCase() === theme.toLowerCase())?.id;
     }
-    return presets.find(preset => themesEqual(preset.theme, theme))?.id;
+    return presets.find(preset => simulatorThemeColorsEqual(preset.theme, theme))?.id;
 }
 
 export function removeSimulatorThemeFromFiles(files: pxt.workspace.ScriptText): pxt.workspace.ScriptText {
@@ -38,11 +42,6 @@ export function removeSimulatorThemeFromFiles(files: pxt.workspace.ScriptText): 
     } catch {
         return files;
     }
-}
-
-function themesEqual(left: pxt.Map<string>, right: pxt.Map<string>): boolean {
-    return Object.keys(left).length === Object.keys(right).length
-        && Object.keys(left).every(key => left[key] === right[key]);
 }
 
 export function addSimulatorThemeToFiles(

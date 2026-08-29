@@ -59,7 +59,8 @@ namespace pxt.auth {
             "text-color": string;
             "button-fill": string;
             "dpad-fill": string;
-            skin?: string;
+            "joystick-handle-stroke": string;
+            layout: string;
         };
     }
 

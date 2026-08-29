@@ -91,6 +91,7 @@ import { FeedbackModal } from "../../react-common/components/controls/Feedback/F
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import {
     getDefaultSimulatorThemePreference,
+    getSimulatorThemeForLayout,
     getSimulatorThemePreferenceForColorThemeChange,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { applyPolyfills } from "./polyfills";
@@ -4786,7 +4787,13 @@ export class ProjectView
             pxt.appTarget.simulator?.themePresets
         );
         const preference = this.themePickerSimulatorThemePreference?.presetId === defaultPreference?.presetId
-            ? defaultPreference
+            ? {
+                ...defaultPreference,
+                theme: getSimulatorThemeForLayout(
+                    defaultPreference.theme,
+                    this.themePickerSimulatorThemePreference.theme.layout
+                ),
+            }
             : this.themePickerSimulatorThemePreference || defaultPreference;
         if (!preference) return;
         this.themePickerSimulatorThemePreference = preference;
@@ -5921,7 +5928,7 @@ export class ProjectView
                     onClose={this.hideThemePicker} />}
                 {this.state.simulatorThemePickerOpen && <SimulatorThemePickerModal
                     presets={pxt.appTarget.simulator.themePresets}
-                    skins={pxt.appTarget.simulator.themeSkins}
+                    layouts={pxt.appTarget.simulator.themeLayouts}
                     initialPreference={this.themePickerSimulatorThemePreference}
                     defaultTheme={getDefaultSimulatorThemePreference(
                         pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId],

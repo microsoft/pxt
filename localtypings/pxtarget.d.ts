@@ -268,7 +268,8 @@ declare namespace pxt {
         "text-color": string;
         "button-fill": string;
         "dpad-fill": string;
-        skin?: string;
+        "joystick-handle-stroke": string;
+        layout: string;
     }
 
     interface SimulatorThemePreset {
@@ -277,7 +278,7 @@ declare namespace pxt {
         theme: SimulatorTheme;
     }
 
-    interface SimulatorThemeSkin {
+    interface SimulatorThemeLayout {
         id: string;
         name: string;
     }
@@ -307,7 +308,7 @@ declare namespace pxt {
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
         themePresets?: SimulatorThemePreset[]; // customizable simulator themes offered by the editor
-        themeSkins?: SimulatorThemeSkin[]; // additional simulator skins offered by the theme editor; Default is always included
+        themeLayouts?: SimulatorThemeLayout[]; // additional simulator layouts offered by the theme editor; Default is always included
 
         // a map of allowed simulator channel to URL to handle specific control messages
         // DEPRECATED. Use `simx` in targetconfig.json approvedRepoLib instead.

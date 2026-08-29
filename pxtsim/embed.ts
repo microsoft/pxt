@@ -280,7 +280,8 @@ namespace pxsim {
             | "button-stroke"
             | "text-color"
             | "button-fill"
-            | "dpad-fill";
+            | "dpad-fill"
+            | "joystick-handle-stroke";
         color: string;
     }
 

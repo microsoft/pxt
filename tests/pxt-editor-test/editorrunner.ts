@@ -9,12 +9,15 @@ import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../
 import {
     addSimulatorThemeToFiles,
     getSimulatorThemePresetId,
+    isValidSimulatorTheme,
     removeSimulatorThemeFromFiles,
     resolveSimulatorTheme,
 } from "../../webapp/src/simulatorTheme";
 import {
-    getSimulatorThemeForSkin,
+    copySimulatorTheme,
+    getSimulatorThemeForLayout,
     getSimulatorThemePreferenceForColorThemeChange,
+    simulatorThemeColorsEqual,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 
 pxt.appTarget = {
@@ -44,6 +47,8 @@ const simulatorTheme: pxt.SimulatorTheme = {
     "text-color": "#333333",
     "button-fill": "#444444",
     "dpad-fill": "#555555",
+    "joystick-handle-stroke": "#666666",
+    layout: "default",
 };
 
 describe("simulator themes", () => {
@@ -66,12 +71,12 @@ describe("simulator themes", () => {
         {
             id: "teal",
             name: "Teal",
-            theme: { ...simulatorTheme, skin: "teal" },
+            theme: { ...simulatorTheme },
         },
         {
             id: "retro",
             name: "Retro",
-            theme: { ...simulatorTheme, "background-color": "#FCF7E4", skin: "retro" },
+            theme: { ...simulatorTheme, "background-color": "#FCF7E4", layout: "retro" },
         },
     ];
     const lightTheme = { id: "light", name: "Light", colors: {} };
@@ -87,7 +92,7 @@ describe("simulator themes", () => {
         name: "Inline",
         defaultSimulatorTheme: {
             "background-color": "#123456",
-            skin: "inline",
+            layout: "inline",
         },
         colors: {},
     };
@@ -147,7 +152,20 @@ describe("simulator themes", () => {
     it("matches project themes to built-in presets", () => {
         chai.expect(getSimulatorThemePresetId("DEFAULT", presets)).equals("default");
         chai.expect(getSimulatorThemePresetId({ ...simulatorTheme }, presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, layout: "retro" }, presets)).equals("default");
         chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, "button-fill": "#666666" }, presets)).equals(undefined);
+        chai.expect(simulatorThemeColorsEqual(simulatorTheme, { ...simulatorTheme, layout: "retro" })).equals(true);
+    });
+
+    it("requires all simulator theme properties in persisted themes", () => {
+        const themeWithoutHandle = { ...simulatorTheme } as Partial<pxt.SimulatorTheme>;
+        const themeWithoutLayout = { ...simulatorTheme } as Partial<pxt.SimulatorTheme>;
+        delete themeWithoutHandle["joystick-handle-stroke"];
+        delete themeWithoutLayout.layout;
+
+        chai.expect(isValidSimulatorTheme(simulatorTheme)).equals(true);
+        chai.expect(isValidSimulatorTheme(themeWithoutHandle as pxt.SimulatorTheme)).equals(false);
+        chai.expect(isValidSimulatorTheme(themeWithoutLayout as pxt.SimulatorTheme)).equals(false);
     });
 
     it("uses a color theme's simulator default when no preference is set", () => {
@@ -174,7 +192,7 @@ describe("simulator themes", () => {
             theme: {
                 ...presets[0].theme,
                 "background-color": "#123456",
-                skin: "inline",
+                layout: "inline",
             },
         });
     });
@@ -196,6 +214,17 @@ describe("simulator themes", () => {
 
         chai.expect(purplePreference).deep.equals({ presetId: "default", theme: presets[1].theme });
         chai.expect(restoredPreference).deep.equals(defaultPreference);
+    });
+
+    it("uses the theme's layout while moving between color theme simulator defaults", () => {
+        const preference = { presetId: "default", theme: { ...presets[0].theme, layout: "retro" } };
+
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            preference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        )).deep.equals({ presetId: "default", theme: presets[1].theme });
     });
 
     it("preserves user-selected simulator themes when the color theme changes", () => {
@@ -250,22 +279,26 @@ describe("simulator themes", () => {
         )).equals(defaultPreference);
     });
 
-    it("uses a skin's canonical preset theme", () => {
-        chai.expect(getSimulatorThemeForSkin(simulatorTheme, "retro", presets))
-            .deep.equals(presets[4].theme);
+    it("changes layout without changing custom colors", () => {
+        const customTheme = { ...simulatorTheme, "background-color": "#ABCDEF" };
+
+        chai.expect(getSimulatorThemeForLayout(customTheme, "retro"))
+            .deep.equals({ ...customTheme, layout: "retro" });
     });
 
-    it("removes a skin without changing its colors", () => {
-        const expectedTheme = { ...presets[4].theme };
-        delete expectedTheme.skin;
-
-        chai.expect(getSimulatorThemeForSkin(presets[4].theme, undefined, presets))
-            .deep.equals(expectedTheme);
+    it("selects the default layout without changing its colors", () => {
+        chai.expect(getSimulatorThemeForLayout(presets[4].theme, "default"))
+            .deep.equals({ ...presets[4].theme, layout: "default" });
     });
 
-    it("preserves colors for a target-specific skin without a preset", () => {
-        chai.expect(getSimulatorThemeForSkin(simulatorTheme, "target-skin", presets))
-            .deep.equals({ ...simulatorTheme, skin: "target-skin" });
+    it("preserves colors for a target-specific layout without a preset", () => {
+        chai.expect(getSimulatorThemeForLayout(simulatorTheme, "target-layout"))
+            .deep.equals({ ...simulatorTheme, layout: "target-layout" });
+    });
+
+    it("ignores unknown simulator theme properties when copying", () => {
+        const themeWithUnknownProperty = { ...simulatorTheme, extra: "ignored" } as pxt.SimulatorTheme;
+        chai.expect(copySimulatorTheme(themeWithUnknownProperty)).deep.equals(simulatorTheme);
     });
 
     it("removes a simulator theme from an editable shared-project copy", () => {

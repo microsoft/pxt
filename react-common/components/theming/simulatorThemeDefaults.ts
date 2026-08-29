@@ -1,3 +1,12 @@
+const simulatorThemeColorProperties = [
+    "background-color",
+    "button-stroke",
+    "text-color",
+    "button-fill",
+    "dpad-fill",
+    "joystick-handle-stroke",
+];
+
 export function getSimulatorThemePreferenceForColorThemeChange(
     preference: pxt.auth.SimulatorThemePreference | undefined,
     previousColorTheme: pxt.ColorThemeInfo | undefined,
@@ -11,7 +20,8 @@ export function getSimulatorThemePreferenceForColorThemeChange(
 
     if (preference) {
         if (preference.presetId !== nextDefault.presetId) return preference;
-        if (simulatorThemesEqual(preference.theme, nextDefault.theme)) return preference;
+        if (simulatorThemeColorsEqual(preference.theme, nextDefault.theme)
+            && preference.theme.layout === nextDefault.theme.layout) return preference;
     }
     else if (!nextColorTheme?.defaultSimulatorTheme) {
         return preference;
@@ -40,23 +50,28 @@ export function getDefaultSimulatorThemePreference(
     };
 }
 
-export function getSimulatorThemeForSkin(
+export function copySimulatorTheme(theme: pxt.SimulatorTheme): pxt.SimulatorTheme {
+    const result: pxt.SimulatorTheme = {
+        "background-color": theme["background-color"],
+        "button-stroke": theme["button-stroke"],
+        "text-color": theme["text-color"],
+        "button-fill": theme["button-fill"],
+        "dpad-fill": theme["dpad-fill"],
+        "joystick-handle-stroke": theme["joystick-handle-stroke"],
+        layout: theme.layout || "default",
+    };
+    return result;
+}
+
+export function getSimulatorThemeForLayout(
     theme: pxt.SimulatorTheme,
-    skinId: string | undefined,
-    presets: pxt.SimulatorThemePreset[] | undefined
+    layoutId: string
 ): pxt.SimulatorTheme {
-    const skinPreset = skinId
-        ? presets?.find(preset => preset.theme.skin === skinId)
-        : undefined;
-    const nextTheme = { ...(skinPreset?.theme || theme) };
-    if (skinId) nextTheme.skin = skinId;
-    else delete nextTheme.skin;
+    const nextTheme = copySimulatorTheme(theme);
+    nextTheme.layout = layoutId;
     return nextTheme;
 }
 
-function simulatorThemesEqual(left: pxt.SimulatorTheme, right: pxt.SimulatorTheme): boolean {
-    const leftKeys = Object.keys(left);
-    const rightKeys = Object.keys(right);
-    return leftKeys.length === rightKeys.length
-        && leftKeys.every(key => left[key] === right[key]);
+export function simulatorThemeColorsEqual(left: pxt.Map<string>, right: pxt.Map<string>): boolean {
+    return simulatorThemeColorProperties.every(key => left[key] === right[key]);
 }
