@@ -225,12 +225,18 @@ build's.
 | 45 | an `assert` in the generated program failed; the id is on serial |
 | 999 | unhandled thrown value (a `throw` that reached the top) |
 | 020 / 021 | out of memory |
+| 521 | the flash itself failed (DAPLink could not decode the hex); the program never ran -- re-flash |
 
 A panic 999 in a generated case project means something threw that was not an
 assertion -- the case files raise exceptions deliberately in a few places, so a
 999 points at an exception escaping a `try` that should have caught it.
 
 ## Troubleshooting
+
+**Sad face with 521 right after flashing** -- DAPLink rejected the incoming
+hex (a flash-time checksum failure). The program never ran, so the capture
+times out with no banner. Intermittent; a re-flash nearly always succeeds.
+If it repeats back to back, unplug and replug the board before retrying.
 
 **`no MICROBIT volume within 30s`** -- the drive is not mounted. Check the
 cable is a data cable, not charge-only. If a `MAINTENANCE` drive appears
