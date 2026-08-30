@@ -77,6 +77,9 @@ const DEVICE_ASSERT =
     "    if (!cond) {\n" +
     "        console.log(\"ASSERT \" + (m || \"?\"))\n" +
     "        control.dmesg(\"ASSERT \" + (m || \"?\"))\n" +
+    "        // Panic does not flush serial; without this drain pause the tail\n" +
+    "        // of the assert id is lost, and the id is the failure report.\n" +
+    "        basic.pause(250)\n" +
     "        panic(45)\n" +
     "    }\n" +
     "}\n" +

@@ -18,11 +18,18 @@ const REMOUNT_WAIT = 60;    // seconds to wait for the board to come back after 
 const UNMOUNT_GRACE = 15;   // seconds to wait for the drive to go away while programming
 
 const USAGE = [
-    "Usage: node tests/hw-ab/run-capture.js <hex> <logfile> [--timeout <sec>] [--soak <minutes>]",
+    "Usage: node tests/hw-ab/run-capture.js <hex> <logfile> [--timeout <sec>]",
+    "           [--soak <minutes>] [--expect <case>]",
     "",
     "Copies <hex> to the attached micro:bit, waits for it to re-enumerate, opens its",
     "USB-CDC serial device at 115200 8N1 raw, and appends everything it prints to",
     "<logfile>.",
+    "",
+    "Verdicts are read only from the first \"HWAB START\" banner onward: DAPLink",
+    "buffers serial while no host is reading, so the first bytes after opening the",
+    "port can belong to the previously flashed program -- including its PASS",
+    "banner. --expect <case> additionally requires the banner (and the verdict) to",
+    "name that case.",
     "",
     "Normal mode (default, --timeout 120):",
     "  stops at the first \"HWAB PASS\" or \"ASSERT\" line, or at the timeout.",
@@ -71,6 +78,7 @@ const hex = argv[0];
 const logFile = argv[1];
 let timeout = 120;
 let soakMin = 0;
+let expectCase = "";
 
 for (let i = 2; i < argv.length; i++) {
     const arg = argv[i];
@@ -80,6 +88,9 @@ for (let i = 2; i < argv.length; i++) {
     } else if (arg === "--soak") {
         if (i + 1 >= argv.length) fail("--soak needs a value");
         soakMin = argv[++i];
+    } else if (arg === "--expect") {
+        if (i + 1 >= argv.length) fail("--expect needs a value");
+        expectCase = argv[++i];
     } else {
         usage(process.stderr);
         fail("unknown argument: " + arg);
@@ -218,6 +229,28 @@ function countMatches(text, needle) {
         if (line.indexOf(needle) >= 0) n++;
     }
     return n;
+}
+
+// Verdict lines are only meaningful from the flashed program's own START
+// banner onward: the port can open onto buffered output from the previously
+// flashed program (DAPLink keeps transmitting into its buffer while no host
+// reads), and that output can contain a PASS banner. Returns null until the
+// banner has been seen.
+function startNeedle() {
+    return "HWAB START" + (expectCase ? " " + expectCase : "");
+}
+
+function verdictBody(content) {
+    const lines = splitLines(content);
+    for (let i = 0; i < lines.length; i++) {
+        if (lines[i].indexOf(startNeedle()) >= 0)
+            return lines.slice(i).join("\n");
+    }
+    return null;
+}
+
+function firstHwabLine(text) {
+    return firstMatch(text, "HWAB ");
 }
 
 function countLines(text) {
@@ -416,11 +449,11 @@ async function main() {
         let before = null;
         while (nowSeconds() < deadline) {
             if (before === null && nowSeconds() >= checkpoint)
-                before = countMatches(readLog(), "HWAB SOAK");
+                before = countMatches(verdictBody(readLog()) || "", "HWAB SOAK");
             await sleep(5000);
         }
         cleanup();
-        const content = readLog();
+        const content = verdictBody(readLog()) || "";
         const after = countMatches(content, "HWAB SOAK");
         if (before === null) before = 0;
         process.stdout.write("run-capture: HWAB SOAK lines: " + before +
@@ -448,22 +481,25 @@ async function main() {
 
     process.stdout.write(
         "run-capture: capturing up to " + timeout + "s -> " + logFile + "\n");
+    const passNeedle = "HWAB PASS" + (expectCase ? " " + expectCase : "");
     while (nowSeconds() < deadline) {
-        const content = readLog();
-        const assertLine = firstMatch(content, "ASSERT ");
-        if (assertLine !== null) {
-            cleanup();
-            process.stderr.write("run-capture: FAIL -- assertion failed on device:\n");
-            writeRaw(process.stderr, assertLine + "\n");
-            process.stderr.write("run-capture: the board shows a sad face and 45.\n");
-            process.exit(1);
-        }
-        const passLine = firstMatch(content, "HWAB PASS");
-        if (passLine !== null) {
-            cleanup();
-            writeRaw(process.stdout,
-                "run-capture: PASS -- " + passLine.replace(/\r/g, "") + "\n");
-            process.exit(0);
+        const body = verdictBody(readLog());
+        if (body !== null) {
+            const assertLine = firstMatch(body, "ASSERT ");
+            if (assertLine !== null) {
+                cleanup();
+                process.stderr.write("run-capture: FAIL -- assertion failed on device:\n");
+                writeRaw(process.stderr, assertLine + "\n");
+                process.stderr.write("run-capture: the board shows a sad face and 45.\n");
+                process.exit(1);
+            }
+            const passLine = firstMatch(body, passNeedle);
+            if (passLine !== null) {
+                cleanup();
+                writeRaw(process.stdout,
+                    "run-capture: PASS -- " + passLine.replace(/\r/g, "") + "\n");
+                process.exit(0);
+            }
         }
         await sleep(1000);
     }
@@ -476,6 +512,18 @@ async function main() {
         "run-capture: TIMEOUT -- no HWAB PASS and no ASSERT within " + timeout + "s.\n" +
         "Captured " + logLines + " line(s), " + logBytes + " byte(s). Last lines:\n");
     writeRaw(process.stderr, tailBytes(content, 5));
+    if (verdictBody(content) === null) {
+        process.stderr.write(
+            "\nNo \"" + startNeedle() + "\" banner was seen, so no verdict could be read.\n");
+        const stray = firstHwabLine(content);
+        if (stray !== null) {
+            process.stderr.write(
+                "HWAB output from another program was ignored (stale serial buffer from\n" +
+                "the previously flashed program, or the flash did not take -- check the\n" +
+                "MICROBIT drive for FAIL.TXT). First ignored line:\n");
+            writeRaw(process.stderr, stray + "\n");
+        }
+    }
     if (logLines === 0 && logBytes > 0) {
         process.stderr.write(
             "\n" +

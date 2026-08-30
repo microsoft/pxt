@@ -235,7 +235,8 @@ function cmdCapture(argv) {
     const hex = requireHex(caseName, side);
     const log = logPath(caseName, side);
     say("capture " + caseName + " " + side);
-    return run("run-capture.js", [hex, log].concat(passthrough));
+    return run("run-capture.js",
+        [hex, log, "--expect", caseName].concat(passthrough));
 }
 
 function cmdDiff(argv) {
@@ -291,7 +292,8 @@ function cmdAb(argv) {
     const stages = SIDES.map(side => ({
         name: "capture " + side,
         run: () => run("run-capture.js",
-            [hexPath(caseName, side), logPath(caseName, side)].concat(passthrough))
+            [hexPath(caseName, side), logPath(caseName, side),
+             "--expect", caseName].concat(passthrough))
     }));
     stages.push({
         name: "diff",
