@@ -464,20 +464,34 @@ export function initGitHubDb() {
             repopath = repopath.toLowerCase();
 
             const cache = await getGitHubCacheAsync();
-
             const id = this.latestVersionCacheKey(repopath);
+            let cachedVersion: string = null;
 
             try {
                 const entry = await cache.getAsync(id);
+                cachedVersion = entry?.version;
 
-                if (entry && Date.now() - entry.cacheTime < GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS) {
-                    return entry.version;
+                if (cachedVersion && entry && !isExpired(entry)) {
+                    return cachedVersion;
                 }
             }
             catch (e) {
             }
 
-            const version = await this.mem.latestVersionAsync(repopath, config);
+            let version: string;
+            try {
+                version = await this.mem.latestVersionAsync(repopath, config);
+            }
+            catch (e) {
+                if (cachedVersion && isOfflineError(e)) {
+                    pxt.debug(`github offline cache hit ${id}`);
+                    return cachedVersion;
+                }
+                throw e;
+            }
+            if (!version) {
+                return cachedVersion;
+            }
 
             await this.cacheLatestVersionAsync(cache, repopath, version);
 
@@ -508,7 +522,7 @@ export function initGitHubDb() {
             }
         }
 
-        async loadPackageAsync(repopath: string, tag: string): Promise<pxt.github.CachedPackage> {
+        async loadPackageAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
             repopath = repopath.toLowerCase()
             if (!tag) {
               pxt.debug(`dep: default to master`)
@@ -516,7 +530,7 @@ export function initGitHubDb() {
             }
             // don't cache master
             if (tag == "master")
-                return this.mem.loadPackageAsync(repopath, tag);
+                return this.loadPackageFromMemoryAsync(repopath, tag, fallbackPackageFiles);
 
             const id = this.packageCacheKey(repopath, tag);
             const cache = await getGitHubCacheAsync();
@@ -528,7 +542,7 @@ export function initGitHubDb() {
             }
             catch (e) {
                 pxt.debug(`github offline cache miss ${id}`);
-                const p = await this.mem.loadPackageAsync(repopath, tag);
+                const p = await this.loadPackageFromMemoryAsync(repopath, tag, fallbackPackageFiles);
 
                 await this.cachePackageAsync(cache, repopath, tag, p);
 
@@ -561,7 +575,17 @@ export function initGitHubDb() {
                 return readFromCache();
             }
 
-            const tutorialResponse = await pxt.github.downloadMarkdownTutorialInfoAsync(repopath, tag, undefined, existing?.etag);
+            let tutorialResponse: { resp?: pxt.github.GHTutorialResponse, etag?: string };
+            try {
+                tutorialResponse = await pxt.github.downloadMarkdownTutorialInfoAsync(repopath, tag, undefined, existing?.etag);
+            }
+            catch (e) {
+                if (existing && isOfflineError(e)) {
+                    pxt.debug(`github offline tutorial cache hit ${id}`);
+                    return readFromCache();
+                }
+                throw e;
+            }
 
             const body = tutorialResponse.resp;
 
@@ -701,6 +725,20 @@ export function initGitHubDb() {
             }
         }
 
+        private async loadPackageFromMemoryAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
+            try {
+                return await this.mem.loadPackageAsync(repopath, tag, fallbackPackageFiles);
+            }
+            catch (e) {
+                if (fallbackPackageFiles) {
+                    return {
+                        files: { ...fallbackPackageFiles }
+                    };
+                }
+                throw e;
+            }
+        }
+
         private async cacheTutorialResponseAsync(cache: pxt.BrowserUtils.IDBObjectStoreWrapper<GitHubCacheEntry>, repopath: string, tag?: string, etag?: string) {
             const id = this.tutorialCacheKey(repopath, tag);
 
@@ -741,12 +779,13 @@ export function initGitHubDb() {
         return repopath.toLowerCase();
     }
 
-    async function purgeExpiredEntriesAsync() {
+    async function purgeExpiredTutorialEntriesAsync() {
         const cache = await getGitHubCacheAsync();
 
         const entries = await cache.getAllAsync();
 
-        const expired = entries.filter(isExpired);
+        // package and config entries are used for offline hex imports
+        const expired = entries.filter(isExpiredTutorialEntry);
 
         if (expired.length) {
             for (const entry of expired) {
@@ -755,13 +794,21 @@ export function initGitHubDb() {
         }
     }
 
+    function isExpiredTutorialEntry(entry: GitHubCacheEntry) {
+        return entry.id.indexOf("tutorial-") === 0 && isExpired(entry);
+    }
+
     function isExpired(entry: GitHubCacheEntry) {
         return !!entry.cacheTime && Date.now() - entry.cacheTime >= GITHUB_TUTORIAL_CACHE_EXPIRATION_MILLIS;
     }
 
+    function isOfflineError(e: any) {
+        return e?.isOffline || e?.statusCode === 0 || !pxt.Cloud.isOnline();
+    }
+
     if (!/skipgithubcache=1/i.test(window.location.href)) {
         pxt.github.db = new GithubDb();
-        /* await */ purgeExpiredEntriesAsync();
+        /* await */ purgeExpiredTutorialEntriesAsync();
     }
 }
 

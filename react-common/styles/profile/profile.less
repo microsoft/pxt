@@ -403,6 +403,10 @@
                 position: relative;
                 overflow: visible;
 
+                &:focus-visible::after {
+                    outline: var(--pxt-neutral-foreground1) solid 1px;
+                }
+
                 .label {
                     display: flex;
                     flex-direction: row;
@@ -428,6 +432,10 @@
                     }
                 }
             }
+
+            .rememberme .common-checkbox:focus-within {
+                outline: var(--pxt-neutral-foreground1) solid 1px;
+            }
         }
     }
 
@@ -436,6 +444,13 @@
             display: flex;
             gap: 0.5rem;
             justify-content: center;
+
+            .link-button:focus-visible {
+                outline: var(--pxt-neutral-foreground1) solid 3px;
+                outline-offset: 2px;
+                border-radius: 0.1em;
+                text-decoration: none;
+            }
         }
 
         .learn {

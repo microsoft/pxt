@@ -26,12 +26,20 @@ export type StackFrameDisplayInfo = {
     onClick?: () => void;
 };
 
+export interface ErrorDisplayAction {
+    label: string;
+    title?: string;
+    ariaLabel?: string;
+    onClick: () => void;
+}
+
 export type ErrorDisplayInfo = {
     message: string;
     stackFrames?: StackFrameDisplayInfo[];
     metadata?: ErrorMetadata;
     preventsRunning?: boolean;
     onClick?: () => void;
+    actions?: ErrorDisplayAction[];
 };
 
 export interface ErrorListProps {
@@ -230,21 +238,51 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const hasStack = !!error.stackFrames && error.stackFrames.length > 0;
         const topRowClass = hasStack ? "exceptionMessage" : classList("item", className);
         const errorCounter = (errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>;
+        const errorMessage = <>
+            <span className="errorListItemText">{error.message}</span>
+            {errorCounter}
+        </>;
+        const actionButtons = error.actions?.length ? (
+            <div className="errorListItemActions">
+                {error.actions.map((action, index) => (
+                    <Button
+                        key={index}
+                        className="secondary errorListAction"
+                        onClick={action.onClick}
+                        title={action.title || action.label}
+                        ariaLabel={action.ariaLabel || action.title || action.label}
+                        label={action.label}
+                    />
+                ))}
+            </div>
+        ) : undefined;
 
-        const itemHeaderRow = isInteractive ? (
+        const itemHeaderRow = actionButtons ? (
+            <div className={classList(topRowClass, "errorListItemRow")}>
+                {isInteractive ? (
+                    <Button className="errorListItemMessage"
+                        onClick={error.onClick}
+                        title={lf("Go to error: {0}", error.message)}
+                        ariaLabel={lf("Go to error: {0}", error.message)}>
+                        {errorMessage}
+                    </Button>
+                ) : (
+                    <div className="errorListItemMessage" aria-label={error.message} tabIndex={0}>
+                        {errorMessage}
+                    </div>
+                )}
+                {actionButtons}
+            </div>
+        ) : isInteractive ? (
             <Button className={topRowClass}
                 onClick={error.onClick}
                 title={lf("Go to error: {0}", error.message)}
-                aria-label={lf("Go to error: {0}", error.message)}>
-                <div>
-                    <span>{error.message}</span>
-                    {errorCounter}
-                </div>
+                ariaLabel={lf("Go to error: {0}", error.message)}>
+                <div>{errorMessage}</div>
             </Button>
         ) : (
              <div className={topRowClass} aria-label={error.message} tabIndex={0}>
-                <span>{error.message}</span>
-                {errorCounter}
+                {errorMessage}
             </div>
         );
 

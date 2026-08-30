@@ -29,7 +29,7 @@ Don’t have time for a full week curriculum workshop?  Drop in for one of our S
 
 ### 🔵 Top 10 little-known features of MakeCode
 
-Friday June 5th – 9am Pacific / 11am Central / 12pm Eastern / 4pm UTC
+Thursday June 11th – 9am Pacific / 11am Central / 12pm Eastern / 4pm UTC
 
 **Topic** – Join us for this fun countdown of the top 10 little-known (but very useful) features of MakeCode.  Whether you are a newbie or a power user, we hope you walk away with some new features to put to use!
 
@@ -56,16 +56,6 @@ Friday June 26th – 9am Pacific / 11am Central / 12pm Eastern / 4pm UTC
 **Note**: this content applies for all MakeCode editors (micro:bit, Minecraft and Arcade).
 
 **[Register here](https://msit.events.teams.microsoft.com/event/msit.106a0088-d435-4c01-a713-d85d43f820dc@72f988bf-86f1-41af-91ab-2d7cd011db47)**
- 
-### 🔵 How to create a MakeCode tutorial
-
-Thursday July 2nd – 9am Pacific / 11am Central / 12pm Eastern / 4pm UTC
-
-**Topic** – Join us for a fun hands-on workshop on how to write tutorials in MakeCode!  No prior experience required.  Come with your own idea for a tutorial, or use an example project.  You'll learn how to write markdown to create a MakeCode tutorial and then publish it live!
-
-**Note**: this content applies for all MakeCode editors (micro:bit, Minecraft and Arcade).
-
-**[Register here](https://msit.events.teams.microsoft.com/event/msit.51c160f3-942c-400c-9840-d68761a38fc3@72f988bf-86f1-41af-91ab-2d7cd011db47)**
  
 ### 🔵 Tips and tricks for debugging
 
@@ -117,6 +107,16 @@ Friday August 21st – 9am Pacific / 11am Central / 12pm Eastern / 4pm UTC
 
 **[Register here](https://msit.events.teams.microsoft.com/event/msit.5614a5ea-5a2d-4678-82eb-a0a381396b0d@72f988bf-86f1-41af-91ab-2d7cd011db47)**
  
+### 🔵 How to create a MakeCode tutorial
+
+Thursday August 27th – 9am Pacific / 11am Central / 12pm Eastern / 4pm UTC
+
+**Topic** – Join us for a fun hands-on workshop on how to write tutorials in MakeCode!  No prior experience required.  Come with your own idea for a tutorial, or use an example project.  You'll learn how to write markdown to create a MakeCode tutorial and then publish it live!
+
+**Note**: this content applies for all MakeCode editors (micro:bit, Minecraft and Arcade).
+
+**[Register here](https://msit.events.teams.microsoft.com/event/msit.51c160f3-942c-400c-9840-d68761a38fc3@72f988bf-86f1-41af-91ab-2d7cd011db47)**
+
 ### 🔵 Physical Computing and AI with MakeCode for the micro:bit
 
 Friday August 28th – 9am Pacific / 11am Central / 12pm Eastern / 4pm UTC

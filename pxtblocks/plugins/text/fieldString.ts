@@ -21,7 +21,8 @@ export class FieldString extends Blockly.FieldTextInput {
         if (this.quoteLeft_) this.quoteLeft_.parentNode.removeChild(this.quoteLeft_);
         this.quoteLeft_ = Blockly.utils.dom.createSvgElement('text', {
             'font-size': this.quoteSize_ + 'px',
-            'class': 'field-text-quote'
+            'class': 'field-text-quote',
+            'aria-hidden': 'true'
         }, this.fieldGroup_);
 
 
@@ -30,7 +31,8 @@ export class FieldString extends Blockly.FieldTextInput {
         if (this.quoteRight_) this.quoteRight_.parentNode.removeChild(this.quoteRight_);
         this.quoteRight_ = Blockly.utils.dom.createSvgElement('text', {
             'font-size': this.quoteSize_ + 'px',
-            'class': 'field-text-quote'
+            'class': 'field-text-quote',
+            'aria-hidden': 'true'
         }, this.fieldGroup_);
         this.quoteLeft_.appendChild(document.createTextNode('"'));
         this.quoteRight_.appendChild(document.createTextNode('"'));

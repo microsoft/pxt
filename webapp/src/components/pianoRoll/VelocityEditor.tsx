@@ -1,3 +1,5 @@
+import * as React from "react";
+
 import { useEffect, useRef, useState } from "react";
 import { classList } from "../../../../react-common/components/util";
 import { usePianoRollTheme } from "./context";
@@ -18,13 +20,24 @@ interface NoteOffset {
 export const VelocityEditor = (props: Props) => {
     const { notes, onNotesChange } = props;
     const theme = usePianoRollTheme();
-    const { octaveWidth, measures } = theme;
+    const { tickWidth, ticksPerBeat, beatsPerMeasure, measures } = theme;
 
-    const [highlightedTick, setHighlightedTick] = useState<Number>(undefined);
+    const [highlightedTick, setHighlightedTick] = useState<number | undefined>(undefined);
 
-    const width = octaveWidth * measures;
+    const width = tickWidth * ticksPerBeat * beatsPerMeasure * measures;
 
     const offsets: NoteOffset[] = [];
+
+    const ref = useRef<HTMLDivElement>(null);
+
+    React.useEffect(() => {
+        if (!ref.current) return;
+
+        const workspace = document.getElementById("piano-roll-workspace");
+        if (!workspace) return;
+
+        ref.current.scrollLeft = workspace.parentElement.scrollLeft;
+    }, []);
 
     for (const note of notes) {
         const offset = offsets.find(o => o.start === note.start);
@@ -78,7 +91,7 @@ export const VelocityEditor = (props: Props) => {
     }
 
     return (
-        <div id="velocity-editor" className="velocity-editor">
+        <div id="velocity-editor" className="velocity-editor" ref={ref}>
             <div className="velocity-editor-sidebar" />
             <div className="velocity-sliders" style={{ width: `${width}px` }}>
                 {offsets.map((notes, i) => (

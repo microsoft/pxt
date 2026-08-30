@@ -123,7 +123,7 @@
             "use": "variable_usage",
             "template": "Uses at least ${count} variable(s)",
             "docPath": "/teachertool",
-            "description": "The program creates and uses at least this many user-defined variables.",
+            "description": "At least this many user-defined variables are both set and read — auto-generated variables like loop indices do not count.",
             "maxCount": 1,
             "tags": ["Code Elements"],
             "params": [

@@ -735,6 +735,7 @@ const lint = lintWithEslint
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
 const testlang = testTask("compile-test", "compilerunner.js");
+const testthumb = testTask("thumb-test", "thumbrunner.js");
 const testhelpers = testTask("helpers-test", "helperrunner.js");
 const testerr = testTask("errors-test", "errorrunner.js");
 const testfmt = testTask("format-test", "formatrunner.js");
@@ -772,6 +773,7 @@ const browserifyBlocksPrep = () =>
 const testAll = gulp.series(
     testdecompiler,
     testlang,
+    testthumb,
     testhelpers,
     testerr,
     testfmt,
@@ -884,6 +886,7 @@ exports.updatestrings = updatestrings;
 exports.lint = lint
 exports.testdecompiler = testdecompiler;
 exports.testlang = testlang;
+exports.testthumb = testthumb;
 exports.testerr = testerr;
 exports.testfmt = testfmt;
 exports.testpydecomp = testpydecomp;

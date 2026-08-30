@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as workspace from "./workspace";
-import { Tree, TreeItem, TreeItemBody } from "../../react-common/components/controls/Tree";
+import { Tree, TreeItem } from "../../react-common/components/controls/Tree";
 import { Button } from "../../react-common/components/controls/Button";
 import { hideDialog, warningNotification } from "./core";
 import { FocusTrap } from "../../react-common/components/controls/FocusTrap";
@@ -25,6 +25,7 @@ interface PendingMessage {
 
 interface TimelineEntry {
     label: string;
+    timestamp: number;
     entries: TimeEntry[];
 }
 
@@ -59,7 +60,7 @@ export const TimeMachine = (props: TimeMachineProps) => {
         let nextId = 1;
         let workspaceReady: boolean;
         const messageQueue: pxt.editor.EditorMessageRequest[] = [];
-        const pendingMessages: {[index: string]: PendingMessage} = {};
+        const pendingMessages: { [index: string]: PendingMessage } = {};
 
         const postMessageCore = (message: pxt.editor.EditorMessageRequest | pxt.editor.EditorMessageResponse) => {
             iframe.contentWindow!.postMessage(message, "*");
@@ -251,6 +252,8 @@ export const TimeMachine = (props: TimeMachineProps) => {
 
     const url = `${window.location.origin + window.location.pathname}?${argString}`;
 
+    const initialSelection = entries.length ? dayEntryId(entries[0], 0) : undefined;
+
     return (
         <FocusTrap className="time-machine" onEscape={hideDialog}>
             <div className="time-machine-header">
@@ -269,11 +272,17 @@ export const TimeMachine = (props: TimeMachineProps) => {
                             {selected ? formatFullDate(selected.timestamp) : lf("Now")}
                         </div>
                         <Button
+                            className="square-on-mobile"
+                            labelClassName="mobile-hidden"
+                            leftIcon="fas fa-save mobile-only"
                             label={lf("Save a copy")}
                             title={lf("Save a copy")}
                             onClick={onSaveCopySelect}
                         />
                         <Button
+                            className="square-on-mobile"
+                            labelClassName="mobile-hidden"
+                            leftIcon="fas fa-undo mobile-only"
                             label={lf("Restore")}
                             title={lf("Restore")}
                             onClick={onGoPressed}
@@ -298,46 +307,49 @@ export const TimeMachine = (props: TimeMachineProps) => {
                     {/* eslint-enable @microsoft/sdl/react-iframe-missing-sandbox */}
                 </div>
                 <div className="time-machine-timeline">
-                    <h3>
+                    <div id="time-machine-timeline-header" className="time-machine-timeline-header">
                         {lf("Version History")}
-                    </h3>
+                    </div>
                     <div className="time-machine-tree-container">
-                        <Tree>
+                        <Tree
+                            title={lf("Version History Timeline")}
+                            ariaLabelledby="time-machine-timeline-header"
+                            initialSelectedId={initialSelection}
+                        >
                             {entries.map((e, i) =>
-                                <TreeItem key={i} initiallyExpanded={i === 0}>
-                                    <TreeItemBody>
-                                        {e.label}
-                                    </TreeItemBody>
-                                    <Tree role="group">
-                                        {e.entries.map((entry, index) => {
-                                            const isSelected = (!selected && entry.timestamp === -1) ||
-                                                (selected?.kind === entry.kind && selected?.timestamp === entry.timestamp);
+                                <TreeItem
+                                    key={i}
+                                    id={dayEntryId(e, i)}
+                                    initiallyExpanded={i === 0}
+                                    label={e.label}
+                                    title={e.label}
+                                >
+                                    {e.entries.map((entry, index) => {
+                                        const isSelected = (!selected && entry.timestamp === -1) ||
+                                            (selected?.kind === entry.kind && selected?.timestamp === entry.timestamp);
 
-                                            let title: string;
+                                        let title: string;
 
-                                            if (entry.kind === "share") {
-                                                title = lf("Select shared version from {0} at {1}", e.label, entry.label);
-                                            }
-                                            else {
-                                                title = lf("Select project version from {0} at {1}", e.label, entry.label);
-                                            }
-
-                                            return (
-                                                <TreeItem
-                                                    key={index}
-                                                    onClick={() => onTimeSelected(entry)}
-                                                    className={classList(isSelected && "selected", entry.kind)}
-                                                    title={title}
-                                                >
-                                                    <TreeItemBody>
-                                                        {entry.label}
-                                                        {entry.kind === "share" && <i className="fas fa-share-alt" />}
-                                                    </TreeItemBody>
-                                                </TreeItem>
-                                            );
+                                        if (entry.kind === "share") {
+                                            title = lf("Select shared version from {0} at {1}", e.label, entry.label);
                                         }
-                                        )}
-                                    </Tree>
+                                        else {
+                                            title = lf("Select project version from {0} at {1}", e.label, entry.label);
+                                        }
+
+                                        return (
+                                            <TreeItem
+                                                key={index}
+                                                id={timeEntryId(entry, index)}
+                                                onClick={() => onTimeSelected(entry)}
+                                                className={classList(isSelected && "selected", entry.kind)}
+                                                title={title}
+                                                label={entry.label}
+                                                leftIcon={entry.kind === "share" ? "fas fa-share-alt" : undefined}
+                                            />
+                                        );
+                                    }
+                                    )}
                                 </TreeItem>
                             )}
                         </Tree>
@@ -346,6 +358,14 @@ export const TimeMachine = (props: TimeMachineProps) => {
             </div>
         </FocusTrap>
     );
+}
+
+function timeEntryId(entry: TimeEntry, index: number) {
+    return `entry-${entry.timestamp}-${entry.kind}-${index}`;
+}
+
+function dayEntryId(entry: TimelineEntry, index: number) {
+    return `day-${entry.timestamp}-${index}`;
 }
 
 async function getTextAtTimestampAsync(text: ScriptText, history: HistoryFile, time: TimeEntry): Promise<Project> {
@@ -453,7 +473,7 @@ function isToday(time: number) {
 }
 
 function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
-    const buckets: {[index: string]: TimeEntry[]} = {};
+    const buckets: { [index: string]: TimeEntry[] } = {};
 
     const createTimeEntry = (timestamp: number, kind: "snapshot" | "diff" | "share") => {
         const date = new Date(timestamp);
@@ -536,6 +556,7 @@ function getTimelineEntries(history: HistoryFile): TimelineEntry[] {
 
     return sortedBuckets.map(key => (
         {
+            timestamp: parseInt(key),
             label: formatDate(parseInt(key)),
             entries: buckets[key]
         } as TimelineEntry

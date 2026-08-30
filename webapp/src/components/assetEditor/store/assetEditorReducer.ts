@@ -35,7 +35,9 @@ const topReducer = (state: AssetEditorState = initialState, action: any): AssetE
 
             return {
                 ...state,
-                selectedAsset: state.selectedAsset ? assets.find(el => el.id == state.selectedAsset.id) : undefined,
+                selectedAsset: state.selectedAsset
+                    ? (assets.find(el => el.type == state.selectedAsset.type && el.id == state.selectedAsset.id) ?? state.selectedAsset)
+                    : undefined,
                 assets
             }
         case actions.UPDATE_GALLERY_ASSETS:

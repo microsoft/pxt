@@ -4,14 +4,14 @@ import { Instrument } from "./types";
 import { range } from "./utils";
 
 interface Props {
-    selectedTrack: number;
+    selectedTrackId: number;
     instrument: Instrument;
     minOctave: number;
     maxOctave: number;
 }
 
 export const Sidebar = (props: Props) => {
-    const { selectedTrack, instrument, minOctave, maxOctave } = props;
+    const { selectedTrackId: selectedTrack, instrument, minOctave, maxOctave } = props;
 
     const octaves = range(minOctave, maxOctave + 1);
     octaves.reverse();

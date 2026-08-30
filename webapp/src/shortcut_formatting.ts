@@ -2,6 +2,8 @@ import * as Blockly from 'blockly';
 
 const isMacPlatform = pxt.BrowserUtils.isMac();
 
+export const CONTROL_KEY_SHORT = lf("{id:keyboard symbol}Ctrl");
+
 /**
  * Name of the shortcut that opens the help dialog. Registered in blocks.tsx
  * initKeyboardControls. The literal string is also hardcoded by Blockly core's
@@ -47,7 +49,7 @@ const longModifierNames: Record<string, string> = {
 };
 
 const shortModifierNames: Record<string, string> = {
-  'Control': Blockly.Msg['CONTROL_KEY'],
+  'Control': CONTROL_KEY_SHORT,
   'Meta': '⌘',
   'Alt': isMacPlatform ? '⌥' : Blockly.Msg['ALT_KEY'],
 };
@@ -149,7 +151,8 @@ function getKeyName(keyCode: number): string {
  *
  * Mirrors Blockly's internal getShortcutKeys (core/utils/shortcut_formatting.ts).
  * Kept as a local copy because Blockly doesn't expose this on its public API
- * surface; the algorithm should track Blockly's version.
+ * surface; the algorithm tracks Blockly's version with an exception to avoid
+ * the menu key for the context menu shortcut (not present on all keyboards).
  *
  * @param shortcutName The action name, e.g. "cut".
  * @param modifierNames The names to use for the Meta/Control/Alt modifiers.
@@ -186,12 +189,13 @@ function getShortcutKeys(
 
   // If there are modifiers return only one shortcut on the assumption they are
   // intended for different platforms. Otherwise assume they are alternatives.
+  // Skips a bare key here for the menu key case.
   const hasModifiers = currentPlatform.some((shortcut) =>
-    shortcut.some(
-      (key) => "Meta" === key || "Alt" === key || "Control" === key,
-    ),
+    shortcut.some(isModifierName),
   );
-  const chosen = hasModifiers ? [currentPlatform[0]] : currentPlatform;
+  const chosen = hasModifiers
+    ? [currentPlatform.find((shortcut) => shortcut.some(isModifierName)) ?? currentPlatform[0]]
+    : currentPlatform;
   return chosen.map((shortcut) =>
     shortcut
       .map((maybeNumeric) =>
@@ -216,4 +220,9 @@ function modifierOrder(key: string): number {
   const order = modifierOrdering.indexOf(key);
   // Regular keys at the end.
   return order === -1 ? Number.MAX_VALUE : order;
+}
+
+/** Whether a serialized key part is one of the (non-Shift) modifier names. */
+function isModifierName(key: string): boolean {
+  return key === "Meta" || key === "Alt" || key === "Control";
 }

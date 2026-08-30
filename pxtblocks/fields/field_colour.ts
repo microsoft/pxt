@@ -201,6 +201,24 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
         return super.getSize();
     }
 
+    override getScaledBBox(): Blockly.utils.Rect {
+        // the default implementation of getScaledBBox uses the borderRect_, but we set the
+        // display of the borderRect_ to none in applyColour when the field is a full block field.
+        // this implementation comes from getScaledBboxOfBlock in blockly/core/dropdowndiv.ts
+        if (this.borderRect_?.style?.display === "none") {
+            const block = this.getSourceBlock() as Blockly.BlockSvg;
+
+            const blockSvg = block.getSvgRoot();
+            const scale = block.workspace.scale;
+            const scaledHeight = block.height * scale;
+            const scaledWidth = block.width * scale;
+            const xy = Blockly.utils.style.getPageOffset(blockSvg);
+            return new Blockly.utils.Rect(xy.y, xy.y + scaledHeight, xy.x, xy.x + scaledWidth);
+        }
+
+        return super.getScaledBBox();
+    }
+
     /**
      * Updates the colour of the block to reflect whether this is a full
      * block field or not.

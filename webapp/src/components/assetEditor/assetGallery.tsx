@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as core from "../../core";
 import * as pkg from "../../package";
 import { connect } from 'react-redux';
 
@@ -7,7 +8,7 @@ import { Button } from "../../../../react-common/components/controls/Button";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
 
 import { AssetEditorState, GalleryView } from './store/assetEditorReducerState';
-import { dispatchUpdateUserAssets } from './actions/dispatch';
+import { dispatchChangeSelectedAsset, dispatchUpdateUserAssets } from './actions/dispatch';
 
 import { AssetCardList } from "./assetCardList";
 import { AssetTopbar } from "./assetTopbar";
@@ -18,6 +19,7 @@ interface AssetGalleryProps {
     userAssets: pxt.Asset[];
     disableCreateButton?: boolean;
     showAssetFieldView?: (asset: pxt.Asset, cb: (result: any) => void) => void;
+    dispatchChangeSelectedAsset?: (assetType?: pxt.AssetType, assetId?: string) => void;
     dispatchUpdateUserAssets?: () => void;
 }
 
@@ -94,22 +96,32 @@ class AssetGalleryImpl extends React.Component<AssetGalleryProps, AssetGallerySt
             this.props.showAssetFieldView(asset, (result: any) => {
                 project.pushUndo();
                 const name = result.meta?.displayName;
+                let newAsset: pxt.Asset | undefined;
                 switch (type) {
                     case pxt.AssetType.Image:
-                        project.createNewProjectImage(result.bitmap, name); break;
+                        newAsset = project.createNewProjectImage(result.bitmap, name); break;
                     case pxt.AssetType.Tile:
-                        project.createNewTile(result.bitmap, null, name); break;
+                        newAsset = project.createNewTile(result.bitmap, null, name); break;
                     case pxt.AssetType.Tilemap:
-                        project.createNewTilemapFromData(result.data, name); break;
+                        const [id] = project.createNewTilemapFromData(result.data, name);
+                        newAsset = project.getTilemap(id);
+                        break;
                     case pxt.AssetType.Animation:
-                        project.createNewAnimationFromData(result.frames, result.interval, name); break;
+                        newAsset = project.createNewAnimationFromData(result.frames, result.interval, name); break;
                     case pxt.AssetType.Song:
-                        project.createNewSong(result.song, name); break;
+                        newAsset = project.createNewSong(result.song, name); break;
                     case pxt.AssetType.Json:
-                        project.createNewJsonAsset(result.data, result.fileName, name); break;
+                        newAsset = project.createNewJsonAsset(result.data, result.fileName, name); break;
                 }
                 pkg.mainEditorPkg().buildAssetsAsync()
-                    .then(() => this.props.dispatchUpdateUserAssets());
+                    .then(() => {
+                        this.props.dispatchUpdateUserAssets();
+                        if (newAsset) this.props.dispatchChangeSelectedAsset(newAsset.type, newAsset.id);
+                    })
+                    .catch(e => {
+                        pxt.reportException(e);
+                        core.errorNotification(lf("Something went wrong while trying to create this asset."));
+                    });
             });
         }
     }
@@ -195,6 +207,7 @@ function mapStateToProps(state: AssetEditorState, ownProps: any) {
 }
 
 const mapDispatchToProps = {
+    dispatchChangeSelectedAsset,
     dispatchUpdateUserAssets
 };
 

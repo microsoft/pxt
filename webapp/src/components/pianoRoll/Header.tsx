@@ -1,11 +1,13 @@
 import { Checkbox } from "../../../../react-common/components/controls/Checkbox";
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
-import { Song, lf, isDrumInstrument, NOTE_RANGES } from "./types";
+import { Song, lf, isDrumInstrument, NOTE_RANGES, SNAP_OPTIONS } from "./types";
 
 interface Props {
     song: Song;
-    selectedTrack: number;
+    selectedTrackId: number;
     velocityEditorVisible: boolean;
+    snapTicks: number;
+    showSnapControls: boolean;
 
     onTrackSelected(trackId: number): void;
     onTrackCreated(): void;
@@ -13,10 +15,24 @@ interface Props {
     onInstrumentSelected(trackId: number, instrumentId: number): void;
     onOctavesChanged(minOctave: number, maxOctave: number): void;
     onVelocityEditorToggle(): void;
+    onSnapChanged(snapTicks: number): void;
 }
 
 export const Header = (props: Props) => {
-    const { song, selectedTrack, velocityEditorVisible, onVelocityEditorToggle, onTrackSelected, onInstrumentSelected, onTrackCreated, onTrackDeleted, onOctavesChanged } = props;
+    const {
+        song,
+        selectedTrackId: selectedTrack,
+        velocityEditorVisible,
+        snapTicks,
+        showSnapControls,
+        onVelocityEditorToggle,
+        onTrackSelected,
+        onInstrumentSelected,
+        onTrackCreated,
+        onTrackDeleted,
+        onOctavesChanged,
+        onSnapChanged
+    } = props;
 
     const onTrackDropdownChange = (id: string) => {
         if (id === "new-track") {
@@ -87,6 +103,12 @@ export const Header = (props: Props) => {
         selectedRangeId = range.id;
     }
 
+    const snapOptions: DropdownItem[] = SNAP_OPTIONS.map(option => ({
+        label: option.name,
+        title: option.name,
+        id: option.id
+    }));
+
 
     return (
         <div className="header">
@@ -127,6 +149,20 @@ export const Header = (props: Props) => {
                 isChecked={velocityEditorVisible}
                 onChange={onVelocityEditorToggle}
             />
+            <div className="spacer" />
+            {showSnapControls &&
+                <>
+                    <div className="music-editor-label">
+                        {lf("Snap:")}
+                    </div>
+                    <Dropdown
+                        id="snap-select"
+                        items={snapOptions}
+                        selectedId={snapTicksToId(snapTicks)}
+                        onItemSelected={(id) => onSnapChanged(snapIdToTicks(id))}
+                    />
+                </>
+            }
         </div>
     );
 }
@@ -147,3 +183,12 @@ function parseInstrumentId(id: string) {
     return parseInt(id.replace("instrument-", ""));
 }
 
+function snapIdToTicks(id: string) {
+    const option = SNAP_OPTIONS.find(option => option.id === id);
+    return option?.ticksPerSnap ?? 1;
+}
+
+function snapTicksToId(ticks: number) {
+    const option = SNAP_OPTIONS.find(option => option.ticksPerSnap === ticks);
+    return option?.id ?? "sixteenth";
+}

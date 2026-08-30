@@ -7,7 +7,7 @@ export function isBlackKey(note: number) {
 
 export function getNoteName(note: number, includeOctave: boolean = true) {
     const noteInOctave = note % 12;
-    const octave = Math.floor(note / 12);
+    const octave = Math.floor(note / 12) + 1;
     const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
     return includeOctave ? `${noteNames[noteInOctave]}${octave}` : noteNames[noteInOctave];
 }
@@ -17,11 +17,11 @@ export function range(start: number, end: number) {
 }
 
 export function noteWidth(theme: PianoRollTheme, duration: number) {
-    return (theme.octaveWidth / 16) * duration + 1;
+    return theme.tickWidth * duration + 1;
 }
 
 export function noteLeft(theme: PianoRollTheme, start: number) {
-    return (theme.octaveWidth / 16) * start;
+    return theme.tickWidth * start;
 }
 
 export function noteTop(theme: PianoRollTheme, note: number) {
@@ -41,11 +41,11 @@ export function workspaceHeight(theme: PianoRollTheme) {
 }
 
 export function workspaceWidth(theme: PianoRollTheme) {
-    return theme.measures * theme.octaveWidth;
+    return theme.measures * theme.ticksPerBeat * theme.beatsPerMeasure * theme.tickWidth;
 }
 
 export function xToTick(theme: PianoRollTheme, x: number) {
-    return Math.floor(x / (theme.octaveWidth / 16));
+    return Math.floor(x / theme.tickWidth);
 }
 
 export function yToNote(theme: PianoRollTheme, y: number) {

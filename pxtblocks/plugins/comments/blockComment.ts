@@ -59,6 +59,10 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
         return CommentIcon.TYPE;
     }
 
+    protected override getAriaLabel(): string | null {
+        return Blockly.Msg.ICON_LABEL_COMMENT_CLOSED;
+    }
+
     override initView(pointerdownListener: (e: PointerEvent) => void): void {
         if (this.svgRoot) return; // Already initialized.
 
