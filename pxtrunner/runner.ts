@@ -316,7 +316,10 @@ function loadPackageAsync(id: string, code?: string, dependencies?: string[]) {
                     epkg.files[pxt.MAIN_TS] = code;
                     //set the custom doc name from the URL.
                     let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                    cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
+                    cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0].replace(/\.html$/i, "");
+                    if (cfg.files.indexOf(pxt.MAIN_BLOCKS) == -1) {
+                        cfg.files.push(pxt.MAIN_BLOCKS);
+                    }
                     epkg.files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
                     //Propgate the change to main package

@@ -151,6 +151,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             if (!res || res instanceof Error) return;
 
             res.forEach(gal => gal.cards?.forEach(card => {
+                if (card.hideFromSearch) return;
+
                 const key = (card.url || card.name || "") + (card.cardType || "");
                 if (seen.has(key)) return;
                 seen.add(key);
@@ -430,6 +432,33 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             ? this.getLocalProjectDescription(selectedSearchProjectHeader) || selectedSearchCard?.description
             : selectedSearchCard?.description;
         const canImport = !!(pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing)) && !searchMode;
+        const searchResultsContent = hasSearchQuery
+            ? searchResults.length
+                ? searchResults.map((scr, index) =>
+                    <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
+                        <ProjectsCodeCard
+                            className={`${scr.projectHeader ? "" : "example"} ${searchSelectedIndex === index ? "selected" : ""}`.trim()}
+                            { ...scr }
+                            description="" // the description would show up below the card in the view; remove it, shows up in details.
+                            scr={scr.projectHeader || scr} index={index}
+                            onCardClick={this.handleSearchCardClick}
+                            selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
+                        />
+                        {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview">
+                            <ProjectsDetail parent={this.props.parent}
+                                { ...selectedSearchCard }
+                                name={selectedSearchCard.name}
+                                cardType={selectedSearchCard.cardType}
+                                key={'detailsearch' + selectedSearchCard.name}
+                                description={selectedSearchDescription}
+                                scr={selectedSearchCard}
+                                onClick={this.handleSearchDetailClick}
+                            />
+                            <sui.CloseButton onClick={this.closeSearchDetail} />
+                        </div>}
+                    </React.Fragment>)
+                : <p className="ui grey inverted segment">{lf("No search results found.")}</p>
+            : null;
 
         // lf("Make")
         // lf("Code")
@@ -513,31 +542,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             </div>
             {searchMode && <div key={`search_gallerysegment`} className="ui segment gallerysegment search-segment" role="region" aria-label={lf("Search results")}>
                 <div className="content search-results-grid">
-                    {!hasSearchQuery ? <p className="ui grey inverted segment search-empty-state">{lf("Start typing to search tutorials, examples, and projects.")}</p>
-                        : searchResults.length ? searchResults.map((scr, index) =>
-                            <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
-                                <ProjectsCodeCard
-                                    className={`${scr.projectHeader ? "" : "example"} ${searchSelectedIndex === index ? "selected" : ""}`.trim()}
-                                    { ...scr }
-                                    description="" // the description would show up below the card in the view; remove it, shows up in details.
-                                    scr={scr.projectHeader || scr} index={index}
-                                    onCardClick={this.handleSearchCardClick}
-                                    selected={!scr.directOpen ? searchSelectedIndex === index : undefined}
-                                />
-                                {selectedSearchCard && searchSelectedIndex === index && <div ref="searchDetailView" className="detailview search-detailview">
-                                    <ProjectsDetail parent={this.props.parent}
-                                        { ...selectedSearchCard }
-                                        name={selectedSearchCard.name}
-                                        cardType={selectedSearchCard.cardType}
-                                        key={'detailsearch' + selectedSearchCard.name}
-                                        description={selectedSearchDescription}
-                                        scr={selectedSearchCard}
-                                        onClick={this.handleSearchDetailClick}
-                                    />
-                                    <sui.CloseButton onClick={this.closeSearchDetail} />
-                                </div>}
-                            </React.Fragment>
-                        ) : <p className="ui grey inverted segment">{lf("No search results found.")}</p>}
+                    {searchResultsContent}
                 </div>
             </div>}
             {!searchMode && <>
@@ -2016,7 +2021,7 @@ function cardActionButton(props: Partial<ProjectsDetailProps>, className: string
 
     // todo: Left these two specifically with the ui class from semantic
     // because messing with them too much had too many side effects
-    // for a side fix (detail card buttons, etc) 
+    // for a side fix (detail card buttons, etc)
     return asLink ? // TODO (shakao)  migrate forumurl to otherAction json in md
         <Link
             ref={autoFocus ? linkRef : undefined}
@@ -2177,40 +2182,40 @@ export class ImportDialog extends data.Component<ISettingsProps, ImportDialogSta
                 closeIcon={true} header={lf("Import")}
                 closeOnDimmerClick closeOnDocumentClick closeOnEscape
             >
-                <div className={`ui ${cardClass} cards`}>
+                <div className={`ui ${cardClass} stackable cards`}>
                     {showOpenFiles &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open files from your computer")}
                             role="button"
-                            key={'import'}
                             icon="upload"
                             iconColor="secondary"
                             name={lf("Import File...")}
                             description={lf("Open files from your computer")}
                             onClick={this.importHex}
-                        />}
+                        />
+                    }
                     {showImport &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Open a shared project URL or GitHub repo")}
                             role="button"
-                            key={'importurl'}
                             icon="cloud download"
                             iconColor="secondary"
                             name={lf("Import URL...")}
                             description={lf("Open a shared project URL or GitHub repo")}
                             onClick={this.importUrl}
-                        />}
+                        />
+                    }
                     {showCreateGithubRepo &&
                         <codecard.CodeCardView
                             ariaLabel={lf("Clone or create your own GitHub repository")}
                             role="button"
-                            key={'importgithub'}
                             icon="github"
                             iconColor="secondary"
                             name={lf("Your GitHub Repo...")}
                             description={lf("Clone or create your own GitHub repository")}
                             onClick={this.cloneGithub}
-                        />}
+                        />
+                    }
                 </div>
             </sui.Modal>
         )

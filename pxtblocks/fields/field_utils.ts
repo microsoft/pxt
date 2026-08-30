@@ -713,3 +713,22 @@ export function isImageProperties(obj: any): obj is Blockly.ImageProperties {
     typeof obj.height === 'number'
   );
 }
+
+export function isTrue(value: any) {
+    if (!value) return false;
+
+    if (typeof value === "string") {
+        switch (value.toLowerCase().trim()) {
+            case "1":
+            case "yes":
+            case "y":
+            case "on":
+            case "true":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    return !!value;
+}

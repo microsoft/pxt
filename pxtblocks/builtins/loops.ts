@@ -25,7 +25,8 @@ export function initLoops() {
                     {
                         "type": "input_value",
                         "name": "COND",
-                        "check": "Boolean"
+                        "check": "Boolean",
+                        "ariaLabelText": lf("condition")
                     }
                 ],
                 "previousStatement": null,
@@ -60,7 +61,8 @@ export function initLoops() {
                     {
                         "type": "input_value",
                         "name": "TO",
-                        "check": "Number"
+                        "check": "Number",
+                        "ariaLabelText": lf("ending number")
                     }
                 ],
                 "previousStatement": null,
@@ -132,7 +134,8 @@ export function initLoops() {
                     {
                         "type": "input_value",
                         "name": "TO",
-                        "check": "Number"
+                        "check": "Number",
+                        "ariaLabelText": lf("ending number")
                     }
                 ],
                 "previousStatement": null,
@@ -291,7 +294,8 @@ export function initLoops() {
                         {
                             "type": "input_value",
                             "name": "LIST",
-                            "check": ["Array", "String"]
+                            "check": ["Array", "String"],
+                            "ariaLabelText": lf("list to iterate over")
                         }
                     ],
                     "previousStatement": null,
@@ -339,7 +343,8 @@ export function initLoops() {
                         {
                             "type": "input_value",
                             "name": "LIST",
-                            "check": "Array"
+                            "check": "Array",
+                            "ariaLabelText": lf("list to iterate over")
                         }
                     ],
                     "previousStatement": null,

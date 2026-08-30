@@ -164,6 +164,8 @@ namespace pxt.cpp {
         let disabledDeps = ""
         let mainDeps: Package[] = []
 
+        mainPkg.loadConfig(true);
+
         // order shouldn't matter for c++ compilation,
         // so use a stable order to prevent order changes from fetching a new hex file
         const mainPkgDeps = mainPkg.sortedDeps(true)
@@ -1514,6 +1516,16 @@ namespace pxt.hexloader {
             })
     }
 
+    export function stringifyHexInfoForCache(hexInfo: pxtc.HexInfo) {
+        if (!hexInfo?.hex) return undefined;
+
+        const cachedMeta = {
+            ...hexInfo,
+            hex: compressHex(hexInfo.hex)
+        };
+        return JSON.stringify(cachedMeta);
+    }
+
     export function getHexInfoAsync(host: Host, extInfo: pxtc.ExtensionInfo, cloudModule?: any): Promise<pxtc.HexInfo> {
         if (!extInfo.sha)
             return Promise.resolve<any>(null)
@@ -1543,10 +1555,7 @@ namespace pxt.hexloader {
                 else {
                     return downloadHexInfoAsync(extInfo)
                         .then(meta => {
-                            let origHex = meta.hex
-                            meta.hex = compressHex(meta.hex)
-                            let store = JSON.stringify(meta)
-                            meta.hex = origHex
+                            let store = stringifyHexInfoForCache(meta)
                             return storeWithLimitAsync(host, "hex-keys", key, store)
                                 .then(() => meta)
                         }).catch(e => {

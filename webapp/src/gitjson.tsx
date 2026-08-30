@@ -21,6 +21,8 @@ import UserInfo = pxt.editor.UserInfo;
 import { Accordion } from "../../react-common/components/controls/Accordion";
 import { Button } from "../../react-common/components/controls/Button"
 import { Checkbox } from "../../react-common/components/controls/Checkbox";
+import { RadioButtonGroup } from "../../react-common/components/controls/RadioButtonGroup"
+import { Input } from "../../react-common/components/controls/Input"
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -423,8 +425,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const vpatch = pxt.semver.parse(pxt.semver.stringify(v)); vpatch.patch++;
 
         let bumpType: string = "patch";
-        function onBumpChange(e: React.ChangeEvent<HTMLInputElement>) {
-            bumpType = e.currentTarget.name;
+        function onBumpChange(id: string) {
+            bumpType = id;
             coretsx.forceUpdate();
         }
         let shouldCacheTutorial: boolean = false;
@@ -438,33 +440,49 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             disagreeLbl: lf("Cancel"),
             jsxd: () => <div>
                 <div className="grouped fields">
-                    <label>{lf("Choose a release version that describes the changes you made to the code.")}
+                    <label id="githubReleaseVersionLabel">
+                        {lf("Choose a release version that describes the changes you made to the code.")}
                         {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
                     </label>
-                    <div className="field">
-                        <div className="ui radio checkbox">
-                            <input type="radio" name="patch" checked={bumpType == "patch"} aria-checked={bumpType == "patch"} onChange={onBumpChange} />
-                            <label>{lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch))}</label>
-                        </div>
-                    </div>
-                    <div className="field">
-                        <div className="ui radio checkbox">
-                            <input type="radio" name="minor" checked={bumpType == "minor"} aria-checked={bumpType == "minor"} onChange={onBumpChange} />
-                            <label>{lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor))}</label>
-                        </div>
-                    </div>
-                    <div className="field">
-                        <div className="ui radio checkbox">
-                            <input type="radio" name="major" checked={bumpType == "major"} aria-checked={bumpType == "major"} onChange={onBumpChange} />
-                            <label>{lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor))}</label>
-                        </div>
-                    </div>
+                    <RadioButtonGroup
+                        id="githubReleaseVersion"
+                        selectedId={bumpType}
+                        ariaLabelledby="githubReleaseVersionLabel"
+                        choices={[
+                            {
+                                id: "patch",
+                                label: lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch)),
+                                title: lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch)),
+                            },
+                            {
+                                id: "minor",
+                                label: lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor)),
+                                title: lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor)),
+                            },
+                            {
+                                id: "major",
+                                label: lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor)),
+                                title: lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor)),
+                            }
+                        ]}
+                        onChoiceSelected={onBumpChange}
+                    />
                 </div>
                 <div className="grouped fields">
-                    <label>{lf("Advanced")}</label>
+                    <label id="advancedLabel">{lf("Advanced")}</label>
                     <div className="field checkbox">
-                        <input type="checkbox" name="cachetutorial" checked={shouldCacheTutorial} aria-checked={shouldCacheTutorial} onChange={onCacheTutorialChange} />
-                        <label>{lf("Optimize for tutorials by caching information about the markdown.")}</label>
+                        <input
+                            type="checkbox"
+                            id="cachetutorial"
+                            name="cachetutorial"
+                            checked={shouldCacheTutorial}
+                            aria-checked={shouldCacheTutorial}
+                            aria-labelledby="cachetutorialLabel"
+                            aria-describedby="advancedLabel"
+                            onKeyDown={fireClickOnEnter}
+                            onChange={onCacheTutorialChange}
+                        />
+                        <label id="cachetutorialLabel" htmlFor="cachetutorial">{lf("Optimize for tutorials by caching information about the markdown.")}</label>
                     </div>
                 </div>
             </div>
@@ -474,10 +492,12 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return
 
         let newv = vpatch;
-        if (bumpType == "major")
+        if (bumpType == "major") {
             newv = vmajor;
-        else if (bumpType == "minor")
+        }
+        else if (bumpType == "minor") {
             newv = vminor;
+        }
         const newVer = pxt.semver.stringify(newv)
         this.showLoading("github.release.new", true, lf("creating release..."));
         try {
@@ -1274,9 +1294,19 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
         const descrError = description && description.length > MAX_COMMIT_DESCRIPTION_LENGTH
             ? lf("Your description is getting long...") : undefined;
         return <div>
-            <div className="ui field">
-                <sui.Input type="text" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange}
-                    error={descrError} />
+            <div>
+                <Input
+                    id="githubCommitDescription"
+                    className="github-commit-message"
+                    label={lf("Commit Message")}
+                    type="text"
+                    placeholder={lf("Describe your changes.")}
+                    initialValue={this.props.parent.state.description}
+                    onChange={this.handleDescriptionChange}
+                />
+                {descrError &&
+                    <div className="ui yellow message">{descrError}</div>
+                }
             </div>
             <div className="ui field">
                 <sui.Button className="green" text={lf("Commit and push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={fireClickOnEnter} />

@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FieldEditorComponent } from "../../blocklyFieldView"
-import { PianoRoll, PianoRollState } from "./PianoRoll"
+import { FieldEditorParams, PianoRoll, PianoRollState } from "./PianoRoll"
 
 interface Props {
     handleRef: (e: FieldEditorComponent<any>) => void;
+    fieldEditorParams?: FieldEditorParams;
 }
 
 interface DoneCallback {
@@ -11,14 +12,14 @@ interface DoneCallback {
 }
 
 export const PianoRollFieldEditor = (props: Props) => {
-    const { handleRef } = props;
+    const { handleRef, fieldEditorParams } = props;
 
     const [asset, setAsset] = useState<pxt.Song>();
     const [onDoneClicked, setOnDoneClicked] = useState<DoneCallback>(undefined);
     const [undoStack, setUndoStack] = useState<PianoRollState["undoStack"]>([]);
     const [redoStack, setRedoStack] = useState<PianoRollState["redoStack"]>([]);
     const [velocityEditorVisible, setVelocityEditorVisible] = useState<PianoRollState["velocityEditorVisible"]>(undefined);
-    const [selectedTrack, setSelectedTrack] = useState<PianoRollState["selectedTrack"]>(undefined);
+    const [selectedTrack, setSelectedTrack] = useState<PianoRollState["selectedTrackIndex"]>(undefined);
 
     const resultRef = useRef<PianoRollState>();
 
@@ -49,7 +50,7 @@ export const PianoRollFieldEditor = (props: Props) => {
                         undoStack: resultRef.current?.undoStack,
                         redoStack: resultRef.current?.redoStack,
                         velocityEditorVisible: resultRef.current?.velocityEditorVisible,
-                        selectedTrack: resultRef.current?.selectedTrack
+                        selectedTrack: resultRef.current?.selectedTrackIndex
                     }
                 },
                 restorePersistentData: (value: any) => {
@@ -74,11 +75,12 @@ export const PianoRollFieldEditor = (props: Props) => {
             undoStack={undoStack}
             redoStack={redoStack}
             onStateChanged={onStateChange}
-            selectedTrack={selectedTrack}
+            selectedTrackIndex={selectedTrack}
             velocityEditorVisible={velocityEditorVisible}
             showEditControls={true}
             onDoneClicked={onDoneClicked?.onDoneClicked}
             name={asset?.meta?.displayName}
+            fieldEditorParams={fieldEditorParams}
         />
     )
 }

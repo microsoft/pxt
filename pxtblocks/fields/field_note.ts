@@ -175,13 +175,21 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         return this.value_ + "";
     }
 
+    override getAriaValue(): string {
+        return this.getNoteString();
+    }
+
+    override getAriaTypeName(): string {
+        return lf("tone");
+    }
+
     /**
      * Called by setValue if the text input is valid. Updates the value of the
      * field, and updates the text of the field if it is not currently being
      * edited (i.e. handled by the htmlInput_).
      * @param {string} note The new note in string format.
      */
-    doValueUpdate_(note: string) {
+    override doValueUpdate_(note: string) {
         if (isNaN(Number(note)) || Number(note) < 0)
             return;
 
@@ -199,6 +207,7 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
 
         this.value_ = note;
         this.refreshText();
+        this.recomputeAriaContext();
     }
 
     /**
@@ -250,7 +259,9 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
     };
 
     protected widgetDispose_(): void {
-        this.htmlInput_.removeEventListener("keydown", this.keyHandler);
+        if (this.htmlInput_) {
+            this.htmlInput_.removeEventListener("keydown", this.keyHandler);
+        }
         super.widgetDispose_();
     }
 
@@ -265,9 +276,14 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         Blockly.DropDownDiv.hideWithoutAnimation();
         clearDropDownDiv();
 
-        const isMobile = pxt.BrowserUtils.isMobile() || pxt.BrowserUtils.isIOS();
-        // invoke FieldTextInputs showeditor, so we can set quiet explicitly / not have a pop up dialogue
-        super.showEditor_(e, isMobile);
+        const quietInput = pxt.BrowserUtils.isMobile()
+            || pxt.BrowserUtils.isIOS()
+            || pxt.BrowserUtils.isAndroid()
+            || Blockly.utils.userAgent.MOBILE
+            || Blockly.utils.userAgent.ANDROID
+            || Blockly.utils.userAgent.IPAD;
+        // invoke FieldTextInput's showEditor, so we can set quiet explicitly / not have a pop up dialogue
+        super.showEditor_(e, quietInput);
         this.refreshText();
 
         // save all changes in the same group of events
@@ -337,8 +353,10 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
         Blockly.DropDownDiv.setColour(this.primaryColour, this.borderColour);
         Blockly.DropDownDiv.showPositionedByBlock(this, this.sourceBlock_ as Blockly.BlockSvg, () => this.onHide(), undefined, false);
 
-        this.htmlInput_.ariaLabel = lf("Press the up and down arrow keys to select the next or previous note, or enter a value in hertz");
-        this.htmlInput_.addEventListener("keydown", this.keyHandler);
+        if (this.htmlInput_) {
+            this.htmlInput_.ariaLabel = lf("Press the up and down arrow keys to select the next or previous note, or enter a value in hertz");
+            this.htmlInput_.addEventListener("keydown", this.keyHandler);
+        }
     }
 
     protected keyHandler = (ev: KeyboardEvent) => {
@@ -372,7 +390,9 @@ export class FieldNote extends Blockly.FieldNumber implements FieldCustom {
          * do not show up on the block itself until after the fieldeditor is closed,
          * as it is currently in an editable state.
          **/
-        (this as any).htmlInput_.value = this.getText();
+        if (this.htmlInput_) {
+            this.htmlInput_.value = this.getText();
+        }
 
         pxt.AudioContextManager.tone(frequency);
         setTimeout(() => {

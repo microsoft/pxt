@@ -37,6 +37,9 @@ export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInfla
         if (this.keyToBlock.has(key)) {
             block = this.keyToBlock.get(key);
             this.keyToBlock.delete(key);
+            // Re-attach the SVG we detached in recycleBlock(). The flyout positions
+            // the block during layout, after createBlock() returns.
+            workspace.getCanvas().appendChild(block.getSvgRoot());
         }
 
         block = block ?? super.createBlock(blockDefinition, workspace);
@@ -76,6 +79,11 @@ export class MultiFlyoutRecyclableBlockInflater extends Blockly.BlockFlyoutInfla
         block.addClass(HIDDEN_CLASS_NAME);
         block.getFocusableElement().ariaHidden = "true";
         block.setDisabledReason(true, HIDDEN_CLASS_NAME);
+        // Detach the SVG from the flyout canvas while the block sits in the pool.
+        // Leaving recycled blocks in place interacts poorly with the flyout's use
+        // of aria-owns with VoiceOver/Safari. Reopening a closed flyout can then
+        // take 10s of seconds. See microsoft/pxt-microbit#6946.
+        block.getSvgRoot().remove();
         const key = this.blockToKey.get(block);
         this.keyToBlock.set(key, block);
         this.removeListeners(block.id);

@@ -192,13 +192,13 @@ export class FieldSlider extends Blockly.FieldNumber {
 
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.DropDownDiv.clearContent();
-        Blockly.DropDownDiv.getContentDiv().style.height = "";
+
 
         const contentDiv = Blockly.DropDownDiv.getContentDiv();
+        contentDiv.style.height = "";
 
-        // Accessibility properties
-        contentDiv.setAttribute('role', 'menu');
-        contentDiv.setAttribute('aria-haspopup', 'true');
+        // Used for high contrast styling
+        contentDiv.parentElement.classList.add("blocklyFieldSliderDropdown");
 
         this.addSlider_(contentDiv);
 
@@ -327,7 +327,7 @@ Blockly.Css.register(`
 .blocklyFieldSliderLabel {
     font-family: "Helvetica Neue", "Segoe UI", Helvetica, sans-serif;
     font-size: 0.65rem;
-    color: $colour_toolboxText;
+    color: #000000;
     margin: 8px;
 }
 .blocklyFieldSliderLabelText {

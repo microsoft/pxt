@@ -123,6 +123,7 @@ export class TextInputBubble extends Bubble {
             'textarea',
         ) as HTMLTextAreaElement;
         textArea.className = 'blocklyTextarea blocklyText';
+        textArea.setAttribute('aria-label', Blockly.Msg.ARIA_LABEL_COMMENT);
         return textArea;
     }
 

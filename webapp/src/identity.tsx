@@ -159,8 +159,9 @@ export class UserMenu extends auth.Component<UserMenuProps, UserMenuState> {
         const githubUser = this.getData("github:user") as UserInfo;
 
         return (
-            <sui.DropdownMenu role="menuitem"
+            <sui.DropdownMenu role="button"
                 title={title}
+                ariaHasPopup={(loggedIn || githubUser) ? "menu" : "dialog"}
                 className={`item icon user-dropdown-menuitem ${loggedIn ? 'logged-in-dropdown' : 'sign-in-dropdown'}`}
                 titleContent={loggedIn ? signedInElem : signedOutElem}
                 tabIndex={loggedIn ? 0 : -1}

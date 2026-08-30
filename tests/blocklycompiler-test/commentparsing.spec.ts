@@ -1,4 +1,5 @@
 /// <reference path="..\..\built\pxtlib.d.ts" />
+/// <reference path="..\..\built\pxtcompiler.d.ts" />
 
 describe("comment attribute parser", () => {
     describe("default values for parameters", () => {
@@ -467,6 +468,99 @@ describe("comment attribute parser", () => {
         chai.assert(parsed.locs["fr|param|bar"] == "bah", JSON.stringify(parsed.locs));
     });
 
+    it("should parse parameter labels", () => {
+        const parsed = ts.pxtc.parseCommentString(`
+            /**
+             * Bla
+             */
+            //% block="foo $fraction"
+            //% fraction.label="beat"
+            //% soundExpression.label="sound effect"
+            //% fraction.fieldOptions.label="dropdown label"
+        `);
+
+        chai.expect(parsed.paramLabels["fraction"]).to.equal("beat");
+        chai.expect(parsed.paramLabels["soundExpression"]).to.equal("sound effect");
+        chai.expect(parsed.paramFieldEditorOptions["fraction"].label).to.equal("dropdown label");
+    });
+
+    it("should compile and extract parameter labels", () => {
+        const explicit = testSymbolInfo("music.beat", "%fraction|beat", [testParameter("fraction", "number")], `
+            //% fraction.label="beat"
+        `);
+        const generated = testSymbolInfo("music.playSound", "play %soundExpression", [testParameter("soundExpression", "string")]);
+        const instance = testSymbolInfo("pins.DigitalPin.digitalRead", "%pin|digital read", [], `
+            //% pin.label="pin"
+        `, pxtc.SymbolKind.Method, "pins.DigitalPin");
+
+        const explicitComp = pxt.blocks.compileInfo(explicit);
+        chai.expect(explicitComp.parameters[0].label).to.equal("beat");
+        chai.expect(explicitComp.parameters[0].labelLocalizationKey).to.equal("music.beat|param|fraction|label");
+
+        const generatedComp = pxt.blocks.compileInfo(generated);
+        chai.expect(generatedComp.parameters[0].label).to.equal(undefined);
+        chai.expect(generatedComp.parameters[0].labelLocalizationKey).to.equal(undefined);
+
+        const instanceComp = pxt.blocks.compileInfo(instance);
+        chai.expect(instanceComp.thisParameter.label).to.equal("pin");
+        chai.expect(instanceComp.thisParameter.labelLocalizationKey).to.equal("pins.DigitalPin.digitalRead|param|this|label");
+
+        const docs = pxtc.genDocs("test", testApisInfo([explicit, generated, instance]), { locs: true });
+        const strings = JSON.parse(docs["test-strings.json"]);
+        chai.expect(strings["music.beat|param|fraction|label"]).to.equal("beat");
+        chai.expect(strings["music.playSound|param|soundExpression|label"]).to.equal(undefined);
+        chai.expect(strings["pins.DigitalPin.digitalRead|param|this|label"]).to.equal("pin");
+    });
+
+    it("should compile and extract parameter default strings", () => {
+        const docDefault = testSymbolInfo("display.showString", "show string $text", [testParameter("text", "string")], `
+            /**
+             * Show text on the screen.
+             * @param text the text to print on the screen, eg: "name"
+             */
+        `);
+        const explicitDefault = testSymbolInfo("game.setGameOverMessage", "use message $message", [testParameter("message", "string")], `
+            /**
+             * Set the message that displays when the game is over.
+             * @param message the message, eg: "Try again"
+             */
+            //% message.defl="winner"
+        `);
+        const numericDefault = testSymbolInfo("display.showNumber", "show number $value", [testParameter("value", "number")], `
+            /**
+             * Show a number on the screen.
+             * @param value the number to show, eg: 42
+             */
+        `);
+
+        const docs = pxtc.genDocs("test", testApisInfo([docDefault, explicitDefault, numericDefault]), { locs: true });
+        const strings = JSON.parse(docs["test-strings.json"]);
+        chai.expect(strings["display.showString|param|text|defl"]).to.equal("name");
+        chai.expect(strings["game.setGameOverMessage|param|message|defl"]).to.equal("winner");
+        chai.expect(strings["display.showNumber|param|value|defl"]).to.equal(undefined);
+    });
+
+    it("should apply localized parameter default strings", async () => {
+        const explicitDefault = testSymbolInfo("game.setGameOverMessage", "use message $message", [testParameter("message", "string")], `
+            //% message.defl="GAME OVER!"
+        `);
+
+        pxt.Util.setUserLanguage("es");
+        try {
+            await pxtc.localizeApisAsync(testApisInfo([explicitDefault]), {
+                localizationStringsAsync: () => Promise.resolve({
+                    "game.setGameOverMessage|param|message|defl": "FIN DEL JUEGO"
+                })
+            } as unknown as pxt.MainPackage);
+
+            chai.expect(explicitDefault.attributes.paramDefl["message"]).to.equal("\"FIN DEL JUEGO\"");
+            chai.expect(explicitDefault.parameters[0].default).to.equal("\"FIN DEL JUEGO\"");
+        }
+        finally {
+            pxt.Util.setUserLanguage("en");
+        }
+    });
+
     it("should parse parameter snippets", () => {
         const parsed = ts.pxtc.parseCommentString(`
             /**
@@ -480,6 +574,42 @@ describe("comment attribute parser", () => {
         chai.assert(parsed.paramSnippets?.["bar"].python === "goodbye", "bar.pySnippet === \"goodbye\"")
     });
 });
+
+function testParameter(name: string, type: string): pxtc.ParameterDesc {
+    return {
+        name,
+        type,
+        description: ""
+    };
+}
+
+function testSymbolInfo(qName: string, block: string, parameters: pxtc.ParameterDesc[], attributes = "", kind = pxtc.SymbolKind.Function, namespace?: string): pxtc.SymbolInfo {
+    const attrs = pxtc.parseCommentString(`
+        //% block="${block}"
+        ${attributes}
+    `);
+    parameters.forEach(parameter => parameter.default = attrs.paramDefl[parameter.name]);
+    const qNameParts = qName.split(".");
+    return {
+        attributes: attrs,
+        name: qNameParts[qNameParts.length - 1],
+        namespace: namespace || qNameParts.slice(0, -1).join("."),
+        fileName: "test.ts",
+        kind,
+        parameters,
+        retType: "void",
+        qName
+    } as pxtc.SymbolInfo;
+}
+
+function testApisInfo(symbols: pxtc.SymbolInfo[]): pxtc.ApisInfo {
+    const byQName: pxt.Map<pxtc.SymbolInfo> = {};
+    symbols.forEach(symbol => byQName[symbol.qName] = symbol);
+    return {
+        byQName,
+        jres: {}
+    };
+}
 
 function brk(): pxtc.BlockBreak {
     return { kind: "break" };

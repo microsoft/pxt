@@ -126,6 +126,19 @@ export function initElectron(projectView: IProjectView): void {
 }
 
 let deployingDeferred: pxt.Util.DeferredPromise<void> = null;
+export function deployCoreAsync(compileResult: pxtc.CompileResult): Promise<void> {
+    if (!pxt.BrowserUtils.isPxtElectron()) {
+        return cmds.browserDownloadDeployCoreAsync(compileResult);
+    }
+
+    if (shouldUseWebUSBDeploy()) {
+        pxt.tickEvent("electron.webusbdeploy.attempt");
+        return cmds.hidDeployCoreAsync(compileResult, undefined, driveDeployAsync);
+    }
+
+    return driveDeployAsync(compileResult);
+}
+
 export function driveDeployAsync(compileResult: pxtc.CompileResult): Promise<void> {
     if (!pxt.BrowserUtils.isPxtElectron()) {
         return cmds.browserDownloadDeployCoreAsync(compileResult);
@@ -144,6 +157,14 @@ export function driveDeployAsync(compileResult: pxtc.CompileResult): Promise<voi
         .finally(() => {
             deployingDeferred = null;
         });
+}
+
+function shouldUseWebUSBDeploy(): boolean {
+    return !!pxt.appTarget?.compile?.webUSB
+        && pxt.usb.isEnabled
+        && (pxt.packetio.isConnected()
+            || pxt.packetio.isConnecting()
+            || !!pxt.appTarget?.appTheme?.preferWebUSBDownload);
 }
 
 let fileDeployDeferred: pxt.Util.DeferredPromise<void> = null;

@@ -40,6 +40,7 @@ interface StringMap {
   */
 //% help=text/parse-int
 //% blockId="string_parseint" block="parse to integer %text" blockNamespace="text"
+//% text.label="value"
 //% text.defl="123"
 //% blockHidden=1
 function parseInt(text: string, radix?: number): number {

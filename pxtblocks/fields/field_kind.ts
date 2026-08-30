@@ -121,7 +121,7 @@ export class FieldKind extends FieldDropdown {
 function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction {
     return function() {
         const that = this as FieldKind;
-        const res: [string, string][] = [];
+        const res: Blockly.MenuOption[] = [];
 
         const sourceBlock = that.getSourceBlock();
 
@@ -137,7 +137,7 @@ function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction
 
 
         res.push([lf("Add a new {0}...", opts.memberName), "CREATE"]);
-        res.push([undefined, "SEPARATOR"]);
+        res.push(Blockly.FieldDropdown.SEPARATOR);
         res.push([lf("Rename {0}...", opts.memberName), "RENAME"]);
         res.push([lf("Delete {0}...", opts.memberName), "DELETE"]);
 

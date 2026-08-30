@@ -1,22 +1,29 @@
 import { createContext, useContext, useEffect, useReducer, useRef } from "react";
 
 export interface PianoRollTheme {
-    octaveWidth: number;
+    tickWidth: number;
     whiteKeyHeight: number;
+    ticksPerBeat: number;
+    beatsPerMeasure: number;
     measures: number;
     minOctave: number;
     maxOctave: number;
     gridLineColor: string;
     whiteKeyWorkspaceColor: string;
     blackKeyWorkspaceColor: string;
+    maxPolyphony: number;
+    borderColor?: string;
 }
 
 const defaultTheme: PianoRollTheme = {
-    octaveWidth: 500,
+    tickWidth: 30,
     whiteKeyHeight: 40,
+    ticksPerBeat: 4,
+    beatsPerMeasure: 4,
     measures: 4,
     minOctave: 3,
     maxOctave: 5,
+    maxPolyphony: Infinity,
     gridLineColor: "#283547",
     whiteKeyWorkspaceColor: "#405470",
     blackKeyWorkspaceColor: "#36475f"
@@ -44,8 +51,8 @@ export function PianoRollThemeProvider(
     const value = { state, dispatch };
     const rootRef = useRef<HTMLDivElement | null>(null);
 
+    // read CSS variables on first mount
     useEffect(() => {
-        rootRef.current!.setAttribute("style", `--octave-width: ${value.state.octaveWidth}px; --white-key-height: ${value.state.whiteKeyHeight}px;`);
         const style = getComputedStyle(rootRef.current!);
 
         const gridLineColor = style.getPropertyValue("--workspace-grid-line-color");
@@ -64,6 +71,19 @@ export function PianoRollThemeProvider(
             });
         }
     }, [])
+
+    useEffect(() => {
+        const styleParts = [
+            `--tick-width: ${value.state.tickWidth}px`,
+            `--white-key-height: ${value.state.whiteKeyHeight}px`,
+        ];
+
+        if (value.state.borderColor) {
+            styleParts.push(`--piano-roll-border-color: ${value.state.borderColor}`);
+        }
+
+        rootRef.current!.setAttribute("style", styleParts.join("; "));
+    }, [value.state.tickWidth, value.state.whiteKeyHeight, value.state.borderColor])
 
     return (
         <PianoRollContext.Provider
