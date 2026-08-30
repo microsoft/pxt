@@ -4166,10 +4166,12 @@ ${lbl}: .short 0xffff
             emitExprAsStmt(node.expression)
         }
         function emitCondition(expr: Expression, inner: ir.Expr = null): ir.Expr {
+            // with `noBoolLower` flag, the generic paths below handle every condition
+            const boolLower = !target.switches.noBoolLower
             // Lower `&&` / `||` used as a condition into short-circuiting jumps
             // that yield 0/1 directly, instead of boxing the intermediate
             // booleans and converting them back with a runtime helper.
-            if (!inner && !isStackMachine() && expr.kind == SK.BinaryExpression) {
+            if (boolLower && !inner && !isStackMachine() && expr.kind == SK.BinaryExpression) {
                 const binary = expr as BinaryExpression
                 const op = binary.operatorToken.kind
                 if (op == SK.AmpersandAmpersandToken || op == SK.BarBarToken) {
@@ -4194,7 +4196,7 @@ ${lbl}: .short 0xffff
             }
             // Lower `!expr` used as a condition by negating the operand's
             // condition directly, avoiding a boxed boolean just to invert it.
-            if (!inner && !isStackMachine() && expr.kind == SK.PrefixUnaryExpression) {
+            if (boolLower && !inner && !isStackMachine() && expr.kind == SK.PrefixUnaryExpression) {
                 const unary = expr as PrefixUnaryExpression
                 if (unary.operator == SK.ExclamationToken) {
                     return ir.rtcall("Boolean_::bang", [emitCondition(unary.operand)])

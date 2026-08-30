@@ -26,10 +26,19 @@ namespace ts.pxtc {
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
         "pxt::switch_eq": "_pxt_switch_eq",
+    }
+
+    // Boolean conversion fast paths, kept out of inlineArithmetic so the
+    // `noBoolLower` flag can drop the group (redirects and helper bodies alike).
+    const inlineBoolOps: pxt.Map<string> = {
         "pxt::fromBool": "_pxt_fromBool",
         "numops::toBool": "_numops_toBool",
         "numops::toBoolDecr": "_numops_toBoolDecr",
         "Boolean_::bang": "_pxt_boolean_bang",
+    }
+
+    function boolLowerEnabled() {
+        return !target.switches.noBoolLower
     }
 
     // snippets for ARM Thumb assembly
@@ -139,6 +148,8 @@ ${lbl}:`
         }
         call_lbl(lbl: string, saveStack?: boolean, stackAlign?: number) {
             let o = U.lookup(inlineArithmetic, lbl)
+            if (!o && boolLowerEnabled())
+                o = U.lookup(inlineBoolOps, lbl)
             if (o) {
                 lbl = o
                 saveStack = false
@@ -328,7 +339,11 @@ _numops_fromInt:
     blx lr
 .over2:
     ${this.callCPPPush("pxt::fromInt")}
+`
 
+            // skipped under `noBoolLower` flag: unreferenced helper text still costs image space
+            if (boolLowerEnabled())
+                r += `
 ; Tag a raw 0/1 truth value into a boolean object (taggedTrue/taggedFalse).
 ; Inverse of the toBool fast paths below; matches C++ pxt::fromBool.
 _pxt_fromBool:
@@ -344,7 +359,7 @@ _pxt_fromBool:
 
 ; Logical NOT of a raw 0/1 truth value -> raw 0/1 (matches C++ bool bang(bool)).
 ; Callers pass an already-tested condition, so this is raw-in / raw-out; value
-; context (`x = !y`) wraps the result with fromBool to re-tag it.
+; context (x = !y) wraps the result with fromBool to re-tag it.
 _pxt_boolean_bang:
     @scope _pxt_boolean_bang
     cmp r0, #0
@@ -444,9 +459,10 @@ _cmp_${op}:
                 // the cmp isn't really needed, given how toBoolDecr() is compiled,
                 // but better not rely on it
                 // Also, cmp isn't needed when ref-counting (it ends with movs r0, r4)
+                const toBoolDecr = boolLowerEnabled() ? "_numops_toBoolDecr" : "numops::toBoolDecr"
                 r += boxedOp(`
                         bl numops::${op}
-                        bl _numops_toBoolDecr
+                        bl ${toBoolDecr}
                         cmp r0, #0`)
             }
 

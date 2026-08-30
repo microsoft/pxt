@@ -776,6 +776,7 @@ declare namespace ts.pxtc {
         rawELF?: boolean;
         multiVariant?: boolean;
         size?: boolean;
+        noBoolLower?: boolean; // disable boolean condition lowering optimizations
     }
 
     interface CompileTarget {

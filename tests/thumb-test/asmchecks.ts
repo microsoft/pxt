@@ -68,6 +68,22 @@ export function assertAtLeast(asm: string, re: RegExp, min: number, what: string
     chai.assert(n >= min, "expected at least " + min + " " + what + ", found " + n);
 }
 
+/** Fails unless `re` matches the listing at most `max` times. */
+export function assertAtMost(asm: string, re: RegExp, max: number, what: string) {
+    const n = countMatches(asm, re);
+    chai.assert(n <= max, "expected at most " + max + " " + what + ", found " + n);
+}
+
+/**
+ * Listing up to _code_end: the program's own code, without the appended
+ * runtime helper text (whose bodies make their own C++ fallback calls).
+ */
+export function userCode(asm: string): string {
+    const i = asm.search(/^_code_end:/m);
+    chai.assert(i >= 0, "no _code_end marker in listing");
+    return asm.substr(0, i);
+}
+
 /**
  * Fails unless `actual` is within `pct` percent of `expected`. Bands are wide
  * on purpose: they catch silent large regressions in either direction without
@@ -87,30 +103,42 @@ function escapeRegExp(s: string): string {
 
 // --- per-case expectations -----------------------------------------------
 //
-// The *baseline cases pin how the compiler in this tree lowers specific
-// constructs, partly by asserting which specialized helpers are ABSENT from
-// the listing. They are the reference half of a differential pair: work that
-// specializes those constructs flips or extends these expectations alongside
-// its codegen change, and a mismatch in either direction is the signal (the
-// specialization silently stopped firing, or it appeared where it was not
-// expected). The helper names and label patterns asserted absent here are
-// therefore a naming contract with that work -- renaming an emitted helper or
-// thunk label means updating the patterns below in the same change.
+// The *baseline cases pin the emitted codegen in both directions: which
+// helpers the listing must contain and which it must not. Where an opt-out
+// compile switch exists, a `variantChecks` entry below compiles the same case
+// with the switch set and pins the codegen it restores; a mismatch in either
+// half is the signal. Helper and label names here are a naming contract with
+// the codegen -- renaming an emitted label means updating these patterns in
+// the same change.
 
 export const asmChecks: pxt.Map<AsmCheck> = {
 
     "boolbaseline.ts": (asm) => {
-        // Conditions are materialized as tagged values and narrowed by a call
-        // into the runtime at each test site.
-        assertAtLeast(asm, /bl numops::toBoolDecr/g, 12, "calls to numops::toBoolDecr");
+        // Boolean condition lowering emits thumb fast paths for the boolean
+        // conversion runtime calls.
+        for (const helper of ["_numops_toBool", "_numops_toBoolDecr",
+            "_pxt_fromBool", "_pxt_boolean_bang"])
+            chai.assert(hasLabel(asm, helper), "no " + helper + " helper in listing");
 
-        // Helpers introduced by boolean condition lowering. Absent here.
-        assertAbsent(asm, [
-            "_numops_toBool",
-            "_numops_toBoolDecr",
-            "_pxt_fromBool",
-            "_pxt_boolean_bang",
-        ]);
+        const code = userCode(asm);
+
+        // Every condition site narrows through the fast path; nothing in the
+        // program still calls the C++ entry point directly.
+        assertAtLeast(code, /bl _numops_toBoolDecr/g, 8, "calls to _numops_toBoolDecr");
+        assertNoMatch(code, /bl numops::toBoolDecr/g, "calls to numops::toBoolDecr");
+
+        // `&&` / `||` in condition position short-circuit to a raw 0/1 instead
+        // of building a tagged boolean. numops::toBool is only reached from
+        // that boxed path, so neither entry point is called at all.
+        assertNoMatch(code, /bl (numops::toBool|_numops_toBool)\b/g,
+            "calls to a toBool entry point");
+
+        // `!` in condition position is raw-in / raw-out, so its result is no
+        // longer re-tagged. The one remaining fromBool is the single `!` this
+        // case uses in value position (an argument), which must still box.
+        assertAtLeast(code, /bl _pxt_boolean_bang/g, 5, "calls to _pxt_boolean_bang");
+        assertAtMost(code, /bl (pxt::fromBool|_pxt_fromBool)\b/g, 1,
+            "calls to a fromBool entry point");
     },
 
     "ifacebaseline.ts": (asm) => {
@@ -136,6 +164,45 @@ export const asmChecks: pxt.Map<AsmCheck> = {
         assertWithin(codeSize(asm), 5592, 15, "generated code size");
     },
 };
+
+// --- switch variants -----------------------------------------------------
+
+/**
+ * A case compiled a second time with extra compile switches and checked
+ * against different expectations -- the opt-out half of the differential
+ * pair described above asmChecks.
+ */
+export interface VariantCheck {
+    /** Case file in tests/thumb-test/cases. */
+    caseFile: string;
+    /** Merged over the case's normal switches. */
+    switches: pxtc.CompileSwitches;
+    /** Names the variant in the test title; keep it short. */
+    label: string;
+    check: AsmCheck;
+}
+
+export const variantChecks: VariantCheck[] = [
+
+    {
+        caseFile: "boolbaseline.ts",
+        switches: { noBoolLower: true },
+        label: "noBoolLower",
+        check: (asm) => {
+            // Conditions are materialized as tagged values and narrowed by a
+            // call into the runtime at each test site.
+            assertAtLeast(asm, /bl numops::toBoolDecr/g, 12, "calls to numops::toBoolDecr");
+
+            // The thumb fast paths are neither emitted nor called.
+            assertAbsent(asm, [
+                "_numops_toBool",
+                "_numops_toBoolDecr",
+                "_pxt_fromBool",
+                "_pxt_boolean_bang",
+            ]);
+        },
+    },
+];
 
 // --- external case programs ----------------------------------------------
 
