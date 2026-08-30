@@ -146,6 +146,11 @@ The 10 second delay and the repeating PASS both exist for the same reason:
 serial capture cannot begin until the board re-enumerates after flashing, so a
 program that printed its verdict once and immediately would race the capture.
 
+Verdicts are read only from the case's own `HWAB START` banner onward, and
+`hwab` passes the expected case name through: DAPLink buffers serial while no
+host is reading, so the first bytes after opening the port can belong to the
+previously flashed program -- including its PASS banner.
+
 On failure the generated `assert` prints `ASSERT <id>` and then panics 45. The
 host prelude's `assert` throws instead, and an uncaught throw on device is just
 panic 999, which does not say which assertion failed -- `gen-project.js`
