@@ -68,7 +68,7 @@ Their [MakeCode Arcade Console](https://tomatocube.com/product/makecode-arcade-c
 
 ![Tomato Cube Arcade Console](/static/blog/arcade/update-aug-2026/tomato-cube-arcade-console.png)
 
-The Tomato Cube [micro:bit Display Shield](https://tomatocube.com/product/makecode-arcade-display-shield-for-microbit) has an innovative design with a built-in micro-USB connector for the micro:bit. This makes it nice to have just 1 cable for downloading and charging the device, and good if you don’t plan on swapping out micro:bits all the time.
+The Tomato Cube [micro:bit Display Shield](https://tomatocube.com/product/makecode-arcade-display-shield-for-microbit) has an innovative design with a built-in micro-USB connector for the micro:bit. This makes it nice since you only need one cable for downloading and charging the device. This is very convenient if you intend to keep the same micro:bit plugged in for most of the time.
 
 ![Tomato Cube Display Shield Console](/static/blog/arcade/update-aug-2026/tomato-cube-display-shield.png)
 
