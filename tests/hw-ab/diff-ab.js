@@ -6,6 +6,10 @@
  * capture picks up incidentally is dropped, and the parts of a line that vary
  * legitimately between two runs of the same build -- elapsed milliseconds and
  * heap byte counts on soak lines -- are masked before the comparison.
+ *
+ * Two capture artifacts are also dropped, since both are properties of the
+ * capture rather than of the build: a final line the capture cut short, and a
+ * banner belonging to the previously flashed program.
  */
 
 "use strict";
@@ -21,6 +25,11 @@ const USAGE = [
     "  - CR stripped, blank lines dropped",
     "  - everything before the first \"HWAB START\" banner is discarded, since a",
     "    capture can attach part way through a line",
+    "  - an unterminated final line is dropped -- it means the capture stopped",
+    "    mid-line, which is not a divergence",
+    "  - the case name comes from the log's own \"HWAB START\" banner; HWAB lines",
+    "    naming a different case are the previous program's, buffered by DAPLink,",
+    "    and are dropped",
     "  - HWAB banners, ASSERT failures and the lang-test0 msg() trace lines are all",
     "    compared; a leading \"[12345]\" or \"123ms\" timestamp is stripped",
     "  - \"HWAB SOAK <ms> free=.. min=.. total=.. numgc=..\" collapses to",
@@ -48,8 +57,20 @@ function splitLines(text) {
     return lines;
 }
 
+// Case name carried by an "HWAB START <case>" or "HWAB PASS <case>" line, or
+// "" for any other line (HWAB SOAK carries no case name).
+function hwabCase(line) {
+    const m = /HWAB (?:START|PASS)[ \t]+([^ \t]+)/.exec(line);
+    return m ? m[1] : "";
+}
+
 function normalize(file) {
-    const raw = splitLines(fs.readFileSync(file, "utf8").replace(/\r/g, ""));
+    const text = fs.readFileSync(file, "utf8").replace(/\r/g, "");
+    const raw = splitLines(text);
+
+    // A capture stopped mid-line leaves an unterminated fragment; where the
+    // capture happened to stop is not a divergence.
+    if (raw.length && !/\n$/.test(text)) raw.pop();
 
     // Serial capture can attach part way through a line, so the sync point is
     // the first HWAB START banner; everything before it is discarded. A log
@@ -57,8 +78,13 @@ function normalize(file) {
     // all of its lines except the first, which is the one that can be a
     // fragment.
     let start = 0;
+    let caseName = "";
     for (let i = 0; i < raw.length; i++) {
-        if (raw[i].indexOf("HWAB START") >= 0) { start = i + 1; break; }
+        if (raw[i].indexOf("HWAB START") >= 0) {
+            start = i + 1;
+            caseName = hwabCase(raw[i]);
+            break;
+        }
     }
     const from = start ? start : 2;
 
@@ -71,6 +97,11 @@ function normalize(file) {
             .replace(/^HWAB SOAK [0-9]+ .*$/, "HWAB SOAK <t> <heap>");
         // Blank lines are dropped without resetting the duplicate filter.
         if (!/[^ \t]/.test(line)) continue;
+        // A whole banner from the previously flashed program can survive the
+        // discard above, buffered by DAPLink and emitted after this program's
+        // own START. It names the other case, which is how it is recognised.
+        const lineCase = hwabCase(line);
+        if (caseName && lineCase && lineCase !== caseName) continue;
         if (line === prev) continue;
         out.push(line);
         prev = line;
