@@ -129,6 +129,25 @@ export const asmChecks: pxt.Map<AsmCheck> = {
         assertNoMatch(asm, /^\s*\S*_iface:/gm, "_iface: proc labels");
     },
 
+    "fieldbaseline.ts": (asm) => {
+        // Checked field loads are emitted inline here: a call into the class's
+        // validate helper immediately followed by the load. QzCell declares two
+        // fields, so their offsets are fixed at #4 (qzTally) and #8 (qzSpare),
+        // and the offset in the sequence is what tells the two apart. The
+        // floors are the exact read-site counts in the case program -- 6 above
+        // the count gate and 4 below it -- so a read that stops taking the
+        // checked path fails here instead of quietly making the case vacuous.
+        assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g, 6,
+            "inline checked loads of qzTally");
+        assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #8\]/g, 4,
+            "inline checked loads of qzSpare");
+
+        // Count-gated checked-field-load specialization. Absent here: qzTally
+        // is calibrated to sit above the gate, so a thunk of any kind means the
+        // specialization started firing in this tree.
+        assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
+    },
+
     "sizebaseline.ts": (asm, res) => {
         chai.assert(hexSize(res) > 0, "empty hex output");
         // Baseline measured on this fixture; see assertWithin on why the band

@@ -38,6 +38,7 @@ The corpus is sized for two optimization families:
 | Reference imbalance on an operand consumed by a condition (allocation in a loop header, re-evaluated every iteration) | `55conditionlowering.ts` `testFreshOperands` -- string concatenation, array literal, `slice`, object literal and ternary operands all built inside the header | testlang (wrong final state), hw-ab (allocator/GC failure) | `fresh:concat`, `fresh:arrlit`, `fresh:slicelen`, `fresh:obj`, `fresh:strcmp`, `fresh:tern`; on device, a memory panic instead of an assert |
 | A condition abandoned part way through by an exception, and conditions used again after the stack unwinds | `55conditionlowering.ts` `testExceptionsInConditions` | testlang, hw-ab | `exn:right`, `exn:left`, `exn:and`, `exn:andshort`, `exn:after`, `exn:loop`; the message carries the actual trace, e.g. `exn:right t!c` |
 | Threshold miscounting in a count-gated specialization -- members just below and just above the gate behaving differently | `56ifacedispatch.ts` `testThresholds` (`qzLo` 2 sites vs `qzHi` 5+, `qzFew` 4 reads vs `qzMany` 6+) and `testStores` (`qzRare` 2 stores vs `qzHot` 4) | testlang, hw-ab | `th:lo1`, `th:hi1`..`th:hi5`, `th:few*`, `th:many*`, `th:agree`, `st:rare`, `st:hot` |
+| The same miscounting for the checked-field-load gate, which counts per class field rather than per interface member and so is not reachable from the semantic layer | `tests/thumb-test/cases/fieldbaseline.ts`, one class whose `qzTally` is read above the gate and `qzSpare` below it, with `asmchecks.ts` counting the inline checked-load sequences by field offset | testthumb | `expected at least 6 inline checked loads of qzTally, found N`, or `listing unexpectedly contains N checked-field-load thunks (ldfldchk_)` |
 | Arity holes in wrapper-skip -- one member name declared at two arities by two unrelated interfaces | `56ifacedispatch.ts` `testArityCollision`, with the two dispatches interleaved in a loop so neither can be hoisted | testlang, hw-ab | `ar:one1`, `ar:two1`, `ar:mixed` |
 | A missing trailing argument on a dynamic call (the documented default-parameter constraint) | `56ifacedispatch.ts` `testDefaults` | testlang, hw-ab | `opt:concrete`, `opt:dynagree`, `opt:safe1`..`opt:safe4`, `opt:iface2`, `opt:any2` |
 | Get and call sharing a dispatch bucket -- one member name that is a field on one type and a method on another | `56ifacedispatch.ts` `testGetCallCollision`, through both interface-typed and `any`-typed references | testlang, hw-ab | `gc:get1`, `gc:call1`, `gc:agree`, `gc:get2`, `gc:call2`, `gc:type` |
@@ -46,7 +47,7 @@ The corpus is sized for two optimization families:
 | Index-signature store fast path misrouting -- a declared field reached through `{ [k: string]: number }`, versus a real map | `56ifacedispatch.ts` `testStores` (`st:idx:*` against a class instance, `st:grow*` against a run-time-keyed map); also in `ifacebaseline.ts` | testlang, testthumb (shape), hw-ab | `st:idx:literal`, `st:idx:class:set`, `st:idx:class:rmw`, `st:grow0`, `st:growsum` |
 | Stores and accessor calls through interface-typed references, including inherited fields and `super` | `56ifacedispatch.ts` `testStores` | testlang, hw-ab | `st:prop:class`, `st:acc:set`, `st:acc:rmw`, `st:inh:ifaceset`, `st:super:iface`, `st:base:call` |
 | Dynamic member get on an `any`, by dot, by string literal and by computed key | `56ifacedispatch.ts` `testDynamicGet` | testlang, hw-ab | `dg:dot`, `dg:literal`, `dg:computed`, `dg:missing`, `dg:inst1`..`dg:inst3`, `dg:instcall` |
-| Silent optimization loss -- an expected helper, thunk or dispatch sequence quietly stops being emitted, or an unexpected one appears | `tests/thumb-test/cases/boolbaseline.ts` and `ifacebaseline.ts`, whose entries in `asmchecks.ts` name the exact helpers that must and must not appear | testthumb | chai failure from `assertAtLeast` / `assertAbsent` / `assertNoMatch`, e.g. `expected at least 12 calls to numops::toBoolDecr, found 0` or `listing unexpectedly mentions _pxt_map_set_by_string` |
+| Silent optimization loss -- an expected helper, thunk or dispatch sequence quietly stops being emitted, or an unexpected one appears | `tests/thumb-test/cases/boolbaseline.ts`, `ifacebaseline.ts` and `fieldbaseline.ts`, whose entries in `asmchecks.ts` name the exact helpers that must and must not appear | testthumb | chai failure from `assertAtLeast` / `assertAbsent` / `assertNoMatch`, e.g. `expected at least 12 calls to numops::toBoolDecr, found 0` or `listing unexpectedly mentions _pxt_map_set_by_string` |
 | Large silent swing in generated code size | `tests/thumb-test/cases/sizebaseline.ts` via `codeSize` and `assertWithin` | testthumb | `generated code size is N, outside the band lo..hi` |
 | Invalid Thumb emission -- an unencodable instruction or a stack imbalance | Every thumb-test case, plus every semantic file registered in `externalCases` in `asmchecks.ts`, compiled natively with the lang-test0 prelude | testthumb | `native compile of <file> failed:` followed by the code-9200 diagnostics from the in-process assembler |
 
@@ -133,7 +134,7 @@ sequence codegen chose.
 ### `tests/thumb-test/cases/ifacebaseline.ts`
 
 The dispatch counterpart. Two classes implement one interface; the program does
-repeated checked field loads of a single field, repeated interface-dispatched
+repeated interface-typed reads of a single field, repeated interface-dispatched
 calls of a single method, repeated object-literal stores of a single key, an
 overridden `toString`, and a typed index signature -- each repeated enough times
 to cross a plausible count gate. Everything feeds a module-level accumulator.
@@ -141,6 +142,21 @@ Its `asmchecks.ts` entry asserts both on the generic map runtime entries the
 program reaches and on the presence or absence of the specialized forms:
 checked-field-load thunks, interface-call thunks, specialized map-store thunks,
 `_iface` proc labels and the by-string map-set helper.
+
+### `tests/thumb-test/cases/fieldbaseline.ts`
+
+The field-access counterpart, and the only case that reaches the checked field
+load path at all: `ifacebaseline.ts`'s field reads have interface-typed
+receivers, so they lower to interface dispatch instead. A field read is checked
+whenever its receiver is not `this`, so this program keeps every receiver in a
+class-typed variable or parameter and reads `qzTally` at six static sites and
+`qzSpare` at four, straddling the count gate that decides whether the checked
+sequence is hoisted into a per-field thunk. Both fields live on one class that
+implements no interface and has no subclass -- an overridden field is treated as
+slow and routed through interface dispatch, which would take the reads out of
+the path this case exists to pin. Its `asmchecks.ts` entry counts the inline
+validate-then-load sequences separately per field, by the load offset, and
+asserts the thunk form is absent.
 
 ### `tests/thumb-test/cases/sizebaseline.ts`
 
