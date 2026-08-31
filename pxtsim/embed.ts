@@ -275,13 +275,7 @@ namespace pxsim {
 
     export interface SetSimThemeMessage extends SimulatorMessage {
         type: "setsimthemecolor";
-        part:
-            | "background-color"
-            | "button-stroke"
-            | "text-color"
-            | "button-fill"
-            | "dpad-fill"
-            | "joystick-handle-stroke";
+        part: string;
         color: string;
     }
 

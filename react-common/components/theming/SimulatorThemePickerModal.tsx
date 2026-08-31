@@ -22,8 +22,8 @@ export interface SimulatorThemePickerModalProps {
 const CUSTOM_PRESET_ID = "custom";
 const ACCOUNT_PRESET_ID = "account";
 
-function getThemeColors(): { id: pxt.auth.SimulatorThemeColor; label: string }[] {
-    const labels: Record<pxt.auth.SimulatorThemeColor, string> = {
+function getDefaultColorFields(theme: pxt.SimulatorTheme): pxt.SimulatorThemeColorField[] {
+    const labels: pxt.Map<string> = {
         "background-color": lf("Console"),
         "button-stroke": lf("Button outline"),
         "text-color": lf("Button labels"),
@@ -31,7 +31,11 @@ function getThemeColors(): { id: pxt.auth.SimulatorThemeColor; label: string }[]
         "dpad-fill": lf("D-pad"),
         "joystick-handle-stroke": lf("Joystick handle outline"),
     };
-    return pxt.auth.SIMULATOR_THEME_COLOR_PROPERTIES.map(id => ({ id, label: labels[id] }));
+    return pxt.auth.DEFAULT_SIMULATOR_THEME_COLOR_PROPERTIES.map(property => ({
+        property,
+        label: labels[property],
+        defaultValue: theme[property],
+    }));
 }
 
 function getPresetId(theme: pxt.SimulatorTheme, presets: pxt.SimulatorThemePreset[]): string | undefined {
@@ -57,7 +61,14 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         onSave,
         onClose,
     } = props;
-    const themeColors = getThemeColors();
+    const defaultColorFields = getDefaultColorFields(presets[0].theme);
+    const getColorFields = (layoutId: string) => {
+        const fields = layouts?.find(layout => layout.id === layoutId)?.colorFields;
+        return fields?.map(field => ({
+            ...field,
+            label: pxt.Util.rlf(`{id:simulator-theme-field}${field.label}`),
+        })) || defaultColorFields;
+    };
     const savedPreset = presets.find(preset => preset.id === initialPreference?.presetId);
     const initialPresetId = savedPreset
         ? savedPreset.id
@@ -66,38 +77,49 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         : onUseAccountTheme
             ? ACCOUNT_PRESET_ID
             : presets[0].id;
-    const initialThemeSource = defaultTheme || initialPreference?.theme || savedPreset?.theme || presets[0].theme;
-    const initialTheme = initialPresetId === "default"
-        ? getSimulatorThemeForLayout(
-            initialThemeSource,
-            initialPreference?.theme.layout || initialThemeSource.layout || pxt.auth.DEFAULT_SIMULATOR_LAYOUT
-        )
-        : copySimulatorTheme(initialPreference?.theme || savedPreset?.theme || accountTheme || presets[0].theme);
+    const initialThemeSource = initialPresetId === "default"
+        ? defaultTheme || initialPreference?.theme || savedPreset?.theme || presets[0].theme
+        : initialPreference?.theme || savedPreset?.theme || accountTheme || presets[0].theme;
+    const initialLayoutId = initialPreference?.theme.layout
+        || initialThemeSource.layout
+        || pxt.auth.DEFAULT_SIMULATOR_LAYOUT;
+    const initialTheme = getSimulatorThemeForLayout(
+        initialThemeSource,
+        initialLayoutId,
+        getColorFields(initialLayoutId)
+    );
     const [presetId, setPresetId] = React.useState(initialPresetId);
     const [theme, setTheme] = React.useState<pxt.SimulatorTheme>(initialTheme);
     const layoutId = theme.layout;
     const layoutIsKnown = layoutId === pxt.auth.DEFAULT_SIMULATOR_LAYOUT || layouts?.some(layout => layout.id === layoutId);
+    const colorFields = getColorFields(layoutId);
 
     const selectPreset = (id: string) => {
         if (id === ACCOUNT_PRESET_ID && onUseAccountTheme) {
             setPresetId(id);
-            setTheme(copySimulatorTheme(accountTheme || presets[0].theme));
+            const nextTheme = copySimulatorTheme(accountTheme || presets[0].theme);
+            setTheme(getSimulatorThemeForLayout(nextTheme, nextTheme.layout, getColorFields(nextTheme.layout)));
             return;
         }
         const preset = presets.find(candidate => candidate.id === id);
         if (!preset) return;
-        const nextTheme = copySimulatorTheme(id === "default" ? defaultTheme || preset.theme : preset.theme);
+        const presetTheme = copySimulatorTheme(id === "default" ? defaultTheme || preset.theme : preset.theme);
+        const nextTheme = getSimulatorThemeForLayout(
+            presetTheme,
+            presetTheme.layout,
+            getColorFields(presetTheme.layout)
+        );
         setPresetId(id);
         setTheme(nextTheme);
         onThemeChanged?.({ presetId: id, theme: nextTheme });
     };
 
-    const updateColor = (part: pxt.auth.SimulatorThemeColor, color: string) => {
+    const updateColor = (property: string, color: string) => {
         const normalized = normalizeColor(color);
         if (!normalized) return;
         const nextTheme = {
             ...theme,
-            [part]: normalized,
+            [property]: normalized,
         };
         setPresetId(CUSTOM_PRESET_ID);
         setTheme(nextTheme);
@@ -105,10 +127,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
     };
 
     const selectLayout = (id: string) => {
-        const nextTheme = getSimulatorThemeForLayout(
-            theme,
-            id
-        );
+        const nextTheme = getSimulatorThemeForLayout(theme, id, getColorFields(id));
         const nextPresetId = presetId === ACCOUNT_PRESET_ID ? CUSTOM_PRESET_ID : presetId;
         setPresetId(nextPresetId);
         setTheme(nextTheme);
@@ -169,17 +188,17 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
                     </select>
                 </div>}
                 <div className="simulator-theme-color-list">
-                    {themeColors.map(part => <div className="simulator-theme-color" key={part.id}>
-                        <span>{part.label}</span>
+                    {colorFields.map(field => <div className="simulator-theme-color" key={field.property}>
+                        <span>{field.label}</span>
                         <input
                             type="color"
-                            aria-label={lf("{0} color", part.label)}
-                            value={theme[part.id]}
-                            onChange={event => updateColor(part.id, event.target.value)} />
+                            aria-label={lf("{0} color", field.label)}
+                            value={theme[field.property]}
+                            onChange={event => updateColor(field.property, event.target.value)} />
                         <Input
-                            ariaLabel={lf("{0} hex color", part.label)}
-                            initialValue={theme[part.id]}
-                            onChange={value => updateColor(part.id, value)}
+                            ariaLabel={lf("{0} hex color", field.label)}
+                            initialValue={theme[field.property]}
+                            onChange={value => updateColor(field.property, value)}
                             validator={(value, previousValue) => normalizeColor(value) || previousValue} />
                     </div>)}
                 </div>

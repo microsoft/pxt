@@ -51,7 +51,7 @@ namespace pxt.auth {
         [targetId: string]: string;
     }
 
-    export const SIMULATOR_THEME_COLOR_PROPERTIES = [
+    export const DEFAULT_SIMULATOR_THEME_COLOR_PROPERTIES = [
         "background-color",
         "button-stroke",
         "text-color",
@@ -62,10 +62,7 @@ namespace pxt.auth {
 
     export const DEFAULT_SIMULATOR_LAYOUT = "default";
 
-    export type SimulatorThemeColor = typeof SIMULATOR_THEME_COLOR_PROPERTIES[number];
-    export type SimulatorTheme = Map<string>
-        & Record<SimulatorThemeColor, string>
-        & { layout: string };
+    export type SimulatorTheme = Map<string> & { layout: string };
 
     export type SimulatorThemePreference = {
         presetId: string;
@@ -78,17 +75,33 @@ namespace pxt.auth {
 
     export const SIMULATOR_THEMES_LOCAL_STORAGE_KEY = "user-pref:simulatorThemes";
 
+    export function isSimulatorThemeColorProperty(property: string): boolean {
+        return property !== "layout"
+            && property !== "skin"
+            && /^[a-z][a-z0-9-]*$/.test(property);
+    }
+
+    export function isSimulatorThemeColor(value: unknown): value is string {
+        return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+    }
+
     export function isValidSimulatorTheme(theme: unknown): theme is SimulatorTheme {
         if (!theme || typeof theme !== "object") return false;
         const candidate = theme as Map<unknown>;
-        return SIMULATOR_THEME_COLOR_PROPERTIES.every(property =>
-            typeof candidate[property] === "string"
-            && /^#[0-9a-f]{6}$/i.test(candidate[property] as string)
-        ) && typeof candidate.layout === "string" && !!candidate.layout;
+        const colorProperties = Object.keys(candidate).filter(property => property !== "layout");
+        return colorProperties.length > 0
+            && colorProperties.every(property =>
+                isSimulatorThemeColorProperty(property)
+                && isSimulatorThemeColor(candidate[property]))
+            && typeof candidate.layout === "string"
+            && !!candidate.layout;
     }
 
     export function simulatorThemeColorsEqual(left: Map<string>, right: Map<string>): boolean {
-        return SIMULATOR_THEME_COLOR_PROPERTIES.every(property => left[property] === right[property]);
+        const leftProperties = Object.keys(left).filter(isSimulatorThemeColorProperty);
+        const rightProperties = Object.keys(right).filter(isSimulatorThemeColorProperty);
+        return leftProperties.length === rightProperties.length
+            && leftProperties.every(property => left[property] === right[property]);
     }
 
     export function isValidSimulatorThemePreference(preference: unknown): preference is SimulatorThemePreference {

@@ -1999,6 +1999,9 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     }
     for (const layout of cfg.simulator?.themeLayouts ?? []) {
         targetStrings[`{id:simulator-layout-name}${layout.name}`] = layout.name;
+        for (const field of layout.colorFields ?? []) {
+            targetStrings[`{id:simulator-theme-field}${field.label}`] = field.label;
+        }
     }
     if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
         const heroBannerCard = theme.homeScreenHero;

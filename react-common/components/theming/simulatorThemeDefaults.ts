@@ -43,17 +43,26 @@ export function getDefaultSimulatorThemePreference(
 
 export function copySimulatorTheme(theme: pxt.SimulatorTheme): pxt.SimulatorTheme {
     const result = { layout: theme.layout || pxt.auth.DEFAULT_SIMULATOR_LAYOUT } as pxt.SimulatorTheme;
-    for (const property of pxt.auth.SIMULATOR_THEME_COLOR_PROPERTIES) {
-        result[property] = theme[property];
+    for (const property of Object.keys(theme)) {
+        if (pxt.auth.isSimulatorThemeColorProperty(property)
+            && pxt.auth.isSimulatorThemeColor(theme[property])) {
+            result[property] = theme[property];
+        }
     }
     return result;
 }
 
 export function getSimulatorThemeForLayout(
     theme: pxt.SimulatorTheme,
-    layoutId: string
+    layoutId: string,
+    colorFields: pxt.SimulatorThemeColorField[] = []
 ): pxt.SimulatorTheme {
     const nextTheme = copySimulatorTheme(theme);
     nextTheme.layout = layoutId;
+    for (const field of colorFields) {
+        if (!pxt.auth.isSimulatorThemeColor(nextTheme[field.property])) {
+            nextTheme[field.property] = field.defaultValue;
+        }
+    }
     return nextTheme;
 }

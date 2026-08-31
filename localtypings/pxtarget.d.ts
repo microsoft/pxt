@@ -263,12 +263,6 @@ declare namespace pxt {
     }
 
     interface SimulatorTheme extends Map<string> {
-        "background-color": string;
-        "button-stroke": string;
-        "text-color": string;
-        "button-fill": string;
-        "dpad-fill": string;
-        "joystick-handle-stroke": string;
         layout: string;
     }
 
@@ -278,9 +272,16 @@ declare namespace pxt {
         theme: SimulatorTheme;
     }
 
+    interface SimulatorThemeColorField {
+        property: string;
+        label: string;
+        defaultValue: string;
+    }
+
     interface SimulatorThemeLayout {
         id: string;
         name: string;
+        colorFields?: SimulatorThemeColorField[]; // replaces the standard color fields for this layout
     }
 
     interface AppSimulator {

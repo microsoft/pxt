@@ -197,18 +197,20 @@ describe("simulator themes", () => {
             .deep.equals(preference.theme);
     });
 
-    it("requires all simulator theme properties in persisted themes", () => {
-        for (const property of pxt.auth.SIMULATOR_THEME_COLOR_PROPERTIES) {
-            const incompleteTheme = { ...simulatorTheme } as Partial<pxt.SimulatorTheme>;
-            delete incompleteTheme[property];
-            chai.expect(pxt.auth.isValidSimulatorTheme(incompleteTheme), property).equals(false);
-        }
-
+    it("requires a layout in persisted themes", () => {
         const themeWithoutLayout = { ...simulatorTheme } as Partial<pxt.SimulatorTheme>;
         delete themeWithoutLayout.layout;
 
         chai.expect(pxt.auth.isValidSimulatorTheme(simulatorTheme)).equals(true);
         chai.expect(pxt.auth.isValidSimulatorTheme(themeWithoutLayout)).equals(false);
+    });
+
+    it("accepts sparse themes with target-defined colors", () => {
+        chai.expect(pxt.auth.isValidSimulatorTheme({
+            "background-color": "#123456",
+            "screen-border": "#ABCDEF",
+            layout: "target-layout",
+        })).equals(true);
     });
 
     it("rejects malformed simulator theme preferences", () => {
@@ -334,6 +336,24 @@ describe("simulator themes", () => {
             .deep.equals({ ...customTheme, layout: "retro" });
     });
 
+    it("fills missing colors declared by a layout", () => {
+        const borderField: pxt.SimulatorThemeColorField = {
+            property: "screen-border",
+            label: "Screen border",
+            defaultValue: "#ABCDEF",
+        };
+        chai.expect(getSimulatorThemeForLayout(simulatorTheme, "retro", [borderField]))
+            .deep.equals({ ...simulatorTheme, layout: "retro", "screen-border": "#ABCDEF" });
+        chai.expect(getSimulatorThemeForLayout({
+            ...simulatorTheme,
+            "screen-border": "#123456",
+        }, "retro", [borderField])).deep.equals({
+            ...simulatorTheme,
+            layout: "retro",
+            "screen-border": "#123456",
+        });
+    });
+
     it("selects the default layout without changing its colors", () => {
         chai.expect(getSimulatorThemeForLayout(retroSimulatorTheme, "default"))
             .deep.equals({ ...retroSimulatorTheme, layout: "default" });
@@ -344,9 +364,17 @@ describe("simulator themes", () => {
             .deep.equals({ ...simulatorTheme, layout: "target-layout" });
     });
 
-    it("ignores unknown simulator theme properties when copying", () => {
-        const themeWithUnknownProperty = { ...simulatorTheme, extra: "ignored" } as pxt.SimulatorTheme;
-        chai.expect(copySimulatorTheme(themeWithUnknownProperty)).deep.equals(simulatorTheme);
+    it("copies target-defined colors and ignores reserved or malformed properties", () => {
+        const themeWithMalformedProperty = {
+            ...simulatorTheme,
+            "screen-border": "#ABCDEF",
+            skin: "#123456",
+            extra: "ignored",
+        } as pxt.SimulatorTheme;
+        chai.expect(copySimulatorTheme(themeWithMalformedProperty)).deep.equals({
+            ...simulatorTheme,
+            "screen-border": "#ABCDEF",
+        });
     });
 
     it("removes a simulator theme from an editable shared-project copy", () => {
