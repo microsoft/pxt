@@ -194,7 +194,9 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = simScreenshot || simGif;
 
         const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
-        const simulatorTheme = simulatorThemePreference.getEffectiveSimulatorThemePreference();
+        const simulatorTheme = pxt.appTarget.simulator?.themePresets?.length
+            ? simulatorThemePreference.getEffectiveSimulatorThemePreference()
+            : undefined;
 
         const publishAsync = async (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean, sharedSimulatorTheme?: pxt.SimulatorTheme) =>
             parent.publishAsync(name, description, screenshotUri, forceAnonymous, sharedSimulatorTheme)

@@ -58,14 +58,14 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
         <Modal
             id="theme-picker-modal"
             title={lf("Choose a Theme")}
-            hideTitle
+            hideTitle={!!props.onSimulatorThemeClicked}
             onClose={props.onClose}
             className="theme-picker-modal"
             rightHeader={props.onSimulatorThemeClicked && <ThemePickerToggle
                 selected="editor"
                 onModeChanged={props.onSimulatorThemeClicked} />}
             actions={[{
-                label: lf("Save"),
+                label: lf("Apply"),
                 className: "primary",
                 disabled: !selectedTheme,
                 onClick: () => selectedTheme && props.onSave(selectedTheme),

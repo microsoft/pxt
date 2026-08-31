@@ -150,6 +150,7 @@ export class Editor extends srceditor.Editor {
     }
 
     private showSimulatorThemePicker = () => {
+        if (!pxt.appTarget.simulator?.themePresets?.length) return;
         pxt.tickEvent("pxtjson.simulatortheme.open", undefined, { interactiveConsent: true });
         this.simulatorThemePickerOpen = true;
         this.parent.forceUpdate();
@@ -212,7 +213,10 @@ export class Editor extends srceditor.Editor {
 
         const pxtJsonOptions = pxt.appTarget.appTheme?.pxtJsonOptions || [];
         const simulatorThemePresets = pxt.appTarget.simulator?.themePresets || [];
-        const accountSimulatorTheme = simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme;
+        const simulatorThemesEnabled = !!simulatorThemePresets.length;
+        const accountSimulatorTheme = simulatorThemesEnabled
+            ? simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme
+            : undefined;
         const projectSimulatorThemePreference = accountSimulatorTheme
             ? simulatorTheme.getProjectSimulatorThemePreference(c.theme, simulatorThemePresets, accountSimulatorTheme)
             : undefined;
@@ -258,7 +262,7 @@ export class Editor extends srceditor.Editor {
                             resize="vertical"
                         />
                     }
-                    {!!simulatorThemePresets.length && <div className="pxt-json-simulator-theme">
+                    {simulatorThemesEnabled && <div className="pxt-json-simulator-theme">
                         <label htmlFor="projectSimulatorTheme">{lf("Simulator theme")}</label>
                         <Button
                             id="projectSimulatorTheme"
@@ -296,7 +300,7 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </div>
             </div>
-            {this.simulatorThemePickerOpen && !!accountSimulatorTheme && <SimulatorThemePickerModal
+            {simulatorThemesEnabled && this.simulatorThemePickerOpen && !!accountSimulatorTheme && <SimulatorThemePickerModal
                 presets={simulatorThemePresets}
                 layouts={pxt.appTarget.simulator?.themeLayouts}
                 initialPreference={projectSimulatorThemePreference}

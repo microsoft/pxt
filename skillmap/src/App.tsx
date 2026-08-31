@@ -457,21 +457,24 @@ class AppImpl extends React.Component<AppProps, AppState> {
     async changeTheme(theme: pxt.ColorThemeInfo) {
         await this.persistColorTheme(theme);
 
-        let simulatorThemePreference = this.state.simulatorThemePreference;
-        if (!simulatorThemePreference) {
-            const currentPreference = await authClient.getSimulatorThemePreferenceAsync();
-            const initialColorTheme = this.themePickerInitialColorThemeId
-                ? pxt.appTarget.colorThemeMap?.[this.themePickerInitialColorThemeId]
-                : undefined;
-            simulatorThemePreference = getSimulatorThemePreferenceForColorThemeChange(
-                currentPreference,
-                initialColorTheme,
-                theme,
-                pxt.appTarget.simulator?.themePresets
-            );
-        }
-        if (simulatorThemePreference) {
-            await this.persistSimulatorTheme(simulatorThemePreference);
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets;
+        if (simulatorThemePresets?.length) {
+            let simulatorThemePreference = this.state.simulatorThemePreference;
+            if (!simulatorThemePreference) {
+                const currentPreference = await authClient.getSimulatorThemePreferenceAsync();
+                const initialColorTheme = this.themePickerInitialColorThemeId
+                    ? pxt.appTarget.colorThemeMap?.[this.themePickerInitialColorThemeId]
+                    : undefined;
+                simulatorThemePreference = getSimulatorThemePreferenceForColorThemeChange(
+                    currentPreference,
+                    initialColorTheme,
+                    theme,
+                    simulatorThemePresets
+                );
+            }
+            if (simulatorThemePreference) {
+                await this.persistSimulatorTheme(simulatorThemePreference);
+            }
         }
         this.closeThemePicker(false);
     }
@@ -484,18 +487,21 @@ class AppImpl extends React.Component<AppProps, AppState> {
             this.themePickerInitialColorThemeId = previousColorTheme?.id;
         }
         this.themeManager.switchColorTheme(theme.id);
-        const simulatorThemePreference = this.state.simulatorThemePreference
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets;
+        const simulatorThemePreference = simulatorThemePresets?.length && this.state.simulatorThemePreference
             ? getSimulatorThemePreferenceForColorThemeChange(
                 this.state.simulatorThemePreference,
                 previousColorTheme,
                 theme,
-                pxt.appTarget.simulator?.themePresets
+                simulatorThemePresets
             )
             : undefined;
         this.setState({ editorThemeId: theme.id, simulatorThemePreference });
     }
 
     async showSimulatorThemePicker() {
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets;
+        if (!simulatorThemePresets?.length) return;
         const colorTheme = pxt.appTarget.colorThemeMap?.[
             this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id
         ];
@@ -511,9 +517,9 @@ class AppImpl extends React.Component<AppProps, AppState> {
             savedSimulatorThemePreference,
             initialColorTheme,
             colorTheme,
-            pxt.appTarget.simulator?.themePresets
+            simulatorThemePresets
         )
-            || getDefaultSimulatorThemePreference(colorTheme, pxt.appTarget.simulator?.themePresets);
+            || getDefaultSimulatorThemePreference(colorTheme, simulatorThemePresets);
         this.setState({
             simulatorThemePickerOpen: true,
             editorThemeId: this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id,
