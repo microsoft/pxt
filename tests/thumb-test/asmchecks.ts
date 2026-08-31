@@ -184,4 +184,8 @@ export const externalCases: pxt.Map<AsmCheck> = {
     "tests/compile-test/lang-test0/56ifacedispatch.ts": (asm) => {
         chai.assert(codeSize(asm) > 0, "no code generated");
     },
+
+    "tests/compile-test/lang-test0/57defaultparamdispatch.ts": (asm) => {
+        chai.assert(codeSize(asm) > 0, "no code generated");
+    },
 };
