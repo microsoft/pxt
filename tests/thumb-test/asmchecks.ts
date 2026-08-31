@@ -178,22 +178,23 @@ export const asmChecks: pxt.Map<AsmCheck> = {
     },
 
     "fieldbaseline.ts": (asm) => {
-        // Checked field loads are emitted inline here: a call into the class's
-        // validate helper immediately followed by the load. QzCell declares two
-        // fields, so their offsets are fixed at #4 (qzTally) and #8 (qzSpare),
-        // and the offset in the sequence is what tells the two apart. The
-        // floors are the exact read-site counts in the case program -- 6 above
-        // the count gate and 4 below it -- so a read that stops taking the
-        // checked path fails here instead of quietly making the case vacuous.
-        assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g, 6,
+        const code = userCode(asm);
+
+        // qzTally sits above the count gate, so its six checked reads collapse
+        // onto one ldfldchk_ helper: the validate+load sequence moves into the
+        // helper body and every read site becomes a bl to it.
+        assertAtLeast(asm, /^\s*\S*ldfldchk_\S*qzTally\S*:/gm, 1,
+            "checked-field-load helper definitions for qzTally");
+        assertAtLeast(code, /bl \S*ldfldchk_\S*qzTally\S*/g, 6,
+            "calls to the qzTally checked-field-load helper");
+        assertNoMatch(code, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g,
             "inline checked loads of qzTally");
+
+        // qzSpare sits below the gate and keeps its inline checked loads.
+        assertNoMatch(asm, /ldfldchk_\S*qzSpare/g,
+            "checked-field-load helpers for qzSpare");
         assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #8\]/g, 4,
             "inline checked loads of qzSpare");
-
-        // Count-gated checked-field-load specialization. Absent here: qzTally
-        // is calibrated to sit above the gate, so a thunk of any kind means the
-        // specialization started firing in this tree.
-        assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
     },
 
     "sizebaseline.ts": (asm, res) => {
@@ -247,6 +248,21 @@ export const variantChecks: VariantCheck[] = [
             assertNoMatch(asm, /ifacecall\d+_.*_i\d+/g, "interface call thunks");
             assertNoMatch(asm, /mapset_i/g, "specialized map-store thunks (mapset_i)");
             assertNoMatch(asm, /^\s*\S*_iface:/gm, "_iface: proc labels");
+        },
+    },
+
+    {
+        caseFile: "fieldbaseline.ts",
+        switches: { noIfaceSpec: true },
+        label: "noIfaceSpec",
+        check: (asm) => {
+            // Both fields keep their inline checked loads (validate + load at
+            // the field's offset), and no helper of any kind is emitted.
+            assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g, 6,
+                "inline checked loads of qzTally");
+            assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #8\]/g, 4,
+                "inline checked loads of qzSpare");
+            assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
         },
     },
 ];
