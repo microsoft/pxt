@@ -145,7 +145,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
             onModeChanged={onEditorThemeClicked} />}
         actions={[
             {
-                label: lf("Save"),
+                label: lf("Apply"),
                 className: "primary",
                 onClick: () => presetId === ACCOUNT_PRESET_ID
                     ? onUseAccountTheme?.()
