@@ -1,6 +1,9 @@
 import * as auth from "./auth";
 import * as data from "./data";
-import { getDefaultSimulatorThemePreference } from "../../react-common/components/theming/simulatorThemeDefaults";
+import {
+    getDefaultSimulatorThemePreference,
+    isImplicitSimulatorThemePreference,
+} from "../../react-common/components/theming/simulatorThemeDefaults";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 // Embedded hosts can update the active simulator without writing the account preference.
@@ -20,10 +23,14 @@ export function getEffectiveSimulatorThemePreference(): pxt.auth.SimulatorThemeP
     );
 }
 
-export async function setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference): Promise<void> {
-    if (!pxt.auth.isValidSimulatorThemePreference(preference)) return;
+export async function setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference | undefined): Promise<void> {
+    if (preference && !pxt.auth.isValidSimulatorThemePreference(preference)) return;
+    const persistedPreference = preference && !isImplicitSimulatorThemePreference(
+        preference,
+        pxt.appTarget.simulator?.themePresets
+    ) ? preference : undefined;
     const previousSessionPreference = sessionSimulatorThemePreference;
-    await auth.setSimulatorThemePrefAsync(preference);
+    await auth.setSimulatorThemePrefAsync(persistedPreference);
     if (sessionSimulatorThemePreference === previousSessionPreference) {
         sessionSimulatorThemePreference = undefined;
     }

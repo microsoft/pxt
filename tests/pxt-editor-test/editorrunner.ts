@@ -18,6 +18,7 @@ import {
     copySimulatorTheme,
     getSimulatorThemeForLayout,
     getSimulatorThemePreferenceForColorThemeChange,
+    isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 
 pxt.appTarget = {
@@ -327,6 +328,21 @@ describe("simulator themes", () => {
             darkTheme,
             presets
         )).equals(defaultPreference);
+    });
+
+    it("only treats the Default preset on the Default layout as implicit", () => {
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "default",
+            theme: purpleSimulatorTheme,
+        }, presets)).equals(true);
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "custom",
+            theme: defaultSimulatorTheme,
+        }, presets)).equals(false);
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "default",
+            theme: { ...defaultSimulatorTheme, layout: "retro" },
+        }, presets)).equals(false);
     });
 
     it("changes layout without changing custom colors", () => {

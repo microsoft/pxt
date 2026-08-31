@@ -41,6 +41,15 @@ export function getDefaultSimulatorThemePreference(
     };
 }
 
+export function isImplicitSimulatorThemePreference(
+    preference: pxt.auth.SimulatorThemePreference,
+    presets: pxt.SimulatorThemePreset[] | undefined
+): boolean {
+    const defaultPreset = presets?.find(candidate => candidate.id === "default") || presets?.[0];
+    return preference.presetId === defaultPreset?.id
+        && preference.theme.layout === pxt.auth.DEFAULT_SIMULATOR_LAYOUT;
+}
+
 export function copySimulatorTheme(theme: pxt.SimulatorTheme): pxt.SimulatorTheme {
     const result = { layout: theme.layout || pxt.auth.DEFAULT_SIMULATOR_LAYOUT } as pxt.SimulatorTheme;
     for (const property of Object.keys(theme)) {

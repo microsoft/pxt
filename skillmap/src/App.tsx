@@ -56,6 +56,7 @@ import { SimulatorThemePickerModal } from './components/SimulatorThemePickerModa
 import {
     getDefaultSimulatorThemePreference,
     getSimulatorThemePreferenceForColorThemeChange,
+    isImplicitSimulatorThemePreference,
 } from '../../react-common/components/theming/simulatorThemeDefaults';
 
 /* eslint-enable import/no-unassigned-import */
@@ -568,7 +569,11 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     private async persistSimulatorTheme(preference: pxt.auth.SimulatorThemePreference) {
-        await authClient.setSimulatorThemePreferenceAsync(preference);
+        const persistedPreference = isImplicitSimulatorThemePreference(
+            preference,
+            pxt.appTarget.simulator?.themePresets
+        ) ? undefined : preference;
+        await authClient.setSimulatorThemePreferenceAsync(persistedPreference);
         const resources = await this.ready();
         await resources.sendMessageAsync?.({
             type: "pxteditor",

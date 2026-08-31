@@ -4781,6 +4781,10 @@ export class ProjectView
     }
 
     hideThemePicker() {
+        if (pxt.appTarget.simulator?.themePresets?.length) {
+            this.closeSimulatorThemePicker(false);
+            return;
+        }
         this.resetThemePickerDrafts(true);
         this.setState({ themePickerOpen: false });
     }
@@ -4846,14 +4850,15 @@ export class ProjectView
         const shouldRestartSimulator = !this.state.simulatorThemePickerOpen
             && this.simulatorWasRunningBeforeThemePicker;
         if (this.themePickerColorThemeId) {
-            this.setColorThemeById(this.themePickerColorThemeId, true, false);
+            await this.setColorThemeById(this.themePickerColorThemeId, true, false);
         }
-        if (this.themePickerSimulatorThemePreference) {
+        if (pxt.appTarget.simulator?.themePresets?.length) {
             await simulatorThemePreference.setSimulatorThemePreference(this.themePickerSimulatorThemePreference);
         }
 
         if (this.state.simulatorThemePickerOpen) this.closeSimulatorThemePicker(false, true, false);
         else {
+            simulator.clearPreviewSimulatorTheme();
             this.resetThemePickerDrafts(false);
             this.setState({ themePickerOpen: false });
             if (shouldRestartSimulator) this.restartSimulator();
@@ -4870,6 +4875,9 @@ export class ProjectView
         );
         this.themePickerColorThemeId = theme.id;
         this.themeManager.switchColorTheme(theme.id);
+        if (this.themePickerSimulatorThemePreference) {
+            simulator.setPreviewSimulatorTheme(this.themePickerSimulatorThemePreference.theme);
+        }
     }
 
     async saveEditorTheme(theme: pxt.ColorThemeInfo) {
@@ -5543,10 +5551,10 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    setColorThemeById(colorThemeId: string, savePreference: boolean, updateSimulatorDefault = true) {
+    async setColorThemeById(colorThemeId: string, savePreference: boolean, updateSimulatorDefault = true): Promise<void> {
         const previousColorTheme = this.themeManager.getCurrentColorTheme();
         if (previousColorTheme?.id === colorThemeId) {
-            if (savePreference) this.updateThemePreference();
+            if (savePreference) await this.updateThemePreference();
             return;
         }
 
@@ -5558,7 +5566,7 @@ export class ProjectView
         this.themeManager.switchColorTheme(colorThemeId);
 
         if (savePreference) {
-            this.updateThemePreference();
+            await this.updateThemePreference();
             if (updateSimulatorDefault && pxt.appTarget.simulator?.themePresets?.length) {
                 const currentPreference = simulatorThemePreference.getSimulatorThemePreference();
                 const nextPreference = getSimulatorThemePreferenceForColorThemeChange(
@@ -5568,23 +5576,23 @@ export class ProjectView
                     pxt.appTarget.simulator?.themePresets
                 );
                 if (nextPreference && nextPreference !== currentPreference) {
-                    this.setSimulatorThemePreference(nextPreference);
+                    await this.setSimulatorThemePreference(nextPreference);
                 }
             }
         }
     }
 
-    private updateThemePreference() {
+    private async updateThemePreference(): Promise<void> {
         const newThemeId = this.themeManager.getCurrentColorTheme()?.id;
 
         if (newThemeId) {
-            auth.setThemePrefAsync(newThemeId);
+            await auth.setThemePrefAsync(newThemeId);
 
             // Disable high contrast preference (separate from theme pref) if the new theme is not high contrast.
             // This is only needed while we transition from not having themes to having them. In time, the
             // auth.HIGHCONTRAST preference can be phased out in favor of the themeId preference.
             if (!this.themeManager.isHighContrast(newThemeId) && data.getData<boolean>(auth.HIGHCONTRAST)) {
-                auth.setHighContrastPrefAsync(false);
+                await auth.setHighContrastPrefAsync(false);
             }
         }
     }

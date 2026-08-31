@@ -128,10 +128,9 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
 
     const selectLayout = (id: string) => {
         const nextTheme = getSimulatorThemeForLayout(theme, id, getColorFields(id));
-        const nextPresetId = presetId === ACCOUNT_PRESET_ID ? CUSTOM_PRESET_ID : presetId;
-        setPresetId(nextPresetId);
+        setPresetId(CUSTOM_PRESET_ID);
         setTheme(nextTheme);
-        onThemeChanged?.({ presetId: nextPresetId, theme: nextTheme });
+        onThemeChanged?.({ presetId: CUSTOM_PRESET_ID, theme: nextTheme });
     };
 
     return <Modal
