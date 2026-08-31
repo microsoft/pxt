@@ -7,12 +7,14 @@ export type ThemePickerMode = "editor" | "simulator";
 
 export interface ThemePickerToggleProps {
     selected: ThemePickerMode;
-    onEditorThemeClicked: () => void;
-    onSimulatorThemeClicked: () => void;
+    onModeChanged: (mode: ThemePickerMode) => void;
 }
 
 export const ThemePickerToggle = (props: ThemePickerToggleProps) => {
-    const { selected, onEditorThemeClicked, onSimulatorThemeClicked } = props;
+    const { selected, onModeChanged } = props;
+    const selectMode = (mode: ThemePickerMode) => {
+        if (mode !== selected) onModeChanged(mode);
+    };
 
     return <div className="theme-picker-toggle">
         <EditorToggle
@@ -25,14 +27,14 @@ export const ThemePickerToggle = (props: ThemePickerToggleProps) => {
                     title: lf("Editor theme"),
                     icon: "fas fa-paint-brush",
                     focusable: true,
-                    onClick: onEditorThemeClicked,
+                    onClick: () => selectMode("editor"),
                 },
                 {
                     label: lf("Simulator"),
                     title: lf("Simulator theme"),
                     icon: "fas fa-gamepad",
                     focusable: true,
-                    onClick: onSimulatorThemeClicked,
+                    onClick: () => selectMode("simulator"),
                 },
             ]} />
     </div>;
@@ -41,33 +43,32 @@ export const ThemePickerToggle = (props: ThemePickerToggleProps) => {
 export interface ThemePickerModalProps {
     themes: pxt.ColorThemeInfo[];
     selectedThemeId?: string;
-    onThemeClicked(them: pxt.ColorThemeInfo): void;
-    onThemeSelected?: (theme: pxt.ColorThemeInfo) => void;
+    onThemeChanged: (theme: pxt.ColorThemeInfo) => void;
+    onSave: (theme: pxt.ColorThemeInfo) => void;
     onSimulatorThemeClicked?: () => void;
     onClose(): void;
 }
 export const ThemePickerModal = (props: ThemePickerModalProps) => {
     const [selectedThemeId, setSelectedThemeId] = React.useState(
-        props.selectedThemeId || props.themes?.[0]?.id
+        props.selectedThemeId || props.themes[0]?.id
     );
-    const selectedTheme = props.themes?.find(theme => theme.id === selectedThemeId);
+    const selectedTheme = props.themes.find(theme => theme.id === selectedThemeId);
 
     return (
         <Modal
-            id="theme-picker-modal" 
+            id="theme-picker-modal"
             title={lf("Choose a Theme")}
-            hideTitle={true}
+            hideTitle
             onClose={props.onClose}
             className="theme-picker-modal"
             rightHeader={props.onSimulatorThemeClicked && <ThemePickerToggle
                 selected="editor"
-                onEditorThemeClicked={() => {}}
-                onSimulatorThemeClicked={props.onSimulatorThemeClicked} />}
+                onModeChanged={props.onSimulatorThemeClicked} />}
             actions={[{
                 label: lf("Save"),
                 className: "primary",
                 disabled: !selectedTheme,
-                onClick: () => selectedTheme && props.onThemeClicked(selectedTheme),
+                onClick: () => selectedTheme && props.onSave(selectedTheme),
             }]}
         >
             <div
@@ -75,14 +76,14 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
                 role="list"
                 aria-label={lf("List of available themes")}
             >
-                {props.themes && props.themes.map(theme => 
+                {props.themes.map(theme =>
                     <ThemeCard
                         key={theme.id}
                         theme={theme}
                         selected={theme.id === selectedThemeId}
                         onClick={selected => {
                             setSelectedThemeId(selected.id);
-                            props.onThemeSelected?.(selected);
+                            props.onThemeChanged(selected);
                         }}
                     />
                 )}

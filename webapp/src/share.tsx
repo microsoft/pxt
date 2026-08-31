@@ -194,6 +194,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = simScreenshot || simGif;
 
         const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
+        const simulatorTheme = simulatorThemePreference.getEffectiveSimulatorThemePreference();
 
         const publishAsync = async (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean, sharedSimulatorTheme?: pxt.SimulatorTheme) =>
             parent.publishAsync(name, description, screenshotUri, forceAnonymous, sharedSimulatorTheme)
@@ -217,7 +218,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
                     setAnonymousSharePreference={setSharePreference}
                     isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
-                    simulatorTheme={simulatorThemePreference.getSimulatorThemePreference()?.theme}
+                    simulatorTheme={simulatorTheme?.presetId === "default" ? undefined : simulatorTheme?.theme}
                     kind={this.state.kind}
                     onClose={this.hide}
                 />

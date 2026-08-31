@@ -455,15 +455,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
     }
 
     async changeTheme(theme: pxt.ColorThemeInfo) {
-        pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: theme.id });
-        this.themeManager.switchColorTheme(theme.id);
-        await authClient.setColorThemeIdAsync(theme.id);
-
-        // Disable the legacy high contrast preference (separate from the theme pref) if the new
-        // theme is not high contrast, otherwise it would take precedence on the next page load.
-        if (!this.themeManager.isHighContrast(theme.id) && await authClient.getHighContrastPrefAsync()) {
-            await authClient.setHighContrastPrefAsync(false);
-        }
+        await this.persistColorTheme(theme);
 
         let simulatorThemePreference = this.state.simulatorThemePreference;
         if (!simulatorThemePreference) {
@@ -484,7 +476,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.closeThemePicker(false);
     }
 
-    async previewColorTheme(theme: pxt.ColorThemeInfo) {
+    previewColorTheme(theme: pxt.ColorThemeInfo) {
         const previousColorTheme = pxt.appTarget.colorThemeMap?.[
             this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id
         ];
@@ -492,17 +484,15 @@ class AppImpl extends React.Component<AppProps, AppState> {
             this.themePickerInitialColorThemeId = previousColorTheme?.id;
         }
         this.themeManager.switchColorTheme(theme.id);
-        this.setState({ editorThemeId: theme.id });
-
-        const currentPreference = this.state.simulatorThemePreference
-            || await authClient.getSimulatorThemePreferenceAsync();
-        const simulatorThemePreference = getSimulatorThemePreferenceForColorThemeChange(
-            currentPreference,
-            previousColorTheme,
-            theme,
-            pxt.appTarget.simulator?.themePresets
-        );
-        this.setState({ simulatorThemePreference });
+        const simulatorThemePreference = this.state.simulatorThemePreference
+            ? getSimulatorThemePreferenceForColorThemeChange(
+                this.state.simulatorThemePreference,
+                previousColorTheme,
+                theme,
+                pxt.appTarget.simulator?.themePresets
+            )
+            : undefined;
+        this.setState({ editorThemeId: theme.id, simulatorThemePreference });
     }
 
     async showSimulatorThemePicker() {
@@ -514,7 +504,15 @@ class AppImpl extends React.Component<AppProps, AppState> {
         }
         const savedSimulatorThemePreference = this.state.simulatorThemePreference
             || await authClient.getSimulatorThemePreferenceAsync();
-        const simulatorThemePreference = savedSimulatorThemePreference
+        const initialColorTheme = this.themePickerInitialColorThemeId
+            ? pxt.appTarget.colorThemeMap?.[this.themePickerInitialColorThemeId]
+            : undefined;
+        const simulatorThemePreference = getSimulatorThemePreferenceForColorThemeChange(
+            savedSimulatorThemePreference,
+            initialColorTheme,
+            colorTheme,
+            pxt.appTarget.simulator?.themePresets
+        )
             || getDefaultSimulatorThemePreference(colorTheme, pxt.appTarget.simulator?.themePresets);
         this.setState({
             simulatorThemePickerOpen: true,
@@ -546,16 +544,21 @@ class AppImpl extends React.Component<AppProps, AppState> {
         pxt.tickEvent("skillmap.simulator.theme.save", { preset: preference.presetId }, { interactiveConsent: true });
         const editorThemeId = this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id;
         const editorTheme = this.themeManager.getAllColorThemes().find(theme => theme.id === editorThemeId);
-        if (editorTheme) {
-            pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: editorTheme.id });
-            this.themeManager.switchColorTheme(editorTheme.id);
-            await authClient.setColorThemeIdAsync(editorTheme.id);
-            if (!this.themeManager.isHighContrast(editorTheme.id) && await authClient.getHighContrastPrefAsync()) {
-                await authClient.setHighContrastPrefAsync(false);
-            }
-        }
+        if (editorTheme) await this.persistColorTheme(editorTheme);
         await this.persistSimulatorTheme(preference);
         this.closeThemePicker(false);
+    }
+
+    private async persistColorTheme(theme: pxt.ColorThemeInfo) {
+        pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: theme.id });
+        this.themeManager.switchColorTheme(theme.id);
+        await authClient.setColorThemeIdAsync(theme.id);
+
+        // Disable the legacy high contrast preference (separate from the theme pref) if the new
+        // theme is not high contrast, otherwise it would take precedence on the next page load.
+        if (!this.themeManager.isHighContrast(theme.id) && await authClient.getHighContrastPrefAsync()) {
+            await authClient.setHighContrastPrefAsync(false);
+        }
     }
 
     private async persistSimulatorTheme(preference: pxt.auth.SimulatorThemePreference) {
@@ -602,8 +605,8 @@ class AppImpl extends React.Component<AppProps, AppState> {
                 {this.props.showSelectTheme && this.themeManager && !this.state.simulatorThemePickerOpen && <ThemePickerModal
                     themes={this.themeManager.getAllColorThemes()}
                     selectedThemeId={this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id}
-                    onThemeSelected={this.previewColorTheme}
-                    onThemeClicked={this.changeTheme}
+                    onThemeChanged={this.previewColorTheme}
+                    onSave={this.changeTheme}
                     onSimulatorThemeClicked={simulatorThemePresets.length
                         ? this.showSimulatorThemePicker
                         : undefined}

@@ -1,22 +1,3 @@
-import { simulatorThemeColorsEqual } from "../../react-common/components/theming/simulatorThemeDefaults";
-
-export type SimulatorThemePreference = pxt.auth.SimulatorThemePreference;
-
-function isColor(value: string): boolean {
-    return /^#[0-9a-f]{6}$/i.test(value || "");
-}
-
-export function isValidSimulatorTheme(theme: pxt.SimulatorTheme): boolean {
-    return !!theme
-        && isColor(theme["background-color"])
-        && isColor(theme["button-stroke"])
-        && isColor(theme["text-color"])
-        && isColor(theme["button-fill"])
-        && isColor(theme["dpad-fill"])
-        && isColor(theme["joystick-handle-stroke"])
-        && !!theme.layout;
-}
-
 export function getSimulatorThemePresetId(
     theme: string | pxt.Map<string> | undefined,
     presets: pxt.SimulatorThemePreset[]
@@ -25,7 +6,41 @@ export function getSimulatorThemePresetId(
     if (typeof theme === "string") {
         return presets.find(preset => preset.id.toLowerCase() === theme.toLowerCase())?.id;
     }
-    return presets.find(preset => simulatorThemeColorsEqual(preset.theme, theme))?.id;
+    return presets.find(preset => pxt.auth.simulatorThemeColorsEqual(preset.theme, theme))?.id;
+}
+
+export function getProjectSimulatorThemePreference(
+    projectTheme: string | pxt.Map<string> | undefined,
+    presets: pxt.SimulatorThemePreset[],
+    accountTheme: pxt.SimulatorTheme
+): pxt.auth.SimulatorThemePreference | undefined {
+    if (!projectTheme) return undefined;
+
+    if (typeof projectTheme === "string") {
+        const preset = presets.find(candidate => candidate.id.toLowerCase() === projectTheme.toLowerCase());
+        return preset
+            ? { presetId: preset.id, theme: { ...preset.theme } }
+            : { presetId: "custom", theme: { ...accountTheme, layout: projectTheme } };
+    }
+
+    const theme = { ...accountTheme, ...projectTheme } as pxt.SimulatorTheme;
+    if (!pxt.auth.isValidSimulatorTheme(theme)) return undefined;
+    return {
+        presetId: getSimulatorThemePresetId(theme, presets) || "custom",
+        theme,
+    };
+}
+
+export function serializeProjectSimulatorThemePreference(
+    preference: pxt.auth.SimulatorThemePreference,
+    presets: pxt.SimulatorThemePreset[]
+): string | pxt.SimulatorTheme {
+    const preset = presets.find(candidate => candidate.id === preference.presetId);
+    return preset
+        && preset.theme.layout === preference.theme.layout
+        && pxt.auth.simulatorThemeColorsEqual(preset.theme, preference.theme)
+        ? preset.id
+        : { ...preference.theme };
 }
 
 export function removeSimulatorThemeFromFiles(files: pxt.workspace.ScriptText): pxt.workspace.ScriptText {

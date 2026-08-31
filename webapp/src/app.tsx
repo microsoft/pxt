@@ -171,10 +171,10 @@ export class ProjectView
     private firstRun: boolean;
 
     private runToken: pxt.Util.CancellationToken;
-    private simulatorWasRunningBeforeThemePicker: boolean;
-    private themePickerInitialColorThemeId: string;
-    private themePickerColorThemeId: string;
-    private themePickerSimulatorThemePreference: pxt.auth.SimulatorThemePreference;
+    private simulatorWasRunningBeforeThemePicker?: boolean;
+    private themePickerInitialColorThemeId?: string;
+    private themePickerColorThemeId?: string;
+    private themePickerSimulatorThemePreference?: pxt.auth.SimulatorThemePreference;
     private updatingEditorFile: boolean;
     private loadingExample: boolean;
     private openingTypeScript: boolean;
@@ -4768,7 +4768,7 @@ export class ProjectView
         this.themePickerSimulatorThemePreference = simulatorPreference
             ? { presetId: simulatorPreference.presetId, theme: { ...simulatorPreference.theme } }
             : getDefaultSimulatorThemePreference(currentColorTheme, pxt.appTarget.simulator?.themePresets);
-        this.simulatorWasRunningBeforeThemePicker = undefined;
+        this.simulatorWasRunningBeforeThemePicker = this.state.simState !== SimState.Stopped;
         this.setState({ themePickerOpen: true, simulatorThemePickerOpen: false });
     }
 
@@ -4779,9 +4779,6 @@ export class ProjectView
 
     showSimulatorThemePicker() {
         pxt.tickEvent("simulator.theme.open", undefined, { interactiveConsent: true });
-        if (this.simulatorWasRunningBeforeThemePicker === undefined) {
-            this.simulatorWasRunningBeforeThemePicker = this.state.simState !== SimState.Stopped;
-        }
         const defaultPreference = getDefaultSimulatorThemePreference(
             pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId],
             pxt.appTarget.simulator?.themePresets
@@ -4870,7 +4867,7 @@ export class ProjectView
         await this.saveThemePickerDrafts();
     }
 
-    async saveSimulatorTheme(preference: simulatorTheme.SimulatorThemePreference) {
+    async saveSimulatorTheme(preference: pxt.auth.SimulatorThemePreference) {
         pxt.tickEvent("simulator.theme.save", { preset: preference.presetId }, { interactiveConsent: true });
         this.themePickerSimulatorThemePreference = {
             presetId: preference.presetId,
@@ -5920,8 +5917,8 @@ export class ProjectView
                 {this.state.themePickerOpen && <ThemePickerModal
                     themes={this.themeManager.getAllColorThemes()}
                     selectedThemeId={this.themePickerColorThemeId}
-                    onThemeSelected={this.previewColorTheme}
-                    onThemeClicked={this.saveEditorTheme}
+                    onThemeChanged={this.previewColorTheme}
+                    onSave={this.saveEditorTheme}
                     onSimulatorThemeClicked={pxt.appTarget.simulator?.themePresets?.length
                         ? this.showSimulatorThemePicker
                         : undefined}

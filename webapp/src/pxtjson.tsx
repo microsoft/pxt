@@ -161,7 +161,10 @@ export class Editor extends srceditor.Editor {
     }
 
     private saveSimulatorTheme = async (preference: pxt.auth.SimulatorThemePreference) => {
-        this.config.theme = { ...preference.theme };
+        this.config.theme = simulatorTheme.serializeProjectSimulatorThemePreference(
+            preference,
+            pxt.appTarget.simulator.themePresets
+        );
         await this.save(true);
         this.closeSimulatorThemePicker();
     }
@@ -170,22 +173,6 @@ export class Editor extends srceditor.Editor {
         delete this.config.theme;
         await this.save(true);
         this.closeSimulatorThemePicker();
-    }
-
-    private getProjectSimulatorThemePreference(
-        presets: pxt.SimulatorThemePreset[],
-        accountTheme: pxt.SimulatorTheme
-    ): pxt.auth.SimulatorThemePreference | undefined {
-        if (!this.config.theme) return undefined;
-
-        const projectTheme = typeof this.config.theme === "string"
-            ? { ...accountTheme, layout: this.config.theme }
-            : { ...accountTheme, ...this.config.theme } as pxt.SimulatorTheme;
-        const presetId = simulatorTheme.getSimulatorThemePresetId(this.config.theme, presets);
-        const preset = presets.find(candidate => candidate.id === presetId);
-        if (preset) return { presetId, theme: projectTheme };
-
-        return { presetId: "custom", theme: projectTheme };
     }
 
     private showEditSettingsDialogAsync = async () => {
@@ -225,10 +212,12 @@ export class Editor extends srceditor.Editor {
 
         const pxtJsonOptions = pxt.appTarget.appTheme?.pxtJsonOptions || [];
         const simulatorThemePresets = pxt.appTarget.simulator?.themePresets || [];
-        const simulatorThemePresetId = simulatorTheme.getSimulatorThemePresetId(c.theme, simulatorThemePresets);
-        const hasCustomSimulatorTheme = !!c.theme && !simulatorThemePresetId;
-        const accountSimulatorTheme = simulatorThemePreference.getSimulatorThemePreference()?.theme
-            || simulatorThemePresets[0]?.theme;
+        const accountSimulatorTheme = simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme;
+        const projectSimulatorThemePreference = accountSimulatorTheme
+            ? simulatorTheme.getProjectSimulatorThemePreference(c.theme, simulatorThemePresets, accountSimulatorTheme)
+            : undefined;
+        const simulatorThemePresetId = projectSimulatorThemePreference?.presetId;
+        const hasCustomSimulatorTheme = simulatorThemePresetId === "custom";
         const selectedSimulatorThemeName = !c.theme
             ? lf("Use account theme")
             : hasCustomSimulatorTheme
@@ -310,7 +299,7 @@ export class Editor extends srceditor.Editor {
             {this.simulatorThemePickerOpen && !!accountSimulatorTheme && <SimulatorThemePickerModal
                 presets={simulatorThemePresets}
                 layouts={pxt.appTarget.simulator?.themeLayouts}
-                initialPreference={this.getProjectSimulatorThemePreference(simulatorThemePresets, accountSimulatorTheme)}
+                initialPreference={projectSimulatorThemePreference}
                 accountTheme={accountSimulatorTheme}
                 onUseAccountTheme={this.useAccountSimulatorTheme}
                 onSave={this.saveSimulatorTheme}

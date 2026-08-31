@@ -26,10 +26,11 @@ const SkillmapSimulatorThemePreview = (props: SkillmapSimulatorThemePreviewProps
 
     const applyTheme = () => {
         if (loadedSimulatorUrl.current !== simulatorUrl || !frame.current?.contentWindow) return;
-        frame.current.contentWindow.postMessage({
+        const message = {
             type: "setsimtheme",
             theme,
-        } as pxsim.SimulatorMessage & { type: "setsimtheme"; theme: pxt.SimulatorTheme }, new URL(simulatorUrl).origin);
+        };
+        frame.current.contentWindow.postMessage(message, new URL(simulatorUrl).origin);
     };
 
     React.useEffect(applyTheme, [theme, simulatorUrl]);

@@ -1,29 +1,35 @@
 import * as auth from "./auth";
 import * as data from "./data";
-import { isValidSimulatorTheme, SimulatorThemePreference } from "./simulatorTheme";
+import { getDefaultSimulatorThemePreference } from "../../react-common/components/theming/simulatorThemeDefaults";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
-const LEGACY_SIMULATOR_THEME_STORAGE_KEY = "simulator-theme";
-let sessionSimulatorThemePreference: SimulatorThemePreference;
+// Embedded hosts can update the active simulator without writing the account preference.
+let sessionSimulatorThemePreference: pxt.auth.SimulatorThemePreference;
 
-function legacyStorageKey(): string {
-    return `${LEGACY_SIMULATOR_THEME_STORAGE_KEY}:${pxt.appTarget.id}`;
-}
-
-export function getSimulatorThemePreference(): SimulatorThemePreference | undefined {
+export function getSimulatorThemePreference(): pxt.auth.SimulatorThemePreference | undefined {
     if (sessionSimulatorThemePreference) return sessionSimulatorThemePreference;
     const preferences = data.getData<pxt.auth.SimulatorThemesState>(auth.SIMULATOR_THEMES);
-    const preference = preferences?.[pxt.appTarget.id]
-        || pxt.Util.jsonTryParse(pxt.storage.getLocal(legacyStorageKey())) as SimulatorThemePreference;
-    return preference?.presetId && isValidSimulatorTheme(preference.theme) ? preference : undefined;
+    const preference = preferences?.[pxt.appTarget.id];
+    return pxt.auth.isValidSimulatorThemePreference(preference) ? preference : undefined;
 }
 
-export async function setSimulatorThemePreference(preference: SimulatorThemePreference): Promise<void> {
-    if (!preference?.presetId || !isValidSimulatorTheme(preference.theme)) return;
+export function getEffectiveSimulatorThemePreference(): pxt.auth.SimulatorThemePreference | undefined {
+    return getSimulatorThemePreference() || getDefaultSimulatorThemePreference(
+        ThemeManager.getInstance(document).getCurrentColorTheme(),
+        pxt.appTarget.simulator?.themePresets
+    );
+}
+
+export async function setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference): Promise<void> {
+    if (!pxt.auth.isValidSimulatorThemePreference(preference)) return;
+    const previousSessionPreference = sessionSimulatorThemePreference;
     await auth.setSimulatorThemePrefAsync(preference);
-    pxt.storage.removeLocal(legacyStorageKey());
+    if (sessionSimulatorThemePreference === previousSessionPreference) {
+        sessionSimulatorThemePreference = undefined;
+    }
 }
 
-export function setSessionSimulatorThemePreference(preference: SimulatorThemePreference): void {
-    if (!preference?.presetId || !isValidSimulatorTheme(preference.theme)) return;
+export function setSessionSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference): void {
+    if (!pxt.auth.isValidSimulatorThemePreference(preference)) return;
     sessionSimulatorThemePreference = preference;
 }

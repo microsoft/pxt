@@ -2,16 +2,8 @@ import * as React from "react";
 
 import { Input } from "../controls/Input";
 import { Modal } from "../controls/Modal";
-import { copySimulatorTheme, getSimulatorThemeForLayout, simulatorThemeColorsEqual } from "./simulatorThemeDefaults";
+import { copySimulatorTheme, getSimulatorThemeForLayout } from "./simulatorThemeDefaults";
 import { ThemePickerToggle } from "./ThemePickerModal";
-
-type SimulatorThemeColor =
-    | "background-color"
-    | "button-stroke"
-    | "text-color"
-    | "button-fill"
-    | "dpad-fill"
-    | "joystick-handle-stroke";
 
 export interface SimulatorThemePickerModalProps {
     presets: pxt.SimulatorThemePreset[];
@@ -29,21 +21,26 @@ export interface SimulatorThemePickerModalProps {
 
 const CUSTOM_PRESET_ID = "custom";
 const ACCOUNT_PRESET_ID = "account";
-const DEFAULT_LAYOUT_ID = "default";
 
-function getThemeColors(): { id: SimulatorThemeColor; label: string }[] {
-    return [
-        { id: "background-color", label: lf("Console") },
-        { id: "button-stroke", label: lf("Button outline") },
-        { id: "text-color", label: lf("Button labels") },
-        { id: "button-fill", label: lf("Buttons") },
-        { id: "dpad-fill", label: lf("D-pad") },
-        { id: "joystick-handle-stroke", label: lf("Joystick handle outline") },
-    ];
+function getThemeColors(): { id: pxt.auth.SimulatorThemeColor; label: string }[] {
+    const labels: Record<pxt.auth.SimulatorThemeColor, string> = {
+        "background-color": lf("Console"),
+        "button-stroke": lf("Button outline"),
+        "text-color": lf("Button labels"),
+        "button-fill": lf("Buttons"),
+        "dpad-fill": lf("D-pad"),
+        "joystick-handle-stroke": lf("Joystick handle outline"),
+    };
+    return pxt.auth.SIMULATOR_THEME_COLOR_PROPERTIES.map(id => ({ id, label: labels[id] }));
 }
 
 function getPresetId(theme: pxt.SimulatorTheme, presets: pxt.SimulatorThemePreset[]): string | undefined {
-    return presets.find(preset => simulatorThemeColorsEqual(preset.theme, theme))?.id;
+    return presets.find(preset => pxt.auth.simulatorThemeColorsEqual(preset.theme, theme))?.id;
+}
+
+function normalizeColor(value: string): string | undefined {
+    const normalized = value.startsWith("#") ? value : `#${value}`;
+    return /^#[0-9a-f]{6}$/i.test(normalized) ? normalized.toUpperCase() : undefined;
 }
 
 export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps) => {
@@ -73,13 +70,13 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
     const initialTheme = initialPresetId === "default"
         ? getSimulatorThemeForLayout(
             initialThemeSource,
-            initialPreference?.theme.layout || initialThemeSource.layout || DEFAULT_LAYOUT_ID
+            initialPreference?.theme.layout || initialThemeSource.layout || pxt.auth.DEFAULT_SIMULATOR_LAYOUT
         )
         : copySimulatorTheme(initialPreference?.theme || savedPreset?.theme || accountTheme || presets[0].theme);
     const [presetId, setPresetId] = React.useState(initialPresetId);
     const [theme, setTheme] = React.useState<pxt.SimulatorTheme>(initialTheme);
-    const layoutId = theme.layout || DEFAULT_LAYOUT_ID;
-    const layoutIsKnown = layoutId === DEFAULT_LAYOUT_ID || layouts?.some(layout => layout.id === layoutId);
+    const layoutId = theme.layout;
+    const layoutIsKnown = layoutId === pxt.auth.DEFAULT_SIMULATOR_LAYOUT || layouts?.some(layout => layout.id === layoutId);
 
     const selectPreset = (id: string) => {
         if (id === ACCOUNT_PRESET_ID && onUseAccountTheme) {
@@ -95,12 +92,12 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         onThemeChanged?.({ presetId: id, theme: nextTheme });
     };
 
-    const updateColor = (part: SimulatorThemeColor, color: string) => {
-        const normalized = color.startsWith("#") ? color : `#${color}`;
-        if (!/^#[0-9a-f]{6}$/i.test(normalized)) return;
+    const updateColor = (part: pxt.auth.SimulatorThemeColor, color: string) => {
+        const normalized = normalizeColor(color);
+        if (!normalized) return;
         const nextTheme = {
             ...theme,
-            [part]: normalized.toUpperCase(),
+            [part]: normalized,
         };
         setPresetId(CUSTOM_PRESET_ID);
         setTheme(nextTheme);
@@ -126,8 +123,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         onClose={onClose}
         rightHeader={onEditorThemeClicked && <ThemePickerToggle
             selected="simulator"
-            onEditorThemeClicked={onEditorThemeClicked}
-            onSimulatorThemeClicked={() => {}} />}
+            onModeChanged={onEditorThemeClicked} />}
         actions={[
             {
                 label: lf("Save"),
@@ -165,7 +161,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
                         className="simulator-theme-select"
                         value={layoutId}
                         onChange={event => selectLayout(event.target.value)}>
-                        <option value={DEFAULT_LAYOUT_ID}>{lf("Default")}</option>
+                        <option value={pxt.auth.DEFAULT_SIMULATOR_LAYOUT}>{lf("Default")}</option>
                         {!layoutIsKnown && <option value={layoutId} disabled>{lf("Custom ({0})", layoutId)}</option>}
                         {layouts.map(layout => <option key={layout.id} value={layout.id}>
                             {pxt.Util.rlf(`{id:simulator-layout-name}${layout.name}`)}
@@ -184,14 +180,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
                             ariaLabel={lf("{0} hex color", part.label)}
                             initialValue={theme[part.id]}
                             onChange={value => updateColor(part.id, value)}
-                            onBlur={value => updateColor(part.id, value)}
-                            onEnterKey={value => updateColor(part.id, value)}
-                            validator={(value, previousValue) => {
-                                const normalized = value.startsWith("#") ? value : `#${value}`;
-                                return /^#[0-9a-f]{6}$/i.test(normalized)
-                                    ? normalized.toUpperCase()
-                                    : previousValue;
-                            }} />
+                            validator={(value, previousValue) => normalizeColor(value) || previousValue} />
                     </div>)}
                 </div>
             </div>

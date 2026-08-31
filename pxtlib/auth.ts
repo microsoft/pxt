@@ -51,17 +51,25 @@ namespace pxt.auth {
         [targetId: string]: string;
     }
 
+    export const SIMULATOR_THEME_COLOR_PROPERTIES = [
+        "background-color",
+        "button-stroke",
+        "text-color",
+        "button-fill",
+        "dpad-fill",
+        "joystick-handle-stroke",
+    ] as const;
+
+    export const DEFAULT_SIMULATOR_LAYOUT = "default";
+
+    export type SimulatorThemeColor = typeof SIMULATOR_THEME_COLOR_PROPERTIES[number];
+    export type SimulatorTheme = Map<string>
+        & Record<SimulatorThemeColor, string>
+        & { layout: string };
+
     export type SimulatorThemePreference = {
         presetId: string;
-        theme: Map<string> & {
-            "background-color": string;
-            "button-stroke": string;
-            "text-color": string;
-            "button-fill": string;
-            "dpad-fill": string;
-            "joystick-handle-stroke": string;
-            layout: string;
-        };
+        theme: SimulatorTheme;
     }
 
     export type SimulatorThemesState = {
@@ -69,6 +77,27 @@ namespace pxt.auth {
     }
 
     export const SIMULATOR_THEMES_LOCAL_STORAGE_KEY = "user-pref:simulatorThemes";
+
+    export function isValidSimulatorTheme(theme: unknown): theme is SimulatorTheme {
+        if (!theme || typeof theme !== "object") return false;
+        const candidate = theme as Map<unknown>;
+        return SIMULATOR_THEME_COLOR_PROPERTIES.every(property =>
+            typeof candidate[property] === "string"
+            && /^#[0-9a-f]{6}$/i.test(candidate[property] as string)
+        ) && typeof candidate.layout === "string" && !!candidate.layout;
+    }
+
+    export function simulatorThemeColorsEqual(left: Map<string>, right: Map<string>): boolean {
+        return SIMULATOR_THEME_COLOR_PROPERTIES.every(property => left[property] === right[property]);
+    }
+
+    export function isValidSimulatorThemePreference(preference: unknown): preference is SimulatorThemePreference {
+        if (!preference || typeof preference !== "object") return false;
+        const candidate = preference as Partial<SimulatorThemePreference>;
+        return typeof candidate.presetId === "string"
+            && !!candidate.presetId
+            && isValidSimulatorTheme(candidate.theme);
+    }
 
     export type SetPrefResult = {
         success: boolean;

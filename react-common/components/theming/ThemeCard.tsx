@@ -3,8 +3,8 @@ import { Card } from "../controls/Card";
 
 interface ThemeCardProps {
     theme: pxt.ColorThemeInfo;
-    selected?: boolean;
-    onClick?: (theme: pxt.ColorThemeInfo) => void;
+    selected: boolean;
+    onClick: (theme: pxt.ColorThemeInfo) => void;
 }
 
 export const ThemeCard = (props: ThemeCardProps) => {
@@ -20,7 +20,7 @@ export const ThemeCard = (props: ThemeCardProps) => {
             ariaPressed={selected}
             key={theme.id}
             onClick={() => onClick(theme)}
-            tabIndex={onClick && 0}
+            tabIndex={0}
         >
             <div className="theme-info-box">
                 <ThemePreview theme={theme} />

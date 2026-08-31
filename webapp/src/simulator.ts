@@ -9,8 +9,6 @@ import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
-import { ThemeManager } from "../../react-common/components/theming/themeManager";
-import { getDefaultSimulatorThemePreference } from "../../react-common/components/theming/simulatorThemeDefaults";
 
 
 
@@ -33,7 +31,7 @@ export const SLOW_TRACE_INTERVAL = 500;
 export let driver: pxsim.SimulatorDriver;
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
-let previewSimulatorTheme: pxt.SimulatorTheme;
+let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 
@@ -353,15 +351,10 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
     const deviceTheme = pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected()
         ? pxt.packetio.deviceVariant()
         : undefined;
-    const simulatorPreference = simulatorThemePreference.getSimulatorThemePreference();
-    const colorThemeDefault = getDefaultSimulatorThemePreference(
-        ThemeManager.getInstance(document).getCurrentColorTheme(),
-        pxt.appTarget.simulator?.themePresets
-    );
     const theme = previewSimulatorTheme || simulatorTheme.resolveSimulatorTheme(
             pkg.config.theme,
             deviceTheme,
-            (simulatorPreference || colorThemeDefault)?.theme,
+            simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme,
             !!playerNumber
         );
 
@@ -438,8 +431,7 @@ export function setPreviewSimulatorTheme(theme: pxt.SimulatorTheme) {
 }
 
 function postPreviewSimulatorTheme() {
-    if (!previewSimulatorTheme) return;
-    if (!driver) return;
+    if (!previewSimulatorTheme || !driver) return;
     const message: pxsim.SetSimulatorThemeMessage = {
         type: "setsimtheme",
         theme: previewSimulatorTheme,

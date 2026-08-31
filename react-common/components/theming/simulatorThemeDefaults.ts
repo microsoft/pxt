@@ -1,12 +1,3 @@
-const simulatorThemeColorProperties = [
-    "background-color",
-    "button-stroke",
-    "text-color",
-    "button-fill",
-    "dpad-fill",
-    "joystick-handle-stroke",
-];
-
 export function getSimulatorThemePreferenceForColorThemeChange(
     preference: pxt.auth.SimulatorThemePreference | undefined,
     previousColorTheme: pxt.ColorThemeInfo | undefined,
@@ -20,7 +11,7 @@ export function getSimulatorThemePreferenceForColorThemeChange(
 
     if (preference) {
         if (preference.presetId !== nextDefault.presetId) return preference;
-        if (simulatorThemeColorsEqual(preference.theme, nextDefault.theme)
+        if (pxt.auth.simulatorThemeColorsEqual(preference.theme, nextDefault.theme)
             && preference.theme.layout === nextDefault.theme.layout) return preference;
     }
     else if (!nextColorTheme?.defaultSimulatorTheme) {
@@ -46,20 +37,15 @@ export function getDefaultSimulatorThemePreference(
         : configuredPreset?.theme || defaultPreset.theme;
     return {
         presetId: defaultPreset.id,
-        theme: { ...theme } as pxt.SimulatorTheme,
+        theme: copySimulatorTheme(theme as pxt.SimulatorTheme),
     };
 }
 
 export function copySimulatorTheme(theme: pxt.SimulatorTheme): pxt.SimulatorTheme {
-    const result: pxt.SimulatorTheme = {
-        "background-color": theme["background-color"],
-        "button-stroke": theme["button-stroke"],
-        "text-color": theme["text-color"],
-        "button-fill": theme["button-fill"],
-        "dpad-fill": theme["dpad-fill"],
-        "joystick-handle-stroke": theme["joystick-handle-stroke"],
-        layout: theme.layout || "default",
-    };
+    const result = { layout: theme.layout || pxt.auth.DEFAULT_SIMULATOR_LAYOUT } as pxt.SimulatorTheme;
+    for (const property of pxt.auth.SIMULATOR_THEME_COLOR_PROPERTIES) {
+        result[property] = theme[property];
+    }
     return result;
 }
 
@@ -70,8 +56,4 @@ export function getSimulatorThemeForLayout(
     const nextTheme = copySimulatorTheme(theme);
     nextTheme.layout = layoutId;
     return nextTheme;
-}
-
-export function simulatorThemeColorsEqual(left: pxt.Map<string>, right: pxt.Map<string>): boolean {
-    return simulatorThemeColorProperties.every(key => left[key] === right[key]);
 }

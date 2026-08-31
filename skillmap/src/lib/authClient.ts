@@ -175,15 +175,17 @@ export async function setColorThemeIdAsync(themeId: string): Promise<void> {
 export async function getSimulatorThemePreferenceAsync(): Promise<pxt.auth.SimulatorThemePreference | undefined> {
     const prefs = await userPreferencesAsync();
     const cloudPreference = prefs?.simulatorThemes?.[pxt.appTarget.id];
-    if (cloudPreference) return cloudPreference;
+    if (pxt.auth.isValidSimulatorThemePreference(cloudPreference)) return cloudPreference;
 
     const localPrefs = pxt.U.jsonTryParse(
         pxt.storage.getLocal(pxt.auth.SIMULATOR_THEMES_LOCAL_STORAGE_KEY)
     ) as pxt.auth.SimulatorThemesState;
-    return localPrefs?.[pxt.appTarget.id];
+    const localPreference = localPrefs?.[pxt.appTarget.id];
+    return pxt.auth.isValidSimulatorThemePreference(localPreference) ? localPreference : undefined;
 }
 
 export async function setSimulatorThemePreferenceAsync(preference: pxt.auth.SimulatorThemePreference): Promise<void> {
+    if (!pxt.auth.isValidSimulatorThemePreference(preference)) return;
     const cli = await clientAsync();
     const targetId = pxt.appTarget.id;
     if (cli) {
