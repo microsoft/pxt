@@ -16,11 +16,13 @@
  *             string on device surfaces only as panic 999, which carries no
  *             identity; the rewrite is what makes a device failure legible.
  *   body      the case file text, verbatim
- *   footer    prints "HWAB PASS <case>" on a loop and never resets
+ *   footer    prints "HWAB PASS <case>" for a bounded window, then idles
+ *             without resetting
  *
  * The trailing PASS loop and the startup delay both exist because serial
  * capture cannot begin until the board has re-enumerated after flashing: a
- * program that printed its result once, early, would race the capture.
+ * program that printed its result once, early, would race the capture. The
+ * window is bounded because only that first minute can be raced.
  *
  * Usage:
  *   node tests/hw-ab/gen-project.js
@@ -47,6 +49,12 @@ const START_DELAY_MS = 10000;
 // Interval of the trailing PASS heartbeat and of the soak progress line.
 const PASS_INTERVAL_MS = 2000;
 const SOAK_INTERVAL_MS = 5000;
+// How long the PASS heartbeat runs before the program goes quiet. It only has
+// to outlast the post-flash re-enumeration the capture waits for; streaming
+// past that is noise, and a board transmitting indefinitely is suspected of
+// aggravating flash failures.
+const PASS_WINDOW_MS = 60000;
+const PASS_REPEATS = Math.round(PASS_WINDOW_MS / PASS_INTERVAL_MS);
 
 // case name -> lang-test0 source file
 const CASES = {
@@ -125,12 +133,16 @@ function header(name) {
 function footer(name) {
     return [
         "",
-        "// Reaching here means every assertion held. Repeat the verdict so a",
-        "// capture that attached late still sees it, and never reset.",
-        "while (true) {",
+        "// Reaching here means every assertion held. Repeat the verdict for",
+        "// " + Math.round(PASS_WINDOW_MS / 1000) + "s so a capture that could only attach after the board",
+        "// re-enumerated still sees it, then go quiet without resetting.",
+        "for (let hwabI = 0; hwabI < " + PASS_REPEATS + "; hwabI++) {",
         "    console.log(\"HWAB PASS " + name + "\")",
         "    control.dmesg(\"HWAB PASS " + name + "\")",
         "    basic.pause(" + PASS_INTERVAL_MS + ")",
+        "}",
+        "while (true) {",
+        "    basic.pause(1000)",
         "}",
         ""
     ].join("\n");

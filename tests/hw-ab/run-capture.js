@@ -32,7 +32,10 @@ const USAGE = [
     "name that case.",
     "",
     "Normal mode (default, --timeout 120):",
-    "  stops at the first \"HWAB PASS\" or \"ASSERT\" line, or at the timeout.",
+    "  stops at the first \"HWAB PASS\" or \"ASSERT\" line, or at the timeout. A",
+    "  timeout with no banner at all means the program never ran -- usually a flash",
+    "  DAPLink rejected -- so the whole flash and capture is retried once, and only",
+    "  the second result is reported. Budget twice the timeout for that case.",
     "  exit 0  HWAB PASS seen",
     "  exit 1  ASSERT seen (the failing line is printed)",
     "  exit 2  timeout with neither",
@@ -283,6 +286,28 @@ let devFd = null;
 let logFd = null;
 let pumpTimer = null;
 let stopped = false;
+let volumePath = null;      // volume the current attempt flashed through
+
+// DAPLink writes FAIL.TXT to the volume when it rejects an incoming hex (a
+// decode failure surfaces as panic 521), and the program then never runs.
+// Returns the file's text, or null when there is none or the volume has gone.
+function readFailTxt() {
+    if (!volumePath) return null;
+    let name = null;
+    try {
+        for (const entry of fs.readdirSync(volumePath)) {
+            if (/^fail\.txt$/i.test(entry)) { name = entry; break; }
+        }
+    } catch (e) {
+        return null;   // unmounted, or not readable
+    }
+    if (!name) return null;
+    try {
+        return fs.readFileSync(path.join(volumePath, name), "latin1");
+    } catch (e) {
+        return null;
+    }
+}
 
 function cleanup() {
     stopped = true;
@@ -314,13 +339,19 @@ function pump() {
 
 function startReader() {
     // Frequently enough that a burst at 115200 baud cannot outrun the tty's own
-    // input buffer between polls.
+    // input buffer between polls. Clearing `stopped` is what lets a second
+    // attempt read after the first one's cleanup.
+    stopped = false;
     pumpTimer = setInterval(pump, 50);
 }
 
-async function main() {
-    const volume = await waitForVolume(VOLUME_WAIT);
-    if (!volume) {
+// One full flash-and-capture cycle: copy the hex, wait for the board to come
+// back, open its serial device and read until a verdict or the timeout. Returns
+// the outcome for report(). Host and board problems still exit through fail()
+// here -- a second attempt at a missing board finds the same missing board.
+async function attempt() {
+    volumePath = await waitForVolume(VOLUME_WAIT);
+    if (!volumePath) {
         process.stderr.write(
             "run-capture: no MICROBIT volume within " + VOLUME_WAIT + "s (looked at:\n" +
             volumeDesc + ").\n" +
@@ -334,11 +365,11 @@ async function main() {
         process.exit(3);
     }
 
-    process.stdout.write("run-capture: flashing " + hex + " -> " + volume + "\n");
+    process.stdout.write("run-capture: flashing " + hex + " -> " + volumePath + "\n");
     try {
-        fs.copyFileSync(hex, path.join(volume, path.basename(hex)));
+        fs.copyFileSync(hex, path.join(volumePath, path.basename(hex)));
     } catch (e) {
-        fail("copy to " + volume + " failed");
+        fail("copy to " + volumePath + " failed");
     }
     if (!isWindows) {
         // Best effort: push the copy out of the page cache before the drive
@@ -350,9 +381,9 @@ async function main() {
     // board. Wait for the drive to go away (best effort -- flashing a small hex
     // can be quicker than this poll) and then for it to come back.
     const graceDeadline = nowSeconds() + UNMOUNT_GRACE;
-    while (nowSeconds() < graceDeadline && isDir(volume)) await sleep(1000);
+    while (nowSeconds() < graceDeadline && isDir(volumePath)) await sleep(1000);
     if (!await waitForVolume(REMOUNT_WAIT))
-        fail(volume + " did not remount within " + REMOUNT_WAIT + "s after flashing");
+        fail(volumePath + " did not remount within " + REMOUNT_WAIT + "s after flashing");
     process.stdout.write("run-capture: flashed, board remounted\n");
 
     // The generated programs idle for ~10s before printing, which is the window
@@ -454,29 +485,12 @@ async function main() {
         }
         cleanup();
         const content = verdictBody(readLog()) || "";
-        const after = countMatches(content, "HWAB SOAK");
-        if (before === null) before = 0;
-        process.stdout.write("run-capture: HWAB SOAK lines: " + before +
-            " at checkpoint, " + after + " at end\n");
-        const assertLine = firstMatch(content, "ASSERT ");
-        if (assertLine !== null) {
-            process.stderr.write("run-capture: FAIL -- assertion during soak:\n");
-            writeRaw(process.stderr, assertLine + "\n");
-            process.exit(1);
-        }
-        if (after > before) {
-            process.stdout.write(
-                "run-capture: PASS -- still printing after " + soakMin + " minute(s)\n");
-            writeRaw(process.stdout, tailBytes(content, 1));
-            process.exit(0);
-        }
-        process.stderr.write(
-            "run-capture: FAIL -- output stalled before the end of the soak.\n" +
-            "The board stopped printing HWAB SOAK lines, which is what an out-of-memory\n" +
-            "panic looks like from the host side (the LED matrix will show a sad face and a\n" +
-            "number; 020/021 are the memory panics). Last captured lines:\n");
-        writeRaw(process.stderr, tailBytes(content, 5));
-        process.exit(1);
+        return {
+            kind: "soak",
+            before: before === null ? 0 : before,
+            after: countMatches(content, "HWAB SOAK"),
+            content: content
+        };
     }
 
     process.stdout.write(
@@ -488,39 +502,89 @@ async function main() {
             const assertLine = firstMatch(body, "ASSERT ");
             if (assertLine !== null) {
                 cleanup();
-                process.stderr.write("run-capture: FAIL -- assertion failed on device:\n");
-                writeRaw(process.stderr, assertLine + "\n");
-                process.stderr.write("run-capture: the board shows a sad face and 45.\n");
-                process.exit(1);
+                return { kind: "assert", line: assertLine };
             }
             const passLine = firstMatch(body, passNeedle);
             if (passLine !== null) {
                 cleanup();
-                writeRaw(process.stdout,
-                    "run-capture: PASS -- " + passLine.replace(/\r/g, "") + "\n");
-                process.exit(0);
+                return { kind: "pass", line: passLine };
             }
         }
         await sleep(1000);
     }
 
     cleanup();
-    const content = readLog();
+    const timedOut = readLog();
+    return {
+        kind: "timeout",
+        content: timedOut,
+        noBanner: verdictBody(timedOut) === null
+    };
+}
+
+function reportSoak(result) {
+    const content = result.content;
+    process.stdout.write("run-capture: HWAB SOAK lines: " + result.before +
+        " at checkpoint, " + result.after + " at end\n");
+    const assertLine = firstMatch(content, "ASSERT ");
+    if (assertLine !== null) {
+        process.stderr.write("run-capture: FAIL -- assertion during soak:\n");
+        writeRaw(process.stderr, assertLine + "\n");
+        process.exit(1);
+    }
+    if (result.after > result.before) {
+        process.stdout.write(
+            "run-capture: PASS -- still printing after " + soakMin + " minute(s)\n");
+        writeRaw(process.stdout, tailBytes(content, 1));
+        process.exit(0);
+    }
+    process.stderr.write(
+        "run-capture: FAIL -- output stalled before the end of the soak.\n" +
+        "The board stopped printing HWAB SOAK lines, which is what an out-of-memory\n" +
+        "panic looks like from the host side (the LED matrix will show a sad face and a\n" +
+        "number; 020/021 are the memory panics). Last captured lines:\n");
+    writeRaw(process.stderr, tailBytes(content, 5));
+    process.exit(1);
+}
+
+// Turns an attempt's outcome into the script's output and exit code.
+function report(result) {
+    if (result.kind === "soak") reportSoak(result);
+    if (result.kind === "assert") {
+        process.stderr.write("run-capture: FAIL -- assertion failed on device:\n");
+        writeRaw(process.stderr, result.line + "\n");
+        process.stderr.write("run-capture: the board shows a sad face and 45.\n");
+        process.exit(1);
+    }
+    if (result.kind === "pass") {
+        writeRaw(process.stdout,
+            "run-capture: PASS -- " + result.line.replace(/\r/g, "") + "\n");
+        process.exit(0);
+    }
+
+    const content = result.content;
     const logLines = countLines(content);
     const logBytes = content.length;
     process.stderr.write(
         "run-capture: TIMEOUT -- no HWAB PASS and no ASSERT within " + timeout + "s.\n" +
         "Captured " + logLines + " line(s), " + logBytes + " byte(s). Last lines:\n");
     writeRaw(process.stderr, tailBytes(content, 5));
-    if (verdictBody(content) === null) {
+    if (result.noBanner) {
         process.stderr.write(
             "\nNo \"" + startNeedle() + "\" banner was seen, so no verdict could be read.\n");
+        const failText = readFailTxt();
+        if (failText !== null) {
+            process.stderr.write(
+                "DAPLink left FAIL.TXT on " + volumePath + ": it rejected the hex, so the\n" +
+                "program never ran.\n");
+            writeRaw(process.stderr, failText.replace(/[\r\n]+$/, "") + "\n");
+        }
         const stray = firstHwabLine(content);
         if (stray !== null) {
             process.stderr.write(
                 "HWAB output from another program was ignored (stale serial buffer from\n" +
-                "the previously flashed program, or the flash did not take -- check the\n" +
-                "MICROBIT drive for FAIL.TXT). First ignored line:\n");
+                "the previously flashed program, or the flash did not take). First\n" +
+                "ignored line:\n");
             writeRaw(process.stderr, stray + "\n");
         }
     }
@@ -538,6 +602,19 @@ async function main() {
         "reaching its verdict; read the number off the matrix (999 = unhandled throw,\n" +
         "020/021 = out of memory).\n");
     process.exit(2);
+}
+
+async function main() {
+    let result = await attempt();
+    // A timeout with no banner means the program never spoke, and the usual
+    // cause is a rejected flash (DAPLink error 521), which is intermittent and
+    // clears on a re-flash. A timeout after a banner is a real verdict about a
+    // program that did run, so it is reported as it stands.
+    if (result.kind === "timeout" && result.noBanner) {
+        process.stderr.write("run-capture: no banner -- re-flashing once\n");
+        result = await attempt();
+    }
+    report(result);
 }
 
 process.on("exit", cleanup);

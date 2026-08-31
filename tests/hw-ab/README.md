@@ -80,8 +80,11 @@ Two constraints:
    `PXT_COMPILE_SWITCHES` name-agnostically -- an unknown switch name is
    accepted silently and then never read. A misspelled or not-yet-implemented
    switch therefore produces a "reference" that is a second candidate build.
-   `build-ab.js` compares the two hexes and refuses to continue if they are
-   byte-identical, rather than letting you diff a build against itself.
+   `build-ab.js` compares the two hexes of every case and refuses to continue
+   when all of them are byte-identical, rather than letting you diff a build
+   against itself. Some cases identical is not that failure -- a switch only
+   changes the programs that use what it gates -- so those are reported as a
+   note and the build succeeds.
 2. It only covers changes that are gated behind those switches. An ungated
    change is in both builds and the comparison cannot see it.
 
@@ -129,8 +132,13 @@ which is what to reach for when the two sides are run on different boards or at
 different times.
 
 `run-capture.js` exits 0 on `HWAB PASS`, 1 on `ASSERT` (printing the failing
-assertion id), 2 on timeout, 3 on a host/board problem. `diff-ab.js` exits
-nonzero on divergence and prints a unified diff of the normalized lines.
+assertion id), 2 on timeout, 3 on a host/board problem. A timeout with no
+banner at all means the program never ran, so it re-flashes once before
+reporting. `diff-ab.js` exits nonzero on divergence and prints a unified diff of
+the normalized lines; normalization drops what belongs to the capture rather
+than to the build -- a final line cut short when the capture stopped, and
+banners naming a different case, which are the previous program's output
+arriving out of DAPLink's buffer.
 
 A pass on both sides is not the whole story, which is why `ab` diffs even when
 both captures passed: the trace lines between the banners can differ while the
@@ -140,11 +148,13 @@ final verdict does not.
 
     HWAB START <case>     once, after a 10 s startup delay
     <trace lines>         from the prelude's msg()
-    HWAB PASS <case>      repeated every 2 s, forever
+    HWAB PASS <case>      repeated every 2 s for about a minute
 
 The 10 second delay and the repeating PASS both exist for the same reason:
 serial capture cannot begin until the board re-enumerates after flashing, so a
 program that printed its verdict once and immediately would race the capture.
+Only that first minute can be raced, so the heartbeat stops there and the board
+idles quietly rather than streaming serial until it is unplugged.
 
 Verdicts are read only from the case's own `HWAB START` banner onward, and
 `hwab` passes the expected case name through: DAPLink buffers serial while no
@@ -235,8 +245,10 @@ assertion -- the case files raise exceptions deliberately in a few places, so a
 
 **Sad face with 521 right after flashing** -- DAPLink rejected the incoming
 hex (a flash-time checksum failure). The program never ran, so the capture
-times out with no banner. Intermittent; a re-flash nearly always succeeds.
-If it repeats back to back, unplug and replug the board before retrying.
+times out with no banner, which is the case `run-capture.js` re-flashes once by
+itself; it also prints `FAIL.TXT` from the MICROBIT drive when DAPLink left one
+there. Reaching the report means both attempts were rejected: unplug and replug
+the board before retrying.
 
 **`no MICROBIT volume within 30s`** -- the drive is not mounted. Check the
 cable is a data cable, not charge-only. If a `MAINTENANCE` drive appears
@@ -254,12 +266,14 @@ read the serial device directly.
 and the capture cannot tell which board is which. Unplug the others, or name
 the right one with `MICROBIT_SERIAL`.
 
-**`candidate and reference hexes are byte-identical`** -- the reference build
-differs from the candidate only by compile switches, and those switches changed
-nothing. Almost always this means the compiler on this branch does not
-implement them: an unrecognised switch name is accepted silently and never
-read. Check the spelling against what the compiler reads, or switch to the
-git-based reference strategy.
+**`candidate and reference hexes are byte-identical for every case`** -- the
+reference build differs from the candidate only by compile switches, and those
+switches changed nothing anywhere. Almost always this means the compiler on
+this branch does not implement them: an unrecognised switch name is accepted
+silently and never read. Check the spelling against what the compiler reads, or
+switch to the git-based reference strategy. The per-case
+`no codegen difference for <case>` note is the benign version of the same
+observation and does not stop the build.
 
 **Empty capture / timeout** -- the capture attached after the program had
 already printed, or the board reset. The repeating PASS banner normally covers
