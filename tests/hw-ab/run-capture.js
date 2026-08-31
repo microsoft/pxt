@@ -477,8 +477,22 @@ async function attempt() {
         // by the deadline the program stopped printing, which is how a leak ends.
         let checkpoint = deadline - 60;
         if (checkpoint <= nowSeconds()) checkpoint = deadline - Math.floor(timeout / 4);
+        // The program's banner appears within seconds of the startup delay. A
+        // soak that has printed nothing by this grace deadline never started
+        // (a failed flash), which must not consume the whole soak window --
+        // returning a no-banner timeout here hands it to the re-flash retry.
+        const bannerGrace = nowSeconds() + 90;
+        let sawBanner = false;
         let before = null;
         while (nowSeconds() < deadline) {
+            if (!sawBanner) {
+                sawBanner = verdictBody(readLog()) !== null;
+                if (!sawBanner && nowSeconds() >= bannerGrace) {
+                    cleanup();
+                    const content = readLog();
+                    return { kind: "timeout", content: content, noBanner: true };
+                }
+            }
             if (before === null && nowSeconds() >= checkpoint)
                 before = countMatches(verdictBody(readLog()) || "", "HWAB SOAK");
             await sleep(5000);
