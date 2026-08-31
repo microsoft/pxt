@@ -15,21 +15,26 @@
 "use strict";
 
 const fs = require("fs");
+const path = require("path");
 
 const USAGE = [
-    "Usage: node tests/hw-ab/diff-ab.js <log-a> <log-b>",
+    "Usage: node tests/hw-ab/diff-ab.js <log-a> <log-b> [--case <name>]",
     "",
     "Normalizes two run-capture.js logs and diffs them.",
     "",
     "Normalization:",
     "  - CR stripped, blank lines dropped",
-    "  - everything before the first \"HWAB START\" banner is discarded, since a",
-    "    capture can attach part way through a line",
+    "  - the expected case comes from --case, else from the log's parent",
+    "    directory (the out/<case>/<side>.log layout); everything before its",
+    "    \"HWAB START <case>\" banner is discarded, including a stale prefix glued",
+    "    to the banner line. DAPLink's buffer can hold a previous program's",
+    "    entire run, START banner included, so content cannot name its own case.",
+    "    With no --case and no such banner, the first START of any case is the",
+    "    sync point.",
     "  - an unterminated final line is dropped -- it means the capture stopped",
     "    mid-line, which is not a divergence",
-    "  - the case name comes from the log's own \"HWAB START\" banner; HWAB lines",
-    "    naming a different case are the previous program's, buffered by DAPLink,",
-    "    and are dropped",
+    "  - HWAB lines naming a different case are the previous program's, buffered",
+    "    by DAPLink, and are dropped",
     "  - HWAB banners, ASSERT failures and the lang-test0 msg() trace lines are all",
     "    compared; a leading \"[12345]\" or \"123ms\" timestamp is stripped",
     "  - \"HWAB SOAK <ms> free=.. min=.. total=.. numgc=..\" collapses to",
@@ -64,7 +69,7 @@ function hwabCase(line) {
     return m ? m[1] : "";
 }
 
-function normalize(file) {
+function normalize(file, expectedCase) {
     const text = fs.readFileSync(file, "utf8").replace(/\r/g, "");
     const raw = splitLines(text);
 
@@ -72,18 +77,39 @@ function normalize(file) {
     // capture happened to stop is not a divergence.
     if (raw.length && !/\n$/.test(text)) raw.pop();
 
-    // Serial capture can attach part way through a line, so the sync point is
-    // the first HWAB START banner; everything before it is discarded. A log
-    // with no banner at all (capture attached after the program had run) keeps
-    // all of its lines except the first, which is the one that can be a
-    // fragment.
+    // Serial capture can attach part way through a line, and DAPLink's buffer
+    // can hold a previous program's entire run, START banner included -- so
+    // when the expected case is known, the sync point is ITS banner, and a
+    // stale fragment glued to the front of that line is cut off. Only with no
+    // expected case (or a log that never prints its banner) does the first
+    // START of any case stand in. A log with no banner at all keeps all of
+    // its lines except the first, which is the one that can be a fragment.
     let start = 0;
     let caseName = "";
+    const wanted = expectedCase ? "HWAB START " + expectedCase : null;
     for (let i = 0; i < raw.length; i++) {
-        if (raw[i].indexOf("HWAB START") >= 0) {
+        const at = wanted ? raw[i].indexOf(wanted) : -1;
+        if (at >= 0) {
+            raw[i] = raw[i].substr(at);
+            start = i + 1;
+            caseName = expectedCase;
+            break;
+        }
+        if (!wanted && raw[i].indexOf("HWAB START") >= 0) {
             start = i + 1;
             caseName = hwabCase(raw[i]);
             break;
+        }
+    }
+    if (!start && wanted) {
+        // Expected banner never seen: fall back to any-case sync so a log from
+        // outside the out/<case>/ layout still normalizes.
+        for (let i = 0; i < raw.length; i++) {
+            if (raw[i].indexOf("HWAB START") >= 0) {
+                start = i + 1;
+                caseName = hwabCase(raw[i]);
+                break;
+            }
         }
     }
     const from = start ? start : 2;
@@ -212,8 +238,18 @@ function unifiedDiff(a, b, labelA, labelB, context) {
 }
 
 function main(argv) {
-    if (argv.length !== 2) { usage(process.stderr); return 2; }
-    for (const f of argv) {
+    let expectedCase = "";
+    const files = [];
+    for (let i = 0; i < argv.length; i++) {
+        if (argv[i] === "--case") {
+            if (i + 1 >= argv.length) { usage(process.stderr); return 2; }
+            expectedCase = argv[++i];
+        } else {
+            files.push(argv[i]);
+        }
+    }
+    if (files.length !== 2) { usage(process.stderr); return 2; }
+    for (const f of files) {
         let ok = false;
         try { ok = fs.statSync(f).isFile(); } catch (e) { ok = false; }
         if (!ok) {
@@ -222,10 +258,13 @@ function main(argv) {
         }
     }
 
-    const a = argv[0];
-    const b = argv[1];
-    const na = normalize(a);
-    const nb = normalize(b);
+    const a = files[0];
+    const b = files[1];
+    // Without --case, the out/<case>/<side>.log layout names the case; a log
+    // from elsewhere falls back to content sync inside normalize().
+    if (!expectedCase) expectedCase = path.basename(path.dirname(a));
+    const na = normalize(a, expectedCase);
+    const nb = normalize(b, expectedCase);
 
     if (na.concat(nb).some(l => l.indexOf("HWAB SOAK") >= 0)) {
         process.stdout.write("diff-ab: final soak line\n");

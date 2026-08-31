@@ -136,9 +136,10 @@ assertion id), 2 on timeout, 3 on a host/board problem. A timeout with no
 banner at all means the program never ran, so it re-flashes once before
 reporting. `diff-ab.js` exits nonzero on divergence and prints a unified diff of
 the normalized lines; normalization drops what belongs to the capture rather
-than to the build -- a final line cut short when the capture stopped, and
-banners naming a different case, which are the previous program's output
-arriving out of DAPLink's buffer.
+than to the build -- a final line cut short when the capture stopped, and the
+previous program's output arriving out of DAPLink's buffer, which can include
+that program's entire run. The expected case therefore comes from `--case`
+(passed by `hwab`) or the log's directory, never from log content.
 
 A pass on both sides is not the whole story, which is why `ab` diffs even when
 both captures passed: the trace lines between the banners can differ while the
