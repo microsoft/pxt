@@ -284,6 +284,11 @@ function writeRaw(stream, text) {
 
 let devFd = null;
 let logFd = null;
+// Serial arriving in the first moments after the port opens is buffered
+// history, not the flashed program (which idles for 10s post-reset; the port
+// opens within ~6s of it). 3s of discard ends safely inside that quiet window.
+const STALE_DISCARD_MS = 3000;
+let discardUntil = 0;
 let pumpTimer = null;
 let stopped = false;
 let volumePath = null;      // volume the current attempt flashed through
@@ -333,6 +338,13 @@ function pump() {
             return;   // EAGAIN while the port is quiet, or the device went away
         }
         if (bytes <= 0) return;
+        // DAPLink flushes serial it buffered while no host was reading, and
+        // that history can include a previous run of the SAME case -- banners,
+        // asserts and all -- which no content check can tell apart. But the
+        // generated programs are silent for their first 10s after the
+        // post-flash reset, and the port opens well inside that window, so
+        // anything arriving this early is necessarily history.
+        if (Date.now() < discardUntil) continue;
         try { fs.writeSync(logFd, READ_BUF, 0, bytes); } catch (e) { return; }
     }
 }
@@ -342,6 +354,7 @@ function startReader() {
     // input buffer between polls. Clearing `stopped` is what lets a second
     // attempt read after the first one's cleanup.
     stopped = false;
+    discardUntil = Date.now() + STALE_DISCARD_MS;
     pumpTimer = setInterval(pump, 50);
 }
 
