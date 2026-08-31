@@ -606,7 +606,9 @@ ${baseLabel}_nochk:
         }
 
         private shouldSpecializeCheckedFieldLoad(info: FieldAccessInfo) {
-            if (!isThumb() || !this.bin.finalPass || target.switches.skipClassCheck || !info.needsCheck)
+            if (!isThumb() || !this.bin.finalPass || target.switches.noIfaceSpec)
+                return false
+            if (target.switches.skipClassCheck || !info.needsCheck)
                 return false
             return (this.bin.checkedFieldAccessCounts[this.checkedFieldAccessCountKey(info)] || 0) >= 5
         }
@@ -909,7 +911,7 @@ ${baseLabel}_nochk:
         // each shared call site saves ~4 bytes vs an inline call, and the thunk
         // itself costs ~12 bytes. At 3 callers, savings break even with thunk cost.
         private shouldSpecializeIfaceCall(ifaceIndex: number, numargs: number, getset: string) {
-            if (!isThumb() || !this.bin.finalPass)
+            if (!isThumb() || !this.bin.finalPass || target.switches.noIfaceSpec)
                 return false
             const count = this.bin.ifaceCallCounts[this.ifaceCallCountKey(ifaceIndex, numargs, getset)] || 0
             if (getset == "get" && numargs == 1)
@@ -1168,7 +1170,7 @@ ${baseLabel}_nochk:
         }
 
         private shouldSpecializeMapSetByFieldId(fieldId: number) {
-            if (!isThumb() || !this.bin.finalPass)
+            if (!isThumb() || !this.bin.finalPass || target.switches.noIfaceSpec)
                 return false
             return (this.bin.mapSetByFieldIdCounts[fieldId + ""] || 0) >= 3
         }
@@ -1320,6 +1322,12 @@ ${baseLabel}_nochk:
             // - non-RefMap pointer receivers: tail-call _pxt_map_set, which handles
             //   non-map objects via interface dispatch. Preserves back-compat for code that
             //   casts non-map objects to a string-index-signature type.
+            //
+            // Emitted only when the final-pass IR selected mapSetByStringOnly
+            // (never under `noIfaceSpec`): unreferenced helper text costs image
+            // space in every program otherwise.
+            if (!this.bin.usesMapSetByStringOnly)
+                return
             this.write(`
                 ${this.helperObject("set string map")}
                 .section code

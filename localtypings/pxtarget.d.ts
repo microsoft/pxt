@@ -776,6 +776,7 @@ declare namespace ts.pxtc {
         rawELF?: boolean;
         multiVariant?: boolean;
         size?: boolean;
+        noIfaceSpec?: boolean; // disable interface dispatch specializations
     }
 
     interface CompileTarget {

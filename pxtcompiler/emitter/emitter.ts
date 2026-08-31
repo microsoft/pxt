@@ -1073,7 +1073,7 @@ namespace ts.pxtc {
         // (which read useExactIfaceWrapper to decide whether to emit _iface).
         function markExactIfaceWrappers() {
             bin.procs.forEach(p => p.useExactIfaceWrapper = false);
-            if (!isThumb())
+            if (!isThumb() || target.switches.noIfaceSpec)
                 return;
 
             const eligible: pxt.Map<boolean> = {};
@@ -1209,6 +1209,7 @@ namespace ts.pxtc {
         bin.mapSetByFieldIdCounts = {}
         bin.checkedFieldAccessCounts = {}
         bin.dynamicIfaceCalls = {}
+        bin.usesMapSetByStringOnly = false
         emit(rootFunction)
         markExactIfaceWrappers()
 
@@ -2100,7 +2101,13 @@ ${lbl}: .short 0xffff
 
             if (!indexer && (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable))) {
                 const hasIndexSignature = !!checker.getIndexTypeOfType(t, IndexKind.String) || !!checker.getIndexTypeOfType(t, IndexKind.Number);
-                const mapOnlySet = !!assign && !(t.flags & TypeFlags.Any) && hasIndexSignature;
+                // Native-only: mapSetByStringOnly resolves to the _pxt_map_set_by_string
+                // thumb helper. The JS backend has no such runtime entry, so the generic
+                // setter is the only valid choice there.
+                const mapOnlySet = !target.switches.noIfaceSpec && target.isNative
+                    && !!assign && !(t.flags & TypeFlags.Any) && hasIndexSignature;
+                if (mapOnlySet)
+                    bin.usesMapSetByStringOnly = true
                 indexer = assign
                     ? (mapOnlySet ? "pxtrt::mapSetByStringOnly" : "pxtrt::mapSetGeneric")
                     : "pxtrt::mapGetGeneric"
@@ -5247,6 +5254,7 @@ ${lbl}: .short 0xffff
         mapSetByFieldIdCounts: pxt.Map<number> = {};
         checkedFieldAccessCounts: pxt.Map<number> = {};
         dynamicIfaceCalls: pxt.Map<boolean> = {};
+        usesMapSetByStringOnly = false;
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
         doubles: pxt.Map<string> = {};
