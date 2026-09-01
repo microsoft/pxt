@@ -7,6 +7,8 @@ import * as data from "./data";
 import U = pxt.U
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Milestones } from "./constants";
+import * as simulatorTheme from "./simulatorTheme";
+import * as simulatorThemePreference from "./simulatorThemePreference";
 
 
 
@@ -29,6 +31,7 @@ export const SLOW_TRACE_INTERVAL = 500;
 export let driver: pxsim.SimulatorDriver;
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
+let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
 export let simTranslations: pxt.Map<string>;
 
@@ -210,6 +213,7 @@ export async function initAsync(cfg: SimulatorConfig) {
                 postSimEditorEvent("stopped");
             } else if (state === pxsim.SimulatorState.Running) {
                 this.onDebuggerResume();
+                postPreviewSimulatorTheme();
             }
             cfg.onStateChanged(state);
         },
@@ -344,7 +348,15 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         }
     }
 
-    const theme = pkg.config.theme || (pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected() && pxt.packetio.deviceVariant());
+    const deviceTheme = pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected()
+        ? pxt.packetio.deviceVariant()
+        : undefined;
+    const theme = previewSimulatorTheme || simulatorTheme.resolveSimulatorTheme(
+            pkg.config.theme,
+            deviceTheme,
+            simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme,
+            !!playerNumber
+        );
 
     const opts: pxsim.SimulatorRunOptions = {
         boardDefinition: boardDefinition,
@@ -411,6 +423,24 @@ export function setTraceInterval(intervalMs: number) {
 export function proxy(message: pxsim.SimulatorCustomMessage) {
     if (!driver) return;
     driver.postMessage(message);
+}
+
+export function setPreviewSimulatorTheme(theme: pxt.SimulatorTheme) {
+    previewSimulatorTheme = theme;
+    postPreviewSimulatorTheme();
+}
+
+function postPreviewSimulatorTheme() {
+    if (!previewSimulatorTheme || !driver) return;
+    const message: pxsim.SetSimulatorThemeMessage = {
+        type: "setsimtheme",
+        theme: previewSimulatorTheme,
+    };
+    driver.postMessage(message);
+}
+
+export function clearPreviewSimulatorTheme() {
+    previewSimulatorTheme = undefined;
 }
 
 export function dbgPauseResume() {

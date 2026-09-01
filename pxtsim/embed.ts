@@ -275,13 +275,13 @@ namespace pxsim {
 
     export interface SetSimThemeMessage extends SimulatorMessage {
         type: "setsimthemecolor";
-        part:
-            | "background-color"
-            | "button-stroke"
-            | "text-color"
-            | "button-fill"
-            | "dpad-fill";
+        part: string;
         color: string;
+    }
+
+    export interface SetSimulatorThemeMessage extends SimulatorMessage {
+        type: "setsimtheme";
+        theme: string | pxt.Map<string>;
     }
 
     export interface SetMuteButtonStateMessage extends SimulatorMessage {
