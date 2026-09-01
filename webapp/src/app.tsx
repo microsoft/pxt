@@ -13,6 +13,8 @@ import * as pkg from "./package";
 import * as core from "./core";
 import * as sui from "./sui";
 import * as simulator from "./simulator";
+import * as simulatorTheme from "./simulatorTheme";
+import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as srceditor from "./srceditor"
 import * as compiler from "./compiler"
 import * as cmds from "./cmds"
@@ -47,6 +49,7 @@ import * as headerbar from "./headerbar";
 import * as sidepanel from "./sidepanel";
 import * as qr from "./qr";
 import { ThemePickerModal } from "../../react-common/components/theming/ThemePickerModal";
+import { SimulatorThemePickerModal } from "./components/SimulatorThemePickerModal";
 
 import * as monaco from "./monaco"
 import * as toolboxHelpers from "./toolboxHelpers"
@@ -86,6 +89,11 @@ import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import {
+    getDefaultSimulatorThemePreference,
+    getSimulatorThemeForLayout,
+    getSimulatorThemePreferenceForColorThemeChange,
+} from "../../react-common/components/theming/simulatorThemeDefaults";
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import { ariaAnnounce } from "./util";
@@ -163,6 +171,10 @@ export class ProjectView
     private firstRun: boolean;
 
     private runToken: pxt.Util.CancellationToken;
+    private simulatorWasRunningBeforeThemePicker?: boolean;
+    private themePickerInitialColorThemeId?: string;
+    private themePickerColorThemeId?: string;
+    private themePickerSimulatorThemePreference?: pxt.auth.SimulatorThemePreference;
     private updatingEditorFile: boolean;
     private loadingExample: boolean;
     private openingTypeScript: boolean;
@@ -239,6 +251,12 @@ export class ProjectView
         this.initSimulatorMessageHandlers();
         this.showThemePicker = this.showThemePicker.bind(this);
         this.hideThemePicker = this.hideThemePicker.bind(this);
+        this.showSimulatorThemePicker = this.showSimulatorThemePicker.bind(this);
+        this.showEditorThemePicker = this.showEditorThemePicker.bind(this);
+        this.hideSimulatorThemePicker = this.hideSimulatorThemePicker.bind(this);
+        this.previewColorTheme = this.previewColorTheme.bind(this);
+        this.saveEditorTheme = this.saveEditorTheme.bind(this);
+        this.saveSimulatorTheme = this.saveSimulatorTheme.bind(this);
         this.onThemeChanged = this.onThemeChanged.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
         this.showLoginDialog = this.showLoginDialog.bind(this);
@@ -4504,7 +4522,7 @@ export class ProjectView
         return this.getShareUrl(script.shortid || script.id, false);
     }
 
-    async publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<pxt.editor.ShareData> {
+    async publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean, sharedSimulatorTheme?: pxt.SimulatorTheme): Promise<pxt.editor.ShareData> {
         pxt.tickEvent("menu.embed.publish", undefined, { interactiveConsent: true });
         if ((name && this.state.projectName != name) || description !== undefined) {
             await this.updateHeaderNameAsync(name, description);
@@ -4514,7 +4532,7 @@ export class ProjectView
 
         try {
             const persistentPublish = hasIdentity && !forceAnonymous;
-            const id = await this.publishCurrentHeaderAsync(persistentPublish, screenshotUri);
+            const id = await this.publishCurrentHeaderAsync(persistentPublish, screenshotUri, sharedSimulatorTheme);
             return await this.getShareUrl(id, persistentPublish);
         } catch (e) {
             pxt.tickEvent("menu.embed.error", { code: (e as any).statusCode })
@@ -4565,7 +4583,7 @@ export class ProjectView
         return shareData;
     }
 
-    async publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string> {
+    async publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string, sharedSimulatorTheme?: pxt.SimulatorTheme): Promise<string> {
         pxt.tickEvent("publish");
         this.setState({ publishing: true })
         const mpkg = pkg.mainPkg
@@ -4574,8 +4592,14 @@ export class ProjectView
         try {
             await this.saveProjectNameAsync();
             await this.saveFileAsync();
-            const files = await mpkg.filesToBePublishedAsync(true);
-            if (epkg.header.pubCurrent && !screenshotUri) {
+            let files = await mpkg.filesToBePublishedAsync(true);
+            if (sharedSimulatorTheme) {
+                files = simulatorTheme.addSimulatorThemeToFiles(files, sharedSimulatorTheme);
+            }
+            const publishOptions: workspace.PublishOptions = {
+                projectFilesMatchPublishedFiles: !sharedSimulatorTheme,
+            };
+            if (epkg.header.pubCurrent && !screenshotUri && !sharedSimulatorTheme) {
                 return epkg.header.pubId;
             }
 
@@ -4589,11 +4613,11 @@ export class ProjectView
                 meta.blocksWidth = blocksSize.width;
             }
             if (persistent) {
-                const header = await workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri);
+                const header = await workspace.persistentPublishAsync(epkg.header, files, meta, screenshotUri, publishOptions);
                 return header.pubId
             }
             else {
-                const info = await workspace.anonymousPublishAsync(epkg.header, files, meta, screenshotUri);
+                const info = await workspace.anonymousPublishAsync(epkg.header, files, meta, screenshotUri, publishOptions);
                 return info.id;
             }
         }
@@ -4759,11 +4783,143 @@ export class ProjectView
     }
 
     showThemePicker() {
-        this.setState( { themePickerOpen: true });
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets;
+        const currentColorTheme = this.themeManager.getCurrentColorTheme();
+        this.themePickerInitialColorThemeId = currentColorTheme?.id;
+        this.themePickerColorThemeId = currentColorTheme?.id;
+        if (simulatorThemePresets?.length) {
+            const simulatorPreference = simulatorThemePreference.getSimulatorThemePreference();
+            this.themePickerSimulatorThemePreference = simulatorPreference
+                ? { presetId: simulatorPreference.presetId, theme: { ...simulatorPreference.theme } }
+                : getDefaultSimulatorThemePreference(currentColorTheme, simulatorThemePresets);
+        }
+        else {
+            this.themePickerSimulatorThemePreference = undefined;
+        }
+        this.simulatorWasRunningBeforeThemePicker = simulatorThemePresets?.length
+            ? this.state.simState !== SimState.Stopped
+            : undefined;
+        this.setState({ themePickerOpen: true, simulatorThemePickerOpen: false });
     }
 
     hideThemePicker() {
-        this.setState( { themePickerOpen: false });
+        if (pxt.appTarget.simulator?.themePresets?.length) {
+            this.closeSimulatorThemePicker(false);
+            return;
+        }
+        this.resetThemePickerDrafts(true);
+        this.setState({ themePickerOpen: false });
+    }
+
+    showSimulatorThemePicker() {
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets;
+        if (!simulatorThemePresets?.length) return;
+        pxt.tickEvent("simulator.theme.open", undefined, { interactiveConsent: true });
+        const defaultPreference = getDefaultSimulatorThemePreference(
+            pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId],
+            simulatorThemePresets
+        );
+        const preference = this.themePickerSimulatorThemePreference?.presetId === defaultPreference?.presetId
+            ? {
+                ...defaultPreference,
+                theme: getSimulatorThemeForLayout(
+                    defaultPreference.theme,
+                    this.themePickerSimulatorThemePreference.theme.layout
+                ),
+            }
+            : this.themePickerSimulatorThemePreference || defaultPreference;
+        if (!preference) return;
+        this.themePickerSimulatorThemePreference = preference;
+        simulator.setPreviewSimulatorTheme(preference.theme);
+        this.setState({ themePickerOpen: false, simulatorThemePickerOpen: true }, () => this.startSimulator());
+    }
+
+    hideSimulatorThemePicker() {
+        this.closeSimulatorThemePicker(false);
+    }
+
+    showEditorThemePicker() {
+        this.closeSimulatorThemePicker(true, false, false);
+    }
+
+    closeSimulatorThemePicker(showEditorThemePicker: boolean, resetDrafts = true, restoreColorTheme = true) {
+        const shouldRestartSimulator = this.simulatorWasRunningBeforeThemePicker;
+        if (resetDrafts) this.resetThemePickerDrafts(restoreColorTheme);
+        simulator.clearPreviewSimulatorTheme();
+        this.setState({
+            simulatorThemePickerOpen: false,
+            themePickerOpen: showEditorThemePicker,
+        }, () => {
+            this.stopSimulator(true).then(() => {
+                if (shouldRestartSimulator) this.startSimulator();
+            });
+        });
+    }
+
+    private resetThemePickerDrafts(restoreColorTheme: boolean) {
+        if (restoreColorTheme
+            && this.themePickerInitialColorThemeId
+            && this.themeManager.getCurrentColorTheme()?.id !== this.themePickerInitialColorThemeId) {
+            this.themeManager.switchColorTheme(this.themePickerInitialColorThemeId);
+        }
+        this.themePickerInitialColorThemeId = undefined;
+        this.themePickerColorThemeId = undefined;
+        this.themePickerSimulatorThemePreference = undefined;
+        this.simulatorWasRunningBeforeThemePicker = undefined;
+    }
+
+    private async saveThemePickerDrafts() {
+        const shouldRestartSimulator = !this.state.simulatorThemePickerOpen
+            && this.simulatorWasRunningBeforeThemePicker;
+        if (this.themePickerColorThemeId) {
+            await this.setColorThemeById(this.themePickerColorThemeId, true, false);
+        }
+        if (pxt.appTarget.simulator?.themePresets?.length) {
+            await simulatorThemePreference.setSimulatorThemePreference(this.themePickerSimulatorThemePreference);
+        }
+
+        if (this.state.simulatorThemePickerOpen) this.closeSimulatorThemePicker(false, true, false);
+        else {
+            simulator.clearPreviewSimulatorTheme();
+            this.resetThemePickerDrafts(false);
+            this.setState({ themePickerOpen: false });
+            if (shouldRestartSimulator) this.restartSimulator();
+        }
+    }
+
+    previewColorTheme(theme: pxt.ColorThemeInfo) {
+        const previousColorTheme = pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId];
+        this.themePickerSimulatorThemePreference = getSimulatorThemePreferenceForColorThemeChange(
+            this.themePickerSimulatorThemePreference,
+            previousColorTheme,
+            theme,
+            pxt.appTarget.simulator?.themePresets
+        );
+        this.themePickerColorThemeId = theme.id;
+        this.themeManager.switchColorTheme(theme.id);
+        if (this.themePickerSimulatorThemePreference) {
+            simulator.setPreviewSimulatorTheme(this.themePickerSimulatorThemePreference.theme);
+        }
+    }
+
+    async saveEditorTheme(theme: pxt.ColorThemeInfo) {
+        this.themePickerColorThemeId = theme.id;
+        await this.saveThemePickerDrafts();
+    }
+
+    async saveSimulatorTheme(preference: pxt.auth.SimulatorThemePreference) {
+        pxt.tickEvent("simulator.theme.save", { preset: preference.presetId }, { interactiveConsent: true });
+        this.themePickerSimulatorThemePreference = {
+            presetId: preference.presetId,
+            theme: { ...preference.theme },
+        };
+        await this.saveThemePickerDrafts();
+    }
+
+    async setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference, savePreference = true) {
+        if (savePreference) await simulatorThemePreference.setSimulatorThemePreference(preference);
+        else simulatorThemePreference.setSessionSimulatorThemePreference(preference);
+        if (this.state.header) this.restartSimulator();
     }
 
     showImportUrlDialog() {
@@ -5417,8 +5573,10 @@ export class ProjectView
         this.setState({ bannerVisible: b });
     }
 
-    setColorThemeById(colorThemeId: string, savePreference: boolean) {
-        if (this.themeManager.getCurrentColorTheme()?.id === colorThemeId) {
+    async setColorThemeById(colorThemeId: string, savePreference: boolean, updateSimulatorDefault = true): Promise<void> {
+        const previousColorTheme = this.themeManager.getCurrentColorTheme();
+        if (previousColorTheme?.id === colorThemeId) {
+            if (savePreference) await this.updateThemePreference();
             return;
         }
 
@@ -5430,21 +5588,33 @@ export class ProjectView
         this.themeManager.switchColorTheme(colorThemeId);
 
         if (savePreference) {
-            this.updateThemePreference();
+            await this.updateThemePreference();
+            if (updateSimulatorDefault && pxt.appTarget.simulator?.themePresets?.length) {
+                const currentPreference = simulatorThemePreference.getSimulatorThemePreference();
+                const nextPreference = getSimulatorThemePreferenceForColorThemeChange(
+                    currentPreference,
+                    previousColorTheme,
+                    this.themeManager.getCurrentColorTheme(),
+                    pxt.appTarget.simulator?.themePresets
+                );
+                if (nextPreference && nextPreference !== currentPreference) {
+                    await this.setSimulatorThemePreference(nextPreference);
+                }
+            }
         }
     }
 
-    private updateThemePreference() {
+    private async updateThemePreference(): Promise<void> {
         const newThemeId = this.themeManager.getCurrentColorTheme()?.id;
 
         if (newThemeId) {
-            auth.setThemePrefAsync(newThemeId);
+            await auth.setThemePrefAsync(newThemeId);
 
             // Disable high contrast preference (separate from theme pref) if the new theme is not high contrast.
             // This is only needed while we transition from not having themes to having them. In time, the
             // auth.HIGHCONTRAST preference can be phased out in favor of the themeId preference.
             if (!this.themeManager.isHighContrast(newThemeId) && data.getData<boolean>(auth.HIGHCONTRAST)) {
-                auth.setHighContrastPrefAsync(false);
+                await auth.setHighContrastPrefAsync(false);
             }
         }
     }
@@ -5784,7 +5954,30 @@ export class ProjectView
                     shouldFocusAfterRender={false} closable={true} onClose={this.hideLightbox} /> : undefined}
                 {this.state.areaMenuOpen && <AreaMenuOverlay parent={this}/>}
                 {this.state.activeTourConfig && <Tour config={this.state.activeTourConfig} onClose={this.closeTour} />}
-                {this.state.themePickerOpen && <ThemePickerModal themes={this.themeManager.getAllColorThemes()} onThemeClicked={theme => this.setColorThemeById(theme?.id, true)} onClose={this.hideThemePicker} />}
+                {this.state.themePickerOpen && <ThemePickerModal
+                    themes={this.themeManager.getAllColorThemes()}
+                    selectedThemeId={this.themePickerColorThemeId}
+                    onThemeChanged={this.previewColorTheme}
+                    onSave={this.saveEditorTheme}
+                    onSimulatorThemeClicked={pxt.appTarget.simulator?.themePresets?.length
+                        ? this.showSimulatorThemePicker
+                        : undefined}
+                    onClose={this.hideThemePicker} />}
+                {this.state.simulatorThemePickerOpen && <SimulatorThemePickerModal
+                    presets={pxt.appTarget.simulator.themePresets}
+                    layouts={pxt.appTarget.simulator.themeLayouts}
+                    initialPreference={this.themePickerSimulatorThemePreference}
+                    defaultTheme={getDefaultSimulatorThemePreference(
+                        pxt.appTarget.colorThemeMap?.[this.themePickerColorThemeId],
+                        pxt.appTarget.simulator.themePresets
+                    )?.theme}
+                    onThemeChanged={preference => this.themePickerSimulatorThemePreference = {
+                        presetId: preference.presetId,
+                        theme: { ...preference.theme },
+                    }}
+                    onEditorThemeClicked={this.showEditorThemePicker}
+                    onSave={this.saveSimulatorTheme}
+                    onClose={this.hideSimulatorThemePicker} />}
             </div>
         );
     }

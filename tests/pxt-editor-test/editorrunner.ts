@@ -6,10 +6,27 @@ import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
+import {
+    addSimulatorThemeToFiles,
+    getProjectSimulatorThemePreference,
+    getSimulatorThemePresetId,
+    removeSimulatorThemeFromFiles,
+    resolveSimulatorTheme,
+    serializeProjectSimulatorThemePreference,
+} from "../../webapp/src/simulatorTheme";
+import {
+    copySimulatorTheme,
+    getSimulatorThemeForLayout,
+    getSimulatorThemePreferenceForColorThemeChange,
+    isImplicitSimulatorThemePreference,
+} from "../../react-common/components/theming/simulatorThemeDefaults";
 
 pxt.appTarget = {
     versions: {
         target: "1"
+    },
+    appTheme: {
+        defaultLocale: "en"
     }
 } as any
 
@@ -24,6 +41,379 @@ function patchText(patch: unknown, a: string) {
 }
 
 const filename = "main.ts";
+
+const simulatorTheme: pxt.SimulatorTheme = {
+    "background-color": "#111111",
+    "button-stroke": "#222222",
+    "text-color": "#333333",
+    "button-fill": "#444444",
+    "dpad-fill": "#555555",
+    "joystick-handle-stroke": "#666666",
+    layout: "default",
+};
+
+describe("simulator themes", () => {
+    const defaultSimulatorTheme = simulatorTheme;
+    const purpleSimulatorTheme = { ...simulatorTheme, "background-color": "#660066" };
+    const redSimulatorTheme = { ...simulatorTheme, "background-color": "#660000" };
+    const tealSimulatorTheme = { ...simulatorTheme };
+    const retroSimulatorTheme = { ...simulatorTheme, "background-color": "#FCF7E4", layout: "retro" };
+    const presets: pxt.SimulatorThemePreset[] = [
+        {
+            id: "default",
+            name: "Default",
+            theme: defaultSimulatorTheme,
+        },
+        {
+            id: "purple",
+            name: "Purple",
+            theme: purpleSimulatorTheme,
+        },
+        {
+            id: "red",
+            name: "Red",
+            theme: redSimulatorTheme,
+        },
+        {
+            id: "teal",
+            name: "Teal",
+            theme: tealSimulatorTheme,
+        },
+        {
+            id: "retro",
+            name: "Retro",
+            theme: retroSimulatorTheme,
+        },
+    ];
+    const lightTheme = { id: "light", name: "Light", colors: {} };
+    const darkTheme = { id: "dark", name: "Dark", colors: {} };
+    const tokyoNightTheme = {
+        id: "tokyo-night",
+        name: "Tokyo Night",
+        defaultSimulatorTheme: "purple",
+        colors: {},
+    };
+    const inlineSimulatorTheme = {
+        id: "inline",
+        name: "Inline",
+        defaultSimulatorTheme: {
+            "background-color": "#123456",
+            layout: "inline",
+        },
+        colors: {},
+    };
+
+    it("loads shared and target translations for skillmaps", async () => {
+        const requestedUrls: string[] = [];
+        const originalHttpGetJsonAsync = pxt.Util.httpGetJsonAsync;
+        pxt.Util.httpGetJsonAsync = <T>(url: string) => {
+            requestedUrls.push(url);
+            return Promise.resolve({} as T);
+        };
+
+        try {
+            await pxt.Util.downloadTranslationsAsync(
+                "arcade",
+                "https://example.com/",
+                "fr",
+                false,
+                ts.pxtc.Util.TranslationsKind.SkillMap
+            );
+        } finally {
+            pxt.Util.httpGetJsonAsync = originalHttpGetJsonAsync;
+        }
+
+        chai.expect(requestedUrls).to.include.members([
+            "https://example.com/locales/fr/strings.json",
+            "https://example.com/locales/fr/target-strings.json",
+            "https://example.com/locales/fr/skillmap-strings.json",
+        ]);
+    });
+
+    it("initializes an empty cloud-synced simulator theme map", () => {
+        chai.expect(pxt.auth.DEFAULT_USER_PREFERENCES().simulatorThemes).deep.equals({});
+    });
+
+    it("uses the user theme only when project and device themes are absent", () => {
+        chai.expect(resolveSimulatorTheme(undefined, undefined, simulatorTheme, false)).equals(simulatorTheme);
+        chai.expect(resolveSimulatorTheme("project", undefined, simulatorTheme, false)).equals("project");
+        chai.expect(resolveSimulatorTheme(undefined, "device", simulatorTheme, false)).equals("device");
+    });
+
+    it("lets multiplayer override all other simulator themes", () => {
+        chai.expect(resolveSimulatorTheme("project", "device", simulatorTheme, true)).equals(undefined);
+    });
+
+    it("adds a simulator theme to a copied share config", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", theme: "project" }),
+            [pxt.MAIN_TS]: "",
+        };
+        const sharedFiles = addSimulatorThemeToFiles(files, simulatorTheme);
+
+        chai.expect(JSON.parse(sharedFiles[pxt.CONFIG_NAME]).theme).deep.equals(simulatorTheme);
+        chai.expect(JSON.parse(files[pxt.CONFIG_NAME]).theme).equals("project");
+    });
+
+    it("matches project themes to built-in presets", () => {
+        chai.expect(getSimulatorThemePresetId("DEFAULT", presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme }, presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, layout: "retro" }, presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, "button-fill": "#666666" }, presets)).equals(undefined);
+        chai.expect(pxt.auth.simulatorThemeColorsEqual(simulatorTheme, { ...simulatorTheme, layout: "retro" })).equals(true);
+    });
+
+    it("resolves string project themes to their canonical presets", () => {
+        chai.expect(getProjectSimulatorThemePreference("RETRO", presets, defaultSimulatorTheme))
+            .deep.equals({ presetId: "retro", theme: retroSimulatorTheme });
+    });
+
+    it("preserves unknown string project themes as custom layouts", () => {
+        chai.expect(getProjectSimulatorThemePreference("target-layout", presets, defaultSimulatorTheme))
+            .deep.equals({
+                presetId: "custom",
+                theme: { ...defaultSimulatorTheme, layout: "target-layout" },
+            });
+    });
+
+    it("rejects malformed project theme overrides", () => {
+        chai.expect(getProjectSimulatorThemePreference({
+            "background-color": "invalid",
+        }, presets, defaultSimulatorTheme)).equals(undefined);
+    });
+
+    it("serializes canonical project themes by preset ID", () => {
+        chai.expect(serializeProjectSimulatorThemePreference({
+            presetId: "teal",
+            theme: tealSimulatorTheme,
+        }, presets)).equals("teal");
+    });
+
+    it("serializes independently customized layouts as full themes", () => {
+        const preference = {
+            presetId: "red",
+            theme: { ...redSimulatorTheme, layout: "retro" },
+        };
+        chai.expect(serializeProjectSimulatorThemePreference(preference, presets))
+            .deep.equals(preference.theme);
+    });
+
+    it("requires a layout in persisted themes", () => {
+        const themeWithoutLayout = { ...simulatorTheme } as Partial<pxt.SimulatorTheme>;
+        delete themeWithoutLayout.layout;
+
+        chai.expect(pxt.auth.isValidSimulatorTheme(simulatorTheme)).equals(true);
+        chai.expect(pxt.auth.isValidSimulatorTheme(themeWithoutLayout)).equals(false);
+    });
+
+    it("accepts sparse themes with target-defined colors", () => {
+        chai.expect(pxt.auth.isValidSimulatorTheme({
+            "background-color": "#123456",
+            "screen-border": "#ABCDEF",
+            layout: "target-layout",
+        })).equals(true);
+    });
+
+    it("rejects malformed simulator theme preferences", () => {
+        const invalidColors = ["", "#12345", "#1234567", "123456", "not-a-color"];
+        for (const color of invalidColors) {
+            chai.expect(pxt.auth.isValidSimulatorTheme({
+                ...simulatorTheme,
+                "background-color": color,
+            }), color).equals(false);
+        }
+
+        chai.expect(pxt.auth.isValidSimulatorThemePreference({
+            presetId: "default",
+            theme: simulatorTheme,
+        })).equals(true);
+        chai.expect(pxt.auth.isValidSimulatorThemePreference({
+            presetId: "",
+            theme: simulatorTheme,
+        })).equals(false);
+    });
+
+    it("uses a color theme's simulator default when no preference is set", () => {
+        const result = getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        );
+
+        chai.expect(result).deep.equals({ presetId: "default", theme: purpleSimulatorTheme });
+    });
+
+    it("merges an inline color theme simulator default over Default", () => {
+        const result = getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            inlineSimulatorTheme,
+            presets
+        );
+
+        chai.expect(result).deep.equals({
+            presetId: "default",
+            theme: {
+                ...defaultSimulatorTheme,
+                "background-color": "#123456",
+                layout: "inline",
+            },
+        });
+    });
+
+    it("moves between color theme simulator defaults", () => {
+        const defaultPreference = { presetId: "default", theme: defaultSimulatorTheme };
+        const purplePreference = getSimulatorThemePreferenceForColorThemeChange(
+            defaultPreference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        );
+        const restoredPreference = getSimulatorThemePreferenceForColorThemeChange(
+            purplePreference,
+            tokyoNightTheme,
+            lightTheme,
+            presets
+        );
+
+        chai.expect(purplePreference).deep.equals({ presetId: "default", theme: purpleSimulatorTheme });
+        chai.expect(restoredPreference).deep.equals(defaultPreference);
+    });
+
+    it("uses the theme's layout while moving between color theme simulator defaults", () => {
+        const preference = { presetId: "default", theme: { ...defaultSimulatorTheme, layout: "retro" } };
+
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            preference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        )).deep.equals({ presetId: "default", theme: purpleSimulatorTheme });
+    });
+
+    it("preserves user-selected simulator themes when the color theme changes", () => {
+        const preferences = [
+            { presetId: "red", theme: redSimulatorTheme },
+            { presetId: "purple", theme: purpleSimulatorTheme },
+            { presetId: "teal", theme: tealSimulatorTheme },
+            { presetId: "custom", theme: { ...simulatorTheme } },
+        ];
+
+        for (const preference of preferences) {
+            chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+                preference,
+                lightTheme,
+                tokyoNightTheme,
+                presets
+            )).equals(preference);
+        }
+    });
+
+    it("does not create a simulator preference between unpinned color themes", () => {
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            darkTheme,
+            presets
+        )).equals(undefined);
+    });
+
+    it("keeps the existing default between unpinned color themes", () => {
+        const defaultPreference = { presetId: "default", theme: defaultSimulatorTheme };
+
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            defaultPreference,
+            lightTheme,
+            darkTheme,
+            presets
+        )).equals(defaultPreference);
+    });
+
+    it("only treats the Default preset on the Default layout as implicit", () => {
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "default",
+            theme: purpleSimulatorTheme,
+        }, presets)).equals(true);
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "custom",
+            theme: defaultSimulatorTheme,
+        }, presets)).equals(false);
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "default",
+            theme: { ...defaultSimulatorTheme, layout: "retro" },
+        }, presets)).equals(false);
+    });
+
+    it("changes layout without changing custom colors", () => {
+        const customTheme = { ...simulatorTheme, "background-color": "#ABCDEF" };
+
+        chai.expect(getSimulatorThemeForLayout(customTheme, "retro"))
+            .deep.equals({ ...customTheme, layout: "retro" });
+    });
+
+    it("fills missing colors declared by a layout", () => {
+        const borderField: pxt.SimulatorThemeColorField = {
+            property: "screen-border",
+            label: "Screen border",
+            defaultValue: "#ABCDEF",
+        };
+        chai.expect(getSimulatorThemeForLayout(simulatorTheme, "retro", [borderField]))
+            .deep.equals({ ...simulatorTheme, layout: "retro", "screen-border": "#ABCDEF" });
+        chai.expect(getSimulatorThemeForLayout({
+            ...simulatorTheme,
+            "screen-border": "#123456",
+        }, "retro", [borderField])).deep.equals({
+            ...simulatorTheme,
+            layout: "retro",
+            "screen-border": "#123456",
+        });
+    });
+
+    it("selects the default layout without changing its colors", () => {
+        chai.expect(getSimulatorThemeForLayout(retroSimulatorTheme, "default"))
+            .deep.equals({ ...retroSimulatorTheme, layout: "default" });
+    });
+
+    it("preserves colors for a target-specific layout without a preset", () => {
+        chai.expect(getSimulatorThemeForLayout(simulatorTheme, "target-layout"))
+            .deep.equals({ ...simulatorTheme, layout: "target-layout" });
+    });
+
+    it("copies target-defined colors and ignores reserved or malformed properties", () => {
+        const themeWithMalformedProperty = {
+            ...simulatorTheme,
+            "screen-border": "#ABCDEF",
+            skin: "#123456",
+            extra: "ignored",
+        } as pxt.SimulatorTheme;
+        chai.expect(copySimulatorTheme(themeWithMalformedProperty)).deep.equals({
+            ...simulatorTheme,
+            "screen-border": "#ABCDEF",
+        });
+    });
+
+    it("removes a simulator theme from an editable shared-project copy", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", theme: simulatorTheme }),
+            [pxt.MAIN_TS]: "",
+        };
+        const importedFiles = removeSimulatorThemeFromFiles(files);
+
+        chai.expect(JSON.parse(importedFiles[pxt.CONFIG_NAME]).theme).equals(undefined);
+        chai.expect(JSON.parse(files[pxt.CONFIG_NAME]).theme).deep.equals(simulatorTheme);
+        chai.expect(importedFiles).not.equals(files);
+    });
+
+    it("leaves shared-project files without a simulator theme unchanged", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test" }),
+            [pxt.MAIN_TS]: "",
+        };
+
+        chai.expect(removeSimulatorThemeFromFiles(files)).equals(files);
+    });
+});
 
 const versions = [
     "Here is some text",
