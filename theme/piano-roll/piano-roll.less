@@ -64,6 +64,13 @@
 .piano-roll .header-container {
     height: var(--header-height);
     flex-shrink: 0;
+
+    .header > .common-dropdown .common-menu-dropdown-pane {
+        max-height: 15rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 2;
+    }
 }
 
 .piano-roll .header,
