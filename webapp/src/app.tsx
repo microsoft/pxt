@@ -1188,7 +1188,17 @@ export class ProjectView
             restartSimulator: () => this.restartSimulator(),
             singleSimulator: () => this.singleSimulator(),
             onStateChanged: (state) => {
-                const simStateChanged = () => this.allEditors.forEach((editor) => editor.simStateChanged());
+                const simStateChanged = () => {
+                    // If the simulator was pending a run when the user switched to
+                    // a different view, stop the simulator to avoid running in the background
+                    if (
+                        state === pxsim.SimulatorState.Running &&
+                        this.isSimulatorInaccessible()
+                    ) {
+                        this.stopSimulator();
+                    }
+                    this.allEditors.forEach((editor) => editor.simStateChanged())
+                };
                 switch (state) {
                     case pxsim.SimulatorState.Paused:
                     case pxsim.SimulatorState.Unloaded:
@@ -4192,6 +4202,14 @@ export class ProjectView
         })();
     }
 
+    protected isSimulatorInaccessible() {
+        return this.state.home ||
+            this.state.extensionsVisible ||
+            this.profileDialog?.state?.visible ||
+            this.scriptSearch?.state.visible ||
+            this.state.timeMachine
+    }
+
     openNewTab(hd: pxt.workspace.Header, dependent: boolean) {
         if (!hd
             || pxt.BrowserUtils.isElectron()
@@ -4734,10 +4752,14 @@ export class ProjectView
             this.stopSimulator();
         }
 
+        this.setState({ timeMachine: true });
+
         await dialogs.showTurnBackTimeDialogAsync(this.state.header, () => {
             this.reloadHeaderAsync();
             simWasRunning = false;
         });
+
+        this.setState({ timeMachine: false });
 
         if (simWasRunning) {
             this.startSimulator();

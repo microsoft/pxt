@@ -839,6 +839,7 @@ declare namespace pxt.editor {
         themePickerOpen?: boolean;
         simulatorThemePickerOpen?: boolean;
         errorListNote?: string;
+        timeMachine?: boolean;
     }
 
     export interface EditorState {

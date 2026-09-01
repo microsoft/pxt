@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [MakeCode Arcade August 2026 Update](/blog/arcade/update-aug-2026)
+
+August 31st, 2026 by [Jaqster](https://github.com/jaqster)
+
+Two updates in one year?! Well, what was supposed to be a simple default theme change turned into  a full version update!
+
+**[Continue reading this blog post](/blog/arcade/update-aug-2026)**
+
 ## [MakeCode for the micro:bit 2026 – Accessible Blocks are here!](/blog/microbit/2026-release)
 
 July 13, 2026 by [Jaqster](https://github.com/jaqster)
