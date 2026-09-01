@@ -12,7 +12,6 @@
     --note-event-text-color-hover: #ffffff;
     --note-event-border-hover: 2px solid #ffffff;
 
-    --header-text-color: black;
 
     --white-key-color: white;
     --black-key-color: black;
@@ -28,7 +27,9 @@
 
     --velocity-slider-color: var(--note-event-color);
 
-    --header-background: #f0f0f0;
+    --header-background: var(--pxt-neutral-background1);
+    --header-text-color: var(--pxt-neutral-foreground1);
+
     --piano-roll-border-color: var(--workspace-grid-line-color);
 }
 
@@ -64,6 +65,13 @@
 .piano-roll .header-container {
     height: var(--header-height);
     flex-shrink: 0;
+
+    .header > .common-dropdown .common-menu-dropdown-pane {
+        max-height: 15rem;
+        overflow-y: auto;
+        overflow-x: hidden;
+        z-index: 2;
+    }
 }
 
 .piano-roll .header,
@@ -127,6 +135,10 @@
 
     &>.common-dropdown #snap-select {
         min-width: 4.75rem;
+    }
+
+    .common-button.menu-button {
+        color: var(--header-text-color);
     }
 }
 
@@ -340,6 +352,16 @@
     background-color: var(--playhead-color);
 }
 
+.piano-roll .header .velocity-editor-toggle {
+    overflow-x: hidden;
+
+    label {
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+}
+
 .velocity-editor {
     position: relative;
     display: flex;
@@ -420,5 +442,11 @@
     /* Hide the done button */
     .music-editor-edit-controls .common-button.green {
         display: none;
+    }
+}
+
+@media @tabletAndBelow {
+    .common-dropdown > .common-button {
+        min-width: 8rem;
     }
 }

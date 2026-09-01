@@ -136,7 +136,11 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
         </div>
         <Input
             id="music-playback-tempo-input music-editor-label"
-            label={lf("Tempo:")}
+            label={
+                <span className="mobile-hidden tablet-hidden">
+                    {lf("Tempo:")}
+                </span>
+            }
             initialValue={beatsPerMinute.toString()}
             onBlur={handleTempoChange}
             onEnterKey={handleTempoChange}
@@ -165,7 +169,7 @@ export const PlaybackControls = (props: PlaybackControlsProps) => {
                 onClick={onRedoClick} />
         </div>
         <div className="music-playback-measures">
-            <div className="music-editor-label">
+            <div className="music-editor-label mobile-hidden tablet-hidden">
                 {lf("Measures:")}
             </div>
             <Button
