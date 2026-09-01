@@ -61,6 +61,7 @@ interface StateSnapshot {
 
 interface ExtraState {
     velocityEditorVisible: boolean;
+    snapTicks: number;
 }
 
 
@@ -75,7 +76,8 @@ export class PianoRollModel extends AssetModel<StateSnapshot, ExtraState> {
 
     protected cloneExtraState(value: ExtraState): ExtraState {
         return {
-            velocityEditorVisible: value?.velocityEditorVisible
+            velocityEditorVisible: value?.velocityEditorVisible,
+            snapTicks: value?.snapTicks || 4
         };
     }
 }
@@ -92,11 +94,9 @@ const PianoRollInternal = (props: PianoRollProps) => {
     const { value, hasUndo, hasRedo, extraState } = useModelValue(model);
 
     const { song, selectedTrackIndex, assetName } = value;
-    const { velocityEditorVisible } = extraState;
+    const { velocityEditorVisible, snapTicks } = extraState;
 
     const [modal, setModal] = useState<{ type: modalType, trackId?: number, instrumentId?: number } | null>(null);
-
-    const [snapTicks, setSnapTicks] = useState(4);
 
     const workspaceContainerRef = useRef<HTMLDivElement>(null);
 
@@ -417,7 +417,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
     }
 
     const onVelocityEditorToggle = () => {
-        model.updateExtraState({ velocityEditorVisible: !extraState.velocityEditorVisible });
+        model.updateExtraState({ velocityEditorVisible: !extraState.velocityEditorVisible, snapTicks });
     }
 
     const onSelectionChange = useCallback((selection: WorkspaceSelection | undefined) => {
@@ -541,6 +541,10 @@ const PianoRollInternal = (props: PianoRollProps) => {
         }
     }, [song, updateSong]);
 
+    const setSnapTicks = (newSnapTicks: number) => {
+        model.updateExtraState({ velocityEditorVisible, snapTicks: newSnapTicks });
+    }
+
     const showHeader = !fieldEditorParams?.hideHeader;
 
     return (
@@ -571,6 +575,8 @@ const PianoRollInternal = (props: PianoRollProps) => {
                         velocityEditorVisible={velocityEditorVisible}
                         snapTicks={snapTicks}
                         showSnapControls={fieldEditorParams?.showSnapControls}
+                        showTimeSignature={!!fieldEditorParams?.showTimeSignature}
+                        selectedTimeSignature={selectedTimeSignature?.id}
                         onVelocityEditorToggle={onVelocityEditorToggle}
                         onTrackSelected={onTrackSelected}
                         onInstrumentSelected={onInstrumentSelected}
@@ -578,6 +584,10 @@ const PianoRollInternal = (props: PianoRollProps) => {
                         onTrackDeleted={onTrackDeleted}
                         onOctavesChanged={onOctavesChanged}
                         onSnapChanged={setSnapTicks}
+                        onTimeSignatureChanged={onTimeSignatureChanged}
+                        showAssetName={true}
+                        assetName={assetName}
+                        onAssetNameChanged={onNameChange}
                     />
                 </div>
             }
@@ -636,6 +646,7 @@ const PianoRollInternal = (props: PianoRollProps) => {
                 />
                 {fieldEditorParams?.showTimeSignature &&
                     <Dropdown
+                        className="mobile-hidden"
                         id="time-signature-dropdown"
                         items={timeSignatures}
                         selectedId={selectedTimeSignature?.id}
