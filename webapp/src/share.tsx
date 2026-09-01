@@ -2,6 +2,7 @@ import * as React from "react";
 import * as auth from "./auth";
 import * as screenshot from "./screenshot";
 import * as pkg from "./package";
+import * as simulatorThemePreference from "./simulatorThemePreference";
 
 import { Modal } from "../../react-common/components/controls/Modal";
 import { Share } from "../../react-common/components/share/Share";
@@ -193,9 +194,12 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = simScreenshot || simGif;
 
         const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
+        const simulatorTheme = pxt.appTarget.simulator?.themePresets?.length
+            ? simulatorThemePreference.getEffectiveSimulatorThemePreference()
+            : undefined;
 
-        const publishAsync = async (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean) =>
-            parent.publishAsync(name, description, screenshotUri, forceAnonymous)
+        const publishAsync = async (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean, sharedSimulatorTheme?: pxt.SimulatorTheme) =>
+            parent.publishAsync(name, description, screenshotUri, forceAnonymous, sharedSimulatorTheme)
 
         const setSharePreference = (anonymousByDefault: boolean) => parent.saveSharePreferenceForHeaderAsync(anonymousByDefault)
 
@@ -216,6 +220,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
                     setAnonymousSharePreference={setSharePreference}
                     isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
+                    simulatorTheme={simulatorTheme?.presetId === "default" ? undefined : simulatorTheme?.theme}
                     kind={this.state.kind}
                     onClose={this.hide}
                 />
