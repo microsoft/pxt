@@ -139,6 +139,16 @@ export const Header = (props: Props) => {
 
     const overflowMenuItems: MenuItem[] = [];
 
+    overflowMenuItems.push(
+        {
+            role: "menuitemcheckbox",
+            label: lf("Velocity Editor"),
+            isChecked: velocityEditorVisible,
+            onChange: () => onVelocityEditorToggle(),
+            id: "show-velocity-editor"
+        }
+    );
+
     if (!isDrum) {
         overflowMenuItems.push(
             {
@@ -150,16 +160,6 @@ export const Header = (props: Props) => {
             }
         );
     }
-
-    overflowMenuItems.push(
-        {
-            role: "menuitemcheckbox",
-            label: lf("Velocity Editor"),
-            isChecked: velocityEditorVisible,
-            onChange: () => onVelocityEditorToggle(),
-            id: "show-velocity-editor"
-        }
-    );
 
     if (showSnapControls) {
         overflowMenuItems.push(
