@@ -12,7 +12,7 @@ If the changes look correct, click on **commit & push changes** to create a **co
 
 ## Review & revert
 
-It's good practice to **review** your **local** changes before commiting; just like you review your answer sheet before turning in a test. If you find some changes that are incorrect, you can decide to fix them right away, **revert** the entire file, or even just **commit** them so you can make any fixes later.
+It's good practice to **review** your **local** changes before committing; just like you review your answer sheet before turning in a test. If you find some changes that are incorrect, you can decide to fix them right away, **revert** the entire file, or even just **commit** them so you can make any fixes later.
 
 ## See Also
 
