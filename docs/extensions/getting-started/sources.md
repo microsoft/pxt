@@ -28,7 +28,7 @@ enum TropicalFruit {
     //% block=banana
     Banana = 0,
     //% block=pineapple
-    Pinapple = 1,
+    Pineapple = 1,
     //% block=coconut
     Coconut = 2
 }
@@ -164,7 +164,7 @@ The methods to pick, peel, and eat tropical fruit.
 
 ```cards
 tropic.pick(TropicalFruit.Coconut);
-tropic.peel(TropicalFruit.Cocount);
+tropic.peel(TropicalFruit.Coconut);
 ```
 
 ```package

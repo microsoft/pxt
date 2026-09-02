@@ -369,7 +369,7 @@ Ringing in the New Year with a New Release! The MakeCode team is very happy and 
 
 December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
 
-The latest episode of our GitHub intergration - streamlining the hosting of code
+The latest episode of our GitHub integration - streamlining the hosting of code
 in GitHub inside of MakeCode!
 **[Continue reading this blog post](/blog/makecode-with-github)**
 

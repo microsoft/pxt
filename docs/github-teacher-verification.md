@@ -19,9 +19,9 @@ Go to https://github.com/signup and use your educator email account.
 
 ### 1. Verify your account
 
-After creating your account, you will see a prompt to verify yourself as an Educator. Continue the verification and select “Apply for your GitHub teacher benefits”. 
+After creating your account, you will see a prompt to verify yourself as an Educator. Continue the verification and select "Apply for your GitHub teacher benefits". 
 
-Alternatively, you can verify your account and bypass the benifits selection at: https://education.github.com/discount_requests/teacher_application.
+Alternatively, you can verify your account and bypass the benefits selection at: https://education.github.com/discount_requests/teacher_application.
 
 ![Apply for teacher benefits](/static/github-teacher/teacher-benefits-signup.png)
 
