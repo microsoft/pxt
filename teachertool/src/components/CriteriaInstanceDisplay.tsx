@@ -9,7 +9,7 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { Input } from "react-common/components/controls/Input";
 import { Button } from "react-common/components/controls/Button";
 import { AppStateContext } from "../state/appStateContext";
-import { Strings, Ticks } from "../constants";
+import { Constants, Strings, Ticks } from "../constants";
 import { showModal } from "../transforms/showModal";
 import { BlockPickerOptions } from "../types/modalOptions";
 import { validateParameterValue } from "../utils/validateParameterValue";
@@ -21,6 +21,7 @@ interface InlineInputSegmentProps {
     param: CriteriaParameterValue;
     shouldExpand: boolean;
     numeric: boolean;
+    minLength?: number;
 }
 const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     initialValue,
@@ -28,12 +29,39 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
     param,
     shouldExpand,
     numeric,
+    minLength,
 }) => {
     const [errorMessage, setErrorMessage] = useState(initialValue ? "" : Strings.ValueRequired);
     const paramDefinition = useMemo(() => getParameterDefinition(instance.catalogCriteriaId, param.name), [param]);
+    const paramOptions = useMemo(() => {
+        if (!paramDefinition?.options?.length) {
+            return undefined;
+        }
+
+        return paramDefinition.options.reduce((acc, option) => {
+            const optionLabel = option.label || option.value;
+            const optionValue = option.value ?? optionLabel;
+
+            if (optionLabel && optionValue) {
+                acc[optionLabel] = optionValue;
+            }
+
+            return acc;
+        }, {} as pxt.Map<string>);
+    }, [paramDefinition]);
 
     useEffect(() => {
         if (!paramDefinition) {
+            return;
+        }
+
+        if (!initialValue) {
+            setErrorMessage(Strings.ValueRequired);
+            return;
+        }
+
+        if (minLength && initialValue.trim().length < minLength) {
+            setErrorMessage(Strings.QuestionTooShort);
             return;
         }
 
@@ -55,6 +83,10 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
             setErrorMessage(Strings.ValueRequired);
         }
 
+        if (minLength && newValue.trim().length < minLength) {
+            setErrorMessage(Strings.QuestionTooShort);
+        }
+
         setParameterValue(instance.instanceId, param.name, newValue);
     }
 
@@ -68,14 +100,15 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                     shouldExpand ? css["long"] : undefined,
                     errorMessage ? css["error"] : undefined
                 )}
+                options={paramOptions}
                 icon={errorMessage ? "fas fa-exclamation-triangle" : undefined}
                 initialValue={initialValue}
                 onChange={onChange}
+                onOptionSelected={onChange}
                 preserveValueOnBlur={true}
                 placeholder={numeric ? "0" : param.name}
                 title={tooltip}
-                autoComplete={false}
-                filter={numeric ? "[0-9]{1,2}" : undefined}
+                filter={numeric && !paramOptions ? "[0-9]{1,2}" : undefined}
             />
         </div>
     );
@@ -212,6 +245,10 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
         if (paramDef.type === "block") {
             return <BlockInputSegment param={paramInstance} instance={criteriaInstance} />;
         } else {
+            const minLength =
+                catalogCriteria?.use === "ai_question" && paramDef.name === "question"
+                    ? Constants.MinAIQuestionLength
+                    : undefined;
             return (
                 <InlineInputSegment
                     initialValue={paramInstance.value}
@@ -219,6 +256,7 @@ export const CriteriaInstanceDisplay: React.FC<CriteriaInstanceDisplayProps> = (
                     instance={criteriaInstance}
                     shouldExpand={paramDef.type === "longString"}
                     numeric={paramDef.type === "number"}
+                    minLength={minLength}
                 />
             );
         }

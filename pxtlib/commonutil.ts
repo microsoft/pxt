@@ -30,12 +30,12 @@ namespace ts.pxtc.Util {
 
     export function htmlEscape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
-        return _input.replace(/([^\w .!?\-$])/g, c => "&#" + c.charCodeAt(0) + ";");
+        return _input.replace(/([^\w .!?\-$])/ug, c => "&#" + c.codePointAt(0) + ";");
     }
 
     export function htmlUnescape(_input: string) {
         if (!_input) return _input; // null, undefined, empty string test
-        return _input.replace(/(&#\d+;)/g, c => String.fromCharCode(Number(c.substr(2, c.length - 3))));
+        return _input.replace(/(&#\d+;)/g, c => String.fromCodePoint(Number(c.substr(2, c.length - 3))));
     }
 
     export function jsStringQuote(s: string) {
@@ -227,6 +227,19 @@ namespace ts.pxtc.Util {
         return lf_va(format, args); // @ignorelf@
     }
 
+    /**
+     * Same as lf except the strings are not replaced in translation mode. This is used
+     * exclusively for blockly JSON block definitions as the crowdin in-context translation
+     * script doesn't handle the SVG text fields. Instead, they are translated via a context
+     * menu item on the block.
+     */
+    export function blf(format: string): string { // @ignorelf@
+        if (isTranslationMode()) {
+            return format;
+        }
+        return lf_va(format, []); // @ignorelf@
+    }
+
     export function lookup<T>(m: pxt.Map<T>, key: string): T {
         if (m.hasOwnProperty(key))
             return m[key]
@@ -287,6 +300,39 @@ namespace ts.pxtc.Util {
 
         return "Unable to compare " + a + ", " + b;
     }
+
+    export function deepEqual(a: any, b: any): boolean {
+        if (a === b) { return true; }
+
+        if (a && b && typeof a === 'object' && typeof b === 'object') {
+            const arrA = Array.isArray(a);
+            const arrB = Array.isArray(b);
+
+            if (arrA && arrB) {
+                if (a.length !== b.length) { return false; }
+                for (let i = 0; i < a.length; ++i) {
+                    if (!deepEqual(a[i], b[i])) { return false; }
+                }
+                return true;
+            }
+
+            if (arrA !== arrB) { return false; }
+
+            const keysA = Object.keys(a);
+
+            if (keysA.length !== Object.keys(b).length) { return false; }
+
+            for (const key of keysA) {
+                if (!b.hasOwnProperty(key)) { return false; }
+                if (!deepEqual(a[key], b[key])) { return false; }
+            }
+
+            return true;
+        }
+
+        // True if both are NaN, false otherwise
+        return a !== a && b !== b;
+    };
 }
 
 const lf = ts.pxtc.Util.lf;

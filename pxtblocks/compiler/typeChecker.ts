@@ -6,6 +6,8 @@ import { getDefinition } from "../plugins/functions";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { PXT_WARNING_ID } from "./compiler";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "../loader";
+import { getContainingFunction } from "../plugins/duplicateOnDrag";
+import { COLOR_PICKER_BLOCK_TYPE } from "..";
 
 interface DeclaredVariable {
     name: string;
@@ -148,6 +150,22 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                     break;
                 case pxtc.PAUSE_UNTIL_TYPE:
                     unionParam(e, b, "PREDICATE", pBoolean);
+                    break;
+                case COLOR_PICKER_BLOCK_TYPE:
+                    const format = b.getFieldValue("FORMAT");
+
+                    if (format === "hex") {
+                        unionParam(e, b, "HEX_INPUT", ground("string"));
+                    }
+                    else {
+                        for (let i = 0; i < 4; i++) {
+                            const input = b.getInput("INPUT" + i);
+                            if (input) {
+                                unionParam(e, b, input.name, ground("number"));
+                            }
+                        }
+                    }
+
                     break;
                 default:
                     if (b.type in e.stdCallTable) {
@@ -335,7 +353,7 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
         return find(b.p);
     }
 
-    if (b.type == "variables_get")
+    if (b.type == "variables_get" || b.type == "variables_get_reporter")
         return find(lookup(e, b, b.getField("VAR").getText()).type);
 
     if (b.type == "function_call_output")  {
@@ -435,6 +453,8 @@ function getReturnTypeOfFunction(e: Environment, name: string) {
             const returnTypes: Point[] = [];
             for (const child of definition.getDescendants(false)) {
                 if (child.type === "function_return") {
+
+                    if (getContainingFunction(child) !== definition) continue;
                     attachPlaceholderIf(e, child, "RETURN_VALUE");
                     returnTypes.push(returnType(e, getInputTargetBlock(e, child, "RETURN_VALUE")));
                 }
@@ -473,14 +493,18 @@ function getReturnTypeOfFunctionCall(e: Environment, call: Blockly.Block) {
 // Basic type unification routine; easy, because there's no structural types.
 // FIXME: Generics are not supported
 function unify(t1: string, t2: string) {
-    if (t1 == null || t1 === "Array" && isArrayType(t2))
+    if (t1 == null || isNullishType(t1) || t1 === "Array" && isArrayType(t2))
         return t2;
-    else if (t2 == null || t2 === "Array" && isArrayType(t1))
+    else if (t2 == null || isNullishType(t2) || t2 === "Array" && isArrayType(t1))
         return t1;
     else if (t1 == t2)
         return t1;
     else
         throw new Error("cannot mix " + t1 + " with " + t2);
+}
+
+function isNullishType(type: string) {
+    return type === "null" || type === "undefined";
 }
 
 function isArrayType(type: string) {
@@ -687,7 +711,7 @@ function getCBParameters(b: Blockly.Block, stdfun: StdFunc, e: Environment): Dec
                 varName = varBlock && varBlock.getField("VAR").getText();
             }
 
-            if (varName !== null) {
+            if (varName !== null && varName !== undefined) {
                 handlerArgs.push({
                     name: varName,
                     type: mkPoint(arg.type)

@@ -157,6 +157,8 @@ const initialState: AnimationState = {
     interval: 200
 }
 
+let nextTilesetRevision = 1;
+
 const initialStore: ImageEditorStore = {
     store: {
         present: initialState,
@@ -257,7 +259,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                     referencedTiles: toOpen.data.projectReferences,
                     previewAnimating: false,
                     onionSkinEnabled: false,
-                    tilesetRevision: 0,
+                    tilesetRevision: nextTilesetRevision++,
                     // Properties below this comment carry over if keep past is true
                     tool: action.keepPast ? state.editor.tool : initialStore.editor.tool,
                     cursorSize: action.keepPast ? state.editor.cursorSize : initialStore.editor.cursorSize,
@@ -266,7 +268,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
 
                 } : {
                     isTilemap: false,
-                    tilesetRevision: 0,
+                    tilesetRevision: nextTilesetRevision++,
 
                     // Properties below this comment carry over if keep past is true
                     selectedColor: action.keepPast ? state.editor.selectedColor : initialStore.editor.selectedColor,
@@ -318,7 +320,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 },
                 editor: {
                     ...state.editor,
-                    tilesetRevision: state.editor.tilesetRevision + 1
+                    tilesetRevision: nextTilesetRevision++
                 }
             };
         case actions.REDO_IMAGE_EDIT:
@@ -335,7 +337,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 },
                 editor: {
                     ...state.editor,
-                    tilesetRevision: state.editor.tilesetRevision + 1
+                    tilesetRevision: nextTilesetRevision++
                 }
             };
         default:
@@ -526,7 +528,7 @@ const editorReducer = (state: EditorState, action: any, store: EditorStore): Edi
                 deletedTiles: (state.deletedTiles || []).concat([action.id]),
                 selectedColor: action.index === state.selectedColor ? 0 : state.selectedColor,
                 backgroundColor: action.index === state.backgroundColor ? 0 : state.backgroundColor,
-                tilesetRevision: state.tilesetRevision + 1
+                tilesetRevision: nextTilesetRevision++
             };
         case actions.OPEN_TILE_EDITOR:
             const editType = action.index ? "edit" : "new";
@@ -549,7 +551,7 @@ const editorReducer = (state: EditorState, action: any, store: EditorStore): Edi
                 editedTiles,
                 selectedColor: action.index || (store.present as TilemapState).tileset.tiles.length,
                 editingTile: undefined,
-                tilesetRevision: state.tilesetRevision + 1
+                tilesetRevision: nextTilesetRevision++
             };
         case actions.SHOW_ALERT:
             tickEvent("show-alert");

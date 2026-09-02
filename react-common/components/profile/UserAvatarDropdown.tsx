@@ -23,6 +23,7 @@ export const UserAvatarDropdown: React.FC<IProps> = (props) => {
 
     if (onSignOutClick) {
         allItems.unshift({
+            role: "menuitem",
             id: "signout",
             title: lf("Sign Out"),
             label: lf("Sign Out"),

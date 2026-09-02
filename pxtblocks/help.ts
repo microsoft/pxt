@@ -38,7 +38,7 @@ export function setHelpResources(block: Blockly.BlockSvg, id: string, name: stri
     if (pxt.Util.isTranslationMode()) {
         block.customContextMenu = (options: any[]) => {
             const blockd = pxt.blocks.getBlockDefinition(block.type);
-            if (blockd && blockd.translationIds) {
+            if (blockd?.translationIds) {
                 options.push({
                     enabled: true,
                     text: lf("Translate this block"),

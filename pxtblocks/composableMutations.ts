@@ -5,9 +5,11 @@ import { createShadowValue } from "./toolbox";
 import { MutatingBlock } from "./legacyMutations";
 import { optionalDummyInputPrefix, optionalInputWithFieldPrefix } from "./constants";
 import { FieldArgumentVariable } from "./fields";
-import { setVarFieldValue } from "./loader";
+import { DRAGGABLE_PARAM_INPUT_PREFIX, getBlocklyCheckForType, setVarFieldValue } from "./loader";
 import { UpdateBeforeRenderMixin } from "./plugins/renderer";
 import { FieldImageNoText } from "./fields/field_imagenotext";
+import { setDuplicateOnDrag } from "./plugins/duplicateOnDrag";
+import { maybeMoveFocusFromButton } from "./utils";
 
 export interface ComposableMutation {
     // Set to save mutations. Should return an XML element
@@ -40,7 +42,8 @@ export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.
     let actuallyVisible = 0;
 
     let i = b.appendDummyInput();
-    let updateShape = () => {
+    let updateShape = (userTriggered?: boolean) => {
+        let fieldToFocus: null | FieldArgumentVariable = null;
         if (currentlyVisible === actuallyVisible) {
             return;
         }
@@ -49,7 +52,8 @@ export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.
             const diff = currentlyVisible - actuallyVisible;
             for (let j = 0; j < diff; j++) {
                 const arg = handlerArgs[actuallyVisible + j];
-                i.insertFieldAt(i.fieldRow.length - 1, new FieldArgumentVariable(arg.name), "HANDLER_" + arg.name);
+                fieldToFocus = new FieldArgumentVariable(arg.name);
+                i.insertFieldAt(i.fieldRow.length - 1, fieldToFocus, "HANDLER_" + arg.name);
                 const blockSvg = b as Blockly.BlockSvg;
                 if (blockSvg?.initSvg) blockSvg.initSvg(); // call initSvg on block to initialize new fields
             }
@@ -64,6 +68,9 @@ export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.
 
         if (currentlyVisible >= handlerArgs.length) {
             i.removeField("_HANDLER_ADD");
+            if (userTriggered) {
+                maybeMoveFocusFromButton(fieldToFocus);
+            }
         }
         else if (actuallyVisible >= handlerArgs.length) {
             addPlusButton();
@@ -107,7 +114,7 @@ export function initVariableArgsBlock(b: Blockly.Block, handlerArgs: pxt.blocks.
         i.appendField(new FieldImageNoText((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Add argument"),
             () => {
                 currentlyVisible = Math.min(currentlyVisible + 1, handlerArgs.length);
-                updateShape();
+                updateShape(true);
             }, false), "_HANDLER_ADD");
     }
 }
@@ -120,6 +127,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
     const buttonAddRemName = "0_add_rem_button";
     const numVisibleAttr = "_expanded";
     const inputInitAttr = "_input_init";
+    let buttonToFocus: null | Blockly.Input = null;
 
     const optionNames = def.parameters.map(p => p.name);
     const totalOptions = def.parameters.length;
@@ -218,7 +226,7 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
     // Set skipRender to true if the block is still initializing. Otherwise
     // the inputs will render before their shadow blocks are created and
     // leave behind annoying artifacts
-    function updateShape(delta: number, skipRender = false, force = false) {
+    function updateShape(delta: number, skipRender = false, force = false, userTriggered = false) {
         const newValue = addDelta(delta);
         if (!force && !skipRender && newValue === state.getNumber(numVisibleAttr)) return;
 
@@ -254,12 +262,23 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
         updateButtons();
         if (variableInlineInputs) b.setInputsInline(visibleOptions < inlineInputModeLimit);
-        if (!skipRender) (b as Blockly.BlockSvg).queueRender();
+        if (!skipRender) {
+            (b as Blockly.BlockSvg).queueRender().then(() => {
+                if (userTriggered && buttonToFocus) {
+                    let field = buttonToFocus.fieldRow[0];
+                    if (buttonToFocus.fieldRow.length > 1) {
+                        field = delta < 0 ? field : buttonToFocus.fieldRow[1];
+                    }
+                    maybeMoveFocusFromButton(field);
+                    buttonToFocus = null;
+                }
+            });
+        }
     }
 
     function addButton(name: string, uri: string, alt: string, delta: number) {
-        b.appendDummyInput(name)
-        .appendField(new FieldImageNoText(uri, 24, 24, alt, () => updateShape(delta), false));
+        return b.appendDummyInput(name)
+        .appendField(new FieldImageNoText(uri, 24, 24, alt, () => updateShape(delta, false, false, true), false));
     }
 
     function updateButtons() {
@@ -273,28 +292,28 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
         if (b.inputList.some(i => i.name === buttonAddRemName)) b.removeInput(buttonAddRemName, true);
 
         if (showPlus && showMinus) {
-            addPlusAndMinusButtons();
+            buttonToFocus = addPlusAndMinusButtons();
         }
         else if (showPlus) {
-            addPlusButton();
+            buttonToFocus = addPlusButton();
         }
         else if (showMinus) {
-            addMinusButton();
+            buttonToFocus = addMinusButton();
         }
     }
 
     function addPlusAndMinusButtons() {
-        b.appendDummyInput(buttonAddRemName)
-            .appendField(new FieldImageNoText((b as any).REMOVE_IMAGE_DATAURI, 24, 24, lf("Hide optional arguments"), () => updateShape(-1 * buttonDelta), false))
-            .appendField(new FieldImageNoText((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Reveal optional arguments"), () => updateShape(buttonDelta), false))
+        return b.appendDummyInput(buttonAddRemName)
+            .appendField(new FieldImageNoText((b as any).REMOVE_IMAGE_DATAURI, 24, 24, lf("Hide optional arguments"), () => updateShape(-1 * buttonDelta, false, false, true), false))
+            .appendField(new FieldImageNoText((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Reveal optional arguments"), () => updateShape(buttonDelta, false, false, true), false))
     }
 
-    function addPlusButton() {
-        addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
+    function addPlusButton(): Blockly.Input {
+        return addButton(buttonAddName, (b as any).ADD_IMAGE_DATAURI, lf("Reveal optional arguments"), buttonDelta);
     }
 
-    function addMinusButton() {
-        addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
+    function addMinusButton(): Blockly.Input {
+        return addButton(buttonRemName, (b as any).REMOVE_IMAGE_DATAURI, lf("Hide optional arguments"), -1 * buttonDelta);
     }
 
     function initOptionalInputs() {
@@ -374,6 +393,144 @@ export function initExpandableBlock(info: pxtc.BlocksInfo, b: Blockly.Block, def
 
         Blockly.Events.enable();
     }
+}
+
+export function initVariableReporterArgs(b: Blockly.Block, handlerArgs: pxt.blocks.HandlerArg[], info: pxtc.BlocksInfo) {
+    const buttonAddName = "0_add_button";
+    const numVisibleAttr = "numargs";
+
+    const state = new MutationState(b as unknown as MutatingBlock);
+    state.setEventsEnabled(false);
+    state.setValue(numVisibleAttr, 0);
+    state.setEventsEnabled(true);
+
+    Blockly.Extensions.apply('inline-svgs', b, false);
+
+    const populateArguments = () => {
+        for (const arg of handlerArgs) {
+            const input = b.getInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
+
+            if (!input) break;
+
+            if (!input.connection.targetConnection) {
+                Blockly.Events.disable();
+
+                const type = pxt.blocks.reporterTypeForArgType(arg.type);
+                const blockDom = document.createElement("block");
+                blockDom.setAttribute("type", type);
+
+                const fieldDom = document.createElement("field");
+                fieldDom.setAttribute("name", "VALUE");
+                fieldDom.textContent = arg.name;
+                blockDom.appendChild(fieldDom);
+
+                if (type === "argument_reporter_custom") {
+                    const mutation = document.createElement("mutation");
+                    mutation.setAttribute("type", arg.type);
+                    blockDom.appendChild(mutation);
+                }
+
+                const newBlock = Blockly.Xml.domToBlock(blockDom, b.workspace);
+                input.connection.connect(newBlock.outputConnection);
+
+                if (!b.isInsertionMarker() && newBlock instanceof Blockly.BlockSvg) {
+                    newBlock.initSvg();
+                    newBlock.queueRender();
+                }
+
+                Blockly.Events.enable();
+            }
+        }
+    }
+
+    const updateShape = (userTriggered?: boolean) => {
+        let inputToFocus: null | Blockly.Input = null;
+        const existingInputs = b.inputList.filter(
+            i => i.name.startsWith(DRAGGABLE_PARAM_INPUT_PREFIX)
+        ).length;
+
+        const buttonExists = b.inputList.some(i => i.name === buttonAddName);
+
+        if (existingInputs < state.getNumber(numVisibleAttr)) {
+            for (let i = existingInputs; i < state.getNumber(numVisibleAttr); i++) {
+                const arg = handlerArgs[i];
+                if (arg) {
+                    inputToFocus = b.appendValueInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
+                    inputToFocus.setCheck(getBlocklyCheckForType(arg.type, info));
+
+                    // Use zero width space character. Empty strings and null are falsey
+                    // which results in the default value being used by Blockly "input i".
+                    inputToFocus.setAriaLabelProvider("\u200b");
+
+                    setDuplicateOnDrag(b.type, inputToFocus.name);
+
+                    if (buttonExists) {
+                        b.moveInputBefore(inputToFocus.name, buttonAddName);
+                    }
+                    else {
+                        b.moveInputBefore(inputToFocus.name, "HANDLER");
+                    }
+                }
+            }
+        }
+        else if (existingInputs > state.getNumber(numVisibleAttr)) {
+            for (let i = existingInputs - 1; i >= state.getNumber(numVisibleAttr); i--) {
+                const arg = handlerArgs[i];
+                if (arg) {
+                    const input = b.getInput(DRAGGABLE_PARAM_INPUT_PREFIX + arg.name);
+
+                    if (input.connection.targetConnection) {
+                        Blockly.Events.disable();
+                        input.connection.targetBlock().dispose();
+                        Blockly.Events.enable();
+                    }
+                    b.removeInput(input.name, true);
+                }
+            }
+        }
+
+        if (state.getNumber(numVisibleAttr) < handlerArgs.length) {
+            if (!buttonExists) {
+                b.appendDummyInput(buttonAddName)
+                    .appendField(new FieldImageNoText((b as any).ADD_IMAGE_DATAURI, 24, 24, lf("Add argument"),
+                        () => {
+                            state.setValue(numVisibleAttr, state.getNumber(numVisibleAttr) + 1);
+                            updateShape(true);
+                        }, false));
+                b.moveInputBefore(buttonAddName, "HANDLER");
+            }
+        }
+        else if (buttonExists) {
+            b.removeInput(buttonAddName, true);
+        }
+
+        setTimeout(() => {
+            populateArguments();
+            if (userTriggered && handlerArgs.length === state.getNumber(numVisibleAttr)) {
+                maybeMoveFocusFromButton(inputToFocus.connection?.targetBlock() as Blockly.BlockSvg)
+            }
+        }, 0);
+    }
+
+    updateShape();
+
+    appendMutation(b, {
+        mutationToDom: (el: Element) => {
+            el.setAttribute(numVisibleAttr, state.getString(numVisibleAttr));
+            return el;
+        },
+        domToMutation: (saved: Element) => {
+            state.setEventsEnabled(false);
+            if (saved.hasAttribute(numVisibleAttr)) {
+                const val = parseInt(saved.getAttribute(numVisibleAttr));
+                if (!isNaN(val)) {
+                    state.setValue(numVisibleAttr, val);
+                    updateShape();
+                }
+            }
+            state.setEventsEnabled(true);
+        }
+    });
 }
 
 class MutationState {

@@ -27,5 +27,6 @@
         "*.variables": "less",
         "*.jres": "json"
     },
-    "git.ignoreLimitWarning": true
+    "git.ignoreLimitWarning": true,
+    "js/ts.tsdk.path": "node_modules/typescript/lib"
 }

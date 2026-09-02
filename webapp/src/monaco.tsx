@@ -36,6 +36,9 @@ import { AIErrorExplanationText } from "./components/AIErrorExplanationText";
 
 const MIN_EDITOR_FONT_SIZE = 10
 const MAX_EDITOR_FONT_SIZE = 40
+const SUPPRESSIBLE_ENHANCED_DIAGNOSTICS = [9284]
+const TS_IGNORE_COMMENT = "// @ts-ignore"
+const TS_IGNORE_COMMENT_REGEX = /^\s*\/\/\s*@ts-ignore\b/
 
 interface TranspileResult {
     success: boolean;
@@ -369,15 +372,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private highlightedBreakpoint: number;
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errors: ErrorDisplayInfo[] = [];
+    private errorListDebounceActive: boolean = false;
+    private revealErrorListDebounced: () => void;
     private callLocations: pxtc.LocationInfo[];
-
-    private userPreferencesSubscriber: data.DataSubscriber = {
-        subscriptions: [],
-        onDataChanged: () => {
-            this.onUserPreferencesChanged();
-        }
-    };
-
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
     private handleFlyoutScroll = (e: WheelEvent) => e.stopPropagation();
 
@@ -391,15 +388,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.onUserPreferencesChanged = this.onUserPreferencesChanged.bind(this);
         this.getDisplayInfoForError = this.getDisplayInfoForError.bind(this);
         this.getErrorHelp = this.getErrorHelp.bind(this);
-
-        data.subscribe(this.userPreferencesSubscriber, auth.HIGHCONTRAST);
+        this.setErrors = this.setErrors.bind(this);
+        this.revealErrorListDebounced = pxt.Util.debounce(() => {
+            this.errorListDebounceActive = false;
+        }, 2000 /* 2 seconds */);
 
         ThemeManager.getInstance(document)?.subscribe("monaco", () => this.onUserPreferencesChanged());
     }
 
     onUserPreferencesChanged() {
-        const hc = data.getData<boolean>(auth.HIGHCONTRAST);
-
+        const hc = ThemeManager.isCurrentThemeHighContrast();
         if (this.loadMonacoPromise) this.defineEditorTheme(hc, true);
     }
 
@@ -583,6 +581,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 pxt.tickEvent(`${tickLang}.discardText`, undefined, { interactiveConsent: true });
                 this.parent.saveBlocksToTypeScriptAsync().then((src) => {
                     this.overrideFile(src);
+
+                    // Clear diagnostics so blocks editor doesn't show old errors.
+                    // Recompile will pick up the updated content and re-validate it.
+                    this.currFile.diagnostics = [];
+
                     this.parent.setFile(bf);
                 })
             }
@@ -640,7 +643,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     display(): JSX.Element {
-        const showErrorList = pxt.appTarget.appTheme.errorList && !pxt.shell.isTimeMachineEmbed() && !this.parent.state.debugging;
+        const showErrorList =
+            !this.errorListDebounceActive &&
+            pxt.appTarget.appTheme.errorList &&
+            !pxt.shell.isTimeMachineEmbed() &&
+            !this.parent.state.debugging;
 
         return (
             <div id="monacoEditorArea" className={`monacoEditorArea`} style={{ direction: 'ltr' }}>
@@ -660,8 +667,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     {showErrorList && (
                         <ErrorList
                             onSizeChange={this.setErrorListState}
+                            collapsedByUser={this.parent.state.errorListCollapsed}
+                            onUserCollapse={this.setErrorListCollapsePreference}
                             errors={this.errors}
-                            startDebugger={!!this.errors.find(a => a.stackFrames?.length) && this.startDebugger}
+                            startDebugger={this.startDebugger}
                             getErrorHelp={this.getErrorHelp}
                             note={
                                 this.parent.state.errorListNote && (
@@ -688,15 +697,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
     }
 
+    // This sets the errors and manages our debounce logic for showing the error list.
+    setErrors(errors: ErrorDisplayInfo[]) {
+        const oldHasErrors = !!this.errors?.length;
+        const newHasErrors = !!errors?.length;
+
+        this.errors = errors;
+
+        // Delay showing error list when going from none -> some errors,
+        // but do not re-hide the list if it was already visible.
+        if (newHasErrors && (!oldHasErrors || this.errorListDebounceActive)) {
+            this.errorListDebounceActive = true;
+            this.revealErrorListDebounced();
+        }
+    }
+
     public onExceptionDetected(exception: pxsim.DebuggerBreakpointMessage) {
         const exceptionDisplayInfo: ErrorDisplayInfo = this.getDisplayInfoForException(exception);
-        this.errors = [exceptionDisplayInfo];
+        this.setErrors([exceptionDisplayInfo]);
         this.parent.setState({ errorListNote: undefined });
     }
 
     private onErrorChanges(errors: pxtc.KsDiagnostic[]) {
         const errorDisplayInfo: ErrorDisplayInfo[] = errors.map(this.getDisplayInfoForError);
-        this.errors = errorDisplayInfo;
+        this.setErrors(errorDisplayInfo);
         this.parent.setState({ errorListNote: undefined });
     }
 
@@ -714,16 +738,53 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         return {
             message,
-            stackFrames
+            stackFrames,
+            preventsRunning: false
         };
     }
 
     private getDisplayInfoForError(error: pxtc.KsDiagnostic): ErrorDisplayInfo {
         const message = lf("Line {0}: {1}", error.endLine ? error.endLine + 1 : error.line + 1, error.messageText);
+        const actions = error.category == ts.pxtc.DiagnosticCategory.Warning && SUPPRESSIBLE_ENHANCED_DIAGNOSTICS.indexOf(error.code) !== -1 ? [{
+            label: lf("Ignore"),
+            title: lf("Ignore this warning"),
+            ariaLabel: lf("Ignore this warning"),
+            onClick: () => this.insertTsIgnoreForDiagnostic(error)
+        }] : undefined;
         return {
             message,
-            onClick: () => this.goToError(error)
+            onClick: () => this.goToError(error),
+            preventsRunning: error.category == ts.pxtc.DiagnosticCategory.Error,
+            actions
         };
+    }
+
+    private insertTsIgnoreForDiagnostic(error: pxtc.KsDiagnostic) {
+        if (error.line === undefined)
+            return;
+
+        const model = this.editor.getModel();
+        const lineNumber = error.line + 1;
+        if (lineNumber > 1 && TS_IGNORE_COMMENT_REGEX.test(model.getLineContent(lineNumber - 1))) {
+            this.goToError(error);
+            return;
+        }
+
+        const lineContent = model.getLineContent(lineNumber);
+        const indentation = /^\s*/.exec(lineContent)[0];
+
+        this.editor.pushUndoStop();
+        this.editor.executeEdits("ignoreDiagnostic", [{
+            range: new monaco.Range(lineNumber, 1, lineNumber, 1),
+            text: `${indentation}${TS_IGNORE_COMMENT}${model.getEOL()}`,
+            forceMoveMarkers: true
+        }]);
+        this.beforeCompile();
+        this.editor.pushUndoStop();
+
+        this.editor.revealLineInCenter(lineNumber);
+        this.editor.setPosition({ lineNumber: lineNumber + 1, column: (error.column || 0) + 1 });
+        this.editor.focus();
     }
 
     /**
@@ -772,7 +833,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public showPackageDialog() {
         pxt.tickEvent("monaco.addpackage", undefined, { interactiveConsent: true });
         this.hideFlyout();
-        this.parent.showPackageDialog();
+        this.parent.showPackageDialog(true);
     }
 
     private defineEditorTheme(hc?: boolean, withNamespaces?: boolean) {
@@ -816,11 +877,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const baseTheme: monaco.editor.BuiltinTheme = hc
             ? "hc-black"
             : (ThemeManager.getInstance(document)?.getCurrentColorTheme()?.monacoBaseTheme as monaco.editor.BuiltinTheme) ?? (inverted ? "vs-dark" : "vs");
+        const useColors = (hc || baseTheme === "vs-dark") ? {} : colors;
         monaco.editor.defineTheme('pxtTheme', {
             base: baseTheme,
             inherit: true, // can also be false to completely replace the builtin rules
             rules: rules,
-            colors: hc ? {} : colors
+            colors: useColors
         });
         monaco.editor.setTheme('pxtTheme');
 
@@ -938,6 +1000,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    protected setErrorListCollapsePreference = (collapsed: boolean) => {
+        this.parent.setState({
+            errorListCollapsed: collapsed
+        });
+    }
+
     prepare() {
         this.isReady = true
     }
@@ -979,9 +1047,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 keybindings: [monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter],
                 keybindingContext: "!editorReadonly",
                 precondition: "!editorReadonly",
-                contextMenuGroupId: "0_pxtnavigation",
-                contextMenuOrder: 0.21,
-                run: () => Promise.resolve(this.parent.runSimulator())
+                run: async () => this.parent.startStopSimulator({ clickTrigger: true })
             });
 
             if (pxt.appTarget.compile && pxt.appTarget.compile.hasHex) {
@@ -1264,7 +1330,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (this.parent.settings.editorFontSize >= MAX_EDITOR_FONT_SIZE) return;
         let currentFont = this.getEditorFontSize();
-        this.parent.settings.editorFontSize = currentFont + 1;
+        this.parent.settings.editorFontSize = currentFont + 3;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
@@ -1273,7 +1339,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.editor) return;
         if (this.parent.settings.editorFontSize <= MIN_EDITOR_FONT_SIZE) return;
         let currentFont = this.getEditorFontSize();
-        this.parent.settings.editorFontSize = currentFont - 1;
+        this.parent.settings.editorFontSize = currentFont - 3;
         this.editor.updateOptions({ fontSize: this.parent.settings.editorFontSize });
         this.forceDiagnosticsUpdate();
     }
@@ -1329,6 +1395,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.hideFlyout();
     }
 
+    public setFlyoutLabel(categoryName: string) {
+        this.flyout.setLabel(lf("{0} snippets", categoryName))
+    }
+
+    public isFlyoutVisible(): boolean {
+        return !!(this.flyout?.state?.groups && !this.flyout.state.hide);
+    }
+
     public hideFlyout() {
         if (this.flyout) this.flyout.setState({ groups: undefined });
 
@@ -1358,7 +1432,30 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 this.toolbox.hide();
         }
 
+        if (this.parent.isTutorial() &&
+            (this.parent.state.tutorialOptions?.metadata?.flyoutOnly ||
+                this.parent.state.tutorialOptions?.metadata?.unifiedToolbox)) {
+            this.showUnifiedToolbox();
+        }
+
         this.updateDebuggerToolbox();
+    }
+
+    // Merge all toolbox categories into one single, always-open flyout
+    showUnifiedToolbox() {
+        this.injectCategoryStyles();
+
+        let allBlocks = this.getAllBlocks();
+        let combinedGroup: toolbox.GroupDefinition = {
+            name: lf("Snippets"),
+            blocks: allBlocks
+        }
+
+        this.flyout.setState( {
+            hide: false,
+            groups: [combinedGroup],
+            stayOpenOnDrag: true,
+        })
     }
 
     private updateDebuggerToolbox() {
@@ -1380,8 +1477,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     focusToolbox(itemToFocus?: string): void {
         if (this.isDebugging())  {
             this.debuggerToolbox.focus();
-        } else if (this.toolbox) {
+        } else if (this.toolbox && this.parent.state.editorState?.hasCategories !== false) {
             this.toolbox.focus(itemToFocus);
+        } else if (this.flyout) {
+            this.flyout.focus();
         }
     }
 
@@ -1524,6 +1623,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         this.updateDiagnostics();
                         this.changeCallback();
                         this.updateFieldEditors();
+
+                        if (this.errorListDebounceActive) {
+                            // Delay showing the error list while user is typing
+                            this.revealErrorListDebounced();
+                        }
                     });
                 }
 
@@ -1555,12 +1659,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             });
     }
 
-    unloadFileAsync(): Promise<void> {
+    unloadFileAsync(unloadToHome?: boolean): Promise<void> {
         if (this.toolbox)
             this.toolbox.clearSearch();
-        this.errors = [];
+        this.setErrors([]);
         this.parent.setState({errorListNote: undefined});
-        if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME) {
+        if (this.currFile && this.currFile.getName() == "this/" + pxt.CONFIG_NAME && !unloadToHome) {
             // Reload the header if a change was made to the config file: pxt.json
             return this.parent.reloadHeaderAsync();
         }
@@ -1671,9 +1775,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (file && file.diagnostics) {
             const model = monaco.editor.getModel(monaco.Uri.parse(`pkg:${file.getName()}`))
             for (let d of file.diagnostics) {
+                const severity = d.category === ts.pxtc.DiagnosticCategory.Error
+                    ? monaco.MarkerSeverity.Error
+                    : d.category === ts.pxtc.DiagnosticCategory.Warning
+                        ? monaco.MarkerSeverity.Warning
+                        : monaco.MarkerSeverity.Info;
                 const addErrorMessage = (message: string) => {
                     monacoErrors.push({
-                        severity: monaco.MarkerSeverity.Error,
+                        severity,
                         message: message,
                         startLineNumber: d.line + 1,
                         startColumn: d.column + 1,
@@ -1821,6 +1930,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!res[ns]) {
                 res[ns] = [];
             }
+
+            if (fn.attributes.builtinBlockId) {
+                res[ns].push(...snippets.getExtensionContributedBuiltinBlock(fn.attributes.builtinBlockId, fn.attributes.weight || 50));
+                return;
+            }
+
             res[ns].push(fn);
             if (fn.attributes.toolboxParent) {
                 const parent = this.blockInfo.blocks.find(b => b.attributes.blockId === fn.attributes.toolboxParent);
@@ -1931,10 +2046,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     public onToolboxBlur(e: React.FocusEvent, hasSearch: boolean): void {
         const searchInputFocused = e.relatedTarget === (this.toolbox.refs.searchbox as toolbox.ToolboxSearch).refs.searchInput;
         const flyoutFocused = e.relatedTarget === this.flyout.refs.flyout || (this.flyout.refs.flyout as HTMLElement).contains(e.relatedTarget);
-        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused) {
+        const tree = this.toolbox.refs.categoryTree as HTMLElement;
+        const treeFocused = !!tree && (e.relatedTarget === tree || tree.contains(e.relatedTarget as Node));
+        if (((searchInputFocused && !hasSearch) || !searchInputFocused) && !flyoutFocused && !treeFocused) {
             this.hideFlyout();
         }
-        if (!flyoutFocused) {
+        if (!flyoutFocused && !treeFocused) {
             this.toolbox.clear();
             this.toolbox.clearExpandedItem();
         }
@@ -1958,7 +2075,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
         return blocks.filter((block => !(block.attributes.blockHidden)
             && !(block.attributes.deprecated && !this.parent.isTutorial())
-            && (block.name.indexOf('_') != 0)
+            && (block.name.indexOf('_') != 0 || block.attributes.blockAliasFor && !blocks.some(b => b.qName === block.attributes.blockAliasFor))
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
                     || (block.attributes.subcategory && subns == block.attributes.subcategory))))));

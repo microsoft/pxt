@@ -11,7 +11,8 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [{
             "type": "field_number",
             "name": "NUM",
-            "precision": 1
+            "precision": 1,
+            "ariaTypeName": lf("value")
         }],
         "output": "Number",
         "outputShape": provider.SHAPES.ROUND,
@@ -29,7 +30,8 @@ Blockly.defineBlocksWithJsonArray([
             "type": "field_number",
             "name": "NUM",
             "min": 0,
-            "precision": 1
+            "precision": 1,
+            "ariaTypeName": lf("value")
         }],
         "output": "Number",
         "outputShape": provider.SHAPES.ROUND,
@@ -46,7 +48,8 @@ Blockly.defineBlocksWithJsonArray([
         "args0": [{
             "type": "field_number",
             "name": "NUM",
-            "min": 0
+            "min": 0,
+            "ariaTypeName": lf("value")
         }],
         "output": "Number",
         "outputShape": provider.SHAPES.ROUND,

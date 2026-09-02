@@ -59,6 +59,10 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
         return CommentIcon.TYPE;
     }
 
+    protected override getAriaLabel(): string | null {
+        return Blockly.Msg.ICON_LABEL_COMMENT_CLOSED;
+    }
+
     override initView(pointerdownListener: (e: PointerEvent) => void): void {
         if (this.svgRoot) return; // Already initialized.
 
@@ -358,10 +362,10 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
         this.textInputBubble.setCollapseHandler(() => {
             this.setBubbleVisible(false);
         });
-
         if (savedPosition) {
             this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
         }
+        Blockly.getFocusManager().focusNode(this.textInputBubble);
     }
 
     /** Shows the non editable text bubble for this comment. */
@@ -381,12 +385,14 @@ export class CommentIcon extends Blockly.icons.Icon implements Blockly.IHasBubbl
         if (savedPosition) {
             this.textInputBubble.setPositionRelativeToAnchor(savedPosition.x, savedPosition.y);
         }
+        Blockly.getFocusManager().focusNode(this.textInputBubble);
     }
 
     /** Hides any open bubbles owned by this comment. */
     private hideBubble() {
         this.textInputBubble?.dispose();
         this.textInputBubble = null;
+        Blockly.getFocusManager().focusNode(this.getSourceBlock() as Blockly.BlockSvg);
     }
 
     /**

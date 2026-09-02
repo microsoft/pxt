@@ -28,6 +28,14 @@
         }
     }
 
+    .organization-name {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-left: 1rem;
+        color: var(--pxt-header-foreground);
+        white-space: nowrap;
+    }
+
     .brand {
         display: flex;
         align-items: center;
@@ -42,6 +50,19 @@
         .logo {
             height: 1.1rem;
             margin: 0 1rem;
+        }
+
+        .brand-text,
+        .brand-text-short {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--pxt-header-foreground);
+            margin-left: 1rem;
+            white-space: nowrap;
+        }
+
+        .brand-text-short {
+            font-size: 1.125rem;
         }
     }
 

@@ -8,7 +8,7 @@ export interface InputProps extends ControlProps {
     inputClassName?: string;
     groupClassName?: string;
     initialValue?: string;
-    label?: string;
+    label?: string | JSX.Element;
     title?: string;
     placeholder?: string;
     icon?: string;
@@ -16,6 +16,7 @@ export interface InputProps extends ControlProps {
     disabled?: boolean;
     type?: string;
     readOnly?: boolean;
+    autoFocus?: boolean;
     autoComplete?: boolean;
     selectOnClick?: boolean;
     treatSpaceAsEnter?: boolean;
@@ -24,6 +25,7 @@ export interface InputProps extends ControlProps {
     options?: pxt.Map<string>;
     filter?: string;
 
+    validator?: (value: string, prevValue: string) => string;
     onChange?: (newValue: string) => void;
     onEnterKey?: (value: string) => void;
     onIconClick?: (value: string) => void;
@@ -31,6 +33,15 @@ export interface InputProps extends ControlProps {
     onBlur?: (value: string) => void;
     onOptionSelected?: (value: string) => void;
 }
+
+const sanitizeForDomId = (text: string | undefined) => {
+    if (!text) {
+        return "";
+    }
+
+    const sanitized = text.replace(/[^a-zA-Z0-9_-]/g, "-");
+    return sanitized || "option";
+};
 
 export const Input = (props: InputProps) => {
     const {
@@ -50,6 +61,7 @@ export const Input = (props: InputProps) => {
         disabled,
         type,
         readOnly,
+        autoFocus,
         autoComplete,
         selectOnClick,
         onChange,
@@ -60,12 +72,14 @@ export const Input = (props: InputProps) => {
         onOptionSelected,
         handleInputRef,
         preserveValueOnBlur = true,
-        options
+        options,
+        validator,
     } = props;
 
     const [value, setValue] = React.useState(initialValue || "");
     const [expanded, setExpanded] = React.useState(false);
     const [filter] = React.useState(props.filter ? new RegExp(props.filter) : undefined);
+    const optionValues = React.useMemo(() => (options ? Object.values(options) : []), [options]);
 
     let container: HTMLDivElement;
 
@@ -104,21 +118,28 @@ export const Input = (props: InputProps) => {
     const keyDownHandler = (e: React.KeyboardEvent) => {
         const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
         if (charCode === /*enter*/13 || props.treatSpaceAsEnter && charCode === /*space*/32) {
+            let validatedValue = value;
+            if (validator) {
+                validatedValue = validator(value, initialValue || "");
+                setValue(validatedValue);
+            }
             if (onEnterKey) {
                 e.preventDefault();
-                onEnterKey(value);
+                onEnterKey(validatedValue);
             }
         } else if (options && e.key === "ArrowDown") {
             if (expanded) {
-                document.getElementById(getDropdownOptionId(Object.values(options)[0]))?.focus();
+                document.getElementById(getDropdownOptionId(optionValues[0]))?.focus();
             } else {
                 expandButtonClickHandler();
+                setTimeout(() => {
+                    document.getElementById(getDropdownOptionId(optionValues[0]))?.focus();
+                }, 0);
             }
             e.preventDefault();
             e.stopPropagation();
         } else if (options && expanded && e.key === "ArrowUp") {
-            const optionVals = Object.values(options);
-            document.getElementById(getDropdownOptionId(optionVals[optionVals.length - 1]))?.focus();
+            document.getElementById(getDropdownOptionId(optionValues[optionValues.length - 1]))?.focus();
             e.preventDefault();
             e.stopPropagation();
         }
@@ -150,8 +171,13 @@ export const Input = (props: InputProps) => {
     }
 
     const blurHandler = () => {
+        let validatedValue = value;
+        if (validator) {
+            validatedValue = validator(value, initialValue || "");
+            setValue(validatedValue);
+        }
         if (onBlur) {
-            onBlur(value);
+            onBlur(validatedValue);
         }
         if (!preserveValueOnBlur) {
             setValue("");
@@ -177,7 +203,17 @@ export const Input = (props: InputProps) => {
     }
 
     const getDropdownOptionId = (option: string) => {
-        return option && Object.values(options).indexOf(option) != -1 ? `dropdown-item-${option}` : undefined;
+        if (!optionValues.length) {
+            return undefined;
+        }
+
+        const index = optionValues.indexOf(option);
+        if (index === -1) {
+            return undefined;
+        }
+
+        const sanitized = sanitizeForDomId(option);
+        return `dropdown-item-${index}-${sanitized}`;
     }
 
     return (
@@ -198,6 +234,7 @@ export const Input = (props: InputProps) => {
                     placeholder={placeholder}
                     value={value}
                     readOnly={!!readOnly}
+                    autoFocus={autoFocus}
                     onClick={clickHandler}
                     onChange={changeHandler}
                     onKeyDown={keyDownHandler}
@@ -231,7 +268,7 @@ export const Input = (props: InputProps) => {
             {expanded &&
                 <FocusList role="listbox"
                     className="common-menu-dropdown-pane common-dropdown-shadow"
-                    childTabStopId={getDropdownOptionId(value) ?? getDropdownOptionId(Object.values(options)[0])}
+                    childTabStopId={getDropdownOptionId(value) ?? getDropdownOptionId(optionValues[0])}
                     aria-labelledby={id}
                     useUpAndDownArrowKeys={true}>
                         <ul role="presentation"

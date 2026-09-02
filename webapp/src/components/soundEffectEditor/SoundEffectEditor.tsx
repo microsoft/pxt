@@ -3,7 +3,7 @@ import { Button } from "../../../../react-common/components/controls/Button";
 import { SoundControls } from "./SoundControls";
 import { SoundEffectHeader } from "./SoundEffectHeader";
 import { SoundGallery } from "./SoundGallery";
-import { SoundPreview } from "./SoundPreview";
+import { PreviewSynthListener, SoundPreview } from "./SoundPreview";
 import { getGallerySounds, soundToCodalSound } from "./soundUtil";
 import { FocusTrap, FocusTrapRegion } from "../../../../react-common/components/controls/FocusTrap";
 
@@ -44,7 +44,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
 
     let startPreviewAnimation: (duration: number) => void;
     let startControlsAnimation: (duration: number) => void;
-    let previewSynthListener: (freq: number, vol: number, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void;
+    let previewSynthListener: PreviewSynthListener;
 
     const cancel = () => {
         if (!cancelToken) return;
@@ -67,8 +67,8 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         if (startControlsAnimation) startControlsAnimation(toPlay.duration);
 
         const isCancelled = () => newToken.cancelled;
-        const onPull = (freq: number, volume: number) => {
-            previewSynthListener(freq, volume, toPlay, newToken)
+        const onPull = (snapshot: pxsim.AudioContextManager.SoundOscilloscopeData | pxsim.AudioContextManager.SoundSnapshotData) => {
+            previewSynthListener(snapshot, toPlay, newToken);
         }
 
         if (useMixerSynthesizer) {
@@ -81,33 +81,21 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         setCancelToken(null);
     }, [sound]);
 
-    const handleKeyDown = React.useCallback((ev: React.KeyboardEvent) => {
-            // Ignore all keys that could be used for accessibility navigation
-            // Enter is exempt to maintain the same behaviour with Space (" ")
-            if ((ev.key.length !== 1 && ev.key !== "Enter") || ev.metaKey || ev.ctrlKey || /[0-9]/.test(ev.key)) return;
-
-            // Ignore when a text input is focused
-            if (document.activeElement) {
-                if (
-                    document.activeElement.tagName === "INPUT" &&
-                    (document.activeElement as HTMLInputElement).type === "text"
-                )
-                    return;
-                // Space and Enter shouldn't fire these as these keys open dropdowns
-                if (
-                      (document.activeElement.id === "effect-dropdown" ||
-                     document.activeElement.id === "interpolation-dropdown") &&
-                     (ev.key === " " || ev.key === "Enter")
-                )
-                    return;
-                if (document.activeElement.id === "sound-effect-play-button")
-                    return;
-            }
-            // Ignore in gallery view
-            if (selectedView === "gallery") return;
-
+    const handleKeyDown = React.useCallback((e: React.KeyboardEvent) => {
+        // Ignore in gallery view
+        if (selectedView === "gallery") return;
+        if (e.key.toLowerCase() === "p") {
             play();
+            e.preventDefault();
+            e.stopPropagation();
+        }
     }, [play, selectedView])
+
+    React.useEffect(() => {
+        return () => {
+            pxsim.AudioContextManager.stopAll();
+        }
+    }, [])
 
     const handlePlayButtonClick = () => {
         if (cancelToken) {
@@ -134,7 +122,7 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
         startControlsAnimation = startAnimation;
     }
 
-    const handleSynthListenerRef = (onPull: (freq: number, vol: number, sound: pxt.assets.Sound, token: CancellationToken) => void) => {
+    const handleSynthListenerRef = (onPull: PreviewSynthListener) => {
         previewSynthListener = onPull;
     }
 
@@ -148,12 +136,12 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
     const handleGallerySelection = (newSound: pxt.assets.Sound) => {
         handleSoundChange(newSound);
         setSelectedView("editor");
-        playButtonRef.current.focus();
+        document.getElementById("sound-effect-editor-toggle-option-0").focus();
     }
 
     return (
-        <div className="sound-effect-editor" onKeyDown={handleKeyDown}>
-            {/* 
+        <div id="sound-effect-editor" className="sound-effect-editor" onKeyDown={handleKeyDown} role="dialog" aria-label={lf("Sound effect editor. Press P to play the sound effect at any point while in the editor tab.")}>
+            {/*
                 Don't steal focus to prevent focus-visible style if opened by mouse.
                 If opened by keyboard, we focus the editor / gallery toggle anyway.
             */}
@@ -177,7 +165,12 @@ export const SoundEffectEditor = (props: SoundEffectEditorProps) => {
                             onClick={handlePlayButtonClick}
                             leftIcon={cancelToken ? "fas fa-stop" : "fas fa-play"}
                             />
-                        <SoundControls sound={sound} onSoundChange={handleSoundChange} handleStartAnimationRef={handleControlsAnimationRef} />
+                        <SoundControls
+                            sound={sound}
+                            onSoundChange={handleSoundChange}
+                            handleStartAnimationRef={handleControlsAnimationRef}
+                            isMixerSound={useMixerSynthesizer}
+                        />
                         <Button
                             className="link-button generate-similar"
                             leftIcon="fas fa-sync"

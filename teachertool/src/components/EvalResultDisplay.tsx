@@ -8,6 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { getChecklistHash, getObfuscatedProjectId, getProjectLink } from "../utils";
 import { classList } from "react-common/components/util";
 import { AddCriteriaButton } from "./AddCriteriaButton";
+import { AskAIButton } from "./AskAIButton";
 import { DebouncedInput } from "./DebouncedInput";
 import { setChecklistName } from "../transforms/setChecklistName";
 import { Strings, Ticks } from "../constants";
@@ -98,6 +99,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.ExportChecklist}
                         rightIcon="fas fa-download"
                         onClick={handleExportChecklistClicked}
+                        disabled={checklist.criteria.length === 0}
                     />
                     <Button
                         className={classList("secondary", css["control-button"])}
@@ -105,6 +107,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.PrintChecklist}
                         rightIcon="fas fa-print"
                         onClick={handlePrintClicked}
+                        disabled={checklist.criteria.length === 0}
                     />
                     <Button
                         className={classList("primary", css["control-button"])}
@@ -112,7 +115,7 @@ const ResultsHeader: React.FC<ResultsHeaderProps> = ({ printRef }) => {
                         title={Strings.EvaluateChecklist}
                         rightIcon="fas fa-play"
                         onClick={handleEvaluateClickedAsync}
-                        disabled={!isProjectLoaded(teacherTool)}
+                        disabled={!isProjectLoaded(teacherTool) || checklist.criteria.length === 0}
                     />
                 </div>
             </div>
@@ -140,6 +143,7 @@ const CriteriaWithResultsTable: React.FC = () => {
 const ResultsFooterControls: React.FC = () => {
     return (
         <div className={classList(css["footer"], "no-print")}>
+            <AskAIButton />
             <AddCriteriaButton />
         </div>
     );

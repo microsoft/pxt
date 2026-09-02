@@ -23,6 +23,7 @@ import { COLLAPSE_IMAGE_DATAURI } from "../svgs";
 import { ArgumentReporterBlock } from "./argumentReporterBlocks";
 import { setDuplicateOnDrag } from "../../duplicateOnDrag";
 import { FieldImageNoText } from "../../../fields/field_imagenotext";
+import { maybeMoveFocusFromButton } from "../../../utils";
 
 interface FunctionDefinitionMixin extends CommonFunctionMixin {
     createArgumentReporter_(arg: FunctionArgument): ArgumentReporterBlock;
@@ -57,7 +58,6 @@ const FUNCTION_DEFINITION_MIXIN: FunctionDefinitionMixin = {
             argumentReporter = this.createArgumentReporter_(arg);
         }
 
-        argumentReporter.duplicateOnDrag_ = true;
 
         // Attach the block.
         input.connection!.connect(argumentReporter.outputConnection!);
@@ -199,9 +199,11 @@ Blockly.Blocks[FUNCTION_DEFINITION_BLOCK_TYPE] = {
                     image,
                     24,
                     24,
-                    "",
+                    lf("Collapse block"),
                     () => {
                         this.setCollapsed(true);
+                        const expandBtn = this.inputList.find(i => i.name === Blockly.constants.COLLAPSED_INPUT_NAME)?.fieldRow[1];
+                        maybeMoveFocusFromButton(expandBtn);
                     },
                     false
                 )

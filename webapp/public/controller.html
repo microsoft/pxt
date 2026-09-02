@@ -138,13 +138,20 @@
                 };
                 msg.response = true;
             }
+            else if (action == 'info') {
+                msg.response = true;
+            }
             if (msg.response)
                 pendingMsgs[msg.id] = msg;
             editor.postMessage(msg, "*")
         }
 
         function receiveMessage(ev) {
-            var editor = document.getElementById("iframe").contentWindow;
+            var editor = document.getElementById("iframe")?.contentWindow;
+            // Prevents messages from other sources being logged to the console.
+            if (!editor || editor !== ev.source) {
+                return;
+            }
             var msg = ev.data;
             console.log('received...')
             console.log(msg)
@@ -178,6 +185,7 @@
             }
             if (msg.type == "pxteditor") {
                 var req = pendingMsgs[msg.id];
+                if (!req) return;
                 if (req.action == "renderblocks") {
                     var img = document.createElement("img");
                     img.src = msg.resp;
@@ -241,8 +249,10 @@
         <button class="ui button" onclick="sendMessage('renderblocks')">renderblocks</button>
         <button class="ui button" onclick="sendMessage('closeflyout')">close flyout</button>
         <button class="ui button" onclick="sendMessage('setsimulatorfullscreen')">set sim full screen</button>
+        <button class="ui button" onclick="sendMessage('showthemepicker')">show theme picker</button>
         <button class="ui button" onclick="sendMessage('togglehighcontrast')">toggle high contrast</button>
         <button class="ui button" onclick="sendMessage('togglegreenscreen')">toggle green screen</button>
+        <button class="ui button" onclick="sendMessage('togglekeyboardcontrols')">toggle keyboard controls</button>
         <button class="ui button" onclick="sendMessage('print')">print</button>
         <button class="ui button" onclick="sendMessage('pair')">pair</button>
         <button class="ui button" onclick="sendMessage('info')">info</button>

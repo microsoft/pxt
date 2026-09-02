@@ -10,6 +10,9 @@ import { MutatorTypes } from "../legacyMutations";
 import { trackAllVariables } from "./variables";
 import { FieldTilemap, FieldTextInput } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
+import { getContainingFunction } from "../plugins/duplicateOnDrag";
+import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../plugins/functions/constants";
+import { COLOR_NUMBER_BLOCK_TYPE, COLOR_PICKER_BLOCK_TYPE, COLOR_STRING_BLOCK_TYPE } from "../plugins/colorpicker";
 
 
 interface Rect {
@@ -290,9 +293,9 @@ function updateDisabledBlocks(e: Environment, allBlocks: Blockly.Block[], topBlo
         // multiple calls allowed
         if (b.type == ts.pxtc.ON_START_TYPE)
             flagDuplicate(ts.pxtc.ON_START_TYPE, b);
-        else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !call.attrs.handlerStatement) return;
+        else if (isFunctionDefinition(b) || call && call.attrs.blockAllowMultiple && !(call.attrs.handlerStatement || call.attrs.forceStatement)) return;
         // is this an event?
-        else if (call && call.hasHandler && !call.attrs.handlerStatement) {
+        else if (call && call.hasHandler && !(call.attrs.handlerStatement || call.attrs.forceStatement)) {
             // compute key that identifies event call
             // detect if same event is registered already
             const key = call.attrs.blockHandlerKey || callKey(e, b);
@@ -434,8 +437,8 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
         case "math_number":
         case "math_integer":
         case "math_whole_number":
-            expr = compileNumber(e, b, comments); break;
         case "math_number_minmax":
+        case COLOR_NUMBER_BLOCK_TYPE:
             expr = compileNumber(e, b, comments); break;
         case "math_op2":
             expr = compileMathOp2(e, b, comments); break;
@@ -455,6 +458,7 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
         case "variables_get_reporter":
             expr = compileVariableGet(e, b); break;
         case "text":
+        case COLOR_STRING_BLOCK_TYPE:
             expr = compileText(e, b, comments); break;
         case "text_join":
             expr = compileTextJoin(e, b, comments); break;
@@ -478,6 +482,9 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
             break;
         case "function_call_output":
             expr = compileFunctionCall(e, b, comments, false); break;
+        case COLOR_PICKER_BLOCK_TYPE:
+            expr = compileColorPicker(e, b, comments);
+            break;
         default:
             let call = e.stdCallTable[b.type];
             if (call) {
@@ -775,7 +782,20 @@ function compileEvent(e: Environment, b: Blockly.Block, stdfun: StdFunc, args: p
         argumentDeclaration = pxt.blocks.mkText(`function (${handlerArgs.join(", ")})`)
     }
 
-    return mkCallWithCallback(e, ns, stdfun.f, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
+
+    let callNamespace = ns;
+    let callName = stdfun.f
+    if (stdfun.attrs.blockAliasFor) {
+        const aliased = e.blocksInfo.apis.byQName[stdfun.attrs.blockAliasFor];
+
+        if (aliased) {
+            callName = aliased.name;
+            callNamespace = aliased.namespace;
+        }
+    }
+
+
+    return mkCallWithCallback(e, callNamespace, callName, compiledArgs, body, argumentDeclaration, stdfun.isExtensionMethod);
 }
 
 function compileImage(e: Environment, b: Blockly.Block, frames: number, columns: number, rows: number, n: string, f: string, args?: pxt.blocks.JsNode[]): pxt.blocks.JsNode {
@@ -789,7 +809,7 @@ function compileImage(e: Environment, b: Blockly.Block, frames: number, columns:
         for (let j = 0; j < columns; ++j) {
             if (j > 0)
                 state += ' ';
-            state += (leds[(i * columns) + j] === '#') ? "#" : ".";
+            state += leds[(i * columns) + j];
         }
         state += '\n';
     }
@@ -1149,7 +1169,24 @@ function compileFunctionCall(e: Environment, b: Blockly.Block, comments: string[
 function compileReturnStatement(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
     const expression = getInputTargetBlock(e, b, "RETURN_VALUE");
 
-    if (expression && expression.type != "placeholder") {
+    const hasReturn = expression?.type !== "placeholder";
+
+    const parentFunction = getContainingFunction(b);
+    if (!parentFunction) {
+        e.diagnostics.push({
+            blockId: b.id,
+            message: lf("Return statements can only be used within function bodies.")
+        });
+    }
+    else if (hasReturn && parentFunction.type !== FUNCTION_DEFINITION_BLOCK_TYPE) {
+        e.diagnostics.push({
+            blockId: b.id,
+            message: lf("Return statements can only return values inside function definitions.")
+        });
+    }
+
+
+    if (hasReturn) {
         return pxt.blocks.mkStmt(pxt.blocks.mkText("return "), compileExpression(e, expression, comments));
     }
     else {
@@ -1306,13 +1343,13 @@ function compileWorkspaceComment(c: Blockly.comments.RenderedWorkspaceComment): 
 }
 
 function isLiteral(e: Environment, b: Blockly.Block) {
-    return isNumericLiteral(e, b) || b.type === "logic_boolean" || b.type === "text";
+    return isNumericLiteral(e, b) || b.type === "logic_boolean" || b.type === "text" || b.type === COLOR_STRING_BLOCK_TYPE;
 }
 
 function isNumericLiteral(e: Environment, b: Blockly.Block): boolean {
     if (!b) return false;
 
-    if (b.type === "math_number" || b.type === "math_integer" || b.type === "math_number_minmax" || b.type === "math_whole_number") {
+    if (b.type === "math_number" || b.type === "math_integer" || b.type === "math_number_minmax" || b.type === "math_whole_number" || b.type === COLOR_NUMBER_BLOCK_TYPE) {
         return true;
     }
 
@@ -1355,6 +1392,35 @@ function extractTsExpression(e: Environment, b: Blockly.Block, comments: string[
 function compileNumber(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
     return pxt.blocks.H.mkNumberLiteral(extractNumber(b));
 }
+
+function compileColorPicker(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
+    const format = b.getFieldValue("FORMAT");
+
+    if (format === "hex") {
+        return pxt.blocks.H.namespaceCall(
+            "colorHelpers",
+            "hex",
+            [compileExpression(e, getInputTargetBlock(e, b, "HEX_INPUT"), comments)],
+            false
+        );
+    }
+    else {
+        const inputs: pxt.blocks.JsNode[] = [];
+        for (let i = 0; i < 4; i++) {
+            const input = b.getInput("INPUT" + i);
+            if (input) {
+                inputs.push(compileExpression(e, getInputTargetBlock(e, b, input.name), comments));
+            }
+        }
+        return pxt.blocks.H.namespaceCall(
+            "colorHelpers",
+            format,
+            inputs,
+            false
+        );
+    }
+}
+
 
 function throwBlockError(msg: string, block: Blockly.Block) {
     let e = new Error(msg);

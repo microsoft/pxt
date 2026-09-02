@@ -7,6 +7,7 @@ declare namespace pxt.electron {
         timeStamp?: string; // In the format of (new Date()).toISOString()
         isDriveDeployBanned?: boolean;
         isFileDeployBanned?: boolean;
+        isWebUSBDeployBanned?: boolean;
     }
 
     export const enum UpdateStatus {
@@ -29,6 +30,10 @@ declare namespace pxt.electron {
         pxtCoreVersion: string;
         pxtElectronVersion: string;
         isProd: number; // If the app is production, this will be set to 1
+    }
+
+    export interface Capabilities {
+        webUSBDeploy?: boolean;
     }
 
     // Have to duplicate this here because of typings issue when building
@@ -71,6 +76,7 @@ declare namespace pxt.electron {
         sendOpenDevTools: () => void; // Asks the app shell to open dev tools.
         sendDriveDeploy: (compileResult: CompileResult) => void; // Asks the app to deploy the program to the device via USB file copy.
         sendFileDeploy: (files: FileDeployRequest) => void // Asks the app to deploy the given files to a known folder.
+        capabilities?: Capabilities;
         versions: VersionInfo; // Various versions for telemetry base properties
     }
 }

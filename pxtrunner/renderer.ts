@@ -821,7 +821,10 @@ function renderInlineBlocksAsync(options: BlocksRenderOptions): Promise<void> {
                     if (info && r.apiInfo) {
                         const symbolInfo = r.apiInfo.byQName[info.qName];
                         if (symbolInfo && symbolInfo.attributes.help) {
-                            $newel = $(`<a class="ui link"/>`).attr("href", `/reference/${symbolInfo.attributes.help}`).append($newel);
+                            // Create accessible label for the link using a human-readable name
+                            const readableName = symbolInfo.name || symbolInfo.qName;
+                            const ariaLabel = lf("Documentation for {0} block", readableName);
+                            $newel = $(`<a class="ui link"/>`).attr("href", `/reference/${symbolInfo.attributes.help}`).attr("aria-label", ariaLabel).append($newel);
                         }
                     }
                     $el.replaceWith($newel);
@@ -1365,6 +1368,8 @@ export function renderAsync(options?: ClientRenderOptions): Promise<void> {
     if (!options) options = defaultClientRenderOptions();
     if (options.pxtUrl) options.pxtUrl = options.pxtUrl.replace(/\/$/, '');
     if (options.showEdit) options.showEdit = !pxt.BrowserUtils.isIFrame();
+
+    pxt.docs.hydrateYouTubeEmbeds(document.body, false);
 
     mergeConfig(options);
     readAssetJson(options);

@@ -48,7 +48,7 @@ export default function Render() {
                     <div className="tw-flex tw-flex-col tw-gap-4">
                         <div>{lf("Why do you find it offensive?")}</div>
                         <div>
-                            <Textarea onChange={setTextValue}></Textarea>
+                            <Textarea onChange={setTextValue} maxLength={1000}></Textarea>
                         </div>
                     </div>
                 </ConfirmModal>

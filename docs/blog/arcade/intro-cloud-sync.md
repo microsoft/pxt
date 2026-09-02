@@ -10,7 +10,7 @@ Over the past year we've been working hard to bring you the ability to sign into
 
 Have you ever been working on a MakeCode project at school and wanted to take it home? In the past, users have found creative ways to move projects from device to device and browser to browser, and these methods will still work! But Cloud Sync makes this a seamless experience: when you sign into MakeCode, your cloud-saved projects are downloaded to your browser automatically.
 
-Perhaps you've had the experience of returning to a lab computer only to realize the machine had been reset overnight, erasing your projects with it. Losing all your work can be devastating. Cloud Sync guards against this by continouously saving your work to the cloud as you edit your project.
+Perhaps you've had the experience of returning to a lab computer only to realize the machine had been reset overnight, erasing your projects with it. Losing all your work can be devastating. Cloud Sync guards against this by continuously saving your work to the cloud as you edit your project.
 
 ## Nice! How do I enable it?
 
@@ -24,7 +24,7 @@ On the home screen, you can tell a project is saved to cloud if it has a visible
 
 ## The Future
 
-The addition of identity to MakeCode represents a new foundation upon which a wide range of user-aware features can be built. We're excited by all the possiblities!
+The addition of identity to MakeCode represents a new foundation upon which a wide range of user-aware features can be built. We're excited by all the possibilities!
 But we're going to build on this new foundation carefully and thoughtfully, with your privacy and safety always our first priority.
 
 ## Feedback?

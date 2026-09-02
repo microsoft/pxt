@@ -5,8 +5,12 @@ import * as Blockly from "blockly";
 import svg = pxt.svgUtil;
 import { clearDropDownDiv, FieldCustom, FieldCustomOptions, setMelodyEditorOpen } from "./field_utils";
 import { FieldMatrix } from "./field_matrix";
+
 export const HEADER_HEIGHT = 50;
 export const TOTAL_WIDTH = 300;
+const melodyContentDivId = "melody-content-div";
+const melodyEditorDivId = "melody-editor-div";
+const melodyGalleryDivId = "melody-editor-gallery";
 
 export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix implements FieldCustom {
     public isFieldCustom_ = true;
@@ -31,6 +35,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     private bottomDiv: HTMLDivElement;
     private doneButton: HTMLButtonElement;
     private playButton: HTMLButtonElement;
+    private playButtonAriaText: HTMLSpanElement;
     private playIcon: HTMLElement;
     private tempoInput: HTMLInputElement;
     private firstFocusableElement: HTMLElement | SVGElement;
@@ -58,6 +63,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     private gallery: pxtmelody.MelodyGallery;
     protected clearSelectionOnBlur = false;
     private matrixFocusBind: Blockly.browserEvents.Data | null = null;
+    private matrixKeydownBind: Blockly.browserEvents.Data | null = null;
     private tabKeyBind: Blockly.browserEvents.Data | null = null;
 
     constructor(value: string, params: U, validator?: Blockly.FieldValidator) {
@@ -67,6 +73,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     }
 
     init() {
+        if (this.fieldGroup_) return;
         super.init();
         this.onInit();
     }
@@ -79,15 +86,19 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         Blockly.DropDownDiv.setColour(this.getDropdownBackgroundColour(), this.getDropdownBorderColour());
 
         let contentDiv = Blockly.DropDownDiv.getContentDiv() as HTMLDivElement;
+        contentDiv.id = melodyContentDivId;
+        contentDiv.setAttribute("role", "dialog");
+        contentDiv.ariaLabel = lf("Melody editor");
         pxt.BrowserUtils.addClass(contentDiv, "melody-content-div");
         pxt.BrowserUtils.addClass(contentDiv.parentElement, "melody-editor-dropdown");
 
-        this.gallery = new pxtmelody.MelodyGallery();
+        this.gallery = new pxtmelody.MelodyGallery(melodyGalleryDivId);
         this.renderEditor(contentDiv);
 
         this.addKeyboardFocusHandlers();
         this.attachEventHandlersToMatrix();
         this.matrixFocusBind = Blockly.browserEvents.bind(this.matrixSvg, 'focus', this, this.handleMatrixFocus.bind(this));
+        this.matrixKeydownBind = Blockly.browserEvents.bind(this.matrixSvg, 'keydown', this, this.handleMatrixKeydown.bind(this));
         this.tabKeyBind = Blockly.browserEvents.bind(contentDiv, 'keydown', this, this.handleTabKey.bind(this));
 
         this.prevString = this.getValue();
@@ -106,8 +117,9 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         });
 
         if (keyboardTriggered) {
-            this.toggle.getRootElement().focus();
+            this.toggle.getFirstFocusableElement().focus();
         }
+        (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement().ariaExpanded = 'true';
     }
 
     getValue() {
@@ -151,6 +163,16 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             (this.sourceBlock_ as Blockly.BlockSvg).getSvgRoot().appendChild(this.fieldGroup_);
             this.updateFieldLabel();
         }
+        this.addAriaAtributes();
+    }
+
+    private addAriaAtributes() {
+        // ariaLabel is set in this.updateFieldLabel() as it is content dependent.
+        const el = (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement();
+        el.ariaHasPopup = 'dialog';
+        el.ariaExpanded = 'false';
+        el.setAttribute('role', 'button');
+        el.setAttribute('aria-controls', melodyContentDivId);
     }
 
     render_() {
@@ -172,6 +194,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
         // Same toggle set up as sprite editor
         this.root = new svg.SVG(this.topDiv).id("melody-editor-header-controls");
+        this.root.setAttribute("role", "presentation");
         this.toggle = new Toggle(this.root, { leftText: lf("Editor"), rightText: lf("Gallery"), baseColor: color });
         this.toggle.onStateChange(isLeft => {
             if (isLeft) {
@@ -181,7 +204,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
                 this.showGallery();
             }
         });
-        this.firstFocusableElement = this.toggle.getRootElement();
+        this.firstFocusableElement = this.toggle.getFirstFocusableElement();
 
         this.toggle.layout();
         this.toggle.translate((TOTAL_WIDTH - this.toggle.width()) / 2, TOGGLE_PADDING_TOP);
@@ -191,6 +214,9 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
         this.editorDiv = document.createElement("div");
         pxt.BrowserUtils.addClass(this.editorDiv, "melody-editor-div");
+        this.editorDiv.setAttribute("role", "tabpanel");
+        this.editorDiv.setAttribute("aria-labelledby", `${melodyEditorDivId}-control`);
+        this.editorDiv.id = melodyEditorDivId;
         this.editorDiv.style.setProperty("background-color", secondaryColor);
 
         this.gridDiv = this.createGridDisplay();
@@ -208,12 +234,17 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
         this.playButton = document.createElement("button");
         this.playButton.id = "melody-play-button";
+        this.playButtonAriaText = document.createElement("span");
+        this.playButtonAriaText.classList.add("sr-only");
+        this.playButtonAriaText.textContent = lf("Play melody");
         this.playButton.addEventListener("click", () => this.togglePlay());
 
         this.playIcon = document.createElement("i");
         this.playIcon.id = "melody-play-icon";
+        this.playIcon.ariaHidden = "true";
         pxt.BrowserUtils.addClass(this.playIcon, "play icon");
         this.playButton.appendChild(this.playIcon);
+        this.playButton.appendChild(this.playButtonAriaText);
 
         this.tempoInput = document.createElement("input");
         pxt.BrowserUtils.addClass(this.tempoInput, "ui input");
@@ -241,6 +272,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             Blockly.browserEvents.unbind(this.matrixFocusBind);
             this.matrixFocusBind = undefined;
         }
+        if (this.matrixKeydownBind) {
+            Blockly.browserEvents.unbind(this.matrixKeydownBind);
+            this.matrixKeydownBind = undefined;
+        }
         if (this.tabKeyBind) {
             Blockly.browserEvents.unbind(this.tabKeyBind);
             this.tabKeyBind = undefined;
@@ -256,6 +291,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         }
 
         this.prevString = undefined;
+        (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement().ariaExpanded = 'false';
     }
 
     // when click done
@@ -297,14 +333,35 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         let oldValue: string = value;
         try {
             value = value.slice(1, -1); // remove the boundary quotes
-            value = value.trim(); // remove boundary white space
+            const reader = new MelodyStringReader(value, true);
+
+            const notes: string[] = [];
+            const validNotes = [48, 50, 52, 53, 55, 57, 59, 60];
+
+            while (reader.hasNextNote()) {
+                reader.readNote();
+                if (reader.currentDuration !== 4) throw new Error(lf("Only quarter notes are supported"));
+
+                if (reader.currentNote === REST) {
+                    notes.push("-");
+                    continue;
+                }
+
+                const absoluteNote = reader.currentOctave * 12 + reader.currentNote;
+
+                if (!validNotes.includes(absoluteNote)) {
+                    throw new Error(lf("Invalid note '{0}'. Notes can be C D E F G A B C5", absoluteNote));
+                }
+
+                const noteName = pxtmelody.rowToNote(7 - validNotes.indexOf(absoluteNote));
+                notes.push(noteName);
+            }
+
+            if (notes.length > this.numMatrixCols) {
+                throw new Error(lf("Too many notes. Maximum is {0}", this.numMatrixCols));
+            }
+
             this.createMelodyIfDoesntExist();
-            let notes: string[] = value.split(" ");
-
-            notes.forEach(n => {
-                if (!this.isValidNote(n)) throw new Error(lf("Invalid note '{0}'. Notes can be C D E F G A B C5", n));
-            });
-
             this.melody.resetMelody();
 
             for (let j = 0; j < notes.length; j++) {
@@ -314,25 +371,11 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
                 }
             }
             this.updateFieldLabel();
-        } catch (e) {
+        }
+        catch (e) {
             pxt.log(e)
             this.invalidString = oldValue;
         }
-    }
-
-    private isValidNote(note: string): boolean {
-        switch (note) {
-            case "C":
-            case "D":
-            case "E":
-            case "F":
-            case "G":
-            case "A":
-            case "B":
-            case "C5":
-            case "-": return true;
-        }
-        return false;
     }
 
     // The width of the preview on the block itself
@@ -387,6 +430,17 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             pxt.BrowserUtils.addClass(cb.el, className);
             this.fieldGroup_.appendChild(cb.el);
         }
+        (this.sourceBlock_ as Blockly.BlockSvg).getFocusableElement().ariaLabel = this.getAriaValue();
+    }
+
+    override getAriaValue(): string {
+        const notes = this.melody.getStringRepresentation().trim().split(" ");
+        return notes.every(n => n === "-") ? lf("empty melody") : lf("melody");
+    }
+
+    override computeAriaLabel(_verbose?: boolean): string {
+        const notes = this.melody.getStringRepresentation().trim().split(" ");
+        return notes.every(n => n === "-") ? lf("empty") : lf("notes");
     }
 
     private setTempo(tempo: number): void {
@@ -480,14 +534,18 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
 
             for (let col = 0; col < this.numMatrixCols; col++) {
                 const cell = this.cells[col][row];
+                const cellRect = cell.children[1] as SVGRectElement;
+                const cellTextEl = cell.firstElementChild as SVGTextElement;
 
                 if (this.melody.getValue(row, col)) {
-                    pxt.BrowserUtils.removeClass(cell, "melody-default");
-                    pxt.BrowserUtils.addClass(cell, rowClass);
+                    pxt.BrowserUtils.removeClass(cellRect, "melody-default");
+                    pxt.BrowserUtils.addClass(cellRect, rowClass);
+                    cellTextEl.textContent = this.getCellLabel(row, true)
                 }
                 else {
-                    pxt.BrowserUtils.addClass(cell, "melody-default");
-                    pxt.BrowserUtils.removeClass(cell, rowClass);
+                    pxt.BrowserUtils.addClass(cellRect, "melody-default");
+                    pxt.BrowserUtils.removeClass(cellRect, rowClass);
+                    cellTextEl.textContent = this.getCellLabel(row, false)
                 }
             }
         }
@@ -559,8 +617,9 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         const cells = this.cells[col];
 
         cells.forEach(cell => {
-            if (on) pxt.BrowserUtils.addClass(cell, "playing")
-            else pxt.BrowserUtils.removeClass(cell, "playing")
+            const cellRect = cell.children[1] as SVGRectElement;
+            if (on) pxt.BrowserUtils.addClass(cellRect, "playing")
+            else pxt.BrowserUtils.removeClass(cellRect, "playing")
         });
     }
 
@@ -569,12 +628,12 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (pxt.BrowserUtils.isEdge()) FieldCustomMelody.VIEWBOX_WIDTH += 37;
         FieldCustomMelody.VIEWBOX_HEIGHT = (FieldCustomMelody.CELL_WIDTH + FieldCustomMelody.CELL_VERTICAL_MARGIN) * this.numMatrixRows + FieldCustomMelody.CELL_VERTICAL_MARGIN;
         this.matrixSvg = pxsim.svg.parseString(`<svg xmlns="http://www.w3.org/2000/svg" class="melody-grid-div blocklyMatrix" role="grid" viewBox="0 0 ${FieldCustomMelody.VIEWBOX_WIDTH} ${FieldCustomMelody.VIEWBOX_HEIGHT}" tabindex="0" />`);
-        this.matrixSvg.ariaLabel =  lf("Melody grid");
+        this.matrixSvg.ariaLabel = lf("Melody of eight notes. Use the left and right arrows to select the previous or next note in the sequence. Use the up and down arrows to select the note pitch. Use Enter or Space to toggle the note on or off. Press P to play the note.");
 
         this.createMatrixDisplay({
             cellWidth: FieldCustomMelody.CELL_WIDTH,
             cellHeight: FieldCustomMelody.CELL_WIDTH,
-            cellLabel: lf("Note"),
+            cellLabel: this.getCellLabel,
             cellStroke: "white",
             cellHorizontalMargin: FieldCustomMelody.CELL_HORIZONTAL_MARGIN,
             cellVerticalMargin: FieldCustomMelody.CELL_VERTICAL_MARGIN,
@@ -585,6 +644,13 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         return this.matrixSvg;
     }
 
+    private getCellLabel(rowNum: number, value: boolean) {
+        if (value) {
+            return lf("Note {0}, on", pxtmelody.rowToNote(rowNum))
+        }
+        return lf("Note {0}, off", pxtmelody.rowToNote(rowNum))
+    }
+
     private handleMatrixFocus(_e: FocusEvent) {
         if (!this.selected) {
             const startNote = this.getMelodyNote(0) ?? 0;
@@ -592,6 +658,17 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         }
         const [x, y] = this.selected;
         this.focusCell(x, y);
+        const focusVisible = this.matrixSvg.matches(":focus-visible");
+        if (!focusVisible && !this.forceFocusVisible) return;
+        if (this.hasMelodyNote(x)) {
+            this.playNote(y, x);
+        }
+    }
+
+    private handleMatrixKeydown(e: KeyboardEvent) {
+        if (e.key.toLowerCase() === "p") {
+            this.playNote(this.selected[1], this.selected[0]);
+        }
     }
 
     // Used for focus trap
@@ -617,30 +694,40 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
     }
 
     protected override handleArrowUp(x: number, y: number) {
-        const hasNote = this.getMelodyNote(x) !== undefined;
         this.selected = [x, y - 1]
-        if (hasNote) {
+        if (this.hasMelodyNote(x)) {
             this.toggleCell(this.selected[0], this.selected[1]);
         }
     }
     protected override handleArrowDown(x: number, y: number) {
-        const hasNote = this.getMelodyNote(x) !== undefined;
         this.selected = [x, y + 1]
-        if (hasNote) {
+        if (this.hasMelodyNote(x)) {
             this.toggleCell(this.selected[0], this.selected[1]);
         }
     }
 
     protected override handleArrowLeft(x: number, y: number) {
-        const newX = (x + this.numMatrixCols - 1) % this.numMatrixCols;
+        if (x === 0) {
+            return;
+        }
+        const newX = x - 1;
         const existingY = this.getMelodyNote(newX) ?? y;
-        this.selected = [newX, existingY]
+        this.selected = [newX, existingY];
+        if (this.hasMelodyNote(newX)) {
+            this.playNote(this.selected[1], this.selected[0]);
+        }
     }
 
     protected override handleArrowRight(x: number, y: number) {
-        const newX = (x + this.numMatrixCols + 1) % this.numMatrixCols;
+        if (x === this.numMatrixCols - 1) {
+            return;
+        }
+        const newX = x + 1;
         const existingY = this.getMelodyNote(newX) ?? y;
-        this.selected = [newX, existingY]
+        this.selected = [newX, existingY];
+        if (this.hasMelodyNote(newX)) {
+            this.playNote(this.selected[1], this.selected[0]);
+        }
     }
 
     private getMelodyNote(col: number) {
@@ -650,6 +737,10 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             }
         }
         return undefined;
+    }
+
+    private hasMelodyNote(col: number): boolean {
+        return typeof this.getMelodyNote(col) === "number";
     }
 
     private togglePlay() {
@@ -667,10 +758,12 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
         if (this.isPlaying) {
             pxt.BrowserUtils.removeClass(this.playIcon, "play icon");
             pxt.BrowserUtils.addClass(this.playIcon, "stop icon");
+            this.playButtonAriaText.textContent = lf("Stop melody");
         }
         else {
             pxt.BrowserUtils.removeClass(this.playIcon, "stop icon");
             pxt.BrowserUtils.addClass(this.playIcon, "play icon");
+            this.playButtonAriaText.textContent = lf("Play melody");
         }
     }
 
@@ -692,7 +785,7 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             pxt.AudioContextManager.stop();
             this.isPlaying = false;
 
-            this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell, "playing")));
+            this.cells.forEach(row => row.forEach(cell => pxt.BrowserUtils.removeClass(cell.children[1] as SVGRectElement, "playing")));
         }
     }
 
@@ -703,18 +796,23 @@ export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix
             if (result) {
                 this.melody.parseNotes(result);
                 this.toggle.toggle();
-                this.toggle.getRootElement().focus();
                 this.updateFieldLabel();
                 this.updateGrid();
+                // Clear the selected grid cell. This ensures that focus is not returned to the previously
+                // focused grid cell. This can result in the focus of a note that is switched off in a column that
+                // has a different note switched on. This can result in unpredictable behavior.
+                this.selected = undefined;
             }
         });
 
+        this.firstFocusableElement = this.toggle.getFirstFocusableElement();
         this.lastFocusableElement = this.gallery.getLastFocusableElement();
     }
 
 
     private hideGallery() {
         this.gallery.hide();
+        this.firstFocusableElement = this.toggle.getFirstFocusableElement();
         this.lastFocusableElement = this.doneButton;
     }
 
@@ -838,20 +936,33 @@ class Toggle {
 
         // Draw the left option
         this.leftElement = this.root.group();
+        this.leftElement.setAttribute("aria-label", this.props.leftText);
+        this.leftElement.el.tabIndex = 0;
+        this.leftElement.el.ariaSelected = "true";
+        this.leftElement.setAttribute("role", "tab");
+        this.leftElement.el.id = `${melodyEditorDivId}-control`;
+        this.leftElement.el.setAttribute("aria-controls", melodyEditorDivId);
         this.leftText = mkText(this.props.leftText)
             .appendClass("sprite-editor-text")
             .fill(this.props.selectedTextColor);
+        this.leftText.setAttribute("aria-hidden", "true");
         this.leftElement.appendChild(this.leftText);
 
         // Draw the right option
         this.rightElement = this.root.group();
+        this.rightElement.el.ariaLabel = this.props.rightText
+        this.rightElement.el.tabIndex = -1;
+        this.rightElement.el.ariaSelected = "false";
+        this.rightElement.setAttribute("role", "tab");
+        this.rightElement.el.id = `${melodyGalleryDivId}-control`;
+        this.rightElement.el.setAttribute("aria-controls", `${melodyGalleryDivId}-outer`);
         this.rightText = mkText(this.props.rightText)
             .appendClass("sprite-editor-text")
             .fill(this.props.unselectedTextColor);
+        this.rightText.setAttribute("aria-hidden", "true");
         this.rightElement.appendChild(this.rightText);
 
         this.root.onClick(() => this.toggle());
-        this.root.el.tabIndex = 0;
         this.root.el.classList.add("melody-editor-toggle-buttons");
         this.root.el.addEventListener("keydown", (e) => {
             if (["Space", "ArrowLeft", "ArrowRight", "Enter"].includes(e.code)) {
@@ -867,12 +978,22 @@ class Toggle {
             this.switch.appendClass("toggle-right");
             this.leftText.fill(this.props.unselectedTextColor);
             this.rightText.fill(this.props.selectedTextColor);
+            this.leftElement.el.tabIndex = -1
+            this.leftElement.el.ariaSelected = "false";
+            this.rightElement.el.tabIndex = 0
+            this.rightElement.el.ariaSelected = "true";
+            this.rightElement.el.focus();
         }
         else {
             this.switch.removeClass("toggle-right");
             this.switch.appendClass("toggle-left");
             this.leftText.fill(this.props.selectedTextColor);
             this.rightText.fill(this.props.unselectedTextColor);
+            this.rightElement.el.tabIndex = -1
+            this.rightElement.el.ariaSelected = "false";
+            this.leftElement.el.tabIndex = 0
+            this.leftElement.el.ariaSelected = "true";
+            this.leftElement.el.focus();
         }
         this.isLeft = !this.isLeft;
 
@@ -903,8 +1024,11 @@ class Toggle {
         return TOGGLE_WIDTH;
     }
 
-    getRootElement() {
-        return this.root.el;
+    getFirstFocusableElement() {
+        if (this.leftElement.el.tabIndex === 0) {
+            return this.leftElement.el
+        }
+        return this.rightElement.el
     }
 }
 
@@ -943,4 +1067,120 @@ function getPlaceholderColor(row: number): string {
         case 7: return "#B4009E"; // Tenor C
     }
     return "#DCDCDC";
+}
+
+const offsetLookup = [0x09, 0x0b, 0x00, 0x02, 0x04, 0x05, 0x07];
+export const REST = -0xffff;
+
+// copied from pxt-microbit/libs/core/music.ts
+export class MelodyStringReader {
+    currentOctave: number;
+    currentNote: number;
+    currentDuration: number;
+    melodyStringIndex: number;
+
+    constructor(public melody: string, public resetOctave: boolean) {
+        this.melodyStringIndex = 0;
+        this.currentOctave = 4;
+        this.currentDuration = 4;
+        this.currentNote = REST;
+    }
+
+    readNote() {
+        this.eatWhitespace();
+        if (this.resetOctave) {
+            this.currentOctave = 4;
+        }
+        let note: number = undefined;
+        let modifier = 0;
+
+        while (this.melodyStringIndex < this.melody.length) {
+            const c = this.melody.charCodeAt(this.melodyStringIndex++);
+            if (c == 32 /* space */) {
+                break;
+            }
+
+            else if (c === 35 /* # */) {
+                modifier++;
+            }
+            else if (c === 45 /* - */ || c === 114 /* r */ || c === 82 /* R */) {
+                if (note !== undefined) {
+                    this.melodyStringIndex--;
+                    break;
+                }
+                note = -1;
+            }
+            else if (c === 98 /* b */) {
+                if (note === undefined) {
+                    note = 11;
+                }
+                else {
+                    modifier--;
+                }
+            }
+            else if (c >= 48 && c <= 57) {
+                // number
+                if (note === undefined) {
+                    // invalid if we haven't seen a note yet, ignore the number
+                    continue;
+                }
+                else {
+                    this.melodyStringIndex--;
+                    this.currentOctave = this.readNumber();
+                }
+            }
+            else if (c >= 65 && c <= 71) {
+                // A-G
+                if (note !== undefined) {
+                    this.melodyStringIndex--;
+                    break;
+                }
+                note = offsetLookup[c - 65];
+            }
+            else if (c >= 97 && c <= 103) {
+                // a-g
+                if (note !== undefined) {
+                    this.melodyStringIndex--;
+                    break;
+                }
+                note = offsetLookup[c - 97];
+            }
+            else if (c === 58 /* : */) {
+                this.currentDuration = Math.max(1, this.readNumber());
+                break;
+            }
+        }
+
+        if (note === undefined || note < 0) {
+            // invalid note, treat as rest
+            this.currentNote = REST;
+        }
+        else {
+            this.currentNote = note + modifier;
+        }
+
+        this.eatWhitespace();
+    }
+
+    readNumber() {
+        let result = 0;
+        while (this.melodyStringIndex < this.melody.length) {
+            const c = this.melody.charCodeAt(this.melodyStringIndex);
+            if (c < 48 || c > 57) break;
+            result = result * 10 + (c - 48);
+            this.melodyStringIndex++;
+        }
+        return result;
+    }
+
+    eatWhitespace() {
+        while (this.melodyStringIndex < this.melody.length && this.melody.charAt(this.melodyStringIndex) == " ") {
+            this.melodyStringIndex++;
+        }
+    }
+
+    hasNextNote(): boolean {
+        this.eatWhitespace();
+        return this.melodyStringIndex < this.melody.length;
+    }
 }

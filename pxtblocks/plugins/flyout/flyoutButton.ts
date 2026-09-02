@@ -6,6 +6,7 @@ export interface ExtendedButtonInfo extends Blockly.utils.toolbox.LabelInfo {
     "web-icon": string;
     "web-icon-class": string;
     "web-icon-color": string;
+    "web-icon-image": string;
     "web-line": string;
     "web-line-width": string;
 }
@@ -66,8 +67,39 @@ export class FlyoutButton extends Blockly.FlyoutButton {
         const icon = def["web-icon"];
         const iconClass = def["web-icon-class"];
         const iconColor = def["web-icon-color"];
+        const iconImage = def["web-icon-image"];
 
-        if (icon || iconClass) {
+        if (iconImage) {
+            const iconSize = 20;
+            const ws = this.getTargetWorkspace();
+            const svgImage = Blockly.utils.dom.createSvgElement(
+                'image',
+                {
+                    'height': String(iconSize),
+                    'width': String(iconSize),
+                    'x': String(ws.RTL ? this.width + Blockly.FlyoutButton.TEXT_MARGIN_X : Blockly.FlyoutButton.TEXT_MARGIN_X),
+                    'y': String((this.height / 2 + Blockly.FlyoutButton.TEXT_MARGIN_Y) - iconSize / 2),
+                },
+                svgGroup
+            ) as SVGImageElement;
+            svgImage.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', iconImage);
+
+            const iconWidth = iconSize + 2 * Blockly.FlyoutButton.TEXT_MARGIN_X;
+            this.width += iconWidth;
+
+            const rect = svgGroup.getElementsByClassName("blocklyFlyoutLabelBackground").item(0) as SVGRectElement;
+            rect.setAttribute('width', String(this.width));
+
+            for (let i = 0; i < svgGroup.children.length; i++) {
+                const el = svgGroup.children.item(i);
+
+                if (el !== svgImage && el !== rect) {
+                    const x = Number(el.getAttribute("x"));
+                    el.setAttribute("x", (x + iconWidth) + "")
+                }
+            }
+        }
+        else if (icon || iconClass) {
             const extraIconClass = Object.keys(brandIcons).includes(icon) ? 'brandIcon' : ''
             const svgIcon = Blockly.utils.dom.createSvgElement(
                 'text',

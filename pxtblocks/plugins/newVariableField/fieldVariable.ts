@@ -1,5 +1,4 @@
 import * as Blockly from "blockly";
-import { showEditorMixin } from "./fieldDropdownMixin";
 
 /**
  * This is the same as the Blockly variable field but with the addition
@@ -17,7 +16,7 @@ export class FieldVariable extends Blockly.FieldVariable {
             insertIndex,
             0,
             [Blockly.Msg['NEW_VARIABLE_DROPDOWN'], FieldVariable.CREATE_VARIABLE_ID],
-            [undefined, 'SEPARATOR']
+            Blockly.FieldDropdown.SEPARATOR
         );
 
         return options;
@@ -39,7 +38,7 @@ export class FieldVariable extends Blockly.FieldVariable {
         if (this.sourceBlock_ && !this.sourceBlock_.isDeadOrDying()) {
             const id = menuItem.getValue();
             if (id === FieldVariable.CREATE_VARIABLE_ID) {
-                Blockly.Variables.createVariableButtonHandler(this.sourceBlock_.workspace, name => {
+                Blockly.Variables.createVariableButtonHandler(this.sourceBlock_.workspace as Blockly.WorkspaceSvg, name => {
                     const newVar = this.sourceBlock_.workspace.getVariableMap().getVariable(name);
 
                     if (newVar) {
@@ -167,10 +166,6 @@ export class FieldVariable extends Blockly.FieldVariable {
             'ry',
             String(this.getConstants()!.FIELD_BORDER_RECT_RADIUS),
         );
-    }
-
-    protected showEditor_(e?: MouseEvent): void {
-        showEditorMixin.call(this, e);
     }
 
     getValue(): string | null {

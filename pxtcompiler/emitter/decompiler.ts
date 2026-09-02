@@ -105,6 +105,9 @@ namespace ts.pxtc.decompiler {
     const stringType = "text";
     const booleanType = "logic_boolean";
 
+    const colorPickerNumber = "makecode_color_picker_number";
+    const colorPickerString = "makecode_color_picker_string";
+
     const ops: pxt.Map<{ type: string; op?: string; leftName?: string; rightName?: string }> = {
         "+": { type: "math_arithmetic", op: "ADD" },
         "-": { type: "math_arithmetic", op: "MINUS" },
@@ -575,8 +578,8 @@ ${output}</xml>`;
             };
         }
 
-        function compInfo(callInfo: pxtc.CallInfo): pxt.blocks.BlockCompileInfo {
-            const blockInfo = blocksInfo.apis.byQName[callInfo.qName];
+        function compInfo(callInfo: DecompilerCallInfo): pxt.blocks.BlockCompileInfo {
+            const blockInfo = blocksInfo.apis.byQName[callInfo.decompilerBlockAlias || callInfo.qName];
             if (blockInfo) {
                 return pxt.blocks.compileInfo(blockInfo);
             }
@@ -694,13 +697,19 @@ ${output}</xml>`;
         function isEventExpression(expr: ts.ExpressionStatement): boolean {
             if (expr.expression.kind == SK.CallExpression) {
                 const call = expr.expression as ts.CallExpression;
-                const callInfo = pxtInfo(call).callInfo;
+                const callInfo = pxtInfo(call).callInfo as DecompilerCallInfo;
                 if (!callInfo) {
                     error(expr)
                     return false;
                 }
-                const attributes = attrs(callInfo);
-                return attributes.blockId && !attributes.handlerStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
+                let attributes = attrs(callInfo);
+                if (!attributes.block) {
+                    if (env.aliasBlocks[callInfo.qName]) {
+                        callInfo.decompilerBlockAlias = env.aliasBlocks[callInfo.qName];
+                        attributes = attrs(callInfo);
+                    }
+                }
+                return attributes.blockId && !attributes.handlerStatement && !attributes.forceStatement && !callInfo.isExpression && hasStatementInput(callInfo, attributes);
             }
             return false;
         }
@@ -773,7 +782,7 @@ ${output}</xml>`;
         function emitValueNode(n: ValueNode) {
             write(`<value name="${n.name}">`)
 
-            if (shouldEmitShadowOnly(n)) {
+            if (shouldEmitShadowOnly(n, blocksInfo)) {
                 emitOutputNode(n.value, true);
             }
             else {
@@ -783,6 +792,7 @@ ${output}</xml>`;
                         case numberType:
                         case integerNumberType:
                         case wholeNumberType:
+                        case colorPickerNumber:
                             write(`<shadow type="${n.shadowType}"><field name="NUM">0</field></shadow>`)
                             break;
                         case minmaxNumberType:
@@ -796,7 +806,8 @@ ${output}</xml>`;
                             write(`<shadow type="${booleanType}"><field name="BOOL">TRUE</field></shadow>`)
                             break;
                         case stringType:
-                            write(`<shadow type="${stringType}"><field name="TEXT"></field></shadow>`)
+                        case colorPickerString:
+                            write(`<shadow type="${n.shadowType}"><field name="TEXT"></field></shadow>`)
                             break;
                         default:
                             write(`<shadow type="${n.shadowType}"/>`)
@@ -1290,11 +1301,8 @@ ${output}</xml>`;
                 const info = pxtInfo(call).callInfo;
                 const index = call.arguments.indexOf(n);
                 if (info && index !== -1) {
-                    const blockInfo = blocksInfo.apis.byQName[info.qName];
-                    if (blockInfo) {
-                        const comp = pxt.blocks.compileInfo(blockInfo);
-                        return comp && comp.parameters[index];
-                    }
+                    const comp = compInfo(info);
+                    return comp && comp.parameters[index];
                 }
             }
             return undefined;
@@ -1605,6 +1613,8 @@ ${output}</xml>`;
         }
 
         function getImageLiteralStatement(node: ts.CallExpression, info: pxtc.CallInfo) {
+            const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
             let arg = node.arguments[0];
             if (arg.kind != SK.StringLiteral && arg.kind != SK.NoSubstitutionTemplateLiteral) {
                 error(node)
@@ -1616,23 +1626,45 @@ ${output}</xml>`;
             res.fields = [];
 
             const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
-            const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
+            const nc = (attributes.imageLiteralColumns || 5) * gridLiteralValue(attributes);
             const nr = attributes.imageLiteralRows || 5;
             const nleds = nc * nr;
             if (nleds != leds.length) {
                 error(node, Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length));
                 return undefined;
             }
+            const isColor = attributes.colorGridLiteral;
             let ledString = '';
             for (let r = 0; r < nr; ++r) {
                 for (let c = 0; c < nc; ++c) {
-                    ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
+                    if (isColor) {
+                        ledString += chars.charAt(parseCharacter(leds[r * nc + c]));
+                    }
+                    else {
+                        ledString += /[#*1]/.test(leds[r * nc + c]) ? '#' : '.';
+                    }
                 }
                 ledString += '\n';
             }
             res.fields.push(getField(`LEDS`, `\`${ledString}\``));
 
             return res;
+        }
+
+        function parseCharacter(c: string): number {
+            const chars = ".#23456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            switch (c) {
+                case "#":
+                case "*":
+                case "1":
+                    return 1;
+                case ".":
+                case "_":
+                case "0":
+                    return 0;
+                default:
+                    return Math.max(0, chars.indexOf(c.toUpperCase()));
+            }
         }
 
         function getBinaryExpressionStatement(n: ts.BinaryExpression): StatementNode {
@@ -1969,6 +2001,29 @@ ${output}</xml>`;
                 r.fields = [getField("OP", "POWER")];
                 return r;
             }
+            else if (isColorPickerFunction(info)) {
+                const r = mkExpr("makecode_color_picker", node);
+
+                if (info.qName === "colorHelpers.hex") {
+                    r.inputs = [
+                        mkValue("HEX_INPUT", getOutputBlock(node.arguments[0]), colorPickerString)
+                    ]
+                }
+                else {
+                    r.inputs = node.arguments.map((arg, index) =>
+                        mkValue("INPUT" + index, getOutputBlock(arg), colorPickerNumber)
+                    )
+                }
+
+                r.fields = [getField("FORMAT", info.qName.substring(info.qName.lastIndexOf(".") + 1))];
+
+                const blockDef = blocksInfo.blocks.find(b => b.attributes.builtinBlockId === "makecode_color_picker");
+                if (blockDef && blockDef.attributes.color) {
+                    r.mutation = { color: blockDef.attributes.color };
+                }
+
+                return r;
+            }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
                 const op = info.qName.substring(5);
                 if (isSupportedMathFunction(op)) {
@@ -2020,7 +2075,7 @@ ${output}</xml>`;
 
                         let isStatement = true;
 
-                        if (info.isExpression) {
+                        if (isOutputExpression(node, env)) {
                             const [parent] = getParent(node);
                             isStatement = parent && parent.kind === SK.ExpressionStatement;
                         }
@@ -2058,7 +2113,7 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            if (attributes.imageLiteral || attributes.gridLiteral) {
+            if (gridLiteralValue(attributes)) {
                 return getImageLiteralStatement(node, info);
             }
 
@@ -2070,9 +2125,8 @@ ${output}</xml>`;
                 // }
             }
 
-            const args = paramList(info, env.blocks);
-            const api = env.blocks.apis.byQName[info.decompilerBlockAlias || info.qName];
-            const comp = pxt.blocks.compileInfo(api);
+            const args = paramList(info, env);
+            const comp = compInfo(info);
 
             const r = asExpression ? mkExpr(attributes.blockId, node)
                 : mkStmt(attributes.blockId, node);
@@ -2098,9 +2152,9 @@ ${output}</xml>`;
                 const paramComp = comp.parameters[comp.thisParameter ? i - 1 : i];
                 const paramRange = paramComp && paramComp.range;
                 if (paramRange) {
-                    const min = paramRange['min'];
-                    const max = paramRange['max'];
-                    shadowMutation = { 'min': min.toString(), 'max': max.toString() };
+                    const min = paramRange["min"];
+                    const max = paramRange["max"];
+                    shadowMutation = { "min": min.toString(), "max": max.toString(), "label": paramComp.actualName.charAt(0).toUpperCase() + paramComp.actualName.slice(1) };
                 }
 
                 if (i === 0 && attributes.defaultInstance) {
@@ -2172,9 +2226,18 @@ ${output}</xml>`;
                                     r.mutation = {
                                         "numargs": arrow.parameters.length.toString()
                                     };
-                                    arrow.parameters.forEach((parameter, i) => {
-                                        r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
-                                    });
+
+                                    if (attributes.draggableParameters === "reporter") {
+                                        arrow.parameters.forEach((parameter, i) => {
+                                            const arg = paramDesc.handlerParameters[i];
+                                            addDraggableInput(arg, (parameter.name as ts.Identifier).text);
+                                        });
+                                    }
+                                    else {
+                                        arrow.parameters.forEach((parameter, i) => {
+                                            r.mutation["arg" + i] = (parameter.name as ts.Identifier).text;
+                                        });
+                                    }
                                 }
                                 else {
                                     arrow.parameters.forEach((parameter, i) => {
@@ -2190,7 +2253,7 @@ ${output}</xml>`;
                                 }
                             }
                             if (attributes.draggableParameters) {
-                                if (arrow.parameters.length < paramDesc.handlerParameters.length) {
+                                if (arrow.parameters.length < paramDesc.handlerParameters.length && !attributes.optionalVariableArgs) {
                                     for (let i = arrow.parameters.length; i < paramDesc.handlerParameters.length; i++) {
                                         const arg = paramDesc.handlerParameters[i];
                                         addDraggableInput(arg, arg.name);
@@ -2294,7 +2357,7 @@ ${output}</xml>`;
                         if (!arg.param.isOptional) {
                             nonOptional++;
                         }
-                        else if (input && !shouldEmitShadowOnly(input)) {
+                        else if (input && !shouldEmitShadowOnly(input, blocksInfo)) {
                             expandCount = Math.max(arg.param.definitionIndex - nonOptional + 1, expandCount)
                         }
                     }
@@ -2735,7 +2798,7 @@ ${output}</xml>`;
             }
 
             if (!asExpression) {
-                if (info.isExpression && !userFunction) {
+                if (isOutputExpression(n, env) && !userFunction) {
                     const alias = env.aliasBlocks[info.qName];
 
                     if (alias) {
@@ -2746,8 +2809,11 @@ ${output}</xml>`;
                     }
                 }
             }
+            else if (attributes.forceStatement || attributes.handlerStatement) {
+                return Util.lf("Function with forceStatement cannot be used as an expression.")
+            }
 
-            if (info.qName == "Math.pow") {
+            if (info.qName == "Math.pow" || isColorPickerFunction(info)) {
                 return undefined;
             }
             else if (pxt.Util.startsWith(info.qName, "Math.")) {
@@ -2766,7 +2832,7 @@ ${output}</xml>`;
             }
 
             const hasCallback = hasStatementInput(info, attributes);
-            if (hasCallback && !attributes.handlerStatement && !topLevel) {
+            if (hasCallback && !attributes.handlerStatement && !attributes.forceStatement && !topLevel) {
                 return Util.lf("Events must be top level");
             }
 
@@ -2784,12 +2850,12 @@ ${output}</xml>`;
                 attributes.blockId = builtin.blockId;
             }
 
-            const args = paramList(info, env.blocks);
+            const args = paramList(info, env);
             const api = env.blocks.apis.byQName[info.qName];
-            const comp = pxt.blocks.compileInfo(api);
+            const comp = env.compInfo(info);
             const totalDecompilableArgs = comp.parameters.length + (comp.thisParameter ? 1 : 0);
 
-            if (attributes.imageLiteral || attributes.gridLiteral) {
+            if (gridLiteralValue(attributes)) {
                 // Image literals do not show up in the block string, so it won't be in comp
                 if (info.args.length - totalDecompilableArgs > 1) {
                     return Util.lf("Function call has more arguments than are supported by its block");
@@ -2801,7 +2867,7 @@ ${output}</xml>`;
                 }
                 const leds = ((arg as ts.StringLiteral).text || '').replace(/\s+/g, '');
                 const nr = attributes.imageLiteralRows || 5;
-                const nc = (attributes.imageLiteralColumns || 5) * (attributes.imageLiteral || attributes.gridLiteral);
+                const nc = (attributes.imageLiteralColumns || 5) * gridLiteralValue(attributes);
                 const nleds = nc * nr;
                 if (nc * nr != leds.length) {
                     return Util.lf("Invalid image pattern ({0} expected vs {1} actual)", nleds, leds.length);
@@ -2892,7 +2958,7 @@ ${output}</xml>`;
 
                 const predicate = p as (ts.FunctionExpression | ts.ArrowFunction);
 
-                if (isOutputExpression(predicate.body as ts.Expression)) {
+                if (isOutputExpression(predicate.body as ts.Expression, env)) {
                     return true;
                 }
 
@@ -3127,15 +3193,16 @@ ${output}</xml>`;
             if (checkIfWithinFunction(n)) {
                 return undefined;
             }
-            return Util.lf("Return statements can only be used within top-level function declarations");
+            return Util.lf("Return statements can only return values inside user-defined functions");
 
-            function checkIfWithinFunction(n: Node): boolean {
-                const enclosing = ts.getEnclosingBlockScopeContainer(n);
+            function checkIfWithinFunction(toCheck: Node): boolean {
+                const enclosing = ts.getEnclosingBlockScopeContainer(toCheck);
                 if (enclosing) {
                     switch (enclosing.kind) {
-                        case SK.SourceFile:
                         case SK.ArrowFunction:
                         case SK.FunctionExpression:
+                            return !n.expression;
+                        case SK.SourceFile:
                             return false;
                         case SK.FunctionDeclaration:
                             return enclosing.parent && enclosing.parent.kind === SK.SourceFile && !checkStatement(enclosing, env, false, true);
@@ -3360,7 +3427,7 @@ ${output}</xml>`;
                 const pInfo = pxtInfo(n);
                 if (isUndefined(n)) {
                     return Util.lf("Undefined is not supported in blocks");
-                } else if (isDeclaredElsewhere(n as Identifier) && !(pInfo.commentAttrs && pInfo.commentAttrs.blockIdentity && pInfo.commentAttrs.enumIdentity)) {
+                } else if (isDeclaredElsewhere(n as Identifier) && !(pInfo.commentAttrs && pInfo.commentAttrs.blockIdentity && pInfo.commentAttrs.enumIdentity && env.blocks.apis.byQName[pInfo.commentAttrs.blockIdentity])) {
                     return Util.lf("Variable is declared in another file");
                 } else {
                     return undefined;
@@ -3394,7 +3461,7 @@ ${output}</xml>`;
             if (callInfo) {
                 const attributes = env.attrs(callInfo);
                 const blockInfo = env.compInfo(callInfo);
-                if (attributes.blockIdentity || attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
+                if ((attributes.blockIdentity && env.blocks.apis.byQName[attributes.blockIdentity]) || attributes.blockId === "lists_length" || attributes.blockId === "text_length") {
                     return undefined;
                 }
                 else if (callInfo.decl.kind === SK.EnumMember) {
@@ -3472,7 +3539,7 @@ ${output}</xml>`;
 
         const attributes = env.attrs(callInfo);
 
-        if (!attributes.blockIdentity) {
+        if (!attributes.blockIdentity || !env.blocks.apis.byQName[attributes.blockIdentity]) {
             return Util.lf("Tagged template does not have blockIdentity set");
         }
 
@@ -3591,14 +3658,13 @@ ${output}</xml>`;
         return node.kind === SK.ArrowFunction || node.kind === SK.FunctionExpression;
     }
 
-    function paramList(info: CallInfo, blocksInfo: BlocksInfo) {
+    function paramList(info: CallInfo, env: DecompilerEnv) {
         const res: DecompileArgument[] = [];
-        const sym = blocksInfo.apis.byQName[info.qName];
+        const sym = env.blocks.apis.byQName[info.qName];
 
         if (sym) {
-            const attributes = blocksInfo.apis.byQName[info.qName].attributes;
-            const comp = pxt.blocks.compileInfo(sym);
-            const builtin = pxt.blocks.builtinFunctionInfo[info.qName]
+            const attributes = env.blocks.apis.byQName[info.qName].attributes;
+            const comp = env.compInfo(info);
             let offset = attributes.imageLiteral ? 1 : 0;
 
             if (comp.thisParameter) {
@@ -3681,7 +3747,7 @@ ${output}</xml>`;
         });
     }
 
-    function isOutputExpression(expr: ts.Expression): boolean {
+    function isOutputExpression(expr: ts.Expression, env: DecompilerEnv): boolean {
         switch (expr.kind) {
             case SK.BinaryExpression: {
                 const tk = (expr as ts.BinaryExpression).operatorToken.kind;
@@ -3698,7 +3764,8 @@ ${output}</xml>`;
             case SK.CallExpression: {
                 const callInfo: pxtc.CallInfo = pxtc.pxtInfo(expr).callInfo
                 assert(!!callInfo);
-                return callInfo.isExpression;
+                const attrs = env.attrs(callInfo);
+                return callInfo.isExpression && !attrs.forceStatement && !attrs.handlerStatement;
             }
             case SK.Identifier:
             case SK.ParenthesizedExpression:
@@ -3929,7 +3996,7 @@ ${output}</xml>`;
         }
     }
 
-    function shouldEmitShadowOnly(n: ValueNode) {
+    function shouldEmitShadowOnly(n: ValueNode, blocksInfo: BlocksInfo) {
         if (n.emitShadowOnly !== undefined) {
             return n.emitShadowOnly;
         }
@@ -3937,29 +4004,55 @@ ${output}</xml>`;
         let emitShadowOnly = false;
 
         if (n.value.kind === "expr") {
+            if (n.value.type !== n.shadowType) {
+                const shadowBlockInfo = blocksInfo.blocksById[n.shadowType];
+                let shadowBlockShimType: string;
+                let shadowFieldName: string;
+
+                if (shadowBlockInfo?.attributes?.shim === "TD_ID") {
+                    const argType = shadowBlockInfo.parameters[0]?.type;
+                    const blockInfo = pxt.blocks.compileInfo(shadowBlockInfo);
+
+                    if (argType === shadowBlockInfo.retType) {
+                        shadowBlockShimType = argType;
+                        shadowFieldName = blockInfo.parameters[0].definitionName;
+                    }
+                }
+
+                if (
+                    shadowBlockShimType === "boolean" && isBooleanBlockType(n.value.type) ||
+                    shadowBlockShimType === "number" && isNumberBlockType(n.value.type) ||
+                    shadowBlockShimType === "string" && isStringBlockType(n.value.type)
+                ) {
+                    n.value.type = n.shadowType;
+                    n.value.fields[0].name = shadowFieldName;
+                    n.value.mutation = n.shadowMutation;
+                }
+            }
+
             const value = n.value as ExpressionNode;
             if (value.type === numberType && n.shadowType === minmaxNumberType) {
                 value.type = minmaxNumberType;
                 value.fields[0].name = 'SLIDER';
                 value.mutation = n.shadowMutation;
             }
+            else if (value.type === numberType && n.shadowType === colorPickerNumber) {
+                value.type = colorPickerNumber;
+            }
+            else if (value.type === stringType && n.shadowType === colorPickerString) {
+                value.type = colorPickerString;
+            }
+
             emitShadowOnly = value.type === n.shadowType;
             if (!emitShadowOnly) {
-                switch (value.type) {
-                    case "math_number":
-                    case "math_number_minmax":
-                    case "math_integer":
-                    case "math_whole_number":
-                    case "logic_boolean":
-                    case "text":
-                        emitShadowOnly = !n.shadowType;
-                        break;
+                if (isNumberBlockType(value.type) || isBooleanBlockType(value.type) || isStringBlockType(value.type)) {
+                    emitShadowOnly = !n.shadowType
                 }
             }
 
             if (emitShadowOnly && value.inputs) {
                 for (const input of value.inputs) {
-                    if (!shouldEmitShadowOnly(input)) {
+                    if (!shouldEmitShadowOnly(input, blocksInfo)) {
                         emitShadowOnly = false;
                         break;
                     }
@@ -3970,5 +4063,44 @@ ${output}</xml>`;
         n.emitShadowOnly = emitShadowOnly;
 
         return emitShadowOnly;
+    }
+
+    function isNumberBlockType(type: string) {
+        switch (type) {
+            case numberType:
+            case minmaxNumberType:
+            case integerNumberType:
+            case wholeNumberType:
+            case colorPickerNumber:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    function isBooleanBlockType(type: string) {
+        return type === booleanType;
+    }
+
+    function isStringBlockType(type: string) {
+        return type === stringType || type === colorPickerString;
+    }
+
+    function gridLiteralValue(attrs: CommentAttrs) {
+        return attrs.gridLiteral || attrs.imageLiteral || attrs.colorGridLiteral;
+
+    }
+
+    function isColorPickerFunction(info: DecompilerCallInfo) {
+        switch (info?.qName) {
+            case "colorHelpers.rgb":
+            case "colorHelpers.hsv":
+            case "colorHelpers.hsl":
+            case "colorHelpers.hex":
+            case "colorHelpers.cmyk":
+                return true;
+        }
+
+        return false;
     }
 }

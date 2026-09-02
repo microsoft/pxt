@@ -82,5 +82,5 @@ export function getSafeChecklistName(state: AppState): string | undefined {
 }
 
 export function getCatalogCriteria(state: AppState): CatalogCriteria[] {
-    return state.catalog?.filter(c => !c.hideInCatalog) ?? [];
+    return state.catalog?.filter(c => !c.hideInCatalog && c.use !== "ai_question") ?? [];
 }

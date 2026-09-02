@@ -433,7 +433,8 @@ export function expandHtml(html: string, params?: pxt.Map<string>, appTheme?: px
         // so we don't do them here either.
     }
     pxt.docs.prepTemplate(d)
-    return d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
+    const expanded = d.finish().replace(/@-(\w+)-@/g, (f, w) => "@" + w + "@")
+    return expanded
 }
 
 export function expandDocTemplateCore(template: string) {
@@ -1028,6 +1029,11 @@ export function serveAsync(options: ServeOptions) {
         // Rebuild pathname without leading version number
         pathname = "/" + elts.join("/");
 
+        const originalRouteSegment = (elts[0] || "");
+        const hyphenPrefixMatch = originalRouteSegment.match(/^-+/);
+        const hyphenPrefix = hyphenPrefixMatch ? hyphenPrefixMatch[0] : "";
+        const normalizedRouteSegment = originalRouteSegment.replace(/^-+/, "").toLowerCase();
+
         const expandWebappHtml = (appname: string, html: string) => {
             // Expand templates
             html = expandHtml(html);
@@ -1074,13 +1080,21 @@ export function serveAsync(options: ServeOptions) {
             });
         };
 
-        const webappNames = SUB_WEBAPPS.filter(w => w.localServeEndpoint).map(w => w.localServeEndpoint);
+        const devSubapp = SUB_WEBAPPS.find(w =>
+            !!w.localServeEndpoint && w.localServeEndpoint.toLowerCase() === normalizedRouteSegment
+        );
 
-        const webappIdx = webappNames.findIndex(s => new RegExp(`^-{0,3}${s}$`).test(elts[0] || ''));
-        if (webappIdx >= 0) {
-            const webappName = webappNames[webappIdx];
+        if (devSubapp) {
             const webappPath = pathname.split("/").slice(2).join('/'); // remove /<webappName>/ from path
-            return serveWebappFile(webappName, webappPath);
+            elts[0] = `${hyphenPrefix}${devSubapp.name}`;
+            const escapedEndpoint = devSubapp.localServeEndpoint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            const aliasRegex = new RegExp(`^/(-{0,3})${escapedEndpoint}(?=/|$)`, "i");
+            pathname = pathname.replace(aliasRegex, (_match, hyphens) => `/${hyphens}${devSubapp.name}`);
+
+            if (normalizedRouteSegment === devSubapp.name.toLowerCase()) {
+                serveWebappFile(devSubapp.name, webappPath);
+                return;
+            }
         }
 
         if (elts[0] == "api") {

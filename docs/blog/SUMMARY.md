@@ -1,6 +1,14 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [MakeCode Arcade August 2026 Update](/blog/arcade/update-aug-2026)
+    * [MakeCode for the micro:bit 2026 – Accessible Blocks are here!](/blog/microbit/2026-release)
+    * [Summer 2026 – MakeCode Professional Development](/blog/csp/summer-pd-2026)
+    * [MakeCode Arcade 2026 Update](/blog/arcade/update-feb-2026)
+    * [Interview with MakeCode Arcade Game Maker](/blog/arcade/code-ninjas)
+    * [Computer Science Education Week 2025](/blog/csed-week/csed-week-2025)
+    * [MakeCode Minecraft 2025 Update](/blog/minecraft/2025-release)
+    * [MakeCode for the micro:bit – 2025 Update](/blog/microbit/2025-update)
     * [Summer 2025 – MakeCode Professional Development](/blog/csp/summer-pd-2025)
     * [MakeCode Arcade 2025 Update](/blog/arcade/update-mar-2025)
     * [Display shield extension/simulator for the micro:bit](/blog/microbit/display-shield)

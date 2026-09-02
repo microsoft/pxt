@@ -147,6 +147,7 @@ function registerDuplicate() {
         scopeType: Blockly.ContextMenuRegistry.ScopeType.BLOCK,
         id: 'blockDuplicate',
         weight: BlockContextWeight.Duplicate,
+        associatedKeyboardShortcut: Blockly.ShortcutItems.names.DUPLICATE,
     };
     Blockly.ContextMenuRegistry.registry.register(duplicateOption);
 }

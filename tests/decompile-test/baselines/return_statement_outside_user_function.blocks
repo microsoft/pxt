@@ -3,6 +3,13 @@
 <mutation name="doSomething" >
 </mutation>
 <statement name="STACK">
+<block type="control_run_in_background">
+<statement name="HANDLER">
+<block type="function_return">
+<mutation no_return_value="true" />
+</block>
+</statement>
+<next>
 <block type="function_return">
 <value name="RETURN_VALUE">
 <shadow type="math_number">
@@ -10,12 +17,34 @@
 </shadow>
 </value>
 </block>
+</next>
+</block>
+</statement>
+</block>
+<block type="function_definition">
+<mutation name="doSomething2" >
+</mutation>
+<statement name="STACK">
+<block type="control_run_in_background">
+<statement name="HANDLER">
+<block type="typescript_statement">
+<mutation numlines="1" error="Return statements can only be used within top-level function declarations" line0="return 0" />
+</block>
+</statement>
+</block>
+</statement>
+</block>
+<block type="device_forever">
+<statement name="HANDLER">
+<block type="function_return">
+<mutation no_return_value="true" />
+</block>
 </statement>
 </block>
 <block type="device_forever">
 <statement name="HANDLER">
 <block type="typescript_statement">
-<mutation numlines="1" error="Return statements can only be used within top-level function declarations" line0="return" />
+<mutation numlines="1" error="Return statements can only be used within top-level function declarations" line0="return 0" />
 </block>
 </statement>
 </block>

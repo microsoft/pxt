@@ -4,8 +4,10 @@ import { CancellationToken } from "./SoundEffectEditor";
 export interface SoundPreviewProps {
     sound: pxt.assets.Sound;
     handleStartAnimationRef?: (startAnimation: (duration: number) => void) => void;
-    handleSynthListenerRef?: (onPull: (freq: number, volume: number, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void) => void;
+    handleSynthListenerRef?: (onPull: PreviewSynthListener) => void;
 }
+
+export type PreviewSynthListener = (snapshot: pxsim.AudioContextManager.SoundOscilloscopeData | pxsim.AudioContextManager.SoundSnapshotData, sound: pxt.assets.Sound, cancelToken: CancellationToken) => void;
 
 export const SoundPreview = (props: SoundPreviewProps) => {
     const { sound, handleStartAnimationRef, handleSynthListenerRef } = props;
@@ -28,13 +30,24 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 return;
             }
             let toDraw = sound;
-            let frequency = toDraw.startFrequency;
-            let volume = toDraw.startVolume;
+            let freqData: Float32Array;
+            let fftData: Uint8Array;
+            let currentFrequency: number;
+            let currentVolume: number;
+
             let cancelToken: CancellationToken = null;
 
-            handleSynthListenerRef((freq, vol, sound, token) => {
-                frequency = freq;
-                volume = vol * pxt.assets.MAX_VOLUME;
+            handleSynthListenerRef((snapshot, sound, token) => {
+                if (isOscilloscopeData(snapshot)) {
+                    freqData = snapshot.data;
+                    fftData = snapshot.fft;
+                }
+                else {
+                    freqData = undefined;
+                    fftData = undefined;
+                    currentFrequency = snapshot.frequency;
+                    currentVolume = snapshot.volume * pxt.assets.MAX_VOLUME;
+                }
                 toDraw = sound;
                 cancelToken = token;
             })
@@ -51,7 +64,13 @@ export const SoundPreview = (props: SoundPreviewProps) => {
                 animationPath.setAttribute("opacity", "1");
                 previewPath.setAttribute("opacity", "0");
 
-                animationPath.setAttribute("d", pxt.assets.renderWaveSnapshot(frequency, volume, toDraw.wave, width, height, 10))
+                if (freqData) {
+                    animationPath.setAttribute("d", renderWaveSnapshot(freqData, width, height))
+                    // animationPath.setAttribute("d", renderFrequencyContent(fftData, width, height))
+                }
+                else if (currentFrequency !== undefined && currentVolume !== undefined) {
+                    animationPath.setAttribute("d", pxt.assets.renderWaveSnapshot(currentFrequency, currentVolume, toDraw.wave, width, height, 10));
+                }
 
                 requestAnimationFrame(doAnimationFrame);
             }
@@ -110,3 +129,79 @@ export const SoundPreview = (props: SoundPreviewProps) => {
     </div>
 }
 
+function renderWaveSnapshot(data: Float32Array, width: number, height: number) {
+    const xSlice = width / (data.length * 0.75);
+
+    const parts: string[] = [];
+
+    const MIN_VALUE = -0.125;
+    const MAX_VALUE = 0.125;
+
+    let currentSign = 0;
+
+    const crossings: number[] = [];
+
+    let res = "";
+    for (let i = 0; i < data.length; ++i) {
+        const sign = Math.sign(data[i]);
+
+        if (sign !== currentSign) {
+            currentSign = sign;
+            crossings.push(i);
+
+            res += currentSign + " ";
+        }
+    }
+
+    let middleCrossing = data.length >> 1;
+
+    if (crossings.length) {
+        let middleIndex = Math.floor(crossings.length / 2);
+        while (data[crossings[middleIndex]] <=0) {
+            middleIndex++;
+        }
+        middleCrossing = crossings[middleIndex];
+    }
+
+    for (let i = 0; i < data.length; ++i) {
+        const x = (width / 2) + (i - middleCrossing) * xSlice;
+        const y = (height / 2) + data[i] * (height / (MAX_VALUE - MIN_VALUE));
+
+        let op = "L"
+        if (parts.length === 0) {
+            op = "M";
+        }
+
+        parts.push(`${op} ${x} ${height - y}`);
+    }
+
+    return parts.join(" ");
+}
+
+function renderFrequencyContent(data: Uint8Array, width: number, height: number) {
+    const xSlice = width / data.length;
+
+    const parts: string[] = [];
+
+    for (let i = 0; i < data.length; ++i) {
+        const x = i * xSlice;
+        const y = (data[i] / 255) * height;
+
+        let op = "L"
+        if (parts.length === 0) {
+            op = "M";
+        }
+
+        parts.push(`${op} ${x} ${height - y}`);
+    }
+
+    return parts.join(" ");
+}
+
+function isSnapshotData(data: pxsim.AudioContextManager.SoundSnapshotData | pxsim.AudioContextManager.SoundOscilloscopeData): data is pxsim.AudioContextManager.SoundSnapshotData {
+    return (data as pxsim.AudioContextManager.SoundSnapshotData).frequency !== undefined;
+}
+
+function isOscilloscopeData(data: pxsim.AudioContextManager.SoundSnapshotData | pxsim.AudioContextManager.SoundOscilloscopeData): data is pxsim.AudioContextManager.SoundOscilloscopeData {
+    return (data as pxsim.AudioContextManager.SoundOscilloscopeData).data !== undefined;
+}

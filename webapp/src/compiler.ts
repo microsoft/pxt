@@ -174,6 +174,7 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             }
             opts.computeUsedSymbols = true;
             opts.computeUsedParts = true;
+            opts.enhancedErrors = true;
             if (options.forceEmit)
                 opts.forceEmit = true;
             if (/test=1/i.test(window.location.href))
@@ -436,7 +437,7 @@ export function decompilePySnippetstoXmlAsync(code: string[]): Promise<string[]>
             // strip the namespace declaration out of the converted snippets and concat to convert to blocks
             const tsCode = [];
             for (let file of files) {
-                let match = res.outfiles[file + ".ts"].match(namespaceRegex);
+                let match = res.outfiles[file + ".ts"]?.match(namespaceRegex);
                 if (match && match[1]) {
                     const noNamespace = match[1];
                     // strip out 'export let' and 'export function'. This won't hit custom kinds since those are always const
@@ -531,6 +532,20 @@ export function projectSearchClear() {
         });
 }
 
+export function homeSearchAsync(searchFor: pxtc.service.HomeSearchOptions): Promise<pxtc.service.HomeSearchInfo[]> {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("homeSearch", { homeSearch: searchFor });
+        });
+}
+
+export function homeSearchClear() {
+    return ensureApisInfoAsync()
+        .then(() => {
+            return workerOpAsync("homeSearchClear", {});
+        });
+}
+
 export function formatAsync(input: string, pos: number) {
     return workerOpAsync("format", { format: { input: input, pos: pos } });
 }
@@ -558,6 +573,7 @@ export async function typecheckAsync(): Promise<pxtc.CompileResult | null> {
 
             const opts = await pkg.mainPkg.getCompileOptionsAsync();
             opts.testMode = true; // show errors in all top-level code
+            opts.enhancedErrors = true;
 
             await workerOpAsync("setOptions", { options: opts });
 
@@ -619,7 +635,7 @@ interface BundledPackage {
 }
 
 interface UsedPackageInfo {
-    dirname: string,
+    packageId: string,
     info: pxt.PackageApiInfo
 }
 
@@ -662,7 +678,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     const usedPackages = project.pkgAndDeps();
     const externalPackages: pkg.EditorPackage[] = [];
     const usedPackageInfo: UsedPackageInfo[] = [{
-        dirname: corePkgName,
+        packageId: pxt.appTarget.corepkg,
         info: corePkg
     }];
 
@@ -673,7 +689,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         for (const bundle of bundledPackages) {
             if (bundle.config.name === getPackageKey(dep)) {
                 usedPackageInfo.push({
-                    dirname: bundle.dirname,
+                    packageId: dep.getPkgId(),
                     info: bundled[bundle.dirname]
                 });
                 foundIt = true;
@@ -705,7 +721,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
             else {
                 pxt.debug(`Fetched cached API info for ${getPackageKey(dep)}`);
                 usedPackageInfo.push({
-                    dirname: dep.getPkgId(),
+                    packageId: dep.getPkgId(),
                     info: entry
                 });
             }
@@ -718,13 +734,13 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     for (const used of usedPackageInfo) {
         if (!used) continue;
-        let { info, dirname } = used;
+        let { info, packageId } = used;
 
         const byQName = U.cloneApis(info.apis.byQName);
 
-        // reinclude the pkg the api originates from, which is trimmed during compression
+        // Restore the runtime package ID, which is trimmed during compression.
         for (const api of Object.keys(byQName)) {
-            byQName[api].pkg = dirname;
+            byQName[api].pkg = packageId;
 
             // We had a bug where we were caching the translated language code and it broke translations.
             // make sure we clear it on any old cached entries from before the bug was fixed
@@ -821,6 +837,11 @@ function cleanApiForCache(apiInfo: pxtc.SymbolInfo) {
     if (cachedAttrs._untranslatedJsDoc) {
         cachedAttrs.jsDoc = cachedAttrs._untranslatedJsDoc;
         delete cachedAttrs._untranslatedJsDoc;
+        defChanged = true;
+    }
+    if (cachedAttrs._untranslatedAriaLabel) {
+        cachedAttrs.ariaLabel = cachedAttrs._untranslatedAriaLabel;
+        delete cachedAttrs._untranslatedAriaLabel;
         defChanged = true;
     }
     if (defChanged) {

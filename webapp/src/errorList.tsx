@@ -26,11 +26,20 @@ export type StackFrameDisplayInfo = {
     onClick?: () => void;
 };
 
+export interface ErrorDisplayAction {
+    label: string;
+    title?: string;
+    ariaLabel?: string;
+    onClick: () => void;
+}
+
 export type ErrorDisplayInfo = {
     message: string;
     stackFrames?: StackFrameDisplayInfo[];
     metadata?: ErrorMetadata;
+    preventsRunning?: boolean;
     onClick?: () => void;
+    actions?: ErrorDisplayAction[];
 };
 
 export interface ErrorListProps {
@@ -43,6 +52,8 @@ export interface ErrorListProps {
         continuationHash?: string,
         dialogMessages?: { signInMessage?: string; signUpMessage?: string }
     ) => void;
+    collapsedByUser?: boolean;
+    onUserCollapse?: (collapsed: boolean) => void;
 }
 
 export interface ErrorListState {
@@ -55,7 +66,7 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         super(props);
 
         this.state = {
-            isCollapsed: true,
+            isCollapsed: props.collapsedByUser ? true : !props.errors?.length,
             isLoadingHelp: false,
         };
 
@@ -63,6 +74,10 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
     }
 
     componentDidUpdate(prevProps: Readonly<ErrorListProps>, prevState: Readonly<ErrorListState>, snapshot?: any): void {
+        if (this.props.collapsedByUser) {
+            return;
+        }
+
         // Auto-expand if there are new errors
         if (this.props.errors.length > 0 && this.state.isCollapsed) {
             let shouldExpand = this.props.errors.length > prevProps.errors.length;
@@ -103,12 +118,13 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
         const errorListContent = !isCollapsed ? groupedErrors.map((e, i) => <ErrorListItem errorGroup={e} index={i} key={`errorlist_error_${i}`}/> ) : undefined;
         const errorCount = errors.length;
 
-        const showDebuggerSuggestion = startDebugger && !pxt.shell.isReadOnly();
+        const showDebuggerSuggestion = startDebugger && !pxt.shell.isReadOnly() && !errors.some(e => e.preventsRunning);
 
         const showErrorHelp =
             !!getErrorHelp &&
             !!showLoginDialog &&
             !pxt.shell.isReadOnly() &&
+            !pxt.BrowserUtils.isPxtElectron() &&
             (pxt.appTarget.appTheme.forceEnableAiErrorHelp || pxt.Util.isFeatureEnabled("aiErrorHelp"));
 
         const helpLoader = (
@@ -190,6 +206,10 @@ export class ErrorList extends auth.Component<ErrorListProps, ErrorListState> {
             pxt.tickEvent('errorlist.collapse', null, { interactiveConsent: true })
         }
 
+        if (this.props.onUserCollapse) {
+            this.props.onUserCollapse(!this.state.isCollapsed);
+        }
+
         this.setState({
             isCollapsed: !this.state.isCollapsed
         }, this.onDisplayStateChange);
@@ -218,21 +238,51 @@ class ErrorListItem extends React.Component<ErrorListItemProps, ErrorListItemSta
         const hasStack = !!error.stackFrames && error.stackFrames.length > 0;
         const topRowClass = hasStack ? "exceptionMessage" : classList("item", className);
         const errorCounter = (errorGroup.count <= 1) ? null : <div className="ui gray circular label countBubble">{errorGroup.count}</div>;
+        const errorMessage = <>
+            <span className="errorListItemText">{error.message}</span>
+            {errorCounter}
+        </>;
+        const actionButtons = error.actions?.length ? (
+            <div className="errorListItemActions">
+                {error.actions.map((action, index) => (
+                    <Button
+                        key={index}
+                        className="secondary errorListAction"
+                        onClick={action.onClick}
+                        title={action.title || action.label}
+                        ariaLabel={action.ariaLabel || action.title || action.label}
+                        label={action.label}
+                    />
+                ))}
+            </div>
+        ) : undefined;
 
-        const itemHeaderRow = isInteractive ? (
+        const itemHeaderRow = actionButtons ? (
+            <div className={classList(topRowClass, "errorListItemRow")}>
+                {isInteractive ? (
+                    <Button className="errorListItemMessage"
+                        onClick={error.onClick}
+                        title={lf("Go to error: {0}", error.message)}
+                        ariaLabel={lf("Go to error: {0}", error.message)}>
+                        {errorMessage}
+                    </Button>
+                ) : (
+                    <div className="errorListItemMessage" aria-label={error.message} tabIndex={0}>
+                        {errorMessage}
+                    </div>
+                )}
+                {actionButtons}
+            </div>
+        ) : isInteractive ? (
             <Button className={topRowClass}
                 onClick={error.onClick}
                 title={lf("Go to error: {0}", error.message)}
-                aria-label={lf("Go to error: {0}", error.message)}>
-                <div>
-                    <span>{error.message}</span>
-                    {errorCounter}
-                </div>
+                ariaLabel={lf("Go to error: {0}", error.message)}>
+                <div>{errorMessage}</div>
             </Button>
         ) : (
              <div className={topRowClass} aria-label={error.message} tabIndex={0}>
-                <span>{error.message}</span>
-                {errorCounter}
+                {errorMessage}
             </div>
         );
 

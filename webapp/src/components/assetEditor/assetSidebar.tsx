@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as core from "../../core";
 import * as pkg from "../../package";
 import * as simulator from "../../simulator";
 import { connect } from 'react-redux';
@@ -13,6 +14,7 @@ import { dispatchChangeGalleryView, dispatchChangeSelectedAsset, dispatchUpdateU
 import { AssetPreview } from "./assetPreview";
 import { AssetPalette } from "./assetPalette";
 import { getBlocksEditor } from "../../app";
+import { getLabelForAssetType } from "../../assets";
 
 interface AssetDetail {
     name: string;
@@ -62,7 +64,7 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         const asset = this.props.asset;
         const details: AssetDetail[] = [];
         if (asset) {
-            details.push({ name: lf("Type"), value: getDisplayTextForAsset(asset.type) });
+            details.push({ name: lf("Type"), value: getLabelForAssetType(asset.type) });
 
             switch (asset.type) {
                 case pxt.AssetType.Image:
@@ -74,6 +76,9 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
                     break;
                 case pxt.AssetType.Animation:
                     details.push({ name: lf("Size"), value: `${asset.frames[0].width} x ${asset.frames[0].height}` });
+                    break;
+                case pxt.AssetType.Json:
+                    details.push({ name: lf("Filename"), value: asset.fileName });
                     break;
             }
         }
@@ -90,14 +95,19 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         this.props.showAssetFieldView(this.props.asset, this.editAssetDoneHandler);
     }
 
+    protected handleAssetOpError = (message: string) => (e: any) => {
+        pxt.reportException(e);
+        core.errorNotification(message);
+    }
+
     protected editAssetDoneHandler = (result: pxt.Asset) => {
         pxt.tickEvent("assets.edit", { type: result.type.toString() });
 
         const project = pxt.react.getTilemapProject();
-        project.pushUndo();
+        project.pushUndo(this.props.asset?.id);
         result = pxt.patchTemporaryAsset(this.props.asset, result, project);
 
-        if (result.meta.displayName) {
+        if (result.meta.displayName && (result.type !== pxt.AssetType.Json || result.data)) {
             result = project.updateAsset(result);
         }
 
@@ -107,7 +117,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
         }
 
         this.props.dispatchChangeGalleryView(GalleryView.User);
-        this.updateAssets().then(() => simulator.setDirty());
+        this.updateAssets().then(() => {
+            simulator.setDirty();
+            this.props.dispatchChangeSelectedAsset(result.type, result.id);
+        }).catch(this.handleAssetOpError(lf("Something went wrong while trying to edit this asset.")));
     }
 
     protected duplicateAssetHandler = () => {
@@ -120,11 +133,12 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             || pxt.getDefaultAssetDisplayName(asset.type);
 
         const project = pxt.react.getTilemapProject();
-        project.pushUndo();
+        project.pushUndo(asset.id);
         const { type, id } = project.duplicateAsset(asset, displayName);
         this.updateAssets().then(() => {
+            this.props.dispatchChangeSelectedAsset(type, id);
             if (isGalleryAsset) this.props.dispatchChangeGalleryView(GalleryView.User, type, id);
-        });
+        }).catch(this.handleAssetOpError(lf("Something went wrong while trying to duplicate this asset.")));
     }
 
     protected copyAssetHandler = () => {
@@ -172,10 +186,10 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
 
         this.setState({ showDeleteModal: false });
         const project = pxt.react.getTilemapProject();
-        project.pushUndo();
+        project.pushUndo(this.props.asset?.id);
         project.removeAsset(this.props.asset);
         this.props.dispatchChangeSelectedAsset();
-        this.updateAssets();
+        this.updateAssets().catch(this.handleAssetOpError(lf("Something went wrong while trying to delete this asset.")));
     }
 
     render() {
@@ -254,21 +268,6 @@ class AssetSidebarImpl extends React.Component<AssetSidebarProps, AssetSidebarSt
             </Modal>}
             {showPaletteModal && <AssetPalette onClose={this.hidePaletteModal} />}
         </div>
-    }
-}
-
-function getDisplayTextForAsset(type: pxt.AssetType) {
-    switch (type) {
-        case pxt.AssetType.Image:
-            return lf("Image");
-        case pxt.AssetType.Tile:
-            return lf("Tile");
-        case pxt.AssetType.Animation:
-            return lf("Animation");
-        case pxt.AssetType.Tilemap:
-            return lf("Tilemap");
-        case pxt.AssetType.Song:
-            return lf("Song");
     }
 }
 

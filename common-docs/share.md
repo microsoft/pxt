@@ -14,7 +14,7 @@ Give your project a Title and optionally, you can create a thumbnail image or an
 
 Clicking "Share Project" will create a link to your project.
 
-![Share project anonomously](/static/share/anon-share-link.png)
+![Share project anonymously](/static/share/anon-share-link.png)
 
 This link is not published anywhere else and it is not tied to a specific user (it’s an "anonymous link"). If you lose the link, then there’s no way to get it back - you will have to share your project again to create a new link. These links are snapshots in time of a project, so if you make any subsequent changes to your project, you will have to Share your project again to create a new link with the changes. There is also no way to remove or "unpublish" an anonymous share link, except through the "Report Abuse" function (see below for more information).
 
@@ -55,6 +55,16 @@ MakeCode projects can also be embedded into a blog or web site. In the Share Pro
 By default, all shared projects in MakeCode can be copied and edited. There is no way to share a read-only project, or a project where people can’t make a copy or can’t see the code. Any edits they make will not change the original project - if they want to share their changes back, they will have to create a new share link.
 
 ![Edit shared project button](/static/share/edit-shared-project.png)
+
+## Asset Packs #asset-packs
+
+Certain editors (such as [MakeCode Arcade](https://arcade.makecode.com)) can include resource files inside of projects. The resources, or _assets_, might contain byte representations of images, animations, sounds, tilemaps, etc. An **Asset Pack** is a resource only project where just the assets are shared and no code is loaded from the shared project.
+
+If this feature is supported by your editor, you can set a project as an asset pack by going to the **Settings** (⚙️) menu and selecting 'Project Settings'. Enable the 'Import as asset pack' setting. Watch this video to see how it's done:
+
+https://youtu.be/CjLYl5KJiSk
+
+See the [Asset Packs](https://makecode.com/extensions/asset-packs) page to learn more.
 
 ## Report Abuse
 

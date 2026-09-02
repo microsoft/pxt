@@ -1,9 +1,11 @@
 import * as Blockly from "blockly";
 
+const twoToneDataAttr = "data-two-tone-focus-rect";
+
 interface MatrixDisplayProps {
     cellWidth: number;
     cellHeight: number;
-    cellLabel: string;
+    cellLabel: string | ((rowNum: number, value: boolean) => string);
     cellHorizontalMargin: number;
     cellVerticalMargin: number;
     cornerRadius: number;
@@ -14,7 +16,7 @@ interface MatrixDisplayProps {
 }
 
 export abstract class FieldMatrix extends Blockly.Field {
-    protected cells: SVGRectElement[][] = [];
+    protected cells: SVGElement[][] = [];
     protected matrixSvg: SVGSVGElement;
     private keyDownBinding: Blockly.browserEvents.Data | null = null;
     private blurBinding: Blockly.browserEvents.Data | null = null;
@@ -45,27 +47,33 @@ export abstract class FieldMatrix extends Blockly.Field {
 
         // Create the cells of the matrix that is displayed
         for (let y = 0; y < this.numMatrixRows; y++) {
-            const row = pxsim.svg.child(this.matrixSvg, "g", { 'role': 'row' });
+            const row = pxsim.svg.child(this.matrixSvg, "g", { 'role': 'row', 'id': this.getRowId(y) });
             for (let x = 0; x < this.numMatrixCols; x++) {
                 const tx = scale * x * (cellWidth + cellHorizontalMargin) + cellHorizontalMargin + padLeft;
                 const ty = scale * y * (cellHeight + cellVerticalMargin) + cellVerticalMargin;
 
-                const cellG = pxsim.svg.child(row, "g", { transform: `translate(${tx} ${ty})`, 'role': 'gridcell' });
-                const rectOptions = {
+                const cellOptions = {
                     'id': this.getCellId(x,y),  // For aria-activedescendant
-                    'aria-label': cellLabel,
-                    'role': 'switch',
-                    'aria-checked': "false",
+                    'transform': `translate(${tx} ${ty})`,
+                    'role': 'gridcell',
+                };
+                const cellG = pxsim.svg.child(row, "g", cellOptions);
+
+                const textEl = pxsim.svg.child(cellG, "text", {"font-size": 0});
+                textEl.textContent = typeof cellLabel === 'string' ? cellLabel : cellLabel(y, false);
+
+                const rectOptions = {
+                    'aria-hidden': 'true',
                     'width': scale * cellWidth,
                     'height': scale * cellHeight,
                     'fill': cellFill ?? "none",
                     'stroke': cellStroke,
                     'data-x': x,
                     'data-y': y,
-                    'rx': Math.max(2, scale * cornerRadius)
+                    'rx': Math.max(0, scale * cornerRadius)
                 };
-                const cellRect = pxsim.svg.child(cellG, "rect", rectOptions) as SVGRectElement;
-                this.cells[x][y] = cellRect;
+                pxsim.svg.child(cellG, "rect", rectOptions) as SVGRectElement;
+                this.cells[x][y] = cellG;
             }
         }
     }
@@ -141,7 +149,10 @@ export abstract class FieldMatrix extends Blockly.Field {
                 case "Enter":
                 case "Space": {
                     this.toggleCell(x, y, !this.getCellToggled(x, y));
-                    break;
+                    this.updateFocusIndicator(this.cells[x][y], this.useTwoToneFocusIndicator(x, y))
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
                 }
                 case "Escape": {
                     (this.sourceBlock_.workspace as Blockly.WorkspaceSvg).markFocused();
@@ -187,40 +198,74 @@ export abstract class FieldMatrix extends Blockly.Field {
         this.matrixSvg.removeAttribute('aria-activedescendant');
     }
 
-    private setFocusIndicator(cell: SVGRectElement, useTwoToneFocusIndicator: boolean) {
+    private setFocusIndicator(cell: SVGElement, useTwoToneFocusIndicator: boolean) {
         this.clearFocusIndicator();
         const focusVisible = this.matrixSvg.matches(":focus-visible");
         if (!focusVisible && !this.forceFocusVisible) return;
-        const cellG = cell.parentNode as SVGRectElement;
-        const cellWidth = parseInt(cell.getAttribute("width"))
-        const cornerRadius = parseInt(cell.getAttribute("rx"));
+        const cellRect = cell.children[1];
+        const cellWidth = parseInt(cellRect.getAttribute("width"))
+        const cornerRadius = parseInt(cellRect.getAttribute("rx"));
 
-        pxsim.svg.child(cellG, "rect", {
+        pxsim.svg.child(cell, "rect", {
             transform: 'translate(-2, -2)',
             width: cellWidth + 4,
             height: cellWidth + 4,
             rx: `${Math.max(2, cornerRadius)}px`,
             stroke: "#fff",
             "stroke-width": 4,
-            fill: "none"
+            fill: "none",
+            "aria-hidden": "true"
         });
         if (useTwoToneFocusIndicator) {
-            pxsim.svg.child(cellG, "rect", {
+            pxsim.svg.child(cell, "rect", {
                 transform: 'translate(-1, -1)',
                 width: cellWidth + 2,
                 height: cellWidth + 2,
                 rx: `${Math.max(2, cornerRadius)}px`,
                 stroke: "#000",
                 "stroke-width": 2,
-                fill: "none"
+                fill: "none",
+                "aria-hidden": "true",
+                [twoToneDataAttr]: "true"
             });
+        }
+        const cellTextEl = cell.firstElementChild;
+        // Don't take effect for initial gridcell focus.
+        // Only announce gridcells being toggled on/off, not navigated to.
+        setTimeout(() => cellTextEl.setAttribute("aria-live", "polite"), 0);
+    }
+
+    private updateFocusIndicator(cell: SVGElement, useTwoToneFocusIndicator: boolean) {
+        const focusVisible = this.matrixSvg.matches(":focus-visible");
+        if (!focusVisible && !this.forceFocusVisible) return;
+        const cellRect = cell.children[1];
+        const cellWidth = parseInt(cellRect.getAttribute("width"))
+        const cornerRadius = parseInt(cellRect.getAttribute("rx"));
+        const twoToneRect = Array.from(cell.children).find(c => c.hasAttribute(twoToneDataAttr));
+        if (useTwoToneFocusIndicator && !twoToneRect) {
+            pxsim.svg.child(cell, "rect", {
+                transform: 'translate(-1, -1)',
+                width: cellWidth + 2,
+                height: cellWidth + 2,
+                rx: `${Math.max(2, cornerRadius)}px`,
+                stroke: "#000",
+                "stroke-width": 2,
+                fill: "none",
+                "aria-hidden": "true",
+                [twoToneDataAttr]: "true"
+            });
+        } else if (!useTwoToneFocusIndicator && twoToneRect) {
+            twoToneRect.remove();
         }
     }
 
     protected clearFocusIndicator() {
         this.cells.forEach(cell => cell.forEach(cell => {
-            while (cell.nextElementSibling) {
-                cell.nextElementSibling.remove();
+            const cellTextEl = cell.firstElementChild;
+            cellTextEl.removeAttribute("aria-live");
+            const cellRect = cell.children[1];
+            while (cellRect.nextElementSibling) {
+                cellRect.nextElementSibling.remove();
             }
         }));
     }
@@ -264,7 +309,12 @@ export abstract class FieldMatrix extends Blockly.Field {
         }
     }
 
-    protected getCellId = (x: number, y: number) => `${this.sourceBlock_.id}:${x}-${y}`;
+    // sourceBlock._id can clash between flyout and main workspace
+    protected domId = Blockly.utils.idGenerator.getNextUniqueId();
+
+    protected getCellId = (x: number, y: number) => `${this.domId}:${x}-${y}`;
+
+    protected getRowId = (index: number) => `${this.domId}:row-${index}`;
 
     protected abstract attachPointerEventHandlersToCell(x: number, y: number, cellRect: SVGElement): void;
 

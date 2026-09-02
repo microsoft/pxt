@@ -261,16 +261,27 @@ namespace ts.pxtc.thumb {
             let values: pxt.Map<string> = {}
             let seq = 1
 
+            const isLdLit = (line: assembler.Line) =>
+                line.type == "instruction" && line.instruction && line.instruction.name == "ldlit";
+
             for (let i = 0; i < f.lines.length; ++i) {
                 let line = f.lines[i]
                 outlines.push(line)
-                if (line.type == "instruction" && line.instruction && line.instruction.name == "ldlit") {
+                if (isLdLit(line)) {
                     if (!nextGoodSpot) {
                         let limit = line.location + 900 // leave some space - real limit is 1020
                         let j = i + 1
+                        let numLdLits = 0;
                         for (; j < f.lines.length; ++j) {
                             if (f.lines[j].location > limit)
                                 break
+                            if (isLdLit(f.lines[j])) {
+                                numLdLits++;
+                                // Short branches have 256 bytes range. We don't want to move code by anywhere
+                                // close to that. Each ldlit is 4 bytes.
+                                if (numLdLits >= 160 / 4)
+                                    break;
+                            }
                             let op = f.lines[j].getOp()
                             if (op == "b" || op == "bb" || (op == "pop" && f.lines[j].words[2] == "pc"))
                                 nextGoodSpot = f.lines[j]

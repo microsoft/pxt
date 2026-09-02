@@ -164,10 +164,11 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     render() {
         if (this.state.editing) {
+            const editorType = this.state.editing.type === "song" ? "music" : "image";
             return <ImageFieldEditor
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
-                isMusicEditor={this.state.editing.type === "song"}
+                editorType={editorType}
                 doneButtonCallback={this.sendSaveRequest}
                 hideDoneButton={true}
                 includeSpecialTagsInFilter={true}
@@ -377,13 +378,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     protected getEmptyAsset(type: pxt.AssetType, displayName?: string): pxt.Asset {
         const project = pxt.react.getTilemapProject();
 
-        const defaultName = displayName || pxt.getDefaultAssetDisplayName(type);
-        let newName = defaultName;
-        let index = 0;
-
-        while (project.isNameTaken(type, newName)) {
-            newName = defaultName + (index++);
-        }
+        const newName = project.generateNewName(type, displayName);
 
         const asset = { type, id: "", internalID: 0, meta: { displayName: newName } } as pxt.Asset;
         switch (type) {

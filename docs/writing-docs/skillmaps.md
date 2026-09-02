@@ -1,6 +1,6 @@
 # Skillmaps
 
-A skillmap is is one or more guided pathways with focused learning objectives along the way. The goal of a skillmap is to have students progrerssively aquire a set of design and coding skills until they reach an achievement goal.
+A skillmap is is one or more guided pathways with focused learning objectives along the way. The goal of a skillmap is to have students progressively acquire a set of design and coding skills until they reach an achievement goal.
 
 ### ~ reminder
 

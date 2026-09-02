@@ -202,60 +202,6 @@ export function loadWorkspaceXml(xml: string, skipReport = false, opts?: DomToWo
     }
 }
 
-function patchFloatingBlocks(dom: Element, info: pxtc.BlocksInfo) {
-    const onstarts = getBlocksWithType(dom, ts.pxtc.ON_START_TYPE);
-    let onstart = onstarts.length ? onstarts[0] : undefined;
-    if (onstart) { // nothing to do
-        onstart.removeAttribute("deletable");
-        return;
-    }
-
-    let newnodes: Element[] = [];
-
-    const blocks: pxt.Map<pxtc.SymbolInfo> = info.blocksById;
-
-    // walk top level blocks
-    let node = dom.firstElementChild;
-    let insertNode: Element = undefined;
-    while (node) {
-        const nextNode = node.nextElementSibling;
-        // does this block is disable or have s nested statement block?
-        const nodeType = node.getAttribute("type");
-        if (!node.getAttribute("disabled") && !node.getElementsByTagName("statement").length
-            && (buildinBlockStatements[nodeType] ||
-                (blocks[nodeType] && blocks[nodeType].retType == "void" && !hasArrowFunction(blocks[nodeType])))
-        ) {
-            // old block, needs to be wrapped in onstart
-            if (!insertNode) {
-                insertNode = dom.ownerDocument.createElement("statement");
-                insertNode.setAttribute("name", "HANDLER");
-                if (!onstart) {
-                    onstart = dom.ownerDocument.createElement("block");
-                    onstart.setAttribute("type", ts.pxtc.ON_START_TYPE);
-                    newnodes.push(onstart);
-                }
-                onstart.appendChild(insertNode);
-                insertNode.appendChild(node);
-
-                node.removeAttribute("x");
-                node.removeAttribute("y");
-                insertNode = node;
-            } else {
-                // event, add nested statement
-                const next = dom.ownerDocument.createElement("next");
-                next.appendChild(node);
-                insertNode.appendChild(next);
-                node.removeAttribute("x");
-                node.removeAttribute("y");
-                insertNode = node;
-            }
-        }
-        node = nextNode;
-    }
-
-    newnodes.forEach(n => dom.appendChild(n));
-}
-
 /**
  * Patch to transform old function blocks to new ones, and rename child nodes
  */
@@ -346,9 +292,6 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
         const blocks = doc.getElementsByTagName("block");
         for (let i = 0; i < blocks.length; ++i)
             patchBlock(info, enums, blocks[i]);
-
-        // patch floating blocks
-        patchFloatingBlocks(doc.documentElement, info);
 
         // patch function blocks
         patchFunctionBlocks(doc.documentElement, info)

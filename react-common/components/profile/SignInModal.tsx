@@ -17,10 +17,11 @@ export interface SignInModalProps {
     }
     resolvePath?: (path: string) => string
     mode?: "signin" | "signup"
+    lastUsedIdentityProvider?: pxt.IdentityProviderId
 }
 
 export const SignInModal = (props: SignInModalProps) => {
-    const { onSignIn, onClose, appMessage, dialogMessages, hideDismissButton } = props
+    const { onSignIn, onClose, appMessage, dialogMessages, hideDismissButton, lastUsedIdentityProvider } = props
     const { signInMessage, signUpMessage } = dialogMessages || {
         signInMessage: lf("Sign in to save your progress and access your work anytime, anywhere."),
         signUpMessage: lf("Join now to save your progress and access your work anytime, anywhere.")
@@ -70,19 +71,24 @@ export const SignInModal = (props: SignInModalProps) => {
                 <div className='signin-body'>
                     <div className='providers'>
                         {pxt.auth.identityProviders().map((provider, index) => {
+                            const isLastUsedProvider = provider.id === lastUsedIdentityProvider
                             const title =
                                 mode === "signin"
                                     ? lf("Continue with {0}", provider.name)
                                     : lf("Sign up with {0}", provider.name)
+                            const ariaLabel = isLastUsedProvider
+                                ? lf("{0}. You last used this option.", title)
+                                : title
                             return (
                                 <Button
                                     key={index}
                                     className='provider'
                                     onClick={() => onSignIn(provider, rememberMe)}
                                     title={title}
-                                    ariaLabel={title}
+                                    ariaLabel={ariaLabel}
                                     label={
                                         <div className='label'>
+                                            {isLastUsedProvider && <div className='ui orange right ribbon label last-used-ribbon' aria-hidden="true">{lf("Last used")}</div>}
                                             <div>
                                                 <img className='logo' src={resolvePath(provider.icon)} />
                                             </div>

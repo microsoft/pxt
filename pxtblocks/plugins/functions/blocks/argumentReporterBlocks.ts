@@ -7,8 +7,7 @@ import {
     ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE,
 } from "../constants";
 import { MsgKey } from "../msg";
-import { DUPLICATE_ON_DRAG_MUTATION_KEY, setDuplicateOnDragStrategy } from "../../duplicateOnDrag";
-import { PathObject } from "../../renderer/pathObject";
+import { setDuplicateOnDragStrategy, updateDuplicateOnDragState } from "../../duplicateOnDrag";
 
 export const LOCALIZATION_NAME_MUTATION_KEY = "localizationname";
 
@@ -21,7 +20,6 @@ export type ArgumentReporterBlock = Blockly.BlockSvg & ArgumentReporterMixin;
 const ARGUMENT_REPORTER_MIXIN = {
     typeName_: "",
     localizationName_: "",
-    duplicateOnDrag_: false,
 
     getTypeName(this: ArgumentReporterBlock) {
         return this.typeName_;
@@ -33,9 +31,7 @@ const ARGUMENT_REPORTER_MIXIN = {
 
     mutationToDom(this: ArgumentReporterBlock) {
         const container = Blockly.utils.xml.createElement("mutation");
-        if (this.duplicateOnDrag_) {
-            container.setAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY, "true");
-        }
+
         if (this.localizationName_) {
             container.setAttribute(LOCALIZATION_NAME_MUTATION_KEY, this.localizationName_);
         }
@@ -43,12 +39,6 @@ const ARGUMENT_REPORTER_MIXIN = {
     },
 
     domToMutation(this: ArgumentReporterBlock, xmlElement: Element) {
-        if (xmlElement.hasAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)) {
-            this.duplicateOnDrag_ = xmlElement.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY).toLowerCase() === "true";
-            if (this.pathObject) {
-                (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
-            }
-        }
         if (xmlElement.hasAttribute(LOCALIZATION_NAME_MUTATION_KEY)) {
             this.localizationName_ = xmlElement.getAttribute(LOCALIZATION_NAME_MUTATION_KEY);
         }
@@ -71,7 +61,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_BOOLEAN_BLOCK_TYPE] = {
             extensions: ["output_boolean"],
         });
         this.typeName_ = "boolean";
-        setDuplicateOnDragStrategy(this);
+        initArgumentReporter(this);
     },
 };
 
@@ -91,7 +81,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_STRING_BLOCK_TYPE] = {
             extensions: ["output_string"],
         });
         this.typeName_ = "string";
-        setDuplicateOnDragStrategy(this);
+        initArgumentReporter(this);
     },
 };
 
@@ -111,7 +101,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_NUMBER_BLOCK_TYPE] = {
             extensions: ["output_number"],
         });
         this.typeName_ = "number";
-        setDuplicateOnDragStrategy(this);
+        initArgumentReporter(this);
     },
 };
 
@@ -131,7 +121,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_ARRAY_BLOCK_TYPE] = {
             extensions: ["output_array"],
         });
         this.typeName_ = "Array";
-        setDuplicateOnDragStrategy(this);
+        initArgumentReporter(this);
     },
 };
 
@@ -153,7 +143,7 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
             output: null,
         });
         this.typeName_ = "";
-        setDuplicateOnDragStrategy(this);
+        initArgumentReporter(this);
     },
 
     mutationToDom(this: ArgumentReporterBlock) {
@@ -167,8 +157,11 @@ Blockly.Blocks[ARGUMENT_REPORTER_CUSTOM_BLOCK_TYPE] = {
         this.setOutput(true, this.typeName_);
 
         ARGUMENT_REPORTER_MIXIN.domToMutation.call(this, xmlElement);
-        if (this.pathObject) {
-            (this.pathObject as PathObject).setHasDottedOutlineOnHover(this.duplicateOnDrag_);
-        }
     },
 };
+
+
+function initArgumentReporter(block: ArgumentReporterBlock) {
+    setDuplicateOnDragStrategy(block);
+    updateDuplicateOnDragState(block);
+}

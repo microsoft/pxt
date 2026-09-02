@@ -8,7 +8,7 @@ Try out some blocks live in the **[Playground](https://makecode.com/playground)*
 
 ## ~
 
-Blocks are defined by annotations added to the beginning of an API element (export function, method, enum, etc.). Attributes are specified on annotation lines that begin with the comment form of `//%`. All of the `//%` annotations are found in TypeScript library files containg the code for the exposed APIs.
+Blocks are defined by annotations added to the beginning of an API element (export function, method, enum, etc.). Attributes are specified on annotation lines that begin with the comment form of `//%`. All of the `//%` annotations are found in TypeScript library files containing the code for the exposed APIs.
 They can optionally be [auto-generated](/simshim) from C++ library files or from TypeScript
 simulator files.
 
@@ -106,7 +106,7 @@ parameter = string
 * each `field` is mapped to a field name on the block.
 * the function parameters are mapped to the `$parameter` argument with an identical name. The loader automatically builds a mapping between the block field names and the function names.
 * the block will automatically switch to external inputs (wrapping) when there are four or more parameters.
-* the `|` indicates where to start a new line if the block is in external inputs mode. 
+* the `|` indicates where to start a new line if the block is in external inputs mode.
 
 ## Custom block localization
 
@@ -124,11 +124,12 @@ For example,
 export function square(x: number): number {}
 ```
 
-You can also override the ``jsdoc`` description and parameter info.
+You can also override the ``jsdoc`` description, parameter info, and ariaLabel (for dropdown values).
 
 ```
 jsdoc.loc.LOCALE = translated jsdoc
 PARAM.loc.LOCALE = parameter jsdoc
+ariaLabel.loc.LOCALE = translated aria label
 ```
 
 ```typescript-ignore
@@ -141,6 +142,14 @@ PARAM.loc.LOCALE = parameter jsdoc
 //% jsdoc.loc.fr="Calcule le carré de x"
 //% x.loc.fr="le nombre"
 export function square(x: number): number {}
+
+
+export enum MyEnum {
+    //% block="x"
+    //% ariaLabel="x axis"
+    //% ariaLabel.loc.fr="axe des x"
+    X
+}
 ```
 
 
@@ -242,7 +251,7 @@ export function myFunction(myParam: Image[]): void {}
 
 ### Inline input
 
-Blocks with four or more parameters automatically switch to `External Inputs` mode, in which the parameters wrap instead of staying inline. To make a block with multiple parameters appear as a single line, use `inlineInputMode=inline`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
+Blocks with four or more parameters automatically switch to `External Inputs` mode, in which the parameters wrap instead of staying inline. To make a block with multiple parameters appear as a single line, use `inlineInputMode=inline`. The block will expand left to right instead of wrapping the parameter input across multiple lines.
 
 ```typescript-ignore
 //% block="map $value|from low $fromLow|high $fromHigh|to low $toLow|high $toHigh"
@@ -256,7 +265,7 @@ export function map(value: number,
 }
 ```
 
- To force external inputs, set `inlineInputMode=external`. In the block defintion, the `|` indicates where to start a new line if the block is in external inputs mode. New lines are also started after each parameter.
+ To force external inputs, set `inlineInputMode=external`. In the block definition, the `|` indicates where to start a new line if the block is in external inputs mode. New lines are also started after each parameter.
 
 ```typescript-ignore
 //% block="magnitude of 3d vector | at x $x and y $y and z $z"
@@ -339,14 +348,16 @@ Enum is supported and will automatically be represented by a dropdown in blocks.
 enum Button {
     A = 1,
     B = 2,
-    //% blockId="ApB" block="A+B"
+    //% block="A+B" ariaLabel="A and B"
     AB = 3,
 }
 ```
 
 * the initializer can be used to map the value
-* the `blockId` attribute can be used to override the block id
 * the `block` attribute can be used to override the rendered string
+* the `ariaLabel` attribute can be used to override the aria label on the dropdown value if the `block` value is not read correctly by screen readers
+
+The `block` and `ariaLabel` values can both be localized, either by including a strings JSON file or locally in the comments (see custom block localization section above).
 
 ### Tip: dropdown for non-enum parameters
 
@@ -446,7 +457,7 @@ parameter like so:
 
 ### Creating enumerations with blocks
 
-You can have blocks themselves define an enumeration dynamically. The block will specify some inital members but additional ones are added by selecting the "Add a new &lt;enum_name&gt;..." option in the parameter dropdown.
+You can have blocks themselves define an enumeration dynamically. The block will specify some initial members but additional ones are added by selecting the "Add a new &lt;enum_name&gt;..." option in the parameter dropdown.
 
 You first create a shadow block that defines the enumeration and has the initial members.
 
@@ -674,6 +685,15 @@ class Foo {
 }
 ```
 
+To specify the help URL for the blocks generated by the `blockCombine` annotation, the following attributes can be used:
+
+* `blockCombineChangeHelp`
+* `blockCombineGetHelp`
+* `blockCombineSetHelp`
+
+The syntax for these is exactly the same as the `help` attribute. These attributes can be placed on any of the getters/setters that are being combined. If you only want to have one help page for all the `blockCombine` generated blocks, you can just specify `help`.
+
+
 **Playground example**: [Classes](https://makecode.com/playground#classes)
 
 ### Factories #factories
@@ -696,7 +716,7 @@ namespace Widgets {
     }
 
     /**
-     * Create a Gizmo widget and automtically set it to a variable
+     * Create a Gizmo widget and automatically set it to a variable
      */
     //% block="create gizmo"
     //% blockSetVariable=gizmo
@@ -742,7 +762,7 @@ class Gizmo {
 namespace Widgets {
 
     /**
-     * Create a Gizmo widget and automtically set it to a variable
+     * Create a Gizmo widget and automatically set it to a variable
      */
     //% block="create gizmo"
     //% blockSetVariable=gizmo

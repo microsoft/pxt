@@ -21,7 +21,7 @@ export const dispatchResetUser = () => ({ type: actions.RESET_USER });
 export const dispatchSetPageTitle = (title: string) => ({ type: actions.SET_PAGE_TITLE, title });
 export const dispatchSetPageDescription = (description: string) => ({ type: actions.SET_PAGE_DESCRIPTION, description });
 export const dispatchSetPageInfoUrl = (infoUrl: string) => ({ type: actions.SET_PAGE_INFO_URL, infoUrl });
-export const dispatchSetPageBackgroundImageUrl = (backgroundImageUrl: string) => ({ type: actions.SET_PAGE_BACKGROUND_IMAGE_URL, backgroundImageUrl });
+export const dispatchSetPageBackgroundImageUrl = (backgroundImageUrl: string, pixelatedBackground?: boolean) => ({ type: actions.SET_PAGE_BACKGROUND_IMAGE_URL, backgroundImageUrl, pixelatedBackground });
 export const dispatchSetPageBannerImageUrl = (bannerImageUrl: string) => ({ type: actions.SET_PAGE_BANNER_IMAGE_URL, bannerImageUrl });
 export const dispatchSetPageTheme = (theme: SkillGraphTheme) => ({ type: actions.SET_PAGE_THEME, theme });
 export const dispatchSetPageSourceUrl = (url: string, status: PageSourceStatus) => ({ type: actions.SET_PAGE_SOURCE_URL, url, status });

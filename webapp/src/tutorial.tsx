@@ -674,6 +674,7 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
         const currentStep = tutorialStep;
         const maxSteps = tutorialStepInfo.length;
         const hideIteration = metadata && metadata.hideIteration;
+        const immersiveReaderEnabled = pxt.appTarget.appTheme.immersiveReader;
         const hideDone = metadata && metadata.hideDone;
         const hasPrevious = tutorialReady && currentStep != 0 && !hideIteration;
         const hasNext = tutorialReady && currentStep != maxSteps - 1 && !hideIteration;
@@ -712,6 +713,12 @@ export class TutorialCard extends data.Component<TutorialCardProps, TutorialCard
                             {!showDialog && <md.MarkedContent className="no-select" tabIndex={0} markdown={tutorialCardContent} parent={this.props.parent} onDidRender={this.onMarkdownDidRender} />}
                         </div>
                     </div>
+                    {/* Immersive reader is normally shown in tutorialmenu, but that is cut for hideIteration */}
+                    {hideIteration && immersiveReaderEnabled &&
+                        <div className="tutorialcard-immersive-reader hideiteration">
+                            <ImmersiveReader.ImmersiveReaderButton content={tutorialCardContent} tutorialOptions={options} />
+                        </div>
+                    }
                     <div className="avatar-container">
                         {(!showDialog && hasHint) && <sui.Button
                             className={`ui circular label blue hintbutton hidelightbox ${this.props.pokeUser ? 'shake flash' : ''}`}

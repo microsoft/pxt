@@ -4,6 +4,7 @@ import { registerWorkspaceItems } from "./workspaceItems";
 import { onWorkspaceContextMenu } from "../external";
 import { registerBlockitems } from "./blockItems";
 
+let shortcutsInitialized = false;
 export function initContextMenu() {
     const msg = Blockly.Msg;
 
@@ -23,6 +24,8 @@ export function initContextMenu() {
     msg.DELETE_ALL_BLOCKS = lf("Delete All Blocks");
     msg.HELP = lf("Help");
 
+    if (shortcutsInitialized) return;
+    shortcutsInitialized = true;
     registerWorkspaceItems();
     registerBlockitems();
 }

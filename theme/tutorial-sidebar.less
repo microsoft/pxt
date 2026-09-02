@@ -481,7 +481,7 @@
         /** TODO: change when supporting small horizontal sim && make not arcade centric at that time. **/
         #boardview.ui.vertical.editorFloat, #boardview #simulators .simframe {
             width: 17rem !important;
-
+            background: transparent !important;
         }
         #boardview #simulators {
             justify-content: flex-end;
@@ -535,10 +535,13 @@
         background: none transparent;
         min-width: inherit;
         max-width: inherit;
-        width: @simulatorWidth;
         top: @mainMenuHeight;
         bottom: 0;
         left: 0;
+
+        &:not(.topInstructions) {
+            width: @simulatorWidth;
+        }
 
         .simPanel {
             display: none;
@@ -549,9 +552,13 @@
         display: auto;
     }
 
-    #maineditor {
+    &:not(.tutorialSimSidebar) #maineditor {
         left: @simulatorWidth;
     }
+}
+
+#root.headless.tabTutorial.notificationBannerVisible #simulator .editor-sidebar {
+    top: calc(@mainMenuHeight + @bannerHeight);
 }
 
 #root.headless.tabTutorial.hideMenuBar {
@@ -684,7 +691,7 @@
         #simulator .editor-sidebar {
             display: block !important;
             height: @defaultTutorialHeight;
-            width: 100%;
+            width: 100% !important;
         }
     }
 
@@ -700,7 +707,7 @@
         padding: .5rem 1rem 0.7rem 1rem;
 
         .tutorial-step-content {
-            margin-right: 1.5rem;
+            margin-right: 2.5rem;
         }
 
         .immersive-reader-button {
@@ -798,7 +805,7 @@
         min-width: 30rem;
     }
 
-    .common-button.square-button {
+    .tutorial-container .common-button.square-button {
         margin: 0;
         border: unset;
         color: @white !important;
@@ -821,13 +828,8 @@
         }
     }
 
-    .tutorial-hint .tutorial-callout-button.ui.button {
-        color: @white;
-        background: @tutorialPrimaryColor;
-
-        &.disabled {
-            display: none;
-        }
+    .tutorial-hint .tutorial-callout-button.ui.button.disabled {
+        display: none;
     }
 
     // Overrides
@@ -1063,6 +1065,15 @@
     .topInstructionsWrapper {
         .topInstructionsSettings();
 
+        .tutorial-step-bubbles {
+            justify-content: flex-end !important;
+            gap: 1.5rem;
+
+            .circle-button {
+                margin: 0;
+            }
+        }
+
         .tutorial-callout {
             right: unset;
             top: unset;
@@ -1087,7 +1098,8 @@
         min-width: 25rem;
     }
 
-    #simulator .editor-sidebar {
+    #simulator .editor-sidebar,
+    #root.headless.tabTutorial #simulator .editor-sidebar {
         top: @mobileMenuHeight;
     }
 

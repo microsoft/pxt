@@ -1,0 +1,34 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="test_handler_arguments5">
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_handler_arguments5">
+<mutation numargs="1" />
+<value name="HANDLER_DRAG_PARAM_c">
+<block type="argument_reporter_number">
+<mutation duplicateondrag="true" />
+<field name="VALUE">num1</field>
+</block>
+</value>
+<statement name="HANDLER">
+</statement>
+</block>
+<block type="test_handler_arguments5">
+<mutation numargs="2" />
+<value name="HANDLER_DRAG_PARAM_c">
+<block type="argument_reporter_number">
+<mutation duplicateondrag="true" />
+<field name="VALUE">num1</field>
+</block>
+</value>
+<value name="HANDLER_DRAG_PARAM_d">
+<block type="argument_reporter_custom">
+<mutation typename="testNamespace.TestClass" duplicateondrag="true" />
+<field name="VALUE">class1</field>
+</block>
+</value>
+<statement name="HANDLER">
+</statement>
+</block>
+</xml>

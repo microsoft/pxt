@@ -17,6 +17,12 @@
     margin: 1rem;
 }
 
+.asset-editor-sidebar-detail {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
 .asset-editor-sidebar-name,
 .asset-editor-sidebar-temp {
     overflow: hidden;
@@ -157,6 +163,24 @@
         image-rendering: pixelated;
         -ms-interpolation-mode: nearest-neighbor;
         object-fit: contain;
+    }
+
+    .json-asset-preview {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+        text-align: center;
+        background-color: var(--pxt-neutral-background1);
+
+        &>div {
+            font-size: 1.2rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--pxt-neutral-foreground1);
+        }
     }
 }
 

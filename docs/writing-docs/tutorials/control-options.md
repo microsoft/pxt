@@ -30,9 +30,17 @@ Typically, when a tutorial starts the default editor view, it's for editing code
 ### @preferredEditor asset
 ```
 
-### Flyout blocks
+### Unified toolbox
 
-To have all of the available blocks in a permanently visible flyout instead of the toolbox, use **@flyoutOnly**. The default setting is ``false``.
+To have all of the available blocks grouped in a permanently visible flyout (instead of the toolbox), use **@unifiedToolbox**. The default setting is ``false``.
+
+```
+### @unifiedToolbox true
+```
+
+### Flyout blocks (deprecated)
+
+This flag is deprecated. Use `unifiedToolbox` instead.
 
 ```
 ### @flyoutOnly true
@@ -110,6 +118,8 @@ For a "blank" template that only contains the `on start` block (in targets like 
 ````
 
 You can include **1** template in a tutorial. Place the template section either at the beginning of the document or at the end so as to not clutter the sequence of tutorial steps.
+
+If you're writing a Python tutorial, you should use **python-template** in place of **template** to provide the user with starter code.
 
 ### Ghost blocks
 

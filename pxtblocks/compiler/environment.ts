@@ -203,7 +203,7 @@ export function mkEnv(w: Blockly.Workspace, blockInfo?: pxtc.BlocksInfo, options
                     attrs: fn.attributes,
                     isExtensionMethod: instance,
                     isExpression: fn.retType && fn.retType !== "void",
-                    imageLiteral: fn.attributes.imageLiteral || fn.attributes.gridLiteral,
+                    imageLiteral: fn.attributes.imageLiteral || fn.attributes.gridLiteral || fn.attributes.colorGridLiteral,
                     imageLiteralColumns: fn.attributes.imageLiteralColumns,
                     imageLiteralRows: fn.attributes.imageLiteralRows,
                     hasHandler: pxt.blocks.hasHandler(fn),

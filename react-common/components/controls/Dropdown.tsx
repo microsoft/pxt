@@ -12,6 +12,7 @@ export interface DropdownProps extends ControlProps {
     id: string;
     selectedId: string;
     items: DropdownItem[];
+    getAriaLabel?: (value: string) => string;
     onItemSelected: (id: string) => void;
     tabIndex?: number;
 }
@@ -22,6 +23,7 @@ export const Dropdown = (props: DropdownProps) => {
         className,
         ariaHidden,
         ariaLabel,
+        getAriaLabel,
         role,
         items,
         tabIndex,
@@ -89,7 +91,7 @@ export const Dropdown = (props: DropdownProps) => {
         <Button
             {...selected}
             id={id}
-            buttonRef={ref => dropdownButton.current = ref}
+            buttonRef={ref => dropdownButton.current = (ref as HTMLButtonElement)}
             tabIndex={tabIndex}
             rightIcon={expanded ? "fas fa-chevron-up" : "fas fa-chevron-down"}
             role={role}
@@ -98,7 +100,7 @@ export const Dropdown = (props: DropdownProps) => {
             onKeydown={onKeyDown}
             ariaHasPopup="listbox"
             ariaExpanded={expanded}
-            ariaLabel={ariaLabel}
+            ariaLabel={ariaLabel ?? getAriaLabel?.(selected.title) ?? selected.title}
             ariaHidden={ariaHidden}
             />
         {expanded &&
@@ -107,13 +109,17 @@ export const Dropdown = (props: DropdownProps) => {
                 childTabStopId={selectedId}
                 aria-labelledby={id}
                 useUpAndDownArrowKeys={true}
+                onClose={() => {
+                    setExpanded(false);
+                    dropdownButton.current.focus();
+                }}
                 onItemReceivedFocus={onItemFocused}>
                     <ul role="presentation">
                         { items.map(item =>
                             <li key={item.id} role="presentation">
                                 <Button
                                     {...item}
-                                    buttonRef={ref => focusableItems.current[item.id] = ref}
+                                    buttonRef={ref => focusableItems.current[item.id] = (ref as HTMLButtonElement)}
                                     className={classList("common-dropdown-item", item.className)}
                                     onClick={() => {
                                         setExpanded(false);

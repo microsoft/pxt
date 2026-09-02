@@ -28,7 +28,6 @@ interface MakeCodeFrameProps {
     shareHeaderId?: string;
     shareProjectName?: string;
     signedIn?: boolean;
-    highContrast?: boolean;
     pageSourceUrl: string;
     dispatchSetHeaderIdForActivity: (mapId: string, activityId: string, id: string, currentStep: number, maxSteps: number, isCompleted: boolean) => void;
     dispatchCloseActivity: (finished?: boolean) => void;
@@ -76,22 +75,12 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         this.updateTheme = this.updateTheme.bind(this);
     }
 
-    UNSAFE_componentWillReceiveProps(nextProps: MakeCodeFrameProps) {
-        if (this.props.highContrast != nextProps.highContrast) {
-            this.sendMessageAsync({
-                type: "pxteditor",
-                action: "sethighcontrast",
-                on: nextProps.highContrast
-            }  as pxt.editor.EditorMessageSetHighContrastRequest);
-        }
-    }
-
     componentDidMount(): void {
         ThemeManager.getInstance(document).subscribe("skillmapframe", this.updateTheme);
     }
 
     async componentDidUpdate() {
-        const { shareHeaderId, highContrast } = this.props;
+        const { shareHeaderId } = this.props;
         const { frameState, pendingShare } = this.state;
         if (frameState === "project-open" && this.props.save) {
             this.setState({ frameState: "closing-project" }, async () => {
@@ -142,7 +131,7 @@ class MakeCodeFrameImpl extends React.Component<MakeCodeFrameProps, MakeCodeFram
         return <div className="makecode-frame-outer" style={{ display: activityId ? "block" : "none" }}>
             <div className={`makecode-frame-loader ${showLoader ? "" : "hidden"}`}>
                 <img src={resolvePath("assets/logo.svg")} alt={imageAlt} />
-                {openingProject && <ProgressBar className="makecode-frame-loader-bar" value={loadPercent! / 100} />}
+                {openingProject && <ProgressBar className="makecode-frame-loader-bar" value={loadPercent!} />}
                 <div className="makecode-frame-loader-text">{loadingText}</div>
             </div>
             <iframe className="makecode-frame" src={url} title={title} ref={this.handleFrameRef}></iframe>
@@ -382,7 +371,6 @@ function mapStateToProps(state: SkillMapState, ownProps: any) {
         shareHeaderId,
         shareProjectName,
         signedIn: state.auth.signedIn,
-        highContrast: state.auth.preferences?.highContrast,
         pageSourceUrl: state.pageSourceUrl
     } as MakeCodeFrameProps
 }

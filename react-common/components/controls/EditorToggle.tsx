@@ -50,7 +50,7 @@ export const EditorToggle = (props: EditorToggleProps) => {
         hasDropdown && "has-dropdown",
         isFocused && "focused",
         className);
-    
+
     return (
         <div className="common-editor-toggle-outer">
             <EditorToggleAccessibleMenu
@@ -80,6 +80,7 @@ export const EditorToggle = (props: EditorToggleProps) => {
                                         tabIndex={-1}
                                         ariaHidden={true}
                                         items={item.items.map(item => ({
+                                            role: "menuitem",
                                             title: item.title,
                                             label: item.label,
                                             onClick: item.onClick,
@@ -155,11 +156,11 @@ const EditorToggleAccessibleMenu = (props: EditorToggleAccessibleProps) => {
     }, [] as ToggleTab[]);
 
     const childIdPrefix = `${id}-option-`
-    
-    return <FocusList 
-            id={id} 
-            role="tablist" 
-            className="common-toggle-accessibility" 
+
+    return <FocusList
+            id={id}
+            role="tablist"
+            className="common-toggle-accessibility"
             childTabStopId={`${childIdPrefix}${selectedIndex}`}
             focusSelectsItem={true}
         >

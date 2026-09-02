@@ -232,6 +232,14 @@ pre {
             filter: none;
         }
     }
+
+    .fullscreen-button {
+        i {
+            margin: 0;
+            width: inherit;
+            opacity: 0.9;
+        }
+    }
 }
 
 .editor-sidebar .simtoolbar .ui.button:focus-visible {
@@ -289,6 +297,40 @@ pre {
         &:hover {
             background: var(--pxt-primary-background-hover) !important;
             color: var(--pxt-primary-foreground-hover) !important;
+        }
+    }
+
+    .file-list-item {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+
+        .file-list-item-contents {
+            flex-grow: 1;
+        }
+
+        .button:focus-visible {
+            outline: @editorFocusBorderSize solid var(--pxt-focus-border);
+            outline-offset: 2px;
+        }
+
+        &.nested {
+            font-size: 0.9rem;
+            padding-left: 2rem;
+        }
+
+        & > i.icon.chevron {
+            margin-right: 0;
+            margin-left: 0.5rem;
+        }
+
+        & > i.icon.folder {
+            margin-right: 0.3rem;
+        }
+
+        &:focus-visible {
+            outline-offset: -3px;
+            outline: @editorFocusBorderSize solid var(--pxt-focus-border);
         }
     }
 }
@@ -400,13 +442,15 @@ div.simframe > iframe {
 .menubar {
     .left.menu, .right.menu, .center.menu {
         display: flex;
-        flex: 1;
+        flex-grow: 1;
     }
     .right.menu {
         justify-content: flex-end;
+        flex-shrink: 0;
     }
     .center.menu {
         justify-content: center;
+        flex-shrink: 0;
     }
 
     .ui.item {
@@ -434,6 +478,33 @@ div.simframe > iframe {
     display: flex;
 }
 
+.settings-menuitem, .help-dropdown-menuitem {
+    flex-shrink: 0;
+
+    ul.common-menu-dropdown-pane {
+        overflow-y: auto;
+        overflow-x: hidden;
+        max-height: calc(100vh - @mainMenuHeight);
+    }
+
+    & > button.common-button {
+        &:focus-visible {
+            background: var(--pxt-neutral-alpha10);
+            color: #fff;
+            outline: 3px solid var(--pxt-neutral-stencil3);
+            outline-offset: -3px
+        }
+
+        &:focus-visible::after {
+            outline: none;
+            border: none;
+        }
+
+        & > span > i {
+            opacity: 0.9;
+        }
+    }
+}
 
 
 /* toggle style */
@@ -570,6 +641,11 @@ div.simframe > iframe {
     margin-bottom: 1px;
 }
 
+.ui.item.logo button.name,
+.ui.item.logo button.name-short {
+    margin-left: 0 !important;
+}
+
 .ui.item.logo .name-short {
     display: none;
 }
@@ -583,6 +659,13 @@ div.simframe > iframe {
     margin: 0 1rem;
     height: 1.4rem;
 }
+
+.ui.item.logo .logo-button {
+    img {
+        margin: 3px 0 0 0 !important;
+    }
+}
+
 
 /* Native Host (iOS app) back button */
 .nativeback.ui.item {
@@ -762,7 +845,7 @@ div.simframe > iframe {
 
 .notificationBannerVisible #simulator .editor-sidebar,
 .notificationBannerVisible #maineditor,
-.notificationBannerVisible #sidedocs {
+.notificationBannerVisible.sideDocs #sidedocs {
     top: calc(@mainMenuHeight + @bannerHeight);
 }
 
@@ -779,6 +862,7 @@ div.simframe > iframe {
     display: flex;
     flex-direction: row;
     align-items: center;
+    width: 100%;
     .bannerLeft {
         display: block;
         .content {
@@ -809,7 +893,7 @@ div.simframe > iframe {
         .close {
             &:hover, &:focus {
                 cursor: pointer;
-                color: var(--pxt-neutral-background1-hover);
+                opacity: 0.7;
             }
         }
     }
@@ -1036,6 +1120,13 @@ Field editors
             }
         }
     }
+
+    .settings-menuitem, .help-dropdown-menuitem {
+        ul.common-menu-dropdown-pane {
+            overflow-y: auto;
+            max-height: calc(100vh - @mobileMenuHeight);
+        }
+    }
 }
 
 @media @mobileAndBelow {
@@ -1074,7 +1165,7 @@ Field editors
                 border-radius: 500rem;
                 padding: 0.7rem 1rem;
 
-                & > i.fas.fa-search {
+                & i.fas.fa-search {
                     position: relative;
                     margin-top: 0.1rem;
                     right: 0;
@@ -1082,6 +1173,25 @@ Field editors
 
                     opacity: .5;
                     transition: opacity 0.3s ease;
+                }
+                & > button:focus-visible {
+                    outline: 3px solid var(--pxt-focus-border);
+                    border-radius: 20%;
+                    &::after {
+                        content: none;
+                    }
+                }
+                &:focus-within {
+                    outline: 3px solid var(--pxt-focus-border);
+                    &:has(button:focus-visible) {
+                        outline: none;
+                    }
+                }
+                &:focus-within::after {
+                    content: none;
+                }
+                & > input:focus {
+                    outline: none !important;
                 }
             }
 
@@ -1158,6 +1268,10 @@ Field editors
             background-color: var(--pxt-neutral-background1-hover) !important;
             color: var(--pxt-neutral-foreground1-hover) !important;
         }
+
+        &:focus-visible {
+            outline: 3px solid var(--pxt-focus-border);
+        }
     }
 
     .extension-grid {
@@ -1191,16 +1305,17 @@ Field editors
         background-color: var(--pxt-neutral-alpha20);
     }
 
-    .extension-tag.selected {
+    .extension-tag[aria-selected="true"] {
         background-color: var(--pxt-focus-border);
         border-color: var(--pxt-focus-border);
         color: @white
     }
 
-    .extension-tag:focus::after  {
-        border: .05rem;
-        border-color: var(--pxt-focus-border);
-        border-radius: 1.6rem;
+    .extension-tag:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        &::after {
+            content: none;
+        }
     }
 
     .tab-header {
@@ -1526,7 +1641,9 @@ p.ui.font.small {
     .menubar .ui.item:not(.logo),
     #maineditor,
     #editortools,
-    #serialPreview {
+    #serialPreview,
+    .settings-menuitem,
+    .help-dropdown-menuitem  {
         display: none !important;
         z-index: -10 !important;
     }
@@ -2580,6 +2697,33 @@ button.ui.button.hostmultiplayergame-button {
     }
 }
 
+.search-input.common-input-wrapper {
+    border-radius: 500rem;
+    height: 3rem;
+
+    .common-input-group {
+        border-radius: 500rem;
+        height: 3rem;
+
+        input {
+            border-radius: 500rem;
+            height: 3rem;
+        }
+
+        &:focus-within:after, &:focus:after {
+            border-radius: 500rem;
+        }
+    }
+
+    i {
+        color: var(--pxt-neutral-foreground2);
+    }
+
+    &.project-manager {
+        max-width: 250px;
+    }
+}
+
 // win the specificity fight with hc mode
 #root.hc .sim-presence-bar .sim-presence-bar-player {
     background-repeat: no-repeat !important;
@@ -2794,6 +2938,10 @@ select.ui.dropdown {
 .newproject {
     .expandable-menu {
         font-size: 12px !important;
+    }
+
+    .language-restriction-dropdown > button {
+        min-width: 18rem;
     }
 }
 

@@ -257,6 +257,10 @@ export function TutorialContainer(props: TutorialContainerProps) {
         stepContentRef.current = ref;
     }
 
+    const showReplaceMyCode =
+        hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" &&
+        !pxt.appTarget.appTheme.hideReplaceMyCode && !props.tutorialOptions.metadata?.hideReplaceMyCode
+
     return <div className="tutorial-container" ref={containerRef}>
         {!isHorizontal && stepCounter}
         <div className={classList("tutorial-content", hasHint && "has-hint")} ref={contentRef} onScroll={updateScrollGradient}>
@@ -283,8 +287,9 @@ export function TutorialContainer(props: TutorialContainerProps) {
                 tutorialId={tutorialId}
                 currentStep={currentStep}
                 attemptsWithError={stepErrorAttemptCount} />}
-        {hasTemplate && currentStep == firstNonModalStep && preferredEditor !== "asset" && !pxt.appTarget.appTheme.hideReplaceMyCode &&
-            <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />}
+        {showReplaceMyCode &&
+            <TutorialResetCode tutorialId={tutorialId} currentStep={visibleStep} resetTemplateCode={parent.resetTutorialTemplateCode} />
+        }
         {showScrollGradient && <div className="tutorial-scroll-gradient" />}
         {isModal && !hideModal && <Modal isOpen={isModal} closeIcon={false} header={currentStepInfo.title || name} buttons={modalActions}
             className="hintdialog" onClose={onModalClose} dimmer={true}

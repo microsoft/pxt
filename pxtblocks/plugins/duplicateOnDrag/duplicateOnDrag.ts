@@ -1,6 +1,5 @@
 import * as Blockly from "blockly";
-
-export const DUPLICATE_ON_DRAG_MUTATION_KEY = "duplicateondrag";
+import { PathObject } from "../renderer/pathObject";
 
 let draggableShadowAllowlist: string[];
 let duplicateRefs: DuplicateOnDragRef[];
@@ -66,7 +65,7 @@ export function shouldDuplicateOnDrag(block: Blockly.Block) {
                 if (ref && (!ref.childBlockType || ref.childBlockType === block.type)) {
                     if (ref.inputName) {
                         const targetConnection = block.outputConnection.targetConnection;
-                        if (targetConnection.getParentInput().name === ref.inputName) {
+                        if (targetConnection.getParentInput()?.name === ref.inputName) {
                             return true;
                         }
                     }
@@ -78,12 +77,17 @@ export function shouldDuplicateOnDrag(block: Blockly.Block) {
         }
     }
 
-    if (block.mutationToDom) {
-        const mutation = block.mutationToDom();
-        if (mutation?.getAttribute(DUPLICATE_ON_DRAG_MUTATION_KEY)?.toLowerCase() === "true") {
-            return true;
-        }
-    }
-
     return false;
+}
+
+export function updateDuplicateOnDragState(block: Blockly.BlockSvg) {
+    // run this in a timeout to ensure that the block's parent has been intialized
+    // in case this is called during block initialization
+    setTimeout(() => {
+        const shouldDuplicate = shouldDuplicateOnDrag(block);
+        if (block.pathObject) {
+            (block.pathObject as PathObject).setHasDottedOutlineOnHover(shouldDuplicate);
+        }
+        block.setDeletable(!shouldDuplicate);
+    });
 }

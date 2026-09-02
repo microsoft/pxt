@@ -108,7 +108,7 @@ namespace testNamespace {
     export function callbackWithArguments(cb: (a: number, b: number) => void) {}
 
     //% blockId=test_handler_arguments2 optionalVariableArgs=true
-    //% block="Handler with optioinal arguments"
+    //% block="Handler with optional arguments"
     //% blockAllowMultiple
     export function callbackWithIgnoredArguments(cb: (c: number, d: number) => void) {}
 
@@ -121,6 +121,12 @@ namespace testNamespace {
     //% block="Handler with draggable reporters"
     //% blockAllowMultiple
     export function callbackWithDraggableParamsReporters(cb: (c: string, d: number, e: boolean, f: TestClass) => void) {}
+
+    //% blockId=test_handler_arguments5 optionalVariableArgs
+    //% block="Handler with optional arguments"
+    //% draggableParameters="reporter"
+    //% blockAllowMultiple
+    export function callbackWithVariableReporterArgs(cb: (c: number, d: TestClass) => void) {}
 
     /**
      * Enum value function

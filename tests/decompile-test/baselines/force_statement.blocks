@@ -1,0 +1,24 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="forceStatement">
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="x" numlines="1" error="Function with forceStatement cannot be used as an expression." line0="let x &#61; testNamespace.forceStatement&#40;&#41;&#59;" />
+<next>
+<block type="handlerStatement">
+<statement name="HANDLER">
+</statement>
+<next>
+<block type="typescript_statement">
+<mutation declaredvars="y" numlines="2" error="Function with forceStatement cannot be used as an expression." line0="let y &#61; testNamespace.handlerStatement&#40;&#40;&#41; &#61;&#62; &#123;" line1="&#125;&#41;&#59;" />
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>

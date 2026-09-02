@@ -241,7 +241,7 @@ export function nativeHostLongpressAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions): Promise<void> {
+export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions, fallbackAsync = browserDownloadDeployCoreAsync): Promise<void> {
     pxt.tickEvent(`hid.deploy`);
     log(`hid deploy`);
     // error message handled in browser download
@@ -278,8 +278,8 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
             // TODO: slightly different flow vs implicit, as this is in a 'half paired' state?
             // Ideally, we should be including this in the pairing webusb.tsx pairing dialog flow
             // directly instead of deferring it all the way here.
-            await pairDialogAsync();
-            return hidDeployCoreAsync(resp, d);
+            await pairAsync();
+            return hidDeployCoreAsync(resp, d, fallbackAsync);
         } else if (e.message === "timeout") {
             pxt.tickEvent("hid.flash.timeout");
             log(`flash timeout`);
@@ -301,7 +301,7 @@ export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.comma
         }
 
         // default, save file
-        return browserDownloadDeployCoreAsync(resp);
+        return fallbackAsync(resp);
     } finally {
         deployingPacketIO = false
     }
@@ -480,8 +480,8 @@ export async function initAsync() {
     }
 
     // check if webUSB is available and usable
-    if ((pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) && !pxt.BrowserUtils.isPxtElectron()) {
-        // TODO: WebUSB is currently disabled in electron app, but should be supported.
+    const canUseWebUSBInCurrentShell = !pxt.BrowserUtils.isPxtElectron() || pxt.BrowserUtils.isPxtElectronWebUSBDeployEnabled();
+    if ((pxt.appTarget?.compile?.isNative || pxt.appTarget?.compile?.hasHex) && canUseWebUSBInCurrentShell) {
         if (pxt.shell.getControllerMode() !== pxt.shell.ControllerMode.App && pxt.usb.isAvailable() && pxt.appTarget?.compile?.webUSB) {
             log(`enabled webusb`);
             pxt.usb.setEnabled(true);
@@ -489,7 +489,7 @@ export async function initAsync() {
         } else {
             log(`webusb disabled`);
             pxt.usb.setEnabled(false);
-            if (!pxt.appTarget?.compile?.disableHIDBridge && pxt.BrowserUtils.isLocalHost()) {
+            if (!pxt.appTarget?.compile?.disableHIDBridge && pxt.BrowserUtils.isLocalHostDev()) {
                 log(`enabled hid bridge`);
                 pxt.packetio.mkPacketIOAsync = hidbridge.mkHIDBridgePacketIOAsync;
             }
@@ -508,7 +508,7 @@ export async function initAsync() {
         pxt.commands.workspaceLoadedAsync = nativeHostWorkspaceLoadedCoreAsync;
     } else if (pxt.BrowserUtils.isPxtElectron()) {
         log(`deploy: electron`);
-        pxt.commands.deployCoreAsync = electron.driveDeployAsync;
+        pxt.commands.deployCoreAsync = electron.deployCoreAsync;
         pxt.commands.electronDeployAsync = electron.driveDeployAsync;
         pxt.commands.electronFileDeployAsync = electron.deployFilesAsync;
     } else if (webUSBSupported) {
@@ -548,7 +548,7 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
                 return true;
             } catch (e) {
                 if (e.type == "devicenotfound") {
-                    return !!pairIfDeviceNotFound && pairDialogAsync();
+                    return !!pairIfDeviceNotFound && pairAsync();
                 } else if (e.type == "inittimeout") {
                     pxt.tickEvent("hid.flash.inittimeout");
                     await showReconnectDeviceInstructionsAsync(core.confirmAsync);
@@ -558,12 +558,11 @@ export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfCo
         } finally {
             reconnectPromise = undefined;
         }
-    })().then(res => res === pxt.commands.WebUSBPairResult.Success);
+    })();
     return reconnectPromise;
 }
 
-
-export async function pairDialogAsync(implicitlyCalled?: boolean): Promise<pxt.commands.WebUSBPairResult> {
+export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
     pxt.tickEvent("cmds.pair")
     const res = await pxt.commands.webUsbPairDialogAsync(
         pxt.usb.pairAsync,
@@ -575,15 +574,19 @@ export async function pairDialogAsync(implicitlyCalled?: boolean): Promise<pxt.c
         case pxt.commands.WebUSBPairResult.Success:
             try {
                 await maybeReconnectAsync(false, true);
+                return true;
             } catch (e) {
                 // Device
                 core.infoNotification(lf("Oops, connection failed."));
-                return pxt.commands.WebUSBPairResult.Failed;
+                return false;
             }
         case pxt.commands.WebUSBPairResult.Failed:
             core.infoNotification(lf("Oops, no device was paired."));
+            return false;
+        case pxt.commands.WebUSBPairResult.UserRejected:
+            // User exited pair flow intentionally
+            return false;
     }
-    return res;
 
 }
 

@@ -58,7 +58,7 @@ interface Category {
     tiles: GalleryTile[];
 }
 
-const options: Category[] = [
+export const BUILTIN_CATEGORIES: Category[] = [
     {
         id: "forest",
         text: lf("Forest"),
@@ -126,7 +126,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 }
             }
 
-            this.categories = options.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
+            this.categories = BUILTIN_CATEGORIES.concat(Object.keys(extraCategories).map(key => extraCategories[key]));
         } else {
             this.categories = [];
         }
@@ -250,7 +250,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                         <TileButton
                             key={index}
                             tile={tile.bitmap}
-                            title={lf("Tile {0}", tile)}
+                            title={this.getTileTooltip(tile)}
                             colors={colors}
                             onClick={() => this.handleTileClick(index, false)}
                             onRightClick={() => this.handleTileClick(index, true)}
@@ -277,6 +277,20 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
                 </div>
             </div>
         </div>;
+    }
+
+    protected getTileTooltip(tile: RenderedTile): string {
+        const label = (() => {
+            if (isGalleryTile(tile)) return tile.qualifiedName?.split(".").pop();
+
+            const tileInfo = this.props.tileset?.tiles?.[tile.index];
+            return tileInfo?.meta?.displayName
+                || (tileInfo ? pxt.getShortIDForAsset(tileInfo) : undefined)
+                || tileInfo?.id;
+        })();
+
+        const shortName = label?.split(".").pop();
+        return shortName ? lf("Tile {0}", shortName) : lf("Tile");
     }
 
     protected updateGalleryTiles() {
@@ -420,7 +434,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
     protected refreshGallery(props: TilePaletteProps) {
         const { gallery, tileset } = props;
         if (gallery) {
-            options.forEach(opt => {
+            BUILTIN_CATEGORIES.forEach(opt => {
                 opt.tiles = gallery.filter(t => t.tags.indexOf(opt.id) !== -1 && t.tileWidth === tileset.tileWidth);
             });
         }

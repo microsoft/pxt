@@ -53,8 +53,6 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
             <div className="actions">
                 <Button
                     tabIndex={-1}
-                    ariaPosInSet={1}
-                    ariaSetSize={showSignIn ? 3 : 2}
                     className="primary inverted"
                     title={lf("Claim Reward")}
                     label={lf("Claim Reward")}
@@ -62,8 +60,6 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
                 />
                 <Button
                     tabIndex={-1}
-                    ariaPosInSet={2}
-                    ariaSetSize={showSignIn ? 3 : 2}
                     className="primary inverted"
                     title={lf("Play your game")}
                     label={lf("Play your game")}
@@ -72,8 +68,6 @@ export class RewardActionsImpl extends React.Component<RewardActionsProps> {
                 {showSignIn &&
                     <Button
                         tabIndex={-1}
-                        ariaPosInSet={3}
-                        ariaSetSize={3}
                         className="tertiary"
                         onClick={dispatchShowLoginModal}
                         label={lf("Sign in to Save")}

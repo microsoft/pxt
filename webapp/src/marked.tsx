@@ -32,6 +32,25 @@ interface MarkedContentState {
 export class MarkedContent extends data.Component<MarkedContentProps, MarkedContentState> {
     protected readonly semanticIconNames = ["flipped", "horizontally", "vertically", "rotated", "counterclockwise", "access", "accessible", "accusoft", "add", "address", "adjust", "adn", "adversal", "affiliatetheme", "aid", "alarm", "ald", "algolia", "alien", "align", "all", "alphabet", "als", "alt", "alternate", "alternative", "amazon", "ambulance", "american", "amex", "amilia", "amount", "anchor", "and", "android", "angellist", "angle", "angrycreative", "angular", "announcement", "app", "apper", "apple", "archive", "area", "arrow", "arrows", "ascending", "asexual", "asl", "assistive", "asterisk", "asymmetrik", "at", "attach", "attention", "audible", "audio", "autoprefixer", "avianex", "aviato", "awesome", "aws", "backward", "badge", "bag", "balance", "ball", "ban", "band", "bandcamp", "bar", "barcode", "bars", "baseball", "basket", "basketball", "bath", "bathtub", "battery", "bed", "beer", "beginner", "behance", "bell", "bicycle", "bill", "bimobject", "binary", "binoculars", "birthday", "bishop", "bitbucket", "bitcoin", "bity", "black", "blackberry", "blind", "block", "blogger", "bluetooth", "board", "bold", "bolt", "bomb", "book", "bookmark", "bowling", "box", "boxes", "braille", "branch", "briefcase", "broken", "browser", "brush", "btc", "bug", "building", "bullhorn", "bullseye", "bureau", "buromobelexperte", "bus", "buysellads", "cake", "calculator", "calendar", "call", "camera", "camp", "cancel", "cap", "captioning", "car", "card", "caret", "cart", "cc", "center", "centercode", "certificate", "chain", "chart", "chat", "check", "checked", "checkered", "checkmark", "chess", "chevron", "child", "chrome", "circle", "clipboard", "clock", "clone", "close", "closed", "cloud", "cloudscale", "cloudsmith", "cloudversify", "club", "cny", "cocktail", "code", "codepen", "codiepie", "coffee", "cog", "cogs", "columns", "combinator", "comment", "commenting", "comments", "commons", "compass", "compose", "compress", "computer", "configure", "connectdevelop", "contao", "content", "control", "conversation", "copy", "copyright", "cord", "cpanel", "creative", "credit", "crop", "crosshairs", "css3", "cube", "cubes", "currency", "cursor", "cut", "cuttlefish", "dashboard", "dashcube", "database", "deaf", "deafness", "delete", "delicious", "deploydog", "descending", "description", "deskpro", "desktop", "detective", "deviantart", "devices", "diamond", "digg", "digital", "diners", "discord", "discourse", "discover", "discussions", "disk", "dna", "dochub", "docker", "doctor", "dollar", "dolly", "dont", "dot", "double", "down", "download", "draft2digital", "dribbble", "dribble", "drive", "drivers", "dropbox", "dropdown", "dropper", "drupal", "dyalog", "earlybirds", "edge", "edit", "eercast", "eject", "elementor", "ellipsis", "ember", "emergency", "empire", "empty", "end", "envelope", "envira", "erase", "eraser", "erlang", "ethereum", "etsy", "eur", "euro", "excel", "exchange", "exclamation", "expand", "expeditedssl", "explorer", "express", "external", "extinguisher", "eye", "eyedropper", "facebook", "factory", "fast", "favorite", "fax", "feed", "female", "fi", "fighter", "file", "film", "filter", "find", "fire", "firefox", "first", "firstdraft", "five", "flag", "flask", "flatbed", "flickr", "flipboard", "fly", "folder", "font", "fonticons", "food", "football", "fork", "forms", "fort", "forumbee", "forward", "four", "foursquare", "framework", "free", "freebsd", "from", "frown", "full", "futbol", "gallery", "game", "gavel", "gay", "gbp", "gem", "gender", "genderless", "get", "gg", "ghost", "gift", "git", "github", "gitkraken", "gitlab", "gitter", "gittip", "glass", "glide", "globe", "gofore", "golf", "goodreads", "google", "grab", "graduation", "graph", "gratipay", "grav", "grid", "gripfire", "group", "grunt", "gulp", "hacker", "half", "hand", "handicap", "handshake", "hard", "hash", "hashtag", "hat", "hdd", "header", "heading", "headphones", "hearing", "heart", "heartbeat", "height", "help", "helper", "heterosexual", "hide", "high", "hips", "hire", "history", "hockey", "home", "homosexual", "hooli", "horizontal", "hospital", "hotel", "hotjar", "hourglass", "houzz", "html5", "hubspot", "hundred", "hunt", "id", "idea", "ils", "image", "images", "imdb", "in", "in-cart", "inbox", "indent", "industry", "info", "inr", "instagram", "intergender", "international", "internet", "interpreting", "intersex", "ios", "ioxhost", "isle", "italic", "itunes", "japan", "jcb", "jenkins", "jet", "joget", "joomla", "jpy", "js", "jsfiddle", "justify", "key", "keyboard", "keycdn", "kickstarter", "king", "knight", "korvue", "krw", "lab", "language", "laptop", "laravel", "large", "lastfm", "law", "layout", "leaf", "leanpub", "left", "legal", "lemon", "lesbian", "less", "level", "license", "life", "lightbulb", "lightning", "like", "line", "linechat", "linkedin", "linkify", "linode", "linux", "lira", "list", "listening", "lizard", "location", "lock", "log", "logout", "long", "low", "lyft", "magento", "magic", "magnet", "magnify", "mail", "male", "man", "map", "marker", "mars", "martini", "mastercard", "maxcdn", "maximize", "md", "meanpath", "medapps", "medium", "medkit", "medrt", "meetup", "meh", "mercury", "messenger", "microchip", "microphone", "microsoft", "military", "minimize", "minus", "mix", "mixcloud", "mizuni", "mobile", "modx", "monero", "money", "monster", "moon", "motorcycle", "mouse", "move", "ms", "mule", "music", "mute", "napster", "neuter", "new", "news", "newspaper", "nintendo", "node", "non", "notch", "notched", "note", "npm", "ns8", "numbered", "numeric", "nutritionix", "object", "ocean", "odnoklassniki", "of", "off", "official", "ol", "on", "one", "open", "opencart", "openid", "opera", "optin", "optinmonster", "options", "order", "ordered", "osi", "other", "out", "outdent", "outline", "overflow", "page4", "pagelines", "paint", "palfed", "pallet", "paper", "paperclip", "paragraph", "paste", "patreon", "pause", "paw", "pawn", "pay", "payment", "paypal", "pdf", "peace", "pen", "pencil", "percent", "periscope", "phabricator", "phoenix", "phone", "photo", "php", "picture", "pie", "piece", "pied", "pills", "pin", "pinterest", "piper", "pixels", "plane", "play", "playstation", "play", "plug", "plus", "pocket", "podcast", "point", "pointer", "pointing", "pound", "power", "powerpoint", "pp", "print", "privacy", "product", "protect", "puck", "pushed", "puzzle", "python", "qq", "qrcode", "quarter", "quarters", "queen", "question", "quidditch", "quinscape", "quora", "quote", "radio", "rain", "random", "ravelry", "react", "rebel", "record", "rectangle", "recycle", "reddit", "redo", "redriver", "refresh", "registered", "remove", "rendact", "renren", "repeat", "reply", "replyd", "resize", "resolving", "restore", "retro", "retweet", "right", "ring", "rmb", "road", "rock", "rocket", "rocketchat", "rockrms", "rook", "rouble", "rss", "rub", "ruble", "rupee", "s15", "safari", "sass", "save", "scale", "schlix", "scissors", "scribd", "search", "searchengin", "secret", "selected", "sellcast", "sellsy", "send", "server", "servicestack", "setting", "settings", "share", "shekel", "sheqel", "shield", "ship", "shipping", "shirtsinbulk", "shop", "shopping", "shower", "shuffle", "shutdown", "shuttle", "sidebar", "sign", "sign-in", "sign-out", "signal", "signing", "signs", "signup", "simple", "simplybuilt", "sistrix", "sitemap", "skyatlas", "skype", "slack", "slash", "sliders", "slideshare", "smile", "snapchat", "snowflake", "soccer", "sort", "sound", "soundcloud", "space", "speakap", "spinner", "spock", "spoon", "spotify", "spy", "square", "stack", "star", "start", "staylinked", "steam", "step", "stethoscope", "sticker", "sticky", "stop", "stopwatch", "store", "strava", "street", "strikethrough", "stripe", "stroke", "student", "studiovinari", "stumbleupon", "subscript", "subway", "suitcase", "sun", "superpowers", "superscript", "supple", "switch", "symbol", "sync", "syringe", "systems", "table", "tablet", "tachometer", "tack", "tag", "tags", "talk", "target", "tasks", "taxi", "telegram", "telephone", "teletype", "television", "tencent", "tennis", "terminal", "text", "th", "theme", "themeisle", "thermometer", "thin", "three", "thumb", "thumbs", "thumbtack", "ticket", "tie", "time", "times", "tint", "tm", "to", "toggle", "trademark", "train", "transgender", "translate", "trash", "travel", "treatment", "tree", "trello", "triangle", "tripadvisor", "trophy", "truck", "try", "tumblr", "tv", "twitch", "twitter", "two", "uber", "uikit", "ul", "umbrella", "underline", "undo", "ungroup", "unhide", "uniregistry", "universal", "university", "unlink", "unlinkify", "unlock", "unmute", "unordered", "untappd", "up", "upload", "usb", "usd", "user", "users", "ussunnah", "utensil", "utensils", "vaadin", "vcard", "venus", "vertical", "viacoin", "viadeo", "viber", "victory", "video", "view", "vimeo", "vine", "visa", "vision", "vk", "vnv", "volleyball", "volume", "vuejs", "wait", "wallet", "warehouse", "warning", "wechat", "weibo", "weight", "weixin", "whatsapp", "wheelchair", "whmcs", "wi-fi", "width", "wifi", "wikipedia", "window", "windows", "winner", "wizard", "woman", "won", "word", "wordpress", "world", "wpbeginner", "wpexplorer", "wpforms", "wrench", "write", "xbox", "xing", "yahoo", "yandex", "yc", "ycombinator", "yelp", "yen", "yoast", "youtube", "zero", "zip", "zoom", "zoom-in", "zoom-out"];
     protected readonly customIconNames = ["blocks", "js", "python", "toolbox", "book-reader", "photo-video", "gamepad", "function"];
+
+    // Map of block categories to their Semantic UI icon names for use in tutorial bullets
+    protected readonly categoryIconMap: pxt.Map<string> = {
+        "variables": "align justify",
+        "loops": "redo",
+        "logic": "random",
+        "math": "calculator",
+        "arrays": "list ol",
+        "text": "text width",
+        "controller": "game",
+        "sprites": "paper plane",
+        "scene": "tree",
+        "info": "id card",
+        "music": "headphones",
+        "animation": "sync",
+        "images": "image",
+        "console": "terminal",
+    };
+
     protected contentRef: HTMLDivElement;
 
     // Local cache for images, cleared when we create a new project.
@@ -295,21 +314,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
 
     private renderVideo(content: HTMLElement) {
+        pxt.docs.hydrateYouTubeEmbeds(content, true);
 
-        pxt.Util.toArray(content.querySelectorAll('iframe.yt-embed'))
-            .forEach((inlineVideo: HTMLElement) => {
-                let lang = pxt.appTarget.appTheme?.defaultLocale ?? "en";
-                const src = inlineVideo.getAttribute('src');
-                let url = new URL(src);
-                pxt.tickEvent("video.loaded", {
-                    player: "youtube",
-                    url: src
-                })
-                url.searchParams.append('hl', lang);
-                inlineVideo.setAttribute('src', url.toString());
-            });
-
-        pxt.Util.toArray(content.querySelectorAll('Video.ams-embed'))
+        pxt.Util.toArray(content.querySelectorAll("Video.ams-embed"))
             .forEach((inlineVideo: HTMLMediaElement) => {
 
                 let player = MediaPlayer().create()
@@ -385,7 +392,9 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
     // Renders inline blocks, such as "||controller: Controller||".
     private renderInlineBlocks(content: HTMLElement) {
         const { parent } = this.props;
-        const hasCategories = !parent.state.tutorialOptions?.metadata?.flyoutOnly && !parent.state.tutorialOptions?.metadata?.hideToolbox;
+        const hasCategories = !parent.state.tutorialOptions?.metadata?.flyoutOnly
+            && !parent.state.tutorialOptions?.metadata?.hideToolbox
+            && !parent.state.tutorialOptions?.metadata?.unifiedToolbox;
         const inlineBlocks = pxt.Util.toArray(content.querySelectorAll(`:not(pre) > code`))
             .map((inlineBlock: HTMLElement) => {
                 const text = inlineBlock.innerText;
@@ -483,7 +492,10 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
 
                             const toolboxSelector = `${editorSelector} .blocklyTreeRow[data-ns="${ns}"]`;
                             const toolboxRow = document.querySelector<HTMLDivElement>(toolboxSelector);
-                            toolboxRow?.click();
+                            if (toolboxRow) {
+                                toolboxRow.click();
+                                this.props.parent.editor.focusToolbox();
+                            }
                         });
                         inlineBlock.addEventListener("keydown", e => fireClickOnEnter(e as any))
                     }
@@ -520,14 +532,22 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                     bullet.className = "formatted-bullet";
                     const icon = document.createElement("i");
                     let iconNames = match[1].split(" ");
+                    const iconNameString = iconNames.join(" ");
 
-                    // Filter out icon names that don't match our allowlist
-                    let iconClasses = iconNames.filter(el => this.semanticIconNames.indexOf(el) >= 0);
-                    if (iconClasses.length) {
-                        icon.className = `ui icon ${iconClasses.join(" ")}`;
+                    // Check if there's a category icon mapping first
+                    const categoryIcon = this.categoryIconMap[iconNameString.toLowerCase().trim()];
+                    if (categoryIcon) {
+                        // Use the mapped icon directly, split by spaces to handle multi-word icon names
+                        icon.className = `ui icon ${categoryIcon}`;
                     } else {
-                        iconClasses = iconNames.filter(el => this.customIconNames.indexOf(el) >= 0);
-                        icon.className = `ui xicon ${iconClasses.join(" ")}`;
+                        // Filter out icon names that don't match our allowlist
+                        let iconClasses = iconNames.filter(el => this.semanticIconNames.indexOf(el) >= 0);
+                        if (iconClasses.length) {
+                            icon.className = `ui icon ${iconClasses.join(" ")}`;
+                        } else {
+                            iconClasses = iconNames.filter(el => this.customIconNames.indexOf(el) >= 0);
+                            icon.className = `ui xicon ${iconClasses.join(" ")}`;
+                        }
                     }
 
                     bullet.appendChild(icon);
@@ -660,37 +680,42 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
         markdown = markdown.replace(/@([a-z]+)@/ig, (m, param) => pubinfo[param] || 'unknown macro')
 
         // create a custom renderer
-        let renderer = new marked.Renderer()
+        const renderer = new marked.Renderer()
         pxt.docs.setupRenderer(renderer);
 
-        // always popout external links
-        const linkRenderer = renderer.link;
-        renderer.link = function (href: string, title: string, text: string) {
-            const relative = /^[\/#]/.test(href);
-            const target = !relative ? '_blank' : '';
-            const html = linkRenderer.call(renderer, href, title, text);
-            return html.replace(/^<a /, `<a ${target ? `target="${target}"` : ''} rel="nofollow noopener" `);
+        // always popout links
+        const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
+        renderer.link = function (this: any, token: marked.Tokens.Link) {
+            const html = linkRenderer
+                ? linkRenderer(token)
+                : `<a href="${token.href}">${this.parser.parseInline(token.tokens)}</a>`;
+            return html.replace(/^<a /, `<a target="_blank" rel="nofollow noopener" `);
         };
 
         // Set markdown options
         marked.setOptions({
+            async: false,
             renderer: renderer,
-            sanitize: true,
-            sanitizer: pxt.docs.requireDOMSanitizer()
+            gfm: true,
+            breaks: false,
+            pedantic: false
         })
+
+        const sanitizer = pxt.docs.requireDOMSanitizer() as ((input: string) => string) | undefined;
 
         // preemptively remove script tags, although they'll be escaped anyway
         // prevents ugly <script ...> rendering in docs. This is not intended to sanitize
-        // the markedown, that is done using DOMPurify (see setOptions above)
+        // the markdown, that is done using DOMPurify below
         markdown = markdown.replace(/<\s*script[^>]*>.*<\/\s*script[^>]*>/gi, '');
 
         // Render the markdown into a div outside of the DOM tree to prevent the page from reflowing
         // when we edit the HTML it produces. Then, add the finished result to the content div
         const tempDiv = document.createElement("div");
-
-        // We pass DOMPurify to marked in the call to setOptions above. This should be safe
+        const rendered = marked.marked(markdown) as string;
         /* eslint-disable @microsoft/sdl/no-inner-html */
-        tempDiv.innerHTML = marked(markdown);
+        const safeHtml = sanitizer?.(rendered);
+        const normalizedHtml = typeof safeHtml === "string" ? safeHtml : (safeHtml as any)?.toString?.() ?? rendered;
+        tempDiv.innerHTML = normalizedHtml;
         /* eslint-enable @microsoft/sdl/no-inner-html */
 
         // We'll go through a series of adjustments here, rendering inline blocks, blocks and snippets as needed

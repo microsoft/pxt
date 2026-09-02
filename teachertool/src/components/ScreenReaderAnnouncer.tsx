@@ -1,6 +1,5 @@
 import { useContext } from "react";
 import { AppStateContext } from "../state/appStateContext";
-import css from "./styling/ActionAnnouncer.module.scss";
 
 export interface ScreenReaderAnnouncerProps {}
 export const ScreenReaderAnnouncer: React.FC<ScreenReaderAnnouncerProps> = () => {
@@ -8,7 +7,7 @@ export const ScreenReaderAnnouncer: React.FC<ScreenReaderAnnouncerProps> = () =>
     return (
         <>
             {teacherTool.screenReaderAnnouncement && (
-                <div className={css["sr-only"]} aria-live="polite">
+                <div className="sr-only" aria-live="polite">
                     {teacherTool.screenReaderAnnouncement}
                 </div>
             )}

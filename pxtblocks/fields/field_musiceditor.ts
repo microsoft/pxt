@@ -39,7 +39,7 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
         let song: pxt.assets.music.Song;
 
         if (text) {
-            const match = /^\s*hex\s*`([a-fA-F0-9]+)`\s*(?:;?)\s*$/.exec(text);
+            const match = /^\s*hex\s*`\s*([a-fA-F0-9]+)\s*`\s*(?:;?)\s*$/.exec(text);
 
             if (match) {
                 song = pxt.assets.music.decodeSongFromHex(match[1]);
@@ -56,7 +56,9 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
         }
         else {
             // Restore all of the unused tracks
-            pxt.assets.music.inflateSong(song);
+            if (this.shouldInflateAsset()) {
+                pxt.assets.music.inflateSong(song);
+            }
         }
 
         const newAsset: pxt.Song = {
@@ -105,7 +107,7 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
         const bg = new svg.Rect()
             .at(X_PADDING, Y_PADDING)
             .size(BG_PADDING * 2 + this.previewWidth(), BG_HEIGHT)
-            .setClass("blocklySpriteField")
+            .setClass("blocklyFieldRect blocklySpriteField")
             .stroke("#898989", 1)
             .corner(4);
 
@@ -131,5 +133,9 @@ export class FieldMusicEditor extends FieldAssetEditor<FieldMusicEditorOptions, 
     protected previewWidth() {
         const measures = this.asset ? (this.asset as pxt.Song).song.measures : 2;
         return measures * PREVIEW_HEIGHT;
+    }
+
+    protected shouldInflateAsset(): boolean {
+        return true;
     }
 }

@@ -24,6 +24,7 @@ type DismissToast = ActionBase & {
 type SetProjectMetadata = ActionBase & {
     type: "SET_PROJECT_METADATA";
     metadata: ProjectData | undefined;
+    force?: boolean; // Optional flag to force reload even if metadata is the same
 };
 
 type SetEvalResult = ActionBase & {
@@ -53,6 +54,11 @@ type SetCatalog = ActionBase & {
 
 type SetCatalogOpen = ActionBase & {
     type: "SET_CATALOG_OPEN";
+    open: boolean;
+};
+
+type SetAskAiOpen = ActionBase & {
+    type: "SET_ASK_AI_OPEN";
     open: boolean;
 };
 
@@ -137,6 +143,7 @@ export type Action =
     | SetTargetConfig
     | SetCatalog
     | SetCatalogOpen
+    | SetAskAiOpen
     | SetChecklist
     | ShowModal
     | HideModal
@@ -162,9 +169,10 @@ const dismissToast = (toastId: string): DismissToast => ({
     toastId,
 });
 
-const setProjectMetadata = (metadata: ProjectData | undefined): SetProjectMetadata => ({
+const setProjectMetadata = (metadata: ProjectData | undefined, force?: boolean): SetProjectMetadata => ({
     type: "SET_PROJECT_METADATA",
     metadata,
+    force,
 });
 
 const setEvalResult = (criteriaInstanceId: string, result: CriteriaResult): SetEvalResult => ({
@@ -194,6 +202,11 @@ const setCatalog = (catalog: CatalogCriteria[] | undefined): SetCatalog => ({
 
 const setCatalogOpen = (open: boolean): SetCatalogOpen => ({
     type: "SET_CATALOG_OPEN",
+    open,
+});
+
+const setAskAiOpen = (open: boolean): SetAskAiOpen => ({
+    type: "SET_ASK_AI_OPEN",
     open,
 });
 
@@ -274,6 +287,7 @@ export {
     setTargetConfig,
     setCatalog,
     setCatalogOpen,
+    setAskAiOpen,
     setChecklist,
     showModal,
     hideModal,

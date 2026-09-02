@@ -4,7 +4,7 @@
 
 ## Using Extensions #using
 
-In the web editor, click on the **Settings** (the ⚙️ symbol) menu and then choose **Extensions** to search and add extensions to the project.
+In the code editor, click on the **Settings** (the ⚙️ symbol) menu and then choose **Extensions** to search and add extensions to the project.
 The Blocks and any other JavaScript definitions from the extension are automatically loaded in the editor.
 
 ### ~ reminder

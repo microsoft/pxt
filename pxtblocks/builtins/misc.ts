@@ -165,7 +165,8 @@ export function initOnStart() {
                         {
                             "type": "input_value",
                             "name": "PREDICATE",
-                            "check": "Boolean"
+                            "check": "Boolean",
+                            "ariaLabelText": lf("condition")
                         }
                     ],
                     "inputsInline": true,

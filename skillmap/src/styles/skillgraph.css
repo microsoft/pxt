@@ -37,6 +37,10 @@
     max-height: 100%;
 }
 
+.skill-graph-background img.pixelated {
+    image-rendering: pixelated;
+}
+
 /*******************************/
 /*****   HIGH CONTRAST     *****/
 /*******************************/

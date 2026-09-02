@@ -15,7 +15,10 @@
         "classHandlerParameter.ts",
         "globals.ts",
         "spritekind.ts",
-        "decompilerShadowAlias.ts"
+        "decompilerShadowAlias.ts",
+        "blockAliasFor.ts",
+        "forceStatement.ts",
+        "robot.ts"
     ],
     "public": true,
     "dependencies": {},

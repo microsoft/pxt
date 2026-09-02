@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "module": "commonjs",
-        "outDir": "../built/pxtrunner",
+        "outDir": "../built",
         "rootDir": "..",
         "newLine": "LF",
         "sourceMap": false,

@@ -25,6 +25,7 @@ namespace ts.pxtc {
         "numops::lsrs": "_numops_lsrs",
         "pxt::toInt": "_numops_toInt",
         "pxt::fromInt": "_numops_fromInt",
+        "pxt::switch_eq": "_pxt_switch_eq",
     }
 
     // snippets for ARM Thumb assembly
@@ -354,6 +355,70 @@ _cmp_${op}:
                         bl numops::toBoolDecr
                         cmp r0, #0`)
             }
+
+            // switch(x){case k:} compiles to equality tests via pxt::switch_eq.
+            // Fast-path the common case of two tagged ints; defer anything boxed
+            // (low bit clear) to the C++ helper.
+            r += `
+.section code
+.object _pxt_helper_switch_eq
+_pxt_switch_eq:
+    @scope _pxt_switch_eq
+    lsls r2, r0, #31    ; arg0 a tagged int? (low bit set)
+    beq .boxed
+    lsls r2, r1, #31    ; arg1 a tagged int?
+    beq .boxed
+    cmp r0, r1          ; tagged ints compare equal iff identical
+    beq .true
+.false:
+    movs r0, #0
+    bx lr
+.true:
+    movs r0, #1
+    bx lr
+`
+            r += boxedOp(`bl pxt::switch_eq`)
+
+            // Array .length on a known RefCollection: read the length field and
+            // tag it inline, skipping the call into C++ Array_::length + fromInt.
+            // Anything that isn't a plain RefCollection pointer defers to C++.
+            //
+            // This depends on the C++ runtime object layout (pxt-common-packages
+            // pxtbase.h). If those structs are reordered, update the offsets here:
+            //   * object[0]   = RefObject.vtable      (RefObject: vtable is field 0)
+            //   * vtable[8]   = VTable.classNo (u16)  (struct VTable, non-VM build:
+            //                   numbytes@0, objectType/magic@2-3, ifaceTable@4-7,
+            //                   classNo@8) -- same layout this compiler emits in
+            //                   vtableToAsm(), so read and write stay in sync
+            //   * object[8]   = RefCollection.head.length  (RefCollection : RefObject
+            //                   {vtable@0} + Segment head@4; Segment {data@0, length@4})
+            // The length is read with ldrh; ramint_t may be u16 or u32 (pxtbase.h
+            // #if), but little-endian makes the low halfword correct for any array
+            // that fits in device RAM (< 65536 elements). The classNo guard ensures
+            // only genuine RefCollections take this path.
+            r += `
+.section code
+.object _pxt_helper_array_length_tagged
+_pxt_array_length_tagged:
+    @scope _pxt_array_length_tagged
+    lsls r1, r0, #30    ; pointer? (low 2 bits 00)
+    bne .boxed
+    cmp r0, #0          ; non-null?
+    beq .boxed
+    ldr r2, [r0, #0]    ; load vtable
+    ldrh r2, [r2, #8]   ; vtable class id
+    cmp r2, #${pxt.BuiltInType.RefCollection}
+    bne .boxed
+    ldrh r0, [r0, #8]   ; length field
+    lsls r0, r0, #1     ; tag as int: (n<<1)|1
+    adds r0, r0, #1
+    bx lr
+.boxed:
+    ${this.pushLR()}
+    ${this.callCPP("Array_::length")}
+    bl _numops_fromInt
+    ${this.popPC()}
+`
 
             return r
         }

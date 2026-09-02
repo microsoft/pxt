@@ -3,7 +3,6 @@ namespace pxt.commands {
         Failed = 0,
         Success = 1,
         UserRejected = 2,
-        DownloadOnly = 3,
     }
 
     export interface RecompileOptions {

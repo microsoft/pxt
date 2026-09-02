@@ -340,28 +340,16 @@ export const ENTER_KEY = 13;
 export const SPACE_KEY = 32;
 
 export function getHighContrastOnce(): boolean {
-    // User preference gets priority over theme setting.
-    if (data.getData<boolean>(auth.HIGHCONTRAST)) {
-        return true;
-    }
-
-    const themeManager = ThemeManager.getInstance(document);
-    const currentTheme = themeManager.getCurrentColorTheme();
-    return themeManager.isHighContrast(currentTheme?.id);
-}
-export function toggleHighContrast() {
-    setHighContrast(!getHighContrastOnce())
-}
-export async function setHighContrast(on: boolean) {
-    sendUpdateFeedbackTheme(on);
-    await auth.setHighContrastPrefAsync(on);
+    return ThemeManager.isCurrentThemeHighContrast();
 }
 
-export async function toggleAccessibleBlocks() {
-    await setAccessibleBlocks(!data.getData<boolean>(auth.ACCESSIBLE_BLOCKS));
+export async function toggleScreenReaderMode(eventSource: string) {
+    await setScreenReaderMode(!data.getData<boolean>(auth.SCREEN_READER_MODE), eventSource);
 }
-export async function setAccessibleBlocks(on: boolean) {
-    await auth.setAccessibleBlocksPrefAsync(on);
+
+export async function setScreenReaderMode(on: boolean, eventSource: string) {
+    pxt.tickEvent("app.screenreadermode", { on: on ? 1 : 0, eventSource });
+    await auth.setScreenReaderModePrefAsync(on);
 }
 
 export async function setLanguage(lang: string) {

@@ -15,6 +15,7 @@ interface SkillGraphContainerProps {
     graphs: SvgGraph[];
     backgroundImageUrl: string;
     backgroundColor: string;
+    pixelatedBackground?: boolean;
     strokeColor: string;
     graphSize: {
         width: number;
@@ -50,7 +51,7 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
     }
 
     render() {
-        const { maps, graphs, graphSize, backgroundImageUrl, backgroundColor, strokeColor } = this.props;
+        const { maps, graphs, graphSize, backgroundImageUrl, pixelatedBackground, backgroundColor, strokeColor } = this.props;
         const { backgroundSize } = this.state;
         let altTextColor: string = 'black';
         let backgroundAltText: string = lf("Background image for {0}", maps[0]?.displayName || lf("skillmap"));
@@ -97,7 +98,13 @@ export class SkillGraphContainerImpl extends React.Component<SkillGraphContainer
                     </svg>
                 </MenuBar>
                 {backgroundImageUrl && <div className="skill-graph-background">
-                    <img src={backgroundImageUrl} alt={backgroundAltText} onLoad={this.onImageLoad} style={{ color: altTextColor }} />
+                    <img
+                        src={backgroundImageUrl}
+                        className={pixelatedBackground ? "pixelated" : undefined}
+                        alt={backgroundAltText}
+                        onLoad={this.onImageLoad}
+                        style={{ color: altTextColor }}
+                    />
                 </div>}
             </div>
         </div>

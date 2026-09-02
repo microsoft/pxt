@@ -537,6 +537,8 @@ namespace pxsim {
             super.kill();
             pxsim.codal.music.__stopSoundExpressions();
             AudioContextManager.stopAll();
+            AudioContextManager.SpatialAudioPlayer.disposeAll();
+            AudioContextManager.setListenerPosition(0, 0, 0);
         }
     }
 

@@ -12,6 +12,7 @@ export * from "./monaco-fields/field_tilemap";
 export * from "./monaco-fields/field_musiceditor";
 export * from "./monaco-fields/field_soundEffect";
 export * from "./monaco-fields/field_sprite";
+export * from "./monaco-fields/field_animation";
 export * from "./monaco-fields/field_react";
 
 export {

@@ -16,7 +16,12 @@ export function monkeyPatchGrid() {
 
     const gridPatternIds: string[] = [];
 
-    Blockly.Grid.createDom = function (rnd: string, gridOptions: Blockly.Options.GridOptions, defs: SVGElement) {
+    Blockly.Grid.createDom = function (
+        rnd: string,
+        gridOptions: Blockly.Options.GridOptions,
+        defs: SVGElement,
+        injectionDiv?: HTMLElement
+    ) {
         const id = "blocklyGridPattern" + rnd;
 
         const gridPattern = Blockly.utils.dom.createSvgElement(
@@ -43,6 +48,10 @@ export function monkeyPatchGrid() {
         );
 
         image.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", options.image.path)
+
+        if (injectionDiv) {
+            injectionDiv.style.setProperty('--blocklyGridPattern', `url(#${gridPattern.id})`);
+        }
 
         return gridPattern;
     }

@@ -521,19 +521,7 @@ export class ScriptSearch extends data.Component<ISettingsProps, ScriptSearchSta
                                 description={lf("Open files from your computer")}
                                 onClick={this.importExtensionFile}
                             />}
-                            {showOpenBeta && <codecard.CodeCardView
-                                ariaLabel={lf("Open the next version of the editor")}
-                                role="link"
-                                key={'beta'}
-                                className="beta"
-                                icon="lab ui cardimage"
-                                iconColor="secondary"
-                                name={lf("Beta Editor")}
-                                label={lf("Beta")}
-                                labelClass="red right ribbon"
-                                description={lf("Open the next version of the editor")}
-                                url={betaUrl}
-                            />}
+                            {showOpenBeta && <BetaExperimentCard betaUrl={betaUrl} />}
                         </div>
                     }
                     {isEmpty() ?
@@ -576,4 +564,33 @@ class ScriptSearchCodeCard extends sui.StatelessUIElement<ScriptSearchCodeCardPr
         const { onCardClick, onClick, scr, ...rest } = this.props;
         return <codecard.CodeCardView {...rest} onClick={this.handleClick} />
     }
+}
+
+const BetaExperimentCard = (props: { betaUrl: string }) => {
+    const { betaUrl } = props;
+
+    let onClick: () => void = undefined;
+
+    if (pxt.BrowserUtils.isInGame()) {
+        onClick = () => {
+            window.location.assign(betaUrl);
+        };
+    }
+
+    return (
+        <codecard.CodeCardView
+            ariaLabel={lf("Open the next version of the editor")}
+            role="link"
+            key={'beta'}
+            className="beta"
+            icon="lab ui cardimage"
+            iconColor="secondary"
+            name={lf("Beta Editor")}
+            label={lf("Beta")}
+            labelClass="red right ribbon"
+            description={lf("Open the next version of the editor")}
+            url={!onClick ? betaUrl : undefined}
+            onClick={onClick}
+        />
+    );
 }

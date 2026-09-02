@@ -19,7 +19,7 @@ interface RectBounds {
     height: number;
 }
 
-type AreaId = "mainmenu" | "simulator" | "toolbox" | "editor" | "editortools" | "tutorial";
+type AreaId = "topbar" | "simulator" | "toolbox" | "workspace" | "bottombar" | "tutorial";
 
 interface Area {
     id: AreaId;
@@ -31,15 +31,21 @@ interface Area {
 }
 
 const getToolboxBounds = (projectView: IProjectView): DOMRect | undefined => {
-    return document.querySelector(`${projectView.isBlocksActive() ? ".blocklyToolbox" : ".monacoToolboxDiv"}`)?.getBoundingClientRect();
+    const flyoutOnly = projectView.state.editorState?.hasCategories === false;
+    const blocksActive = projectView.isBlocksActive();
+    if (flyoutOnly) {
+        return document.querySelector(`${blocksActive ? ".blocklyFlyout" : ".monacoFlyout"}`)?.getBoundingClientRect();
+    } else {
+        return document.querySelector(`${blocksActive ? ".blocklyToolbox" : ".monacoToolboxDiv"}`)?.getBoundingClientRect();
+    }
 }
 
 const isSimMini = () => !!document.querySelector(".miniSim");
 
 const areas: Area[] = [
     {
-        id: "mainmenu",
-        ariaLabel: lf("Main menu"),
+        id: "topbar",
+        ariaLabel: lf("Top bar"),
         shortcutKey: "1",
         getBounds() {
             return document.querySelector("#mainmenu")?.getBoundingClientRect();
@@ -60,6 +66,9 @@ const areas: Area[] = [
         ariaLabel: lf("Simulator"),
         shortcutKey: "2",
         getBounds(projectView: IProjectView) {
+            if (pxt.appTarget.simulator?.headless) {
+                return undefined;
+            }
             const element = isSimMini()
                 ? document.querySelector(".simPanel")
                 : projectView.state.collapseEditorTools ?
@@ -112,7 +121,11 @@ const areas: Area[] = [
             if (!bounds) {
                 return undefined;
             }
-            if (projectView.state.collapseEditorTools) {
+
+            const inTutorial = !!projectView.state.tutorialOptions?.tutorial;
+            const isHeadless = !!pxt.appTarget.simulator?.headless;
+
+            if (projectView.state.collapseEditorTools && !(isHeadless && inTutorial)) {
                 const isRtl = pxt.Util.isUserLanguageRtl();
                 // Shift over for a clearer area when the toolbox is collapsed
                 const copy = DOMRect.fromRect(bounds);
@@ -128,11 +141,12 @@ const areas: Area[] = [
         },
         focus(projectView: IProjectView) {
             projectView.editor.focusToolbox();
+            Blockly.keyboardNavigationController.setIsActive(true);
         }
     },
     {
-        id: "editor",
-        ariaLabel: lf("Editor"),
+        id: "workspace",
+        ariaLabel: lf("Workspace"),
         shortcutKey: "4",
         getBounds(projectView: IProjectView) {
             const editorSelectors = ["#pxtJsonEditor", "#githubEditor", "#blocksArea", "#serialEditor", "#assetEditor", "#monacoEditor"];
@@ -163,12 +177,13 @@ const areas: Area[] = [
                 findFirstFocusableDescendant(document.querySelector("#pxtJsonEditor"))?.focus();
             } else {
                 projectView.editor.focusWorkspace();
+                Blockly.keyboardNavigationController.setIsActive(true);
             }
         }
     },
     {
-        id: "editortools",
-        ariaLabel: lf("Editor toolbar"),
+        id: "bottombar",
+        ariaLabel: lf("Bottom bar"),
         shortcutKey: "5",
         getBounds() {
             return document.querySelector("#editortools")?.getBoundingClientRect();
@@ -207,12 +222,8 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
         parent.toggleAreaMenu();
     }, [parent]);
     useEffect(() => {
-        if (parent.state.fullscreen) {
-            parent.setSimulatorFullScreen(false);
-        }
-
         const listener = (e: KeyboardEvent) => {
-            const area = areas.find(area => area.shortcutKey === e.key);
+            const area = areas.find(area => area.shortcutKey === e.key && !!areaRects.get(area.id));
             if (area) {
                 e.preventDefault();
                 moveFocusToArea(area);
@@ -236,19 +247,24 @@ export const AreaMenuOverlay = ({ parent }: AreaMenuOverlapProps) => {
         }
     }, [])
 
-    const handleEscape = () => {
+    const handleEscape = useCallback(() => {
         parent.toggleAreaMenu();
-    }
+    }, [parent]);
 
-    if (!areaRects.get("editor")) {
-        // Something is awry, bail out.
-        parent.toggleAreaMenu();
+    // Something is awry, bail out.
+    const bailOut = !areaRects.get("workspace");
+    useEffect(() => {
+        if (bailOut) {
+            parent.toggleAreaMenu();
+        }
+    }, [bailOut, parent]);
+
+    if (bailOut) {
         return null;
     }
-
     return ReactDOM.createPortal(
-        <FocusTrap dontRestoreFocus onEscape={handleEscape}>
-            <div className="area-menu-container" >
+        <FocusTrap dontRestoreFocus onEscape={handleEscape} arrowKeyNavigation={true} focusFirstItem>
+            <div className="area-menu-container" role="menu" aria-label={lf("Area overlay")}>
                 {areas.map(area => {
                     const rect = areaRects.get(area.id);
                     return rect ? (<AreaButton
@@ -279,6 +295,7 @@ const AreaButton = ({ shortcutKey, bounds, ...props }: AreaButtonProps) => {
     return <Button
         {...props}
         className={`area-button ${props.className}`}
+        role="menuitem"
         style={{
             top, height, left, width
         }}

@@ -54,6 +54,8 @@
         "49unicode.ts",
         "50indexedtypes.ts",
         "51exceptions.ts",
+        "52parseint.ts",
+        "53unionarraytypes.ts",
         "99final.ts"
     ],
     "public": true,

@@ -10,7 +10,9 @@ namespace pxt.sprite {
     export const ANIMATION_NAMESPACE = "myAnimations";
     export const ANIMATION_PREFIX = "anim";
     export const SONG_NAMESPACE = "mySongs"
+    export const JSON_NAMESPACE = "myFiles";
     export const SONG_PREFIX = "song";
+    export const JSON_PREFIX = "file";
 
     export interface Coord {
         x: number,

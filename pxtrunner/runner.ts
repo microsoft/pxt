@@ -4,7 +4,7 @@
 /// <reference path="../built/pxtcompiler.d.ts" />
 /// <reference path="../built/pxtsim.d.ts" />
 
-import { BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
+import { BlockSvg, BlocksRenderOptions, blocklyToSvgAsync, initializeAndInject, render } from "../pxtblocks";
 import { initEditorExtensionsAsync } from "../pxteditor/editor";
 import { defaultClientRenderOptions, fireClickOnEnter, renderAsync } from "./renderer";
 
@@ -316,7 +316,10 @@ function loadPackageAsync(id: string, code?: string, dependencies?: string[]) {
                     epkg.files[pxt.MAIN_TS] = code;
                     //set the custom doc name from the URL.
                     let cfg = JSON.parse(epkg.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                    cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0];;
+                    cfg.name = window.location.href.split('/').pop().split(/[?#]/)[0].replace(/\.html$/i, "");
+                    if (cfg.files.indexOf(pxt.MAIN_BLOCKS) == -1) {
+                        cfg.files.push(pxt.MAIN_BLOCKS);
+                    }
                     epkg.files[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(cfg);
 
                     //Propgate the change to main package
@@ -428,6 +431,7 @@ function initDriverAndOptions(
     } = compileInfo || {};
     let board = pxt.appTarget.simulator.boardDefinition;
     let storedState: pxt.Map<string> = getStoredState(simOptions.id)
+    let theme: string | pxt.Map<string> = mainPkg.config?.theme ?? compileInfo?.theme;
     let runOptions: pxsim.SimulatorRunOptions = {
         debug: simOptions.debug,
         mute: simOptions.mute,
@@ -446,7 +450,7 @@ function initDriverAndOptions(
         autofocus: simOptions.autofocus,
         queryParameters: simOptions.additionalQueryParameters,
         mpRole: simOptions.mpRole,
-        theme: mainPkg.config?.theme,
+        theme,
     };
     if (pxt.appTarget.simulator && !simOptions.fullScreen)
         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio
@@ -694,12 +698,23 @@ export function startRenderServer() {
             const result = isXml
                 ? await compileBlocksAsync(msg.code, options)
                 : await decompileSnippetAsync(msg.code, msg.options);
+
             const blocksSvg = result.blocksSvg as SVGSVGElement;
+            if (!blocksSvg) {
+                throw new Error("Failed to generate blocks SVG");
+            }
+
             const width = blocksSvg.viewBox.baseVal.width;
             const height = blocksSvg.viewBox.baseVal.height;
-            const res = blocksSvg
-                ? await blocklyToSvgAsync(blocksSvg, 0, 0, width, height)
-                : undefined;
+
+            let res: BlockSvg;
+            try {
+                res = await blocklyToSvgAsync(blocksSvg, 0, 0, width, height);
+            } catch (e) {
+                pxt.reportException(e);
+                throw e;
+            }
+
             // try to render to png
             let png: string;
             try {

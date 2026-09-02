@@ -177,6 +177,9 @@ export class AssetEditor extends Editor {
             case pxt.AssetType.Song:
                 fieldView = pxt.react.getFieldEditorView("music-editor", asset as pxt.Song, {});
                 break;
+            case pxt.AssetType.Json:
+                fieldView = pxt.react.getFieldEditorView("file-picker", asset as pxt.JsonAsset, {});
+                break;
             default:
                 break;
         }

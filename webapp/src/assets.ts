@@ -1,3 +1,4 @@
+import { string } from "blockly/core/utils";
 import * as pxtblockly from "../../pxtblocks";
 
 export function isNameTaken(name: string) {
@@ -53,6 +54,7 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
     const tilemaps = getAssetType(pxt.AssetType.Tilemap).map(toGalleryItem).sort(comparePackage(defaultPackages));
     const animations = getAssetType(pxt.AssetType.Animation).map(toGalleryItem).sort(comparePackage(defaultPackages));
     const songs = getAssetType(pxt.AssetType.Song).map(toGalleryItem).sort(comparePackage(defaultPackages));
+    const jsonFiles = getAssetType(pxt.AssetType.Json).map(toGalleryItem).sort(comparePackage(defaultPackages));
 
     for (const asset of tempAssets) {
         switch (asset.type) {
@@ -71,25 +73,31 @@ export function getAssets(gallery = false, firstType = pxt.AssetType.Image, temp
             case pxt.AssetType.Song:
                 songs.push(toGalleryItem(asset));
                 break;
+            case pxt.AssetType.Json:
+                jsonFiles.push(toGalleryItem(asset));
+                break;
         }
     }
 
     let assets: pxt.Asset[] = [];
     switch (firstType) {
         case pxt.AssetType.Image:
-            assets = images.concat(tiles).concat(animations).concat(tilemaps).concat(songs);
+            assets = images.concat(tiles).concat(animations).concat(tilemaps).concat(songs).concat(jsonFiles);
             break;
         case pxt.AssetType.Tile:
-            assets = tiles.concat(images).concat(animations).concat(tilemaps).concat(songs);
+            assets = tiles.concat(images).concat(animations).concat(tilemaps).concat(songs).concat(jsonFiles);
             break;
         case pxt.AssetType.Animation:
-            assets = animations.concat(images).concat(tiles).concat(tilemaps).concat(songs);
+            assets = animations.concat(images).concat(tiles).concat(tilemaps).concat(songs).concat(jsonFiles);
             break;
         case pxt.AssetType.Tilemap:
-            assets = tilemaps.concat(tiles).concat(images).concat(animations).concat(songs);
+            assets = tilemaps.concat(tiles).concat(images).concat(animations).concat(songs).concat(jsonFiles);
             break;
         case pxt.AssetType.Song:
-            assets = songs.concat(images).concat(tiles).concat(animations).concat(tilemaps);
+            assets = songs.concat(images).concat(tiles).concat(animations).concat(tilemaps).concat(jsonFiles);
+            break;
+        case pxt.AssetType.Json:
+            assets = jsonFiles.concat(images).concat(tiles).concat(animations).concat(tilemaps).concat(songs);
             break;
     }
 
@@ -117,6 +125,58 @@ export function assetToGalleryItem(asset: pxt.Asset, imgConv = new pxt.ImageConv
         case pxt.AssetType.Song:
             asset.previewURI = pxtblockly.songToDataURI(asset.song, 32, 32, false, 1);
             return asset;
+        case pxt.AssetType.Json:
+            // For JSON assets, we just show the filename
+            return asset;
+    }
+}
+
+export function getIconClassForAssetType(type: pxt.AssetType) {
+    if (typeof pxt.appTarget.appTheme?.assetEditor === "object") {
+        const assetConfig = pxt.appTarget.appTheme.assetEditor[type];
+        if (typeof assetConfig === "object" && assetConfig.iconClass) {
+            return assetConfig.iconClass;
+        }
+    }
+
+    switch (type) {
+        case pxt.AssetType.Tile:
+            return "clone";
+        case pxt.AssetType.Animation:
+            return "video";
+        case pxt.AssetType.Tilemap:
+            return "map";
+        case pxt.AssetType.Song:
+            return "music";
+        case pxt.AssetType.Json:
+            return "file code";
+        case pxt.AssetType.Image:
+        default:
+            return null;
+    }
+}
+
+export function getLabelForAssetType(type: pxt.AssetType) {
+    if (typeof pxt.appTarget.appTheme?.assetEditor === "object") {
+        const assetConfig = pxt.appTarget.appTheme.assetEditor[type];
+        if (typeof assetConfig === "object" && assetConfig.label) {
+            return pxt.U.rlf(`{id:assetType}${assetConfig.label}`);
+        }
+    }
+
+    switch (type) {
+        case pxt.AssetType.Image:
+            return lf("Image");
+        case pxt.AssetType.Tile:
+            return lf("Tile");
+        case pxt.AssetType.Animation:
+            return lf("Animation");
+        case pxt.AssetType.Tilemap:
+            return lf("Tilemap");
+        case pxt.AssetType.Song:
+            return lf("Song");
+        case pxt.AssetType.Json:
+            return lf("File");
     }
 }
 

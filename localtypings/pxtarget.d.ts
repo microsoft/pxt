@@ -24,6 +24,8 @@ declare namespace pxt {
         multiplayer?: MultiplayerConfig;
         // common galleries
         galleries?: pxt.Map<string | GalleryProps>;
+        // additional galleries included in projects search but not shown on the homescreen
+        searchGalleries?: pxt.Map<string | GalleryProps>;
         // localized galleries
         localizedGalleries?: pxt.Map<pxt.Map<string>>;
         windowsStoreLink?: string;
@@ -260,6 +262,28 @@ declare namespace pxt {
         order?: number;     // Sort order
     }
 
+    interface SimulatorTheme extends Map<string> {
+        layout: string;
+    }
+
+    interface SimulatorThemePreset {
+        id: string;
+        name: string;
+        theme: SimulatorTheme;
+    }
+
+    interface SimulatorThemeColorField {
+        property: string;
+        label: string;
+        defaultValue: string;
+    }
+
+    interface SimulatorThemeLayout {
+        id: string;
+        name: string;
+        colorFields?: SimulatorThemeColorField[]; // replaces the standard color fields for this layout
+    }
+
     interface AppSimulator {
         autoRun?: boolean; // enable autoRun in regular mode, not light mode
         autoRunLight?: boolean; // force autorun in light mode
@@ -284,6 +308,8 @@ declare namespace pxt {
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
+        themePresets?: SimulatorThemePreset[]; // customizable simulator themes offered by the editor
+        themeLayouts?: SimulatorThemeLayout[]; // additional simulator layouts offered by the theme editor; Default is always included
 
         // a map of allowed simulator channel to URL to handle specific control messages
         // DEPRECATED. Use `simx` in targetconfig.json approvedRepoLib instead.
@@ -424,6 +450,7 @@ declare namespace pxt {
         disableLiveTranslations?: boolean; // don't load translations from crowdin
         extendEditor?: boolean; // whether a target specific editor.js is loaded
         extendFieldEditors?: boolean; // wether a target specific fieldeditors.js is loaded
+        extendScriptPage?: boolean; // if set to true, builds scriptpage.js from scriptPage/ folder when building target
         highContrast?: boolean; // simulator has a high contrast mode
         print?: boolean; //Print blocks and text feature
         greenScreen?: boolean; // display webcam stream in background
@@ -513,7 +540,7 @@ declare namespace pxt {
         errorList?: boolean; // error list experiment
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         identity?: boolean; // login with identity providers
-        assetEditor?: boolean; // enable asset editor view (in blocks/text toggle)
+        assetEditor?: boolean | AssetConfig; // enable asset editor view (in blocks/text toggle)
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
@@ -525,7 +552,7 @@ declare namespace pxt {
         tours?: {
             editor?: string // path to markdown file for the editor tour steps
         }
-        tutorialSimSidebarLayout?: boolean; // Enable tutorial layout with the sim in the sidebar (desktop only)
+        tutorialSimSidebarLangs?: string[]; // Enable tutorial layout with sim in sidebar for specific editor languages (blocks, python, or javascript). Desktop only.
         showOpenInVscode?: boolean; // show the open in VS Code button
         matchWebUSBDeviceInSim?: boolean; // if set, pass current device id as theme to sim when available.
         condenseProfile?: boolean; // if set, will make the profile dialog smaller
@@ -539,6 +566,8 @@ declare namespace pxt {
         pxtJsonOptions?: PxtJsonOption[];
         enabledFeatures?: pxt.Map<FeatureFlag>;
         forceEnableAiErrorHelp?: boolean; // Enables the AI Error Help feature, regardless of geo setting.
+        shareHomepageContent?: boolean; // Show buttons to share links to homepage content more easily
+        showProjectDescription?: boolean; // Show project description in pxtjson editor and share dialog
     }
 
     interface DownloadDialogTheme {
@@ -602,6 +631,10 @@ declare namespace pxt {
         type: "checkbox";
     }
 
+    interface AssetConfig {
+        [index: string /*pxt.AssetType*/]: (boolean | { label?: string; iconClass?: string });
+    }
+
     interface TargetBundle extends AppTarget {
         bundledpkgs: Map<Map<string>>;   // @internal use only (cache)
         bundleddirs: string[];
@@ -632,6 +665,7 @@ declare namespace pxt {
         id: string; // Unique identifier
         name: string; // Human-readable name
         weight?: number; // Lower weights appear first in theme list, no value = go to end
+        defaultSimulatorTheme?: string | Partial<SimulatorTheme>; // Simulator preset id or partial inline theme used by Default
         overrideCss?: string; // Special css to apply for the theme
         monacoBaseTheme?: string; // Theme for monaco editor, see https://code.visualstudio.com/docs/getstarted/themes
         colors: { [key: string]: string }; // Values for theme variables
@@ -876,6 +910,9 @@ declare namespace ts.pxtc {
         blockImage?: boolean; // for enum variable, specifies that it should use an image from a predefined location
         blockCombine?: boolean;
         blockCombineShadow?: string;
+        blockCombineGetHelp?: string;
+        blockCombineSetHelp?: string;
+        blockCombineChangeHelp?: string;
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
         fixedInstances?: boolean;
         fixedInstance?: boolean;
@@ -894,13 +931,7 @@ declare namespace ts.pxtc {
         icon?: string;
         jresURL?: string;
         iconURL?: string;
-        imageLiteral?: number;
-        gridLiteral?: number;
-        gridLiteralOnColor?: string;
-        gridLiteralOffColor?: string;
-        imageLiteralColumns?: number; // optional number of columns
-        imageLiteralRows?: number; // optional number of rows
-        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
+
         weight?: number;
         parts?: string;
         hiddenParts?: string; // allows an extesion to declaratively hide a part
@@ -935,6 +966,10 @@ declare namespace ts.pxtc {
         toolboxParentArgument?: string; // Used with toolboxParent. The name of the arg that this block should be inserted into as a shadow
         duplicateWithToolboxParent?: string; // The ID of an additional block that will be created, which wraps this block in the toolbox. The original (unwrapped) block will also remain in the toolbox.
         duplicateWithToolboxParentArgument?: string; // Used with duplicateWithToolboxParent. The name of the arg that this block should be inserted into as a shadow.
+        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
+        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescripts
+        handlerStatement?: boolean; // deprecated, use forceStatement instead
+        forceStatement?: boolean; // indicates that the block for this API should be a statement, regardless of the return value or if it has a handler param
 
         // On namepspace
         subcategories?: string[];
@@ -942,9 +977,6 @@ declare namespace ts.pxtc {
         groupIcons?: string[];
         groupHelp?: string[];
         labelLineWidth?: string;
-        handlerStatement?: boolean; // indicates a block with a callback that can be used as a statement
-        blockHandlerKey?: string; // optional field for explicitly declaring the handler key to use to compare duplicate events
-        afterOnStart?: boolean; // indicates an event that should be compiled after on start when converting to typescript
 
         // on interfaces
         indexerGet?: string;
@@ -973,8 +1005,26 @@ declare namespace ts.pxtc {
         enumIsHash?: boolean; // if true, the name of the enum is normalized, then hashed to generate the value
         enumPromptHint?: string; // The hint that will be displayed in the member creation prompt
         enumInitialMembers?: string[]; // The initial enum values which will be given the lowest values available
+        ariaLabel?: string; // The aria label for the enum value if the screen reader text should differ from the block value in dropdown items
 
         /* end enum-only attributes */
+
+        /* led matrix field editor attributes */
+
+        imageLiteral?: number;
+        gridLiteral?: number;
+        colorGridLiteral?: number;
+        gridLiteralPalette?: string;
+        gridLiteralPaletteNames?: string;
+        gridLiteralUseProjectPalette?: boolean;
+        gridLiteralOnColor?: string;
+        gridLiteralOffColor?: string;
+        gridLiteralVerticalSpacing?: number; // optional spacing between pixels, default is 5
+        gridLiteralHorizontalSpacing?: number; // optional spacing between pixels, default is 7
+        gridLiteralBorderRadius?: number; // optional border radius for pixels, default is 5
+        imageLiteralColumns?: number; // optional number of columns
+        imageLiteralRows?: number; // optional number of rows
+        imageLiteralScale?: number; // button sizing between 0.6 and 2, default is 1
 
 
         isKind?: boolean; // annotation for built-in kinds in library code
@@ -992,12 +1042,15 @@ declare namespace ts.pxtc {
         _expandedDef?: ParsedBlockDef;
         _untranslatedBlock?: string; // The block definition before it was translated
         _untranslatedJsDoc?: string // the jsDoc before it was translated
+        _untranslatedParamDefl?: pxt.Map<string>; // the parameter defaults before they were translated
+        _untranslatedAriaLabel?: string; // the aria label before it was translated
         _translatedLanguageCode?: string // the language this block has been translated into
         _shadowOverrides?: pxt.Map<string>;
         jsDoc?: string;
         paramHelp?: pxt.Map<string>;
         // foo.defl=12 -> paramDefl: { foo: "12" }; eg.: 12 in arg description will also go here
         paramDefl: pxt.Map<string>;
+        paramLabels?: pxt.Map<string>; //.label
         paramSnippets?: pxt.Map<ParamSnippet>;
         // this lists arguments that have .defl as opposed to just eg.: stuff
         explicitDefaults?: string[];
@@ -1014,6 +1067,7 @@ declare namespace ts.pxtc {
         alias?: string; // another symbol alias for this member
         pyAlias?: string; // optional python version of the alias
         blockAliasFor?: string; // qname of the function this block is an alias for
+        builtinBlockId?: string; // if present, this block is to be replaced with a builtin block in the toolbox
     }
 
     interface ParamSnippet {
@@ -1106,6 +1160,7 @@ declare namespace ts.pxtc {
         fileSystem: pxt.Map<string>;
         target: CompileTarget;
         testMode?: boolean;
+        enhancedErrors?: boolean; // enable extra editor-only diagnostics
         sourceFiles?: string[]; // list of file names
         sourceTexts?: string[]; // list of file text content (TS string)
         generatedFiles?: string[];
@@ -1156,6 +1211,7 @@ declare namespace ts.pxtc {
         usedBuiltinParts?: string[];
         allParts?: string[];
         breakpoints?: number[];
+        theme?: string | pxt.Map<string>;
     }
 
     interface UpgradePolicy {
@@ -1227,12 +1283,14 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig; // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
 
     interface TutorialMetadata {
         activities?: boolean; // tutorial consists of activities, then steps. uses `###` for steps
         explicitHints?: boolean; // tutorial expects explicit hints in `#### ~ tutorialhint` format
-        flyoutOnly?: boolean; // no categories, display all blocks in flyout
+        flyoutOnly?: boolean; // Deprecated. Indicates unifiedToolbox (below) + some Minecraft-HOC-specific UI adjustments.
+        unifiedToolbox?: boolean; // No categories, display all blocks directly in an always-open flyout.
         hideToolbox?: boolean; // hide the toolbox in the tutorial
         hideIteration?: boolean; // hide step control in tutorial
         diffs?: boolean; // automatically diff snippets
@@ -1242,6 +1300,8 @@ declare namespace pxt.tutorial {
         autoexpandOff?: boolean; // INTERNAL TESTING ONLY
         preferredEditor?: string; // preferred editor for opening the tutorial
         hideDone?: boolean; // Do not show a "Done" button at the end of the tutorial
+        hideFromProjects?: boolean; // hide this tutorial from the projects list
+        hideReplaceMyCode?: boolean; // hide the "Replace Code" button in the tutorial
     }
 
     interface TutorialBlockConfigEntry {
@@ -1340,6 +1400,7 @@ declare namespace pxt.tutorial {
         globalBlockConfig?: TutorialBlockConfig; // concatenated `blockconfig.global` sections. Contains block configs applicable to all tutorial steps
         globalValidationConfig?: CodeValidationConfig // concatenated 'validation.global' sections. Contains validation config applicable to all steps
         simTheme?: Partial<pxt.PackageConfig>;
+        hiddenNamespaces?: string[]; // list of categories to put in the toolbox filters of the tutorial project's pxt.json
     }
     interface TutorialCompletionInfo {
         // id of the tutorial
@@ -1358,6 +1419,7 @@ declare namespace pxt.tour {
         sansQuery?: string; // Use this to exclude an element from the cutout
         sansLocation?: BubbleLocation; // relative location of element to exclude
         onStepBegin?: () => void;
+        onStepEnd?: () => void;
         bubbleStyle?: "yellow"; // Currently just have default (unset) & yellow styles. May add more in the future...
     }
     interface TourConfig {

@@ -80,9 +80,13 @@ declare namespace pxt.editor {
         | "getblockastext"
 
         | "toggletrace" // EditorMessageToggleTraceRequest
+        | "showthemepicker"
         | "togglehighcontrast"
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
+        | "setsimulatortheme" // EditorMessageSetSimulatorThemeRequest
         | "togglegreenscreen"
+        | "togglekeyboardcontrols"
+        | "togglescreenreadermode"
         | "settracestate" //
         | "setsimulatorfullscreen" // EditorMessageSimulatorFullScreenRequest
 
@@ -403,6 +407,12 @@ declare namespace pxt.editor {
         on: boolean;
     }
 
+    export interface EditorMessageSetSimulatorThemeRequest extends EditorMessageRequest {
+        action: "setsimulatortheme";
+        preference: pxt.auth.SimulatorThemePreference;
+        savePreference?: boolean;
+    }
+
     export interface EditorMessageStartActivity extends EditorMessageRequest {
         action: "startactivity";
         activityType: "tutorial" | "example" | "recipe";
@@ -422,6 +432,8 @@ declare namespace pxt.editor {
         versions: pxt.TargetVersions;
         locale: string;
         availableLocales?: string[];
+        keyboardControls: boolean;
+        screenReaderMode: boolean;
     }
 
     export interface PackageExtensionData {
@@ -810,21 +822,24 @@ declare namespace pxt.editor {
         editorOffset?: string;
         print?: boolean;
         greenScreen?: boolean;
-        accessibleBlocks?: boolean;
         home?: boolean;
         hasError?: boolean;
         cancelledDownload?: boolean;
         simSerialActive?: boolean;
         deviceSerialActive?: boolean;
         errorListState?: ErrorListState;
+        errorListCollapsed?: boolean;
         screenshoting?: boolean;
         extensionsVisible?: boolean;
+        extensionsToolboxTriggered?: boolean;
         isMultiplayerGame?: boolean; // Arcade: Does the current project contain multiplayer blocks?
         activeTourConfig?: pxt.tour.TourConfig;
         areaMenuOpen?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
+        simulatorThemePickerOpen?: boolean;
         errorListNote?: string;
+        timeMachine?: boolean;
     }
 
     export interface EditorState {
@@ -871,6 +886,7 @@ declare namespace pxt.editor {
 
     export interface SimulatorStartOptions {
         clickTrigger?: boolean;
+        background?: boolean;
     }
 
     export interface ImportFileOptions {
@@ -955,7 +971,7 @@ declare namespace pxt.editor {
         saveAndCompile(): void;
         updateHeaderName(name: string): void;
         updateHeaderNameAsync(name: string): Promise<void>;
-        compile(saveOnly?: boolean): void;
+        compile(): void;
 
         setFile(fn: IFile, line?: number): void;
         setSideFile(fn: IFile, line?: number): void;
@@ -975,6 +991,7 @@ declare namespace pxt.editor {
         completeTutorialAsync(): Promise<void>;
         showTutorialHint(): void;
         isTutorial(): boolean;
+        useTutorialSimSidebarLayout(): boolean;
         onEditorContentLoaded(): void;
         pokeUserActivity(): void;
         stopPokeUserActivity(): void;
@@ -983,8 +1000,8 @@ declare namespace pxt.editor {
         setEditorOffset(): void;
 
         anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<ShareData>;
-        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
-        publishAsync (name: string, screenshotUri?: string, forceAnonymous?: boolean): Promise<ShareData>;
+        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string, simulatorTheme?: pxt.SimulatorTheme): Promise<string>;
+        publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean, simulatorTheme?: pxt.SimulatorTheme): Promise<ShareData>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
@@ -1042,8 +1059,9 @@ declare namespace pxt.editor {
 
         toggleHighContrast(): void;
         setHighContrast(on: boolean): void;
+        toggleScreenReaderModeAsync(eventSource: string): Promise<void>;
+        isScreenReaderModeEnabled(): boolean;
         toggleGreenScreen(): void;
-        toggleAccessibleBlocks(): void;
         launchFullEditor(): void;
         resetWorkspace(): void;
 
@@ -1089,10 +1107,11 @@ declare namespace pxt.editor {
         showChooseHwDialog(skipDownload?: boolean): void;
         showExperimentsDialog(): void;
 
-        showPackageDialog(query?: string): void;
+        showPackageDialog(toolboxTriggered?: boolean): void;
         showBoardDialogAsync(features?: string[], closeIcon?: boolean): Promise<void>;
         checkForHwVariant(): boolean;
-        pairDialogAsync(): Promise<pxt.commands.WebUSBPairResult>;
+        pairAsync(): Promise<boolean>;
+        shouldShowPairingDialogOnDownload(): boolean;
 
         createModalClasses(classes?: string): string;
         showModalDialogAsync(options: ModalDialogOptions): Promise<void>;
@@ -1112,6 +1131,7 @@ declare namespace pxt.editor {
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
         setColorThemeById(colorThemeId: string, savePreference: boolean): void;
+        setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference, savePreference?: boolean): Promise<void>;
     }
 
     export interface IHexFileImporter {

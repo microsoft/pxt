@@ -5,7 +5,7 @@ import { ReadyResources } from '../lib/readyResources';
 import { getCompletedTags, lookupActivityProgress, isMapCompleted,
     isRewardNode, applyUserUpgrades, applyUserMigrations } from '../lib/skillMapUtils';
 
-export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "login-prompt" | "delete-account" | "reward";
+export type ModalType = "restart-warning" | "completion" | "report-abuse" | "reset" | "carryover" | "share" | "login" | "login-prompt" | "delete-account" | "reward" | "markdown-intro";
 export type PageSourceStatus = "approved" | "banned" | "unknown";
 
 // State for the entire page
@@ -14,6 +14,7 @@ export interface SkillMapState {
     description: string;
     infoUrl?: string;
     backgroundImageUrl?: string;
+    pixelatedBackground?: boolean;
     bannerImageUrl?: string;
     user: UserState;
     pageSourceUrl: string;
@@ -49,6 +50,7 @@ export interface ModalState {
     currentMapId?: string;
     currentActivityId?: string;
     currentReward?: MapReward;
+    markdownContent?: string;
 }
 
 export interface ShareState {
@@ -124,6 +126,7 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
                 description: initialState.description,
                 infoUrl: initialState.infoUrl,
                 backgroundImageUrl: undefined,
+                pixelatedBackground: undefined,
                 bannerImageUrl: undefined,
                 alternateSourceUrls: undefined,
                 theme: {
@@ -326,7 +329,8 @@ const topReducer = (state: SkillMapState = initialState, action: any): SkillMapS
         case actions.SET_PAGE_BACKGROUND_IMAGE_URL:
             return {
                 ...state,
-                backgroundImageUrl: action.backgroundImageUrl
+                backgroundImageUrl: action.backgroundImageUrl,
+                pixelatedBackground: action.pixelatedBackground
             }
         case actions.SET_PAGE_BANNER_IMAGE_URL:
             return {

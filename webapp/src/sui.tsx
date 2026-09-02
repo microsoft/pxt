@@ -5,9 +5,9 @@ import * as ReactTooltip from 'react-tooltip';
 
 import * as data from "./data";
 import * as core from "./core";
-import * as auth from "./auth";
 import { fireClickOnEnter } from "./util";
-import { focusLastActive } from "../../react-common/components/util";
+import { classList, focusLastActive } from "../../react-common/components/util";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 export const appElement = document.getElementById('content');
 
@@ -21,10 +21,12 @@ export interface UiProps {
     role?: string;
     title?: string;
     ariaLabel?: string;
+    ariaHasPopup?: React.AriaAttributes["aria-haspopup"];
     ariaHidden?: boolean;
     tabIndex?: number;
     rightIcon?: boolean;
     inverted?: boolean;
+    fontAwesome?: boolean;
 }
 
 export type SIZES = 'mini' | 'tiny' | 'small' | 'medium' | 'large' | 'big' | 'huge' | 'massive';
@@ -43,7 +45,7 @@ function genericClassName(cls: string, props: UiProps, ignoreIcon: boolean = fal
 
 export function genericContent(props: UiProps) {
     let retVal = [
-        props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} />) : null,
+        props.icon ? (<Icon key='iconkey' icon={props.icon + (props.text ? " icon-and-text " : "") + (props.iconClass ? " " + props.iconClass : '')} fontAwesome={props.fontAwesome} />) : null,
         props.text ? (<span key='textkey' className={'ui text' + (props.textClass ? ' ' + props.textClass : '')}>{props.text}</span>) : null,
     ]
     if (props.icon && props.rightIcon) retVal = retVal.reverse();
@@ -325,14 +327,17 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     renderCore() {
         const { disabled, title, role, icon, className, titleContent, children,
-            displayAbove, displayLeft, displayRight, dataTooltip } = this.props;
+            displayAbove, displayLeft, displayRight, dataTooltip, ariaHasPopup } = this.props;
         const { open } = this.state;
 
+        const hasPopup = ariaHasPopup ?? !disabled;
         const aria = {
             'role': role || 'combobox',
             'aria-disabled': disabled,
-            'aria-haspopup': !disabled,
-            ...(role !== 'option' && { 'aria-expanded': open }) // Exclude aria-expanded when the dropdown is an option
+            'aria-haspopup': hasPopup,
+            // Exclude aria-expanded when the dropdown is an option, or when it opens a dialog
+            // (the dialog is modal and not a region owned/expanded by this control).
+            ...(role !== 'option' && hasPopup !== 'dialog' && { 'aria-expanded': open })
             }
         const menuAria = {
             'role': 'menu',
@@ -436,60 +441,6 @@ export class ExpandableMenu extends UIElement<ExpandableMenuProps, ExpandableMen
     }
 }
 
-export interface SelectProps {
-    options: SelectItem[];
-    onChange?: (value: string) => void;
-    "aria-label"?: string;
-    label?: string;
-}
-
-export interface SelectState {
-    selected?: string;
-}
-
-export interface SelectItem {
-    value: string | number;
-    display?: string;
-}
-
-export class Select extends UIElement<SelectProps, SelectState> {
-    constructor(props: SelectProps) {
-        super(props);
-        const { options } = props;
-        this.state = {
-            selected: options[0] && (options[0].value + "")
-        };
-    }
-
-    handleOnChange = (ev: React.ChangeEvent<HTMLSelectElement>) => {
-        const { onChange } = this.props;
-        this.setState({
-            selected: ev.target.value
-        });
-
-        if (onChange) {
-            onChange(ev.target.value);
-        }
-    }
-
-    render() {
-        const { options, label, "aria-label": ariaLabel } = this.props;
-        const { selected } = this.state;
-
-        return (<div>
-            { label && `${label} ` }
-            <select value={selected} className="ui dropdown" onChange={this.handleOnChange} aria-label={ariaLabel} >
-                {options.map(opt =>
-                    opt && <option
-                        aria-selected={selected === opt.value}
-                        value={opt.value}
-                        key={opt.value}
-                    >{opt.display || opt.value}</option>
-                )}
-            </select>
-        </div>);
-    }
-}
 
 ///////////////////////////////////////////////////////////
 ////////////             Items                /////////////
@@ -511,15 +462,17 @@ export class Item extends data.Component<ItemProps, {}> {
             text,
             title,
             ariaLabel,
-            ariaHidden
+            ariaHidden,
+            ariaHasPopup
         } = this.props;
 
         return (
             <div className={genericClassName("ui item link", this.props, true) + ` ${this.props.active ? 'active' : ''}`}
                 role={this.props.role}
                 aria-label={(!this.props.role || this.props.role === "presentation") ? "" : ariaLabel || title || text}
-                aria-selected={this.props.active}
+                aria-selected={this.props.role === "option" ? this.props.active : undefined}
                 aria-hidden={ariaHidden}
+                aria-haspopup={ariaHasPopup}
                 title={title || text}
                 tabIndex={this.props.tabIndex || 0}
                 key={this.props.value}
@@ -564,6 +517,7 @@ export interface ButtonProps extends UiProps, TooltipUIProps {
     id?: string;
     title?: string;
     ariaLabel?: string;
+    ariaDisabled?: boolean;
     ariaExpanded?: boolean;
     onClick?: (e: React.MouseEvent<HTMLElement>) => void;
     disabled?: boolean;
@@ -592,6 +546,7 @@ export class Button extends StatelessUIElement<ButtonProps> {
             tabIndex={this.props.tabIndex || 0}
             aria-label={this.props.ariaLabel}
             aria-expanded={this.props.ariaExpanded}
+            aria-disabled={this.props.ariaDisabled ?? disabled}
             onClick={this.props.onClick}
             onKeyDown={this.props.onKeyDown}
             autoFocus={this.props.autoFocus}
@@ -671,19 +626,31 @@ export function helpIconLink(url: string, title: string) {
 
 export class Field extends data.Component<{
     label?: string;
+    labelWrapper?: React.ElementType;
+    visuallyHidden?: boolean;
     children?: any;
-    ariaLabel?: string;
     htmlFor?: string;
 }, {}> {
     renderCore() {
         return (
             <div className="field">
-                {this.props.label ? <label htmlFor={!this.props.ariaLabel ? this.props.htmlFor : undefined}>{this.props.label}</label> : null}
-                {this.props.ariaLabel && this.props.htmlFor ? (<label htmlFor={this.props.htmlFor} className="accessible-hidden">{this.props.ariaLabel}</label>) : ""}
+                <LabelWrapper
+                    wrapperType={this.props.labelWrapper}
+                >
+                    {this.props.label && this.props.htmlFor && (<label className={classList(this.props.visuallyHidden ? "accessible-hidden" : "")} htmlFor={this.props.htmlFor}>{this.props.label}</label>)}
+                </LabelWrapper>
                 {this.props.children}
             </div>
         );
     }
+}
+
+const LabelWrapper = ({wrapperType, children}: {wrapperType?: React.ElementType, children: React.ReactNode}) => {
+    if (wrapperType) {
+        const Wrapper = wrapperType;
+        return <Wrapper>{children}</Wrapper>
+    }
+    return <>{children}</>
 }
 
 ///////////////////////////////////////////////////////////
@@ -692,7 +659,9 @@ export class Field extends data.Component<{
 
 export interface InputProps {
     label?: string;
+    labelWrapper?: React.ElementType
     inputLabel?: string;
+    visuallyHiddenLabel?: boolean;
     class?: string;
     value?: string;
     error?: string;
@@ -706,7 +675,6 @@ export interface InputProps {
     copy?: boolean;
     selectOnClick?: boolean;
     id?: string;
-    ariaLabel?: string;
     autoFocus?: boolean;
     autoComplete?: boolean;
     selectOnMount?: boolean;
@@ -799,14 +767,14 @@ export class Input extends data.Component<InputProps, InputState> {
 
     renderCore() {
         const p = this.props;
-        const { copy, error, ariaLabel, id, label, inputLabel, lines, autoFocus, placeholder, readOnly, autoComplete } = p;
+        const { copy, error, id, label, labelWrapper, inputLabel, lines, autoFocus, placeholder, readOnly, autoComplete, visuallyHiddenLabel } = p;
         const { value, copied } = this.state;
         const copyBtn = copy && document.queryCommandSupported('copy')
             ? <Button className={`ui right labeled ${copied ? "green" : "primary"} icon button`} text={copied ? lf("Copied!") : lf("Copy")} icon="copy" onClick={this.copy} />
             : null;
 
         return (
-            <Field ariaLabel={ariaLabel} htmlFor={id} label={label}>
+            <Field htmlFor={id} label={label} visuallyHidden={visuallyHiddenLabel} labelWrapper={labelWrapper}>
                 <div className={"ui input" + (p.inputLabel ? " labelled" : "") + (copy ? " action fluid" : "") + (p.disabled ? " disabled" : "")}>
                     {inputLabel ? (<div className="ui label">{inputLabel}</div>) : ""}
                     {!lines || lines == 1 ? <input
@@ -890,11 +858,12 @@ export interface IconProps extends UiProps {
     icon?: string;
     onClick?: () => void;
     onKeyDown?: () => void;
+    fontAwesome?: boolean;
 }
 
 export const Icon: React.FunctionComponent<IconProps> = (props: IconProps) => {
-    const { icon, className, onClick, onKeyDown, children, ...rest } = props;
-    return <i className={`icon ${icon} ${className ? className : ''}`}
+    const { icon, className, onClick, onKeyDown, fontAwesome, children, ...rest } = props;
+    return <i className={`${fontAwesome ? '' : 'icon '}${icon} ${className ? className : ''}`}
         onClick={onClick}
         onKeyDown={onKeyDown || fireClickOnEnter}
         aria-hidden={true} role="presentation" {...rest}>
@@ -1311,7 +1280,7 @@ export class Modal extends data.Component<ModalProps, ModalState> {
             'modal transition visible active',
             className
         ]);
-        const hc = this.getData<boolean>(auth.HIGHCONTRAST);
+        const hc = ThemeManager.isCurrentThemeHighContrast();
         const portalClassName = cx([
             hc ? 'hc' : '',
             mountClasses
@@ -1407,6 +1376,7 @@ class ModalButtonElement extends data.PureComponent<ModalButton, {}> {
             className={`approve ${action.icon ? `icon ${action.labelPosition ? action.labelPosition : 'right'} labeled` : ''} ${action.className || ''} ${action.loading ? "loading disabled" : ""} ${action.disabled ? "disabled" : ""}`}
             onClick={this.handleClick}
             onKeyDown={fireClickOnEnter}
+            disabled={action.disabled || action.loading}
             ariaLabel={this.props.ariaLabel ? this.props.ariaLabel : this.props.label}
             title={this.props.title}/>
     }

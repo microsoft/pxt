@@ -250,7 +250,7 @@ function receiveMessage(ev) {
     }
     if (msg.type == "pxteditor") {
         var req = pendingMsgs[msg.id];
-        if (req.action == "renderblocks") {
+        if (req?.action == "renderblocks") {
             var img = document.createElement("img");
             img.src = msg.resp;
         }

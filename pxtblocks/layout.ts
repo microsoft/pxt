@@ -24,7 +24,7 @@ export function patchBlocksFromOldWorkspace(blockInfo: ts.pxtc.BlocksInfo, oldWs
         if (
             !pxt.BrowserUtils.isElement(child) ||
             child.localName !== "block" ||
-            child.getAttribute("disabled") !== "true"
+            !isDisabledBlocklyElement(child)
         ) {
             continue;
         }
@@ -274,8 +274,9 @@ export function toSvgAsync(ws: Blockly.WorkspaceSvg, pixelDensity: number): Prom
         return Promise.resolve<{ width: number; height: number; xml: string; }>(undefined);
 
     const viewbox = ws.getBlocksBoundingBox();
-    const sg = ws.getParentSvg().cloneNode(true) as SVGElement;
-    cleanUpBlocklySvg(sg);
+    const sourceSvg = ws.getParentSvg();
+    const sg = sourceSvg.cloneNode(true) as SVGElement;
+    cleanUpBlocklySvg(sg, sourceSvg);
 
     // getBlocksBoundingBox doesn't include any expanded blocks comments, so
     // do a pass to expand the bounding box if any are present
@@ -328,7 +329,13 @@ export interface BlockSvg {
     width: number; height: number; svg: string; xml: string; css: string;
 }
 
-export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
+// Blockly sets --blocklyDisabledPattern on the injection div to reference an
+// SVG pattern for disabled blocks. Exported SVGs lose access to this CSS
+// variable, so we copy it explicitly.
+// See: blockly/core/renderers/common/constants.ts (createDom)
+const DISABLED_PATTERN_PROP = '--blocklyDisabledPattern';
+
+export function cleanUpBlocklySvg(svg: SVGElement, sourceSvg: SVGElement): SVGElement {
     pxt.BrowserUtils.removeClass(svg, "blocklySvg");
     pxt.BrowserUtils.addClass(svg, "blocklyPreview pxt-renderer classic-theme");
 
@@ -349,6 +356,11 @@ export function cleanUpBlocklySvg(svg: SVGElement): SVGElement {
     svg.querySelectorAll("[tabindex]").forEach(el => {
         el.removeAttribute("tabindex");
     });
+
+    const disabledPattern = window.getComputedStyle(sourceSvg).getPropertyValue(DISABLED_PATTERN_PROP);
+    if (disabledPattern) {
+        svg.style.setProperty(DISABLED_PATTERN_PROP, disabledPattern);
+    }
 
     // In order to get the Blockly comment's text area to serialize properly they have to have names
     const parser = new DOMParser();
@@ -381,22 +393,33 @@ export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, wi
     const xsg = new DOMParser().parseFromString(svgXml, "image/svg+xml");
 
     const cssLink = xsg.createElementNS("http://www.w3.org/1999/xhtml", "style");
-    const isRtl = pxt.Util.isUserLanguageRtl();
-    const customCssHref = (document.getElementById(`style-${isRtl ? 'rtl' : ''}blockly.css`) as HTMLLinkElement).href;
-    const semanticCssHref = pxt.Util.toArray(document.head.getElementsByTagName("link"))
-        .filter(l => pxt.Util.endsWith(l.getAttribute("href"), "semantic.css"))[0].href;
+    const customCssLink = document.getElementById('blocklycss') as HTMLLinkElement;
+    const customCssHref = customCssLink?.href;
+    const semanticCssLink = pxt.Util.toArray(document.head.getElementsByTagName("link"))
+        .filter(l => pxt.Util.endsWith(l.getAttribute("href"), "semantic.css"))[0];
+    const semanticCssHref = semanticCssLink?.href;
 
-    const customCss = await Promise.all([pxt.BrowserUtils.loadAjaxAsync(customCssHref), pxt.BrowserUtils.loadAjaxAsync(semanticCssHref)]);
+    const customCss = await Promise.all([
+        customCssHref ? pxt.BrowserUtils.loadAjaxAsync(customCssHref) : Promise.resolve(""),
+        semanticCssHref ? pxt.BrowserUtils.loadAjaxAsync(semanticCssHref) : Promise.resolve("")
+    ]);
 
     const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
         .filter((el: HTMLStyleElement) => /\.blocklySvg/.test(el.innerText))[0] as HTMLStyleElement;
     // Custom CSS injected directly into the DOM by Blockly
-    customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLLinkElement)?.innerText || "");
-    customCss.unshift((document.getElementById(`blockly-renderer-style-pxt-classic`) as HTMLLinkElement)?.innerText || "");
+    customCss.unshift((document.getElementById(`blockly-common-style`) as HTMLStyleElement)?.innerText || "");
+    // Blockly injects renderer styles with className="blockly-renderer-style", not an id
+    const rendererStyle = document.querySelector(`style.blockly-renderer-style`) as HTMLStyleElement;
+    customCss.unshift(rendererStyle?.innerText || "");
     // CSS may contain <, > which need to be stored in CDATA section
     const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
     cssLink.appendChild(xsg.createCDATASection(cssString));
     xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
+
+    const disabledPattern = sg.style.getPropertyValue(DISABLED_PATTERN_PROP);
+    if (disabledPattern) {
+        (xsg.documentElement as unknown as SVGElement).style.setProperty(DISABLED_PATTERN_PROP, disabledPattern);
+    }
 
     await expandImagesAsync(xsg);
     await convertIconsToPngAsync(xsg);
@@ -683,4 +706,14 @@ function flowBlocks(comments: Blockly.comments.RenderedWorkspaceComment[], block
 function formattable(entity: Blockly.BlockSvg | Blockly.comments.RenderedWorkspaceComment): Formattable {
     const hw = entity instanceof Blockly.BlockSvg ? entity.getHeightWidth() : entity.getSize();
     return { value: entity, height: hw.height, width: hw.width }
+}
+
+export function isDisabledBlocklyElement(element: Element): boolean {
+    if (element.hasAttribute("disabled-reasons")) {
+        return !!element.getAttribute("disabled-reasons");
+    }
+    else if (element.hasAttribute("disabled")) {
+        return element.getAttribute("disabled") === "true";
+    }
+    return false;
 }

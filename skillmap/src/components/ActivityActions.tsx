@@ -98,18 +98,11 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
         if (status === "locked") return <div />
         const showSignIn = pxt.auth.hasIdentity() && !signedIn;
 
-        let numberOfActions = 1;
-        if (activityStarted) numberOfActions += 2;
-        if (completedHeaderId) numberOfActions += 1;
-        if (showSignIn) numberOfActions += 1;
-
         // Apply "grid" class when there are four actions (for a completed activity)
         return <div className={`actions ${completedHeaderId ? "grid" : ""}`}>
             <Button
                 className="tertiary"
                 tabIndex={-1}
-                ariaPosInSet={1}
-                ariaSetSize={numberOfActions}
                 title={this.getActivityActionText()}
                 label={this.getActivityActionText()}
                 onClick={this.handleActionButtonClick}
@@ -118,8 +111,6 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
                 <Button
                     className="primary inverted"
                     tabIndex={-1}
-                    ariaPosInSet={2}
-                    ariaSetSize={numberOfActions}
                     title={lf("Restart")}
                     label={lf("Restart")}
                     onClick={this.handleRestartButtonClick}
@@ -127,8 +118,6 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
                 <Button
                     className="primary inverted"
                     tabIndex={-1}
-                    ariaPosInSet={3}
-                    ariaSetSize={numberOfActions}
                     title={lf("Share")}
                     label={lf("Share")}
                     onClick={this.handleShareButtonClick}
@@ -137,8 +126,6 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             {completedHeaderId &&
                 <Button
                     tabIndex={-1}
-                    ariaPosInSet={activityStarted ? 4 : 2}
-                    ariaSetSize={numberOfActions}
                     className="primary inverted"
                     title={lf("Save to My Projects")}
                     label={lf("Save to My Projects")}
@@ -148,8 +135,6 @@ export class ActivityActionsImpl extends React.Component<ActivityActionsProps> {
             {showSignIn &&
                 <Button
                     tabIndex={-1}
-                    ariaPosInSet={numberOfActions}
-                    ariaSetSize={numberOfActions}
                     className="primary inverted"
                     onClick={dispatchShowLoginModal}
                     label={lf("Sign in to Save")}

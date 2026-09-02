@@ -14,6 +14,15 @@ export const SignInModal: React.FC<IProps> = () => {
         params: pxt.Util.parseQueryString(window.location.href),
     }
 
+    // Projects loaded from urls get cleared after load, so check if we need to add that back.
+    if (teacherTool.projectMetadata?.persistId && !callbackState.params?.["project"]) {
+        if (!callbackState.params) {
+            callbackState.params = {};
+        }
+
+        callbackState.params["project"] = teacherTool.projectMetadata.persistId;
+    }
+
     return teacherTool.modalOptions?.modal === "sign-in" ? (
         <RCSignInModal
             onClose={hideModal}

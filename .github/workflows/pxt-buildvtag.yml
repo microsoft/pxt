@@ -38,7 +38,7 @@ jobs:
         env:
           CROWDIN_KEY: ${{ secrets.CROWDIN_KEY }}
           PXT_ACCESS_TOKEN: ${{ secrets.PXT_ACCESS_TOKEN }}
-          NPM_ACCESS_TOKEN: ${{ secrets.NPM_ACCESS_TOKEN }}
+          NPM_PUBLISH: true
           PXT_ENV: production
           CHROME_BIN: chromium-browser
           DISPLAY: :99.0

@@ -220,6 +220,29 @@
 			"outFiles": []
 		},
 		{
+			"name": "pxt serve (core)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/built/pxt.js",
+			"stopOnEntry": false,
+			"args": [
+				"serve",
+				"--rebundle",
+				"--noauth"
+			],
+			"cwd": "${workspaceRoot}",
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development"
+			},
+			"console": "integratedTerminal",
+			"sourceMaps": false,
+			"outFiles": []
+		},
+		{
 			"name": "pxt serve (bedrock)",
 			"type": "node",
 			"request": "launch",

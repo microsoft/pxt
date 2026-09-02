@@ -4,14 +4,6 @@ To access certain curriculum resources, you must have a verified [GitHub Teacher
 
 The process of obtaining a GitHub Teacher account is free and includes other benefits. Learn more at https://education.github.com/teachers.
 
-### ~ reminder
-
-#### Verification Survey
-
-For teachers who have gone through this process, we would love to hear from you! The Microsoft and GitHub Education teams are working to improve this process. Please consider filling out this short survey to share your experiences, thoughts, and suggestions with us! -- **[Take the survey here](https://forms.office.com/r/cb5sXHpVVz)**.
-
-### ~
-
 ## Create a GitHub Teacher Account
 
 https://youtu.be/XYErnMTILEQ
@@ -27,9 +19,9 @@ Go to https://github.com/signup and use your educator email account.
 
 ### 1. Verify your account
 
-After creating your account, you will see a prompt to verify yourself as an Educator. Continue the verification and select “Apply for your GitHub teacher benefits”. 
+After creating your account, you will see a prompt to verify yourself as an Educator. Continue the verification and select "Apply for your GitHub teacher benefits". 
 
-Alternatively, you can verify your account and bypass the benifits selection at: https://education.github.com/discount_requests/teacher_application.
+Alternatively, you can verify your account and bypass the benefits selection at: https://education.github.com/discount_requests/teacher_application.
 
 ![Apply for teacher benefits](/static/github-teacher/teacher-benefits-signup.png)
 

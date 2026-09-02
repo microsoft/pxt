@@ -46,7 +46,8 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         this.addKeyDownHandler(contentDiv)
         const options = this.getOptions();
         if (this.shouldSort_) options.sort();
-        let row = this.createRow();
+        let rowNum = 0;
+        let row = this.createRow(rowNum);
         for (let i = 0; i < options.length; i++) {
             const content = (options[i] as any)[0]; // Human-readable text or image.
             const value = (options[i] as any)[1]; // Language-neutral value.
@@ -63,11 +64,10 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             const buttonContainer = document.createElement('div');
             buttonContainer.setAttribute('class', 'blocklyDropDownButtonContainer')
             let button = document.createElement('div');
-            button.setAttribute('id', ':' + i); // For aria-activedescendant
+            button.setAttribute('id', `${this.sourceBlock_.id}:${i}`); // For aria-activedescendant
             button.setAttribute('role', 'gridcell');
             button.setAttribute('aria-selected', 'false');
             button.setAttribute('class', 'blocklyDropDownButton');
-            button.title = content.alt;
             if ((this as any).columns_) {
                 button.style.width = (((this as any).width_ / (this as any).columns_) - 8) + 'px';
                 //button.style.height = ((this.width_ / this.columns_) - 8) + 'px';
@@ -109,6 +109,8 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             // Store a data attribute on all possible click targets so we can match it to the icon.
             button.setAttribute('data-value', value);
             buttonImg.setAttribute('data-value', value);
+            buttonImg.setAttribute('aria-hidden', 'true');
+            button.title = content.alt;
             button.appendChild(buttonImg);
             if (this.addLabel_) {
                 const buttonText = this.createTextNode_(content.alt);
@@ -120,7 +122,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
             row.append(buttonContainer)
             if (row.childElementCount === this.columns_) {
                 contentDiv.appendChild(row);
-                row = this.createRow();
+                row = this.createRow(++rowNum);
             }
         }
         if (row.childElementCount) {
@@ -143,6 +145,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', sourceBlock.style.colourTertiary);
         }
+        this.getFocusableElement().ariaExpanded = 'true';
     }
 
     // Update color (deselect) on dropdown hide
@@ -157,6 +160,7 @@ export class FieldImages extends FieldImageDropdown implements FieldCustom {
         } else if (this.borderRect_) {
             this.borderRect_.setAttribute('fill', this.savedPrimary_);
         }
+        this.getFocusableElement().ariaExpanded = 'false';
     }
 
     protected createTextNode_(text: string) {

@@ -37,38 +37,70 @@ export class ConnectionPreviewer extends Blockly.InsertionMarkerPreviewer {
             const staticIndicatorParent = staticConn.sourceBlock_.getSvgRoot().querySelector(":scope>.blocklyConnectionIndicatorParent") as SVGElement;
             this.staticConnectionIndicator = this.createConnectionIndicator(staticIndicatorParent, staticConn);
         }
-        this.staticConnectionIndicator.parentElement.appendChild(this.staticConnectionIndicator);
+        this.raiseIndicators();
+        this.updateLineCoords(draggedConn, staticConn);
+        // Refresh after the in-flight render queue drains. Covers two cases:
+        //  - base.startDrag for keyboard events nudges the block after firing
+        //    the preview, leaving our line endpoints stale.
+        //  - disconnecting from a parent can queue a re-render of the static
+        //    block (size change when a child slot collapses), shifting its
+        //    connection positions.
+        Blockly.renderManagement.finishQueuedRenders().then(() => {
+            if (this.connectionLine) {
+                this.raiseIndicators();
+                this.updateLineCoords(draggedConn, staticConn);
+            }
+        });
+    }
 
+    private raiseIndicators() {
+        // Dragged side: keep the dragged dot last in the dragged block's
+        // svgRoot so it paints over the line and the dragged block's path.
+        this.draggedConnectionIndicator.parentElement?.appendChild(this.draggedConnectionIndicator);
+        // Static side: ensure the indicator group ends up at the end of the
+        // static block's svgRoot so the connection-highlight path that
+        // RenderedConnection.highlight re-appends doesn't sit on top of it.
+        const staticParent = this.staticConnectionIndicator.parentElement;
+        staticParent.appendChild(this.staticConnectionIndicator);
+        staticParent.parentElement?.appendChild(staticParent);
+    }
+
+    private updateLineCoords(draggedConn: Blockly.RenderedConnection, staticConn: Blockly.RenderedConnection) {
         const radius = ConnectionPreviewer.CONNECTION_INDICATOR_RADIUS;
-        const offset = draggedConn.getOffsetInBlock();
+        const dragOffset = draggedConn.getOffsetInBlock();
+        const staticOffset = staticConn.getOffsetInBlock();
+        // Connection offsets can shift when the host block re-renders (e.g.
+        // a static block whose input slot collapses on disconnect), so keep
+        // each indicator's transform in sync with the current offset.
+        this.draggedConnectionIndicator.setAttribute(
+            "transform", `translate(${dragOffset.x}, ${dragOffset.y})`);
+        this.staticConnectionIndicator.setAttribute(
+            "transform", `translate(${staticOffset.x}, ${staticOffset.y})`);
 
         const absDrag = Blockly.utils.Coordinate.sum(
             draggedConn.sourceBlock_.getRelativeToSurfaceXY(),
-            offset
+            dragOffset,
         );
         const absStatic = Blockly.utils.Coordinate.sum(
             staticConn.sourceBlock_.getRelativeToSurfaceXY(),
-            staticConn.getOffsetInBlock()
+            staticOffset,
         );
-
         const dx = absStatic.x - absDrag.x;
         const dy = absStatic.y - absDrag.y;
-        // Offset the line by the radius of the indicator to prevent overlap
-        const atan = Math.atan2(dy, dx);
-
         const len = Math.sqrt(dx * dx + dy * dy);
-        const isMouseDrag = Blockly.Gesture.inProgress();
-        // When the indicators are overlapping, or if the drag is keyboard driven, we hide the line
-        if (len < radius * 2 + 1 || !isMouseDrag) {
+        // Hide when the indicators are close enough to overlap; the line
+        // endpoints would otherwise land inside the dots and look wrong.
+        if (len < radius * 2 + 1) {
             Blockly.utils.dom.addClass(this.connectionLine, "hidden");
-        } else if (isMouseDrag) {
-            Blockly.utils.dom.removeClass(this.connectionLine, "hidden");
-            this.connectionLine.setAttribute("x1", String(offset.x + Math.cos(atan) * radius));
-            this.connectionLine.setAttribute("y1", String(offset.y + Math.sin(atan) * radius));
-
-            this.connectionLine.setAttribute("x2", String(offset.x + dx - Math.cos(atan) * radius));
-            this.connectionLine.setAttribute("y2", String(offset.y + dy - Math.sin(atan) * radius));
+            return;
         }
+        Blockly.utils.dom.removeClass(this.connectionLine, "hidden");
+        // Stop each endpoint at the dot's edge so the line visually meets it.
+        const atan = Math.atan2(dy, dx);
+        this.connectionLine.setAttribute("x1", String(dragOffset.x + Math.cos(atan) * radius));
+        this.connectionLine.setAttribute("y1", String(dragOffset.y + Math.sin(atan) * radius));
+        this.connectionLine.setAttribute("x2", String(dragOffset.x + dx - Math.cos(atan) * radius));
+        this.connectionLine.setAttribute("y2", String(dragOffset.y + dy - Math.sin(atan) * radius));
     }
 
     hidePreview(): void {

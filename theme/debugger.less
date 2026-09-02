@@ -12,7 +12,11 @@
 *******************************/
 
 /* Debugger toolbox */
-.debuggerToolbox.elements {
+#debuggerToolbox {
+    max-width: 100%;
+}
+
+#debuggerToolbox.elements {
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -128,6 +132,9 @@
         font-family: @pageFont;
         font-size: larger;
         color: var(--pxt-neutral-foreground1);
+    }
+    .variableAndValue .variable.varname i.ui.icon.small {
+        background: unset;
     }
 }
 .ui.segment.debugvariables {

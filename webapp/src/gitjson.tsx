@@ -20,6 +20,9 @@ import UserInfo = pxt.editor.UserInfo;
 
 import { Accordion } from "../../react-common/components/controls/Accordion";
 import { Button } from "../../react-common/components/controls/Button"
+import { Checkbox } from "../../react-common/components/controls/Checkbox";
+import { RadioButtonGroup } from "../../react-common/components/controls/RadioButtonGroup"
+import { Input } from "../../react-common/components/controls/Input"
 
 const MAX_COMMIT_DESCRIPTION_LENGTH = 70;
 
@@ -63,6 +66,16 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         this.handleGithubError = this.handleGithubError.bind(this);
         this.handlePullRequest = this.handlePullRequest.bind(this);
         this.handleSignoutGithub = this.handleSignoutGithub.bind(this);
+        this.togglePxtJsonOption = this.togglePxtJsonOption.bind(this);
+    }
+
+    public async togglePxtJsonOption(option: pxt.PxtJsonOption, checked: boolean) {
+        if (option.type !== "checkbox") return;
+
+        await pkg.mainEditorPkg().updateConfigAsync(cfg => {
+            (cfg as any)[option.property] = checked;
+        });
+        this.forceUpdate();
     }
 
     clearCacheDiff(cachePrefix?: string, f?: DiffFile) {
@@ -412,8 +425,8 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
         const vpatch = pxt.semver.parse(pxt.semver.stringify(v)); vpatch.patch++;
 
         let bumpType: string = "patch";
-        function onBumpChange(e: React.ChangeEvent<HTMLInputElement>) {
-            bumpType = e.currentTarget.name;
+        function onBumpChange(id: string) {
+            bumpType = id;
             coretsx.forceUpdate();
         }
         let shouldCacheTutorial: boolean = false;
@@ -427,33 +440,49 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             disagreeLbl: lf("Cancel"),
             jsxd: () => <div>
                 <div className="grouped fields">
-                    <label>{lf("Choose a release version that describes the changes you made to the code.")}
+                    <label id="githubReleaseVersionLabel">
+                        {lf("Choose a release version that describes the changes you made to the code.")}
                         {sui.helpIconLink("/github/release#versioning", lf("Learn about version numbers."))}
                     </label>
-                    <div className="field">
-                        <div className="ui radio checkbox">
-                            <input type="radio" name="patch" checked={bumpType == "patch"} aria-checked={bumpType == "patch"} onChange={onBumpChange} />
-                            <label>{lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch))}</label>
-                        </div>
-                    </div>
-                    <div className="field">
-                        <div className="ui radio checkbox">
-                            <input type="radio" name="minor" checked={bumpType == "minor"} aria-checked={bumpType == "minor"} onChange={onBumpChange} />
-                            <label>{lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor))}</label>
-                        </div>
-                    </div>
-                    <div className="field">
-                        <div className="ui radio checkbox">
-                            <input type="radio" name="major" checked={bumpType == "major"} aria-checked={bumpType == "major"} onChange={onBumpChange} />
-                            <label>{lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor))}</label>
-                        </div>
-                    </div>
+                    <RadioButtonGroup
+                        id="githubReleaseVersion"
+                        selectedId={bumpType}
+                        ariaLabelledby="githubReleaseVersionLabel"
+                        choices={[
+                            {
+                                id: "patch",
+                                label: lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch)),
+                                title: lf("{0}: patch (bug fixes or other non-user visible changes)", pxt.semver.stringify(vpatch)),
+                            },
+                            {
+                                id: "minor",
+                                label: lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor)),
+                                title: lf("{0}: minor change (added function or optional parameters)", pxt.semver.stringify(vminor)),
+                            },
+                            {
+                                id: "major",
+                                label: lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor)),
+                                title: lf("{0}: major change (renamed functions, deleted parameters or functions)", pxt.semver.stringify(vmajor)),
+                            }
+                        ]}
+                        onChoiceSelected={onBumpChange}
+                    />
                 </div>
                 <div className="grouped fields">
-                    <label>{lf("Advanced")}</label>
+                    <label id="advancedLabel">{lf("Advanced")}</label>
                     <div className="field checkbox">
-                        <input type="checkbox" name="cachetutorial" checked={shouldCacheTutorial} aria-checked={shouldCacheTutorial} onChange={onCacheTutorialChange} />
-                        <label>{lf("Optimize for tutorials by caching information about the markdown.")}</label>
+                        <input
+                            type="checkbox"
+                            id="cachetutorial"
+                            name="cachetutorial"
+                            checked={shouldCacheTutorial}
+                            aria-checked={shouldCacheTutorial}
+                            aria-labelledby="cachetutorialLabel"
+                            aria-describedby="advancedLabel"
+                            onKeyDown={fireClickOnEnter}
+                            onChange={onCacheTutorialChange}
+                        />
+                        <label id="cachetutorialLabel" htmlFor="cachetutorial">{lf("Optimize for tutorials by caching information about the markdown.")}</label>
                     </div>
                 </div>
             </div>
@@ -463,10 +492,12 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
             return
 
         let newv = vpatch;
-        if (bumpType == "major")
+        if (bumpType == "major") {
             newv = vmajor;
-        else if (bumpType == "minor")
+        }
+        else if (bumpType == "minor") {
             newv = vminor;
+        }
         const newVer = pxt.semver.stringify(newv)
         this.showLoading("github.release.new", true, lf("creating release..."));
         try {
@@ -813,7 +844,7 @@ class GithubComponent extends data.Component<GithubProps, GithubState> {
                     {diffFiles && <DiffView parent={this} diffFiles={diffFiles} cacheKey={gs.commit.sha} allowRevert={true} showWhitespaceDiff={true} blocksMode={isBlocksMode} showConflicts={true} />}
                     <HistoryZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     {(master || main) && <ReleaseZone parent={this} needsToken={needsToken} githubId={githubId} master={master || main} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
-                    {!isBlocksMode && <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />}
+                    <ExtensionZone parent={this} needsToken={needsToken} githubId={githubId} master={master} gs={gs} isBlocks={isBlocksMode} needsCommit={needsCommit} user={user} pullStatus={pullStatus} pullRequest={pr} />
                     <div></div>
                 </div>
                 <div className="ui serialHeader">
@@ -1263,9 +1294,19 @@ class CommmitComponent extends sui.StatelessUIElement<GitHubViewProps> {
         const descrError = description && description.length > MAX_COMMIT_DESCRIPTION_LENGTH
             ? lf("Your description is getting long...") : undefined;
         return <div>
-            <div className="ui field">
-                <sui.Input type="text" placeholder={lf("Describe your changes.")} value={this.props.parent.state.description} onChange={this.handleDescriptionChange}
-                    error={descrError} />
+            <div>
+                <Input
+                    id="githubCommitDescription"
+                    className="github-commit-message"
+                    label={lf("Commit Message")}
+                    type="text"
+                    placeholder={lf("Describe your changes.")}
+                    initialValue={this.props.parent.state.description}
+                    onChange={this.handleDescriptionChange}
+                />
+                {descrError &&
+                    <div className="ui yellow message">{descrError}</div>
+                }
             </div>
             <div className="ui field">
                 <sui.Button className="green" text={lf("Commit and push changes")} icon="long arrow alternate up" onClick={this.handleCommitClick} onKeyDown={fireClickOnEnter} />
@@ -1497,6 +1538,8 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
             /^LICENSE/.test(f.path.toUpperCase()) || /^COPYING/.test(f.path.toUpperCase()))
         const testurl = header && `${window.location.href.replace(/#.*$/, '')}#testproject:${header.id}`;
         const showFork = user && user.id != githubId.owner;
+        const pxtJsonOptions = pxt.appTarget.appTheme?.pxtJsonOptions || [];
+        const cfg = pkg.mainPkg.config;
 
         const inverted = !!pxt.appTarget.appTheme.invertedGitHub;
         return <div className={`ui transparent ${inverted ? 'inverted' : ''} segment`}>
@@ -1543,6 +1586,20 @@ class ExtensionZone extends sui.StatelessUIElement<GitHubViewProps> {
                     {sui.helpIconLink("/github/offline", lf("Learn more about offline support for extensions."))}
                 </span>
             </div>
+            {pxtJsonOptions.map(option => {
+                const checked = !!cfg?.[option.property as keyof pxt.PackageConfig];
+                return (
+                    <div className="ui field" key={option.property}>
+                        <Checkbox
+                            id={`ext-opt-${option.property}`}
+                            label={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                            isChecked={checked}
+                            onChange={value => this.props.parent.togglePxtJsonOption(option, value)}
+                            style="toggle"
+                        />
+                    </div>
+                );
+            })}
         </div>
     }
 }
