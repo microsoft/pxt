@@ -149,6 +149,13 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private applyPropertyInput = (option: pxt.PxtJsonOption, value: string) => {
+        if (option.type === "input") {
+            (this.config as any)[option.property] = value;
+            this.save(true);
+        }
+    }
+
     private showSimulatorThemePicker = () => {
         if (!pxt.appTarget.simulator?.themePresets?.length) return;
         pxt.tickEvent("pxtjson.simulatortheme.open", undefined, { interactiveConsent: true });
@@ -283,9 +290,11 @@ export class Editor extends srceditor.Editor {
                     {pxtJsonOptions.map(option =>
                         option.type === "checkbox" ? (
                             <sui.Checkbox
+                            <Checkbox
                                 key={option.property}
-                                inputLabel={pxt.Util.rlf(`{id:setting}${option.label}`)}
-                                checked={!!c?.[option.property as keyof pxt.PackageConfig]}
+                                id={option.property}
+                                label={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                                isChecked={!!c?.[option.property as keyof pxt.PackageConfig]}
                                 onChange={value => this.applyPropertyCheckbox(option, value)}
                             />
                         ) : option.type === "input" ? (
