@@ -17,7 +17,7 @@ to store and retrieve your scripts:
 - use the **Share** link on the upper left of the MakeCode editor to obtain
   an anonymized URL that you can use to later retrieve your encrypted script
   from the cloud; do not lose this URL, as it is the only way to retrieve
-  your (unecrypted) script text
+  your (unencrypted) script text
 
 ## Editors and Languages
 

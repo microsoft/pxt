@@ -52,7 +52,7 @@ We are cautiously starting to add more validation rules and auto-assessment capa
 
 There is a new extension available in the extension gallery called "audio-recording" which will allow you to record short audio clips and play them back. This extension will only work on the micro:bit v2.
 
-![Audio extenstion card](/static/blog/microbit/2023-release/audio-ext.png)
+![Audio extension card](/static/blog/microbit/2023-release/audio-ext.png)
 
 ![New audio blocks](/static/blog/microbit/2023-release/audio-blocks.png)
 

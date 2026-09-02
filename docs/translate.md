@@ -16,7 +16,7 @@ If you want to help with translating the MakeCode project, please sign in to Cro
 
 #### Sign up to translate
 
-For a quick explaination of how to sign up and join a MakeCode translation team, watch this
+For a quick explanation of how to sign up and join a MakeCode translation team, watch this
 short video:
 
 https://youtu.be/4PqWq50e8C4
