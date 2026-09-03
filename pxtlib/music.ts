@@ -799,7 +799,7 @@ namespace pxt.assets.music {
                         },
 
                         {
-                            name: lf("booming kick"),
+                            name: lf("boom kick"),
                             startFrequency: 100,
                             startVolume: 1024,
                             steps: [{
