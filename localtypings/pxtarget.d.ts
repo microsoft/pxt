@@ -628,7 +628,7 @@ declare namespace pxt {
     interface PxtJsonOption {
         label: string;
         property: string;
-        type: "checkbox";
+        type: "checkbox" | "input";
     }
 
     interface AssetConfig {

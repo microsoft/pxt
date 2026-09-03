@@ -843,8 +843,10 @@ namespace pxt {
          * @param skipIDs string[] a list of string ids (block id, asset id, or file name) to ignore
          **/
         public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>, skipIDs?: string[]): boolean {
-            let blockIds = asset.meta?.blockIDs?.filter(id => !skipIDs || skipIDs?.indexOf(id) < 0) || [];
-            if (blockIds.length > 0) return true;
+            if (!asset.meta?.displayName || !files) {
+                let blockIds = asset.meta?.blockIDs?.filter(id => !skipIDs || skipIDs?.indexOf(id) < 0) || [];
+                if (blockIds.length > 0) return true;
+            }
 
             if (asset.type == pxt.AssetType.Tile) {
                 for (const tm of this.getAssets(AssetType.Tilemap)) {
@@ -857,74 +859,88 @@ namespace pxt {
             }
 
             if (files) {
+                const config = U.jsonTryParse(files["pxt.json"]?.content) as pxt.PackageConfig;
+
+                const filesToCheck: string[] = [];
+
+                if (config?.files) {
+                    for (const file of config.files) {
+                        if (file.endsWith(".g.ts")) continue;
+                        if (skipIDs && (skipIDs.indexOf(file) !== -1)) continue;
+
+                        if (file.endsWith(".ts") && file !== pxt.MAIN_TS || file.endsWith(".py") && file !== pxt.MAIN_PY) {
+                            filesToCheck.push(file);
+                        }
+                    }
+                }
+
+                if (config?.preferredEditor === pxt.BLOCKS_PROJECT_NAME) {
+                    filesToCheck.push(pxt.MAIN_BLOCKS);
+                }
+                else if (config?.preferredEditor === pxt.JAVASCRIPT_PROJECT_NAME) {
+                    filesToCheck.push(pxt.MAIN_TS);
+                }
+                else if (config?.preferredEditor === pxt.PYTHON_PROJECT_NAME) {
+                    filesToCheck.push(pxt.MAIN_PY);
+                }
+
+                const references: string[] = [];
+
                 const shortId = Util.escapeForRegex(getShortIDForAsset(asset));
                 const displayName = Util.escapeForRegex(asset.meta?.displayName) || "";
 
-                let assetTsRefs: string;
+                const addNamespaceReference = (namespace: string, fun: string, id: string) => {
+                    references.push(`${namespace}\\s*\\.\\s*${fun}\`\\s*${id}\\s*\``);
+                }
+
                 switch (asset.type) {
                     case pxt.AssetType.Tile:
-                        assetTsRefs = `myTiles.${shortId}|assets.tile\`${shortId}\``;
-                        if (displayName) assetTsRefs += `|assets.tile\`${displayName}\``;
+                        references.push(`myTiles\\s*\\.\\s*${shortId}\\s*`);
+
+                        addNamespaceReference("assets", "tile", shortId);
+                        if (displayName) addNamespaceReference("assets", "tile", displayName);
                         break;
                     case pxt.AssetType.Tilemap:
-                        assetTsRefs = `tilemap\`${shortId}\``;
+                        references.push(`tilemap\`\\s*${shortId}\\s*\``);
+                        addNamespaceReference("assets", "tilemap", shortId);
+                        if (displayName) {
+                            references.push(`tilemap\`\\s*${displayName}\\s*\``);
+                            addNamespaceReference("assets", "tilemap", displayName);
+                        }
                         break;
                     case pxt.AssetType.Animation:
-                        assetTsRefs = `assets.animation\`${shortId}\``;
-                        if (displayName) assetTsRefs += `|assets.animation\`${displayName}\``;
+                        addNamespaceReference("assets", "animation", shortId);
+                        if (displayName) addNamespaceReference("assets", "animation", displayName);
                         break;
                     case pxt.AssetType.Song:
-                        assetTsRefs = `assets.song\`${shortId}\``;
-                        if (displayName) assetTsRefs += `|assets.song\`${displayName}\``;
+                        addNamespaceReference("assets", "song", shortId);
+                        if (displayName) addNamespaceReference("assets", "song", displayName);
                         break;
                     case pxt.AssetType.Json:
-                        assetTsRefs = `assets.json\`${shortId}\``;
-                        if (displayName) assetTsRefs += `|assets.json\`${displayName}\``;
+                        addNamespaceReference("assets", "json", shortId);
+                        if (displayName) addNamespaceReference("assets", "json", displayName);
                         break;
                     default:
-                        assetTsRefs = `assets.image\`${shortId}\``;
-                        if (displayName) assetTsRefs += `|assets.image\`${displayName}\``;
+                        addNamespaceReference("assets", "image", shortId);
+                        if (displayName) addNamespaceReference("assets", "image", displayName);
                         break;
                 }
-                const assetTsRegex = new RegExp(assetTsRefs, "gm");
 
-                let assetPyRefs: string;
-                switch (asset.type) {
-                    case pxt.AssetType.Tile:
-                        assetPyRefs = `myTiles.${shortId}|assets.tile\("""${shortId}"""\)`;
-                        if (displayName) assetPyRefs += `|assets.tile\("""${displayName}"""\)`;
-                        break;
-                    case pxt.AssetType.Tilemap:
-                        assetPyRefs = `assets.tilemap\("""${shortId}"""\)`;
-                        break;
-                    case pxt.AssetType.Animation:
-                        assetPyRefs = `assets.animation\("""${shortId}"""\)`;
-                        if (displayName) assetPyRefs += `|assets.animation\("""${displayName}"""\)`;
-                        break;
-                    case pxt.AssetType.Song:
-                        assetPyRefs = `assets.song\("""${shortId}"""\)`;
-                        if (displayName) assetPyRefs += `|assets.song\("""${displayName}"""\)`;
-                        break;
-                    case pxt.AssetType.Json:
-                        assetPyRefs = `assets.json\("""${shortId}"""\)`;
-                        if (displayName) assetPyRefs += `|assets.json\("""${displayName}"""\)`;
-                        break;
-                    default:
-                        assetPyRefs = `assets.image\("""${shortId}"""\)`;
-                        if (displayName) assetPyRefs += `|assets.image\("""${displayName}"""\)`;
-                        break;
-                }
-                const assetPyRegex = new RegExp(assetPyRefs, "gm");
+                const regex = new RegExp(references.map(r => `(?:${r})`).join("|"));
+                const pyRegex = new RegExp(references.map(r => `(?:${r})`).join("|").replace(/`/g, '"""'));
 
-                for (let filename of Object.keys(files)) {
-                    if (skipIDs?.indexOf(filename) >= 0) continue;
+                for (const file of filesToCheck) {
+                    const content = files[file].content;
 
-                    const f = files[filename];
-                    // Match .ts files that are not generated (.g.ts)
-                    if (filename.match(/((?!\.g).{2}|^.{0,1})\.ts$/i)) {
-                        if (f.content.match(assetTsRegex)) return true;
-                    } else if (filename.endsWith(".py")) {
-                        if (f.content.match(assetPyRegex)) return true;
+                    if (file.endsWith(".py")) {
+                        if (pyRegex.test(content)) {
+                            return true;
+                        }
+                    }
+                    else {
+                        if (regex.test(content)) {
+                            return true;
+                        }
                     }
                 }
             }
