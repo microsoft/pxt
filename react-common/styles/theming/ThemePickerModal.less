@@ -1,6 +1,190 @@
-.theme-picker-modal>.common-modal {
-    width: 80%;
-    max-width: 60rem;
+.theme-picker-modal,
+.simulator-theme-picker-modal {
+    >.common-modal {
+        width: 90%;
+        max-width: 64rem;
+    }
+
+    .common-modal-header {
+        padding-left: 0;
+
+        .common-modal-right-menu {
+            flex: 1;
+            justify-content: center;
+            min-width: 0;
+            margin-left: 4rem;
+        }
+    }
+
+    .common-modal-footer {
+        grid-template-columns: 1fr auto;
+
+        button:only-child {
+            justify-self: end;
+            min-width: 8rem;
+        }
+    }
+}
+
+.theme-picker-modal>.common-modal,
+.simulator-theme-picker-modal:not(.standalone)>.common-modal {
+    height: 90%;
+    max-height: 48rem;
+    display: flex;
+    flex-direction: column;
+
+    .common-modal-body {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+    }
+}
+
+.theme-picker-toggle {
+    width: 20rem;
+    max-width: 40vw;
+    padding: 0.5rem 0;
+
+    .common-editor-toggle-outer {
+        width: 100%;
+    }
+
+    .common-editor-toggle {
+        overflow: hidden;
+    }
+
+    .common-editor-toggle .common-editor-toggle-item > .common-button {
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+
+    .common-button-flex,
+    .common-button-label {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.simulator-theme-picker-modal.standalone .common-modal-header {
+    padding-left: 1.5rem;
+}
+
+.simulator-theme-picker {
+    display: grid;
+    grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 1fr);
+    gap: 2rem;
+    align-items: center;
+}
+
+.simulator-theme-preview {
+    min-width: 0;
+
+    .simframe {
+        margin: 0;
+    }
+
+    .simframe > .ui.loader {
+        display: none;
+    }
+}
+
+.simulator-theme-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.simulator-theme-select-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.simulator-theme-select {
+    box-sizing: border-box;
+    width: 100%;
+    height: 2.5rem;
+    padding: 0 0.75rem;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    border-radius: 2px;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+    font: inherit;
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        outline-offset: 2px;
+    }
+}
+
+.simulator-theme-color-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.simulator-theme-color {
+    display: grid;
+    grid-template-columns: minmax(7rem, 1fr) 3rem minmax(8rem, 1fr);
+    gap: 0.5rem;
+    align-items: center;
+
+    .common-input-wrapper {
+        min-width: 0;
+    }
+
+    input[type="color"] {
+        width: 3rem;
+        height: 2.25rem;
+        padding: 0.125rem;
+        cursor: pointer;
+        border: 1px solid var(--pxt-neutral-stencil1);
+        background: var(--pxt-neutral-background1);
+    }
+}
+
+@media only screen and (max-width: 50rem) {
+    .theme-picker-modal>.common-modal {
+        width: 90%;
+    }
+
+    .theme-picker-modal,
+    .simulator-theme-picker-modal {
+        .common-modal-header .common-modal-right-menu {
+            margin-left: clamp(0rem, calc(90vw - 16rem), 4rem);
+        }
+    }
+
+    .theme-picker-toggle {
+        width: 10rem;
+        max-width: 100%;
+
+        .common-editor-toggle .common-editor-toggle-item > .common-button {
+            padding-left: 0.2rem;
+            padding-right: 0.2rem;
+
+            i {
+                display: none;
+            }
+        }
+    }
+
+    .simulator-theme-picker {
+        grid-template-columns: 1fr;
+    }
+
+    .simulator-theme-preview {
+        max-width: 28rem;
+        width: 100%;
+        justify-self: center;
+    }
+
+    .simulator-theme-color {
+        grid-template-columns: minmax(5.5rem, 1fr) 3rem minmax(6.5rem, 1fr);
+    }
 }
 
 .theme-picker {
@@ -18,10 +202,15 @@
 
     .theme-card {
         width: 18rem;
-        height: unset;
+        height: auto;
         background-color: var(--pxt-neutral-background1);
         color: var(--pxt-neutral-foreground1);
         border: 1px solid var(--pxt-neutral-stencil1);
+
+        &.selected {
+            border-color: var(--pxt-primary-background);
+            box-shadow: inset 0 0 0 2px var(--pxt-primary-background);
+        }
 
         &:hover {
             border: 1px solid var(--pxt-focus-border);
@@ -179,4 +368,9 @@
             }
         }
     }
+}
+
+.hc .theme-picker .theme-card.selected {
+    border-color: @highContrastTextColor;
+    box-shadow: inset 0 0 0 2px @highContrastTextColor;
 }

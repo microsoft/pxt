@@ -83,6 +83,7 @@ declare namespace pxt.editor {
         | "showthemepicker"
         | "togglehighcontrast"
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
+        | "setsimulatortheme" // EditorMessageSetSimulatorThemeRequest
         | "togglegreenscreen"
         | "togglekeyboardcontrols"
         | "togglescreenreadermode"
@@ -404,6 +405,12 @@ declare namespace pxt.editor {
     export interface EditorMessageSetHighContrastRequest extends EditorMessageRequest {
         action: "sethighcontrast";
         on: boolean;
+    }
+
+    export interface EditorMessageSetSimulatorThemeRequest extends EditorMessageRequest {
+        action: "setsimulatortheme";
+        preference: pxt.auth.SimulatorThemePreference;
+        savePreference?: boolean;
     }
 
     export interface EditorMessageStartActivity extends EditorMessageRequest {
@@ -830,7 +837,9 @@ declare namespace pxt.editor {
         areaMenuOpen?: boolean;
         feedback?: FeedbackState;
         themePickerOpen?: boolean;
+        simulatorThemePickerOpen?: boolean;
         errorListNote?: string;
+        timeMachine?: boolean;
     }
 
     export interface EditorState {
@@ -991,8 +1000,8 @@ declare namespace pxt.editor {
         setEditorOffset(): void;
 
         anonymousPublishHeaderByIdAsync(headerId: string, projectName?: string): Promise<ShareData>;
-        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string): Promise<string>;
-        publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean): Promise<ShareData>;
+        publishCurrentHeaderAsync(persistent: boolean, screenshotUri?: string, simulatorTheme?: pxt.SimulatorTheme): Promise<string>;
+        publishAsync (name: string, description?: string,screenshotUri?: string, forceAnonymous?: boolean, simulatorTheme?: pxt.SimulatorTheme): Promise<ShareData>;
 
         startStopSimulator(opts?: SimulatorStartOptions): void;
         stopSimulator(unload?: boolean, opts?: SimulatorStartOptions): void;
@@ -1122,6 +1131,7 @@ declare namespace pxt.editor {
         getSharePreferenceForHeader(): boolean;
         saveSharePreferenceForHeaderAsync(anonymousByDefault: boolean): Promise<void>;
         setColorThemeById(colorThemeId: string, savePreference: boolean): void;
+        setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference, savePreference?: boolean): Promise<void>;
     }
 
     export interface IHexFileImporter {

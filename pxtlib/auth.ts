@@ -51,6 +51,67 @@ namespace pxt.auth {
         [targetId: string]: string;
     }
 
+    export const DEFAULT_SIMULATOR_THEME_COLOR_PROPERTIES = [
+        "background-color",
+        "button-stroke",
+        "text-color",
+        "button-fill",
+        "dpad-fill",
+        "joystick-handle-stroke",
+    ] as const;
+
+    export const DEFAULT_SIMULATOR_LAYOUT = "default";
+
+    export type SimulatorTheme = Map<string> & { layout: string };
+
+    export type SimulatorThemePreference = {
+        presetId: string;
+        theme: SimulatorTheme;
+    }
+
+    export type SimulatorThemesState = {
+        [targetId: string]: SimulatorThemePreference;
+    }
+
+    export const SIMULATOR_THEMES_LOCAL_STORAGE_KEY = "user-pref:simulatorThemes";
+
+    export function isSimulatorThemeColorProperty(property: string): boolean {
+        return property !== "layout"
+            && property !== "skin"
+            && /^[a-z][a-z0-9-]*$/.test(property);
+    }
+
+    export function isSimulatorThemeColor(value: unknown): value is string {
+        return typeof value === "string" && /^#[0-9a-f]{6}$/i.test(value);
+    }
+
+    export function isValidSimulatorTheme(theme: unknown): theme is SimulatorTheme {
+        if (!theme || typeof theme !== "object") return false;
+        const candidate = theme as Map<unknown>;
+        const colorProperties = Object.keys(candidate).filter(property => property !== "layout");
+        return colorProperties.length > 0
+            && colorProperties.every(property =>
+                isSimulatorThemeColorProperty(property)
+                && isSimulatorThemeColor(candidate[property]))
+            && typeof candidate.layout === "string"
+            && !!candidate.layout;
+    }
+
+    export function simulatorThemeColorsEqual(left: Map<string>, right: Map<string>): boolean {
+        const leftProperties = Object.keys(left).filter(isSimulatorThemeColorProperty);
+        const rightProperties = Object.keys(right).filter(isSimulatorThemeColorProperty);
+        return leftProperties.length === rightProperties.length
+            && leftProperties.every(property => left[property] === right[property]);
+    }
+
+    export function isValidSimulatorThemePreference(preference: unknown): preference is SimulatorThemePreference {
+        if (!preference || typeof preference !== "object") return false;
+        const candidate = preference as Partial<SimulatorThemePreference>;
+        return typeof candidate.presetId === "string"
+            && !!candidate.presetId
+            && isValidSimulatorTheme(candidate.theme);
+    }
+
     export type SetPrefResult = {
         success: boolean;
         res: UserPreferences;
@@ -64,6 +125,7 @@ namespace pxt.auth {
         highContrast?: boolean;
         screenReaderMode?: boolean;
         colorThemeIds?: ColorThemeIdsState;
+        simulatorThemes?: SimulatorThemesState;
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;
@@ -75,6 +137,7 @@ namespace pxt.auth {
         highContrast: false,
         screenReaderMode: false,
         colorThemeIds: {}, // Will lookup pxt.appTarget.appTheme.defaultColorTheme for active target
+        simulatorThemes: {},
         reader: "",
         skillmap: { mapProgress: {}, completedTags: {} },
         email: false
@@ -759,7 +822,7 @@ namespace pxt.auth {
     }
 
     export function hasIdentity(): boolean {
-        return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0;
+        return !authDisabled && !pxt.BrowserUtils.isPxtElectron() && identityProviders().length > 0 && !pxt.shell.isTimeMachineEmbed();
     }
 
     function idpEnabled(idp: pxt.IdentityProviderId): boolean {

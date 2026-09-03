@@ -12,6 +12,7 @@ import * as indexedDBWorkspace from "./idbworkspace";
 import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
+import * as simulatorTheme from "./simulatorTheme"
 
 import * as pxteditor from "../../pxteditor";
 
@@ -19,7 +20,7 @@ import U = pxt.Util;
 import Cloud = pxt.Cloud;
 
 import * as pxtblockly from "../../pxtblocks";
-import { getTextAtTime, HistoryFile } from "../../pxteditor/history";
+import { HistoryFile, SnapshotEvent, getTextAtTime } from "../../pxteditor/history";
 import { Milestones } from "./constants";
 
 
@@ -330,11 +331,20 @@ export async function getTextAsync(id: string, getSavedText = false): Promise<Sc
     });
 }
 
-export async function saveSnapshotAsync(id: string): Promise<void> {
+export async function saveSnapshotAsync(id: string, event?: SnapshotEvent, snapshotText?: ScriptText): Promise<void> {
     await enqueueHistoryOperationAsync(
         id,
         text => {
-            pxteditor.history.pushSnapshotOnHistory(text, Date.now())
+            pxteditor.history.pushSnapshotOnHistory(text, Date.now(), event, snapshotText)
+        }
+    );
+}
+
+export async function saveExtensionHistoryAsync(id: string, previousText: ScriptText, event: SnapshotEvent): Promise<void> {
+    await enqueueHistoryOperationAsync(
+        id,
+        text => {
+            pxteditor.history.pushExtensionEventOnHistory(text, previousText, Date.now(), event, diffText)
         }
     );
 }
@@ -363,6 +373,7 @@ async function enqueueHistoryOperationAsync(id: string, op: (text: ScriptText, h
         op(saved.text, h);
 
         const ver = await impl.setAsync(h, saved.version, saved.text);
+        e.text = saved.text;
         e.version = ver;
 
         data.invalidate("text:" + h.id);
@@ -410,7 +421,11 @@ function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screens
 }
 
 // https://github.com/Microsoft/pxt-backend/blob/master/docs/sharing.md#anonymous-publishing
-export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+export interface PublishOptions {
+    projectFilesMatchPublishedFiles?: boolean;
+}
+
+export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string, options?: PublishOptions) {
     checkHeaderSession(h);
 
     const saveId = {}
@@ -423,7 +438,7 @@ export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: S
     h.pubVersions.push({ id: inf.id, type: "snapshot" });
     if (inf.shortid) inf.id = inf.shortid;
     h.pubId = inf.shortid
-    h.pubCurrent = h.saveId === saveId
+    h.pubCurrent = options?.projectFilesMatchPublishedFiles !== false && h.saveId === saveId
     h.meta = inf.meta;
     pxt.debug(`published; id /${h.pubId}`)
 
@@ -432,7 +447,7 @@ export async function anonymousPublishAsync(h: Header, text: ScriptText, meta: S
     return inf;
 }
 
-export async function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string) {
+export async function persistentPublishAsync(h: Header, text: ScriptText, meta: ScriptMeta, screenshotUri?: string, options?: PublishOptions) {
     checkHeaderSession(h);
 
     const saveId = {}
@@ -444,7 +459,7 @@ export async function persistentPublishAsync(h: Header, text: ScriptText, meta: 
     if (!h.pubVersions) h.pubVersions = [];
     h.pubVersions.push({ id: script.id, type: "permalink" });
     h.pubId = shareID
-    h.pubCurrent = h.saveId === saveId
+    h.pubCurrent = options?.projectFilesMatchPublishedFiles !== false && h.saveId === saveId
     h.pubPermalink = shareID;
     h.meta = script.meta;
     pxt.debug(`published; id /${h.pubId}`)
@@ -1713,16 +1728,18 @@ export function installByIdAsync(id: string) {
     return Cloud.privateGetAsync(id, /* forceLiveEndpoint */ true)
         .then((scr: Cloud.JsonScript) =>
             getPublishedScriptAsync(scr.id)
-                .then(files => installAsync(
-                    {
+                .then(files => {
+                    const editableFiles = simulatorTheme.removeSimulatorThemeFromFiles(files);
+                    return installAsync({
                         name: scr.name,
                         pubId: id,
-                        pubCurrent: true,
+                        pubCurrent: editableFiles === files,
                         meta: scr.meta,
                         editor: scr.editor,
                         target: scr.target,
                         targetVersion: scr.targetVersion || (scr.meta && scr.meta.versions && scr.meta.versions.target)
-                    }, files)))
+                    }, editableFiles);
+                }))
 }
 
 // this promise is set while a sync is in progress

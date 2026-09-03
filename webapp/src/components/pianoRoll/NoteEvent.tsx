@@ -27,7 +27,7 @@ export const NoteEventView = (props: Props) => {
             data-tick={start}
             data-note={note}
         >
-            {isDrumTrack ? undefined : getNoteName(note)}
+            {(isDrumTrack || duration <= 1) ? undefined : getNoteName(note)}
         </div>
     );
 }

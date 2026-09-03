@@ -43,7 +43,7 @@ If you want to bypass the home page, you can get to the editor directly at https
 
 ![If then else - block](/static/blog/microbit/v1-beta/if-then-else-block.png)
 
-* **Make a Variable** – based on feedback, we tried to make the process of creating variables much clearer. Now, you will explicitly click on the ``Make a Variable...`` button in the Toolbox to create a new variable with the name you want. The variable is then associated wtih the other blocks in the Variables drawer of the Toolbox.
+* **Make a Variable** – based on feedback, we tried to make the process of creating variables much clearer. Now, you will explicitly click on the ``Make a Variable...`` button in the Toolbox to create a new variable with the name you want. The variable is then associated with the other blocks in the Variables drawer of the Toolbox.
 
 ![Make a variable](/static/blog/microbit/v1-beta/make-variable.gif)
 

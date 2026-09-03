@@ -1,6 +1,6 @@
 # Multiple languages
 
-In addtion to Block-based tutorials, MakeCode supports tutorials for JavaScript and Python.
+In addition to Block-based tutorials, MakeCode supports tutorials for JavaScript and Python.
 
 ## Using JavaScript
 

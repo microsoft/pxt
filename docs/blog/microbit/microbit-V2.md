@@ -60,7 +60,7 @@ The following blocks support the microphone and the capacitive touch sensor on t
 
 * **On Logo Pressed** - this block detects when the capacitive touch sensor (the gold logo) is pressed.
 
-![on logo presed block](/static/blog/microbit/microbit-V2/on-logo-pressed.png)
+![on logo pressed block](/static/blog/microbit/microbit-V2/on-logo-pressed.png)
 
 * **Sound Level** - this block returns the current sound level that goes from 0 = silent, to 255 = very loud!
 

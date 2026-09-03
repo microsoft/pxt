@@ -1994,6 +1994,15 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    for (const preset of cfg.simulator?.themePresets ?? []) {
+        targetStrings[`{id:simulator-theme-name}${preset.name}`] = preset.name;
+    }
+    for (const layout of cfg.simulator?.themeLayouts ?? []) {
+        targetStrings[`{id:simulator-layout-name}${layout.name}`] = layout.name;
+        for (const field of layout.colorFields ?? []) {
+            targetStrings[`{id:simulator-theme-field}${field.label}`] = field.label;
+        }
+    }
     if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
         const heroBannerCard = theme.homeScreenHero;
         if (heroBannerCard.title) targetStrings[heroBannerCard.title] = heroBannerCard.title;
@@ -2520,6 +2529,7 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
             id: themeData.id,
             name: themeData.name,
             weight: themeData.weight,
+            defaultSimulatorTheme: themeData.defaultSimulatorTheme,
             monacoBaseTheme: themeData.monacoBaseTheme,
             colors: themeData.colors
         };

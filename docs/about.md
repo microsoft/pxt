@@ -18,7 +18,7 @@ interface and by adding additional blocks and functions specific to their hardwa
 
 ## MakeCode essentials
 
-All of the parts of the MakeCode programming experience, when put toghether, create what's typically called an "editor". Even though MakeCode incorporates much more than just editors,
+All of the parts of the MakeCode programming experience, when put together, create what's typically called an "editor". Even though MakeCode incorporates much more than just editors,
 this concrete term is used more often, rather than referring to the MakeCode target as a "programming experience".
 
 To describe the essentials of a MakeCode editor, it is combination of: a blocks editor, a language editor, a target simulator, and a target code generator.
@@ -30,7 +30,7 @@ The Blocks editor is where the user can interactively create a program by "pulli
 available in the Blocks Toolbox aligning next to the workspace.
 
 Blocks represent coding actions and programming structures that would traditionally be
-written in text. Coding elements such as loops, conditonal statements, and events are
+written in text. Coding elements such as loops, conditional statements, and events are
 containing blocks with other blocks fitting inside. Functions and assignments are "flat"
 blocks that fit into others. Variables, values, and properties are mini-blocks that fit into 
 slots of functions, assignments, or evaluators.

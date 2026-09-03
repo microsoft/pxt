@@ -739,6 +739,7 @@ const testthumb = testTask("thumb-test", "thumbrunner.js");
 const testhelpers = testTask("helpers-test", "helperrunner.js");
 const testerr = testTask("errors-test", "errorrunner.js");
 const testfmt = testTask("format-test", "formatrunner.js");
+const testembed = testTask("embed-test", "embedrunner.js");
 const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
@@ -777,6 +778,7 @@ const testAll = gulp.series(
     testhelpers,
     testerr,
     testfmt,
+    testembed,
     testpydecomp,
     testpycomp,
     testpytraces,
@@ -889,6 +891,7 @@ exports.testlang = testlang;
 exports.testthumb = testthumb;
 exports.testerr = testerr;
 exports.testfmt = testfmt;
+exports.testembed = testembed;
 exports.testpydecomp = testpydecomp;
 exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
