@@ -149,6 +149,13 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private applyPropertyInput = (option: pxt.PxtJsonOption, value: string) => {
+        if (option.type === "input") {
+            (this.config as any)[option.property] = value;
+            this.save(true);
+        }
+    }
+
     private showSimulatorThemePicker = () => {
         if (!pxt.appTarget.simulator?.themePresets?.length) return;
         pxt.tickEvent("pxtjson.simulatortheme.open", undefined, { interactiveConsent: true });
@@ -281,14 +288,26 @@ export class Editor extends srceditor.Editor {
                             applyUserConfig={this.applyUserConfig} />
                     )}
                     {pxtJsonOptions.map(option =>
-                        <Checkbox
-                            key={option.property}
-                            id={option.property}
-                            label={pxt.Util.rlf(`{id:setting}${option.label}`)}
-                            isChecked={!!c?.[option.property as keyof pxt.PackageConfig]}
-                            onChange={value => this.applyPropertyCheckbox(option, value)}
-                            style="toggle"
-                        />
+                        option.type === "checkbox" ? (
+                            <Checkbox
+                                key={option.property}
+                                id={option.property}
+                                label={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                                isChecked={!!c?.[option.property as keyof pxt.PackageConfig]}
+                                onChange={value => this.applyPropertyCheckbox(option, value)}
+                                style="toggle"
+                            />
+                        ) : option.type === "input" ? (
+                            <Input
+                                key={option.property}
+                                id={option.property}
+                                label={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                                ariaLabel={option.label}
+                                initialValue={(c as any)?.[option.property] || ""}
+                                onChange={value => this.applyPropertyInput(option, value)}
+                                autoComplete={false}
+                            />
+                        ) : undefined
                     )}
                     <div>
                         <Button
