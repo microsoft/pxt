@@ -843,7 +843,7 @@ namespace pxt {
          * @param skipIDs string[] a list of string ids (block id, asset id, or file name) to ignore
          **/
         public isAssetUsed(asset: Asset, files?: pxt.Map<{content: string}>, skipIDs?: string[]): boolean {
-            if (!asset.meta?.displayName) {
+            if (!asset.meta?.displayName || !files) {
                 let blockIds = asset.meta?.blockIDs?.filter(id => !skipIDs || skipIDs?.indexOf(id) < 0) || [];
                 if (blockIds.length > 0) return true;
             }
