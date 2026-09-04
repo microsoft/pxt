@@ -1,0 +1,297 @@
+/*
+ * Generates micro:bit device projects for the hardware A/B comparison.
+ *
+ * Each project is a standalone pxt project under
+ * <target>/projects/hw-ab/<case>/ that can be built with `pxt build` and
+ * flashed to a board. One project is generated per semantic case file in
+ * tests/compile-test/lang-test0 (the case files cannot be merged: their
+ * top-level names collide), plus a `soak` project used for leak detection.
+ *
+ * A generated main.ts is:
+ *
+ *   header    banner + startup delay so a serial capture can attach
+ *   prelude   tests/compile-test/lang-test0/lang-test0.ts, with its throwing
+ *             `assert` textually replaced by one that prints "ASSERT <id>" to
+ *             serial and then panics 45 (the lang-test1 convention). A thrown
+ *             string on device surfaces only as panic 999, which carries no
+ *             identity; the rewrite is what makes a device failure legible.
+ *   body      the case file text, verbatim
+ *   footer    prints "HWAB PASS <case>" for a bounded window, then idles
+ *             without resetting
+ *
+ * The trailing PASS loop and the startup delay both exist because serial
+ * capture cannot begin until the board has re-enumerated after flashing: a
+ * program that printed its result once, early, would race the capture. The
+ * window is bounded because only that first minute can be raced.
+ *
+ * Usage:
+ *   node tests/hw-ab/gen-project.js
+ *
+ * Environment:
+ *   PXT_TARGET_DIR  target checkout to generate into
+ *                   (default: sibling ../pxt-microbit)
+ */
+
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+
+const pxtDir = path.resolve(__dirname, "..", "..");
+const targetDir = path.resolve(
+    process.env.PXT_TARGET_DIR || path.join(pxtDir, "..", "pxt-microbit"));
+const langTest0Dir = path.join(pxtDir, "tests", "compile-test", "lang-test0");
+const outRoot = path.join(targetDir, "projects", "hw-ab");
+
+// Milliseconds the device idles before running anything, so that the host has
+// time to reopen the serial device after the post-flash reset.
+const START_DELAY_MS = 10000;
+// Interval of the trailing PASS heartbeat and of the soak progress line.
+const PASS_INTERVAL_MS = 2000;
+const SOAK_INTERVAL_MS = 5000;
+// How long the PASS heartbeat runs before the program goes quiet. It only has
+// to outlast the post-flash re-enumeration the capture waits for; streaming
+// past that is noise, and a board transmitting indefinitely is suspected of
+// aggravating flash failures.
+const PASS_WINDOW_MS = 60000;
+const PASS_REPEATS = Math.round(PASS_WINDOW_MS / PASS_INTERVAL_MS);
+
+// case name -> lang-test0 source file
+const CASES = {
+    "conditiontruthiness": "54conditiontruthiness.ts",
+    "conditionlowering": "55conditionlowering.ts",
+    "ifacedispatch": "56ifacedispatch.ts"
+};
+
+// Exact text of the host prelude's assert. Matching it exactly rather than by
+// regex is deliberate: if the prelude changes shape, generation fails loudly
+// instead of silently emitting a program whose failures are invisible.
+const HOST_ASSERT =
+    "function assert(cond: boolean, m?: string) {\n" +
+    "    if (!cond) {\n" +
+    "        throw `assertion failed: ${m || \"\"}`;\n" +
+    "    }\n" +
+    "}\n";
+
+const DEVICE_ASSERT =
+    "// ---- hw-ab generated replacement -------------------------------------\n" +
+    "// The host prelude's assert throws. An uncaught throw on device is just\n" +
+    "// panic 999, which does not say which assertion failed, so the device\n" +
+    "// build prints the assertion id to serial first and then panics 45.\n" +
+    "//% shim=pxtrt::panic\n" +
+    "function panic(code2: number): void { }\n" +
+    "\n" +
+    "function assert(cond: boolean, m?: string) {\n" +
+    "    if (!cond) {\n" +
+    "        console.log(\"ASSERT \" + (m || \"?\"))\n" +
+    "        control.dmesg(\"ASSERT \" + (m || \"?\"))\n" +
+    "        // Panic does not flush serial; without this drain pause the tail\n" +
+    "        // of the assert id is lost, and the id is the failure report.\n" +
+    "        basic.pause(250)\n" +
+    "        panic(45)\n" +
+    "    }\n" +
+    "}\n" +
+    "// ---- end hw-ab generated replacement ----------------------------------\n";
+
+function fail(msg) {
+    console.error("gen-project: " + msg);
+    process.exit(1);
+}
+
+function targetVersion() {
+    // Stamping the current target version keeps the target's "upgrades" rules
+    // from injecting extra dependencies (they are all gated on older
+    // versions). Without the stamp the project reads as version 0.0.0,
+    // pxt-microbit's missingPackage rules match it, and the build dies with an
+    // error like "Package not installed: microphone".
+    const pkg = path.join(targetDir, "package.json");
+    return JSON.parse(fs.readFileSync(pkg, "utf8")).version;
+}
+
+function devicePrelude() {
+    const src = fs.readFileSync(path.join(langTest0Dir, "lang-test0.ts"), "utf8");
+    if (src.indexOf(HOST_ASSERT) < 0)
+        fail("lang-test0.ts prelude no longer contains the expected throwing " +
+            "assert -- update HOST_ASSERT in gen-project.js");
+    return src.replace(HOST_ASSERT, DEVICE_ASSERT);
+}
+
+function header(name) {
+    return [
+        "// Generated by tests/hw-ab/gen-project.js -- do not edit.",
+        "// Case: " + name,
+        "",
+        "// Serial capture cannot start until the board re-enumerates after",
+        "// flashing, so nothing is printed for the first " + START_DELAY_MS + " ms.",
+        "basic.pause(" + START_DELAY_MS + ")",
+        "console.log(\"HWAB START " + name + "\")",
+        "control.dmesg(\"HWAB START " + name + "\")",
+        ""
+    ].join("\n");
+}
+
+function footer(name) {
+    return [
+        "",
+        "// Reaching here means every assertion held. Repeat the verdict for",
+        "// " + Math.round(PASS_WINDOW_MS / 1000) + "s so a capture that could only attach after the board",
+        "// re-enumerated still sees it, then go quiet without resetting.",
+        "for (let hwabI = 0; hwabI < " + PASS_REPEATS + "; hwabI++) {",
+        "    console.log(\"HWAB PASS " + name + "\")",
+        "    control.dmesg(\"HWAB PASS " + name + "\")",
+        "    basic.pause(" + PASS_INTERVAL_MS + ")",
+        "}",
+        "while (true) {",
+        "    basic.pause(1000)",
+        "}",
+        ""
+    ].join("\n");
+}
+
+// The soak body is written here rather than imported from the case files: it
+// needs the allocation shapes those files exercise, not their assertions, and
+// it has to run forever. The three shapes are the ones whose codegen the A/B
+// is about -- string building in condition position, growth of a dynamically
+// keyed map, and polymorphic interface dispatch over mixed receivers.
+function soakBody() {
+    return [
+        "namespace Soak {",
+        "    interface SoakIface {",
+        "        soakVal(): number",
+        "    }",
+        "",
+        "    class SoakClass implements SoakIface {",
+        "        n: number",
+        "        constructor(n: number) {",
+        "            this.n = n",
+        "        }",
+        "        soakVal(): number {",
+        "            return this.n",
+        "        }",
+        "    }",
+        "",
+        "    function useSoak(v: SoakIface): number {",
+        "        return v.soakVal() + 1",
+        "    }",
+        "",
+        "    // Freshly built strings and arrays evaluated in condition position.",
+        "    function churnConditions() {",
+        "        let s = \"x\"",
+        "        let i = 0",
+        "        while ((s + i).length < 24) {",
+        "            i++",
+        "            s = s + \"y\"",
+        "        }",
+        "        const base = [1, 2, 3, 4, 5]",
+        "        let k = 0",
+        "        let seen = 0",
+        "        while (base.slice(0, (k % 5) + 1).length > 0 && k < 200) {",
+        "            seen += base.slice(k % 5).length",
+        "            k++",
+        "        }",
+        "        assert(seen == 600, \"soak:slice\")",
+        "        let m = 0",
+        "        while (({ v: m }).v < 150 || m < 0) m++",
+        "        assert(m == 150, \"soak:obj\")",
+        "    }",
+        "",
+        "    // A map grown by computed key, then discarded.",
+        "    function churnMap() {",
+        "        const o: any = {}",
+        "        for (let i = 0; i < 60; i++) o[\"soakKey\" + i] = i",
+        "        let tot = 0",
+        "        for (let i = 0; i < 60; i++) tot += o[\"soakKey\" + i]",
+        "        assert(tot == 1770, \"soak:map\")",
+        "    }",
+        "",
+        "    // The same call site over class instances and object literals.",
+        "    function churnDispatch() {",
+        "        const mixed: SoakIface[] = []",
+        "        for (let i = 0; i < 40; i++) {",
+        "            if (i % 2 == 0) mixed.push(new SoakClass(i))",
+        "            else mixed.push({ soakVal: () => i })",
+        "        }",
+        "        let tot = 0",
+        "        for (const mm of mixed) tot += useSoak(mm)",
+        "        assert(tot == 820, \"soak:dispatch\")",
+        "    }",
+        "",
+        "    // Free bytes reported after a forced collection. Undefined until",
+        "    // the first GC has run, hence the explicit control.gc() call.",
+        "    function heapMetric(): string {",
+        "        control.gc()",
+        "        const st = control.gcStats()",
+        "        if (!st) return \"free=na\"",
+        "        return \"free=\" + st.lastFreeBytes +",
+        "            \" min=\" + st.minFreeBytes +",
+        "            \" total=\" + st.totalBytes +",
+        "            \" numgc=\" + st.numGC",
+        "    }",
+        "",
+        "    export function run() {",
+        "        const t0 = control.millis()",
+        "        let next = 0",
+        "        while (true) {",
+        "            churnConditions()",
+        "            churnMap()",
+        "            churnDispatch()",
+        "            const el = control.millis() - t0",
+        "            if (el >= next) {",
+        "                const line = \"HWAB SOAK \" + el + \" \" + heapMetric()",
+        "                console.log(line)",
+        "                control.dmesg(line)",
+        "                next = el + " + SOAK_INTERVAL_MS,
+        "            }",
+        "        }",
+        "    }",
+        "}",
+        "",
+        "Soak.run()",
+        ""
+    ].join("\n");
+}
+
+function writeProject(name, mainTs, version) {
+    const dir = path.join(outRoot, name);
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, "pxt.json"), JSON.stringify({
+        name: "hw-ab-" + name,
+        description: "hw-ab device project (generated) -- " + name,
+        dependencies: { core: "file:../../../libs/core" },
+        files: ["main.ts"],
+        targetVersions: { target: version },
+        supportedTargets: ["microbit"]
+    }, null, 4) + "\n");
+    fs.writeFileSync(path.join(dir, "main.ts"), mainTs);
+    console.log("gen-project: " + dir + " (" + mainTs.length + " bytes main.ts)");
+    return dir;
+}
+
+function main() {
+    if (!fs.existsSync(path.join(targetDir, "pxtarget.json")))
+        fail("no pxtarget.json in " + targetDir + " (set PXT_TARGET_DIR)");
+
+    const version = targetVersion();
+    const prelude = devicePrelude();
+    const names = [];
+
+    for (const name of Object.keys(CASES)) {
+        const caseFile = path.join(langTest0Dir, CASES[name]);
+        if (!fs.existsSync(caseFile))
+            fail("missing case file " + caseFile);
+        const body = fs.readFileSync(caseFile, "utf8");
+        writeProject(name, header(name) + prelude + "\n" + body + "\n" + footer(name),
+            version);
+        names.push(name);
+    }
+
+    // The soak program never passes or fails; it prints progress until the
+    // operator stops it or the heap gives out.
+    writeProject("soak", header("soak") + prelude + "\n" + soakBody(), version);
+    names.push("soak");
+
+    fs.writeFileSync(path.join(outRoot, "cases.txt"), names.join("\n") + "\n");
+    console.log("gen-project: " + names.length + " projects in " + outRoot);
+}
+
+main();
