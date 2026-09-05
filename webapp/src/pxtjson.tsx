@@ -227,13 +227,6 @@ export class Editor extends srceditor.Editor {
         const projectSimulatorThemePreference = accountSimulatorTheme
             ? simulatorTheme.getProjectSimulatorThemePreference(c.theme, simulatorThemePresets, accountSimulatorTheme)
             : undefined;
-        const simulatorThemePresetId = projectSimulatorThemePreference?.presetId;
-        const hasCustomSimulatorTheme = simulatorThemePresetId === "custom";
-        const selectedSimulatorThemeName = !c.theme
-            ? lf("Use account theme")
-            : hasCustomSimulatorTheme
-                ? lf("Custom")
-                : pxt.Util.rlf(`{id:simulator-theme-name}${simulatorThemePresets.find(preset => preset.id === simulatorThemePresetId)?.name}`);
 
         return (
             <><div className="ui content">
@@ -269,13 +262,12 @@ export class Editor extends srceditor.Editor {
                             resize="vertical"
                         />
                     }
-                    {simulatorThemesEnabled && <div className="pxt-json-simulator-theme">
-                        <label htmlFor="projectSimulatorTheme">{lf("Simulator theme")}</label>
+                    {simulatorThemesEnabled && <div>
                         <Button
                             id="projectSimulatorTheme"
                             className="primary"
-                            title={lf("Choose simulator theme")}
-                            label={selectedSimulatorThemeName}
+                            title={lf("Simulator Theme")}
+                            label={lf("Simulator Theme")}
                             ariaHasPopup="dialog"
                             ariaExpanded={this.simulatorThemePickerOpen}
                             onClick={this.showSimulatorThemePicker} />
