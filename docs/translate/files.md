@@ -47,9 +47,9 @@ The block strings can include syntax characters and tokens as well as the text t
 
 All of the documentation pages are translated. These pages are written in [markdown](https://daringfireball.net/projects/markdown/) and are copied up to Crowdin verbatim, no processing or text extraction. So, in the file folder tree you will see files with names that end with ``.md`` meaning that they are markdown files. The markdown pages support documentation for how-to pages, maker projects, lessons, coding courses, and code block reference...just to name a few.
 
-In MakeCode, there are a few extensions to "standard" markdown to provide addtional style information for page rendering on the document server. These are for adding hint boxes, inserting code blocs directly into pages, highlighting block names, embedding simulation blocks, macros, and other features. These are described in the [writing docs](/writing-docs) section.
+In MakeCode, there are a few extensions to "standard" markdown to provide additional style information for page rendering on the document server. These are for adding hint boxes, inserting code blocs directly into pages, highlighting block names, embedding simulation blocks, macros, and other features. These are described in the [writing docs](/writing-docs) section.
 
-You can freely translate the content in these files as appropriate for the language context. However, be aware of any MakeCode style and block extensions to the common markdown and avoid incorrecly translating those.
+You can freely translate the content in these files as appropriate for the language context. However, be aware of any MakeCode style and block extensions to the common markdown and avoid incorrectly translating those.
 
 In this example, a reference page for the **show animation** block is translated. Notice that the code blocks, code parameter names, and hint style specifiers are left untranslated. Only the descriptive content for the page is translated.
 

@@ -252,7 +252,8 @@ function cmdDiff(argv) {
             missing.map(s => "npm run hwab -- capture " + caseName + " " + s).join(" ; "));
 
     return run("diff-ab.js", [logPath(caseName, "candidate"),
-                              logPath(caseName, "reference")]);
+                              logPath(caseName, "reference"),
+                              "--case", caseName]);
 }
 
 function cmdAb(argv) {
@@ -298,7 +299,8 @@ function cmdAb(argv) {
     stages.push({
         name: "diff",
         run: () => run("diff-ab.js",
-            [logPath(caseName, "candidate"), logPath(caseName, "reference")])
+            [logPath(caseName, "candidate"), logPath(caseName, "reference"),
+             "--case", caseName])
     });
 
     for (const stage of stages) {

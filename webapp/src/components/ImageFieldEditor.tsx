@@ -13,6 +13,8 @@ import { MusicFieldEditor } from "./MusicFieldEditor";
 import { classList } from "../../../react-common/components/util";
 import { FocusTrap, FocusTrapRegion } from "../../../react-common/components/controls/FocusTrap";
 import { PianoRollAssetEditor } from "./PianoRollFieldEditor";
+import { SongGallery } from "./SongGallery";
+import { stopPlayback } from "./musicEditor/playback";
 
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
@@ -81,7 +83,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
         let showHeader = headerVisible;
         // If there is no asset, show the gallery to prevent changing shape when it's added
-        let showGallery = !this.isSongEditor() || !this.asset || editingTile;
+        let showGallery = true;
         const showMyAssets = !hideMyAssets && !editingTile && !!pxt.appTarget?.appTheme.assetEditor;
 
         if (this.asset && !this.galleryAssets && showGallery) {
@@ -195,12 +197,20 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                                 />
                             )}
                         </FocusTrapRegion>
-                        <ImageEditorGallery
-                            items={filteredAssets}
-                            hidden={currentView === "editor"}
-                            onAssetSelected={this.onAssetSelected}
-                            onEscape={this.onEscapeFromGallery}
-                        />
+                        {(this.asset?.type === pxt.AssetType.Song) ?
+                            <SongGallery
+                                items={filteredAssets}
+                                hidden={currentView === "editor"}
+                                onAssetSelected={this.onAssetSelected}
+                                onEscape={this.onEscapeFromGallery}
+                            /> :
+                            <ImageEditorGallery
+                                items={filteredAssets}
+                                hidden={currentView === "editor"}
+                                onAssetSelected={this.onAssetSelected}
+                                onEscape={this.onEscapeFromGallery}
+                            />
+                        }
                     </div>
                     <div className={`filter-panel-gutter ${!filterPanelVisible ? "hidden" : ""}`}>
                         <div className={`filter-panel-container`}>
@@ -534,6 +544,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected showEditor = () => {
+        stopPlayback();
         this.setImageEditorShortcutsEnabled(true);
         tickImageEditorEvent("gallery-editor");
         this.setState({
@@ -543,6 +554,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected showGallery = () => {
+        stopPlayback();
         this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-builtin");
         this.setState({
@@ -552,6 +564,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected showMyAssets = () => {
+        stopPlayback();
         this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
         this.userAssets = getAssets(undefined, undefined, this.state?.options?.temporaryAssets);

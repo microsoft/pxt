@@ -431,6 +431,7 @@ function initDriverAndOptions(
     } = compileInfo || {};
     let board = pxt.appTarget.simulator.boardDefinition;
     let storedState: pxt.Map<string> = getStoredState(simOptions.id)
+    let theme: string | pxt.Map<string> = mainPkg.config?.theme ?? compileInfo?.theme;
     let runOptions: pxsim.SimulatorRunOptions = {
         debug: simOptions.debug,
         mute: simOptions.mute,
@@ -449,7 +450,7 @@ function initDriverAndOptions(
         autofocus: simOptions.autofocus,
         queryParameters: simOptions.additionalQueryParameters,
         mpRole: simOptions.mpRole,
-        theme: mainPkg.config?.theme,
+        theme,
     };
     if (pxt.appTarget.simulator && !simOptions.fullScreen)
         runOptions.aspectRatio = parts.length && pxt.appTarget.simulator.partsAspectRatio

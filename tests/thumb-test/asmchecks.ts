@@ -114,17 +114,31 @@ function escapeRegExp(s: string): string {
 export const asmChecks: pxt.Map<AsmCheck> = {
 
     "boolbaseline.ts": (asm) => {
-        // Conditions are materialized as tagged values and narrowed by a call
-        // into the runtime at each test site.
-        assertAtLeast(asm, /bl numops::toBoolDecr/g, 12, "calls to numops::toBoolDecr");
+        // Boolean condition lowering emits thumb fast paths for the boolean
+        // conversion runtime calls.
+        for (const helper of ["_numops_toBool", "_numops_toBoolDecr",
+            "_pxt_fromBool", "_pxt_boolean_bang"])
+            chai.assert(hasLabel(asm, helper), "no " + helper + " helper in listing");
 
-        // Helpers introduced by boolean condition lowering. Absent here.
-        assertAbsent(asm, [
-            "_numops_toBool",
-            "_numops_toBoolDecr",
-            "_pxt_fromBool",
-            "_pxt_boolean_bang",
-        ]);
+        const code = userCode(asm);
+
+        // Every condition site narrows through the fast path; nothing in the
+        // program still calls the C++ entry point directly.
+        assertAtLeast(code, /bl _numops_toBoolDecr/g, 8, "calls to _numops_toBoolDecr");
+        assertNoMatch(code, /bl numops::toBoolDecr/g, "calls to numops::toBoolDecr");
+
+        // `&&` / `||` in condition position short-circuit to a raw 0/1 instead
+        // of building a tagged boolean. numops::toBool is only reached from
+        // that boxed path, so neither entry point is called at all.
+        assertNoMatch(code, /bl (numops::toBool|_numops_toBool)\b/g,
+            "calls to a toBool entry point");
+
+        // `!` in condition position is raw-in / raw-out, so its result is no
+        // longer re-tagged. The one remaining fromBool is the single `!` this
+        // case uses in value position (an argument), which must still box.
+        assertAtLeast(code, /bl _pxt_boolean_bang/g, 5, "calls to _pxt_boolean_bang");
+        assertAtMost(code, /bl (pxt::fromBool|_pxt_fromBool)\b/g, 1,
+            "calls to a fromBool entry point");
 
         // No index-signature store in this program, so the map-set fast path
         // must not be emitted (it is demand-driven).
@@ -265,6 +279,25 @@ export const variantChecks: VariantCheck[] = [
             assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
         },
     },
+
+    {
+        caseFile: "boolbaseline.ts",
+        switches: { noBoolLower: true },
+        label: "noBoolLower",
+        check: (asm) => {
+            // Conditions are materialized as tagged values and narrowed by a
+            // call into the runtime at each test site.
+            assertAtLeast(asm, /bl numops::toBoolDecr/g, 12, "calls to numops::toBoolDecr");
+
+            // The thumb fast paths are neither emitted nor called.
+            assertAbsent(asm, [
+                "_numops_toBool",
+                "_numops_toBoolDecr",
+                "_pxt_fromBool",
+                "_pxt_boolean_bang",
+            ]);
+        },
+    },
 ];
 
 // --- external case programs ----------------------------------------------
@@ -293,6 +326,10 @@ export const externalCases: pxt.Map<AsmCheck> = {
     },
 
     "tests/compile-test/lang-test0/56ifacedispatch.ts": (asm) => {
+        chai.assert(codeSize(asm) > 0, "no code generated");
+    },
+
+    "tests/compile-test/lang-test0/57defaultparamdispatch.ts": (asm) => {
         chai.assert(codeSize(asm) > 0, "no code generated");
     },
 };

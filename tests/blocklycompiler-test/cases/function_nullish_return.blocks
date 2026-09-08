@@ -1,0 +1,209 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+    <variables>
+        <variable id="spriteFirst">spriteFirst</variable>
+        <variable id="undefinedFirst">undefinedFirst</variable>
+        <variable id="spriteFirstReferenced">spriteFirstReferenced</variable>
+        <variable id="undefinedFirstReferenced">undefinedFirstReferenced</variable>
+        <variable id="localSprite1">localSprite1</variable>
+        <variable id="localSprite2">localSprite2</variable>
+    </variables>
+    <block type="pxt-on-start" x="0" y="0">
+        <statement name="HANDLER">
+            <block type="variables_set">
+                <field name="VAR" id="spriteFirstReferenced">spriteFirstReferenced</field>
+                <value name="VALUE">
+                    <block type="logic_compare">
+                        <field name="OP">EQ</field>
+                        <value name="A">
+                            <block type="variables_get">
+                                <field name="VAR" id="spriteFirst">spriteFirst</field>
+                            </block>
+                        </value>
+                        <value name="B">
+                            <block type="variables_get">
+                                <field name="VAR" id="spriteFirst">spriteFirst</field>
+                            </block>
+                        </value>
+                    </block>
+                </value>
+                <next>
+                    <block type="variables_set">
+                        <field name="VAR" id="undefinedFirstReferenced">undefinedFirstReferenced</field>
+                        <value name="VALUE">
+                            <block type="logic_compare">
+                                <field name="OP">EQ</field>
+                                <value name="A">
+                                    <block type="variables_get">
+                                        <field name="VAR" id="undefinedFirst">undefinedFirst</field>
+                                    </block>
+                                </value>
+                                <value name="B">
+                                    <block type="variables_get">
+                                        <field name="VAR" id="undefinedFirst">undefinedFirst</field>
+                                    </block>
+                                </value>
+                            </block>
+                        </value>
+                        <next>
+                            <block type="variables_set">
+                                <field name="VAR" id="spriteFirst">spriteFirst</field>
+                                <value name="VALUE">
+                                    <block type="function_call_output">
+                                        <mutation name="sprite_first" functionid="sprite-first-function" />
+                                    </block>
+                                </value>
+                                <next>
+                                    <block type="variables_set">
+                                        <field name="VAR" id="undefinedFirst">undefinedFirst</field>
+                                        <value name="VALUE">
+                                            <block type="function_call_output">
+                                                <mutation name="undefined_first" functionid="undefined-first-function" />
+                                            </block>
+                                        </value>
+                                    </block>
+                                </next>
+                            </block>
+                        </next>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+    <block type="gameupdate" x="0" y="180">
+        <statement name="HANDLER">
+            <block type="variables_set">
+                <field name="VAR" id="spriteFirst">spriteFirst</field>
+                <value name="VALUE">
+                    <block type="function_call_output">
+                        <mutation name="sprite_first" functionid="sprite-first-function" />
+                    </block>
+                </value>
+                <next>
+                    <block type="variables_set">
+                        <field name="VAR" id="undefinedFirst">undefinedFirst</field>
+                        <value name="VALUE">
+                            <block type="function_call_output">
+                                <mutation name="undefined_first" functionid="undefined-first-function" />
+                            </block>
+                        </value>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+    <block type="function_definition" x="400" y="0">
+        <mutation name="sprite_first" functionid="sprite-first-function" />
+        <field name="function_name">sprite_first</field>
+        <statement name="STACK">
+            <block type="pxt_controls_for_of">
+                <value name="VAR">
+                    <block type="variables_get_reporter" deletable="false">
+                        <field name="VAR" id="localSprite1">localSprite1</field>
+                    </block>
+                </value>
+                <value name="LIST">
+                    <block type="test_all_sprites" />
+                </value>
+                <statement name="DO">
+                    <block type="spritesetpos">
+                        <value name="sprite">
+                            <block type="variables_get_reporter">
+                                <field name="VAR" id="localSprite1">localSprite1</field>
+                            </block>
+                        </value>
+                        <value name="x">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                        <value name="y">
+                            <shadow type="math_number">
+                                <field name="NUM">0</field>
+                            </shadow>
+                        </value>
+                        <next>
+                            <block type="function_return">
+                                <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false" />
+                                <value name="RETURN_VALUE">
+                                    <block type="variables_get_reporter">
+                                        <field name="VAR" id="localSprite1">localSprite1</field>
+                                    </block>
+                                </value>
+                            </block>
+                        </next>
+                    </block>
+                </statement>
+                <next>
+                    <block type="function_return">
+                        <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false" />
+                        <value name="RETURN_VALUE">
+                            <block type="test_undefined_value" />
+                        </value>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+    <block type="function_definition" x="400" y="300">
+        <mutation name="undefined_first" functionid="undefined-first-function" />
+        <field name="function_name">undefined_first</field>
+        <statement name="STACK">
+            <block type="controls_if">
+                <value name="IF0">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                </value>
+                <statement name="DO0">
+                    <block type="function_return">
+                        <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false" />
+                        <value name="RETURN_VALUE">
+                            <block type="test_undefined_value" />
+                        </value>
+                    </block>
+                </statement>
+                <next>
+                    <block type="pxt_controls_for_of">
+                        <value name="VAR">
+                            <block type="variables_get_reporter" deletable="false">
+                                <field name="VAR" id="localSprite2">localSprite2</field>
+                            </block>
+                        </value>
+                        <value name="LIST">
+                            <block type="test_all_sprites" />
+                        </value>
+                        <statement name="DO">
+                            <block type="spritesetpos">
+                                <value name="sprite">
+                                    <block type="variables_get_reporter">
+                                        <field name="VAR" id="localSprite2">localSprite2</field>
+                                    </block>
+                                </value>
+                                <value name="x">
+                                    <shadow type="math_number">
+                                        <field name="NUM">0</field>
+                                    </shadow>
+                                </value>
+                                <value name="y">
+                                    <shadow type="math_number">
+                                        <field name="NUM">0</field>
+                                    </shadow>
+                                </value>
+                                <next>
+                                    <block type="function_return">
+                                        <mutation xmlns="http://www.w3.org/1999/xhtml" no_return_value="false" />
+                                        <value name="RETURN_VALUE">
+                                            <block type="variables_get_reporter">
+                                                <field name="VAR" id="localSprite2">localSprite2</field>
+                                            </block>
+                                        </value>
+                                    </block>
+                                </next>
+                            </block>
+                        </statement>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+</xml>

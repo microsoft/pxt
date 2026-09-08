@@ -77,6 +77,10 @@ namespace pxt.shell {
             (isControllerMode() && editorReadonly));
     }
 
+    export function hideOrganizationLogos() {
+        return /[?&]hidelogos=1/i.test(window.location.href);
+    }
+
     export function isNoProject() {
         return noDefaultProject;
     }

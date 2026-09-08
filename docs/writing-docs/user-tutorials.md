@@ -44,7 +44,7 @@ The dependencies for a shared tutorial project are used when the tutorial starts
 
 MakeCode uses a local caching policy for tutorials to reduce interaction with website services. On first use, tutorial content is retrieved from a MakeCode website and then reused from the local cache when a tutorial is run another time. A requested tutorial will refresh from the website when its cache retention period expires.
 
-This caching policy can present a problem if you're developing a tutorial and want to review the recent changes. When you run the tutorial to check your changes, they might not appear and you only see content you viewed the first time. In order to see and test new changes you've published for your tutorial, it's recommended that you view them in a **new anonyomous / incognito** browser window.
+This caching policy can present a problem if you're developing a tutorial and want to review the recent changes. When you run the tutorial to check your changes, they might not appear and you only see content you viewed the first time. In order to see and test new changes you've published for your tutorial, it's recommended that you view them in a **new anonymous / incognito** browser window.
 
 ### ~
 
@@ -91,7 +91,7 @@ Click on the ``lab`` icon in the **Explorer** view to open any markdown file (``
 
 #### Cloud caching
 
-To increase performance, the MakeCode websites may "cloud cache" the release version of a previously used extension and tutorials hosted in a user GitHub repository. This means that if you commit changes to a tutorial you have in a repostory, those updates might not appear when you try to test the tutorial in MakeCode. The MakeCode cloud cache will not reflect your changes until you **create a new release version** for your repository. Making a new release will force the cache to clear the prior version and refresh to the new version the next time it's requested. See [GitHub releases](https://arcade.makecode.com/github/release) for more about creating a versioned release.
+To increase performance, the MakeCode websites may "cloud cache" the release version of a previously used extension and tutorials hosted in a user GitHub repository. This means that if you commit changes to a tutorial you have in a repository, those updates might not appear when you try to test the tutorial in MakeCode. The MakeCode cloud cache will not reflect your changes until you **create a new release version** for your repository. Making a new release will force the cache to clear the prior version and refresh to the new version the next time it's requested. See [GitHub releases](https://arcade.makecode.com/github/release) for more about creating a versioned release.
 
 Again, to be clear, you need to make the release through the [Github integration](https://makecode.com/extensions/github-authoring) on the MakeCode website. Making a release directly on github.com does _not_ force the cache to clear.
 
@@ -100,7 +100,7 @@ Again, to be clear, you need to make the release through the [Github integration
 ### Localization
 
 Localized copies of the tutorial can be added to a subfolder ``_locales/[isocode]/[filename].md`` 
-where ``filename`` is the name of the tutorial in the default locale. ``icocode`` can be the 
+where ``filename`` is the name of the tutorial in the default locale. ``isocode`` can be the 
 region specific language code or language neutral. MakeCode will pick the best match.
 
 #### #youtubeloc

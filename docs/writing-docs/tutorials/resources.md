@@ -20,7 +20,7 @@ Resource sections use the ```` ```jres```` markdown tag and the objects are cont
 
 ### Tiles and tilemaps
 
-The most common use of ```` ```jres```` resourses is for tiles, tilemaps, or maybe some built-in images for game programs. These can be created in the MakeCode editor and then copied directly from the ``.jres`` project files.
+The most common use of ```` ```jres```` resources is for tiles, tilemaps, or maybe some built-in images for game programs. These can be created in the MakeCode editor and then copied directly from the ``.jres`` project files.
 
 Here's an example tilemap extracted from a [MakeCode Arcade](https://arcade.makecode.com) ``.jres`` file:
 

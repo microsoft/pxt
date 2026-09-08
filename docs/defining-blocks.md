@@ -8,7 +8,7 @@ Try out some blocks live in the **[Playground](https://makecode.com/playground)*
 
 ## ~
 
-Blocks are defined by annotations added to the beginning of an API element (export function, method, enum, etc.). Attributes are specified on annotation lines that begin with the comment form of `//%`. All of the `//%` annotations are found in TypeScript library files containg the code for the exposed APIs.
+Blocks are defined by annotations added to the beginning of an API element (export function, method, enum, etc.). Attributes are specified on annotation lines that begin with the comment form of `//%`. All of the `//%` annotations are found in TypeScript library files containing the code for the exposed APIs.
 They can optionally be [auto-generated](/simshim) from C++ library files or from TypeScript
 simulator files.
 
@@ -251,7 +251,7 @@ export function myFunction(myParam: Image[]): void {}
 
 ### Inline input
 
-Blocks with four or more parameters automatically switch to `External Inputs` mode, in which the parameters wrap instead of staying inline. To make a block with multiple parameters appear as a single line, use `inlineInputMode=inline`. The block will expand left to right instead of wrapping the parameter input across mulitple lines.
+Blocks with four or more parameters automatically switch to `External Inputs` mode, in which the parameters wrap instead of staying inline. To make a block with multiple parameters appear as a single line, use `inlineInputMode=inline`. The block will expand left to right instead of wrapping the parameter input across multiple lines.
 
 ```typescript-ignore
 //% block="map $value|from low $fromLow|high $fromHigh|to low $toLow|high $toHigh"
@@ -265,7 +265,7 @@ export function map(value: number,
 }
 ```
 
- To force external inputs, set `inlineInputMode=external`. In the block defintion, the `|` indicates where to start a new line if the block is in external inputs mode. New lines are also started after each parameter.
+ To force external inputs, set `inlineInputMode=external`. In the block definition, the `|` indicates where to start a new line if the block is in external inputs mode. New lines are also started after each parameter.
 
 ```typescript-ignore
 //% block="magnitude of 3d vector | at x $x and y $y and z $z"
@@ -457,7 +457,7 @@ parameter like so:
 
 ### Creating enumerations with blocks
 
-You can have blocks themselves define an enumeration dynamically. The block will specify some inital members but additional ones are added by selecting the "Add a new &lt;enum_name&gt;..." option in the parameter dropdown.
+You can have blocks themselves define an enumeration dynamically. The block will specify some initial members but additional ones are added by selecting the "Add a new &lt;enum_name&gt;..." option in the parameter dropdown.
 
 You first create a shadow block that defines the enumeration and has the initial members.
 
@@ -716,7 +716,7 @@ namespace Widgets {
     }
 
     /**
-     * Create a Gizmo widget and automtically set it to a variable
+     * Create a Gizmo widget and automatically set it to a variable
      */
     //% block="create gizmo"
     //% blockSetVariable=gizmo
@@ -762,7 +762,7 @@ class Gizmo {
 namespace Widgets {
 
     /**
-     * Create a Gizmo widget and automtically set it to a variable
+     * Create a Gizmo widget and automatically set it to a variable
      */
     //% block="create gizmo"
     //% blockSetVariable=gizmo

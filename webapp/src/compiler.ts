@@ -635,7 +635,7 @@ interface BundledPackage {
 }
 
 interface UsedPackageInfo {
-    dirname: string,
+    packageId: string,
     info: pxt.PackageApiInfo
 }
 
@@ -678,7 +678,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     const usedPackages = project.pkgAndDeps();
     const externalPackages: pkg.EditorPackage[] = [];
     const usedPackageInfo: UsedPackageInfo[] = [{
-        dirname: corePkgName,
+        packageId: pxt.appTarget.corepkg,
         info: corePkg
     }];
 
@@ -689,7 +689,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         for (const bundle of bundledPackages) {
             if (bundle.config.name === getPackageKey(dep)) {
                 usedPackageInfo.push({
-                    dirname: bundle.dirname,
+                    packageId: dep.getPkgId(),
                     info: bundled[bundle.dirname]
                 });
                 foundIt = true;
@@ -721,7 +721,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
             else {
                 pxt.debug(`Fetched cached API info for ${getPackageKey(dep)}`);
                 usedPackageInfo.push({
-                    dirname: dep.getPkgId(),
+                    packageId: dep.getPkgId(),
                     info: entry
                 });
             }
@@ -734,13 +734,13 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     for (const used of usedPackageInfo) {
         if (!used) continue;
-        let { info, dirname } = used;
+        let { info, packageId } = used;
 
         const byQName = U.cloneApis(info.apis.byQName);
 
-        // reinclude the pkg the api originates from, which is trimmed during compression
+        // Restore the runtime package ID, which is trimmed during compression.
         for (const api of Object.keys(byQName)) {
-            byQName[api].pkg = dirname;
+            byQName[api].pkg = packageId;
 
             // We had a bug where we were caching the translated language code and it broke translations.
             // make sure we clear it on any old cached entries from before the bug was fixed

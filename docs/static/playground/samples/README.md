@@ -15,7 +15,7 @@ The samples are held in the `PLAY_SAMPLES[]` array. You set the name, category, 
 The entry attributes for the sample are:
 
 * **chapter**: the category for the sample
-* **name**: the sample's name which shows in the the selction dropdown list
+* **name**: the sample's name which shows in the the selection dropdown list
 * **id**: selection id (`<option value/>`) for the sample dropdown list
 * **path**: the path to the sample - `sample` or `category/sample`
 

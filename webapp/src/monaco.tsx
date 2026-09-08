@@ -2075,7 +2075,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private filterBlocks(subns: string, blocks: toolbox.BlockDefinition[]) {
         return blocks.filter((block => !(block.attributes.blockHidden)
             && !(block.attributes.deprecated && !this.parent.isTutorial())
-            && (block.name.indexOf('_') != 0 || block.attributes.blockAliasFor)
+            && (block.name.indexOf('_') != 0 || block.attributes.blockAliasFor && !blocks.some(b => b.qName === block.attributes.blockAliasFor))
             && ((!subns && !block.attributes.subcategory && !block.attributes.advanced)
                 || (subns && ((block.attributes.advanced && subns == lf("more"))
                     || (block.attributes.subcategory && subns == block.attributes.subcategory))))));

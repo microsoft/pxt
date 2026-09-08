@@ -84,7 +84,7 @@ A last little feature we’ve added to help alleviate the hundreds of "Untitled"
 
 ### Multi-Edit
 
-So, you're creating radio programs for two micro:bits. One to send a message and another to receive a message. You have to make two projects seperately for both programs. Well, not anymore, now there's Multi-edit! Create, modify, and test out two programs at the same time. So awesome! Use the Multi-edit version of the editor at: https://makecode.com/multi.
+So, you're creating radio programs for two micro:bits. One to send a message and another to receive a message. You have to make two projects separately for both programs. Well, not anymore, now there's Multi-edit! Create, modify, and test out two programs at the same time. So awesome! Use the Multi-edit version of the editor at: https://makecode.com/multi.
 
 ![Multiple program editing](/static/blog/microbit/2020-beta/multi-edit.gif)
 

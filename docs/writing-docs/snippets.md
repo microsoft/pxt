@@ -63,7 +63,7 @@ basic.showString("HELLO!")
 
 ### highlight
 
-When used in snippets, the renderer will higlight the next line of code or block following a comment containing
+When used in snippets, the renderer will highlight the next line of code or block following a comment containing
 **@highlight**. Use `// @highlight` in blocks and TypeScript, and `# @highlight`
 in Python.
 
@@ -232,7 +232,7 @@ run the snippet in the same page.
 
 ### ghost (tutorials only)
 
-The **ghost** snippet will have addtional blocks to appear in the Toolbox during
+The **ghost** snippet will have additional blocks to appear in the Toolbox during
 a tutorial step. This is used to provide additional block choices other than
 those exactly matching the code snippet in a **blocks** section. The **ghost** blocks
 don't render any code but serve to identify other blocks to add into the Toolbox choices.
@@ -278,7 +278,7 @@ the code in the snippet. This let's you use a snippet for descriptive purposes b
 have it excluded from any validation checks.
 
     ```typescript-ignore
-    // You can include illegal TS in here, e.g. to showcase concepts/psuedocode
+    // You can include illegal TS in here, e.g. to showcase concepts/pseudocode
     for (initialization; check; update) {
         ...
     }
@@ -361,7 +361,7 @@ page for more.
 
 ### ~ hint
 
-#### jres resoures
+#### jres resources
 
 The older `jres` format was previously used to include tile resources. Although older files with `jres` snippets will
 still render, the `assetjson` is the preferred resource format.
