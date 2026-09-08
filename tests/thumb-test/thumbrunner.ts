@@ -8,7 +8,7 @@ import * as zlib from 'zlib';
 import "mocha";
 import * as chai from "chai";
 
-import { asmChecks, externalCases } from "./asmchecks";
+import { asmChecks, externalCases, variantChecks } from "./asmchecks";
 
 const testDir = path.join(process.cwd(), "tests", "thumb-test");
 const casesDir = path.join(testDir, "cases");
@@ -42,7 +42,8 @@ function loadFixtureText(): string {
     return zlib.gunzipSync(fs.readFileSync(fixturePath)).toString("utf8");
 }
 
-function optionsFor(fixtureText: string, programText: string): pxtc.CompileOptions {
+function optionsFor(fixtureText: string, programText: string,
+    switches?: pxtc.CompileSwitches): pxtc.CompileOptions {
     const opts: pxtc.CompileOptions = JSON.parse(fixtureText).options;
 
     opts.fileSystem[pxt.MAIN_TS] = programText;
@@ -52,6 +53,8 @@ function optionsFor(fixtureText: string, programText: string): pxtc.CompileOptio
     opts.target.switches = opts.target.switches || {};
     // Emits the code-size stats header at the top of the listing.
     opts.target.switches.size = true;
+    if (switches)
+        Object.assign(opts.target.switches, switches);
 
     return opts;
 }
@@ -105,6 +108,29 @@ describe("thumb codegen", () => {
             chai.assert(!!asm, "no " + pxtc.BINARY_ASM + " in compile result");
 
             check(asm, res);
+        });
+    });
+
+    // Second compile of a case with extra compile switches; see variantChecks.
+    variantChecks.forEach(variant => {
+        it("compiles " + variant.caseFile + " to thumb with " + variant.label, function () {
+            this.timeout(TIMEOUT_MS);
+
+            const casePath = path.join(casesDir, variant.caseFile);
+            chai.assert(fs.existsSync(casePath), "missing case " + casePath);
+
+            const programText = fs.readFileSync(casePath, "utf8");
+            const opts = optionsFor(fixtureText, programText, variant.switches);
+
+            const res = pxtc.compile(opts);
+            chai.assert(res.success,
+                "native compile of " + variant.caseFile + " with " + variant.label +
+                " failed:\n" + describeDiagnostics(res));
+
+            const asm = res.outfiles[pxtc.BINARY_ASM];
+            chai.assert(!!asm, "no " + pxtc.BINARY_ASM + " in compile result");
+
+            variant.check(asm, res);
         });
     });
 
