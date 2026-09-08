@@ -14,6 +14,26 @@ Goodbye Orange! The new default theme meets all web accessibility color contrast
 
 ![Theme picker](/static/blog/arcade/update-feb-2026/theme.png)
 
+We've also added a cool new theme 😎 - **Tokyo Night**!
+
+![Tokyo Night](/static/blog/arcade/update-aug-2026/TokyoNight.png)
+
+## Game Window Theming!
+
+Since we made the default theme change, we couldn't resist playing around with the theming a bit more!  With this new feature, you can create your own themes for the Game Window (also called the Simulator).  There are a list of built-in themes and layouts, or you can customize using your own color combinations.  To access, click on the ⚙️ **Settings** menu in the top right corner and select 🖌️ **Theme**.  Then click on the 🎮 **Simulator** tab to access the theming options.  Click **Apply** to set your new theme!
+
+![Simulator Theme](/static/blog/arcade/update-aug-2026/SimTheme.png)
+
+When you share a project, you can also choose to share it with your current game window theme.  Simply select the checkbox to Share with Simulator Theme.
+
+![Share Project](/static/blog/arcade/update-aug-2026/SimThemeShare.png)
+
+![Shared Game](/static/blog/arcade/update-aug-2026/GameShare.png)
+
+Additionally, if you would like a specific game to always use the same simulator theme, you can specify that in the Project Settings.
+
+![Project Settings](/static/blog/arcade/update-aug-2026/ProjectSettings.png)
+
 ## Song Gallery
 
 We’ve been wanting to populate our **Song Editor** with a gallery of pre-existing songs that people could use to edit and include in their games. But we’ve never had the time or talent to do it ourselves. Finally, thanks to the musical genius of [Ricardo Pujol](https://www.ricardopujol.pro) we now have some super cool retro game music that you can sample in your projects!
