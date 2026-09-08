@@ -19,7 +19,7 @@ where we talked about [Microsoft MakeCode](https://www.makecode.com) and [MakeCo
 
 ### Unracing to the Finish Line in the Basement of the Holiday Inn
 
-Well, so far I've been showing you glamourous photos from the library where we work with the designers.  The reality is that we spend a lot of our time in a rented room in the basement of the Holiday Inn (Downtown Brooklyn), squashing bugs, writing device drivers, and fabricating (soldering) the required 
+Well, so far I've been showing you glamorous photos from the library where we work with the designers.  The reality is that we spend a lot of our time in a rented room in the basement of the Holiday Inn (Downtown Brooklyn), squashing bugs, writing device drivers, and fabricating (soldering) the required 
 tech for each of the 20 designers.  It's nice and quiet down here - we are close to the pool and the exercise room (both unused by us) and everyone once in a while we hear the rumble of a subway going by. 
 
 The most exciting part of my time down here is the terror of watching James Devine find another race in the JACDAC physical layer protocol [C++ implementation](https://github.com/lancaster-university/codal-core/tree/jacdac-v0/source/JACDAC) - he eventually squashes the race and sets up more stress testing, which reveals... another race! Here are the commits of the fixes James has made in the last few days:

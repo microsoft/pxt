@@ -1414,7 +1414,11 @@ namespace ts.pxtc.Util {
                 stringFiles = [{ staticName: "bundled-strings.json", path: targetId + "/bundled-strings.json" }];
                 break;
             case TranslationsKind.SkillMap:
-                stringFiles = [{ staticName: "skillmap-strings.json", path: "/skillmap-strings.json" }];
+                stringFiles = [
+                    { staticName: "strings.json", path: "strings.json" },
+                    { staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                    { staticName: "skillmap-strings.json", path: "/skillmap-strings.json" },
+                ];
                 break;
         }
         let translations: pxt.Map<string>;

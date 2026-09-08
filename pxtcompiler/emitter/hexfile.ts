@@ -647,7 +647,7 @@ namespace ts.pxtc {
         }
     }
 
-    function saveSourceToUF2(uf2: UF2.BlockFile, bin: Binary) {
+    export function saveSourceToUF2(uf2: UF2.BlockFile, bin: Binary) {
         if (!bin.packedSource)
             return
         let addr = (uf2.currPtr + 0x1000) & ~0xff
@@ -1094,16 +1094,19 @@ _stored_program: .hex ${res}
 `
     }
 
-    function packSource(meta: string, binstring: string) {
+    export function packSource(meta: string, binstring: string) {
         let metablob = Util.toUTF8(meta)
         let totallen = metablob.length + binstring.length
 
         let res = "\x41\x14\x0E\x2F\xB8\x2F\xA2\xBB"
 
+        // Binary header as specified in docs/source-embedding.md: 2-byte meta
+        // length, 4-byte text length, 2 reserved bytes, all little endian.
         res += U.uint8ArrayToString([
             metablob.length & 0xff, metablob.length >> 8,
-            binstring.length & 0xff, binstring.length >> 8,
-            0, 0, 0, 0
+            binstring.length & 0xff, (binstring.length >> 8) & 0xff,
+            (binstring.length >> 16) & 0xff, (binstring.length >> 24) & 0xff,
+            0, 0
         ])
 
         res += metablob

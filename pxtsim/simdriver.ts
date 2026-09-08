@@ -422,10 +422,16 @@ namespace pxsim {
                             // not found, spin a new one
                             if (!messageFrame) {
                                 const url = new URL(simulatorExtension.url);
-                                if (this.options.parentOrigin)
-                                    url.searchParams.set("parentOrigin", encodeURIComponent(this.options.parentOrigin));
+                                // The extension's parent window is this editor, so the origin it
+                                // should trust is the editor's own. options.parentOrigin is the
+                                // editor's *embedder* origin (controller mode) - the extension's
+                                // grandparent - so an extension that validates messages against
+                                // it rejects everything the editor sends when the editor is
+                                // embedded cross-origin.
+                                // searchParams.set() encodes, so don't encode the values here.
+                                url.searchParams.set("parentOrigin", window.location.origin);
                                 if (this.options.userLanguage)
-                                    url.searchParams.set("language", encodeURIComponent(this.options.userLanguage));
+                                    url.searchParams.set("language", this.options.userLanguage);
                                 startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio);
                             }
                             // not running the current run, restart

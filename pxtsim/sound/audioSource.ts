@@ -3,10 +3,11 @@ namespace pxsim.AudioContextManager {
         static activeSources: AudioSource[] = [];
 
         static stopAll() {
-            for (const source of AudioSource.activeSources) {
+            const activeSources = AudioSource.activeSources;
+            AudioSource.activeSources = [];
+            for (const source of activeSources) {
                 source.dispose();
             }
-            AudioSource.activeSources = [];
         }
 
         protected vca: GainNode;

@@ -173,6 +173,7 @@ export const TreeItem = (props: TreeItemProps) => {
         onClick,
         label,
         labelClassName,
+        leftIcon,
         rightIcon,
         title
     } = props;
@@ -208,6 +209,7 @@ export const TreeItem = (props: TreeItemProps) => {
             tabIndex={isSelected ? 0 : -1}
             onKeyDown={handleKeydown(dispatch)}
             aria-expanded={hasSubtree ? expanded : undefined}
+            aria-selected={isSelected}
         >
             <div className={classList("common-treeitem", hasSubtree && "has-subtree")}>
                 <ButtonBody
@@ -215,7 +217,7 @@ export const TreeItem = (props: TreeItemProps) => {
                     title={title}
                     labelClassName={labelClassName}
                     rightIcon={rightIcon}
-                    leftIcon={hasSubtree ? (expanded ? "fas fa-chevron-down" : "fas fa-chevron-right") : undefined}
+                    leftIcon={hasSubtree ? (expanded ? "fas fa-chevron-down" : "fas fa-chevron-right") : leftIcon}
                 />
             </div>
             {hasSubtree &&

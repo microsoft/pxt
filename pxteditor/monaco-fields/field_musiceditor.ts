@@ -71,12 +71,7 @@ export class MonacoSongEditor extends MonacoReactFieldEditor<pxt.Song> {
             }
             let out = pxt.getTSReferenceForAsset(result, this.isPython);
             if (!this.isAsset) {
-                if (this.isPython) {
-                    out = `music.create_song(${out})`;
-                }
-                else {
-                    out = `music.createSong(${out})`;
-                }
+                out = this.wrapCreateSong(out);
             }
             return out;
         }
@@ -99,6 +94,15 @@ export class MonacoSongEditor extends MonacoReactFieldEditor<pxt.Song> {
         return {
             blocksInfo: this.host.blocksInfo()
         };
+    }
+
+    protected wrapCreateSong(text: string): string {
+        if (this.isPython) {
+            return `music.create_song(${text})`;
+        }
+        else {
+            return `music.createSong(${text})`;
+        }
     }
 }
 

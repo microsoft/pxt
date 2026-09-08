@@ -25,8 +25,9 @@ export interface ShareInfoProps {
     isLoggedIn?: boolean;
     hasProjectBeenPersistentShared?: boolean;
     simRecorder: SimRecorder;
-    publishAsync: (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
+    publishAsync: (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean, simulatorTheme?: pxt.SimulatorTheme) => Promise<ShareData>;
     isMultiplayerGame?: boolean; // Arcade: Does the game being shared have multiplayer enabled?
+    simulatorTheme?: pxt.SimulatorTheme;
     kind?: "multiplayer" | "vscode" | "share"; // Arcade: Was the share dialog opened specifically for hosting a multiplayer game?
     anonymousShareByDefault?: boolean;
     setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
@@ -46,6 +47,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
         anonymousShareByDefault,
         setAnonymousSharePreference,
         isMultiplayerGame,
+        simulatorTheme,
         kind = "share",
         onClose,
     } = props;
@@ -62,6 +64,7 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const [ kioskState, setKioskState ] = React.useState(false);
     const [ isAnonymous, setIsAnonymous ] = React.useState(!isLoggedIn || anonymousShareByDefault);
     const [ isShowingMultiConfirmation, setIsShowingMultiConfirmation ] = React.useState(false);
+    const [ shareWithSimulatorTheme, setShareWithSimulatorTheme ] = React.useState(false);
 
     const { simScreenshot, simGif } = pxt.appTarget.appTheme;
     const showSimulator = (simScreenshot || simGif) && !!simRecorder;
@@ -96,7 +99,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const handlePublishClick = async () => {
         setShareState("publishing");
         setLastShareWasAnonymous(isAnonymous);
-        let publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous);
+        let publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous,
+            shareWithSimulatorTheme ? simulatorTheme : undefined);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) setShareState("publish");
         else setShareState("share")
@@ -105,7 +109,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
     const handlePublishInVscodeClick = async () => {
         setShareState("publishing");
         setLastShareWasAnonymous(isAnonymous);
-        let publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous);
+        let publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous,
+            shareWithSimulatorTheme ? simulatorTheme : undefined);
         setShareData(publishedShareData);
         if (!publishedShareData?.error) {
             setShareState("publish-vscode");
@@ -241,7 +246,8 @@ export const ShareInfo = (props: ShareInfoProps) => {
         setIsShowingMultiConfirmation(false);
         setLastShareWasAnonymous(isAnonymous);
 
-        const publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous);
+        const publishedShareData = await publishAsync(name, description, thumbnailUri, isAnonymous,
+            shareWithSimulatorTheme ? simulatorTheme : undefined);
 
         // TODO multiplayer: This won't work on staging (parseScriptId domains check doesn't include staging urls)
         // but those wouldn't load anyways (as staging multiplayer is currently fetching games from prod links)
@@ -323,6 +329,11 @@ export const ShareInfo = (props: ShareInfoProps) => {
         if (setAnonymousSharePreference) setAnonymousSharePreference(!newValue);
     }
 
+    const handleShareWithSimulatorThemeClick = (newValue: boolean) => {
+        pxt.tickEvent("share.simulatorTheme", { checked: newValue.toString() });
+        setShareWithSimulatorTheme(newValue);
+    }
+
     const inputTitle = prePublish ? lf("Project Name") :
         (shareState === "publish-vscode" ? lf("Share Successful") : lf("Project Link"));
 
@@ -399,6 +410,12 @@ export const ShareInfo = (props: ShareInfoProps) => {
                             label={lf("Update existing share link for this project")}
                             isChecked={!isAnonymous}
                             onChange={handleAnonymousShareClick}
+                            />}
+                        {simulatorTheme && <Checkbox
+                            id="share-simulator-theme-checkbox"
+                            label={lf("Share with your simulator theme")}
+                            isChecked={shareWithSimulatorTheme}
+                            onChange={handleShareWithSimulatorThemeClick}
                             />}
                         </>
                     }

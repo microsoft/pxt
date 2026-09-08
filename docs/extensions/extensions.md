@@ -46,7 +46,7 @@ configuration section under ``packages.approvedEditorExtensions``.
 The editor and the editor extension &lt;iframe&gt; communicate using a protocol of IFrame messages. 
 
 * Messages have a unique ``id`` to correlate responses to requests.
-* A ``response`` message can be requested. The ``id`` identifer can be used to correlate a receive response to the original query.
+* A ``response`` message can be requested. The ``id`` identifier can be used to correlate a receive response to the original query.
 * All messages sent by the editor extension must contain the extension id, ``extId``. This identifier is passed when loading the &lt;iframe&gt; (see [Initialization](#initialization)).
 
 ```typescript-ignore
@@ -149,7 +149,7 @@ function receivedResponse(resp) {
 
 ### Read user code
 
-The ``extusercode`` message requests to read the entire set of files in the project. If successfull, the response contains a ``resp`` field with a map of the file names to file contents.
+The ``extusercode`` message requests to read the entire set of files in the project. If successful, the response contains a ``resp`` field with a map of the file names to file contents.
 
 ```typescript-ignore
 export interface UserCodeResponse extends ExtensionResponse {

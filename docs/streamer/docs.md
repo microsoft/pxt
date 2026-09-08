@@ -10,7 +10,7 @@ https://youtu.be/P59Q0i6Zkrg
 
 ## Why Streamer?
 
-"Streaming" is a very popular activity these days where gamers "stream" their gameplay on Twitch.tv and Mixer. Popular streams may have tens of thousands (or more) viewers watching them play. However, they are not just broadcasting; they are also interacting with their audience in various ways. The interaction between the live audience and the artist is one of the reasons streaming is so successul.
+"Streaming" is a very popular activity these days where gamers "stream" their gameplay on Twitch.tv and Mixer. Popular streams may have tens of thousands (or more) viewers watching them play. However, they are not just broadcasting; they are also interacting with their audience in various ways. The interaction between the live audience and the artist is one of the reasons streaming is so successful.
 
 Talented streamers have a sophisticated live production environment to remix their webcams, game streams, sounds and live chat. Viewers can triggers events by making donation, vote for outcome of the game, etc...
 
@@ -54,7 +54,7 @@ As part of a returning an assignment, a student could record video "walking" thr
 
 ### Live streaming on Twitch or Mixer
 
-Streamer simplifies the setup of scenes in your streaming software, you only have one scene :) You can definitely integrate Streamer in your exisiting OBS/StreamLabs/...
+Streamer simplifies the setup of scenes in your streaming software, you only have one scene :) You can definitely integrate Streamer in your existing OBS/StreamLabs/...
 
 ## How to use Streamer?
 
@@ -76,7 +76,7 @@ The camera feed maybe be rotated backwards, this is quite common when using a do
 
 ### Green screen
 
-A green screen is a way to minimize the oclusion of your webcam over the code editor. Any green screen drapped placed behind you will work, make sure it is well lighted.
+A green screen is a way to minimize the occlusion of your webcam over the code editor. Any green screen draped placed behind you will work, make sure it is well lighted.
 
 ### Paint tools
 
@@ -109,7 +109,7 @@ Then measure the time between the clap sound and the video. That's your offset!
 
 ### File format
 
-Streamer will save your recording as a ".webm" file with the "h264" codec. .webm files can be uploaded to YouTube or viewed in Chrome or Edge but some popular video editting tools don't support this, like iMovie. One way to get around this is to convert it into a more standard format like .mp4. To do this, we recommend using a popular command line tool called "ffmpeg". 
+Streamer will save your recording as a ".webm" file with the "h264" codec. .webm files can be uploaded to YouTube or viewed in Chrome or Edge but some popular video editing tools don't support this, like iMovie. One way to get around this is to convert it into a more standard format like .mp4. To do this, we recommend using a popular command line tool called "ffmpeg". 
 
 #### Installing ffmpeg
 
@@ -144,5 +144,5 @@ You can specify the title, subtitle, video subtitles and various other places. Y
 
 The introduction video will automatically run once when transitioning from the countdown scene to any other view. This is typically a branding video.
 
-The ending video will automatically run when transition from the any sence to the countdown scene. This is the time to wrap up your demo and eventually
+The ending video will automatically run when transitioning from the any sense to the countdown scene. This is the time to wrap up your demo and eventually
 stop the recording.

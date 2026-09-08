@@ -3,22 +3,24 @@ import { Card } from "../controls/Card";
 
 interface ThemeCardProps {
     theme: pxt.ColorThemeInfo;
-    onClick?: (theme: pxt.ColorThemeInfo) => void;
+    selected: boolean;
+    onClick: (theme: pxt.ColorThemeInfo) => void;
 }
 
 export const ThemeCard = (props: ThemeCardProps) => {
-    const { onClick, theme } = props;
+    const { onClick, selected, theme } = props;
 
     const themeName = pxt.Util.rlf(`{id:color-theme-name}${theme.name}`);
 
     return (
         <Card
-            className="theme-card"
+            className={`theme-card${selected ? " selected" : ""}`}
             role="listitem"
             ariaLabelledBy={theme.id + "-title"}
+            ariaPressed={selected}
             key={theme.id}
             onClick={() => onClick(theme)}
-            tabIndex={onClick && 0}
+            tabIndex={0}
         >
             <div className="theme-info-box">
                 <ThemePreview theme={theme} />

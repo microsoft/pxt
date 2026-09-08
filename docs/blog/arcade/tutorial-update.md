@@ -12,7 +12,7 @@ Over the past summer, we conducted several user studies to get feedback on tutor
 
 ![Small screen tutorial view](/static/blog/arcade/tutorial-update/small-screen.jpg)
 
-To fix this, we’ve moved the tutorial instructions to the left side of the screen as a tab, sharing space with the game screen. This gives people a lot more room to code using the Toolbox and the Workpace on the right. We also added a mini game screen in the bottom right corner, so you can always see your game. You can expand the mini game screen to the full view on the left pane.
+To fix this, we’ve moved the tutorial instructions to the left side of the screen as a tab, sharing space with the game screen. This gives people a lot more room to code using the Toolbox and the Workspace on the right. We also added a mini game screen in the bottom right corner, so you can always see your game. You can expand the mini game screen to the full view on the left pane.
 
 ![Change locations of tutorial elements](/static/blog/arcade/tutorial-update/tutorial.gif)
 

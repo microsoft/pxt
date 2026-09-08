@@ -1,6 +1,6 @@
 # Naming Conventions
 
-Naming conventions provide a consistant and expected style of usage across all namespaces used by MakeCode. This allows the coding user to make general assumptions about name forms used for functions, methods, properties, and enumerations. While writing code, a user can assume a certain order of name case and style for the names exposed by your extension. This eases the composition of code and saves the user from errors when they try to use a name as they might expect to.
+Naming conventions provide a consistent and expected style of usage across all namespaces used by MakeCode. This allows the coding user to make general assumptions about name forms used for functions, methods, properties, and enumerations. While writing code, a user can assume a certain order of name case and style for the names exposed by your extension. This eases the composition of code and saves the user from errors when they try to use a name as they might expect to.
 
 Although not enforced, these naming conventions help keep the blocks and functions in the MakeCode editor consistent. 
 As much as possible, please try to follow these conventions and consider exceptions only when absolutely necessary. Thank you for creating MakeCode extensions!

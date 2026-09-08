@@ -14,7 +14,7 @@ Now, it would be nice if the **pick** function was general enough to pick a frui
  */
 enum TropicalFruit {
     Banana = 0,
-    Pinapple = 1,
+    Pineapple = 1,
     Coconut = 2
 }
 
@@ -177,7 +177,7 @@ namespace tropic {
 
 ## Step 3: Defining blocks for banana methods
 
-In the blocks model, class methods aren't available, or don't show up, in the Toolbox until there's an actual object instance related to it. The [block definitions](/defining-blocks#objects-and-instance-methods) for the methods must "tag" them to an instance. Let's take the **peel** method as an example. We've inserted the ``%fruit`` parameter at the beginning of the `block` attribute. This is not a parameter for the method, but an association of the block to an instance variable initially called `fruit`. This will cause the **peel** block to be valid in the workspace as a method of `fruit` even if the value of `fruit` is stil `null` or `undefined`. You can think of it as a placeholder or a default instance name, but without it, the **peel** method has no context.
+In the blocks model, class methods aren't available, or don't show up, in the Toolbox until there's an actual object instance related to it. The [block definitions](/defining-blocks#objects-and-instance-methods) for the methods must "tag" them to an instance. Let's take the **peel** method as an example. We've inserted the ``%fruit`` parameter at the beginning of the `block` attribute. This is not a parameter for the method, but an association of the block to an instance variable initially called `fruit`. This will cause the **peel** block to be valid in the workspace as a method of `fruit` even if the value of `fruit` is still `null` or `undefined`. You can think of it as a placeholder or a default instance name, but without it, the **peel** method has no context.
 
 ```typescript-ignore
 /*
@@ -234,7 +234,7 @@ export class banana {
 
 So now, when a **ripen** block is placed onto the workspace, an instance is created by calling the `tropic.pickBanana()` function as an object factory for `fruit`.
 
-Add the `autoCreate` attribute as shown and restart the target. Delete any blocks in the workspace and pull out **ripen** as you did before. After swithing to JavaScript, you'll see that `fruit` is now set to an instance of `banana` rather than being just a variable declaration with a `null` value.
+Add the `autoCreate` attribute as shown and restart the target. Delete any blocks in the workspace and pull out **ripen** as you did before. After switching to JavaScript, you'll see that `fruit` is now set to an instance of `banana` rather than being just a variable declaration with a `null` value.
 
 ```typescript-ignore
 let fruit = tropic.pickBanana()

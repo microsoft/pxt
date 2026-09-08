@@ -17,12 +17,14 @@ const FIELD_USER_PREFERENCES = "preferences";
 const FIELD_HIGHCONTRAST = "high-contrast";
 const FIELD_SCREEN_READER_MODE = "screen-reader-mode";
 const FIELD_COLOR_THEME_IDS = "colorThemeIds";
+const FIELD_SIMULATOR_THEMES = "simulatorThemes";
 const FIELD_LANGUAGE = "language";
 const FIELD_READER = "reader";
 export const USER_PREFERENCES = `${USER_PREF_MODULE}:${FIELD_USER_PREFERENCES}`
 export const HIGHCONTRAST = `${USER_PREF_MODULE}:${FIELD_HIGHCONTRAST}`
 export const SCREEN_READER_MODE = `${USER_PREF_MODULE}:${FIELD_SCREEN_READER_MODE}`
 export const COLOR_THEME_IDS = `${USER_PREF_MODULE}:${FIELD_COLOR_THEME_IDS}`
+export const SIMULATOR_THEMES = `${USER_PREF_MODULE}:${FIELD_SIMULATOR_THEMES}`
 export const LANGUAGE = `${USER_PREF_MODULE}:${FIELD_LANGUAGE}`
 export const READER = `${USER_PREF_MODULE}:${FIELD_READER}`
 export const HAS_USED_CLOUD = "has-used-cloud"; // Key into local storage to see if this computer has logged in before
@@ -73,6 +75,7 @@ class AuthClient extends pxt.auth.AuthClient {
                 case "highContrast": data.invalidate(HIGHCONTRAST); break;
                 case "screenReaderMode": data.invalidate(SCREEN_READER_MODE); break;
                 case "colorThemeIds": data.invalidate(COLOR_THEME_IDS); break;
+                case "simulatorThemes": data.invalidate(SIMULATOR_THEMES); break;
                 case "reader": data.invalidate(READER); break;
             }
         }
@@ -125,6 +128,7 @@ class AuthClient extends pxt.auth.AuthClient {
                 case HIGHCONTRAST: return /^true$/i.test(pxt.storage.getLocal(HIGHCONTRAST));
                 case SCREEN_READER_MODE: return /^true$/i.test(pxt.storage.getLocal(SCREEN_READER_MODE));
                 case COLOR_THEME_IDS: return pxt.U.jsonTryParse(pxt.storage.getLocal(COLOR_THEME_IDS)) as pxt.auth.ColorThemeIdsState;
+                case SIMULATOR_THEMES: return pxt.U.jsonTryParse(pxt.storage.getLocal(pxt.auth.SIMULATOR_THEMES_LOCAL_STORAGE_KEY)) as pxt.auth.SimulatorThemesState;
                 case LANGUAGE: return pxt.storage.getLocal(LANGUAGE);
                 case READER: return pxt.storage.getLocal(READER);
             }
@@ -142,6 +146,7 @@ class AuthClient extends pxt.auth.AuthClient {
                 case FIELD_HIGHCONTRAST: return state.preferences?.highContrast ?? pxt.auth.DEFAULT_USER_PREFERENCES().highContrast;
                 case FIELD_SCREEN_READER_MODE: return state.preferences?.screenReaderMode ?? pxt.auth.DEFAULT_USER_PREFERENCES().screenReaderMode;
                 case FIELD_COLOR_THEME_IDS: return state.preferences?.colorThemeIds ?? pxt.auth.DEFAULT_USER_PREFERENCES().colorThemeIds;
+                case FIELD_SIMULATOR_THEMES: return state.preferences?.simulatorThemes ?? pxt.auth.DEFAULT_USER_PREFERENCES().simulatorThemes;
                 case FIELD_LANGUAGE: return state.preferences?.language ?? pxt.auth.DEFAULT_USER_PREFERENCES().language;
                 case FIELD_READER: return state.preferences?.reader ?? pxt.auth.DEFAULT_USER_PREFERENCES().reader;
             }
@@ -246,7 +251,7 @@ export async function setHighContrastPrefAsync(highContrast: boolean): Promise<v
             op: 'replace',
             path: ['highContrast'],
             value: highContrast
-        });
+        }, { immediate: true });
     } else {
         // Identity not available, save this setting locally
         pxt.storage.setLocal(HIGHCONTRAST, highContrast.toString());
@@ -283,7 +288,7 @@ export async function setThemePrefAsync(themeId: string): Promise<void> {
             op: 'replace',
             path: ['colorThemeIds'],
             value: newColorThemePref
-        });
+        }, { immediate: true });
     } else {
         // Identity not available, save this setting locally
         const currentPrefsStr = pxt.storage.getLocal(COLOR_THEME_IDS);
@@ -295,6 +300,31 @@ export async function setThemePrefAsync(themeId: string): Promise<void> {
         const serialized = JSON.stringify(newColorThemePref);
         pxt.storage.setLocal(COLOR_THEME_IDS, serialized);
         data.invalidate(COLOR_THEME_IDS);
+    }
+}
+
+export async function setSimulatorThemePrefAsync(preference: pxt.auth.SimulatorThemePreference | undefined): Promise<void> {
+    const cli = await clientAsync();
+    const targetId = pxt.appTarget.id;
+
+    if (cli) {
+        const currentPrefs = await cli.userPreferencesAsync();
+        const newSimulatorThemePrefs = { ...currentPrefs?.simulatorThemes };
+        if (preference) newSimulatorThemePrefs[targetId] = preference;
+        else delete newSimulatorThemePrefs[targetId];
+        await cli.patchUserPreferencesAsync({
+            op: 'replace',
+            path: ['simulatorThemes'],
+            value: newSimulatorThemePrefs
+        }, { immediate: true });
+    } else {
+        const currentPrefs = pxt.U.jsonTryParse(
+            pxt.storage.getLocal(pxt.auth.SIMULATOR_THEMES_LOCAL_STORAGE_KEY)
+        ) as pxt.auth.SimulatorThemesState ?? {};
+        if (preference) currentPrefs[targetId] = preference;
+        else delete currentPrefs[targetId];
+        pxt.storage.setLocal(pxt.auth.SIMULATOR_THEMES_LOCAL_STORAGE_KEY, JSON.stringify(currentPrefs));
+        data.invalidate(SIMULATOR_THEMES);
     }
 }
 

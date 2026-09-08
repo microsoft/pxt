@@ -2,6 +2,8 @@ import * as React from "react";
 import * as pkg from "./package";
 import * as srceditor from "./srceditor"
 import * as core from "./core";
+import * as simulatorTheme from "./simulatorTheme";
+import * as simulatorThemePreference from "./simulatorThemePreference";
 
 import Util = pxt.Util;
 
@@ -10,11 +12,13 @@ import { Checkbox } from "../../react-common/components/controls/Checkbox";
 import { Button } from "../../react-common/components/controls/Button";
 import { Input } from "../../react-common/components/controls/Input";
 import { Textarea } from "../../react-common/components/controls/Textarea";
+import { SimulatorThemePickerModal } from "./components/SimulatorThemePickerModal";
 
 export class Editor extends srceditor.Editor {
     config: pxt.PackageConfig = {} as any;
     isSaving: boolean;
     changeMade: boolean = false;
+    private simulatorThemePickerOpen = false;
 
     constructor(public parent: IProjectView) {
         super(parent);
@@ -145,6 +149,40 @@ export class Editor extends srceditor.Editor {
         }
     }
 
+    private applyPropertyInput = (option: pxt.PxtJsonOption, value: string) => {
+        if (option.type === "input") {
+            (this.config as any)[option.property] = value;
+            this.save(true);
+        }
+    }
+
+    private showSimulatorThemePicker = () => {
+        if (!pxt.appTarget.simulator?.themePresets?.length) return;
+        pxt.tickEvent("pxtjson.simulatortheme.open", undefined, { interactiveConsent: true });
+        this.simulatorThemePickerOpen = true;
+        this.parent.forceUpdate();
+    }
+
+    private closeSimulatorThemePicker = () => {
+        this.simulatorThemePickerOpen = false;
+        this.parent.forceUpdate();
+    }
+
+    private saveSimulatorTheme = async (preference: pxt.auth.SimulatorThemePreference) => {
+        this.config.theme = simulatorTheme.serializeProjectSimulatorThemePreference(
+            preference,
+            pxt.appTarget.simulator.themePresets
+        );
+        await this.save(true);
+        this.closeSimulatorThemePicker();
+    }
+
+    private useAccountSimulatorTheme = async () => {
+        delete this.config.theme;
+        await this.save(true);
+        this.closeSimulatorThemePicker();
+    }
+
     private showEditSettingsDialogAsync = async () => {
         pxt.tickEvent("pxtjson.editsettingsdialog", undefined, { interactiveConsent: true });
 
@@ -181,9 +219,17 @@ export class Editor extends srceditor.Editor {
             .forEach(dep => userConfigs = userConfigs.concat(dep.config.yotta.userConfigs));
 
         const pxtJsonOptions = pxt.appTarget.appTheme?.pxtJsonOptions || [];
+        const simulatorThemePresets = pxt.appTarget.simulator?.themePresets || [];
+        const simulatorThemesEnabled = !!simulatorThemePresets.length;
+        const accountSimulatorTheme = simulatorThemesEnabled
+            ? simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme
+            : undefined;
+        const projectSimulatorThemePreference = accountSimulatorTheme
+            ? simulatorTheme.getProjectSimulatorThemePreference(c.theme, simulatorThemePresets, accountSimulatorTheme)
+            : undefined;
 
         return (
-            <div className="ui content">
+            <><div className="ui content">
                 <div className="ui small header">
                     <div className="content">
                         <Button
@@ -216,6 +262,16 @@ export class Editor extends srceditor.Editor {
                             resize="vertical"
                         />
                     }
+                    {simulatorThemesEnabled && <div>
+                        <Button
+                            id="projectSimulatorTheme"
+                            className="primary"
+                            title={lf("Simulator Theme")}
+                            label={lf("Simulator Theme")}
+                            ariaHasPopup="dialog"
+                            ariaExpanded={this.simulatorThemePickerOpen}
+                            onClick={this.showSimulatorThemePicker} />
+                    </div>}
                     {userConfigs.map(uc =>
                         <UserConfigCheckbox
                             key={`userconfig-${uc.description}`}
@@ -224,14 +280,26 @@ export class Editor extends srceditor.Editor {
                             applyUserConfig={this.applyUserConfig} />
                     )}
                     {pxtJsonOptions.map(option =>
-                        <Checkbox
-                            key={option.property}
-                            id={option.property}
-                            label={pxt.Util.rlf(`{id:setting}${option.label}`)}
-                            isChecked={!!c?.[option.property as keyof pxt.PackageConfig]}
-                            onChange={value => this.applyPropertyCheckbox(option, value)}
-                            style="toggle"
-                        />
+                        option.type === "checkbox" ? (
+                            <Checkbox
+                                key={option.property}
+                                id={option.property}
+                                label={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                                isChecked={!!c?.[option.property as keyof pxt.PackageConfig]}
+                                onChange={value => this.applyPropertyCheckbox(option, value)}
+                                style="toggle"
+                            />
+                        ) : option.type === "input" ? (
+                            <Input
+                                key={option.property}
+                                id={option.property}
+                                label={pxt.Util.rlf(`{id:setting}${option.label}`)}
+                                ariaLabel={option.label}
+                                initialValue={(c as any)?.[option.property] || ""}
+                                onChange={value => this.applyPropertyInput(option, value)}
+                                autoComplete={false}
+                            />
+                        ) : undefined
                     )}
                     <div>
                         <Button
@@ -243,6 +311,15 @@ export class Editor extends srceditor.Editor {
                     </div>
                 </div>
             </div>
+            {simulatorThemesEnabled && this.simulatorThemePickerOpen && !!accountSimulatorTheme && <SimulatorThemePickerModal
+                presets={simulatorThemePresets}
+                layouts={pxt.appTarget.simulator?.themeLayouts}
+                initialPreference={projectSimulatorThemePreference}
+                accountTheme={accountSimulatorTheme}
+                onUseAccountTheme={this.useAccountSimulatorTheme}
+                onSave={this.saveSimulatorTheme}
+                onClose={this.closeSimulatorThemePicker} />}
+            </>
         )
     }
 

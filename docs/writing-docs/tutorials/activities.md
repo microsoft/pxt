@@ -2,9 +2,9 @@
 
 Rather than have multiple tutorials for related activities, a tutorial can use the _activity_ format to progress to further activities in the same tutorial. Activities each have their own set of steps to complete.
 
-## Enable activites
+## Enable activities
 
-To have the tutorial engine interpert the sections in the tutorial as activities with steps, use the **@activities** metadata option at the top of the page.
+To have the tutorial engine interpret the sections in the tutorial as activities with steps, use the **@activities** metadata option at the top of the page.
 
 ```
 ### @activities 1
@@ -59,7 +59,7 @@ The activity tutorial structure uses a two-level layout - activity and steps, ne
 
 ### Title
 
-In an activity style tutorial, the title can appear in a psuedo-activity that serves as an introduction. The title is also displayed in the tutorial control bar.
+In an activity style tutorial, the title can appear in a pseudo-activity that serves as an introduction. The title is also displayed in the tutorial control bar.
 
 ```markdown
 ### @activities true

@@ -16,7 +16,7 @@ https://youtu.be/oBarPukXXXQ
 
 ## [Google Classroom](https://classroom.google.com) #googleclassroom
 
-You can use shared urls or download files from the MakeCode editor to create assigments in Google Classroom. See the tutorial video below.
+You can use shared urls or download files from the MakeCode editor to create assignments in Google Classroom. See the tutorial video below.
 
 ### #youtubegoogleclassroom
 
@@ -24,7 +24,7 @@ https://youtu.be/vDISKdJ3ynA
 
 ## [Canvas](https://www.canvas.net/) #canvas
 
-You can use shared urls or download files from the MakeCode editor to create assigments in Canvas. See the tutorial video below.
+You can use shared urls or download files from the MakeCode editor to create assignments in Canvas. See the tutorial video below.
 
 ### #youtubecanvas
 

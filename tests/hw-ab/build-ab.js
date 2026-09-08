@@ -51,7 +51,9 @@ const USAGE = [
     "works if the compiler on this branch implements the named opt-out switches.",
     "PXT parses PXT_COMPILE_SWITCHES name-agnostically, so an unknown switch is",
     "accepted silently and never read -- the \"reference\" is then byte-identical to",
-    "the candidate. This script detects that and fails; it does not guess.",
+    "the candidate for every case, which this script detects and fails on. Identical",
+    "output for only some cases is normal (the switch gates a feature those programs",
+    "do not use) and is reported as a note.",
     "",
     "It also only covers changes that are gated behind those switches. Any ungated",
     "change is present in both builds and invisible to the comparison.",
@@ -255,6 +257,7 @@ fs.writeFileSync(sizesFile, [
 ].join("\n"));
 
 const identical = [];
+let pairs = 0;
 const cases = fs.readFileSync(casesFile, "utf8").split("\n")
     .map(l => l.replace(/\r$/, ""))
     .filter(l => l.length > 0);
@@ -273,6 +276,7 @@ for (const caseName of cases) {
     }
 
     if (doCandidate && doReference) {
+        pairs++;
         if (sha256(path.join(outDir, caseName, "candidate.hex")) ===
             sha256(path.join(outDir, caseName, "reference.hex"))) {
             identical.push(caseName);
@@ -283,18 +287,22 @@ for (const caseName of cases) {
 
 process.stdout.write("build-ab: sizes -> " + sizesFile + "\n");
 
-if (identical.length) {
+// Some pairs identical is expected: a switch only changes the programs that use
+// the feature it gates. Every pair identical is the failure mode worth catching
+// -- the switch names buy nothing, so the A/B would compare a build with itself.
+if (identical.length && identical.length === pairs) {
     process.stderr.write([
         "",
-        "build-ab: ERROR -- candidate and reference hexes are byte-identical for:",
+        "build-ab: ERROR -- candidate and reference hexes are byte-identical for every",
+        "build-ab: case:",
         "build-ab:  " + identical.join(" "),
         "",
         "The reference build differs from the candidate only by the compile switches",
-        "\"" + refSwitches + "\". Identical output means those switches changed nothing.",
-        "The likely cause is that the compiler on this branch does not implement them:",
-        "PXT_COMPILE_SWITCHES is parsed name-agnostically, so an unrecognised switch",
-        "name is accepted silently and then never read, and the \"reference\" build is",
-        "just a second candidate build.",
+        "\"" + refSwitches + "\". Identical output everywhere means those switches changed",
+        "nothing at all. The likely cause is that the compiler on this branch does not",
+        "implement them: PXT_COMPILE_SWITCHES is parsed name-agnostically, so an",
+        "unrecognised switch name is accepted silently and then never read, and the",
+        "\"reference\" build is just a second candidate build.",
         "",
         "Check that the switch names are spelled as the compiler reads them, or use the",
         "git-based reference strategy instead (build-ab.js --help). An A/B run against",
@@ -302,6 +310,11 @@ if (identical.length) {
         ""
     ].join("\n"));
     process.exit(3);
+}
+
+for (const caseName of identical) {
+    process.stdout.write("build-ab: note -- no codegen difference for " + caseName +
+        " under these switches\n");
 }
 
 process.stdout.write("build-ab: done\n");

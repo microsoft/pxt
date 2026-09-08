@@ -80,7 +80,7 @@ function addStrings(stringA: string, stringB: string, first: boolean) {
 
 #### Pull down the parameter
 
-In blocks, you can pull a parmeter from the function block and drag it down and place it as a variable in the code inside the function.
+In blocks, you can pull a parameter from the function block and drag it down and place it as a variable in the code inside the function.
 
 Pull the ``||variables:message||`` parameter from the **repeat** function.
 

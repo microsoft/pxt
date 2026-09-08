@@ -22,6 +22,7 @@ export interface ModalAction {
 
 export interface ModalProps extends ContainerProps {
     title: string;
+    hideTitle?: boolean;
     leftIcon?: string;
     ariaDescribedBy?: string;
     actions?: ModalAction[];
@@ -42,6 +43,7 @@ export const Modal = (props: ModalProps) => {
         ariaDescribedBy,
         role,
         title,
+        hideTitle,
         leftIcon,
         actions,
         onClose,
@@ -106,11 +108,11 @@ export const Modal = (props: ModalProps) => {
                         />
                     </div>
                 }
-                <div id="modal-title" className="common-modal-title">
+                <div id="modal-title" className={classList("common-modal-title", hideTitle && "sr-only")}>
                     {leftIcon && <i className={leftIcon} aria-hidden={true}/>}
                     {title}
                 </div>
-                {fullscreen && rightHeader &&
+                {rightHeader &&
                     <div className="common-modal-right-menu">
                         {rightHeader}
                     </div>

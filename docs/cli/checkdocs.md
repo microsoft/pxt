@@ -10,7 +10,7 @@ pxt checkdocs [--re foo]
 
 ## Description
 
-This commands scans the documentation and perfoms various validation steps:
+This commands scans the documentation and performs various validation steps:
 * checking for broken links,
 * compiling and decompiling code samples
 * ...
