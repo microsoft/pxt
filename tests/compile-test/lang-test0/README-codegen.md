@@ -13,7 +13,7 @@ before structurally cannot:
 The coverage matrix below is the index: failure mode -> covering test -> layer
 -> what the failure looks like when it fires.
 
-The corpus is sized for two optimization families:
+The corpus covers:
 
 - **Boolean condition lowering.** Conditions lower to short-circuit jumps that
   yield a raw 0/1 rather than a tagged value materialized and then narrowed,
@@ -23,6 +23,10 @@ The corpus is sized for two optimization families:
   helpers, shared interface-call thunks, object-literal store specialization,
   vtable wrapper-skip for calls whose arity already matches, and a typed
   index-signature store fast path.
+- **Default parameters (#11562).** TypeScript implementations initialize omitted
+  or `undefined` arguments in their common entry code, including dynamic and
+  virtual dispatch. Shim/helper fallbacks and explicit-default annotations retain
+  their caller-side handling.
 
 ## Coverage matrix
 
@@ -40,7 +44,10 @@ The corpus is sized for two optimization families:
 | Threshold miscounting in a count-gated specialization -- members just below and just above the gate behaving differently | `56ifacedispatch.ts` `testThresholds` (`qzLo` 2 sites vs `qzHi` 5+, `qzFew` 4 reads vs `qzMany` 6+) and `testStores` (`qzRare` 2 stores vs `qzHot` 4) | testlang, hw-ab | `th:lo1`, `th:hi1`..`th:hi5`, `th:few*`, `th:many*`, `th:agree`, `st:rare`, `st:hot` |
 | The same miscounting for the checked-field-load gate, which counts per class field rather than per interface member and so is not reachable from the semantic layer | `tests/thumb-test/cases/fieldbaseline.ts`, one class whose `qzTally` is read above the gate and `qzSpare` below it, with `asmchecks.ts` counting the inline checked-load sequences by field offset | testthumb | `expected at least 6 inline checked loads of qzTally, found N`, or `listing unexpectedly contains N checked-field-load thunks (ldfldchk_)` |
 | Arity holes in wrapper-skip -- one member name declared at two arities by two unrelated interfaces | `56ifacedispatch.ts` `testArityCollision`, with the two dispatches interleaved in a loop so neither can be hoisted | testlang, hw-ab | `ar:one1`, `ar:two1`, `ar:mixed` |
-| A missing trailing argument on a dynamic call (the documented default-parameter constraint) | `56ifacedispatch.ts` `testDefaults` | testlang, hw-ab | `opt:concrete`, `opt:dynagree`, `opt:safe1`..`opt:safe4`, `opt:iface2`, `opt:any2` |
+| Missing defaults on dynamic calls, or using a base method's default for an override | `56ifacedispatch.ts` `testDefaults`, `57defaultparamdispatch.ts` | testlang, testthumb (assembly), hw-ab | `opt:iface-default`, `opt:any-default`, `qzdp:iface`, `qzdp:any`, `qzdp:virtual-default` |
+| Replacing supplied falsy values, missing argument holes, or defaulting after constructor-property/closure creation | `57defaultparamdispatch.ts` | testlang, testthumb (assembly), hw-ab | `qzdp:preserve-*`, `qzdp:argument-hole`, `qzdp:boxed-param`, `qzdp:constructor-property` |
+| Default expressions evaluated twice, in the caller's scope, or before explicit arguments | `58defaultinitializers.ts` | testlang, testthumb (assembly), hw-ab | `qzdpi:argument-evaluation-order`, `qzdpi:undefined-default-once`, `qzdpi:lexical`, `qzdpi:fresh-reference`, `qzdpi:destructured-once` |
+| Native wrapper bypass also bypasses default initialization, or guards added to functions without defaults | `tests/thumb-test/cases/defaultparameters.ts` with normal, `noIfaceSpec` and `slowMethods` switches | testthumb | Guard-placement, wrapper routing, boxed-parameter or constructor-store assertion fails |
 | Get and call sharing a dispatch bucket -- one member name that is a field on one type and a method on another | `56ifacedispatch.ts` `testGetCallCollision`, through both interface-typed and `any`-typed references | testlang, hw-ab | `gc:get1`, `gc:call1`, `gc:agree`, `gc:get2`, `gc:call2`, `gc:type` |
 | `toString` fixed-slot violation -- an override not reached through concatenation, templates, direct call, interface or `any` | `56ifacedispatch.ts` `testToString`; also present in `tests/thumb-test/cases/ifacebaseline.ts` | testlang, testthumb (shape), hw-ab | `ts:concat`, `ts:template`, `ts:iface`, `ts:any`, `ts:anyconcat` |
 | Polymorphic call site confused between class instances and object literals (maps) | `56ifacedispatch.ts` `testPolymorphic` -- one call site `useQzVal` fed both, plus a mixed array iterated twice | testlang, hw-ab | `poly:class`, `poly:literal`, `poly:elem0`..`poly:elem3`, `poly:total` |
@@ -106,19 +113,31 @@ single call site fed both class instances and object literals; a `toString`
 override reached five different ways; stores through property signatures,
 accessors, inherited fields, `super`, a run-time-keyed map and a typed index
 signature over both a literal and a class instance; and dynamic gets by dot, by
-string literal and by computed key. One constraint is documented in the file
-rather than asserted away: the emitter fills a defaulted argument in at the
-call site from the statically known signature, so through an interface- or
-`any`-typed reference there is no signature and the callee's own default does
-not apply. `testDefaults` therefore asserts that the interface and `any` paths
-agree with each other, and that a callee written to test for `undefined` works
-on every path.
+string literal and by computed key. `testDefaults` asserts that concrete,
+interface and `any` calls apply the callee's default, just as an explicit
+`undefined` check in the method body does.
 
-`57defaultparamdispatch.ts` is the minimal standalone repro of that defect: a
-two-line block marked REPRO is commented out so the suite stays green, and
-uncommenting it makes `gulp testlang` fail with `qzdp:iface` -- a ready-made
-red test for whoever picks the fix up. The file's active assertions pin the
-parts that must hold either way.
+### `57defaultparamdispatch.ts` and `58defaultinitializers.ts`
+
+The formerly disabled #11562 repro is active. The dispatch corpus covers
+direct, virtual, interface, `any`, action and object-literal calls; different
+base/derived defaults; `super`; constructors and parameter properties; explicit
+`undefined`, argument holes, and supplied falsy values; mutable and immutable
+parameter captures; native shims and comment-annotated defaults.
+
+The initializer corpus runs in normal compiler mode, without
+`unfetteredInitializers`. Strings, negative numbers, `undefined`, arrays, object
+destructuring, calls, earlier parameters, `this`, and lexical captures are
+evaluated as ordinary expressions. Assertions pin evaluation order and exactly
+one evaluation, including when the default expression itself returns undefined.
+
+Both files execute in simjs, compile and assemble in the native suite, and are
+registered as `defaultparamdispatch` and `defaultinitializers` device payloads.
+The focused native probe checks a strict undefined guard after `_nochk`, so
+both `_args` padding and optimized `_iface` entries reach it. It also checks
+box initialization before capture, constructor defaults before property stores,
+and absence of guards in a plain function. Assembly checks do not execute ARM
+instructions or validate the physical collector; that requires the device run.
 
 ### `tests/thumb-test/cases/boolbaseline.ts`
 

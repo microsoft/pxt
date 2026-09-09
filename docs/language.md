@@ -38,6 +38,8 @@ out to your editor soon!
 
 * variable declarations with `let`, `const`
 * functions with lexical scoping and recursion
+* default parameter initializers, evaluated in the called TypeScript function
+  when an argument is omitted or `undefined`, including on virtual/interface calls
 * top-level code in the file; hello world really is `console.log("Hello world")`
 * `if ... else if ... else` statements
 * `while` and `do ... while` loops
@@ -283,8 +285,6 @@ There are following differences currently, which should be fixed soon.
 They are mostly missing bridges between static, nominally typed classes,
 and dynamic maps.
 
-* default parameters are resolved at call site; they should be resolved in the
-  called method so eg. virtual methods can have different defaults
 * `x.foo`, where `x` is class and `foo` is method cannot be currently used as a value;
   we could make it equivalent to JavaScript's `x.foo.bind(x)`
 * `Object.keys()` is currently not implemented for classes; when it will be
