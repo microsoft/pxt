@@ -64,6 +64,14 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         onReset,
         onClose,
     } = props;
+    const aspectRatio = pxt.appTarget.simulator?.aspectRatio || 1.22;
+    const previewStyle: React.CSSProperties & {
+        "--simulator-theme-aspect-ratio": number;
+        "--simulator-theme-padding-bottom": string;
+    } = {
+        "--simulator-theme-aspect-ratio": aspectRatio,
+        "--simulator-theme-padding-bottom": `${100 / aspectRatio}%`,
+    };
     const defaultColorFields = getDefaultColorFields(presets[0].theme);
     const getColorFields = (layoutId: string) => {
         const fields = layouts?.find(layout => layout.id === layoutId)?.colorFields;
@@ -158,7 +166,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
                     : onSave({ presetId, theme }),
             },
         ]}>
-        <div className="simulator-theme-picker">
+        <div className="simulator-theme-picker" style={previewStyle}>
             {renderPreview(theme)}
             <div className="simulator-theme-controls">
                 <div className="simulator-theme-select-field">

@@ -31,7 +31,7 @@
 }
 
 .theme-picker-modal>.common-modal,
-.simulator-theme-picker-modal:not(.standalone)>.common-modal {
+.simulator-theme-picker-modal>.common-modal {
     height: 90%;
     max-height: 48rem;
     display: flex;
@@ -74,22 +74,62 @@
     padding-left: 1.5rem;
 }
 
+.simulator-theme-picker-modal>.common-modal {
+    overflow: hidden;
+
+    .common-modal-body {
+        display: flex;
+        overflow: hidden;
+    }
+
+    .common-modal-footer {
+        flex-shrink: 0;
+    }
+}
+
 .simulator-theme-picker {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
     display: grid;
-    grid-template-columns: minmax(18rem, 1fr) minmax(18rem, 1fr);
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
     gap: 2rem;
-    align-items: center;
+    align-items: stretch;
 }
 
 .simulator-theme-preview {
+    position: relative;
     min-width: 0;
+    min-height: 0;
 
     .simframe {
         margin: 0;
     }
 
+    .simframe.ui.embed {
+        // Fresh homescreen/skillmap frames have no inline ratio from the simulator driver.
+        padding-bottom: var(--simulator-theme-padding-bottom);
+    }
+
     .simframe > .ui.loader {
         display: none;
+    }
+}
+
+@media only screen and (min-width: 50.001rem) {
+    .simulator-theme-preview .simframe.ui.embed {
+        // Cap the viewport at the target's default ratio, even in a short pane.
+        // If width is constrained further, the simulator centers itself within the taller viewport.
+        // Override the driver's inline padding ratio only while inside the desktop picker.
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: auto;
+        max-width: 100%;
+        height: 100%;
+        aspect-ratio: var(--simulator-theme-aspect-ratio);
+        padding-bottom: 0 !important;
     }
 }
 
@@ -98,6 +138,14 @@
     flex-direction: column;
     gap: 0.75rem;
     min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    // Leave room for focus outlines inside the independently scrolling controls.
+    padding: 0.25rem;
+    scrollbar-gutter: stable;
+    > * {
+        flex-shrink: 0;
+    }
 }
 
 .simulator-theme-select-field {
@@ -132,9 +180,13 @@
 
 .simulator-theme-color {
     display: grid;
-    grid-template-columns: minmax(7rem, 1fr) 3rem minmax(8rem, 1fr);
+    grid-template-columns: minmax(0, 1fr) 3rem minmax(0, 1fr);
     gap: 0.5rem;
     align-items: center;
+
+    > span {
+        overflow-wrap: anywhere;
+    }
 
     .common-input-wrapper {
         min-width: 0;
@@ -177,17 +229,26 @@
     }
 
     .simulator-theme-picker {
+        flex: none;
+        width: 100%;
         grid-template-columns: 1fr;
+        grid-template-rows: auto;
+    }
+
+    .simulator-theme-picker-modal>.common-modal .common-modal-body {
+        display: block;
+        overflow-y: auto;
+    }
+
+    .simulator-theme-controls {
+        overflow: visible;
+        scrollbar-gutter: auto;
     }
 
     .simulator-theme-preview {
-        max-width: 28rem;
         width: 100%;
+        max-width: 28rem;
         justify-self: center;
-    }
-
-    .simulator-theme-color {
-        grid-template-columns: minmax(5.5rem, 1fr) 3rem minmax(6.5rem, 1fr);
     }
 }
 
