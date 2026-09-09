@@ -4,6 +4,7 @@ import { Input } from "../controls/Input";
 import { Modal } from "../controls/Modal";
 import { copySimulatorTheme, getSimulatorThemeForLayout } from "./simulatorThemeDefaults";
 import { ThemePickerToggle } from "./ThemePickerModal";
+import { useThemeReset } from "./useThemeReset";
 
 export interface SimulatorThemePickerModalProps {
     presets: pxt.SimulatorThemePreset[];
@@ -16,6 +17,7 @@ export interface SimulatorThemePickerModalProps {
     onUseAccountTheme?: () => void | Promise<void>;
     onThemeChanged?: (preference: pxt.auth.SimulatorThemePreference) => void;
     onSave: (preference: pxt.auth.SimulatorThemePreference) => void | Promise<void>;
+    onReset?: () => Promise<void>;
     onClose: () => void;
 }
 
@@ -59,6 +61,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         onUseAccountTheme,
         onThemeChanged,
         onSave,
+        onReset,
         onClose,
     } = props;
     const defaultColorFields = getDefaultColorFields(presets[0].theme);
@@ -93,6 +96,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
     const layoutId = theme.layout;
     const layoutIsKnown = layoutId === pxt.auth.DEFAULT_SIMULATOR_LAYOUT || layouts?.some(layout => layout.id === layoutId);
     const colorFields = getColorFields(layoutId);
+    const { resetAction, confirmation } = useThemeReset("simulator-theme-picker-modal", onReset);
 
     const selectPreset = (id: string) => {
         if (id === ACCOUNT_PRESET_ID && onUseAccountTheme) {
@@ -133,6 +137,8 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
         onThemeChanged?.({ presetId: CUSTOM_PRESET_ID, theme: nextTheme });
     };
 
+    if (confirmation) return confirmation;
+
     return <Modal
         id="simulator-theme-picker-modal"
         title={lf("Simulator Theme")}
@@ -143,6 +149,7 @@ export const SimulatorThemePickerModal = (props: SimulatorThemePickerModalProps)
             selected="simulator"
             onModeChanged={onEditorThemeClicked} />}
         actions={[
+            ...(resetAction ? [resetAction] : []),
             {
                 label: lf("Apply"),
                 className: "primary",
