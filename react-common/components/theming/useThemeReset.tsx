@@ -39,7 +39,7 @@ export function useThemeReset(pickerId: string, onReset: (() => Promise<void>) |
     };
 
     const resetAction: ModalAction | undefined = onReset ? {
-        label: lf("Reset all themes"),
+        label: lf("Reset"),
         className: "primary inverted theme-reset-button",
         onClick: () => {
             setFailed(false);
