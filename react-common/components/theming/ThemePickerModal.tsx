@@ -2,6 +2,7 @@ import * as React from "react";
 import { Modal } from "../controls/Modal";
 import { EditorToggle } from "../controls/EditorToggle";
 import { ThemeCard } from "./ThemeCard";
+import { useThemeReset } from "./useThemeReset";
 
 export type ThemePickerMode = "editor" | "simulator";
 
@@ -45,6 +46,7 @@ export interface ThemePickerModalProps {
     selectedThemeId?: string;
     onThemeChanged: (theme: pxt.ColorThemeInfo) => void;
     onSave: (theme: pxt.ColorThemeInfo) => void;
+    onReset?: () => Promise<void>;
     onSimulatorThemeClicked?: () => void;
     onClose(): void;
 }
@@ -53,6 +55,9 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
         props.selectedThemeId || props.themes[0]?.id
     );
     const selectedTheme = props.themes.find(theme => theme.id === selectedThemeId);
+    const { resetAction, confirmation } = useThemeReset("theme-picker-modal", props.onReset);
+
+    if (confirmation) return confirmation;
 
     return (
         <Modal
@@ -64,7 +69,7 @@ export const ThemePickerModal = (props: ThemePickerModalProps) => {
             rightHeader={props.onSimulatorThemeClicked && <ThemePickerToggle
                 selected="editor"
                 onModeChanged={props.onSimulatorThemeClicked} />}
-            actions={[{
+            actions={[...(resetAction ? [resetAction] : []), {
                 label: lf("Apply"),
                 className: "primary",
                 disabled: !selectedTheme,
