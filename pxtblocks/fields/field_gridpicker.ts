@@ -526,13 +526,19 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             searchBar.setSelectionRange(0, searchBar.value.length);
         });
 
+        let lastSearch = "";
+
         // Search on key change
         searchBar.addEventListener("keyup", pxt.Util.debounce((e: KeyboardEvent) => {
             if (e.code === "Tab") {
                 return;
             }
 
-            let text = searchBar.value;
+            let text = pxt.U.escapeForRegex(searchBar.value);
+            if (text === lastSearch) {
+                return;
+            }
+            lastSearch = text;
             let re = new RegExp(text, "i");
             let filteredOptions = options.filter((block) => {
                 const alt = (block as any)[0].alt; // Human-readable text or image.
@@ -554,8 +560,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
         // Select the first item if the enter key is pressed
         searchBar.addEventListener("keyup", (e: KeyboardEvent) => {
-            const code = e.which;
-            if (code == 13) { /* Enter key */
+            if (e.code === "Enter") {
                 // Select the first item in the list
                 const firstRow = tableContainer.childNodes[0] as HTMLElement;
                 if (firstRow) {
