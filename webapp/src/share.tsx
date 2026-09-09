@@ -3,10 +3,12 @@ import * as auth from "./auth";
 import * as screenshot from "./screenshot";
 import * as pkg from "./package";
 import * as simulatorThemePreference from "./simulatorThemePreference";
+import { getSimulatorThemeForSharing } from "./simulatorTheme";
 
 import { Modal } from "../../react-common/components/controls/Modal";
 import { Share } from "../../react-common/components/share/Share";
 import { SimRecorderImpl } from "./components/SimRecorder";
+import { ThemeManager } from "../../react-common/components/theming/themeManager";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 
@@ -194,9 +196,11 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
         const thumbnails = simScreenshot || simGif;
 
         const hasProjectBeenPersistentShared = parent.hasHeaderBeenPersistentShared();
-        const simulatorTheme = pxt.appTarget.simulator?.themePresets?.length
-            ? simulatorThemePreference.getEffectiveSimulatorThemePreference()
-            : undefined;
+        const simulatorTheme = getSimulatorThemeForSharing(
+            simulatorThemePreference.getSimulatorThemePreference(),
+            ThemeManager.getInstance(document).getCurrentColorTheme(),
+            pxt.appTarget.simulator?.themePresets
+        );
 
         const publishAsync = async (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean, sharedSimulatorTheme?: pxt.SimulatorTheme) =>
             parent.publishAsync(name, description, screenshotUri, forceAnonymous, sharedSimulatorTheme)
@@ -220,7 +224,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
                     setAnonymousSharePreference={setSharePreference}
                     isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
-                    simulatorTheme={simulatorTheme?.theme}
+                    simulatorTheme={simulatorTheme}
                     kind={this.state.kind}
                     onClose={this.hide}
                 />
