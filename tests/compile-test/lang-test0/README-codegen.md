@@ -1,7 +1,7 @@
-# Codegen test corpus: conditions and interface dispatch
+# Codegen test corpus: conditions, interface dispatch and loop captures
 
-Tests for how the compiler lowers boolean conditions and dynamic member access
-(interface-typed, structural, `any`). Three layers; each catches what the one
+Tests for how the compiler lowers boolean conditions, dynamic member access
+(interface-typed, structural, `any`) and captured loop bindings. Three layers; each catches what the one
 before structurally cannot:
 
 | layer | run | catches |
@@ -13,7 +13,7 @@ before structurally cannot:
 The coverage matrix below is the index: failure mode -> covering test -> layer
 -> what the failure looks like when it fires.
 
-The corpus is sized for two optimization families:
+The corpus covers:
 
 - **Boolean condition lowering.** Conditions lower to short-circuit jumps that
   yield a raw 0/1 rather than a tagged value materialized and then narrowed,
@@ -23,11 +23,19 @@ The corpus is sized for two optimization families:
   helpers, shared interface-call thunks, object-literal store specialization,
   vtable wrapper-skip for calls whose arity already matches, and a typed
   index-signature store fast path.
+- **Per-iteration loop captures (#11563).** Mutable captured `let` headers
+  receive fresh boxes before the first condition and before each incrementor;
+  mutable captured `for...of` bindings receive a fresh box per element. Closures
+  in the same iteration still share mutations. Hoisted functions whose captures
+  precede a loop block are instantiated on block entry, not before the loop.
 
 ## Coverage matrix
 
 | Failure mode | Covered by | Layers | How it presents |
 | --- | --- | --- | --- |
+| Loop closures sharing the last iteration's binding, or sibling closures losing shared mutations | `58loopcapture.ts`: top-level repro, mutation, nested/hoisted closures, multiple/destructured bindings, and reference-valued `for`/`for...of` | testlang, hw-ab (`loopcapture`) | `loopcapture:top-level`, `sibling-sharing`, `nested-closures`, `function-declarations`, `forof-siblings`, `for-reference` |
+| Box renewed at the wrong point in a loop header or on an abrupt exit | `58loopcapture.ts`: initializer/condition/incrementor captures, zero iterations, continue/break/return/throw, labeled statements | testlang, hw-ab (`loopcapture`); testthumb (assembly) | `loopcapture:initializer`, `condition`, `incrementor`, `zero-iterations`, `labeled-continue`, `throw`; duplicate labels fail assembly |
+| Allocation moved outside a captured loop, added to an uncaptured loop, or old box replaced before its value is copied | `tests/thumb-test/cases/loopcapture.ts` and its `asmchecks.ts` entry | testthumb | Allocation-count, back-edge, copy-order, or per-element placement assertion fails |
 | Truthiness divergence between a fast path and the runtime's own `toBool` (`-0`, `NaN`, boxed zero, `""` vs `"0"`, `[]`, `{}`, functions) | `54conditiontruthiness.ts`, whole `check()` matrix plus the `--- falsy ---` / `--- truthy ---` case list | testlang, hw-ab | `assertion failed: if:<case>` / `ternary:<case>` / `while:<case>` / `bangbang:<case>`, where `<case>` names the value (`negzero`, `nan`, `boxedzero`, `str0`, `emptyarr`, ...) |
 | Statically typed operand and boxed `any` operand disagreeing at the same construct | `54conditiontruthiness.ts`, the `typed:` block; every matrix value additionally arrives through `opaque()` as an `any` | testlang, hw-ab | `typed:emptystr`, `typed:zero`, `typed:nullarr`, `typed:emptyarr` |
 | Raw 0/1 form leaking out of a condition instead of round-tripping to a tagged boolean | `54conditiontruthiness.ts` `roundtrip:` block; `55conditionlowering.ts` `testValuePosition` `vp:rt1`, `vp:rt2`, `vp:rtany` | testlang, hw-ab | `roundtrip:true`, `roundtrip:cond`, `vp:rtany`; also `bangbangtype:<case>` and `vp:bangtype` when `typeof` stops saying `boolean` |
@@ -119,6 +127,27 @@ two-line block marked REPRO is commented out so the suite stays green, and
 uncommenting it makes `gulp testlang` fail with `qzdp:iface` -- a ready-made
 red test for whoever picks the fix up. The file's active assertions pin the
 parts that must hold either way.
+
+### `58loopcapture.ts` and `tests/thumb-test/cases/loopcapture.ts`
+
+The semantic file starts with the exact top-level shape from #11563: closures
+over `for (let i...)` must yield `0,1,2,3`, not `4,4,4,4`. It intentionally
+keeps this repro outside a namespace to exercise the root function's loop-local
+cells. The remaining tests distinguish initializer, condition, body and
+incrementor bindings; mutate variables through sibling closures; exit through
+continue, break, return and throw; and cover nested loops, destructuring, hoisted
+functions, mutable `for...of` captures, strings and reference values. Controls
+preserve shared outer variables, immutable captures and while/do body bindings.
+
+The native probe isolates named function bodies. It asserts two box allocation
+sites before the classic loop (initializer and first iteration), one on the
+continue/increment path, and an ordered allocate/root/copy/replace sequence
+before incrementing. A mutable reference-valued `for...of` must allocate inside
+the length-checked loop before capture. Plain loops and immutable captures must
+remain box-free. The entire semantic file also compiles and assembles through
+`externalCases`; this does not execute native instructions. The `loopcapture`
+hw-ab case runs the semantic file with serial assertion reporting on a device.
+The probe also pins hoisted action creation inside the loop, before first use.
 
 ### `tests/thumb-test/cases/boolbaseline.ts`
 

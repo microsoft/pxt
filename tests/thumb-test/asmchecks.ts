@@ -113,6 +113,52 @@ function escapeRegExp(s: string): string {
 
 export const asmChecks: pxt.Map<AsmCheck> = {
 
+    "loopcapture.ts": (asm, res) => {
+        chai.assert(hexSize(res) > 0, "empty loop capture hex output");
+        const code = userCode(asm);
+        const functionBody = (name: string): string => {
+            const match = new RegExp("^" + name + "__P\\d+:([\\s\\S]*?)^" + name + "__P\\d+_end:", "m").exec(code);
+            chai.assert(!!match, "missing function " + name);
+            return match[1];
+        };
+        const allocations = (body: string): number => countMatches(body, /bl pxtrt::mklocRef/g);
+        const classic = functionBody("captureFor");
+        const top = /^\.fortop\.(\d+):/m.exec(classic);
+        chai.assert(!!top, "missing classic for header");
+        const cont = classic.indexOf(".cont." + top[1] + ":");
+        const end = classic.indexOf(".brk." + top[1] + ":");
+        chai.assert(cont > top.index && end > cont, "incorrect classic for label order");
+        chai.assert.equal(allocations(classic.slice(0, top.index)), 2,
+            "initializer box and first iteration box");
+        chai.assert.equal(allocations(classic.slice(top.index, cont)), 0,
+            "body closures must share the condition's box");
+        const backEdge = classic.slice(cont, end);
+        chai.assert.equal(allocations(backEdge), 1, "new box on the continue/increment path");
+        chai.assert(new RegExp("\\bb \\.cont\\." + top[1] + "\\b").test(classic),
+            "explicit continue must reach the renewal path");
+        chai.assert(new RegExp("\\bb \\.fortop\\." + top[1] + "\\b").test(backEdge),
+            "increment must return to the condition");
+        chai.assert(/bl pxtrt::mklocRef[\s\S]*?push \{r0\}; tmpstore[\s\S]*?bl pxtrt::ldlocRef[\s\S]*?bl pxtrt::stlocRef[\s\S]*?pop \{r0\} ; tmpref[\s\S]*?str r0, \[sp, locals@\d+\][\s\S]*?bl _numops_adds/.test(backEdge),
+            "root and populate the new box before replacing the local and incrementing");
+
+        const forOf = functionBody("captureForOf");
+        const elementLoop = /^\.fortop\.\d+:([\s\S]*?)^\.cont\.\d+:/m.exec(forOf);
+        chai.assert(!!elementLoop, "missing for-of loop");
+        chai.assert.equal(allocations(forOf), 2, "for-of declaration and per-element boxes");
+        chai.assert.equal(allocations(elementLoop[1]), 1, "fresh for-of box inside the loop");
+        chai.assert(/beq \.brk\.\d+[\s\S]*?bl pxtrt::mklocRef[\s\S]*?bl Array_::getAt[\s\S]*?bl pxtrt::stlocRef[\s\S]*?bl pxt::mkAction/.test(elementLoop[1]),
+            "initialize the fresh box after the length check and before capturing it");
+        chai.assert.equal(allocations(functionBody("plainLoop")), 0, "uncaptured loops need no boxes");
+        chai.assert.equal(allocations(functionBody("constCapture")), 0, "immutable for-of captures need no boxes");
+
+        const hoisted = functionBody("captureHoisted");
+        const hoistedBody = /^\.fortop\.\d+:([\s\S]*?)^\.cont\.\d+:/m.exec(hoisted);
+        chai.assert(!!hoistedBody, "missing hoisted capture loop");
+        chai.assert.equal(countMatches(hoisted, /bl pxt::mkAction/g), 1, "one hoisted action allocation site");
+        chai.assert(/beq \.brk\.\d+[\s\S]*?bl pxt::mkAction[\s\S]*?bl pxtrt::stclo[\s\S]*?bl Array_::push/.test(hoistedBody[1]),
+            "instantiate the hoisted function inside each iteration, before its first use");
+    },
+
     "boolbaseline.ts": (asm) => {
         // Boolean condition lowering emits thumb fast paths for the boolean
         // conversion runtime calls.
@@ -316,6 +362,11 @@ export const variantChecks: VariantCheck[] = [
  * emitter produced real code for them.
  */
 export const externalCases: pxt.Map<AsmCheck> = {
+
+    "tests/compile-test/lang-test0/58loopcapture.ts": (asm, res) => {
+        chai.assert(codeSize(asm) > 0, "no loop capture code generated");
+        chai.assert(hexSize(res) > 0, "no loop capture hex generated");
+    },
 
     "tests/compile-test/lang-test0/54conditiontruthiness.ts": (asm) => {
         chai.assert(codeSize(asm) > 0, "no code generated");

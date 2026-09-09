@@ -60,7 +60,8 @@ const PASS_REPEATS = Math.round(PASS_WINDOW_MS / PASS_INTERVAL_MS);
 const CASES = {
     "conditiontruthiness": "54conditiontruthiness.ts",
     "conditionlowering": "55conditionlowering.ts",
-    "ifacedispatch": "56ifacedispatch.ts"
+    "ifacedispatch": "56ifacedispatch.ts",
+    "loopcapture": "58loopcapture.ts"
 };
 
 // Exact text of the host prelude's assert. Matching it exactly rather than by
