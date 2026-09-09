@@ -1,3 +1,19 @@
+import { copySimulatorTheme, getDefaultSimulatorThemePreference } from "../../react-common/components/theming/simulatorThemeDefaults";
+
+/** Snapshot Default's current colors for sharing, without changing saved preferences. */
+export function getSimulatorThemeForSharing(
+    preference: pxt.auth.SimulatorThemePreference | undefined,
+    colorTheme: pxt.ColorThemeInfo | undefined,
+    presets: pxt.SimulatorThemePreset[] | undefined
+): pxt.SimulatorTheme | undefined {
+    if (!presets?.length) return undefined;
+    const defaultPreference = getDefaultSimulatorThemePreference(colorTheme, presets);
+    const theme = !preference || preference.presetId === defaultPreference?.presetId
+        ? defaultPreference?.theme
+        : preference.theme;
+    return theme && copySimulatorTheme(theme);
+}
+
 export function getSimulatorThemePresetId(
     theme: string | pxt.Map<string> | undefined,
     presets: pxt.SimulatorThemePreset[]

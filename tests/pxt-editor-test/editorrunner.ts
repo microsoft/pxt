@@ -20,6 +20,7 @@ import {
     getSimulatorThemePreferenceForColorThemeChange,
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
+import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
 
 pxt.appTarget = {
     versions: {
@@ -132,6 +133,83 @@ describe("simulator themes", () => {
 
     it("initializes an empty cloud-synced simulator theme map", () => {
         chai.expect(pxt.auth.DEFAULT_USER_PREFERENCES().simulatorThemes).deep.equals({});
+    });
+
+    describe("reset editor-wide themes", () => {
+        const target = {
+            appTheme: { defaultColorTheme: lightTheme.id },
+            colorThemeMap: { light: lightTheme, dark: darkTheme },
+            simulator: { themePresets: presets },
+        } as Pick<pxt.TargetBundle, "appTheme" | "colorThemeMap" | "simulator">;
+
+        it("saves the configured editor default then clears the simulator preference", async () => {
+            const calls: string[] = [];
+            const result = await resetEditorThemesAsync(target, async theme => {
+                chai.expect(theme).equals(lightTheme);
+                calls.push("editor");
+            }, async () => { calls.push("simulator"); });
+
+            chai.expect(calls).deep.equals(["editor", "simulator"]);
+            chai.expect(result).deep.equals({ presetId: "default", theme: defaultSimulatorTheme });
+        });
+
+        it("uses the default editor theme's simulator colors and layout", async () => {
+            const configuredTarget = {
+                ...target,
+                appTheme: { ...target.appTheme, defaultColorTheme: inlineSimulatorTheme.id },
+                colorThemeMap: { ...target.colorThemeMap, inline: inlineSimulatorTheme },
+            };
+            const result = await resetEditorThemesAsync(configuredTarget, async () => {}, async () => {});
+            chai.expect(result?.theme).deep.equals({
+                ...defaultSimulatorTheme,
+                "background-color": "#123456",
+                layout: "inline",
+            });
+        });
+
+        it("preserves project themes instead of replacing them with the editor default", async () => {
+            const projectTheme = Object.freeze({ ...retroSimulatorTheme });
+            const projectConfig = Object.freeze({ name: "themed project", theme: projectTheme });
+            const before = JSON.stringify(projectConfig);
+            const result = await resetEditorThemesAsync(target, async () => {}, async () => {});
+
+            chai.expect(JSON.stringify(projectConfig)).equals(before);
+            chai.expect(resolveSimulatorTheme(projectConfig.theme, undefined, result?.theme, false))
+                .equals(projectTheme);
+        });
+
+        it("resets editor preferences even on targets without simulator themes", async () => {
+            let simulatorCleared = false;
+            const result = await resetEditorThemesAsync({ ...target, simulator: undefined }, async theme => {
+                chai.expect(theme).equals(lightTheme);
+            }, async () => { simulatorCleared = true; });
+            chai.expect(result).equals(undefined);
+            chai.expect(simulatorCleared).equals(true);
+        });
+
+        it("does not change preferences if the default editor theme is unavailable", async () => {
+            let changed = false;
+            let failed = false;
+            try {
+                await resetEditorThemesAsync({ ...target, colorThemeMap: {} },
+                    async () => { changed = true; }, async () => { changed = true; });
+            } catch {
+                failed = true;
+            }
+            chai.expect(failed).equals(true);
+            chai.expect(changed).equals(false);
+        });
+
+        it("propagates persistence errors so the confirmation can offer retry", async () => {
+            const error = new Error("Unable to save preferences");
+            let caught: unknown;
+            try {
+                await resetEditorThemesAsync(target, async () => {}, async () => { throw error; });
+            } catch (err) {
+                caught = err;
+            }
+            chai.expect(caught).equals(error);
+        });
     });
 
     it("uses the user theme only when project and device themes are absent", () => {

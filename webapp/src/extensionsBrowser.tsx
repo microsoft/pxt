@@ -747,7 +747,13 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         let trgConfig = await data.getAsync<pxt.TargetConfig>("target-config:")
         const packagesConfig = await pxt.packagesConfigAsync();
         const repos = installedExtensions(packagesConfig);
-        bundled.forEach(e => repos.push(e));
+        const builtinExtensions = trgConfig?.packages?.builtinExtensionsLib;
+        bundled.forEach((extension, name) => {
+            const extensionConfig = builtinExtensions?.[name];
+            if (!extensionConfig || (extensionConfig.preferred && !extensionConfig.hidden)) {
+                repos.push(extension);
+            }
+        });
 
         const toBeFetched: string[] = [];
         if (trgConfig?.packages?.approvedRepoLib) {
