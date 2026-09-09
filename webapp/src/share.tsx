@@ -220,7 +220,7 @@ export class ShareEditor extends auth.Component<ShareEditorProps, ShareEditorSta
                     anonymousShareByDefault={parent.getSharePreferenceForHeader()}
                     setAnonymousSharePreference={setSharePreference}
                     isMultiplayerGame={this.props.parent.state.isMultiplayerGame}
-                    simulatorTheme={simulatorTheme?.presetId === "default" ? undefined : simulatorTheme?.theme}
+                    simulatorTheme={simulatorTheme?.theme}
                     kind={this.state.kind}
                     onClose={this.hide}
                 />
