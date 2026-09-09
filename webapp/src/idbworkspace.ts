@@ -501,7 +501,7 @@ export function initGitHubDb() {
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
             repopath = repopath.toLowerCase()
             // don't cache master
-            if (tag == "master")
+            if (tag === "master" || tag === "main")
                 return this.mem.loadConfigAsync(repopath, tag);
 
             const id =  this.configCacheKey(repopath, tag);
@@ -523,13 +523,34 @@ export function initGitHubDb() {
         }
 
         async loadPackageAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<pxt.github.CachedPackage> {
-            repopath = repopath.toLowerCase()
             if (!tag) {
-              pxt.debug(`dep: default to master`)
-              tag = "master"
+                pxt.debug(`dep: no tag specified, try master and main`)
+                let res: pxt.github.CachedPackage;
+                let error: any;
+
+                try {
+                    res = await this.loadPackageFromMemoryAsync(repopath, "master", fallbackPackageFiles);
+                }
+                catch (e) {
+                    error = e;
+                }
+
+                if (res) return res;
+
+                try {
+                    res = await this.loadPackageFromMemoryAsync(repopath, "main", fallbackPackageFiles);
+                }
+                catch (e) {
+                    error = e;
+                }
+
+                if (res) return res;
+                throw error;
             }
+            repopath = repopath.toLowerCase()
+
             // don't cache master
-            if (tag == "master")
+            if (tag === "master" || tag === "main")
                 return this.loadPackageFromMemoryAsync(repopath, tag, fallbackPackageFiles);
 
             const id = this.packageCacheKey(repopath, tag);
