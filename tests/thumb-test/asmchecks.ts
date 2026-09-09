@@ -139,41 +139,76 @@ export const asmChecks: pxt.Map<AsmCheck> = {
         assertAtLeast(code, /bl _pxt_boolean_bang/g, 5, "calls to _pxt_boolean_bang");
         assertAtMost(code, /bl (pxt::fromBool|_pxt_fromBool)\b/g, 1,
             "calls to a fromBool entry point");
+
+        // No index-signature store in this program, so the map-set fast path
+        // must not be emitted (it is demand-driven).
+        assertAbsent(asm, ["_pxt_map_set_by_string"]);
     },
 
     "ifacebaseline.ts": (asm) => {
-        // The program does reach the generic interface/map runtime entries.
+        const code = userCode(asm);
+
+        // Shared iface-call thunks. The case dispatches one getter and one
+        // method through the same iface index often enough to clear the
+        // per-(index, numargs, getset) threshold, so both buckets get a thunk
+        // and every counted call site branches to one.
+        assertAtLeast(asm, /^\s*\S*ifacecall\d+_\S*_i\d+\S*:/gm, 2,
+            "interface call thunk definitions");
+        assertAtLeast(code, /bl \S*ifacecall\d+_\S*_i\d+\S*/g, 10,
+            "calls to an interface call thunk");
+
+        // Object-literal stores of one repeated key collapse onto a per-field
+        // helper, so the generic pxtrt::mapSet no longer appears at any store
+        // site -- only inside the helper body, which lives past _code_end.
+        assertAtLeast(asm, /^\s*\S*mapset_i\d+\S*:/gm, 1,
+            "object-literal store helper definitions (mapset_i)");
+        assertAtLeast(code, /bl \S*mapset_i\d+\S*/g, 4,
+            "calls to an object-literal store helper");
+        assertNoMatch(code, /bl pxtrt::mapSet\b/g, "inline generic pxtrt::mapSet calls");
+
+        // Vtable wrapper-skip: the two `scale` implementations are reached
+        // only through iface entries whose call sites all pass a full arg
+        // list, so their iface table slots point at _iface (b _nochk).
+        assertAtLeast(asm, /^\s*\S*_iface:/gm, 2, "_iface: proc labels");
+
+        // Typed string index-signature stores go through the thumb fast path
+        // instead of pxtrt::mapSetGeneric.
+        chai.assert(hasLabel(asm, "_pxt_map_set_by_string"),
+            "no _pxt_map_set_by_string helper in listing");
+        assertAtLeast(code, /bl _pxt_map_set_by_string/g, 2,
+            "calls to _pxt_map_set_by_string");
+        assertNoMatch(code, /bl pxtrt::mapSetGeneric/g, "generic map store calls");
+
+        // The program still reaches the generic map runtime for the paths that
+        // are not specialized (reads, key lookup, and the helper bodies).
         assertAtLeast(asm, /bl pxtrt::(mapGet|mapSet|lookupMapKey)/g, 4,
             "generic map runtime calls");
 
-        // Specializations introduced by interface dispatch specialization.
-        // Absent here: every access goes through the generic runtime path.
-        assertAbsent(asm, [
-            "_pxt_map_set_by_string",
-        ]);
-        assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
-        assertNoMatch(asm, /ifacecall\d+_.*_i\d+/g, "interface call thunks");
-        assertNoMatch(asm, /mapset_i/g, "specialized map-store thunks (mapset_i)");
-        assertNoMatch(asm, /^\s*\S*_iface:/gm, "_iface: proc labels");
+        // Checked-field-load helpers do NOT fire on this case: every `.size`
+        // read here has an interface-typed receiver, so it lowers to iface
+        // dispatch rather than a checked FieldAccess. Pinned at zero so that a
+        // change making those reads direct field loads shows up here.
+        assertNoMatch(asm, /ldfldchk_/g, "checked-field-load helpers (ldfldchk_)");
     },
 
     "fieldbaseline.ts": (asm) => {
-        // Checked field loads are emitted inline here: a call into the class's
-        // validate helper immediately followed by the load. QzCell declares two
-        // fields, so their offsets are fixed at #4 (qzTally) and #8 (qzSpare),
-        // and the offset in the sequence is what tells the two apart. The
-        // floors are the exact read-site counts in the case program -- 6 above
-        // the count gate and 4 below it -- so a read that stops taking the
-        // checked path fails here instead of quietly making the case vacuous.
-        assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g, 6,
+        const code = userCode(asm);
+
+        // qzTally sits above the count gate, so its six checked reads collapse
+        // onto one ldfldchk_ helper: the validate+load sequence moves into the
+        // helper body and every read site becomes a bl to it.
+        assertAtLeast(asm, /^\s*\S*ldfldchk_\S*qzTally\S*:/gm, 1,
+            "checked-field-load helper definitions for qzTally");
+        assertAtLeast(code, /bl \S*ldfldchk_\S*qzTally\S*/g, 6,
+            "calls to the qzTally checked-field-load helper");
+        assertNoMatch(code, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g,
             "inline checked loads of qzTally");
+
+        // qzSpare sits below the gate and keeps its inline checked loads.
+        assertNoMatch(asm, /ldfldchk_\S*qzSpare/g,
+            "checked-field-load helpers for qzSpare");
         assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #8\]/g, 4,
             "inline checked loads of qzSpare");
-
-        // Count-gated checked-field-load specialization. Absent here: qzTally
-        // is calibrated to sit above the gate, so a thunk of any kind means the
-        // specialization started firing in this tree.
-        assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
     },
 
     "sizebaseline.ts": (asm, res) => {
@@ -202,6 +237,48 @@ export interface VariantCheck {
 }
 
 export const variantChecks: VariantCheck[] = [
+
+    {
+        caseFile: "ifacebaseline.ts",
+        switches: { noIfaceSpec: true },
+        label: "noIfaceSpec",
+        check: (asm) => {
+            // The program does reach the generic interface/map runtime entries.
+            assertAtLeast(asm, /bl pxtrt::(mapGet|mapSet|lookupMapKey)/g, 4,
+                "generic map runtime calls");
+
+            // Every object-literal store is an inline generic mapSet again,
+            // rather than a call to a per-field helper.
+            assertAtLeast(userCode(asm), /bl pxtrt::mapSet\b/g, 4,
+                "inline generic pxtrt::mapSet calls");
+
+            // Specializations introduced by interface dispatch specialization.
+            // Absent here: every access goes through the generic runtime path,
+            // and no unreferenced helper text is emitted.
+            assertAbsent(asm, [
+                "_pxt_map_set_by_string",
+            ]);
+            assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
+            assertNoMatch(asm, /ifacecall\d+_.*_i\d+/g, "interface call thunks");
+            assertNoMatch(asm, /mapset_i/g, "specialized map-store thunks (mapset_i)");
+            assertNoMatch(asm, /^\s*\S*_iface:/gm, "_iface: proc labels");
+        },
+    },
+
+    {
+        caseFile: "fieldbaseline.ts",
+        switches: { noIfaceSpec: true },
+        label: "noIfaceSpec",
+        check: (asm) => {
+            // Both fields keep their inline checked loads (validate + load at
+            // the field's offset), and no helper of any kind is emitted.
+            assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g, 6,
+                "inline checked loads of qzTally");
+            assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #8\]/g, 4,
+                "inline checked loads of qzSpare");
+            assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
+        },
+    },
 
     {
         caseFile: "boolbaseline.ts",
