@@ -12,7 +12,7 @@ Goodbye Orange! The new default theme meets all web accessibility color contrast
 
 ![Settings menu](/static/blog/arcade/update-aug-2026/settings.png)
 
-![Theme picker](/static/blog/arcade/update-feb-2026/theme.png)
+![Theme picker](/static/blog/arcade/update-aug-2026/theme.png)
 
 Look, look! We've also added a cool new theme 😎 - **Tokyo Night**!
 
