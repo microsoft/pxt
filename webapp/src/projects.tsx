@@ -707,13 +707,13 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             items.push({ role: "separator" });
             items.push({
                 role: "menuitem",
-                className: "ui item",
+                className: "github-menuitem",
                 title: lf("Unlink {0} from GitHub", githubUser.name),
                 onClick: this.signOutGithub,
                 children: <>
                     <div className="avatar" role="presentation">
-                        <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
-                    </div>,
+                        <img src={githubUser.photo} alt={lf("User picture")} />
+                    </div>
                     {lf("Disconnect GitHub")}
                 </>
             });
@@ -758,13 +758,15 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
             });
         }
 
-        return <MenuDropdown
-            id="settings-menuitem"
-            className="settings-menuitem"
-            title={lf("Settings")}
-            icon="icon setting large"
-            items={items}
-        />
+        return (
+            <MenuDropdown
+                id="settings-menuitem"
+                className="settings-menuitem"
+                title={lf("Settings")}
+                icon="icon setting large"
+                items={items}
+            />
+        );
     }
 }
 
