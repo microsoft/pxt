@@ -1458,7 +1458,8 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
     private async ensureForumShareLink() {
         const { cardType, url } = this.props;
         if (cardType !== "forumUrl") return;
-        if (this.state.resolvedForumShareUrl || this.state.resolvingForumShare) return;
+        if (this.getForumEditorShareLink() || this.state.resolvingForumShare) return;
+        if (pxt.BrowserUtils.isPxtElectron()) return;
 
         this.setState({ resolvingForumShare: true });
         try {
@@ -1471,7 +1472,7 @@ export class ProjectsDetail extends data.Component<ProjectsDetailProps, Projects
                 }
             }
         } catch (e) {
-            core.handleNetworkError(e);
+            pxt.debug("Unable to resolve optional forum share link");
         }
         this.setState({ resolvingForumShare: false });
     }
