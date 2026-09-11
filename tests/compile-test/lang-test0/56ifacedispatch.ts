@@ -117,12 +117,8 @@ namespace IfaceDispatch {
 
     // --- optional and defaulted parameters through an interface ----------
     //
-    // The emitter fills in a defaulted argument at the call site from the
-    // statically known signature. Through an interface- or any-typed
-    // reference there is no such signature, so an omitted argument arrives as
-    // undefined and the callee's own default does not apply. What must hold
-    // is that the interface and any paths agree with each other, and that a
-    // callee written to test for undefined works on every path.
+    // Defaults are applied in the runtime callee, so omitted arguments work
+    // through concrete, interface and any-typed references alike (#11562).
 
     interface QzOptIface {
         qzOpt(a: number, b?: number): number
@@ -146,7 +142,7 @@ namespace IfaceDispatch {
         const iface: QzOptIface = impl
         const dyn: any = impl
 
-        // a concrete call gets the default filled in at the call site
+        // a concrete call still applies the default
         assert(impl.qzOpt(1) == 6, "opt:concrete")
 
         // explicit arguments behave the same on every path
@@ -154,8 +150,8 @@ namespace IfaceDispatch {
         assert(iface.qzOpt(1, 2) == 3, "opt:iface2")
         assert(dyn.qzOpt(1, 2) == 3, "opt:any2")
 
-        // omitting the argument yields the same result on both dynamic paths
-        assert(("" + iface.qzOpt(1)) == ("" + dyn.qzOpt(1)), "opt:dynagree")
+        assert(iface.qzOpt(1) == 6, "opt:iface-default")
+        assert(dyn.qzOpt(1) == 6, "opt:any-default")
 
         // a callee that defaults explicitly works everywhere
         assert(impl.qzOptSafe(1) == 6, "opt:safe1")

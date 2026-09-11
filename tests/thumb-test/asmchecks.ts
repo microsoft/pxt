@@ -113,6 +113,13 @@ function escapeRegExp(s: string): string {
 
 export const asmChecks: pxt.Map<AsmCheck> = {
 
+    "defaultparameters.ts": (asm, res) => {
+        chai.assert(hexSize(res) > 0, "empty default parameter hex output");
+        checkDefaultParameters(asm);
+        chai.assert(/DpProbe_exact__P\d+_iface:\s+b DpProbe_exact__P\d+_nochk/.test(asm),
+            "exact interface entry must reach the common default prologue");
+    },
+
     "boolbaseline.ts": (asm) => {
         // Boolean condition lowering emits thumb fast paths for the boolean
         // conversion runtime calls.
@@ -221,6 +228,29 @@ export const asmChecks: pxt.Map<AsmCheck> = {
 
 // --- switch variants -----------------------------------------------------
 
+function checkDefaultParameters(asm: string) {
+    const code = userCode(asm);
+    const procedure = (name: string): string => {
+        const match = new RegExp("^" + name + "__P\\d+_pre:([\\s\\S]*?); endfun", "m").exec(code);
+        chai.assert(!!match, "missing procedure " + name);
+        return match[1];
+    };
+    for (const name of ["DpProbe_padded", "DpProbe_exact", "DpProbe_capture", "DpCtor_constructor"]) {
+        const body = procedure(name);
+        chai.assert.equal(countMatches(body, /bl pxt::eqq_bool/g), 1, name + " strict undefined guard");
+        chai.assert(/_nochk:[\s\S]*?movs r1, #0\s+mov r7, sp\s+str r7, \[r6, #4\]\s+bl pxt::eqq_bool\s+cmp r0, #0\s+beq \.defaultarg_/.test(body),
+            name + " must check undefined (not truthiness) in the shared body");
+    }
+    chai.assert(/_args:[\s\S]*?bl _expand_args_2_\d+[\s\S]*?bl DpProbe_padded__P\d+_nochk/.test(procedure("DpProbe_padded")),
+        "short dynamic calls must pad arguments then reach the default prologue");
+    chai.assert(/bl pxtrt::mklocRef[\s\S]*?bl pxtrt::ldlocRef[\s\S]*?bl pxt::eqq_bool[\s\S]*?movs r1, #23[\s\S]*?bl pxtrt::stlocRef[\s\S]*?bl pxt::mkAction/.test(procedure("DpProbe_capture")),
+        "default must update the rooted parameter box before creating its closure");
+    chai.assert(/bl pxt::eqq_bool[\s\S]*?movs r0, #27[\s\S]*?str r0, \[sp, args@1\][\s\S]*?str r1, \[r0, #4\]/.test(procedure("DpCtor_constructor")),
+        "constructor default must precede the parameter-property store");
+    assertNoMatch(procedure("dpPlain"), /defaultarg|bl pxt::eqq_bool/g, "default guards in a plain function");
+    assertNoMatch(code, /^dpShim__P\d+:/gm, "emitted TypeScript body for a native shim");
+}
+
 /**
  * A case compiled a second time with extra compile switches and checked
  * against different expectations -- the opt-out half of the differential
@@ -237,6 +267,23 @@ export interface VariantCheck {
 }
 
 export const variantChecks: VariantCheck[] = [
+
+    {
+        caseFile: "defaultparameters.ts",
+        switches: { noIfaceSpec: true },
+        label: "noIfaceSpec",
+        check: (asm) => {
+            checkDefaultParameters(asm);
+            assertNoMatch(asm, /^DpProbe_exact__P\d+_iface:/gm, "exact interface entry without specialization");
+        },
+    },
+
+    {
+        caseFile: "defaultparameters.ts",
+        switches: { slowMethods: true },
+        label: "slowMethods",
+        check: checkDefaultParameters,
+    },
 
     {
         caseFile: "ifacebaseline.ts",
@@ -316,6 +363,11 @@ export const variantChecks: VariantCheck[] = [
  * emitter produced real code for them.
  */
 export const externalCases: pxt.Map<AsmCheck> = {
+
+    "tests/compile-test/lang-test0/58defaultinitializers.ts": (asm, res) => {
+        chai.assert(codeSize(asm) > 0, "no default initializer code generated");
+        chai.assert(hexSize(res) > 0, "no default initializer hex generated");
+    },
 
     "tests/compile-test/lang-test0/54conditiontruthiness.ts": (asm) => {
         chai.assert(codeSize(asm) > 0, "no code generated");

@@ -2364,10 +2364,14 @@ ${lbl}: .short 0xffff
                             }
                             args.push(irToNode(expr))
                         } else {
-                            if (!opts.unfetteredInitializers && !isNumericLiteral(prm.initializer)) {
-                                userError(9212, lf("only numbers, null, true and false supported as default arguments"))
+                            // Emitted functions apply their own defaults, including on
+                            // virtual/interface calls where the implementation may differ.
+                            // Shims and helpers may have no emitted parameter prologue.
+                            const needsCallerDefault = attrs.helper || attrs.shim;
+                            if (needsCallerDefault && !opts.unfetteredInitializers && !isNumericLiteral(prm.initializer)) {
+                                userError(9212, lf("only numbers, null, true and false supported as default arguments for shims and helpers"))
                             }
-                            args.push(prm.initializer)
+                            args.push(needsCallerDefault ? prm.initializer : irToNode(emitLit(undefined)))
                         }
                     } else {
                         userError(9213, lf("unsupported default argument (shouldn't happen)"))
@@ -3155,13 +3159,9 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            const destructuredParameters: ParameterDeclaration[] = []
             const fieldAssignmentParameters: ParameterDeclaration[] = []
 
             proc.args = getParameters(node).map((p, i) => {
-                if (p.name.kind === SK.ObjectBindingPattern) {
-                    destructuredParameters.push(p)
-                }
                 if (node.kind == SK.Constructor && isCtorField(p)) {
                     fieldAssignmentParameters.push(p)
                 }
@@ -3181,7 +3181,25 @@ ${lbl}: .short 0xffff
                 }
             })
 
-            destructuredParameters.forEach(dp => emitVariableDeclaration(dp))
+            // Arity wrappers pad omitted arguments with undefined. Keep defaults in
+            // the shared body so direct, virtual, interface and action calls all run
+            // them, including native entries which can skip the arity wrapper.
+            const attrs = parseComments(node);
+            proc.args.forEach(l => {
+                const parameter = l.def as ParameterDeclaration;
+                // Simulator shim dummies must match the native caller-side behavior.
+                if (parameter.initializer && !attrs.shim && !attrs.helper) {
+                    const supplied = proc.mkLabel("defaultarg");
+                    proc.emitJmpZ(supplied, ir.rtcall("pxt::eqq_bool", [l.load(), emitLit(undefined)]));
+                    proc.emitExpr(l.storeByRef(emitEscapedExpression(parameter.initializer, "initializer")));
+                    proc.emitLbl(supplied);
+                    proc.stackEmpty();
+                }
+                if (parameter.name.kind === SK.ObjectBindingPattern) {
+                    // Destructure the resolved argument, not the initializer again.
+                    emitVarOrParam(parameter, l.load(), typeOf(parameter));
+                }
+            })
 
             // for constructor(public foo:number) generate this.foo = foo;
             for (let p of fieldAssignmentParameters) {
