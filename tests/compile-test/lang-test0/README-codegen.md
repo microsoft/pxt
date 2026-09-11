@@ -34,6 +34,7 @@ The corpus covers:
 | Failure mode | Covered by | Layers | How it presents |
 | --- | --- | --- | --- |
 | Loop closures sharing the last iteration's binding, or sibling closures losing shared mutations | `58loopcapture.ts`: top-level repro, mutation, nested/hoisted closures, multiple/destructured bindings, and reference-valued `for`/`for...of` | testlang, hw-ab (`loopcapture`) | `loopcapture:top-level`, `sibling-sharing`, `nested-closures`, `function-declarations`, `forof-siblings`, `for-reference` |
+| Positionless receiver capture makes hoisting depend on capture order, or skips a loop-body declaration | [58loopcapture.ts](58loopcapture.ts): hoisted method functions capturing `this` before/after `i`, a body local, and only `this` | testlang, testthumb (compilation), hw-ab (`loopcapture`) | Missing captured-value diagnostic or `loopcapture:method-this-first`, `method-index-first`, `method-body-local`, `method-this-only`, `method-live-this` |
 | Box renewed at the wrong point in a loop header or on an abrupt exit | `58loopcapture.ts`: initializer/condition/incrementor captures, zero iterations, continue/break/return/throw, labeled statements | testlang, hw-ab (`loopcapture`); testthumb (assembly) | `loopcapture:initializer`, `condition`, `incrementor`, `zero-iterations`, `labeled-continue`, `throw`; duplicate labels fail assembly |
 | Allocation moved outside a captured loop, added to an uncaptured loop, or old box replaced before its value is copied | `tests/thumb-test/cases/loopcapture.ts` and its `asmchecks.ts` entry | testthumb | Allocation-count, back-edge, copy-order, or per-element placement assertion fails |
 | Truthiness divergence between a fast path and the runtime's own `toBool` (`-0`, `NaN`, boxed zero, `""` vs `"0"`, `[]`, `{}`, functions) | `54conditiontruthiness.ts`, whole `check()` matrix plus the `--- falsy ---` / `--- truthy ---` case list | testlang, hw-ab | `assertion failed: if:<case>` / `ternary:<case>` / `while:<case>` / `bangbang:<case>`, where `<case>` names the value (`negzero`, `nan`, `boxedzero`, `str0`, `emptyarr`, ...) |
@@ -138,6 +139,12 @@ incrementor bindings; mutate variables through sibling closures; exit through
 continue, break, return and throw; and cover nested loops, destructuring, hoisted
 functions, mutable `for...of` captures, strings and reference values. Controls
 preserve shared outer variables, immutable captures and while/do body bindings.
+
+Method-loop regressions also cover positionless synthetic `this` captures in both
+source-use orders. They check loop-body initialization, per-iteration function
+identity and live receiver state. Their targeted `@ts-ignore` comments bypass
+TS1251 (the legacy ES5 checker's class-block function restriction) to test the
+emitter's existing hoisting behavior; they do not change that checker policy.
 
 The native probe isolates named function bodies. It asserts two box allocation
 sites before the classic loop (initializer and first iteration), one on the

@@ -3232,9 +3232,12 @@ ${lbl}: .short 0xffff
             if (info.capturedVars.length &&
                 info.usedBeforeDecl &&
                 node.kind == SK.FunctionDeclaration && !bin.finalPass) {
-                info.capturedVars.sort((a, b) => b.pos - a.pos)
+                // Synthetic captures (such as thisParameter) are available before
+                // source declarations, but may not have a source position.
+                const capturePos = (capture: VarOrParam): number => capture.pos == null ? -1 : capture.pos;
+                info.capturedVars.sort((a, b) => capturePos(b) - capturePos(a))
                 const scope = node.parent;
-                if (scope.kind === SK.Block && inLoop(scope) && info.capturedVars[0].pos < scope.pos) {
+                if (scope.kind === SK.Block && inLoop(scope) && info.capturedVars.every(capture => capturePos(capture) < scope.pos)) {
                     // All captures precede this loop block. Defining the function at
                     // the last captured variable would hoist it out of the iteration.
                     const id = getNodeId(scope);

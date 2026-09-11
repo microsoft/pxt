@@ -265,10 +265,74 @@ function testLoopBodyCapture() {
     assert(readers.map(f => f()).join(",") === "0,10,2,30,4", "loopcapture:do-body");
 }
 
+class LoopCaptureMethod {
+    constructor(public value: number) { }
+
+    collectThisFirst(): (() => number)[] {
+        const readers: (() => number)[] = [];
+        for (let i = 0; i < 3; i++) {
+            readers.push(read);
+            // The synthetic thisParameter is captured before the loop variable.
+            // @ts-ignore: The ES5 checker rejects block functions in class methods (TS1251).
+            function read() { return this.value + i; }
+        }
+        return readers;
+    }
+
+    collectIndexFirst(): (() => number)[] {
+        const readers: (() => number)[] = [];
+        for (let i = 0; i < 3; i++) {
+            readers.push(read);
+            // @ts-ignore: The ES5 checker rejects block functions in class methods (TS1251).
+            function read() { return i + this.value; }
+        }
+        return readers;
+    }
+
+    collectBodyLocal(): (() => number)[] {
+        const readers: (() => number)[] = [];
+        for (let i = 0; i < 3; i++) {
+            let value = i * 10;
+            readers.push(read);
+            value++;
+            // This capture is inside the block, so wait for its declaration.
+            // @ts-ignore: The ES5 checker rejects block functions in class methods (TS1251).
+            function read() { return this.value + i + value; }
+        }
+        return readers;
+    }
+
+    collectThisOnly(): (() => number)[] {
+        const readers: (() => number)[] = [];
+        for (let i = 0; i < 3; i++) {
+            readers.push(read);
+            // @ts-ignore: The ES5 checker rejects block functions in class methods (TS1251).
+            function read() { return this.value; }
+        }
+        return readers;
+    }
+}
+
+function testLoopCaptureMethods() {
+    const instance = new LoopCaptureMethod(10);
+    const thisFirst = instance.collectThisFirst();
+    const indexFirst = instance.collectIndexFirst();
+    const thisValues = thisFirst.map(f => f()).join(",");
+    const indexValues = indexFirst.map(f => f()).join(",");
+    assert(thisValues === "10,11,12", "loopcapture:method-this-first " + thisValues);
+    assert(indexValues === "10,11,12", "loopcapture:method-index-first " + indexValues);
+    assert(instance.collectBodyLocal().map(f => f()).join(",") === "11,22,33", "loopcapture:method-body-local");
+    const thisOnly = instance.collectThisOnly();
+    assert(thisOnly[0] !== thisOnly[1] && thisOnly[1] !== thisOnly[2], "loopcapture:method-this-only");
+    instance.value = 20;
+    assert(thisFirst.map(f => f()).join(",") === "20,21,22", "loopcapture:method-live-this");
+}
+
 testLoopCaptureMutations();
 testLoopCaptureHeader();
 testLoopCaptureControlFlow();
 testLoopCaptureBindings();
 testForOfCapture();
 testLoopBodyCapture();
+testLoopCaptureMethods();
 msg("loop capture passed");
