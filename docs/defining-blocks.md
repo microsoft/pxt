@@ -120,7 +120,7 @@ For example,
 
 ```typescript-ignore
 //% block="square $x"
-//% block.loc.fr="$x au carré"
+//% block.loc.fr-FR="$x au carré"
 export function square(x: number): number {}
 ```
 
@@ -138,9 +138,9 @@ ariaLabel.loc.LOCALE = translated aria label
     @param x the number to square
 **/
 //% block="square $x"
-//% block.loc.fr="$x au carré"
-//% jsdoc.loc.fr="Calcule le carré de x"
-//% x.loc.fr="le nombre"
+//% block.loc.fr-FR="$x au carré"
+//% jsdoc.loc.fr-FR="Calcule le carré de x"
+//% x.loc.fr-FR="le nombre"
 export function square(x: number): number {}
 
 
