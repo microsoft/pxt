@@ -978,6 +978,7 @@ namespace ts.pxtc {
         let currUsingContext: PxtNode = null
         let needsUsingInfo = false
         let pendingFunctionDefinitions: FunctionDeclaration[] = []
+        const loopBlockFunctionDefinitions: pxt.Map<FunctionDeclaration[]> = {};
 
         currNodeWave++
 
@@ -3231,11 +3232,23 @@ ${lbl}: .short 0xffff
             if (info.capturedVars.length &&
                 info.usedBeforeDecl &&
                 node.kind == SK.FunctionDeclaration && !bin.finalPass) {
-                info.capturedVars.sort((a, b) => b.pos - a.pos)
-                const vinfo = getVarInfo(info.capturedVars[0])
-                if (!vinfo.functionsToDefine)
-                    vinfo.functionsToDefine = []
-                vinfo.functionsToDefine.push(node)
+                // Synthetic captures (such as thisParameter) are available before
+                // source declarations, but may not have a source position.
+                const capturePos = (capture: VarOrParam): number => capture.pos == null ? -1 : capture.pos;
+                info.capturedVars.sort((a, b) => capturePos(b) - capturePos(a))
+                const scope = node.parent;
+                if (scope.kind === SK.Block && inLoop(scope) && info.capturedVars.every(capture => capturePos(capture) < scope.pos)) {
+                    // All captures precede this loop block. Defining the function at
+                    // the last captured variable would hoist it out of the iteration.
+                    const id = getNodeId(scope);
+                    const definitions = loopBlockFunctionDefinitions[id] || (loopBlockFunctionDefinitions[id] = []);
+                    if (definitions.indexOf(node) < 0) definitions.push(node);
+                } else {
+                    const vinfo = getVarInfo(info.capturedVars[0])
+                    if (!vinfo.functionsToDefine)
+                        vinfo.functionsToDefine = []
+                    vinfo.functionsToDefine.push(node)
+                }
             }
 
             // nothing should be on work list in final pass - everything should be already marked as used
@@ -4252,6 +4265,11 @@ ${lbl}: .short 0xffff
         function emitSpreadElementExpression(node: SpreadElement) { }
         function emitYieldExpression(node: YieldExpression) { }
         function emitBlock(node: Block) {
+            const definitions = bin.finalPass && loopBlockFunctionDefinitions[getNodeId(node)];
+            if (definitions) {
+                U.pushRange(pendingFunctionDefinitions, definitions);
+                flushHoistedFunctionDefinitions();
+            }
             node.statements.forEach(emit)
         }
         function checkForLetOrConst(declList: VariableDeclarationList): boolean {
@@ -4450,16 +4468,45 @@ ${lbl}: .short 0xffff
             proc.stackEmpty();
         }
 
+        function emitForIterationBindings(declList: VariableDeclarationList) {
+            // Only `let` loop headers create copied bindings. `const` and variables
+            // declared outside the loop retain their existing binding semantics.
+            if (!declList || !(declList.flags & NodeFlags.Let)) return;
+
+            const copyBinding = (decl: VarOrParam) => {
+                if (decl.name.kind === SK.ObjectBindingPattern || decl.name.kind === SK.ArrayBindingPattern) {
+                    (decl.name as BindingPattern).elements.forEach(element => {
+                        if (element.kind === SK.BindingElement) copyBinding(element as BindingElement);
+                    });
+                    return;
+                }
+                const loc = proc.localIndex(decl);
+                if (!loc || !loc.isByRefLocal()) return;
+
+                // Populate the new box before replacing the old cell. Closures already
+                // created keep the old box; sibling closures in this iteration share the new one.
+                const next = ir.shared(ir.rtcall("pxtrt::mklocRef", []));
+                proc.emitExpr(ir.rtcall("pxtrt::stlocRef", [next, loc.load()]));
+                proc.emitExpr(loc.storeDirect(next));
+                proc.stackEmpty();
+            };
+            declList.declarations.forEach(copyBinding);
+        }
+
         function emitForStatement(node: ForStatement) {
+            let declList: VariableDeclarationList;
             if (node.initializer && node.initializer.kind == SK.VariableDeclarationList) {
-                checkForLetOrConst(<VariableDeclarationList>node.initializer);
-                (<VariableDeclarationList>node.initializer).declarations.forEach(emit);
+                declList = node.initializer as VariableDeclarationList;
+                checkForLetOrConst(declList);
+                declList.declarations.forEach(emit);
             }
             else {
                 emitExprAsStmt(<Expression>node.initializer);
             }
             emitBrk(node)
             let l = getLabels(node)
+            // Initializer closures keep their own binding, separate from the first condition/body.
+            emitForIterationBindings(declList);
             proc.emitLblDirect(l.fortop);
             if (node.condition) {
                 emitBrk(node.condition);
@@ -4467,6 +4514,8 @@ ${lbl}: .short 0xffff
             }
             emit(node.statement)
             proc.emitLblDirect(l.cont);
+            // A continue must also create the next binding BEFORE evaluating the incrementor.
+            emitForIterationBindings(declList);
             emitExprAsStmt(node.incrementor);
             proc.emitJmp(l.fortop);
             proc.emitLblDirect(l.brk);
@@ -4538,6 +4587,11 @@ ${lbl}: .short 0xffff
 
             // c = a[i]
             if (iterVar) {
+                // A mutable captured for-of variable needs a fresh box for each element,
+                // rather than overwriting the box retained by closures from earlier elements.
+                if (iterVar.isByRefLocal()) {
+                    proc.emitExpr(iterVar.storeDirect(ir.rtcall("pxtrt::mklocRef", [])));
+                }
                 proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
                 emitBrk(node.initializer);
             }
@@ -4663,7 +4717,10 @@ ${lbl}: .short 0xffff
         function emitLabeledStatement(node: LabeledStatement) {
             let l = getLabels(node.statement)
             emit(node.statement)
-            proc.emitLblDirect(l.brk)
+            // Loops and switches define their own break target. Emitting it twice
+            // is tolerated by simjs but rejected by the native assembler.
+            if (!isIterationStatement(node.statement, false) && node.statement.kind !== SK.SwitchStatement)
+                proc.emitLblDirect(l.brk)
         }
 
         function emitThrowStatement(node: ThrowStatement) {
