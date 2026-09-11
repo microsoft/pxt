@@ -241,69 +241,119 @@ export function nativeHostLongpressAsync(): Promise<void> {
     return Promise.resolve();
 }
 
-export async function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions, fallbackAsync = browserDownloadDeployCoreAsync): Promise<void> {
+let hidDeployPromise: Promise<void>;
+
+export function hidDeployCoreAsync(resp: pxtc.CompileResult, d?: pxt.commands.DeployOptions, fallbackAsync = browserDownloadDeployCoreAsync): Promise<void> {
+    if (!hidDeployPromise) {
+        const deploy = hidDeployCoreInternalAsync(resp, d)
+            .then(async flashed => {
+                if (!flashed) {
+                    // Fallback instructions can offer "Try again". Release the
+                    // finished USB attempt before opening that dialog so its retry
+                    // cannot wait on the promise that is waiting for the dialog.
+                    if (hidDeployPromise === deploy) hidDeployPromise = undefined;
+                    await (resp.success ? fallbackAsync(resp) : browserDownloadDeployCoreAsync(resp));
+                }
+            })
+            .finally(() => {
+                if (hidDeployPromise === deploy) hidDeployPromise = undefined;
+            });
+        hidDeployPromise = deploy;
+    }
+    return hidDeployPromise;
+}
+
+async function hidDeployCoreInternalAsync(resp: pxtc.CompileResult, d: pxt.commands.DeployOptions): Promise<boolean> {
     pxt.tickEvent(`hid.deploy`);
     log(`hid deploy`);
     // error message handled in browser download
     if (!resp.success) {
         log(`compilation failed, use browser deploy instead`);
-        return browserDownloadDeployCoreAsync(resp);
-    }
-
-    const deployCore = async () => {
-        const dev = await pxt.packetio.initAsync(false);
-        core.showLoading(LOADING_KEY, lf("Downloading..."));
-        try {
-            await dev.reflashAsync(resp, percentageFlashed => {
-                core.updateLoadingCompletion(LOADING_KEY, percentageFlashed);
-            });
-            await dev.reconnectAsync();
-        } finally {
-            core.hideLoading(LOADING_KEY);
-        }
+        return false;
     }
 
     const LOADING_KEY = "hiddeploy";
-    deployingPacketIO = true
+    deployingPacketIO = true;
+    let repairedBootloader = false;
 
     try {
-        await pxt.Util.promiseTimeout(
-            120000,
-            deployCore()
-        );
-    } catch (e) {
-        // This is hit when we connect to an hf2 device (e.g. arcade) for the first time,
-        // and need the user to select / pair one more time. see pxtlib/hf2.ts
-        if (e.type === "repairbootloader") {
-            // TODO: slightly different flow vs implicit, as this is in a 'half paired' state?
-            // Ideally, we should be including this in the pairing webusb.tsx pairing dialog flow
-            // directly instead of deferring it all the way here.
-            await pairAsync();
-            return hidDeployCoreAsync(resp, d, fallbackAsync);
-        } else if (e.message === "timeout") {
-            pxt.tickEvent("hid.flash.timeout");
-            log(`flash timeout`);
-        } else if (e.type === "devicenotfound") {
-            pxt.tickEvent("hid.flash.devicenotfound");
-            log(`device not found`);
-        } else if (e.code == 19 || e.type === "devicelocked") {
-            // device is locked or used by another tab
-            pxt.tickEvent("hid.flash.devicelocked");
-            log(`error: device locked`);
-        } else if (e.type == "inittimeout") {
-            pxt.tickEvent("hid.flash.inittimeout");
-            await showReconnectDeviceInstructionsAsync(core.confirmAsync);
-        } else {
-            pxt.tickEvent("hid.flash.error");
-            log(`hid error ${e.message}`)
-            pxt.reportException(e)
-            if (d) d.reportError(e.message);
-        }
+        while (true) {
+            let cancelled = false;
+            const deploy = (async () => {
+                if (reconnectPromise) await reconnectPromise;
+                if (cancelled) return;
+                await requestPacketIOLockAsync();
+                if (cancelled) return;
+                const dev = await pxt.packetio.initAsync(false);
+                if (cancelled) return;
+                if (!dev) throw new Error("Device connection is unavailable");
+                core.showLoading(LOADING_KEY, lf("Downloading..."));
+                await dev.reflashAsync(resp, percentageFlashed => {
+                    if (!cancelled) core.updateLoadingCompletion(LOADING_KEY, percentageFlashed);
+                });
+                if (cancelled) return;
+                await dev.reconnectAsync();
+            })();
 
-        // default, save file
-        return fallbackAsync(resp);
+            try {
+                await pxt.Util.promiseTimeout(120000, deploy, "timeout");
+                return true;
+            } catch (e) {
+                if (!(e instanceof Error)) e = new Error(String(e));
+                // promiseTimeout does not cancel its promise. Retire the connection
+                // and stop late continuations before pairing, falling back or allowing
+                // another download to start writing to the same device.
+                cancelled = true;
+                pendingPacketIOLockRejecter?.(new Error("Download cancelled"));
+                // Keep cross-tab ownership while asking permission for the same
+                // board's bootloader; another tab must not take it mid-download.
+                if (e.type === "repairbootloader" && !repairedBootloader)
+                    await pxt.packetio.disconnectAsync();
+                else
+                    await disconnectAsync();
+                await deploy.catch(() => { });
+                core.hideLoading(LOADING_KEY);
+
+                if (e.type === "repairbootloader") {
+                    // Arcade's bootloader can require a second browser permission.
+                    // Retry once, and only if the user actually paired it.
+                    if (!repairedBootloader) {
+                        repairedBootloader = true;
+                        pairingDuringDeploy = true;
+                        try {
+                            if (await pairAsync()) continue;
+                        } catch (pairError) {
+                            pxt.reportException(pairError);
+                        } finally {
+                            pairingDuringDeploy = false;
+                        }
+                    }
+                    await disconnectAsync();
+                } else if (e.message === "timeout" || e.message === "Timeout") {
+                    pxt.tickEvent("hid.flash.timeout");
+                    log(`flash timeout`);
+                } else if (e.type === "devicenotfound") {
+                    pxt.tickEvent("hid.flash.devicenotfound");
+                    log(`device not found`);
+                } else if (e.code == 19 || e.type === "devicelocked") {
+                    pxt.tickEvent("hid.flash.devicelocked");
+                    log(`error: device locked`);
+                } else if (e.type == "inittimeout") {
+                    pxt.tickEvent("hid.flash.inittimeout");
+                    await showReconnectDeviceInstructionsAsync(core.confirmAsync);
+                } else {
+                    pxt.tickEvent("hid.flash.error");
+                    log(`hid error ${e.message}`);
+                    pxt.reportException(e);
+                    if (d) d.reportError(e.message);
+                }
+                return false;
+            } finally {
+                core.hideLoading(LOADING_KEY);
+            }
+        }
     } finally {
-        deployingPacketIO = false
+        deployingPacketIO = false;
     }
 }
 
@@ -533,33 +583,37 @@ export async function initAsync() {
 export async function maybeReconnectAsync(pairIfDeviceNotFound = false, skipIfConnected = false): Promise<boolean> {
     log("[CLIENT]: starting reconnect")
 
+    // DAP wrappers also share this entry point and do not have HF2's flash guard.
+    // Defer foreground reconnects instead of resetting a micro:bit mid-download.
+    if (deployingPacketIO && !pairingDuringDeploy && hidDeployPromise)
+        return hidDeployPromise.then(() => pxt.packetio.isConnected());
+
     if (skipIfConnected && pxt.packetio.isConnected() && !disconnectingPacketIO) return true;
 
     if (reconnectPromise) return reconnectPromise;
+    const connectionId = packetIOConnectionId;
     reconnectPromise = (async () => {
-        try {
-            await requestPacketIOLockAsync();
-            const wrapper = await pxt.packetio.initAsync();
-            if (!wrapper)
-                return false;
-
-            try {
-                await wrapper.reconnectAsync();
-                return true;
-            } catch (e) {
-                if (e.type == "devicenotfound") {
-                    return !!pairIfDeviceNotFound && pairAsync();
-                } else if (e.type == "inittimeout") {
-                    pxt.tickEvent("hid.flash.inittimeout");
-                    await showReconnectDeviceInstructionsAsync(core.confirmAsync);
-                }
-                throw e;
-            }
-        } finally {
-            reconnectPromise = undefined;
+        await requestPacketIOLockAsync();
+        if (connectionId !== packetIOConnectionId) throw new Error("Connection cancelled");
+        const wrapper = await pxt.packetio.initAsync();
+        if (connectionId !== packetIOConnectionId) throw new Error("Connection cancelled");
+        if (!wrapper) return false;
+        await wrapper.reconnectAsync();
+        return true;
+    })().finally(() => reconnectPromise = undefined);
+    try {
+        return await reconnectPromise;
+    } catch (e) {
+        // Pairing itself reconnects. Release the in-flight promise first, otherwise
+        // pairing waits on the very promise that is waiting for it to finish.
+        if (e.type === "devicenotfound") {
+            return !!pairIfDeviceNotFound && pairAsync();
+        } else if (e.type === "inittimeout") {
+            pxt.tickEvent("hid.flash.inittimeout");
+            await showReconnectDeviceInstructionsAsync(core.confirmAsync);
         }
-    })();
-    return reconnectPromise;
+        throw e;
+    }
 }
 
 export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
@@ -573,8 +627,7 @@ export async function pairAsync(implicitlyCalled?: boolean): Promise<boolean> {
     switch (res) {
         case pxt.commands.WebUSBPairResult.Success:
             try {
-                await maybeReconnectAsync(false, true);
-                return true;
+                return await maybeReconnectAsync(false, true);
             } catch (e) {
                 // Device
                 core.infoNotification(lf("Oops, connection failed."));
@@ -606,10 +659,13 @@ export async function showDisconnectAsync(): Promise<void> {
 
 export function disconnectAsync(): Promise<void> {
     log("[CLIENT]: starting disconnect")
+    ++packetIOConnectionId;
+    pendingPacketIOLockRejecter?.(new Error("Connection cancelled"));
     disconnectingPacketIO = true;
     return pxt.packetio.disconnectAsync()
         .then(() => {
             log("[CLIENT]: sending confirmed disconnect " + lockRef)
+            // Also withdraw a pending request without releasing another tab's lock.
             hasLock = false;
             sendServiceWorkerMessage({
                 type: "serviceworkerclient",
@@ -624,18 +680,22 @@ export function disconnectAsync(): Promise<void> {
 // Generate a unique id for communicating with the service worker
 const lockRef = pxtc.Util.guidGen();
 let pendingPacketIOLockResolver: () => void;
-let pendingPacketIOLockRejecter: () => void;
+let pendingPacketIOLockRejecter: (error: Error) => void;
 let serviceWorkerSupportedResolver: () => void;
 let reconnectPromise: Promise<boolean>;
 let hasLock = false;
 let deployingPacketIO = false;
+let pairingDuringDeploy = false;
+let packetIOConnectionId = 0;
 let disconnectingPacketIO = false;
 let serviceWorkerSupported: boolean | undefined = undefined;
 
 async function requestPacketIOLockAsync() {
     if (hasLock) return;
-    if (pendingPacketIOLockResolver) return Promise.reject("Already waiting for packet lock");
+    if (pendingPacketIOLockResolver) return Promise.reject(new Error("Already waiting for packet lock"));
+    const connectionId = packetIOConnectionId;
     const supported = await checkIfServiceWorkerSupportedAsync();
+    if (connectionId !== packetIOConnectionId) throw new Error("Connection cancelled");
     if (!supported) return;
 
     if (navigator?.serviceWorker?.controller) {
@@ -686,10 +746,16 @@ export async function handleServiceWorkerMessageAsync(message: pxt.ServiceWorker
         }
         else {
             log("[CLIENT]: received denied lock " + lockRef)
-            pendingPacketIOLockRejecter();
+            const error = new Error("Device in use by another tab");
+            (error as any).type = "devicelocked";
+            pendingPacketIOLockRejecter(error);
         }
         pendingPacketIOLockResolver = undefined;
         pendingPacketIOLockRejecter = undefined;
+    }
+    else if (message.action === "packet-io-lock-granted" && message.lock === lockRef && message.granted && !hasLock) {
+        // A request can be cancelled while the worker is waiting for another tab.
+        sendServiceWorkerMessage({ type: "serviceworkerclient", action: "release-packet-io-lock", lock: lockRef });
     }
     else if (message.action === "packet-io-supported" && serviceWorkerSupportedResolver) {
         serviceWorkerSupportedResolver();
