@@ -746,6 +746,11 @@ const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
+const testpacketio = gulp.series(
+    pxtlib,
+    () => compileTsProject("tests/packetio-test", "built/tests", true),
+    () => exec(`${getMochaExecutable()} built/tests/packetio-test/packetiorunner.js --reporter dot`, true)
+);
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/", true);
 const browserifyKarma = () =>
@@ -784,6 +789,7 @@ const testAll = gulp.series(
     testpytraces,
     testtutorials,
     testlanguageservice,
+    testpacketio,
     karma,
     testSkillmap,
     testpxteditor
@@ -909,6 +915,7 @@ exports.tt = teacherTool;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
+exports.testpacketio = testpacketio;
 exports.reactCommon = reactCommon;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
