@@ -5813,6 +5813,8 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
+        const projectTools = sideDocs && inEditor && !targetTheme.lockedEditor && !this.state.header.temporary &&
+            !!pxt.appTarget.runtime?.palette && (targetTheme.projectTools || /(?:\?|&)projecttools=1(?:&|$)/i.test(window.location.search));
         const { lightbox, greenScreen } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
@@ -5825,7 +5827,7 @@ export class ProjectView
         const feedbackEnabled = pxt.U.ocvEnabled();
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
-        const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+        const showSideDoc = sideDocs && !projectTools && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
@@ -5952,7 +5954,9 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
+                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed}
+                    docsUrl={this.state.sideDocsLoadUrl} bubble={projectTools} header={this.state.header}
+                    projectNotes={this.state.header?.projectNotes} /> : undefined}
                 {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}

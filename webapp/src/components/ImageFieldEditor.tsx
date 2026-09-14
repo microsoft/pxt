@@ -229,6 +229,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     componentWillUnmount() {
         tickImageEditorEvent("image-editor-hidden");
+        if (this.shortcutLock) releaseShortcutLock(this.shortcutLock);
         this.galleryAssets = undefined;
         this.userAssets = undefined;
     }

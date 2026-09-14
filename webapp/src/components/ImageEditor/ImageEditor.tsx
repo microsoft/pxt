@@ -10,7 +10,7 @@ import { ImageCanvas } from './ImageCanvas';
 import { Alert, AlertInfo } from './Alert';
 
 import { Timeline } from './Timeline';
-import { addKeyListener, removeKeyListener, setStore } from './keyboardShortcuts';
+import { addKeyListener, setStore } from './keyboardShortcuts';
 
 import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName, dispatchChangeImageDimensions, dispatchSetFrames } from './actions/dispatch';
 import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
@@ -39,6 +39,7 @@ export interface ImageEditorProps {
     lightMode?: boolean;
     hideDoneButton?: boolean;
     hideAssetName?: boolean;
+    scopedShortcuts?: boolean; // Nonmodal hosts only handle keys from inside this editor.
 }
 
 export interface ImageEditorState {
@@ -50,6 +51,8 @@ export interface ImageEditorState {
 
 export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorState> implements AssetEditorCore {
     protected unsubscribeChangeListener: Unsubscribe;
+    private root = React.createRef<HTMLDivElement>();
+    private unsubscribeShortcuts: () => void;
 
     constructor(props: ImageEditorProps) {
         super(props);
@@ -58,7 +61,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     componentDidMount() {
-        addKeyListener();
+        this.unsubscribeShortcuts = addKeyListener(this.root.current, this.getStore(), this.props.scopedShortcuts);
 
         if (this.props.asset) {
             this.openAsset(this.props.asset);
@@ -70,7 +73,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     componentWillUnmount() {
-        if (!this.props.nested) removeKeyListener();
+        this.unsubscribeShortcuts?.();
 
         if (this.unsubscribeChangeListener) {
             this.unsubscribeChangeListener()
@@ -85,13 +88,14 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         const isAnimationEditor = instanceStore.getState().store.present.kind === "Animation"
 
-        return <div className="image-editor-outer">
+        return <div className="image-editor-outer" ref={this.root}
+            onPointerDownCapture={this.activateStore} onFocusCapture={this.activateStore} onClickCapture={this.activateStore}>
             <Provider store={instanceStore}>
                 <div className={classList("image-editor", editingTile && "editing-tile", hideDoneButton && "hide-done-button")}>
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
                         <SideBar lightMode={lightMode} />
-                        <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
+                        <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} scopedShortcuts={this.props.scopedShortcuts} />
                         {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
                     <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} hideAssetName={!!hideAssetName} />
@@ -438,6 +442,8 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         return this.props.store || mainStore;
     }
 
+    private activateStore = () => setStore(this.getStore());
+
     protected onStoreChange = () => {
         if (this.props.onChange) {
             this.props.onChange(this.props.singleFrame ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
@@ -445,7 +451,6 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         const store = this.getStore();
         const state = store.getState();
-        setStore(store);
 
         if (state.editor) this.setState({ alert: state.editor.alert });
 

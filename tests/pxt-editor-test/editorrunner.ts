@@ -21,6 +21,7 @@ import {
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
+import { decodeWhiteboard, excludePrivateProjectMetadata, MAX_PROJECT_NOTE_LENGTH, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
     versions: {
@@ -42,6 +43,68 @@ function patchText(patch: unknown, a: string) {
 }
 
 const filename = "main.ts";
+
+describe("private project notes", () => {
+    it("offers the experiment before the project's palette has loaded", () => {
+        const target = pxt.appTarget;
+        const isElectron = pxt.BrowserUtils.isPxtElectron;
+        try {
+            pxt.BrowserUtils.isPxtElectron = () => false;
+            pxt.appTarget = { appTheme: { experiments: [], assetEditor: true }, runtime: {} } as pxt.TargetBundle;
+            chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(true);
+            pxt.appTarget.appTheme.hideSideDocs = true;
+            chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(false);
+        } finally {
+            pxt.appTarget = target;
+            pxt.BrowserUtils.isPxtElectron = isElectron;
+        }
+    });
+
+    it("removes notes from a copied public header without changing the private header", () => {
+        const notes: pxt.workspace.ProjectNotes = { version: 1, text: "private sentinel" };
+        const header = Object.freeze({ id: "test", name: "project", projectNotes: notes }) as pxt.workspace.Header;
+        const shared = excludePrivateProjectMetadata(header);
+        chai.expect(shared.projectNotes).equals(undefined);
+        chai.expect(shared.name).equals("project");
+        chai.expect(header.projectNotes).equals(notes);
+        chai.expect(JSON.stringify(shared)).not.contains("private sentinel");
+    });
+
+    it("validates a bounded text note and clones the stored palette", () => {
+        const palette = new Array<string>(16).fill("#abcdef");
+        const value = validateProjectNotes({ version: 1, text: "reminder", palette });
+        chai.expect(value.palette).deep.equals(palette);
+        chai.expect(value.palette).not.equals(palette);
+        chai.expect(() => validateProjectNotes({ version: 1, text: "x".repeat(MAX_PROJECT_NOTE_LENGTH + 1) })).throws();
+        chai.expect(() => validateProjectNotes({ version: 2, text: "" } as any)).throws();
+    });
+
+    it("round-trips images including odd heights without adding a project asset", () => {
+        for (const [width, height] of [[160, 120], [3, 5], [256, 256]]) {
+            const bitmap = new pxt.sprite.Bitmap(width, height);
+            bitmap.set(0, 0, 3);
+            bitmap.set(width - 1, height - 1, 12);
+            const encoded = pxt.sprite.base64EncodeBitmap(bitmap.data());
+            const result = decodeWhiteboard(encoded);
+            chai.expect(result.equals(bitmap)).equals(true);
+            chai.expect(validateProjectNotes({ version: 1, text: "", image: encoded }).image).equals(encoded);
+        }
+    });
+
+    it("rejects corrupt or oversized image data before decoding dimensions", () => {
+        const bitmap = new pxt.sprite.Bitmap(160, 120);
+        const encoded = pxt.sprite.base64EncodeBitmap(bitmap.data());
+        chai.expect(() => decodeWhiteboard(encoded.slice(0, -8))).throws();
+        chai.expect(() => decodeWhiteboard("not an image")).throws();
+        chai.expect(() => decodeWhiteboard("A".repeat(45004))).throws();
+        chai.expect(() => decodeWhiteboard(pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(257, 1).data()))).throws();
+    });
+
+    it("rejects invalid colors instead of using them in canvas styles", () => {
+        chai.expect(() => validateProjectNotes({ version: 1, text: "", palette: ["#fff"] })).throws();
+        chai.expect(() => validateProjectNotes({ version: 1, text: "", palette: new Array<string>(16).fill("url(https://example.com)") })).throws();
+    });
+});
 
 const simulatorTheme: pxt.SimulatorTheme = {
     "background-color": "#111111",
