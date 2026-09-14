@@ -45,6 +45,13 @@ https://youtu.be/hJweibY7tgE
 
 Although they are linked in the [Get started](#get-started) section above, you can further familiarize yourself with the translation activities by reviewing these topics:
 
+1. [Translation languages](/translate/languages)
+2. [Localization files](/translate/files)
+3. [Parts to translate](/translate/parts)
+4. [Translating markdown](/translate/markdown)
+5. [Translator roles](/translate/roles)
+6. [In context translation](/translate/in-context)
+
 ### ~tip
 
 #### MakeCode Crowdin project style guide
@@ -54,13 +61,6 @@ The MakeCode Crowdin project style guide is a good place to learn how to handle 
 **[MakeCode Crowdin Style Guide](/translate/style-guide)**
 
 ### ~
-
-1. [Translation languages](/translate/languages)
-2. [Localization files](/translate/files)
-3. [Parts to translate](/translate/parts)
-4. [Translating markdown](/translate/markdown)
-5. [Translator roles](/translate/roles)
-6. [In context translation](/translate/in-context)
 
 ### Quick reference info
 
