@@ -22,7 +22,8 @@ describe("responsive project-tools launcher", function () {
         const styles = await less.render(fs.readFileSync("theme/project-tools.less", "utf8"), {
             modifyVars: {
                 mainMenuHeight: "4rem", mobileMenuHeight: "3.5rem", editorToolsCollapsedHeight: "4.7rem",
-                editorToolsHeight: "10rem", sidedocZIndex: "50", largestTabletScreen: "991px", bannerHeight: "2rem"
+                editorToolsHeight: "10rem", editorToolsCollapsedMobileHeight: "3.4rem",
+                sidedocZIndex: "50", largestTabletScreen: "991px", bannerHeight: "2rem"
             }
         });
         css = `* { box-sizing: border-box; } ${styles.css}`;
@@ -53,9 +54,10 @@ describe("responsive project-tools launcher", function () {
                     return { jsx, jsxs: jsx, Fragment: React.Fragment };
                 }
                 if (id === "./ProjectWhiteboard") return {
-                    ProjectWhiteboard: () => {
+                    ProjectWhiteboard: props => {
                         React.useEffect(() => { ++window.whiteboardMounts; }, []);
-                        return React.createElement("textarea", { id: "test-notes", defaultValue: "Private draft" });
+                        return React.createElement(React.Fragment, null, props.renderHeader("Whiteboard"),
+                            React.createElement("textarea", { id: "test-notes", defaultValue: "Private draft" }));
                     }
                 };
                 throw new Error(`Unexpected dependency: ${id}`);

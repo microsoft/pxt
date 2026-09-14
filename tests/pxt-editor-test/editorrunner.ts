@@ -21,7 +21,7 @@ import {
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
-import { decodeWhiteboard, excludePrivateProjectMetadata, MAX_PROJECT_NOTE_LENGTH, validateProjectNotes } from "../../webapp/src/projectNotes";
+import { addProjectWhiteboard, decodeWhiteboard, deleteProjectWhiteboard, excludePrivateProjectMetadata, MAX_PROJECT_NOTE_LENGTH, MAX_PROJECT_WHITEBOARDS, MAX_WHITEBOARD_NAME_LENGTH, normalizeProjectNotes, renameProjectWhiteboard, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
     versions: {
@@ -45,6 +45,14 @@ function patchText(patch: unknown, a: string) {
 const filename = "main.ts";
 
 describe("private project notes", () => {
+    let guidGen: () => string;
+    let whiteboardId = 0;
+    beforeEach(() => {
+        guidGen = pxt.Util.guidGen;
+        pxt.Util.guidGen = () => `test-whiteboard-${++whiteboardId}`;
+    });
+    afterEach(() => { pxt.Util.guidGen = guidGen; });
+
     it("offers the experiment before the project's palette has loaded", () => {
         const target = pxt.appTarget;
         const isElectron = pxt.BrowserUtils.isPxtElectron;
@@ -56,6 +64,57 @@ describe("private project notes", () => {
             chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(false);
         } finally {
             pxt.appTarget = target;
+            pxt.BrowserUtils.isPxtElectron = isElectron;
+        }
+    });
+
+    it("preserves an authored default without needing a local experiment setting", () => {
+        const target = pxt.appTarget;
+        const savedAppTheme = pxt.savedAppTheme;
+        const getLocal = pxt.storage.getLocal;
+        const isElectron = pxt.BrowserUtils.isPxtElectron;
+        try {
+            pxt.appTarget = { appTheme: { experiments: [], assetEditor: true, projectTools: true } } as pxt.TargetBundle;
+            pxt.savedAppTheme = () => pxt.appTarget.appTheme;
+            pxt.storage.getLocal = () => undefined;
+            pxt.BrowserUtils.isPxtElectron = () => false;
+            chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(false);
+            pxteditor.experiments.syncTheme();
+            chai.expect(pxt.appTarget.appTheme.projectTools).equals(true);
+            chai.expect(pxteditor.experiments.someEnabled()).equals(false);
+        } finally {
+            pxt.appTarget = target;
+            pxt.savedAppTheme = savedAppTheme;
+            pxt.storage.getLocal = getLocal;
+            pxt.BrowserUtils.isPxtElectron = isElectron;
+        }
+    });
+
+    it("keeps the project-tools experiment separate from the target default", () => {
+        const target = pxt.appTarget;
+        const savedAppTheme = pxt.savedAppTheme;
+        const getLocal = pxt.storage.getLocal;
+        const reload = pxt.reloadAppTargetVariant;
+        const isElectron = pxt.BrowserUtils.isPxtElectron;
+        try {
+            pxt.appTarget = { appTheme: { experiments: [], assetEditor: true } } as pxt.TargetBundle;
+            pxt.savedAppTheme = () => pxt.appTarget.appTheme;
+            pxt.storage.getLocal = key => key === "experiments-projectTools" ? "1" : undefined;
+            pxt.reloadAppTargetVariant = () => {};
+            pxt.BrowserUtils.isPxtElectron = () => false;
+            pxteditor.experiments.syncTheme();
+            chai.expect(pxteditor.experiments.isEnabled("projectTools")).equals(true);
+            chai.expect(pxt.appTarget.appTheme.projectTools).equals(undefined);
+            chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(true);
+            pxt.storage.getLocal = () => undefined;
+            pxteditor.experiments.syncTheme();
+            chai.expect(pxteditor.experiments.isEnabled("projectTools")).equals(false);
+            chai.expect(pxt.appTarget.appTheme.projectTools).equals(undefined);
+        } finally {
+            pxt.appTarget = target;
+            pxt.savedAppTheme = savedAppTheme;
+            pxt.storage.getLocal = getLocal;
+            pxt.reloadAppTargetVariant = reload;
             pxt.BrowserUtils.isPxtElectron = isElectron;
         }
     });
@@ -103,6 +162,74 @@ describe("private project notes", () => {
     it("rejects invalid colors instead of using them in canvas styles", () => {
         chai.expect(() => validateProjectNotes({ version: 1, text: "", palette: ["#fff"] })).throws();
         chai.expect(() => validateProjectNotes({ version: 1, text: "", palette: new Array<string>(16).fill("url(https://example.com)") })).throws();
+    });
+
+    it("upgrades legacy notes without changing their drawing, palette or source object", () => {
+        const image = pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(160, 120).data());
+        const old: pxt.workspace.ProjectNotesV1 = { version: 1, text: "original", image, palette: new Array<string>(16).fill("#abcdef") };
+        const notes = normalizeProjectNotes(Object.freeze(old));
+        chai.expect(notes.version).equals(2);
+        chai.expect(notes.whiteboards.length).equals(1);
+        chai.expect(notes.whiteboards[0]).includes({ name: "Whiteboard 1", text: "original", image });
+        chai.expect(notes.activeWhiteboardId).equals(notes.whiteboards[0].id);
+        chai.expect(notes.whiteboards[0].palette).deep.equals(old.palette);
+        chai.expect(notes.whiteboards[0].palette).not.equals(old.palette);
+        chai.expect(old.version).equals(1);
+    });
+
+    it("adds and renames independent boards without overwriting the original", () => {
+        const original = normalizeProjectNotes({ version: 1, text: "first notes" });
+        const added = addProjectWhiteboard(original, " Ideas ");
+        chai.expect(added.whiteboards.length).equals(2);
+        chai.expect(added.whiteboards[1].name).equals("Ideas");
+        chai.expect(added.whiteboards[1].text).equals("");
+        chai.expect(added.activeWhiteboardId).equals(added.whiteboards[1].id);
+        const renamed = renameProjectWhiteboard(added, added.whiteboards[0].id, "Plan");
+        chai.expect(renamed.whiteboards[0].name).equals("Plan");
+        chai.expect(renamed.whiteboards[0].text).equals("first notes");
+        chai.expect(original.whiteboards[0].name).equals("Whiteboard 1");
+        chai.expect(original.whiteboards.length).equals(1);
+        chai.expect(() => addProjectWhiteboard(added, "ideas")).throws();
+        chai.expect(() => renameProjectWhiteboard(added, added.whiteboards[0].id, " ")).throws();
+        chai.expect(() => renameProjectWhiteboard(added, "missing", "New name")).throws();
+    });
+
+    it("validates every board and bounds collection sizes, names and IDs", () => {
+        const notes = addProjectWhiteboard(normalizeProjectNotes(), "Other");
+        chai.expect(JSON.stringify(validateProjectNotes(notes))).equals(JSON.stringify(notes));
+        chai.expect(() => validateProjectNotes({ ...notes, activeWhiteboardId: "missing" })).throws();
+        chai.expect(() => validateProjectNotes({ ...notes, whiteboards: [] })).throws();
+        const first = notes.whiteboards[0];
+        for (const invalid of [
+            { id: first.id }, { name: first.name }, { name: " " },
+            { name: "x".repeat(MAX_WHITEBOARD_NAME_LENGTH + 1) }, { name: "two\nlines" },
+            { text: "x".repeat(MAX_PROJECT_NOTE_LENGTH + 1) }, { image: "invalid" }, { palette: ["#fff"] }
+        ]) chai.expect(() => validateProjectNotes({ ...notes, whiteboards: [first, { ...notes.whiteboards[1], ...invalid }] })).throws();
+        let full = notes;
+        while (full.whiteboards.length < MAX_PROJECT_WHITEBOARDS) full = addProjectWhiteboard(full, `Board ${full.whiteboards.length + 1}`);
+        chai.expect(() => addProjectWhiteboard(full, "Overflow")).throws();
+        chai.expect(() => validateProjectNotes({ ...full, whiteboards: [...full.whiteboards, { ...first, id: "extra", name: "extra" }] })).throws();
+    });
+
+    it("deletes only the requested board and selects a neighbor without mutating notes", () => {
+        const original = addProjectWhiteboard(addProjectWhiteboard(normalizeProjectNotes({ version: 1, text: "keep this" }), "Ideas"), "Levels");
+        const [first, middle, last] = original.whiteboards;
+        const snapshot = JSON.stringify(original);
+        const deletedMiddle = deleteProjectWhiteboard({ ...original, activeWhiteboardId: middle.id }, middle.id);
+        chai.expect(deletedMiddle.whiteboards).deep.equals([first, last]);
+        chai.expect(deletedMiddle.activeWhiteboardId).equals(last.id);
+        chai.expect(deleteProjectWhiteboard(original, last.id).activeWhiteboardId).equals(middle.id);
+        chai.expect(deleteProjectWhiteboard(original, first.id).activeWhiteboardId).equals(last.id);
+        chai.expect(JSON.stringify(original)).equals(snapshot);
+        chai.expect(JSON.stringify(validateProjectNotes(deletedMiddle))).equals(JSON.stringify(deletedMiddle));
+    });
+
+    it("never deletes the last whiteboard or a missing ID", () => {
+        const notes = normalizeProjectNotes({ version: 1, text: "last board" });
+        const snapshot = JSON.stringify(notes);
+        chai.expect(() => deleteProjectWhiteboard(notes, notes.activeWhiteboardId)).throws("Keep at least one whiteboard");
+        chai.expect(() => deleteProjectWhiteboard(addProjectWhiteboard(notes, "Other"), "missing")).throws("no longer available");
+        chai.expect(JSON.stringify(notes)).equals(snapshot);
     });
 });
 
