@@ -876,6 +876,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor.addChangeListener((ev: Blockly.Events.Abstract) => {
             Blockly.Events.disableOrphans(ev);
 
+            if (ev.type === Blockly.Events.VIEWPORT_CHANGE) {
+                const viewportEvent = ev as Blockly.Events.ViewportChange;
+                if (viewportEvent.scale !== viewportEvent.oldScale) {
+                    this.parent.forceUpdate();
+                }
+            }
+
             const ignoredChanges = [
                 Blockly.Events.UI,
                 Blockly.Events.SELECTED,
@@ -1148,6 +1155,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     zoomOut() {
         if (!this.editor) return;
         this.editor.zoomCenter(-5);
+    }
+
+    getZoomPercentage(): number | undefined {
+        return this.editor ? Math.round(this.editor.scale * 100) : undefined;
     }
 
     setScale(scale: number) {
