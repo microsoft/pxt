@@ -35,6 +35,16 @@ If you're more comfortable translating while actually using and seeing the strin
 
 Although they are linked in the [Get started](#get-started) section above, you can further familiarize yourself with the translation activities by reviewing these topics:
 
+### ~tip
+
+#### MakeCode Crowdin project style guide
+
+The MakeCode Crowdin project style guide is a good place to learn how to handle translation of MakeCode's special markdown elements, metadata, code examples, and strings for blocks. Read it at:
+
+**[MakeCode Crowdin Style Guide](/translate/style-guide)**
+
+### ~
+
 1. [Translation languages](/translate/languages)
 2. [Localization files](/translate/files)
 3. [Parts to translate](/translate/parts)
