@@ -1,4 +1,4 @@
-# Project tools bubbles (experiment)
+# Project tools bubbles and private whiteboards
 
 This is a focused port of the tabbed/resizable documentation idea from
 [PR #10888](https://github.com/microsoft/pxt/pull/10888), rebuilt on current PXT.
@@ -7,10 +7,16 @@ changes or old layout overrides.
 
 ## Enable
 
-In an asset-editor target such as Arcade, open **Settings → About → Experiments**
+Arcade enables this feature by default through `appTheme.projectTools: true` in
+its target configuration, including target uploads. No experiment setting is
+needed and the default does not trigger an experiments banner on its own.
+
+On other asset-editor targets, open **Settings → About → Experiments**
 and enable **Project tools bubbles**, then reload. For a local preview, add
 `?projecttools=1` to the editor URL. Targets may also opt in with the
-`appTheme.projectTools` flag. Existing sidedocs behavior remains the default.
+`appTheme.projectTools` flag. Without a target flag, experiment or preview query,
+existing sidedocs behavior is unchanged. Experiment startup never overwrites
+the target's authored default.
 
 The feature is hidden on the home screen, in sandbox/locked editors, for temporary
 projects and when there is no image palette. Other targets can explicitly list
@@ -40,13 +46,26 @@ projects and when there is no image palette. Other targets can explicitly list
   panel first; another Escape from its bubble retracts the options.
 - The panel can be resized using its edge, or Left/Right, Home/End on the keyboard
   resize control. The layout is mirrored in RTL and fits narrow screens.
+  Compact panels extend to just above the mobile footer. The whiteboard's palette
+  scrolls independently, so all 16 colors remain available even on short screens.
 - Existing block help, reference, built-in keyboard help and markdown entry points
   open Documentation. Asking for the same topic again selects Documentation even
   when Whiteboard is currently active. Collapsing does not reload the docs iframe.
-- Whiteboard uses the existing single-image editor with a separate Redux store,
-  a 160 × 120 sketch and a plain-text note field. It is not a game asset. The
-  canvas sits directly below the privacy label without a separate Sketch/Clear
-  drawing row. Multiple pages and image resizing are not part of this first version.
+- Use the **Whiteboards** dropdown in the whiteboard header to select a board,
+  **Rename whiteboard**, or create a **New whiteboard**. A project can have up to
+  eight boards with unique, single-line names of up to 64 characters. Each board
+  has its own 160 × 120 drawing, text notes and undo history; the last selected
+  board is remembered. Undo history is kept during switching, not across reloads.
+- When there is more than one board, **Delete whiteboard** asks for confirmation
+  naming the board. **Cancel** or Escape leaves it unchanged. Confirming **Delete**
+  removes that board's drawing and notes, saves the remaining collection and
+  switches to a neighboring board. At least one board is always kept; deletion
+  cannot be undone with the drawing editor's Undo button.
+- An existing single whiteboard becomes **Whiteboard 1**, preserving its drawing,
+  text and palette. Each board uses the existing single-image editor with a
+  separate Redux store and is never registered as a game asset. The canvas sits
+  directly below the privacy label without a separate Sketch/Clear drawing row.
+  Image resizing is not supported.
 
 The short privacy label is **“Private project notes: not included when sharing”**.
 There is no routine saving/saved text. Save errors display a Retry action.
@@ -54,9 +73,12 @@ There is no routine saving/saved text. Save errors display a Retry action.
 ## Storage and sharing boundary
 
 Notes are stored in `Header.projectNotes`, not in `ScriptText`, asset collections,
-JRES or the package manifest. The schema contains a version, up to 4,096 text
-characters, an optional base64 F4 image and its palette. Image dimensions and
-encoded lengths are checked before decoding/allocating the bitmap.
+JRES or the package manifest. Version 2 contains `whiteboards` and
+`activeWhiteboardId`; each board has an ID, name, up to 4,096 text characters,
+an optional base64 F4 image and its palette. Version 1 remains readable and is
+upgraded when notes are next saved, not merely by opening the panel. Every board,
+name and ID is validated. Image dimensions and encoded lengths are checked before
+decoding/allocating the bitmap.
 
 | Path | Notes included? |
 | --- | --- |
@@ -79,6 +101,9 @@ falling back to memory. Existing workspace session ownership prevents saving ove
 a project opened by another tab. Cloud transfers do not acknowledge/overwrite
 notes edited while the network request was in flight. Incoming same-project notes
 replace a clean view; a dirty view offers a choice instead of silently overwriting.
+The collection is saved as one snapshot, so switching boards does not race
+independent writes that could drop another board's edits. Cloud conflict choices
+apply to the entire saved collection.
 
 Existing workspace/cloud account isolation and conflict-copy semantics still
 apply. As with normal project saves, closing the browser before an asynchronous
@@ -96,7 +121,8 @@ tabs retain the draft/store but unmount the canvas and its global listeners.
 ## Validation
 
 - `gulp testpxteditor`: schema validation, bitmap round trips, public-header
-  filtering, experiment availability, and the existing editor tests.
+  filtering, legacy migration, bounded collections, add/rename operations,
+  experiment availability, and the existing editor tests.
 - `gulp testprojecttools`: real workspace/cloud modules with fake durable storage
   and authenticated API, both share paths, duplicate isolation, cloud round trips,
   in-flight edits, persistence failures/retry, and shortcut-owner tests. A
@@ -104,7 +130,8 @@ tabs retain the draft/store but unmount the canvas and its global listeners.
   animation (including RTL and reduced motion), persistent bubbles and repeated
   toggling, keyboard focus/dismissal, the tablet breakpoint, banner layout,
   centered launcher dots, panel-pointer alignment, outside/iframe dismissal and
-  mounted drafts.
+  mounted drafts. A real-image-editor browser suite covers the header menu,
+  independent drawings/text/undo, retries, and mobile palette access/footer spacing.
 - Local Arcade browser checks: separate bubbles, keyboard navigation and resizing,
   drawing/text persistence after collapse and reload, no game-asset registration,
   text undo isolation, exclusion from the actual project-file export, experiment

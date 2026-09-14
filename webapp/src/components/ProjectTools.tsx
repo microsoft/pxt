@@ -150,6 +150,12 @@ export function ProjectTools(props: ProjectToolsProps) {
         tabButtons.current[next]?.focus();
     };
     const resize = (value: number) => setWidth(Math.max(360, Math.min(900, window.innerWidth - 80, value)));
+    const renderHeader = (title: string, actions?: React.ReactNode) => <div className="project-tools__header">
+        <h2 className="project-tools__title" title={title}>{title}</h2>
+        {actions}
+        <button type="button" className="project-tools__close" title={lf("Collapse project tools")}
+            aria-label={lf("Collapse project tools")} onClick={collapse}><i className="icon minus" aria-hidden="true" /></button>
+    </div>;
 
     return <div className={`project-tools${compact ? " project-tools--compact" : ""}`}
         ref={root} dir={rtl ? "rtl" : "ltr"} data-options-open={optionsOpen} onBlur={event => {
@@ -250,12 +256,7 @@ export function ProjectTools(props: ProjectToolsProps) {
                     else if (event.key === "End") resize(900);
                     else resize(width + (event.key === "ArrowLeft" ? 1 : -1) * (rtl ? -1 : 1) * (event.shiftKey ? 80 : 20));
                 }} />
-            <div className="project-tools__header">
-                <h2 className="project-tools__title">{tab === "docs" ? lf("Documentation") : lf("Whiteboard")}</h2>
-                {tab === "docs" && props.docsUrl && props.docsAction}
-                <button type="button" className="project-tools__close" title={lf("Collapse project tools")}
-                    aria-label={lf("Collapse project tools")} onClick={collapse}><i className="icon minus" aria-hidden="true" /></button>
-            </div>
+            {tab === "docs" && renderHeader(lf("Documentation"), props.docsUrl && props.docsAction)}
             <section id="project-tools-docs" role="tabpanel" aria-labelledby="project-tools-tab-docs" hidden={tab !== "docs"}
                 className="project-tools__docs">
                 {props.docsUrl ? props.children : <div className="project-tools__empty">
@@ -267,7 +268,8 @@ export function ProjectTools(props: ProjectToolsProps) {
             </section>
             <section id="project-tools-whiteboard" role="tabpanel" aria-labelledby="project-tools-tab-whiteboard" hidden={tab !== "whiteboard"}
                 className="project-tools__whiteboard">
-                {visitedWhiteboard && <ProjectWhiteboard headerId={props.header.id} notes={props.notes} active={props.expanded && tab === "whiteboard"} />}
+                {visitedWhiteboard && <ProjectWhiteboard headerId={props.header.id} notes={props.notes}
+                    active={props.expanded && tab === "whiteboard"} renderHeader={renderHeader} />}
             </section>
         </div>
     </div>;

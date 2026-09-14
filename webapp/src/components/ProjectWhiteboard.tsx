@@ -1,19 +1,21 @@
 import * as React from "react";
-import { Action, createStore } from "redux";
+import { Action, createStore, Store } from "redux";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import imageReducer, { AnimationState, ImageEditorStore } from "./ImageEditor/store/imageReducer";
 import { dispatchDisableResize, dispatchOpenAsset } from "./ImageEditor/actions/dispatch";
 import { imageStateToBitmap } from "./ImageEditor/util";
-import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, validateProjectNotes, WHITEBOARD_HEIGHT, WHITEBOARD_WIDTH } from "../projectNotes";
+import { addProjectWhiteboard, decodeWhiteboard, deleteProjectWhiteboard, MAX_PROJECT_NOTE_LENGTH, normalizeProjectNotes, renameProjectWhiteboard, WHITEBOARD_HEIGHT, WHITEBOARD_WIDTH } from "../projectNotes";
+import { ProjectWhiteboardMenu } from "./ProjectWhiteboardMenu";
 import * as workspace from "../workspace";
 
 interface ProjectWhiteboardProps {
     headerId: string;
     notes?: pxt.workspace.ProjectNotes;
     active: boolean;
+    renderHeader: (name: string, actions?: React.ReactNode) => React.ReactNode;
 }
 
-function createNoteState(notes?: pxt.workspace.ProjectNotes): ImageEditorStore {
+function createNoteState(notes?: pxt.workspace.WhiteboardContent): ImageEditorStore {
     const bitmap = notes?.image ? decodeWhiteboard(notes.image) : new pxt.sprite.Bitmap(WHITEBOARD_WIDTH, WHITEBOARD_HEIGHT);
     const asset: pxt.ProjectImage = {
         id: "private-project-whiteboard", internalID: -1, type: pxt.AssetType.Image,
@@ -24,22 +26,26 @@ function createNoteState(notes?: pxt.workspace.ProjectNotes): ImageEditorStore {
     return imageReducer(state, dispatchDisableResize());
 }
 
-function noteReducer(state: ImageEditorStore, action: Action & { notes?: pxt.workspace.ProjectNotes }): ImageEditorStore {
+function noteReducer(state: ImageEditorStore, action: Action & { notes?: pxt.workspace.WhiteboardContent }): ImageEditorStore {
     return action.type === "project-notes-load" ? createNoteState(action.notes) : imageReducer(state, action);
 }
 
 export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
     const initial = React.useMemo(() => {
-        try { return { notes: props.notes ? validateProjectNotes(props.notes) : undefined, invalid: false }; }
-        catch { return { notes: undefined, invalid: true }; }
+        try { return { notes: normalizeProjectNotes(props.notes), invalid: false }; }
+        catch { return { notes: normalizeProjectNotes(), invalid: true }; }
     }, []);
-    const store = React.useMemo(() => createStore(noteReducer, createNoteState(initial.notes)), []);
-    const [text, setText] = React.useState(initial.notes?.text || "");
+    const [notes, setNotes] = React.useState(initial.notes);
+    const activeBoard = notes.whiteboards.find(board => board.id === notes.activeWhiteboardId);
+    // Keep each board's undo history and selected tools separate while switching.
+    const stores = React.useRef(new Map<string, Store<ImageEditorStore>>());
+    if (!stores.current.has(activeBoard.id)) stores.current.set(activeBoard.id, createStore(noteReducer, createNoteState(activeBoard)));
+    const store = stores.current.get(activeBoard.id);
     const [status, setStatus] = React.useState<"saved" | "saving" | "error">("saved");
     const [invalid, setInvalid] = React.useState(initial.invalid);
     const [conflict, setConflict] = React.useState<{ notes?: pxt.workspace.ProjectNotes }>();
     const editor = React.useRef<ImageEditor>();
-    const draft = React.useRef<pxt.workspace.ProjectNotes>(initial.notes || { version: 1, text: "" });
+    const draft = React.useRef(initial.notes);
     const dirty = React.useRef(false);
     const alive = React.useRef(true);
     const timer = React.useRef<number>();
@@ -73,8 +79,9 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         });
     }, [props.headerId]);
 
-    const update = React.useCallback((notes: pxt.workspace.ProjectNotes) => {
+    const update = React.useCallback((notes: pxt.workspace.ProjectNotesV2) => {
         draft.current = notes;
+        setNotes(notes);
         dirty.current = true;
         ++revision.current;
         setStatus("saving");
@@ -82,20 +89,29 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         timer.current = window.setTimeout(flush, 500);
     }, [flush]);
 
+    const updateBoard = React.useCallback((id: string, content: Partial<pxt.workspace.WhiteboardContent>) => {
+        const notes = draft.current;
+        update({ ...notes, whiteboards: notes.whiteboards.map(board => board.id === id ? { ...board, ...content } : board) });
+    }, [update]);
+
     const loadNotes = React.useCallback((notes?: pxt.workspace.ProjectNotes) => {
-        const validated = notes ? validateProjectNotes(notes) : { version: 1 as const, text: "" };
+        const validated = normalizeProjectNotes(notes);
         clearTimeout(timer.current);
         dirty.current = false;
         draft.current = validated;
         ++revision.current;
-        setText(validated.text);
         applying.current = true;
-        store.dispatch({ type: "project-notes-load", notes: validated });
+        for (const [id, store] of stores.current) {
+            const board = validated.whiteboards.find(board => board.id === id);
+            if (board) store.dispatch({ type: "project-notes-load", notes: board });
+            else stores.current.delete(id);
+        }
         applying.current = false;
+        setNotes(validated);
         setStatus("saved");
         conflictPending.current = false;
         setConflict(undefined);
-    }, [store]);
+    }, []);
 
     React.useEffect(() => {
         const serialized = JSON.stringify(props.notes);
@@ -122,20 +138,25 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
             const animation = present as AnimationState;
             const bitmap = imageStateToBitmap(animation.frames[0]);
             const image = pxt.sprite.base64EncodeBitmap(bitmap.data());
-            if (image === draft.current.image) return;
-            update({ version: 1, text: draft.current.text, image, palette: present.colors.slice() });
+            const board = draft.current.whiteboards.find(board => board.id === activeBoard.id);
+            if (!board || image === board.image) return;
+            updateBoard(board.id, { image, palette: present.colors.slice() });
         });
+        return unsubscribe;
+    }, [store, activeBoard.id, updateBoard]);
+
+    React.useEffect(() => {
+        alive.current = true;
         const onVisibilityChange = () => { if (document.hidden) flush(); };
         window.addEventListener("pagehide", flush);
         document.addEventListener("visibilitychange", onVisibilityChange);
         return () => {
             alive.current = false;
-            unsubscribe();
             window.removeEventListener("pagehide", flush);
             document.removeEventListener("visibilitychange", onVisibilityChange);
             flush();
         };
-    }, [store, update, flush]);
+    }, [flush]);
 
     React.useEffect(() => { if (!props.active) flush(); }, [props.active, flush]);
 
@@ -145,39 +166,52 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         const observer = new ResizeObserver(() => editor.current?.onResize());
         observer.observe(root);
         return () => observer.disconnect();
-    }, [props.active, invalid]);
+    }, [props.active, invalid, store]);
 
-    if (invalid) return <div className="project-whiteboard__invalid" role="alert">
-        <p>{lf("These notes could not be opened. The saved data has not been changed.")}</p>
-        <button type="button" onClick={() => {
-            setInvalid(false);
-            update({ version: 1, text: "" });
-        }}>{lf("Start a new whiteboard")}</button>
-    </div>;
+    const commit = (notes: pxt.workspace.ProjectNotesV2) => { update(notes); flush(); };
+    const actions = props.active && !invalid && <ProjectWhiteboardMenu notes={notes}
+        onSelect={id => { if (id !== draft.current.activeWhiteboardId) commit({ ...draft.current, activeWhiteboardId: id }); }}
+        onRename={(id, name) => commit(renameProjectWhiteboard(draft.current, id, name))}
+        onAdd={name => commit(addProjectWhiteboard(draft.current, name))}
+        onDelete={id => {
+            const remaining = deleteProjectWhiteboard(draft.current, id);
+            stores.current.delete(id);
+            commit(remaining);
+        }} />;
 
-    return <div className="project-whiteboard" onBlur={flush}>
-        <p id="project-notes-privacy" className="project-whiteboard__privacy">
-            <i className="icon lock" aria-hidden="true" />
-            {lf("Private project notes: not included when sharing")}
-        </p>
-        {conflict && <div role="alert" className="project-whiteboard__conflict">
-            <p>{lf("Saved notes changed while you were editing. Choose which version to keep.")}</p>
-            <button type="button" onClick={() => { conflictPending.current = false; setConflict(undefined); dirty.current = true; flush(); }}>{lf("Keep my notes")}</button>
-            <button type="button" onClick={() => loadNotes(conflict.notes)}>{lf("Load saved notes")}</button>
-        </div>}
-        <div id="project-whiteboard-canvas" className="project-whiteboard__canvas" aria-label={lf("Project sketch editor")}>
-            {props.active && <ImageEditor ref={editor} store={store} singleFrame hideDoneButton hideAssetName scopedShortcuts />}
+    return <>
+        {props.renderHeader(activeBoard.name, actions)}
+        <div className="project-whiteboard__body">
+            {invalid ? <div className="project-whiteboard__invalid" role="alert">
+                <p>{lf("These notes could not be opened. The saved data has not been changed.")}</p>
+                <button type="button" onClick={() => {
+                    const notes = normalizeProjectNotes();
+                    loadNotes(notes);
+                    setInvalid(false);
+                    update(notes);
+                }}>{lf("Start a new whiteboard")}</button>
+            </div> : <div className="project-whiteboard" onBlur={flush}>
+                <p id="project-notes-privacy" className="project-whiteboard__privacy">
+                    <i className="icon lock" aria-hidden="true" />
+                    {lf("Private project notes: not included when sharing")}
+                </p>
+                {conflict && <div role="alert" className="project-whiteboard__conflict">
+                    <p>{lf("Saved notes changed while you were editing. Choose which version to keep.")}</p>
+                    <button type="button" onClick={() => { conflictPending.current = false; setConflict(undefined); dirty.current = true; flush(); }}>{lf("Keep my notes")}</button>
+                    <button type="button" onClick={() => loadNotes(conflict.notes)}>{lf("Load saved notes")}</button>
+                </div>}
+                <div id="project-whiteboard-canvas" className="project-whiteboard__canvas" aria-label={lf("Project sketch editor")}>
+                    {props.active && <ImageEditor key={activeBoard.id} ref={editor} store={store} singleFrame hideDoneButton hideAssetName scopedShortcuts />}
+                </div>
+                <label htmlFor="project-notes-text">{lf("Notes")}</label>
+                <textarea id="project-notes-text" value={activeBoard.text} maxLength={MAX_PROJECT_NOTE_LENGTH}
+                    aria-describedby="project-notes-privacy" placeholder={lf("Ideas, reminders, things to try…")}
+                    onChange={event => updateBoard(activeBoard.id, { text: event.target.value })} />
+                {status === "error" && <div className="project-whiteboard__status" role="alert">
+                    {lf("Notes could not be saved.")}
+                    <button type="button" onClick={flush}>{lf("Retry")}</button>
+                </div>}
+            </div>}
         </div>
-        <label htmlFor="project-notes-text">{lf("Notes")}</label>
-        <textarea id="project-notes-text" value={text} maxLength={MAX_PROJECT_NOTE_LENGTH}
-            aria-describedby="project-notes-privacy" placeholder={lf("Ideas, reminders, things to try…")}
-            onChange={event => {
-                setText(event.target.value);
-                update({ ...draft.current, text: event.target.value });
-            }} />
-        {status === "error" && <div className="project-whiteboard__status" role="alert">
-            {lf("Notes could not be saved.")}
-            <button type="button" onClick={flush}>{lf("Retry")}</button>
-        </div>}
-    </div>;
+    </>;
 }

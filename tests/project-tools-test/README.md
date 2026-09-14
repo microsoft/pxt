@@ -19,6 +19,11 @@ modules before running the tests. The task is included in `gulp test`.
   the ellipsis, outside controls, keyboard focus and the simulator iframe.
   The whiteboard is stubbed; no development server is needed. Puppeteer's browser
   must be installed.
+- [whiteboard.spec.js](whiteboard.spec.js) loads the actual image editor, reducer,
+  whiteboard controller and header menu. Storage and game-asset access are mocked,
+  not the controls. It covers legacy notes, named-board operations, independent
+  images/text/undo, confirmed deletion and last-board protection, save errors/retry,
+  all 16 colors on mobile and footer spacing.
 
 Bitmap/schema checks and the startup experiment guard are also covered by
 [the editor suite](../pxt-editor-test/editorrunner.ts), run with `gulp testpxteditor`.
