@@ -1,6 +1,8 @@
 .project-tools {
     --tools-surface: var(--pxt-target-background1, Canvas);
     --tools-foreground: var(--pxt-target-foreground1, CanvasText);
+    --tools-surface-hover: var(--pxt-target-background1-hover, var(--tools-surface));
+    --tools-foreground-hover: var(--pxt-target-foreground1-hover, var(--tools-foreground));
     --tools-border: var(--pxt-neutral-stencil1, GrayText);
     --tools-accent: var(--pxt-primary-background, Highlight);
     --tools-on-accent: var(--pxt-primary-foreground, HighlightText);
@@ -149,6 +151,22 @@
     .icon { margin: 0; }
 }
 
+// Header actions sit on a target surface, not the primary toolbar background.
+// Outrank shared menu/link rules even when react-common is imported afterwards.
+.project-tools__header .project-tools__close,
+.project-tools__header .project-tools__external,
+.project-whiteboard-menu .common-button.menu-button {
+    color: var(--tools-foreground);
+    background: transparent;
+    filter: none;
+
+    &:hover, &:focus-visible, &:active, &.expanded {
+        color: var(--tools-foreground-hover);
+        background: var(--tools-surface-hover);
+    }
+    &:focus-visible::after { outline: none; }
+}
+
 .project-tools__resize {
     position: absolute;
     inset-inline-start: -.4rem;
@@ -271,14 +289,12 @@
     flex-shrink: 0;
     z-index: 2;
 
-    .menu-button {
+    .common-button.menu-button {
         min-width: 2.75rem;
         min-height: 2.75rem;
         padding: .5rem;
         border: 1px solid transparent;
         border-radius: .5rem;
-        background: transparent;
-        color: var(--tools-foreground);
     }
     .common-menu-dropdown-pane, .project-whiteboard-menu__edit {
         position: absolute;
