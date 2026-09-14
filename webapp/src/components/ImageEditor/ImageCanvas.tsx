@@ -11,7 +11,7 @@ import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, crea
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
-import { areShortcutsEnabled } from './keyboardShortcuts';
+import { shouldHandleShortcut } from './keyboardShortcuts';
 import { LIGHT_MODE_TRANSPARENT } from './ImageEditor';
 
 const IMAGE_MIME_TYPE = "image/x-mkcd-f4"
@@ -43,6 +43,7 @@ export interface ImageCanvasProps {
     tilesetRevision: number;
 
     suppressShortcuts: boolean;
+    scopedShortcuts?: boolean;
 }
 
 /**
@@ -112,7 +113,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
 
     componentDidMount() {
         // move initial focus off of the blockly surface
-        if (document.activeElement instanceof HTMLElement) {
+        if (!this.props.scopedShortcuts && document.activeElement instanceof HTMLElement) {
             document.activeElement.blur();
         }
 
@@ -290,7 +291,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected onKeyDown = (ev: KeyboardEvent): void => {
-        if (!areShortcutsEnabled()) return;
+        if (!this.shouldHandleEvent(ev)) return;
 
         this.hasInteracted = true;
 
@@ -331,6 +332,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected onKeyUp = (ev: KeyboardEvent): void => {
+        if (!this.shouldHandleEvent(ev)) return;
         if (this.lastTool != null) {
             this.props.dispatchChangeImageTool(this.lastTool);
             this.lastTool = null;
@@ -339,6 +341,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected onCopy = (ev: ClipboardEvent) => {
+        if (!this.shouldHandleEvent(ev)) return;
         if (this.props.tool === ImageEditorTool.Marquee && this.editState?.floating?.image) {
             ev.preventDefault();
 
@@ -354,6 +357,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected onPaste = (ev: ClipboardEvent) => {
+        if (!this.shouldHandleEvent(ev)) return;
         if (this.props.isTilemap) {
             const patchData = ev.clipboardData.getData('application/makecode-tilemap');
 
@@ -1013,6 +1017,11 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     protected shouldHandleCanvasShortcut() {
         // canvas shortcuts (select all; delete) should only be handled if the focus is not within an input element
         return !(this.props.suppressShortcuts || document.activeElement instanceof HTMLInputElement);
+    }
+
+    private shouldHandleEvent(event: Event): boolean {
+        const root = (this.refs["canvas-bounds"] as HTMLElement)?.closest(".image-editor-outer") as HTMLElement;
+        return !this.props.suppressShortcuts && shouldHandleShortcut(event, root);
     }
 
     protected preventContextMenu = (ev: React.MouseEvent<any>) => ev.preventDefault();

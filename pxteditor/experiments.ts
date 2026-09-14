@@ -33,6 +33,11 @@ export function all(): Experiment[] {
     if (!ids) return [];
     const exps: Experiment[] = [
         {
+            id: "projectTools",
+            name: lf("Project tools bubbles"),
+            description: lf("Open documentation and a private whiteboard from compact bubble tabs. Notes are not shared or exported.")
+        },
+        {
             id: "print",
             name: lf("Print Code"),
             description: lf("Print the code from the current project"),
@@ -180,7 +185,10 @@ export function all(): Experiment[] {
         },
     ];
 
-    return exps.filter(experiment => ids.indexOf(experiment.id) > -1)
+        return exps.filter(experiment => ids.indexOf(experiment.id) > -1 ||
+                // Palette data is loaded with the project, after startup syncTheme().
+                // Use a stable target capability so saved experiment settings survive reload.
+                (experiment.id === "projectTools" && !pxt.appTarget.appTheme.hideSideDocs && !!pxt.appTarget.appTheme.assetEditor))
         .concat(editorExtensionExperiments || [])
         .filter(experiment => !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
 }

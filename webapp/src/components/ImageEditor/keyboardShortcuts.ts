@@ -7,18 +7,54 @@ import { EditState, flipEdit, getEditState, outlineEdit, replaceColorEdit, rotat
 let store = mainStore;
 
 let lockRefs: number[] = [];
+interface ShortcutOwner {
+    root: HTMLElement;
+    store: Store<ImageEditorStore>;
+    scoped: boolean;
+}
+let owners: ShortcutOwner[] = [];
 
-export function addKeyListener() {
-    lockRefs = [];
-    document.addEventListener("keydown", handleKeyDown);
-    document.addEventListener("keydown", handleUndoRedo, true);
-    document.addEventListener("keydown", overrideBlocklyShortcuts, true);
+export function addKeyListener(root: HTMLElement, instanceStore: Store<ImageEditorStore>, scoped = false): () => void {
+    if (!owners.length) {
+        lockRefs = [];
+        document.addEventListener("keydown", handleKeyDown);
+        document.addEventListener("keydown", handleUndoRedo, true);
+        document.addEventListener("keydown", overrideBlocklyShortcuts, true);
+    }
+    const owner = { root, store: instanceStore, scoped };
+    owners.push(owner);
+    return () => {
+        owners = owners.filter(item => item !== owner);
+        if (!owners.length) removeKeyListener();
+        setStore(owners[owners.length - 1]?.store);
+    };
 }
 
 export function removeKeyListener() {
     document.removeEventListener("keydown", handleKeyDown);
     document.removeEventListener("keydown", handleUndoRedo, true);
     document.removeEventListener("keydown", overrideBlocklyShortcuts, true);
+}
+
+function ownerForEvent(event: Event): ShortcutOwner {
+    if (!(event.target instanceof Node)) return undefined;
+    const target = event.target instanceof Element ? event.target : event.target.parentElement;
+    if (target?.closest("input, textarea, select, [contenteditable=true]")) return undefined;
+    // Prefer the innermost / most recently mounted editor. A nonmodal editor
+    // must never consume shortcuts from Monaco, Blockly or the notes textarea.
+    return owners.slice().reverse().find(owner => owner.root.contains(event.target as Node)) ||
+        owners.slice().reverse().find(owner => !owner.scoped);
+}
+
+export function shouldHandleShortcut(event: Event, root: HTMLElement): boolean {
+    return areShortcutsEnabled() && ownerForEvent(event)?.root === root;
+}
+
+function activateShortcut(event: Event): boolean {
+    const owner = ownerForEvent(event);
+    if (!owner || !areShortcutsEnabled()) return false;
+    store = owner.store;
+    return true;
 }
 
 // Disables shortcuts and returns a ref. Enable by passing the ref to release shortcut lock
@@ -46,6 +82,7 @@ export function setStore(newStore?: Store<ImageEditorStore>) {
 }
 
 function handleUndoRedo(event: KeyboardEvent) {
+    if (!activateShortcut(event)) return;
     const controlOrMeta = event.ctrlKey || event.metaKey; // ctrl on windows, meta on mac
     if (event.key === "Undo" || (controlOrMeta && event.key === "z" && !event.shiftKey)) {
         undo();
@@ -59,6 +96,7 @@ function handleUndoRedo(event: KeyboardEvent) {
 }
 
 function overrideBlocklyShortcuts(event: KeyboardEvent) {
+    if (!activateShortcut(event)) return;
     if (event.key === "Backspace" || event.key === "Delete") {
         handleKeyDown(event);
         event.stopPropagation();
@@ -66,7 +104,7 @@ function overrideBlocklyShortcuts(event: KeyboardEvent) {
 }
 
 function handleKeyDown(event: KeyboardEvent) {
-    if (!areShortcutsEnabled()) return;
+    if (!activateShortcut(event)) return;
 
     if (event.shiftKey && /^(?:Digit[1-9])|(?:Key[A-F])$/.test(event.code)) {
         if (event.code.indexOf("Digit") == 0) outline(parseInt(event.code.substring(5)))

@@ -211,6 +211,7 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<Se
             h.cloudCurrent = false;
             h.cloudVersion = prevVersion;
             cloudMeta.syncInProgress();
+            const uploadedNotes = JSON.stringify(h.projectNotes);
             const project: CloudProject = {
                 id: h.id,
                 header: JSON.stringify(excludeLocalOnlyMetadataFields(h)),
@@ -219,7 +220,9 @@ function setAsync(h: Header, prevVersion: string, text?: ScriptText): Promise<Se
             }
             const result = await auth.apiAsync<string>('/api/user/project', project);
             if (result.success) {
-                h.cloudCurrent = true;
+                // Whiteboard autosaves may update this shared header while the
+                // request is in flight. Acknowledge only the notes we uploaded.
+                h.cloudCurrent = JSON.stringify(h.projectNotes) === uploadedNotes;
                 h.cloudVersion = result.resp;
                 h.cloudLastSyncTime = U.nowSeconds()
                 pxt.tickEvent(`identity.cloudApi.setProject.success`);
@@ -281,8 +284,13 @@ async function transferToCloud(local: Header, cloudVersion: string): Promise<Set
 async function transferFromCloud(local: Header | null, remote: Header | null): Promise<Header> {
     if (local) {
         const newHeader = { ...local, ...remote }; // make sure we keep local-only metadata like _rev
+        const previousNotes = JSON.stringify(local.projectNotes);
         workspace.acquireHeaderSession(local);
         const remoteFile = await getAsync(local);
+        // A note autosave can complete while the download is pending. Leave that
+        // dirty project/version intact so the next sync uses normal conflict handling.
+        if (JSON.stringify(local.projectNotes) !== previousNotes) return local;
+        newHeader.projectNotes = remoteFile.header.projectNotes;
         await workspace.saveAsync(newHeader, remoteFile.text, true);
         return workspace.getHeader(newHeader.id);
     } else if (remote) {

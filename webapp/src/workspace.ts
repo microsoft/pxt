@@ -22,6 +22,7 @@ import Cloud = pxt.Cloud;
 import * as pxtblockly from "../../pxtblocks";
 import { HistoryFile, SnapshotEvent, getTextAtTime } from "../../pxteditor/history";
 import { Milestones } from "./constants";
+import { excludePrivateProjectMetadata, validateProjectNotes } from "./projectNotes";
 
 
 // Avoid importing entire crypto-js
@@ -408,7 +409,7 @@ function getScriptRequest(h: Header, text: ScriptText, meta: ScriptMeta, screens
         targetVersion: h.targetVersion,
         description: meta.description || lf("Made with ❤️ in {0}.", pxt.appTarget.title || pxt.appTarget.name),
         editor: h.editor,
-        header: JSON.stringify(cloud.excludeLocalOnlyMetadataFields(h)),
+        header: JSON.stringify(excludePrivateProjectMetadata(cloud.excludeLocalOnlyMetadataFields(h))),
         text: JSON.stringify(text),
         meta: {
             versions: pxt.appTarget.versions,
@@ -570,7 +571,16 @@ export async function partialSaveAsync(id: string, filename: string, content: st
     return saveAsync(prev.header, newTxt);
 }
 
-export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean): Promise<void> {
+export async function saveProjectNotesAsync(id: string, notes: pxt.workspace.ProjectNotes): Promise<void> {
+    const header = getHeader(id);
+    if (!header || header.isDeleted || header.temporary)
+        return Promise.reject(new Error(lf("This project is not available for saving notes.")));
+    if (implType === "mem" || implType === "memory")
+        throw new Error(lf("Project storage is unavailable. Notes could not be saved."));
+    return saveAsync({ ...header, projectNotes: validateProjectNotes(notes) }, undefined, false, true);
+}
+
+export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean, privateMetadataOnly = false): Promise<void> {
     pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
     if (h.isDeleted)
         clearHeaderSession(h);
@@ -622,7 +632,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     const isUserChange = !fromCloudSync
         && (h.isDeleted || text && hasUserFileChanges())
     if (isHeaderOnlyChange || isUserChange) {
-        h.pubCurrent = false
+        if (!privateMetadataOnly) h.pubCurrent = false
         h.cloudCurrent = false
         h.modificationTime = U.nowSeconds();
         h.targetVersion = h.targetVersion || "0.0.0";
@@ -703,6 +713,9 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         try {
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
+            // Private notes are excluded from the usual download/share recovery
+            // paths. Do not silently call an in-memory fallback a successful save.
+            if (privateMetadataOnly) throw e;
             // Write failed; use in memory db.
             await switchToMemoryWorkspace("write failed");
             ver = await impl.setAsync(h, e.version, toWrite);
