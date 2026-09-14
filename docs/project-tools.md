@@ -28,9 +28,9 @@ projects and when there is no image palette. Other targets can explicitly list
 - On small tablets and phones (991px wide or less), a single **…** bubble reveals
   the other bubbles with a 160ms slide out from behind it. They remain visible when
   selecting, using, switching or closing a panel, so the active bubble can be
-  pressed again to close it. **…**, clicking outside the tools, or tabbing away
-  retracts the bubbles and hides the open panel. Clicking outside also hides the
-  panel on desktop, including clicks in the simulator. Interacting inside either
+  pressed again to close it. **…** retracts the bubbles and hides the open panel.
+  Unless pinned, clicking outside the tools or tabbing away also dismisses it,
+  including clicks in the simulator on desktop. Interacting inside either
   panel (including the documentation iframe) keeps it open. Motion is mirrored in RTL and disabled for reduced-motion
   preferences. Widening the screen restores the separate bubbles without resetting notes.
 - The bubbles and panel follow the editor's notification-banner offset, including
@@ -40,6 +40,16 @@ projects and when there is no image palette. Other targets can explicitly list
   tucked away. Pressing **…** then closes that panel rather than expanding the options.
 - Select a bubble to open its panel, select the other to switch, and select the
   active bubble again to collapse it. Escape also collapses and returns focus.
+- Use the pin icon in either header to keep the tools open while interacting elsewhere.
+  A filled upright pin and a border indicate enabled; an outlined angled pin
+  indicates disabled. Tooltips and an accessible toggle label describe the control.
+  **Collapse**, Escape, the
+  active bubble and **…** still close the panel without clearing the pin. Reopening
+  or switching tabs retains the setting for the current project view.
+- Documentation that automatically opens with a homepage example/project (a
+  configured documentation page or auto-open README) starts pinned. Ordinary block
+  help does not force pinning, and reloading the current project keeps a manual
+  unpin choice. The pin is UI state, not shared project content.
 - Up/Down and Home/End navigate the desktop bubble tabs. Compact options use
   Left/Right and Home/End, then Enter/Space to select. Collapsing a compact panel
   returns focus to its bubble if visible, otherwise **…**. Escape closes the
@@ -130,7 +140,7 @@ tabs retain the draft/store but unmount the canvas and its global listeners.
   animation (including RTL and reduced motion), persistent bubbles and repeated
   toggling, keyboard focus/dismissal, the tablet breakpoint, banner layout,
   centered launcher dots, panel-pointer alignment, outside/iframe dismissal and
-  mounted drafts. A real-image-editor browser suite covers the header menu,
+  pin retention/automatic example defaults and mounted drafts. A real-image-editor browser suite covers the header menu,
   independent drawings/text/undo, retries, and mobile palette access/footer spacing.
 - Local Arcade browser checks: separate bubbles, keyboard navigation and resizing,
   drawing/text persistence after collapse and reload, no game-asset registration,

@@ -5,7 +5,8 @@ const path = require("path");
 const { Transform } = require("stream");
 const browserify = require("browserify");
 const less = require("less");
-const puppeteer = require("puppeteer");
+const { launchTestBrowser } = require("./browser");
+const { colorThemes, contrastSamples } = require("./theme-helpers");
 
 describe("named private whiteboards", function () {
     this.timeout(30000);
@@ -30,22 +31,23 @@ describe("named private whiteboards", function () {
         });
         bundle = await new Promise((resolve, reject) => build.bundle((error, buffer) => error ? reject(error) : resolve(buffer.toString())));
         const imports = [
-            "react-common/styles/controls/Button.less", "react-common/styles/controls/MenuDropdown.less",
-            "theme/image-editor/imageEditor.less", "theme/project-tools.less"
+            // Production imports project-tools through sidedoc before image-editor
+            // and react-common. Reversing this order hides menu-color regressions.
+            "theme/project-tools.less", "theme/image-editor/imageEditor.less",
+            "react-common/styles/react-common-variables.less",
+            "react-common/styles/controls/Button.less", "react-common/styles/controls/MenuDropdown.less"
         ].map(file => `@import "${path.resolve(file).replace(/\\/g, "/")}";`).join("\n");
         const result = await less.render(imports, { modifyVars: {
             mainMenuHeight: "4rem", mobileMenuHeight: "3.5rem", editorToolsCollapsedHeight: "4.7rem",
             editorToolsCollapsedMobileHeight: "3.4rem", sidedocZIndex: "50", largestTabletScreen: "991px",
             largestMobileScreen: "767px", bannerHeight: "2rem", customScrollbarWidth: "8px",
-            pageFont: "sans-serif", white: "#fff", buttonFocusOutlineLightBackground: "2px solid Highlight",
-            buttonFocusOutlineDarkBackground: "2px solid Highlight", highContrastTextColor: "CanvasText",
-            highContrastBackgroundColor: "Canvas", highContrastFocusOutline: "2px solid Highlight", highContrastFocusZIndex: "10"
+            pageFont: "sans-serif", white: "#fff"
         } });
         css = `* { box-sizing: border-box; } body { margin: 0; font: 16px sans-serif; }
             #test-footer { position: fixed; bottom: 0; height: 3.4rem; width: 100%; }
             :root { --pxt-neutral-background1: white; --pxt-neutral-foreground1: black; }
             ${result.css}`;
-        browser = await puppeteer.launch({ headless: true });
+        browser = await launchTestBrowser();
     });
     after(async () => { await browser?.close(); });
     beforeEach(async () => {
@@ -312,6 +314,98 @@ describe("named private whiteboards", function () {
         await item("Whiteboard 1");
         assert.equal(await page.$eval(input, el => el.value), "Legacy private notes");
     });
+
+    for (const theme of colorThemes()) {
+        for (const width of [390, 1366]) {
+            it(`keeps header and whiteboard controls readable in ${theme.id} at ${width}px`, async () => {
+                await page.setViewport({ width, height: 900 });
+                await page.evaluate(theme => whiteboardTest.switchTheme(theme), theme);
+                const readable = async (selector, minimum = 4.5) => {
+                    const samples = await contrastSamples(page, selector);
+                    assert.ok(samples.length, `Missing visible controls: ${selector}`);
+                    for (const sample of samples) assert.ok(sample.contrast >= minimum,
+                        `${theme.id}: ${sample.label} contrast ${sample.contrast.toFixed(2)} < ${minimum} (${sample.color} on ${sample.background})`);
+                };
+                const settle = selector => page.$eval(selector, async el => {
+                    await Promise.all(el.getAnimations().map(animation => animation.finished.catch(() => {})));
+                });
+                const headerStates = async (selector, minimum = 3) => {
+                    await page.mouse.move(0, 0);
+                    // A theme switch can start react-common's color transition.
+                    // Sample the settled idle state, just as for hover and focus.
+                    await settle(selector);
+                    await readable(selector, minimum);
+                    await page.hover(selector);
+                    await settle(selector);
+                    await readable(selector, minimum);
+                    await page.focus(selector);
+                    await page.keyboard.press("Shift");
+                    await page.focus(input);
+                    await page.focus(selector);
+                    await settle(selector);
+                    await readable(selector, minimum);
+                    const [sample] = await contrastSamples(page, selector);
+                    assert.equal(sample.filter, "none", "Header foreground/background pairs must not be altered by toolbar hover filters");
+                    assert.ok(sample.outlineWidth > 0 && sample.outlineStyle !== "none", "Missing keyboard focus indicator");
+                    assert.ok(sample.outlineContrast >= 3, `Low-contrast focus indicator: ${sample.outlineContrast}`);
+                };
+
+                await readable("#project-tools-whiteboard h2, #project-notes-privacy, #project-notes-text");
+                await headerStates(menu);
+                await headerStates("#project-tools-whiteboard .project-tools__close");
+                await headerStates("#project-tools-whiteboard .project-tools__pin", 4.5);
+                await page.click("#project-tools-whiteboard .project-tools__pin");
+                assert.equal(await page.$eval("#project-tools-whiteboard .project-tools__pin", el => el.getAttribute("aria-pressed")), "true");
+                await headerStates("#project-tools-whiteboard .project-tools__pin", 4.5);
+                await page.click("#project-tools-whiteboard .project-tools__pin");
+                await page.hover(menu);
+                await page.mouse.down();
+                await settle(menu);
+                await readable(menu, 3);
+                await page.mouse.up();
+                await page.waitForSelector("#project-whiteboard-menu-menu", { visible: true });
+                await page.mouse.move(0, 0);
+                await settle(menu);
+                await readable(menu, 3); // Expanded, without hover.
+                await readable('#project-whiteboard-menu-menu [role^="menuitem"]');
+                await page.keyboard.press("Escape");
+                await item("Rename whiteboard");
+                await readable(".project-whiteboard-menu__edit label, .project-whiteboard-menu__edit input, .project-whiteboard-menu__edit button");
+                await page.keyboard.press("Escape");
+
+                if (width <= 991 && await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")) !== "true") {
+                    await page.focus("#project-tools-launcher");
+                    await page.keyboard.press("ArrowDown");
+                }
+                await page.click("#project-tools-tab-docs");
+                await readable(".project-tools__external", 3);
+                await page.hover(".project-tools__external");
+                await readable(".project-tools__external", 3);
+            });
+        }
+    }
+
+    for (const colorScheme of ["light", "dark"]) {
+        it(`keeps header controls visible with ${colorScheme} system forced colors`, async () => {
+            await page.evaluate(theme => whiteboardTest.switchTheme(theme), colorThemes().find(theme => theme.id === `regression-${colorScheme}`));
+            // Puppeteer 23's convenience wrapper does not expose forced-colors.
+            const session = await page.createCDPSession();
+            try {
+                await session.send("Emulation.setEmulatedMedia", { features: [
+                    { name: "forced-colors", value: "active" },
+                    { name: "prefers-color-scheme", value: colorScheme }
+                ] });
+                assert.equal(await page.evaluate(() => matchMedia("(forced-colors: active)").matches), true);
+                await page.hover(menu);
+                await page.click("#project-tools-whiteboard .project-tools__pin");
+                const samples = await contrastSamples(page, "#project-whiteboard-menu, #project-tools-whiteboard .project-tools__close, #project-tools-whiteboard .project-tools__pin");
+                assert.equal(samples.length, 3);
+                assert.ok(samples.every(sample => sample.contrast >= 3), JSON.stringify(samples));
+            } finally {
+                await session.detach();
+            }
+        });
+    }
 
     for (const height of [844, 568]) {
         it(`can reach and select all 16 colors at 390×${height}`, async () => {

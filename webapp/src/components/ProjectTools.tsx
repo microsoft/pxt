@@ -5,9 +5,11 @@ interface ProjectToolsProps {
     header: pxt.workspace.Header;
     notes?: pxt.workspace.ProjectNotes;
     expanded: boolean;
+    pinned: boolean;
     docsUrl?: string;
     docsRequest?: number;
     onExpandedChange: (expanded: boolean) => void;
+    onPinnedChange: (pinned: boolean) => void;
     onOpenReference: () => void;
     docsAction?: React.ReactNode;
     children?: React.ReactNode;
@@ -29,7 +31,12 @@ export function ProjectTools(props: ProjectToolsProps) {
     const tabButtons = React.useRef<HTMLButtonElement[]>([]);
     const drag = React.useRef<{ x: number; width: number }>();
     const rtl = pxt.Util.isUserLanguageRtl();
-    const dismissTools = React.useCallback(() => {
+    // Deferred iframe/focus events must honor the latest pin state, not the
+    // state captured before the user clicked Pin or opened an example.
+    const pinState = React.useRef({ pinned: props.pinned, expanded: props.expanded });
+    pinState.current = { pinned: props.pinned, expanded: props.expanded };
+    const dismissTools = React.useCallback((explicit = false) => {
+        if (!explicit && pinState.current.pinned && pinState.current.expanded) return;
         setOptionsOpen(false);
         props.onExpandedChange(false);
     }, [props.onExpandedChange]);
@@ -153,6 +160,14 @@ export function ProjectTools(props: ProjectToolsProps) {
     const renderHeader = (title: string, actions?: React.ReactNode) => <div className="project-tools__header">
         <h2 className="project-tools__title" title={title}>{title}</h2>
         {actions}
+        <button type="button" className="project-tools__pin" aria-pressed={props.pinned}
+            aria-label={lf("Keep project tools open")} title={props.pinned ? lf("Unpin project tools") : lf("Pin project tools open")}
+            onClick={() => props.onPinnedChange(!props.pinned)}>
+            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path className="project-tools__pin-head" d="M8 3h8v3l-1 1v5l3 3v2H6v-2l3-3V7L8 6Z" />
+                <path d="M12 17v5" />
+            </svg>
+        </button>
         <button type="button" className="project-tools__close" title={lf("Collapse project tools")}
             aria-label={lf("Collapse project tools")} onClick={collapse}><i className="icon minus" aria-hidden="true" /></button>
     </div>;
@@ -175,7 +190,7 @@ export function ProjectTools(props: ProjectToolsProps) {
                 title={lf("Project tools")} aria-expanded={optionsOpen} aria-controls="project-tools-options"
                 onClick={() => {
                     if (props.expanded || optionsOpen) {
-                        dismissTools();
+                        dismissTools(true);
                         moreButton.current?.focus();
                     } else setOptionsOpen(true);
                 }} onKeyDown={event => {

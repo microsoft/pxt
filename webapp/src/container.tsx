@@ -797,6 +797,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
 export interface SideDocsProps extends ISettingsProps {
     docsUrl: string;
     sideDocsCollapsed: boolean;
+    pinned?: boolean;
     bubble?: boolean;
     header?: pxt.workspace.Header;
     projectNotes?: pxt.workspace.ProjectNotes;
@@ -963,6 +964,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         return this.state.sideDocsCollapsed != nextState.sideDocsCollapsed
             || this.state.docsUrl != nextState.docsUrl
             || this.state.docsRequest !== nextState.docsRequest
+            || this.props.pinned !== nextProps.pinned
             || this.props.bubble !== nextProps.bubble
             || this.props.header?.id !== nextProps.header?.id
             || this.props.projectNotes !== nextProps.projectNotes;
@@ -1002,6 +1004,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         if (this.props.bubble && this.props.header) return <ProjectTools
             key={this.props.header.id} header={this.props.header} notes={this.props.projectNotes}
             expanded={sideDocsCollapsed === false} docsUrl={docsUrl} docsRequest={this.state.docsRequest}
+            pinned={!!this.props.pinned} onPinnedChange={pinned => this.props.parent.setState({ sideDocsPinned: pinned })}
             onExpandedChange={expanded => this.props.parent.setState({ sideDocsCollapsed: !expanded })}
             onOpenReference={() => this.setPath("/reference", this.props.parent.isBlocksEditor())}
             docsAction={!lockedEditor && <a className="project-tools__external" title={lf("Open documentation in new tab")}

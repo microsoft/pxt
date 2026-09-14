@@ -789,6 +789,7 @@ declare namespace pxt.editor {
         showFiles?: boolean;
         sideDocsLoadUrl?: string; // set once to load the side docs frame
         sideDocsCollapsed?: boolean;
+        sideDocsPinned?: boolean; // UI state retained when collapsing the current project's tools
         projectName?: string;
         suppressPackageWarning?: boolean;
         tutorialOptions?: pxt.tutorial.TutorialOptions;
