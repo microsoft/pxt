@@ -1,3 +1,7 @@
+// Match @largeMonitorBreakpoint (1200px): keep the bubble strip horizontal on
+// smaller desktops without changing the editor's separate tablet breakpoint.
+export const PROJECT_TOOLS_COMPACT_QUERY = "(max-width: 1199px)";
+
 /** Keep project-load defaults separate from explicit pin/unpin and collapse actions. */
 export function projectToolsPinnedOnLoad(state: pxt.editor.IAppState, headerId: string, opensDocumentation: boolean, loadingExample: boolean): boolean {
     // Homepage examples can open either configured docs or an auto-open README.

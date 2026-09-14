@@ -41,7 +41,8 @@ describe("named private whiteboards", function () {
             mainMenuHeight: "4rem", mobileMenuHeight: "3.5rem", editorToolsCollapsedHeight: "4.7rem",
             editorToolsCollapsedMobileHeight: "3.4rem", sidedocZIndex: "50", largestTabletScreen: "991px",
             largestMobileScreen: "767px", bannerHeight: "2rem", customScrollbarWidth: "8px",
-            pageFont: "sans-serif", white: "#fff"
+            pageFont: "sans-serif", white: "#fff", largeMonitorBreakpoint: "1200px",
+            sideBarWidth: "22rem", sideBarWidthLarge: "28rem", sideBarWidthSmall: "18rem"
         } });
         css = `* { box-sizing: border-box; } body { margin: 0; font: 16px sans-serif; }
             #test-footer { position: fixed; bottom: 0; height: 3.4rem; width: 100%; }
@@ -316,7 +317,7 @@ describe("named private whiteboards", function () {
     });
 
     for (const theme of colorThemes()) {
-        for (const width of [390, 1366]) {
+        for (const width of [390, 1024, 1366]) {
             it(`keeps header and whiteboard controls readable in ${theme.id} at ${width}px`, async () => {
                 await page.setViewport({ width, height: 900 });
                 await page.evaluate(theme => whiteboardTest.switchTheme(theme), theme);
@@ -351,6 +352,15 @@ describe("named private whiteboards", function () {
                 };
 
                 await readable("#project-tools-whiteboard h2, #project-notes-privacy, #project-notes-text");
+                await readable(".project-tools__resize--height .project-tools__resize-grip circle", 3);
+                await page.hover(".project-tools__resize--height");
+                await readable(".project-tools__resize--height .project-tools__resize-grip circle", 3);
+                if (width > 991) {
+                    await page.mouse.move(0, 0);
+                    await readable(".project-tools__resize-grip circle", 3);
+                    await page.hover(".project-tools__resize--width");
+                    await readable(".project-tools__resize-grip circle", 3);
+                }
                 await headerStates(menu);
                 await headerStates("#project-tools-whiteboard .project-tools__close");
                 await headerStates("#project-tools-whiteboard .project-tools__pin", 4.5);
@@ -373,7 +383,7 @@ describe("named private whiteboards", function () {
                 await readable(".project-whiteboard-menu__edit label, .project-whiteboard-menu__edit input, .project-whiteboard-menu__edit button");
                 await page.keyboard.press("Escape");
 
-                if (width <= 991 && await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")) !== "true") {
+                if (width < 1200 && await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")) !== "true") {
                     await page.focus("#project-tools-launcher");
                     await page.keyboard.press("ArrowDown");
                 }
@@ -425,4 +435,20 @@ describe("named private whiteboards", function () {
             assert.equal(layout.scrollable, "auto");
         });
     }
+
+    it("keeps the palette and notes usable after shrinking the whiteboard height", async () => {
+        await page.focus(".project-tools__resize--height");
+        await page.keyboard.press("Home");
+        assert.equal(await page.$eval("#project-tools-panel", el => el.getBoundingClientRect().height), 240);
+        const color = ".image-editor-color-buttons button:nth-child(16)";
+        await page.$eval(color, el => el.scrollIntoView({ block: "nearest" }));
+        await page.click(color);
+        assert.equal(await page.evaluate(() => whiteboardTest.store().getState().editor.selectedColor), 15);
+        await page.$eval(input, el => el.scrollIntoView({ block: "nearest" }));
+        await page.type(input, " after resizing");
+        await page.focus(".project-tools__resize--height");
+        await page.keyboard.press("End");
+        assert.ok((await page.$eval(input, el => el.value)).includes("after resizing"));
+        assert.equal(await page.$eval("#project-tools-panel", el => el.style.height), "");
+    });
 });

@@ -55,11 +55,14 @@ async function contrastSamples(page, selector) {
             for (let parent = el; parent; parent = parent.parentElement) ancestors.unshift(parent);
             const background = ancestors.reduce((background, parent) => over(rgba(getComputedStyle(parent).backgroundColor), background), [255, 255, 255]);
             const style = getComputedStyle(el);
+            const isFilledSvg = el instanceof SVGElement && style.fill !== "none";
+            const foreground = rgba(isFilledSvg ? style.fill : style.color);
+            if (isFilledSvg) foreground[3] *= Number(style.fillOpacity);
             return {
                 label: el.id || el.getAttribute("aria-label") || el.textContent.trim() || el.className,
                 color: style.color,
                 background,
-                contrast: contrast(over(rgba(style.color), background), background),
+                contrast: contrast(over(foreground, background), background),
                 outlineContrast: contrast(over(rgba(style.outlineColor), background), background),
                 outlineWidth: parseFloat(style.outlineWidth),
                 outlineStyle: style.outlineStyle,
