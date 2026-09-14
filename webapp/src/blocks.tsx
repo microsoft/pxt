@@ -872,13 +872,15 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })();
 
         let shouldRestartSim = false;
+        let lastZoomPercentage = this.getZoomPercentage();
 
         this.editor.addChangeListener((ev: Blockly.Events.Abstract) => {
             Blockly.Events.disableOrphans(ev);
 
             if (ev.type === Blockly.Events.VIEWPORT_CHANGE) {
-                const viewportEvent = ev as Blockly.Events.ViewportChange;
-                if (viewportEvent.scale !== viewportEvent.oldScale) {
+                const zoomPercentage = this.getZoomPercentage();
+                if (zoomPercentage !== lastZoomPercentage) {
+                    lastZoomPercentage = zoomPercentage;
                     this.parent.forceUpdate();
                 }
             }
