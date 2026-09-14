@@ -7,6 +7,7 @@
     --tools-accent: var(--pxt-primary-background, Highlight);
     --tools-on-accent: var(--pxt-primary-foreground, HighlightText);
     --tools-banner-height: 0rem;
+    --tools-menu-height: @mainMenuHeight;
     --tools-bubble-size: 3.25rem;
     --tools-bubble-gap: .75rem;
     --tools-pointer-rotation: 45deg;
@@ -35,7 +36,7 @@
 .project-tools__launcher {
     position: fixed;
     inset-inline-end: 1rem;
-    top: calc(@mainMenuHeight + var(--tools-banner-height) + 1rem);
+    top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
     z-index: @sidedocZIndex;
 }
 
@@ -84,17 +85,30 @@
 
 .project-tools__panel {
     --tools-pointer-offset: calc(var(--tools-bubble-size) / 2);
+    --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
+    --tools-panel-bottom: calc(@editorToolsCollapsedHeight + 1rem);
+    --tools-available-width: calc(100vw - 6rem);
+    --tools-default-width: @sideBarWidth;
+    --tools-launcher-space: 5rem;
 
     &[data-active-tab="whiteboard"] {
         --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
     }
 
     position: fixed;
+    box-sizing: border-box;
     z-index: @sidedocZIndex;
     inset-inline-end: 5rem;
-    top: calc(@mainMenuHeight + var(--tools-banner-height) + 1rem);
-    bottom: calc(@editorToolsCollapsedHeight + 1rem);
-    max-width: calc(100vw - 6rem);
+    top: var(--tools-panel-top);
+    bottom: var(--tools-panel-bottom);
+    // Keep the panel plus its bubble strip within the legacy sidedocs footprint.
+    // Explicit resizing can grow beyond this default without changing the budget.
+    width: calc(var(--tools-default-width) - var(--tools-launcher-space));
+    min-width: ~"min(16rem, var(--tools-available-width))";
+    max-width: var(--tools-available-width);
+    // Leave CSS max() to the browser rather than Less's numeric max() function.
+    max-height: ~"max(0px, calc(100vh - var(--tools-panel-top) - var(--tools-panel-bottom)))";
+    max-height: ~"max(0px, calc(100dvh - var(--tools-panel-top) - var(--tools-panel-bottom)))";
     display: flex;
     flex-direction: column;
     border: 1px solid var(--tools-border);
@@ -191,18 +205,44 @@
 
 .project-tools__resize {
     position: absolute;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tools-foreground);
+    touch-action: none;
+    border-radius: .5rem;
+    &:hover, &:focus-visible { background: var(--tools-accent); }
+    &:hover circle, &:focus-visible circle { fill-opacity: 1; }
+}
+.project-tools__resize--width {
     inset-inline-start: -.4rem;
     top: 1rem;
     bottom: 1rem;
     width: .75rem;
     cursor: ew-resize;
-    touch-action: none;
-    border-radius: .5rem;
-    &:hover, &:focus-visible { background: var(--tools-accent); }
+}
+.project-tools__resize--height {
+    inset-inline: 1rem;
+    bottom: -.4rem;
+    height: .75rem;
+    cursor: ns-resize;
+    .project-tools__resize-grip { width: 1.75rem; height: .625rem; }
+}
+.project-tools__resize-grip {
+    flex-shrink: 0;
+    width: .625rem;
+    height: 1.75rem;
+    border-radius: .3rem;
+    background: var(--tools-surface);
+    fill: currentColor;
+    pointer-events: none;
+    circle { fill-opacity: .65; }
 }
 .project-tools__panel--resizing {
     user-select: none;
     iframe { pointer-events: none; }
+    .project-tools__resize-grip circle { fill-opacity: 1; }
 }
 
 .project-tools__docs, .project-tools__whiteboard {
@@ -368,6 +408,8 @@
 
     .project-tools__launcher {
         width: var(--tools-bubble-size);
+        top: calc(var(--tools-menu-height) + var(--tools-banner-height) + .5rem);
+        inset-inline-end: .5rem;
     }
     .project-tools__bubbles {
         position: absolute;
@@ -406,14 +448,16 @@
     .project-tools__bubble-label { display: none; }
     .project-tools__panel {
         --tools-pointer-offset: calc(var(--tools-bubble-size) * 2.5 + var(--tools-bubble-gap) * 2);
+        --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 4.75rem);
+        --tools-available-width: calc(100vw - 1rem);
+        // Keep the half-rem outer gutter within the legacy desktop width budget.
+        --tools-launcher-space: .5rem;
 
         &[data-active-tab="whiteboard"] {
             --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
         }
 
         inset-inline-end: .5rem;
-        top: calc(@mobileMenuHeight + var(--tools-banner-height) + 4.75rem);
-        max-width: calc(100vw - 1rem);
     }
     .project-tools__pointer {
         top: calc(-.4375rem - 1px);
@@ -424,12 +468,21 @@
     &[data-options-open="false"] .project-tools__panel {
         --tools-pointer-offset: calc(var(--tools-bubble-size) / 2);
     }
-    .project-tools__resize { display: none; }
 }
 
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    .project-tools__panel { --tools-default-width: @sideBarWidthLarge; }
+}
 @media only screen and (max-width: @largestTabletScreen) {
-    .project-tools__launcher { top: calc(@mobileMenuHeight + var(--tools-banner-height) + .5rem); inset-inline-end: .5rem; }
-    .project-tools__panel { bottom: calc(@editorToolsCollapsedMobileHeight + .5rem); }
+    .project-tools { --tools-menu-height: @mobileMenuHeight; }
+    .project-tools--compact .project-tools__panel {
+        --tools-panel-bottom: calc(@editorToolsCollapsedMobileHeight + .5rem);
+        --tools-launcher-space: 0rem;
+    }
+    .project-tools__resize--width { display: none; }
+}
+@media only screen and (max-width: @largestMobileScreen) {
+    .project-tools__panel { --tools-default-width: @sideBarWidthSmall; }
 }
 @media (prefers-reduced-motion: no-preference) {
     .project-tools__bubble { transition: border-radius .15s, background-color .15s; }

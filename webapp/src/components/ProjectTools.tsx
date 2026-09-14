@@ -1,5 +1,6 @@
 import * as React from "react";
 import { ProjectWhiteboard } from "./ProjectWhiteboard";
+import { PROJECT_TOOLS_COMPACT_QUERY } from "../projectToolsState";
 
 interface ProjectToolsProps {
     header: pxt.workspace.Header;
@@ -18,9 +19,14 @@ interface ProjectToolsProps {
 export function ProjectTools(props: ProjectToolsProps) {
     const [tab, setTab] = React.useState<"docs" | "whiteboard">("docs");
     const [visitedWhiteboard, setVisitedWhiteboard] = React.useState(false);
-    const [width, setWidth] = React.useState(600);
+    // Leave initial sizing to the target's responsive sidedocs CSS. An explicit
+    // resize is remembered independently of those defaults for this project view.
+    const [width, setWidth] = React.useState<number>();
+    const [widthRange, setWidthRange] = React.useState({ width: 0, min: 0, max: 0 });
+    const [height, setHeight] = React.useState<number>();
+    const [heightRange, setHeightRange] = React.useState({ height: 0, max: 0 });
     const [resizing, setResizing] = React.useState(false);
-    const [compact, setCompact] = React.useState(() => pxt.BrowserUtils.isTabletSize());
+    const [compact, setCompact] = React.useState(() => window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY).matches);
     const [optionsOpen, setOptionsOpen] = React.useState(false);
     const [focusedTab, setFocusedTab] = React.useState(0);
     const root = React.useRef<HTMLDivElement>();
@@ -29,8 +35,27 @@ export function ProjectTools(props: ProjectToolsProps) {
     const pendingFocus = React.useRef<"panel" | "trigger">();
     const panel = React.useRef<HTMLDivElement>();
     const tabButtons = React.useRef<HTMLButtonElement[]>([]);
-    const drag = React.useRef<{ x: number; width: number }>();
+    const drag = React.useRef<{ axis: "width" | "height"; position: number; size: number }>();
     const rtl = pxt.Util.isUserLanguageRtl();
+    const measureWidth = React.useCallback(() => {
+        const bounds = panel.current.getBoundingClientRect();
+        const style = window.getComputedStyle(panel.current);
+        const maxWidth = parseFloat(style.maxWidth);
+        const minWidth = parseFloat(style.minWidth);
+        const max = Math.min(900, Number.isFinite(maxWidth) ? maxWidth : window.innerWidth);
+        return { width: bounds.width, min: Math.min(max, Number.isFinite(minWidth) ? minWidth : 256), max };
+    }, []);
+    const measureHeight = React.useCallback(() => {
+        const bounds = panel.current.getBoundingClientRect();
+        const maxHeight = parseFloat(window.getComputedStyle(panel.current).maxHeight);
+        return { height: bounds.height, max: Number.isFinite(maxHeight) ? maxHeight : Math.max(0, window.innerHeight - bounds.top) };
+    }, []);
+    const updateSizeRanges = React.useCallback(() => {
+        const height = measureHeight();
+        const width = measureWidth();
+        setHeightRange(previous => previous.height === height.height && previous.max === height.max ? previous : height);
+        setWidthRange(previous => previous.width === width.width && previous.min === width.min && previous.max === width.max ? previous : width);
+    }, [measureHeight, measureWidth]);
     // Deferred iframe/focus events must honor the latest pin state, not the
     // state captured before the user clicked Pin or opened an example.
     const pinState = React.useRef({ pinned: props.pinned, expanded: props.expanded });
@@ -42,18 +67,44 @@ export function ProjectTools(props: ProjectToolsProps) {
     }, [props.onExpandedChange]);
 
     React.useEffect(() => {
-        const query = window.matchMedia(`(max-width: ${pxt.BREAKPOINT_TABLET}px)`);
+        const query = window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY);
+        const tabletQuery = window.matchMedia(`(max-width: ${pxt.BREAKPOINT_TABLET}px)`);
         const onChange = () => {
             if (launcher.current?.contains(document.activeElement)) pendingFocus.current = "trigger";
-            else if (query.matches && document.activeElement === panel.current?.querySelector(".project-tools__resize")) {
-                pendingFocus.current = "panel";
-            }
             setCompact(query.matches);
             setOptionsOpen(false);
         };
+        const onTabletChange = () => {
+            // Smaller desktops still support width resizing. Only move focus
+            // when the grip actually disappears at the tablet breakpoint.
+            if (tabletQuery.matches && document.activeElement === panel.current?.querySelector(".project-tools__resize--width")) {
+                panel.current?.focus();
+            }
+        };
         query.addEventListener("change", onChange);
-        return () => query.removeEventListener("change", onChange);
+        tabletQuery.addEventListener("change", onTabletChange);
+        return () => {
+            query.removeEventListener("change", onChange);
+            tabletQuery.removeEventListener("change", onTabletChange);
+        };
     }, []);
+    React.useLayoutEffect(() => {
+        if (!props.expanded) return undefined;
+        updateSizeRanges();
+        const observer = new ResizeObserver(updateSizeRanges);
+        observer.observe(panel.current);
+        window.addEventListener("resize", updateSizeRanges);
+        // Banner visibility moves the top edge without necessarily resizing a
+        // manually sized panel. Keep the keyboard/ARIA limits in sync as well.
+        const layoutRoot = panel.current.closest("#root");
+        const mutations = new MutationObserver(updateSizeRanges);
+        if (layoutRoot) mutations.observe(layoutRoot, { attributes: true, attributeFilter: ["class"] });
+        return () => {
+            observer.disconnect();
+            mutations.disconnect();
+            window.removeEventListener("resize", updateSizeRanges);
+        };
+    }, [props.expanded, compact, updateSizeRanges]);
     React.useLayoutEffect(() => {
         if (!pendingFocus.current) return;
         const target = pendingFocus.current === "panel" ? panel.current
@@ -156,7 +207,34 @@ export function ProjectTools(props: ProjectToolsProps) {
         if (!compact) setTab(next ? "whiteboard" : "docs");
         tabButtons.current[next]?.focus();
     };
-    const resize = (value: number) => setWidth(Math.max(360, Math.min(900, window.innerWidth - 80, value)));
+    const resizeWidth = (value: number) => {
+        const { min, max } = measureWidth();
+        setWidth(Math.max(min, Math.min(max, value)));
+    };
+    const resizeHeight = (value: number) => {
+        const { max } = measureHeight();
+        setHeight(Math.min(max, Math.max(Math.min(240, max), value)));
+    };
+    const startResize = (event: React.PointerEvent<HTMLDivElement>, axis: "width" | "height") => {
+        if (event.button !== 0 || drag.current) return;
+        event.preventDefault();
+        const bounds = panel.current.getBoundingClientRect();
+        drag.current = { axis, position: axis === "width" ? event.clientX : event.clientY, size: bounds[axis] };
+        event.currentTarget.setPointerCapture(event.pointerId);
+        setResizing(true);
+    };
+    const moveResize = (event: React.PointerEvent<HTMLDivElement>) => {
+        const current = drag.current;
+        if (!current) return;
+        if (current.axis === "width") resizeWidth(current.size + (event.clientX - current.position) * (rtl ? 1 : -1));
+        else resizeHeight(current.size + event.clientY - current.position);
+    };
+    const stopResize = (event: React.PointerEvent<HTMLDivElement>) => {
+        drag.current = undefined;
+        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
+        setResizing(false);
+    };
+    const lostResizeCapture = () => { drag.current = undefined; setResizing(false); };
     const renderHeader = (title: string, actions?: React.ReactNode) => <div className="project-tools__header">
         <h2 className="project-tools__title" title={title}>{title}</h2>
         {actions}
@@ -237,7 +315,7 @@ export function ProjectTools(props: ProjectToolsProps) {
             </div>
         </div>
         <div id="project-tools-panel" ref={panel} className={`project-tools__panel${resizing ? " project-tools__panel--resizing" : ""}`}
-            hidden={!props.expanded} style={{ width }} data-active-tab={tab}
+            hidden={!props.expanded} style={{ width, height, bottom: height === undefined ? undefined : "auto" }} data-active-tab={tab}
             role="dialog" aria-modal="false" aria-label={lf("Project tools")} tabIndex={-1}
             onKeyDown={event => {
                 if (event.key === "Escape" && !event.defaultPrevented) {
@@ -246,31 +324,60 @@ export function ProjectTools(props: ProjectToolsProps) {
                 }
             }}>
             <div className="project-tools__pointer" aria-hidden="true" />
-            <div className="project-tools__resize" role="separator" aria-orientation="vertical" tabIndex={0}
-                aria-label={lf("Resize project tools")} aria-valuemin={360} aria-valuemax={900} aria-valuenow={width}
-                onPointerDown={event => {
-                    if (event.button !== 0) return;
-                    event.preventDefault();
-                    drag.current = { x: event.clientX, width: panel.current.getBoundingClientRect().width };
-                    event.currentTarget.setPointerCapture(event.pointerId);
-                    setResizing(true);
+            <div className="project-tools__resize project-tools__resize--width" role="separator" aria-orientation="vertical" tabIndex={0}
+                aria-label={lf("Resize project tools width")} title={lf("Resize project tools width")}
+                aria-controls="project-tools-panel"
+                aria-valuemin={widthRange.min} aria-valuemax={widthRange.max} aria-valuenow={widthRange.width}
+                onFocus={updateSizeRanges}
+                onBlur={event => {
+                    // CSS may hide the grip before the media-query callback runs.
+                    // This is a layout change, not a user clicking away from tools.
+                    if (window.getComputedStyle(event.currentTarget).display === "none") {
+                        event.stopPropagation();
+                        panel.current?.focus();
+                    }
                 }}
-                onPointerMove={event => {
-                    if (drag.current) resize(drag.current.width + (event.clientX - drag.current.x) * (rtl ? 1 : -1));
-                }}
-                onPointerUp={event => {
-                    drag.current = undefined;
-                    if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-                    setResizing(false);
-                }}
-                onLostPointerCapture={() => { drag.current = undefined; setResizing(false); }}
+                onPointerDown={event => startResize(event, "width")} onPointerMove={moveResize}
+                onPointerUp={stopResize} onPointerCancel={stopResize} onLostPointerCapture={lostResizeCapture}
                 onKeyDown={event => {
                     if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) < 0) return;
                     event.preventDefault();
-                    if (event.key === "Home") resize(360);
-                    else if (event.key === "End") resize(900);
-                    else resize(width + (event.key === "ArrowLeft" ? 1 : -1) * (rtl ? -1 : 1) * (event.shiftKey ? 80 : 20));
-                }} />
+                    if (event.key === "Home") resizeWidth(measureWidth().min);
+                    else if (event.key === "End") resizeWidth(900);
+                    else resizeWidth(measureWidth().width + (event.key === "ArrowLeft" ? 1 : -1) * (rtl ? -1 : 1) * (event.shiftKey ? 80 : 20));
+                }}>
+                <svg className="project-tools__resize-grip" viewBox="0 0 8 20" aria-hidden="true" focusable="false">
+                    <circle cx="2" cy="4" r="1" />
+                    <circle cx="6" cy="4" r="1" />
+                    <circle cx="2" cy="10" r="1" />
+                    <circle cx="6" cy="10" r="1" />
+                    <circle cx="2" cy="16" r="1" />
+                    <circle cx="6" cy="16" r="1" />
+                </svg>
+            </div>
+            <div className="project-tools__resize project-tools__resize--height" role="separator" aria-orientation="horizontal" tabIndex={0}
+                aria-label={lf("Resize project tools height")} title={lf("Resize project tools height")}
+                aria-controls="project-tools-panel" aria-valuemin={Math.min(240, heightRange.max)}
+                aria-valuemax={heightRange.max} aria-valuenow={heightRange.height}
+                onFocus={updateSizeRanges}
+                onPointerDown={event => startResize(event, "height")} onPointerMove={moveResize}
+                onPointerUp={stopResize} onPointerCancel={stopResize} onLostPointerCapture={lostResizeCapture}
+                onKeyDown={event => {
+                    if (["ArrowUp", "ArrowDown", "Home", "End"].indexOf(event.key) < 0) return;
+                    event.preventDefault();
+                    if (event.key === "Home") resizeHeight(240);
+                    else if (event.key === "End") setHeight(undefined); // Fill the available space again.
+                    else resizeHeight(measureHeight().height + (event.key === "ArrowDown" ? 1 : -1) * (event.shiftKey ? 80 : 20));
+                }}>
+                <svg className="project-tools__resize-grip" viewBox="0 0 20 8" aria-hidden="true" focusable="false">
+                    <circle cx="4" cy="2" r="1" />
+                    <circle cx="4" cy="6" r="1" />
+                    <circle cx="10" cy="2" r="1" />
+                    <circle cx="10" cy="6" r="1" />
+                    <circle cx="16" cy="2" r="1" />
+                    <circle cx="16" cy="6" r="1" />
+                </svg>
+            </div>
             {tab === "docs" && renderHeader(lf("Documentation"), props.docsUrl && props.docsAction)}
             <section id="project-tools-docs" role="tabpanel" aria-labelledby="project-tools-tab-docs" hidden={tab !== "docs"}
                 className="project-tools__docs">

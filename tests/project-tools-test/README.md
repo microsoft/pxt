@@ -18,12 +18,19 @@ test-only setting does not change the editor or its iframe sandbox attributes.
   It covers scoped keys, text undo, nested editors and listener/lock teardown.
 - [launcher.spec.js](launcher.spec.js) uses Puppeteer and real React to check the
   compact bubble animation, persistent options, keyboard focus and dismissal,
-  the 991px breakpoint, and preserving a mounted draft. It compiles the production
+  the 1199/1200px strip breakpoint, and preserving a mounted draft. Small-desktop
+  checks retain desktop header/footer spacing and both resize grips, with the
+  width grip only hiding at the separate 991px tablet breakpoint. It compiles the production
   LESS with test theme variables and checks RTL, reduced-motion behavior, banner
   offsets, ellipsis alignment, speech-bubble pointers, and panel dismissal via
   the ellipsis, outside controls, keyboard focus and the simulator iframe.
   Pin regressions cover click-away/iframe focus, explicit collapse and reopening,
   manual unpin, example defaults, and switching tabs/viewports.
+  Resize tests cover side/bottom grips, pointer and keyboard input, RTL, retained
+  dimensions and viewport/banner limits. Grip dots are included in theme contrast checks.
+  Default-size tests compare the combined desktop panel/bubble footprint with
+  legacy sidedocs, exercise breakpoint transitions, and verify target overrides
+  and preserved manual sizes.
   The whiteboard is stubbed; no development server is needed. Puppeteer's browser
   must be installed.
 - [whiteboard.spec.js](whiteboard.spec.js) loads the actual image editor, reducer,

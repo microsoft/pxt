@@ -25,8 +25,18 @@ projects and when there is no image palette. Other targets can explicitly list
 ## Interaction
 
 - **Documentation** and **Whiteboard** each have a bubble; the bubbles are the tabs.
-- On small tablets and phones (991px wide or less), a single **…** bubble reveals
-  the other bubbles with a 160ms slide out from behind it. They remain visible when
+- Default widths follow the target's legacy sidedocs variables and breakpoints,
+  rather than a fixed 600px panel. On large desktops, the bubble strip counts
+  toward that width budget to preserve coding space. In Arcade, the panel starts
+  at 344px on smaller desktops (352px including its outer gutter), and 368px on
+  large monitors (448px including the strip), 352px on tablets and 288px on phones.
+  Untouched widths adapt when the
+  viewport changes; manual resizing overrides the default. Dimensions remain
+  capped to the screen and the panel can be enlarged whenever needed.
+- On smaller desktops, tablets and phones (less than 1200px wide), a single **…**
+  bubble reveals the other bubbles horizontally above the panel with a 160ms slide
+  out from behind it. The vertical strip is reserved for large desktops (1200px
+  and wider). The bubbles remain visible when
   selecting, using, switching or closing a panel, so the active bubble can be
   pressed again to close it. **…** retracts the bubbles and hides the open panel.
   Unless pinned, clicking outside the tools or tabbing away also dismisses it,
@@ -54,9 +64,16 @@ projects and when there is no image palette. Other targets can explicitly list
   Left/Right and Home/End, then Enter/Space to select. Collapsing a compact panel
   returns focus to its bubble if visible, otherwise **…**. Escape closes the
   panel first; another Escape from its bubble retracts the options.
-- The panel can be resized using its edge, or Left/Right, Home/End on the keyboard
-  resize control. The layout is mirrored in RTL and fits narrow screens.
-  Compact panels extend to just above the mobile footer. The whiteboard's palette
+- Subtle dotted grips mark the side and bottom resize edges. Drag the side to
+  change width (mirrored in RTL), or the bottom to change height. Keyboard users
+  can use Left/Right for width, Up/Down for height, and Shift for larger steps.
+  Home selects the minimum; End on the bottom grip restores the full available
+  height. Both dimensions are retained across tab switches and collapse/reopen,
+  and height is capped to fit below the header and above the footer. Smaller
+  desktops keep both grips and desktop header/footer spacing even with horizontal
+  bubbles. On tablets and phones (991px or narrower), the width grip is hidden;
+  the bottom grip still adjusts height. Initially panels extend to just above the
+  corresponding editor footer. The whiteboard's palette
   scrolls independently, so all 16 colors remain available even on short screens.
 - Existing block help, reference, built-in keyboard help and markdown entry points
   open Documentation. Asking for the same topic again selects Documentation even
@@ -138,7 +155,7 @@ tabs retain the draft/store but unmount the canvas and its global listeners.
   in-flight edits, persistence failures/retry, and shortcut-owner tests. A
   Puppeteer component suite uses the production styles to cover compact
   animation (including RTL and reduced motion), persistent bubbles and repeated
-  toggling, keyboard focus/dismissal, the tablet breakpoint, banner layout,
+  toggling, keyboard focus/dismissal, the tablet and large-desktop breakpoints, banner layout,
   centered launcher dots, panel-pointer alignment, outside/iframe dismissal and
   pin retention/automatic example defaults and mounted drafts. A real-image-editor browser suite covers the header menu,
   independent drawings/text/undo, retries, and mobile palette access/footer spacing.
@@ -146,7 +163,7 @@ tabs retain the draft/store but unmount the canvas and its global listeners.
   drawing/text persistence after collapse and reload, no game-asset registration,
   text undo isolation, exclusion from the actual project-file export, experiment
   off/on behavior, and short/narrow viewport spacing. Compact behavior is checked
-  at 390, 768, 826 and 991px; separate desktop bubbles at 992 and 1366px.
+  at 390, 768, 826, 991, 992, 1024 and 1199px; vertical desktop bubbles at 1200 and 1366px.
 
 Cloud tests mock the API; no notes were publicly published and no live account
 sync was performed. Cross-device account verification and a full mobile/screen
