@@ -3190,7 +3190,15 @@ ${lbl}: .short 0xffff
                 // Simulator shim dummies must match the native caller-side behavior.
                 if (parameter.initializer && !attrs.shim && !attrs.helper) {
                     const supplied = proc.mkLabel("defaultarg");
-                    proc.emitJmpZ(supplied, ir.rtcall("pxt::eqq_bool", [l.load(), emitLit(undefined)]));
+                    if (isThumb()) {
+                        // Tagged undefined is 0, so the guard is a bare
+                        // compare against zero rather than a runtime call.
+                        proc.emitJmp(supplied, l.load(), ir.JmpMode.IfNotZero);
+                    } else {
+                        // The simulator holds real JS values; a raw zero test
+                        // would treat a supplied 0/false/null as omitted.
+                        proc.emitJmpZ(supplied, ir.rtcall("pxt::eqq_bool", [l.load(), emitLit(undefined)]));
+                    }
                     proc.emitExpr(l.storeByRef(emitEscapedExpression(parameter.initializer, "initializer")));
                     proc.emitLbl(supplied);
                     proc.stackEmpty();

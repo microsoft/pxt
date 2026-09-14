@@ -237,9 +237,12 @@ function checkDefaultParameters(asm: string) {
     };
     for (const name of ["DpProbe_padded", "DpProbe_exact", "DpProbe_capture", "DpCtor_constructor"]) {
         const body = procedure(name);
-        chai.assert.equal(countMatches(body, /bl pxt::eqq_bool/g), 1, name + " strict undefined guard");
-        chai.assert(/_nochk:[\s\S]*?movs r1, #0\s+mov r7, sp\s+str r7, \[r6, #4\]\s+bl pxt::eqq_bool\s+cmp r0, #0\s+beq \.defaultarg_/.test(body),
-            name + " must check undefined (not truthiness) in the shared body");
+        // Tagged undefined is 0, so the omitted-argument guard is an inline
+        // compare against zero. A runtime call here is a regression.
+        assertNoMatch(body, /bl pxt::eqq_bool/g, name + " runtime call in the undefined guard");
+        chai.assert.equal(countMatches(body, /bne \.defaultarg_/g), 1, name + " inline undefined guard");
+        chai.assert(/_nochk:[\s\S]*?cmp r0, #0\s+bne \.defaultarg_/.test(body),
+            name + " must guard the default with an inline compare in the shared body");
     }
     chai.assert(/_args:[\s\S]*?bl _expand_args_2_\d+[\s\S]*?bl DpProbe_padded__P\d+_nochk/.test(procedure("DpProbe_padded")),
         "short dynamic calls must pad arguments then reach the default prologue");
