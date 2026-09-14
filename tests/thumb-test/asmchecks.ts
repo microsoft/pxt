@@ -246,9 +246,9 @@ function checkDefaultParameters(asm: string) {
     }
     chai.assert(/_args:[\s\S]*?bl _expand_args_2_\d+[\s\S]*?bl DpProbe_padded__P\d+_nochk/.test(procedure("DpProbe_padded")),
         "short dynamic calls must pad arguments then reach the default prologue");
-    chai.assert(/bl pxtrt::mklocRef[\s\S]*?bl pxtrt::ldlocRef[\s\S]*?bl pxt::eqq_bool[\s\S]*?movs r1, #23[\s\S]*?bl pxtrt::stlocRef[\s\S]*?bl pxt::mkAction/.test(procedure("DpProbe_capture")),
+    chai.assert(/bl pxtrt::ldlocRef\s+cmp r0, #0\s+bne \.defaultarg_[\s\S]*?movs r1, #23[\s\S]*?bl pxtrt::stlocRef[\s\S]*?bl pxt::mkAction/.test(procedure("DpProbe_capture")),
         "default must update the rooted parameter box before creating its closure");
-    chai.assert(/bl pxt::eqq_bool[\s\S]*?movs r0, #27[\s\S]*?str r0, \[sp, args@1\][\s\S]*?str r1, \[r0, #4\]/.test(procedure("DpCtor_constructor")),
+    chai.assert(/cmp r0, #0\s+bne \.defaultarg_[\s\S]*?movs r0, #27\s+str r0, \[sp, args@1\][\s\S]*?str r1, \[r0, #4\]/.test(procedure("DpCtor_constructor")),
         "constructor default must precede the parameter-property store");
     assertNoMatch(procedure("dpPlain"), /defaultarg|bl pxt::eqq_bool/g, "default guards in a plain function");
     assertNoMatch(code, /^dpShim__P\d+:/gm, "emitted TypeScript body for a native shim");
