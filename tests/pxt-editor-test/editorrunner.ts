@@ -21,6 +21,7 @@ import {
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
+import { projectToolsPinnedOnLoad } from "../../webapp/src/projectToolsState";
 import { addProjectWhiteboard, decodeWhiteboard, deleteProjectWhiteboard, excludePrivateProjectMetadata, MAX_PROJECT_NOTE_LENGTH, MAX_PROJECT_WHITEBOARDS, MAX_WHITEBOARD_NAME_LENGTH, normalizeProjectNotes, renameProjectWhiteboard, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
@@ -43,6 +44,28 @@ function patchText(patch: unknown, a: string) {
 }
 
 const filename = "main.ts";
+
+describe("project-tools pin defaults", () => {
+    it("pins documentation opened with a homepage project or example", () => {
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "example", true, false)).equals(true);
+        chai.expect(projectToolsPinnedOnLoad({ home: false }, "example", true, true)).equals(true);
+    });
+
+    it("does not pin projects whose documentation does not auto-open", () => {
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "blank", false, false)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "example", false, true)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({}, "project", true, false)).equals(false);
+    });
+
+    it("preserves manual pin and unpin choices on a current-project reload", () => {
+        const header = { id: "same" } as pxt.workspace.Header;
+        for (const sideDocsPinned of [false, true]) {
+            chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned }, "same", true, false)).equals(sideDocsPinned);
+            chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned }, "same", false, false)).equals(sideDocsPinned);
+        }
+        chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned: true }, "different", false, false)).equals(false);
+    });
+});
 
 describe("private project notes", () => {
     let guidGen: () => string;

@@ -138,12 +138,13 @@
     padding-inline: .5rem;
 }
 
-.project-tools__close, .project-tools__external {
+.project-tools__close, .project-tools__external, .project-tools__pin {
     display: flex;
     justify-content: center;
     align-items: center;
     min-width: 2.75rem;
     min-height: 2.75rem;
+    flex-shrink: 0;
     border: 1px solid transparent;
     border-radius: .5rem;
     background: transparent;
@@ -155,16 +156,37 @@
 // Outrank shared menu/link rules even when react-common is imported afterwards.
 .project-tools__header .project-tools__close,
 .project-tools__header .project-tools__external,
+.project-tools__header .project-tools__pin,
 .project-whiteboard-menu .common-button.menu-button {
     color: var(--tools-foreground);
     background: transparent;
     filter: none;
 
-    &:hover, &:focus-visible, &:active, &.expanded {
+    &:hover, &:focus-visible, &:active, &.expanded, &[aria-pressed="true"] {
         color: var(--tools-foreground-hover);
         background: var(--tools-surface-hover);
     }
     &:focus-visible::after { outline: none; }
+}
+
+.project-tools__pin {
+    padding: .35rem .5rem;
+    svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.75;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        /* rtl:ignore */
+        transform: rotate(35deg);
+    }
+    &[aria-pressed="true"] {
+        border-color: currentColor;
+        svg { transform: none; }
+        .project-tools__pin-head { fill: currentColor; }
+    }
 }
 
 .project-tools__resize {

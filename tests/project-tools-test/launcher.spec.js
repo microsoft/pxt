@@ -2,7 +2,7 @@
 
 const assert = require("assert");
 const fs = require("fs");
-const puppeteer = require("puppeteer");
+const { launchTestBrowser } = require("./browser");
 const less = require("less");
 const rtlcss = require("rtlcss");
 
@@ -27,7 +27,7 @@ describe("responsive project-tools launcher", function () {
             }
         });
         css = `* { box-sizing: border-box; } ${styles.css}`;
-        browser = await puppeteer.launch({ headless: true });
+        browser = await launchTestBrowser();
     });
     after(async () => { await browser?.close(); });
     beforeEach(async () => {
@@ -68,13 +68,16 @@ describe("responsive project-tools launcher", function () {
         await page.evaluate(() => {
             function Harness() {
                 const [expanded, setExpanded] = React.useState(false);
+                const [pinned, setPinned] = React.useState(false);
                 const [request, setRequest] = React.useState(0);
                 const [rtl, setRtl] = React.useState(false);
                 pxt.Util.isUserLanguageRtl = () => rtl;
                 window.setRtl = setRtl;
                 window.openHelp = () => { setRequest(value => value + 1); setExpanded(true); };
+                window.openExample = () => { setPinned(true); window.openHelp(); };
                 return React.createElement(exports.ProjectTools, {
                     header: { id: "test-project" }, expanded, onExpandedChange: setExpanded,
+                    pinned, onPinnedChange: setPinned,
                     docsUrl: request ? "/reference" : undefined, docsRequest: request,
                     onOpenReference: window.openHelp
                 }, React.createElement("iframe", {
@@ -103,6 +106,7 @@ describe("responsive project-tools launcher", function () {
         }
         await page.click(selector);
         await page.waitForFunction(() => !document.getElementById("project-tools-panel").hidden);
+        await page.waitForSelector(`${panel} .project-tools__pin`, { visible: true });
     };
 
     it("keeps options visible so the active bubble can close its panel", async () => {
@@ -221,6 +225,90 @@ describe("responsive project-tools launcher", function () {
         assert.equal(await page.$eval(panel, el => el.hidden), true);
     });
 
+    for (const [name, selector] of [["documentation", docs], ["whiteboard", whiteboard]]) {
+        for (const width of [390, 1366]) {
+            it(`keeps pinned ${name} open on outside clicks and after collapse/reopen at ${width}px`, async () => {
+                await openTool(selector, width);
+                const pin = `${panel} .project-tools__pin`;
+                assert.equal(await page.$eval(pin, el => el.getAttribute("aria-pressed")), "false");
+                await page.click(pin);
+                assert.equal(await page.$eval(pin, el => el.getAttribute("aria-pressed")), "true");
+                assert.equal(await page.$eval(pin, el => el.textContent.trim()), "");
+                assert.equal(await page.$eval(pin, el => el.title), "Unpin project tools");
+                assert.equal(await page.$eval(pin, el => el.getAttribute("aria-label")), "Keep project tools open");
+                await page.$eval("#outside", el => el.addEventListener("click", () => el.dataset.clicked = "true"));
+                await page.click("#outside");
+                await focusIs("outside");
+                assert.equal(await page.$eval("#outside", el => el.dataset.clicked), "true");
+                assert.equal(await page.$eval(panel, el => el.hidden), false);
+                await page.click(`${panel} .project-tools__close`);
+                assert.equal(await page.$eval(panel, el => el.hidden), true);
+                await page.click(selector);
+                assert.equal(await page.$eval(pin, el => el.getAttribute("aria-pressed")), "true");
+                await page.click("#outside");
+                assert.equal(await page.$eval(panel, el => el.hidden), false);
+                await page.click(pin);
+                assert.equal(await page.$eval(pin, el => el.getAttribute("aria-pressed")), "false");
+                assert.equal(await page.$eval(pin, el => el.textContent.trim()), "");
+                assert.equal(await page.$eval(pin, el => el.title), "Pin project tools open");
+                assert.equal(await page.$eval(panel, el => el.hidden), false);
+                await page.click("#outside");
+                await optionsAre(width <= 991);
+                assert.equal(await page.$eval(panel, el => el.hidden), true);
+            });
+        }
+    }
+
+    for (const method of ["bubble", "ellipsis", "Escape"]) {
+        it(`preserves pin when explicitly collapsing with ${method}`, async () => {
+            await openTool(whiteboard);
+            await page.click(`${panel} .project-tools__pin`);
+            if (method === "bubble") await page.click(whiteboard);
+            else if (method === "ellipsis") await page.click(more);
+            else { await page.focus("#test-notes"); await page.keyboard.press("Escape"); }
+            assert.equal(await page.$eval(panel, el => el.hidden), true);
+            if (method === "ellipsis") {
+                await optionsAre(true);
+                await page.click(more);
+                await optionsAre(false);
+            }
+            await page.click(whiteboard);
+            assert.equal(await page.$eval(`${panel} .project-tools__pin`, el => el.getAttribute("aria-pressed")), "true");
+            await page.click("#outside");
+            assert.equal(await page.$eval(panel, el => el.hidden), false);
+        });
+    }
+
+    it("pins example documentation initially without overriding a later manual unpin", async () => {
+        await page.evaluate(() => window.openExample());
+        await focusIs("project-tools-panel");
+        await optionsAre(true);
+        assert.equal(await page.$eval(`${panel} .project-tools__pin`, el => el.getAttribute("aria-pressed")), "true");
+        await page.click("#outside");
+        assert.equal(await page.$eval(panel, el => el.hidden), false);
+        await page.click(`${panel} .project-tools__pin`);
+        await page.evaluate(() => window.openHelp());
+        assert.equal(await page.$eval(`${panel} .project-tools__pin`, el => el.getAttribute("aria-pressed")), "false");
+        await page.click("#outside");
+        assert.equal(await page.$eval(panel, el => el.hidden), true);
+    });
+
+    it("shares the pin across tabs and viewport changes while allowing keyboard focus outside", async () => {
+        await openTool(whiteboard);
+        await page.focus(`${panel} .project-tools__pin`);
+        await page.keyboard.press("Space");
+        await page.focus("#test-notes");
+        await page.keyboard.press("Tab");
+        await focusIs("outside");
+        assert.equal(await page.$eval(panel, el => el.hidden), false);
+        await page.click(docs);
+        await page.setViewport({ width: 1366, height: 900 });
+        await optionsAre(false);
+        assert.equal(await page.$eval(`${panel} .project-tools__pin`, el => el.getAttribute("aria-pressed")), "true");
+        await page.click("#outside");
+        assert.equal(await page.$eval(panel, el => el.hidden), false);
+    });
+
     it("restores desktop tabs above 991px and preserves the mounted draft", async () => {
         await page.click(more);
         await optionsAre(false);
@@ -301,9 +389,10 @@ describe("responsive project-tools launcher", function () {
         await optionsAre(false);
     });
 
-    it("closes the panel when clicking an outside iframe after reading documentation", async () => {
+    for (const pinned of [false, true]) it(`${pinned ? "keeps pinned" : "closes unpinned"} documentation when clicking an outside iframe`, async () => {
         await openTool(docs);
         await page.evaluate(() => window.openHelp());
+        if (pinned) await page.click(`${panel} .project-tools__pin`);
         const inside = await page.waitForSelector("#test-reference", { visible: true });
         const insideFrame = await inside.contentFrame();
         await insideFrame.waitForSelector("h1");
@@ -321,8 +410,9 @@ describe("responsive project-tools launcher", function () {
         const outsideFrame = await outside.contentFrame();
         await outsideFrame.waitForSelector("#simulator-button");
         await outsideFrame.click("#simulator-button");
-        await page.waitForFunction(() => document.getElementById("project-tools-panel").hidden);
-        await optionsAre(true);
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        assert.equal(await page.$eval(panel, el => el.hidden), !pinned);
+        await optionsAre(!pinned);
         await focusIs("outside-frame");
         assert.equal(await outsideFrame.evaluate(() => document.activeElement.id), "simulator-button");
     });

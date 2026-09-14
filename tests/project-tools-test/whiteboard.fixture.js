@@ -8,8 +8,17 @@ const { ProjectTools } = require("../../built/webapp/src/components/ProjectTools
 const { imageStateToBitmap } = require("../../built/webapp/src/components/ImageEditor/util");
 const { dispatchImageEdit, dispatchUndoImageEdit } = require("../../built/webapp/src/components/ImageEditor/actions/dispatch");
 const { validateProjectNotes } = require("../../built/webapp/src/projectNotes");
+const { ThemeManager } = require("../../built/react-common/components/theming/themeManager");
+
+window.DOMPurify = require("dompurify");
 
 const test = window.whiteboardTest;
+test.switchTheme = theme => {
+    pxt.appTarget.colorThemeMap = { [theme.id]: theme };
+    pxt.appTarget.appTheme.highContrastColorTheme = "pxt-high-contrast";
+    document.body.classList.add("pxt-theme-root");
+    ThemeManager.getInstance().switchColorTheme(theme.id);
+};
 Object.assign(test.workspace, {
     async saveProjectNotesAsync(id, notes) {
         const snapshot = JSON.parse(JSON.stringify(validateProjectNotes(notes)));
@@ -23,11 +32,17 @@ Object.assign(test.workspace, {
 
 function Harness({ notes }) {
     const [expanded, setExpanded] = React.useState(false);
+    const [pinned, setPinned] = React.useState(false);
     const [incoming, setIncoming] = React.useState(notes);
     test.receive = setIncoming;
     return React.createElement(ProjectTools, {
         header: { id: "whiteboard-project" }, notes: incoming, expanded,
-        onExpandedChange: setExpanded, onOpenReference: () => {}
+        pinned, onPinnedChange: setPinned,
+        onExpandedChange: setExpanded, onOpenReference: () => {}, docsUrl: "/reference",
+        docsAction: React.createElement("a", {
+            className: "project-tools__external", href: "about:blank", target: "_blank", rel: "noopener noreferrer",
+            "aria-label": "Open documentation in new tab"
+        }, React.createElement("i", { className: "icon external", "aria-hidden": true }))
     });
 }
 

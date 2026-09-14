@@ -98,6 +98,7 @@ import {
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import { ariaAnnounce } from "./util";
+import { projectToolsPinnedOnLoad } from "./projectToolsState";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -1882,6 +1883,11 @@ export class ProjectView
             // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
             const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
 
+            const documentation = pkg.mainPkg.config.documentation;
+            const readmeContent = documentation ? undefined : this.getLocalizedReadmeContent();
+            // No auto-popup when editing packages locally or when the README opts out.
+            const autoOpenReadme = !h.githubId && !!readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent);
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1891,6 +1897,7 @@ export class ProjectView
                 projectName: h.name,
                 currFile: file,
                 sideDocsLoadUrl: "",
+                sideDocsPinned: projectToolsPinnedOnLoad(this.state, h.id, !!documentation || autoOpenReadme, !!this.loadingExample),
                 debugging: false,
                 isMultiplayerGame: false,
                 collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
@@ -1934,17 +1941,11 @@ export class ProjectView
 
             // load side docs
             const editorForFile = this.pickEditorFor(file);
-            const documentation = pkg?.mainPkg?.config?.documentation;
             if (documentation) {
                 this.setSideDoc(documentation, editorForFile == this.blocksEditor);
             }
-            else {
-                const readmeContent = this.getLocalizedReadmeContent();
-                // no auto-popup when editing packages locally
-                // ### @autoOpen false
-                if (!h.githubId && readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent)) {
-                    this.setSideMarkdown(readmeContent);
-                }
+            else if (autoOpenReadme) {
+                this.setSideMarkdown(readmeContent);
             }
 
             // update recentUse on the header
@@ -5957,6 +5958,7 @@ export class ProjectView
                 </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed}
                     docsUrl={this.state.sideDocsLoadUrl} bubble={projectTools} header={this.state.header}
+                    pinned={this.state.sideDocsPinned}
                     projectNotes={this.state.header?.projectNotes} /> : undefined}
                 {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}

@@ -3,6 +3,11 @@
 Run `gulp testprojecttools` from PXT. It rebuilds the shared library and webapp
 modules before running the tests. The task is included in `gulp test`.
 
+Browser suites share [browser.js](browser.js). On GitHub Actions only, they use
+`--no-sandbox`, matching the repository's Karma launcher for Ubuntu runners that
+restrict Chromium user namespaces. Local runs retain the Chromium sandbox; this
+test-only setting does not change the editor or its iframe sandbox attributes.
+
 - [storage.spec.js](storage.spec.js) exercises actual workspace/cloud code with a
   fake persistent provider and authenticated API. No network requests or public
   shares are created. Private notes must survive save, duplication and account
@@ -17,6 +22,8 @@ modules before running the tests. The task is included in `gulp test`.
   LESS with test theme variables and checks RTL, reduced-motion behavior, banner
   offsets, ellipsis alignment, speech-bubble pointers, and panel dismissal via
   the ellipsis, outside controls, keyboard focus and the simulator iframe.
+  Pin regressions cover click-away/iframe focus, explicit collapse and reopening,
+  manual unpin, example defaults, and switching tabs/viewports.
   The whiteboard is stubbed; no development server is needed. Puppeteer's browser
   must be installed.
 - [whiteboard.spec.js](whiteboard.spec.js) loads the actual image editor, reducer,
@@ -24,6 +31,12 @@ modules before running the tests. The task is included in `gulp test`.
   not the controls. It covers legacy notes, named-board operations, independent
   images/text/undo, confirmed deletion and last-board protection, save errors/retry,
   all 16 colors on mobile and footer spacing.
+  Contrast checks use the production stylesheet order (shared menu styles load
+  after project-tools) and the actual theme manager. They check icons, text and
+  keyboard focus through idle/hover/pressed/expanded states on mobile and desktop,
+  plus system forced colors. Light/dark regression palettes and shared high
+  contrast always run. With the sibling Arcade checkout (or `PXT_ARCADE_PATH`),
+  every Arcade color theme and its override CSS is included automatically.
 
 Bitmap/schema checks and the startup experiment guard are also covered by
 [the editor suite](../pxt-editor-test/editorrunner.ts), run with `gulp testpxteditor`.
