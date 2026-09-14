@@ -6,7 +6,7 @@ These extended markdown elements remain in the documents when they're uploaded t
 
 ## Information pages
 
-Information pages are for reference, courses and lessons, projects, how to's, tips, FAQs, etc. These pages typcally contain mostly text with occasional images. There are portions of these pages that do not get translated.
+Information pages are for reference, courses and lessons, projects, how to's, tips, FAQs, etc. These pages typically contain mostly text with occasional images. There are portions of these pages that do not get translated.
 
 ### Code blocks
 
@@ -22,7 +22,7 @@ input.onButtonPressed(Button.A, () => {
 
 ### Code block highlights
 
-Code highlights help to ephasize text that represents a block in the editor Toolbox. They will highlight the text with a color background that matches the block's Toolbox category. In Crowdin, it might look like this:
+Code highlights help to emphasize text that represents a block in the editor Toolbox. They will highlight the text with a color background that matches the block's Toolbox category. In Crowdin, it might look like this:
 
 ```
 <0>||basic:show number||</0>

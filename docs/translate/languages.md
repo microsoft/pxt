@@ -33,4 +33,3 @@ Under each language there are top-level folders for all of the editors (includin
 - [ ] [calliope](https://crowdin.com/project/makecode/en#/calliope)
 - [ ] [calliopemini](https://crowdin.com/project/makecode/en#/calliopemini)
 - [ ] [grovezero](https://crowdin.com/project/makecode/en#/grovezero)
-
