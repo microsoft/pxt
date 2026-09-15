@@ -1004,6 +1004,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             pinned={!!this.props.pinned} onPinnedChange={pinned => this.props.parent.setState({ sideDocsPinned: pinned })}
             onExpandedChange={expanded => this.props.parent.setState({ sideDocsCollapsed: !expanded })}
             onOpenReference={() => this.setPath("/reference", this.props.parent.isBlocksEditor())}
+            onSignIn={() => this.props.parent.showLoginDialog(undefined, { signInMessage: lf("Sign in to sync your backpack across devices.") })}
             docsAction={!lockedEditor && <a className="project-tools__external" title={lf("Open documentation in new tab")}
                 aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}><sui.Icon icon="external" /></a>}>
             {docsUrl && this.renderContent(url, builtIn, lockedEditor)}

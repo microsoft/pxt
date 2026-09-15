@@ -16,6 +16,7 @@ describe("responsive project-tools launcher", function () {
     const more = "#project-tools-launcher";
     const docs = "#project-tools-tab-docs";
     const whiteboard = "#project-tools-tab-whiteboard";
+    const backpack = "#project-tools-tab-backpack";
     const panel = "#project-tools-panel";
     const themeVariables = {
         mainMenuHeight: "4rem", mobileMenuHeight: "3.5rem", editorToolsCollapsedHeight: "4.7rem",
@@ -49,10 +50,40 @@ describe("responsive project-tools launcher", function () {
                 Util: { isUserLanguageRtl: () => false }
             };
             window.whiteboardMounts = 0;
+            window.backpackMounts = 0;
+            window.signInRequests = 0;
+            window.openRequests = [];
+            window.backpackOpenListeners = new Set();
+            window.backpackSubscriptions = 0;
+            window.backpackUnsubscriptions = 0;
+            window.requestBackpackOpen = (headerId, focus) => {
+                const request = { headerId, focus };
+                window.openRequests.push(request);
+                Array.from(window.backpackOpenListeners).forEach(listener => listener(request));
+            };
             window.exports = {};
             window.require = id => {
                 if (id === "react") return window.React;
                 if (id === "../projectToolsState") return window.projectToolsState;
+                if (id === "../backpack") return {
+                    subscribeBackpackOpen: listener => {
+                        ++window.backpackSubscriptions;
+                        window.backpackOpenListeners.add(listener);
+                        return () => {
+                            ++window.backpackUnsubscriptions;
+                            window.backpackOpenListeners.delete(listener);
+                        };
+                    }
+                };
+                if (id === "./ProjectBackpack") return {
+                    ProjectBackpack: props => {
+                        React.useEffect(() => { ++window.backpackMounts; }, []);
+                        window.backpackProps = { headerId: props.headerId, active: props.active, onSignIn: typeof props.onSignIn };
+                        window.setBackpackModalOpen = props.onModalOpenChange;
+                        return React.createElement(React.Fragment, null, props.renderHeader("Backpack"),
+                            React.createElement("button", { id: "test-backpack-signin", onClick: props.onSignIn }, "Sign in"));
+                    }
+                };
                 if (id === "react/jsx-runtime") {
                     const jsx = (type, props, key) => React.createElement(type, { ...props, key });
                     return { jsx, jsxs: jsx, Fragment: React.Fragment };
@@ -85,7 +116,7 @@ describe("responsive project-tools launcher", function () {
                     header: { id: "test-project" }, expanded, onExpandedChange: setExpanded,
                     pinned, onPinnedChange: setPinned,
                     docsUrl: request ? "/reference" : undefined, docsRequest: request,
-                    onOpenReference: window.openHelp
+                    onOpenReference: window.openHelp, onSignIn: () => { ++window.signInRequests; }
                 }, React.createElement("iframe", {
                     id: "test-reference", title: "Reference content", srcDoc: "<h1>Reference content</h1>"
                 }));
@@ -131,6 +162,20 @@ describe("responsive project-tools launcher", function () {
         await page.waitForSelector(`${panel} .project-tools__pin`, { visible: true });
     };
 
+    for (const width of [390, 1024, 1366]) {
+        it(`keeps the unpinned backpack open during modal focus and resumes dismissal afterward at ${width}px`, async () => {
+            await openTool(backpack, width);
+            await page.evaluate(() => window.setBackpackModalOpen(true));
+            await page.focus("#outside");
+            await page.click("#outside");
+            assert.equal(await page.$eval(panel, element => element.hidden), false);
+            assert.equal(await page.$eval(`${panel} .project-tools__pin`, element => element.getAttribute("aria-pressed")), "false");
+            await page.evaluate(() => window.setBackpackModalOpen(false));
+            await page.click("#outside");
+            await page.waitForFunction(() => document.getElementById("project-tools-panel").hidden);
+        });
+    }
+
     for (const width of [390, 768, 991, 992, 1024, 1199, 1200, 1366]) {
         it(`starts with ${width > 991 ? "expanded" : "collapsed"} bubbles and an ellipsis at ${width}px without stealing focus`, async () => {
             await page.setViewport({ width, height: 900 });
@@ -142,19 +187,29 @@ describe("responsive project-tools launcher", function () {
             assert.equal(await page.$eval(more, el => el.getAttribute("aria-expanded")), String(width > 991));
             assert.equal(await page.$eval("#project-tools-options", el => el.getAttribute("aria-orientation")), width < 1200 ? "horizontal" : "vertical");
             assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.length), width > 991 ? 1 : 0);
+            assert.deepEqual(await page.$$eval('#project-tools-options [role="tab"]', els => els.map(el => ({
+                id: el.id, index: el.style.getPropertyValue("--tools-bubble-index")
+            }))), [
+                { id: "project-tools-tab-docs", index: "0" },
+                { id: "project-tools-tab-whiteboard", index: "1" },
+                { id: "project-tools-tab-backpack", index: "2" }
+            ]);
+            assert.equal(await page.$eval(".project-tools", el => el.style.getPropertyValue("--tools-tab-count")), "3");
             assert.equal(await page.$eval(panel, el => el.hidden), true, "Expanded bubbles must not open a panel");
             if (width > 991) {
-                const positions = await page.evaluate(() => ["project-tools-launcher", "project-tools-tab-docs", "project-tools-tab-whiteboard"]
+                const positions = await page.evaluate(() => ["project-tools-launcher", "project-tools-tab-docs", "project-tools-tab-whiteboard", "project-tools-tab-backpack"]
                     .map(id => document.getElementById(id).getBoundingClientRect().toJSON()));
-                const [launcher, docs, whiteboard] = positions;
+                const [launcher, docs, whiteboard, backpack] = positions;
                 if (width < 1200) {
                     assert.equal(docs.top, launcher.top);
                     assert.equal(whiteboard.top, launcher.top);
-                    assert.ok(docs.right < whiteboard.left && whiteboard.right < launcher.left);
+                    assert.equal(backpack.top, launcher.top);
+                    assert.ok(docs.right < whiteboard.left && whiteboard.right < backpack.left && backpack.right < launcher.left);
                 } else {
                     assert.equal(docs.left, launcher.left);
                     assert.equal(whiteboard.left, launcher.left);
-                    assert.ok(launcher.bottom < docs.top && docs.bottom < whiteboard.top);
+                    assert.equal(backpack.left, launcher.left);
+                    assert.ok(launcher.bottom < docs.top && docs.bottom < whiteboard.top && whiteboard.bottom < backpack.top);
                 }
                 await page.click("#outside");
                 await optionsAre(false);
@@ -247,12 +302,15 @@ describe("responsive project-tools launcher", function () {
                 launcher: document.querySelector(".project-tools__launcher").getBoundingClientRect().toJSON(),
                 docs: document.getElementById("project-tools-tab-docs").getBoundingClientRect().toJSON(),
                 whiteboard: document.getElementById("project-tools-tab-whiteboard").getBoundingClientRect().toJSON(),
+                backpack: document.getElementById("project-tools-tab-backpack").getBoundingClientRect().toJSON(),
                 panel: document.getElementById("project-tools-panel").getBoundingClientRect().toJSON()
             }));
             assert.equal(await page.$eval("#project-tools-options", el => el.getAttribute("aria-orientation")), "horizontal");
             assert.equal(layout.docs.top, layout.whiteboard.top);
+            assert.equal(layout.backpack.top, layout.whiteboard.top);
             assert.ok(layout.docs.right <= layout.whiteboard.left);
-            assert.ok(layout.whiteboard.right <= layout.launcher.left);
+            assert.ok(layout.whiteboard.right <= layout.backpack.left);
+            assert.ok(layout.backpack.right <= layout.launcher.left);
             assert.equal(layout.launcher.top, 72, "Use the desktop menu height, not the tablet menu height");
             assert.equal(layout.panel.top, 140);
             assert.ok(layout.docs.bottom < layout.panel.top);
@@ -333,6 +391,118 @@ describe("responsive project-tools launcher", function () {
         await optionsAre(false);
         await focusIs("project-tools-tab-whiteboard");
         assert.equal(await page.$eval(panel, el => el.hidden), true);
+    });
+
+    for (const width of [390, 1024, 1366]) for (const rtl of [false, true]) {
+        it(`cycles all three roving tabs and Home/End at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
+            await openTool(docs, width);
+            if (rtl) {
+                await page.$eval("style", (el, text) => el.textContent = text, rtlcss.process(css));
+                await page.evaluate(() => window.setRtl(true));
+            }
+            const compact = width < 1200;
+            const forward = compact ? (rtl ? "ArrowLeft" : "ArrowRight") : "ArrowDown";
+            const backward = compact ? (rtl ? "ArrowRight" : "ArrowLeft") : "ArrowUp";
+            const checkTab = async name => {
+                await focusIs(`project-tools-tab-${name}`);
+                assert.deepEqual(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.map(el => el.id)), [`project-tools-tab-${name}`]);
+                const selected = compact ? "docs" : name;
+                assert.equal(await page.$eval(panel, el => el.dataset.activeTab), selected);
+                assert.equal(await page.$eval(panel, el => el.hidden), false);
+                assert.deepEqual(await page.$$eval('#project-tools-options [aria-selected="true"]', els => els.map(el => el.id)), [`project-tools-tab-${selected}`]);
+            };
+            await page.focus(docs);
+            for (const name of ["whiteboard", "backpack", "docs"]) {
+                await page.keyboard.press(forward);
+                await checkTab(name);
+            }
+            for (const name of ["backpack", "whiteboard", "docs"]) {
+                await page.keyboard.press(backward);
+                await checkTab(name);
+            }
+            await page.keyboard.press("End");
+            await checkTab("backpack");
+            await page.keyboard.press("Home");
+            await checkTab("docs");
+            for (const key of compact ? ["ArrowUp", "ArrowDown"] : ["ArrowLeft", "ArrowRight"]) {
+                await page.keyboard.press(key);
+                await checkTab("docs");
+            }
+            await page.keyboard.press("End");
+            if (compact) await page.keyboard.press("Enter");
+            await page.waitForSelector("#test-backpack-signin", { visible: true });
+            assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
+            await focusIs("project-tools-tab-backpack");
+        });
+    }
+
+    for (const width of [390, 1024, 1366]) {
+        it(`opens backpack on drag dwell without stealing focus at ${width}px`, async () => {
+            await page.setViewport({ width, height: 900 });
+            await optionsAre(width <= 991);
+            await page.focus("#outside");
+            await page.evaluate(() => window.requestBackpackOpen("test-project", false));
+            await page.waitForSelector("#test-backpack-signin", { visible: true });
+            await optionsAre(false);
+            await focusIs("outside");
+            assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
+            assert.equal(await page.$eval(backpack, el => el.getAttribute("aria-selected")), "true");
+            assert.deepEqual(await page.evaluate(() => window.openRequests), [{ headerId: "test-project", focus: false }]);
+            assert.deepEqual(await page.evaluate(() => window.backpackProps), { headerId: "test-project", active: true, onSignIn: "function" });
+            assert.equal(await page.evaluate(() => window.whiteboardMounts), 0);
+            assert.equal(await page.evaluate(() => window.backpackMounts), 1);
+            await page.click("#test-backpack-signin");
+            assert.equal(await page.evaluate(() => window.signInRequests), 1);
+            await page.click("#project-tools-backpack .project-tools__close");
+            await focusIs("project-tools-tab-backpack");
+            assert.equal(await page.evaluate(() => window.backpackProps.active), false);
+            await page.click(whiteboard);
+            await page.waitForSelector("#test-notes", { visible: true });
+            await focusIs("project-tools-tab-whiteboard");
+        });
+
+        for (const alreadyOpen of [false, true]) it(`opens backpack from context with focused tab ${alreadyOpen ? "over whiteboard" : "from closed tools"} at ${width}px`, async () => {
+            if (alreadyOpen) {
+                await openTool(whiteboard, width);
+                await page.focus("#test-notes");
+            } else {
+                await page.setViewport({ width, height: 900 });
+                await optionsAre(width <= 991);
+                await page.focus("#outside");
+            }
+            await page.evaluate(() => window.requestBackpackOpen("test-project", true));
+            await page.waitForSelector("#test-backpack-signin", { visible: true });
+            await optionsAre(false);
+            await focusIs("project-tools-tab-backpack");
+            assert.deepEqual(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.map(el => el.id)), ["project-tools-tab-backpack"]);
+            assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
+            assert.deepEqual(await page.evaluate(() => window.openRequests), [{ headerId: "test-project", focus: true }]);
+        });
+    }
+
+    it("ignores backpack requests for another header and cleans up subscriptions on remount", async () => {
+        await page.focus("#outside");
+        await page.evaluate(() => {
+            window.requestBackpackOpen("another-project", false);
+            window.requestBackpackOpen("another-project", true);
+        });
+        await optionsAre(true);
+        await focusIs("outside");
+        assert.equal(await page.$eval(panel, el => el.hidden), true);
+        assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "docs");
+        assert.equal(await page.evaluate(() => window.backpackMounts), 0);
+        await openTool(whiteboard);
+        await page.focus("#test-notes");
+        await page.evaluate(() => window.requestBackpackOpen("another-project", true));
+        await focusIs("test-notes");
+        assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "whiteboard");
+        assert.equal(await page.$eval(panel, el => el.hidden), false);
+        await page.evaluate(() => window.mountProjectTools());
+        await page.waitForFunction(() => window.backpackSubscriptions === 2 && window.backpackUnsubscriptions === 1);
+        assert.equal(await page.evaluate(() => window.backpackOpenListeners.size), 1);
+        await page.evaluate(() => ReactDOM.unmountComponentAtNode(document.getElementById("root")));
+        await page.waitForFunction(() => window.backpackUnsubscriptions === 2);
+        assert.equal(await page.evaluate(() => window.backpackOpenListeners.size), 0);
     });
 
     it("dismisses on outside click and Tab without stealing focus", async () => {
@@ -695,13 +865,21 @@ describe("responsive project-tools launcher", function () {
         await optionsAre(false);
         await page.click(docs);
         await optionsAre(false);
+        await page.click(backpack);
+        await page.waitForSelector("#test-backpack-signin", { visible: true });
+        await optionsAre(false);
+        assert.equal(await page.$eval("#project-tools-whiteboard", el => el.hidden), true);
+        assert.equal(await page.$eval("#test-notes", el => el.value), draft);
+        assert.equal(await page.evaluate(() => window.whiteboardMounts), 1);
         await page.evaluate(() => window.openHelp());
         await focusIs("project-tools-panel");
         await optionsAre(false);
         await page.click(whiteboard);
         assert.equal(await page.$eval("#test-notes", el => el.value), draft);
         assert.equal(await page.evaluate(() => window.whiteboardMounts), 1);
-        await page.click(".project-tools__close");
+        assert.equal(await page.evaluate(() => window.backpackMounts), 1);
+        assert.equal(await page.evaluate(() => window.backpackProps.active), false);
+        await page.click("#project-tools-whiteboard .project-tools__close");
         await focusIs("project-tools-tab-whiteboard");
         await optionsAre(false);
         await page.click(more);
@@ -751,7 +929,7 @@ describe("responsive project-tools launcher", function () {
     });
 
     for (const width of [390, 1024, 1366]) for (const rtl of [false, true]) {
-        it(`animates both bubbles from the launcher at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
+        it(`animates all three bubbles from the launcher at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
             await page.setViewport({ width, height: 900 });
             await optionsAre(width <= 991);
             if (width > 991) {
@@ -790,13 +968,18 @@ describe("responsive project-tools launcher", function () {
                 return { origin, start, middle, end: bubbles.map(center), animated, durations };
             }, width < 1200);
             assert.equal(positions.animated, true);
-            assert.deepEqual(positions.durations, [160, 160]);
-            for (let i = 0; i < 2; ++i) {
+            assert.deepEqual(positions.durations, [160, 160, 160]);
+            assert.equal(positions.start.length, 3);
+            assert.equal(positions.middle.length, 3);
+            assert.equal(positions.end.length, 3);
+            for (let i = 0; i < 3; ++i) {
                 assert.ok(Math.abs(positions.start[i] - positions.origin) < 1, "bubble starts behind the launcher");
                 const direction = width >= 1200 || rtl ? 1 : -1;
                 const distance = (positions.end[i] - positions.start[i]) * direction;
                 const halfway = (positions.middle[i] - positions.start[i]) * direction;
                 assert.ok(distance > 40 && halfway > 0 && halfway < distance, "bubble travels outward over time");
+                const steps = width < 1200 ? 3 - i : i + 1;
+                assert.ok(Math.abs(distance - steps * (width < 1200 ? 60 : 64)) < 1, "Each indexed bubble reaches its own slot");
             }
             await page.click(more);
             assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.length), 0);
@@ -810,7 +993,7 @@ describe("responsive project-tools launcher", function () {
         await page.setViewport({ width, height: 900 });
         await optionsAre(width <= 991);
         await showOptions();
-        assert.equal(await page.$eval(docs, el => el.getAnimations().length), 0);
+        assert.deepEqual(await page.$$eval('#project-tools-options [role="tab"]', els => els.map(el => el.getAnimations().length)), [0, 0, 0]);
         await page.click(docs);
         await optionsAre(false);
         await page.click(docs);
@@ -884,7 +1067,7 @@ describe("responsive project-tools launcher", function () {
                         assert.ok(pointer.left < edge && pointer.right > edge);
                     }
                 };
-                for (const selector of [docs, whiteboard]) {
+                for (const selector of [docs, whiteboard, backpack]) {
                     await page.click(selector);
                     assert.equal(await page.$eval(panel, el => el.hidden), false);
                     await checkPointer(selector);

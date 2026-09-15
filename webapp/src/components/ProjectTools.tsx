@@ -1,6 +1,11 @@
 import * as React from "react";
 import { ProjectWhiteboard } from "./ProjectWhiteboard";
+import { ProjectBackpack } from "./ProjectBackpack";
+import { subscribeBackpackOpen } from "../backpack";
 import { PROJECT_TOOLS_COMPACT_QUERY } from "../projectToolsState";
+
+const tabNames = ["docs", "whiteboard", "backpack"] as const;
+type ProjectToolTab = typeof tabNames[number];
 
 interface ProjectToolsProps {
     header: pxt.workspace.Header;
@@ -12,13 +17,15 @@ interface ProjectToolsProps {
     onExpandedChange: (expanded: boolean) => void;
     onPinnedChange: (pinned: boolean) => void;
     onOpenReference: () => void;
+    onSignIn: () => void;
     docsAction?: React.ReactNode;
     children?: React.ReactNode;
 }
 
 export function ProjectTools(props: ProjectToolsProps) {
-    const [tab, setTab] = React.useState<"docs" | "whiteboard">("docs");
+    const [tab, setTab] = React.useState<ProjectToolTab>("docs");
     const [visitedWhiteboard, setVisitedWhiteboard] = React.useState(false);
+    const [visitedBackpack, setVisitedBackpack] = React.useState(false);
     // Leave initial sizing to the target's responsive sidedocs CSS. An explicit
     // resize is remembered independently of those defaults for this project view.
     const [width, setWidth] = React.useState<number>();
@@ -33,10 +40,14 @@ export function ProjectTools(props: ProjectToolsProps) {
     const launcher = React.useRef<HTMLDivElement>();
     const moreButton = React.useRef<HTMLButtonElement>();
     const focusTabOnOpen = React.useRef(false);
+    const openingFromDrag = React.useRef(false);
+    const modalOpen = React.useRef(false);
+    const onModalOpenChange = React.useCallback((open: boolean) => { modalOpen.current = open; }, []);
     const panel = React.useRef<HTMLDivElement>();
     const tabButtons = React.useRef<HTMLButtonElement[]>([]);
     const drag = React.useRef<{ axis: "width" | "height"; position: number; size: number }>();
     const rtl = pxt.Util.isUserLanguageRtl();
+    const tabIndex = tabNames.indexOf(tab);
     const measureWidth = React.useCallback(() => {
         const bounds = panel.current.getBoundingClientRect();
         const style = window.getComputedStyle(panel.current);
@@ -61,13 +72,23 @@ export function ProjectTools(props: ProjectToolsProps) {
     const pinState = React.useRef({ pinned: props.pinned, expanded: props.expanded });
     pinState.current = { pinned: props.pinned, expanded: props.expanded };
     const dismissTools = React.useCallback((explicit = false) => {
-        if (!explicit && pinState.current.pinned && pinState.current.expanded) return;
+        if (!explicit && (modalOpen.current || pinState.current.pinned && pinState.current.expanded)) return;
         // Desktop tabs remain available after click-away; only an explicit
         // disclosure action hides them. Read the current size for deferred blur.
         if (explicit || pxt.BrowserUtils.isTabletSize()) setOptionsOpen(false);
         if (pinState.current.expanded) props.onExpandedChange(false);
     }, [props.onExpandedChange]);
 
+    React.useEffect(() => subscribeBackpackOpen(request => {
+        if (request.headerId !== props.header.id) return;
+        // Native Blockly dragging must retain pointer capture and workspace focus.
+        openingFromDrag.current = !request.focus;
+        focusTabOnOpen.current = request.focus;
+        setVisitedBackpack(true);
+        setTab("backpack");
+        setOptionsOpen(true);
+        props.onExpandedChange(true);
+    }), [props.header.id, props.onExpandedChange]);
     React.useEffect(() => {
         const query = window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY);
         const tabletQuery = window.matchMedia(`(max-width: ${pxt.BREAKPOINT_TABLET}px)`);
@@ -109,8 +130,8 @@ export function ProjectTools(props: ProjectToolsProps) {
         // Only user-initiated expansion moves focus, not desktop startup or resize.
         if (!focusTabOnOpen.current || !optionsOpen) return;
         focusTabOnOpen.current = false;
-        tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
-    }, [optionsOpen]);
+        tabButtons.current[tabIndex]?.focus();
+    }, [optionsOpen, tabIndex]);
     React.useEffect(() => {
         if (!props.expanded && !optionsOpen) return undefined;
         const onPointerDown = (event: PointerEvent) => {
@@ -169,27 +190,32 @@ export function ProjectTools(props: ProjectToolsProps) {
     }, [props.docsUrl, props.docsRequest]);
     React.useEffect(() => {
         if (props.expanded) {
+            if (openingFromDrag.current) return;
             if (!optionsOpen) panel.current?.focus();
-            else tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
+            else tabButtons.current[tabIndex]?.focus();
         }
     }, [props.expanded]);
     React.useEffect(() => {
         if (props.expanded && tab === "whiteboard") setVisitedWhiteboard(true);
+        if (props.expanded && tab === "backpack") setVisitedBackpack(true);
     }, [props.expanded, tab]);
 
     const openOptions = () => {
-        if (optionsOpen) tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
+        openingFromDrag.current = false;
+        if (optionsOpen) tabButtons.current[tabIndex]?.focus();
         else {
             focusTabOnOpen.current = true;
             setOptionsOpen(true);
         }
     };
     const collapse = () => {
+        openingFromDrag.current = false;
         props.onExpandedChange(false);
         if (!optionsOpen) moreButton.current?.focus();
-        else tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
+        else tabButtons.current[tabIndex]?.focus();
     };
-    const selectTab = (name: "docs" | "whiteboard") => {
+    const selectTab = (name: ProjectToolTab) => {
+        openingFromDrag.current = false;
         if (props.expanded && tab === name) collapse();
         else {
             setTab(name);
@@ -199,15 +225,18 @@ export function ProjectTools(props: ProjectToolsProps) {
     const tabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
         let next: number;
         switch (event.key) {
-            case "ArrowUp": case "ArrowDown": if (!compact) next = 1 - index; break;
-            case "ArrowLeft": case "ArrowRight": if (compact) next = 1 - index; break;
+            case "ArrowUp": if (!compact) next = index - 1; break;
+            case "ArrowDown": if (!compact) next = index + 1; break;
+            case "ArrowLeft": if (compact) next = index + (rtl ? 1 : -1); break;
+            case "ArrowRight": if (compact) next = index + (rtl ? -1 : 1); break;
             case "Home": next = 0; break;
-            case "End": next = 1; break;
+            case "End": next = tabNames.length - 1; break;
             default: return;
         }
         if (next === undefined) return;
         event.preventDefault();
-        if (!compact) setTab(next ? "whiteboard" : "docs");
+        next = (next + tabNames.length) % tabNames.length;
+        if (!compact) setTab(tabNames[next]);
         tabButtons.current[next]?.focus();
     };
     const resizeWidth = (value: number) => {
@@ -254,7 +283,8 @@ export function ProjectTools(props: ProjectToolsProps) {
     </div>;
 
     return <div className={`project-tools${compact ? " project-tools--compact" : ""}`}
-        ref={root} dir={rtl ? "rtl" : "ltr"} data-options-open={optionsOpen} onBlur={event => {
+        ref={root} dir={rtl ? "rtl" : "ltr"} data-options-open={optionsOpen}
+        style={{ "--tools-tab-count": tabNames.length } as React.CSSProperties} onBlur={event => {
             if (event.relatedTarget) {
                 if (!event.currentTarget.contains(event.relatedTarget as Node)) dismissTools();
             } else {
@@ -291,11 +321,12 @@ export function ProjectTools(props: ProjectToolsProps) {
             </button>
             <div id="project-tools-options" className="project-tools__bubbles" role="tablist"
                 aria-hidden={!optionsOpen} aria-orientation={compact ? "horizontal" : "vertical"} aria-label={lf("Project tools")}>
-                {[lf("Documentation"), lf("Whiteboard")].map((label, index) => {
-                    const name = index ? "whiteboard" : "docs";
+                {[lf("Documentation"), lf("Whiteboard"), lf("Backpack")].map((label, index) => {
+                    const name = tabNames[index];
                     const selected = tab === name;
                     return <button key={name} id={`project-tools-tab-${name}`} type="button" role="tab"
                         className="project-tools__bubble" ref={element => tabButtons.current[index] = element}
+                        style={{ "--tools-bubble-index": index } as React.CSSProperties}
                         aria-label={label} title={label} aria-selected={selected && props.expanded}
                         aria-expanded={selected && props.expanded} aria-controls={`project-tools-${name}`}
                         tabIndex={optionsOpen && (compact ? focusedTab === index : selected) ? 0 : -1}
@@ -310,14 +341,17 @@ export function ProjectTools(props: ProjectToolsProps) {
                                 moreButton.current?.focus();
                             } else tabKeyDown(event, index);
                         }}>
-                        <i className={`icon ${index ? "pencil" : "book"}`} aria-hidden="true" />
+                        {name === "backpack" ? <svg className="project-backpack__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                            <path d="M9 5V3h6v2M6 7a4 4 0 0 1 4-3h4a4 4 0 0 1 4 3l2 12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L6 7ZM8 13h8v5H8ZM7 9h10" />
+                        </svg> : <i className={`icon ${index ? "pencil" : "book"}`} aria-hidden="true" />}
                         <span className="project-tools__bubble-label">{label}</span>
                     </button>;
                 })}
             </div>
         </div>
         <div id="project-tools-panel" ref={panel} className={`project-tools__panel${resizing ? " project-tools__panel--resizing" : ""}`}
-            hidden={!props.expanded} style={{ width, height, bottom: height === undefined ? undefined : "auto" }} data-active-tab={tab}
+            hidden={!props.expanded} style={{ width, height, bottom: height === undefined ? undefined : "auto",
+                "--tools-tab-index": tabIndex } as React.CSSProperties} data-active-tab={tab}
             role="dialog" aria-modal="false" aria-label={lf("Project tools")} tabIndex={-1}
             onKeyDown={event => {
                 if (event.key === "Escape" && !event.defaultPrevented) {
@@ -394,6 +428,11 @@ export function ProjectTools(props: ProjectToolsProps) {
                 className="project-tools__whiteboard">
                 {visitedWhiteboard && <ProjectWhiteboard headerId={props.header.id} notes={props.notes}
                     active={props.expanded && tab === "whiteboard"} renderHeader={renderHeader} />}
+            </section>
+            <section id="project-tools-backpack" role="tabpanel" aria-labelledby="project-tools-tab-backpack" hidden={tab !== "backpack"}
+                className="project-backpack">
+                {visitedBackpack && <ProjectBackpack headerId={props.header.id} active={props.expanded && tab === "backpack"}
+                    renderHeader={renderHeader} onSignIn={props.onSignIn} onModalOpenChange={onModalOpenChange} />}
             </section>
         </div>
     </div>;

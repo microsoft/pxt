@@ -20,6 +20,10 @@ export * from "./importer";
 export * from "./diff";
 export * from "./legacyMutations";
 export * from "./blockDragger";
+export {
+    BackpackCode, BackpackWorkspaceOptions, isBackpackContainer, serializeBackpackBlock,
+    parseBackpackCode, getBackpackBlockTypes, pasteBackpackBlock, registerBackpackWorkspace,
+} from "./backpack";
 export * from "./workspaceSearch";
 export * from "./monkeyPatches";
 export * from "./getBlockText";

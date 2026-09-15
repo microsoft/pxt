@@ -21,12 +21,40 @@ describe("named private whiteboards", function () {
         const build = browserify(path.join(__dirname, "whiteboard.fixture.js"));
         const workspacePath = path.resolve("built/webapp/src/workspace.js");
         const assetsPath = path.resolve("built/webapp/src/assets.js");
+        const backpackPath = path.resolve("built/webapp/src/backpack.js");
+        const projectBackpackPath = path.resolve("built/webapp/src/components/ProjectBackpack.js");
+        const fixturePath = path.join(__dirname, "whiteboard.fixture.js");
         build.transform(file => {
             const replacement = file === workspacePath ? "module.exports = window.whiteboardTest.workspace;"
-                : file === assetsPath ? "module.exports = { lookupAsset() { return undefined; }, isNameTaken() { return false; } };" : undefined;
+                : file === assetsPath ? "module.exports = { lookupAsset() { return undefined; }, isNameTaken() { return false; } };"
+                : file === backpackPath ? "module.exports = window.whiteboardTest.backpack;"
+                : file === projectBackpackPath ? `
+                    const React = require("react");
+                    exports.ProjectBackpack = props => {
+                        const test = window.whiteboardTest;
+                        React.useEffect(() => { ++test.backpackMounts; }, []);
+                        test.backpackProps = { headerId: props.headerId, active: props.active, onSignIn: typeof props.onSignIn };
+                        return React.createElement(React.Fragment, null, props.renderHeader("Backpack"),
+                            React.createElement("button", { id: "test-backpack-signin", onClick: props.onSignIn }, "Sign in"));
+                    };
+                ` : undefined;
+            // Supply the newly required callback without changing the shared fixture
+            // or replacing any real whiteboard/image-editor components.
+            let fixtureSource = "";
             return new Transform({
-                transform(chunk, _encoding, done) { if (!replacement) this.push(chunk); done(); },
-                flush(done) { if (replacement) this.push(replacement); done(); }
+                transform(chunk, _encoding, done) {
+                    if (file === fixturePath) fixtureSource += chunk.toString();
+                    else if (!replacement) this.push(chunk);
+                    done();
+                },
+                flush(done) {
+                    if (file === fixturePath) {
+                        const anchor = "pinned, onPinnedChange: setPinned,";
+                        if (fixtureSource.split(anchor).length !== 2) return done(new Error("Whiteboard fixture sign-in prop anchor must occur once"));
+                        this.push(fixtureSource.replace(anchor, `${anchor} onSignIn: () => { ++test.signInRequests; },`));
+                    } else if (replacement) this.push(replacement);
+                    done();
+                }
             });
         });
         bundle = await new Promise((resolve, reject) => build.bundle((error, buffer) => error ? reject(error) : resolve(buffer.toString())));
@@ -72,6 +100,21 @@ describe("named private whiteboards", function () {
                 whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text: "Saved private notes" }],
                 activeWhiteboardId: "whiteboard-1"
             } };
+            const openListeners = new Set();
+            Object.assign(whiteboardTest, {
+                backpackMounts: 0, signInRequests: 0, openRequests: [],
+                backpack: {
+                    subscribeBackpackOpen: listener => {
+                        openListeners.add(listener);
+                        return () => openListeners.delete(listener);
+                    },
+                    requestBackpackOpen: (headerId, focus) => {
+                        const request = { headerId, focus };
+                        whiteboardTest.openRequests.push(request);
+                        Array.from(openListeners).forEach(listener => listener(request));
+                    }
+                }
+            });
             pxt.reportException = error => whiteboardTest.errors.push(error.message);
         });
         await page.addScriptTag({ content: bundle });
@@ -151,6 +194,46 @@ describe("named private whiteboards", function () {
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
         await page.click("#outside");
         assert.equal(await page.$eval("#project-tools-panel", el => el.hidden), false);
+    });
+
+    for (const width of [390, 1024, 1366]) it(`preserves real notes, drawing store and undo across backpack at ${width}px`, async () => {
+        await page.setViewport({ width, height: 900 });
+        await page.waitForFunction(horizontal => document.getElementById("project-tools-options").getAttribute("aria-orientation") === (horizontal ? "horizontal" : "vertical"), {}, width < 1200);
+        await page.focus(input);
+        await page.keyboard.press("End");
+        await page.type(input, " retained across backpack");
+        await page.evaluate(() => {
+            whiteboardTest.draw(6);
+            whiteboardTest.originalStore = whiteboardTest.store();
+            whiteboardTest.originalNotes = document.getElementById("project-notes-text");
+        });
+        await page.click("#project-tools-whiteboard .project-tools__pin");
+        await page.click("#project-tools-tab-backpack");
+        await page.waitForSelector("#test-backpack-signin", { visible: true });
+        assert.deepEqual(await page.evaluate(() => whiteboardTest.backpackProps), { headerId: "whiteboard-project", active: true, onSignIn: "function" });
+        assert.equal(await page.$eval("#project-tools-whiteboard", el => el.hidden), true);
+        // The inactive whiteboard unmounts its image editor, but retains the
+        // Redux store and textarea. Check the store when the editor remounts.
+        assert.equal(await page.$eval(input, el => el === whiteboardTest.originalNotes), true);
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes retained across backpack");
+        await page.click("#test-backpack-signin");
+        assert.equal(await page.evaluate(() => whiteboardTest.signInRequests), 1);
+        await page.click("#project-tools-tab-docs");
+        assert.equal(await page.$eval("#project-tools-docs", el => el.hidden), false);
+        await page.click("#project-tools-tab-whiteboard");
+        await page.waitForSelector(input, { visible: true });
+        assert.equal(await page.evaluate(() => whiteboardTest.originalStore === whiteboardTest.store()), true);
+        assert.equal(await page.$eval(input, el => el === whiteboardTest.originalNotes), true);
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes retained across backpack");
+        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 6);
+        assert.equal(await page.$eval("#project-tools-whiteboard .project-tools__pin", el => el.getAttribute("aria-pressed")), "true");
+        await page.evaluate(() => whiteboardTest.undo());
+        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
+        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards[0].text === "Saved private notes retained across backpack" &&
+            pxt.sprite.getBitmapFromJResURL(whiteboardTest.persisted.whiteboards[0].image).get(0, 0) === 0);
+        assert.equal(await page.evaluate(() => whiteboardTest.backpackMounts), 1);
+        assert.equal(await page.evaluate(() => whiteboardTest.backpackProps.active), false);
+        assert.deepEqual(await page.evaluate(() => whiteboardTest.errors), []);
     });
 
     it("adds, renames and switches independent drawings, notes and undo histories", async () => {
