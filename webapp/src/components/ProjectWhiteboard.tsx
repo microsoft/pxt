@@ -4,7 +4,7 @@ import { ImageEditor } from "./ImageEditor/ImageEditor";
 import imageReducer, { AnimationState, ImageEditorStore } from "./ImageEditor/store/imageReducer";
 import { dispatchDisableResize, dispatchOpenAsset } from "./ImageEditor/actions/dispatch";
 import { imageStateToBitmap } from "./ImageEditor/util";
-import { addProjectWhiteboard, decodeWhiteboard, deleteProjectWhiteboard, MAX_PROJECT_NOTE_LENGTH, normalizeProjectNotes, renameProjectWhiteboard, WHITEBOARD_HEIGHT, WHITEBOARD_WIDTH } from "../projectNotes";
+import { addProjectWhiteboard, createProjectNotes, decodeWhiteboard, deleteProjectWhiteboard, MAX_PROJECT_NOTE_LENGTH, renameProjectWhiteboard, validateProjectNotes, WHITEBOARD_HEIGHT, WHITEBOARD_WIDTH } from "../projectNotes";
 import { ProjectWhiteboardMenu } from "./ProjectWhiteboardMenu";
 import * as workspace from "../workspace";
 
@@ -32,8 +32,8 @@ function noteReducer(state: ImageEditorStore, action: Action & { notes?: pxt.wor
 
 export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
     const initial = React.useMemo(() => {
-        try { return { notes: normalizeProjectNotes(props.notes), invalid: false }; }
-        catch { return { notes: normalizeProjectNotes(), invalid: true }; }
+        try { return { notes: props.notes === undefined ? createProjectNotes() : validateProjectNotes(props.notes), invalid: false }; }
+        catch { return { notes: createProjectNotes(), invalid: true }; }
     }, []);
     const [notes, setNotes] = React.useState(initial.notes);
     const activeBoard = notes.whiteboards.find(board => board.id === notes.activeWhiteboardId);
@@ -79,7 +79,7 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         });
     }, [props.headerId]);
 
-    const update = React.useCallback((notes: pxt.workspace.ProjectNotesV2) => {
+    const update = React.useCallback((notes: pxt.workspace.ProjectNotes) => {
         draft.current = notes;
         setNotes(notes);
         dirty.current = true;
@@ -95,7 +95,7 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
     }, [update]);
 
     const loadNotes = React.useCallback((notes?: pxt.workspace.ProjectNotes) => {
-        const validated = normalizeProjectNotes(notes);
+        const validated = notes === undefined ? createProjectNotes() : validateProjectNotes(notes);
         clearTimeout(timer.current);
         dirty.current = false;
         draft.current = validated;
@@ -168,7 +168,7 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         return () => observer.disconnect();
     }, [props.active, invalid, store]);
 
-    const commit = (notes: pxt.workspace.ProjectNotesV2) => { update(notes); flush(); };
+    const commit = (notes: pxt.workspace.ProjectNotes) => { update(notes); flush(); };
     const actions = props.active && !invalid && <ProjectWhiteboardMenu notes={notes}
         onSelect={id => { if (id !== draft.current.activeWhiteboardId) commit({ ...draft.current, activeWhiteboardId: id }); }}
         onRename={(id, name) => commit(renameProjectWhiteboard(draft.current, id, name))}
@@ -185,7 +185,7 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
             {invalid ? <div className="project-whiteboard__invalid" role="alert">
                 <p>{lf("These notes could not be opened. The saved data has not been changed.")}</p>
                 <button type="button" onClick={() => {
-                    const notes = normalizeProjectNotes();
+                    const notes = createProjectNotes();
                     loadNotes(notes);
                     setInvalid(false);
                     update(notes);

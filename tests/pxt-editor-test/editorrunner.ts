@@ -22,7 +22,7 @@ import {
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
 import { projectToolsPinnedOnLoad } from "../../webapp/src/projectToolsState";
-import { addProjectWhiteboard, decodeWhiteboard, deleteProjectWhiteboard, excludePrivateProjectMetadata, MAX_PROJECT_NOTE_LENGTH, MAX_PROJECT_WHITEBOARDS, MAX_WHITEBOARD_NAME_LENGTH, normalizeProjectNotes, renameProjectWhiteboard, validateProjectNotes } from "../../webapp/src/projectNotes";
+import { addProjectWhiteboard, createProjectNotes, decodeWhiteboard, deleteProjectWhiteboard, excludePrivateProjectMetadata, MAX_PROJECT_NOTE_LENGTH, MAX_PROJECT_WHITEBOARDS, MAX_WHITEBOARD_NAME_LENGTH, renameProjectWhiteboard, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
     versions: {
@@ -70,6 +70,10 @@ describe("project-tools pin defaults", () => {
 describe("private project notes", () => {
     let guidGen: () => string;
     let whiteboardId = 0;
+    const notesWithBoard = (content: Partial<pxt.workspace.WhiteboardContent> = {}): pxt.workspace.ProjectNotes => ({
+        whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text: "", ...content }],
+        activeWhiteboardId: "whiteboard-1"
+    });
     beforeEach(() => {
         guidGen = pxt.Util.guidGen;
         pxt.Util.guidGen = () => `test-whiteboard-${++whiteboardId}`;
@@ -143,7 +147,7 @@ describe("private project notes", () => {
     });
 
     it("removes notes from a copied public header without changing the private header", () => {
-        const notes: pxt.workspace.ProjectNotes = { version: 1, text: "private sentinel" };
+        const notes = notesWithBoard({ text: "private sentinel" });
         const header = Object.freeze({ id: "test", name: "project", projectNotes: notes }) as pxt.workspace.Header;
         const shared = excludePrivateProjectMetadata(header);
         chai.expect(shared.projectNotes).equals(undefined);
@@ -154,11 +158,11 @@ describe("private project notes", () => {
 
     it("validates a bounded text note and clones the stored palette", () => {
         const palette = new Array<string>(16).fill("#abcdef");
-        const value = validateProjectNotes({ version: 1, text: "reminder", palette });
-        chai.expect(value.palette).deep.equals(palette);
-        chai.expect(value.palette).not.equals(palette);
-        chai.expect(() => validateProjectNotes({ version: 1, text: "x".repeat(MAX_PROJECT_NOTE_LENGTH + 1) })).throws();
-        chai.expect(() => validateProjectNotes({ version: 2, text: "" } as any)).throws();
+        const value = validateProjectNotes(notesWithBoard({ text: "reminder", palette }));
+        chai.expect(value.whiteboards[0].palette).deep.equals(palette);
+        chai.expect(value.whiteboards[0].palette).not.equals(palette);
+        chai.expect(() => validateProjectNotes(notesWithBoard({ text: "x".repeat(MAX_PROJECT_NOTE_LENGTH + 1) }))).throws();
+        chai.expect(() => validateProjectNotes({ text: "" } as unknown as pxt.workspace.ProjectNotes)).throws();
     });
 
     it("round-trips images including odd heights without adding a project asset", () => {
@@ -169,7 +173,7 @@ describe("private project notes", () => {
             const encoded = pxt.sprite.base64EncodeBitmap(bitmap.data());
             const result = decodeWhiteboard(encoded);
             chai.expect(result.equals(bitmap)).equals(true);
-            chai.expect(validateProjectNotes({ version: 1, text: "", image: encoded }).image).equals(encoded);
+            chai.expect(validateProjectNotes(notesWithBoard({ image: encoded })).whiteboards[0].image).equals(encoded);
         }
     });
 
@@ -183,25 +187,35 @@ describe("private project notes", () => {
     });
 
     it("rejects invalid colors instead of using them in canvas styles", () => {
-        chai.expect(() => validateProjectNotes({ version: 1, text: "", palette: ["#fff"] })).throws();
-        chai.expect(() => validateProjectNotes({ version: 1, text: "", palette: new Array<string>(16).fill("url(https://example.com)") })).throws();
+        chai.expect(() => validateProjectNotes(notesWithBoard({ palette: ["#fff"] }))).throws();
+        chai.expect(() => validateProjectNotes(notesWithBoard({ palette: new Array<string>(16).fill("url(https://example.com)") }))).throws();
     });
 
-    it("upgrades legacy notes without changing their drawing, palette or source object", () => {
+    it("creates a blank named whiteboard for a project without notes", () => {
+        const notes = createProjectNotes();
+        chai.expect(notes).deep.equals(notesWithBoard());
+        chai.expect(JSON.stringify(validateProjectNotes(notes))).equals(JSON.stringify(notes));
+        const other = createProjectNotes();
+        notes.whiteboards[0].text = "Only this project";
+        chai.expect(other.whiteboards[0].text).equals("");
+    });
+
+    it("validates saved notes without changing their drawing, palette or source object", () => {
         const image = pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(160, 120).data());
-        const old: pxt.workspace.ProjectNotesV1 = { version: 1, text: "original", image, palette: new Array<string>(16).fill("#abcdef") };
-        const notes = normalizeProjectNotes(Object.freeze(old));
-        chai.expect(notes.version).equals(2);
-        chai.expect(notes.whiteboards.length).equals(1);
-        chai.expect(notes.whiteboards[0]).includes({ name: "Whiteboard 1", text: "original", image });
-        chai.expect(notes.activeWhiteboardId).equals(notes.whiteboards[0].id);
-        chai.expect(notes.whiteboards[0].palette).deep.equals(old.palette);
-        chai.expect(notes.whiteboards[0].palette).not.equals(old.palette);
-        chai.expect(old.version).equals(1);
+        const original = notesWithBoard({ text: "original", image, palette: new Array<string>(16).fill("#abcdef") });
+        Object.freeze(original.whiteboards[0].palette);
+        Object.freeze(original.whiteboards[0]);
+        Object.freeze(original.whiteboards);
+        const notes = validateProjectNotes(Object.freeze(original));
+        chai.expect(notes).deep.equals(original);
+        chai.expect(notes).not.equals(original);
+        chai.expect(notes.whiteboards).not.equals(original.whiteboards);
+        chai.expect(notes.whiteboards[0]).not.equals(original.whiteboards[0]);
+        chai.expect(notes.whiteboards[0].palette).not.equals(original.whiteboards[0].palette);
     });
 
     it("adds and renames independent boards without overwriting the original", () => {
-        const original = normalizeProjectNotes({ version: 1, text: "first notes" });
+        const original = notesWithBoard({ text: "first notes" });
         const added = addProjectWhiteboard(original, " Ideas ");
         chai.expect(added.whiteboards.length).equals(2);
         chai.expect(added.whiteboards[1].name).equals("Ideas");
@@ -218,7 +232,7 @@ describe("private project notes", () => {
     });
 
     it("validates every board and bounds collection sizes, names and IDs", () => {
-        const notes = addProjectWhiteboard(normalizeProjectNotes(), "Other");
+        const notes = addProjectWhiteboard(createProjectNotes(), "Other");
         chai.expect(JSON.stringify(validateProjectNotes(notes))).equals(JSON.stringify(notes));
         chai.expect(() => validateProjectNotes({ ...notes, activeWhiteboardId: "missing" })).throws();
         chai.expect(() => validateProjectNotes({ ...notes, whiteboards: [] })).throws();
@@ -235,7 +249,7 @@ describe("private project notes", () => {
     });
 
     it("deletes only the requested board and selects a neighbor without mutating notes", () => {
-        const original = addProjectWhiteboard(addProjectWhiteboard(normalizeProjectNotes({ version: 1, text: "keep this" }), "Ideas"), "Levels");
+        const original = addProjectWhiteboard(addProjectWhiteboard(notesWithBoard({ text: "keep this" }), "Ideas"), "Levels");
         const [first, middle, last] = original.whiteboards;
         const snapshot = JSON.stringify(original);
         const deletedMiddle = deleteProjectWhiteboard({ ...original, activeWhiteboardId: middle.id }, middle.id);
@@ -248,7 +262,7 @@ describe("private project notes", () => {
     });
 
     it("never deletes the last whiteboard or a missing ID", () => {
-        const notes = normalizeProjectNotes({ version: 1, text: "last board" });
+        const notes = notesWithBoard({ text: "last board" });
         const snapshot = JSON.stringify(notes);
         chai.expect(() => deleteProjectWhiteboard(notes, notes.activeWhiteboardId)).throws("Keep at least one whiteboard");
         chai.expect(() => deleteProjectWhiteboard(addProjectWhiteboard(notes, "Other"), "missing")).throws("no longer available");

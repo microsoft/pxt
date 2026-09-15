@@ -39,12 +39,8 @@ function validateContent(notes: pxt.workspace.WhiteboardContent): pxt.workspace.
     return { text: notes.text, image: notes.image, palette: notes.palette?.slice() };
 }
 
-export function validateProjectNotes(notes: pxt.workspace.ProjectNotesV1): pxt.workspace.ProjectNotesV1;
-export function validateProjectNotes(notes: pxt.workspace.ProjectNotesV2): pxt.workspace.ProjectNotesV2;
-export function validateProjectNotes(notes: pxt.workspace.ProjectNotes): pxt.workspace.ProjectNotes;
 export function validateProjectNotes(notes: pxt.workspace.ProjectNotes): pxt.workspace.ProjectNotes {
-    if (notes?.version === 1) return { version: 1, ...validateContent(notes) };
-    if (notes?.version !== 2 || !Array.isArray(notes.whiteboards) || !notes.whiteboards.length ||
+    if (!notes || !Array.isArray(notes.whiteboards) || !notes.whiteboards.length ||
         notes.whiteboards.length > MAX_PROJECT_WHITEBOARDS) throw new Error("Invalid project whiteboards");
     const ids = new Set<string>();
     const names = new Set<string>();
@@ -57,21 +53,18 @@ export function validateProjectNotes(notes: pxt.workspace.ProjectNotes): pxt.wor
         return { id: board.id, name: board.name.trim(), ...validateContent(board) };
     });
     if (!ids.has(notes.activeWhiteboardId)) throw new Error("Invalid active whiteboard");
-    return { version: 2, whiteboards, activeWhiteboardId: notes.activeWhiteboardId };
+    return { whiteboards, activeWhiteboardId: notes.activeWhiteboardId };
 }
 
-/** Upgrade a single whiteboard without saving or changing the original metadata. */
-export function normalizeProjectNotes(notes?: pxt.workspace.ProjectNotes): pxt.workspace.ProjectNotesV2 {
-    const validated = notes ? validateProjectNotes(notes) : undefined;
-    if (validated?.version === 2) return validated;
+/** Create the first whiteboard for a project without saved notes. */
+export function createProjectNotes(): pxt.workspace.ProjectNotes {
     const board: pxt.workspace.ProjectWhiteboard = {
-        id: "whiteboard-1", name: pxt.Util.lf("Whiteboard {0}", 1),
-        text: validated?.text || "", image: validated?.image, palette: validated?.palette
+        id: "whiteboard-1", name: pxt.Util.lf("Whiteboard {0}", 1), text: ""
     };
-    return { version: 2, whiteboards: [board], activeWhiteboardId: board.id };
+    return { whiteboards: [board], activeWhiteboardId: board.id };
 }
 
-export function whiteboardNameError(name: string, notes: pxt.workspace.ProjectNotesV2, exceptId?: string): string {
+export function whiteboardNameError(name: string, notes: pxt.workspace.ProjectNotes, exceptId?: string): string {
     const trimmed = name.trim();
     if (!trimmed) return pxt.Util.lf("Enter a whiteboard name.");
     if (trimmed.length > MAX_WHITEBOARD_NAME_LENGTH || /[\r\n\t]/.test(trimmed))
@@ -81,13 +74,13 @@ export function whiteboardNameError(name: string, notes: pxt.workspace.ProjectNo
     return undefined;
 }
 
-export function nextWhiteboardName(notes: pxt.workspace.ProjectNotesV2): string {
+export function nextWhiteboardName(notes: pxt.workspace.ProjectNotes): string {
     let index = 1;
     while (notes.whiteboards.some(board => board.name.toLowerCase() === pxt.Util.lf("Whiteboard {0}", index).toLowerCase())) ++index;
     return pxt.Util.lf("Whiteboard {0}", index);
 }
 
-export function addProjectWhiteboard(notes: pxt.workspace.ProjectNotesV2, name: string): pxt.workspace.ProjectNotesV2 {
+export function addProjectWhiteboard(notes: pxt.workspace.ProjectNotes, name: string): pxt.workspace.ProjectNotes {
     const error = whiteboardNameError(name, notes);
     if (error) throw new Error(error);
     if (notes.whiteboards.length >= MAX_PROJECT_WHITEBOARDS) throw new Error(pxt.Util.lf("You can have up to {0} whiteboards per project.", MAX_PROJECT_WHITEBOARDS));
@@ -95,7 +88,7 @@ export function addProjectWhiteboard(notes: pxt.workspace.ProjectNotesV2, name: 
     return { ...notes, whiteboards: [...notes.whiteboards, board], activeWhiteboardId: board.id };
 }
 
-export function renameProjectWhiteboard(notes: pxt.workspace.ProjectNotesV2, id: string, name: string): pxt.workspace.ProjectNotesV2 {
+export function renameProjectWhiteboard(notes: pxt.workspace.ProjectNotes, id: string, name: string): pxt.workspace.ProjectNotes {
     const error = whiteboardNameError(name, notes, id);
     if (error) throw new Error(error);
     if (!notes.whiteboards.some(board => board.id === id)) throw new Error("Unknown whiteboard");
@@ -103,7 +96,7 @@ export function renameProjectWhiteboard(notes: pxt.workspace.ProjectNotesV2, id:
 }
 
 /** Remove a confirmed board while keeping at least one board and a valid selection. */
-export function deleteProjectWhiteboard(notes: pxt.workspace.ProjectNotesV2, id: string): pxt.workspace.ProjectNotesV2 {
+export function deleteProjectWhiteboard(notes: pxt.workspace.ProjectNotes, id: string): pxt.workspace.ProjectNotes {
     const index = notes.whiteboards.findIndex(board => board.id === id);
     if (index < 0) throw new Error(pxt.Util.lf("This whiteboard is no longer available."));
     if (notes.whiteboards.length <= 1) throw new Error(pxt.Util.lf("Keep at least one whiteboard."));

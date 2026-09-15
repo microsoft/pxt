@@ -41,7 +41,7 @@ underlying DevTools operation before Mocha's unchanged 30-second hook timeout.
   must be installed.
 - [whiteboard.spec.js](whiteboard.spec.js) loads the actual image editor, reducer,
   whiteboard controller and header menu. Storage and game-asset access are mocked,
-  not the controls. It covers legacy notes, named-board operations, independent
+  not the controls. It covers new and saved notes, named-board operations, independent
   images/text/undo, confirmed deletion and last-board protection, save errors/retry,
   all 16 colors on mobile and footer spacing.
   Contrast checks use the production stylesheet order (shared menu styles load

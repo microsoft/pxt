@@ -68,7 +68,10 @@ describe("named private whiteboards", function () {
             ] } };
             pxt.BrowserUtils.isTabletSize = () => innerWidth <= 991;
             pxt.Util.isUserLanguageRtl = () => false;
-            window.whiteboardTest = { workspace: {}, saves: [], errors: [], initialNotes: { version: 1, text: "Legacy private notes" } };
+            window.whiteboardTest = { workspace: {}, saves: [], errors: [], initialNotes: {
+                whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text: "Saved private notes" }],
+                activeWhiteboardId: "whiteboard-1"
+            } };
             pxt.reportException = error => whiteboardTest.errors.push(error.message);
         });
         await page.addScriptTag({ content: bundle });
@@ -100,14 +103,30 @@ describe("named private whiteboards", function () {
         await page.waitForSelector(".project-whiteboard-menu__edit", { hidden: true });
     };
 
-    it("preserves legacy notes and starts with one named whiteboard", async () => {
-        assert.equal(await page.$eval(input, el => el.value), "Legacy private notes");
+    it("opens a saved named whiteboard without rewriting its notes", async () => {
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
         assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Whiteboard 1");
         assert.equal(await page.evaluate(() => whiteboardTest.saves.length), 0);
         await page.click(menu);
         assert.equal(await page.$$eval('[role="menuitemcheckbox"]', els => els.length), 1);
         assert.equal(await page.$eval("#project-whiteboard-menu-menu", el => el.scrollWidth <= el.clientWidth), true);
         assert.equal(await page.$$eval('[role="menuitem"]', els => els.some(el => el.textContent.includes("Delete whiteboard"))), false);
+    });
+
+    it("starts projects without notes with a blank board and only saves after editing", async () => {
+        await page.evaluate(() => whiteboardTest.mount());
+        await openWhiteboard();
+        assert.equal(await page.$eval(input, el => el.value), "");
+        assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Whiteboard 1");
+        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
+        assert.equal(await page.evaluate(() => whiteboardTest.saves.length), 0);
+        await page.type(input, "First private notes");
+        await page.click("#outside");
+        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards[0].text === "First private notes");
+        const notes = await page.evaluate(() => whiteboardTest.persisted);
+        assert.deepEqual(Object.keys(notes).sort(), ["activeWhiteboardId", "whiteboards"]);
+        assert.equal(notes.whiteboards.length, 1);
+        assert.equal(notes.activeWhiteboardId, notes.whiteboards[0].id);
     });
 
     it("adds, renames and switches independent drawings, notes and undo histories", async () => {
@@ -119,7 +138,7 @@ describe("named private whiteboards", function () {
         await page.evaluate(() => whiteboardTest.draw(7));
         await nameBoard("Rename whiteboard", "Level ideas");
         await item("Whiteboard 1");
-        assert.equal(await page.$eval(input, el => el.value), "Legacy private notes");
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 3);
         await page.evaluate(() => whiteboardTest.undo());
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
@@ -190,7 +209,7 @@ describe("named private whiteboards", function () {
         await page.waitForSelector('[role="alertdialog"]', { hidden: true });
         assert.equal(await page.evaluate(() => document.activeElement.id), "project-whiteboard-menu");
         assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Whiteboard 1");
-        assert.equal(await page.$eval(input, el => el.value), "Legacy private notes");
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 3);
         await page.evaluate(() => whiteboardTest.undo());
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
@@ -203,7 +222,7 @@ describe("named private whiteboards", function () {
         await page.evaluate(() => whiteboardTest.mount(whiteboardTest.persisted));
         await openWhiteboard();
         assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Whiteboard 1");
-        assert.equal(await page.$eval(input, el => el.value), "Legacy private notes");
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
     });
 
@@ -219,7 +238,7 @@ describe("named private whiteboards", function () {
         await page.waitForFunction(() => document.querySelector("#project-tools-whiteboard h2").textContent === "Whiteboard 1");
         await page.click('[role="alertdialog"] button:last-child');
         await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards.length === 1);
-        assert.equal(await page.$eval(input, el => el.value), "Legacy private notes");
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
         assert.equal(await page.evaluate(() => whiteboardTest.persisted.whiteboards[0].id), "whiteboard-1");
     });
 
@@ -313,7 +332,7 @@ describe("named private whiteboards", function () {
         await page.waitForFunction(() => document.getElementById("project-notes-text").value === "Conflicting remote notes");
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
         await item("Whiteboard 1");
-        assert.equal(await page.$eval(input, el => el.value), "Legacy private notes");
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
     });
 
     for (const theme of colorThemes()) {
