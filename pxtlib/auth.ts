@@ -117,6 +117,20 @@ namespace pxt.auth {
         res: UserPreferences;
     }
 
+    /** A private, portable code snippet stored in the user's profile. */
+    export interface BackpackItem {
+        id: string;
+        name: string;
+        code: string;
+        dependencies: pxt.Map<string>;
+        /** Block IDs whose definitions live in project files, rather than extensions. */
+        projectBlocks?: pxt.Map<string>;
+        createdAt: number;
+        previewUri?: string;
+    }
+
+    export type BackpackState = pxt.Map<pxt.Map<BackpackItem>>;
+
     /**
      * User preference state that should be synced with the cloud.
      */
@@ -126,6 +140,7 @@ namespace pxt.auth {
         screenReaderMode?: boolean;
         colorThemeIds?: ColorThemeIdsState;
         simulatorThemes?: SimulatorThemesState;
+        backpack?: BackpackState;
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;

@@ -43,6 +43,10 @@ import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater"
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
+import * as backpack from "./backpack";
+import { addBackpackToProjectAsync, getBackpackRequirements } from "./backpackProject";
+import { backpackPreviewAsync } from "./backpackPreview";
+import { clearBackpackDragState } from "../../pxtblocks/backpack";
 
 interface CopyDataEntry {
     version: 1;
@@ -81,6 +85,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     // Blockly plugins
     protected workspaceSearch: WorkspaceSearch;
+    private disposeBackpackWorkspace: () => void;
+    private disposeBackpackEditor: () => void;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -185,7 +191,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = 'none');
             if (this.editor) Blockly.hideChaff();
             if (this.toolbox) this.toolbox.clearExpandedItem();
+            if (this.editor) clearBackpackDragState(this.editor);
         }
+        backpack.notifyBackpackEditorChanged();
     }
 
     saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string> {
@@ -266,6 +274,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     } catch { }
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
+                    backpack.notifyBackpackEditorChanged();
                     pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly, { projectHeaderId: this.parent.state.header?.id });
                     // Do Not Remove: This is used by the skillmap
                     this.parent.onEditorContentLoaded();
@@ -861,6 +870,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyDiv = document.getElementById('blocksEditor');
         if (!blocklyDiv)
             return;
+        this.disposeBackpackWorkspace?.();
+        this.disposeBackpackEditor?.();
         pxsim.U.clear(blocklyDiv);
 
         // Increase the Blockly connection radius
@@ -868,6 +879,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.config.connectingSnapRadius = 96;
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
+        this.disposeBackpackWorkspace = pxtblockly.registerBackpackWorkspace(this.editor, {
+            isEnabled: () => this.backpackAvailable(),
+            save: block => { void this.saveBlockToBackpackAsync(block); },
+            open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false)
+        });
+        this.disposeBackpackEditor = backpack.setBackpackEditor({
+            headerId: () => this.parent.state.header?.id,
+            canImport: () => this.backpackAvailable(),
+            importAsync: item => this.importFromBackpackAsync(item)
+        });
 
         (this.editor.getSvgGroup() as SVGElement).addEventListener("focusin", this.onWorkspaceFocus);
 
@@ -2577,6 +2598,76 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         else {
             this.removeBreakpointFromEvent(block.id)
         }
+    }
+
+    private backpackAvailable(): boolean {
+        const header = this.parent.state.header;
+        return !!header && !header.temporary && !(header.tutorial && !header.tutorialCompleted)
+            && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor
+            && this.isVisible && this.parent.isBlocksActive() && !!this.blockInfo
+            && !this.loadingXml && !this.delayLoadXml && !!document.getElementById("project-tools-tab-backpack");
+    }
+
+    private async saveBlockToBackpackAsync(block: Blockly.BlockSvg): Promise<void> {
+        if (!this.backpackAvailable()) return;
+        const headerId = this.parent.state.header.id;
+        const signedIn = auth.loggedIn();
+        const userId = auth.userProfile()?.id;
+        const isCurrentAccount = (): boolean => auth.loggedIn() === signedIn
+            && (!signedIn || auth.userProfile()?.id === userId);
+        let item: pxt.auth.BackpackItem;
+        try {
+            const code = pxtblockly.serializeBackpackBlock(block);
+            const requirements = getBackpackRequirements(code, this.blockInfo, pkg.mainPkg);
+            item = {
+                id: pxt.U.guidGen(), name: pxtblockly.getBlockText(block).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
+                code, ...requirements, createdAt: Date.now(), previewUri: await backpackPreviewAsync(block)
+            };
+            backpack.validateBackpackItem(item);
+        } catch (error) {
+            if (!isCurrentAccount()) return;
+            await core.confirmAsync({ header: lf("Cannot save this snippet"),
+                body: error instanceof Error ? error.message : lf("This block could not be saved to your backpack."),
+                hideCancel: true, agreeLbl: lf("OK") });
+            return;
+        }
+        // Retain the captured item/ID for an explicit retry after a failed local save or upload.
+        while (isCurrentAccount()) {
+            try {
+                await backpack.saveBackpackItemAsync(item);
+            if (!isCurrentAccount()) return;
+                core.infoNotification(lf("Added {0} to Backpack.", item.name));
+                if (this.parent.state.header?.id === headerId) backpack.requestBackpackOpen(headerId, false);
+                return;
+            } catch (error) {
+                if (!isCurrentAccount()) return;
+                const retry = await core.confirmAsync({ header: lf("Backpack was not saved"),
+                    body: error instanceof Error ? error.message : lf("Could not save your backpack. Please try again."),
+                    agreeLbl: lf("Retry") });
+                if (!retry) return;
+            }
+        }
+    }
+
+    private async importFromBackpackAsync(item: pxt.auth.BackpackItem): Promise<boolean> {
+        if (!this.backpackAvailable()) throw new Error(lf("Open an editable Blocks project to add this snippet."));
+        const headerId = this.parent.state.header.id;
+        const signedIn = auth.loggedIn();
+        const userId = auth.userProfile()?.id;
+        return addBackpackToProjectAsync(item, {
+            headerId,
+            // Loading the same project is expected while adding extensions; changing accounts or projects is not.
+            isCurrent: () => auth.loggedIn() === signedIn && (!signedIn || auth.userProfile()?.id === userId)
+                && this.parent.state.header?.id === headerId && this.parent.isBlocksActive() && !pxt.shell.isReadOnly(),
+            getWorkspace: () => this.editor,
+            getBlocksInfo: () => this.blockInfo,
+            saveAsync: () => this.parent.saveProjectAsync(),
+            reloadAsync: async () => {
+                await this.parent.reloadHeaderAsync();
+                this.domUpdate();
+                if (this.loadingXmlPromise) await this.loadingXmlPromise;
+            }
+        });
     }
 
     protected pasteCallback = (workspace: Blockly.Workspace, ev: Event) => {

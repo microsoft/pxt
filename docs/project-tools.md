@@ -1,4 +1,4 @@
-# Project tools bubbles and private whiteboards
+# Project tools bubbles, private whiteboards and backpack
 
 This is a focused port of the tabbed/resizable documentation idea from
 [PR #10888](https://github.com/microsoft/pxt/pull/10888), rebuilt on current PXT.
@@ -24,7 +24,7 @@ projects and when there is no image palette. Other targets can explicitly list
 
 ## Interaction
 
-- **Documentation** and **Whiteboard** each have a bubble; the bubbles are the tabs.
+- **Documentation**, **Whiteboard** and **Backpack** each have a bubble; the bubbles are the tabs.
 - Default widths follow the target's legacy sidedocs variables and breakpoints,
   rather than a fixed 600px panel. On large desktops, the bubble strip counts
   toward that width budget to preserve coding space. In Arcade, the panel starts
@@ -45,7 +45,7 @@ projects and when there is no image palette. Other targets can explicitly list
   pressed again to close it. **…** retracts the bubbles and hides the open panel.
   Unless pinned, clicking outside the tools or tabbing away dismisses the panel,
   including clicks in the simulator. Desktop bubbles remain available; tablet and
-  phone bubbles retract. Interacting inside either
+  phone bubbles retract. Interacting inside any
   panel (including the documentation iframe) keeps it open. Motion is mirrored in RTL and disabled for reduced-motion
   preferences. Resizing and hiding bubbles never reset the notes or pin setting.
 - The bubbles and panel follow the editor's notification-banner offset, including
@@ -53,9 +53,9 @@ projects and when there is no image palette. Other targets can explicitly list
 - A speech-bubble pointer connects the open panel to its active bubble. In either
   layout, the pointer targets **…** instead if help opens while the options are
   tucked away. Pressing **…** then closes that panel rather than expanding the options.
-- Select a bubble to open its panel, select the other to switch, and select the
+- Select a bubble to open its panel, select another to switch, and select the
   active bubble again to collapse it. Escape also collapses and returns focus.
-- Use the pin icon in either header to keep the tools open while interacting elsewhere.
+- Use the pin icon in any header to keep the tools open while interacting elsewhere.
   A filled upright pin and a border indicate enabled; an outlined angled pin
   indicates disabled. Tooltips and an accessible toggle label describe the control.
   **Collapse**, Escape, the
@@ -102,7 +102,53 @@ projects and when there is no image palette. Other targets can explicitly list
 The short privacy label is **“Private project notes: not included when sharing”**.
 There is no routine saving/saved text. Save errors display a Retry action.
 
-## Storage and sharing boundary
+## Backpack
+
+Keep reusable block containers without signing in: they are saved in this
+browser's local storage, separately for each MakeCode target. A centered button at
+the top offers **Sign in to save your backpack across browsers**. Signing in
+adds local snippets to the profile when the backpack next opens or saves; local
+copies are removed only after the server confirms them. Failed uploads keep the
+local copies, and existing profile snippets are never silently overwritten.
+
+In an editable Blocks project, right-click or hold a container
+(such as an event, loop, if block or function definition) and choose **Add to
+Backpack**. Alternatively, drag it onto the Backpack bubble or panel. Hovering
+over the bubble for 500ms opens the panel without taking focus; the **…** bubble
+also accepts the drag when the other bubbles are hidden.
+
+Saving copies the container's contents, referenced Blockly function definitions
+and assets. It does not include following siblings or remove the original blocks.
+Each entry lists its required extensions. **Add to project** asks permission
+before installing missing extensions, checks conflicts, preserves current code
+before reloading, and inserts the snippet as one undo group. It does not silently
+replace existing extensions or upgrade an installed version of the same repository.
+
+Blocks defined in the original project's own TypeScript files need those APIs in
+the destination too. The backpack records their filenames, not their source code.
+If a required block is missing, **Project code is required** names the source files
+and stops insertion. Copy the code into the destination or publish it as an
+extension before trying again.
+
+**Delete** opens a confirmation modal: it removes the entry from this browser when
+signed out, or from the profile after server acknowledgement when signed in.
+Cancel or Escape closes the modal without deleting. Failures remain in the modal
+for retry; routine add/delete progress and success messages are not shown in the panel.
+Copies already inserted in projects remain unchanged. Reopen the panel to receive
+changes from other tabs or, when signed in, other browsers. Failed saves offer
+retry; sign-out/account changes hide the previous account's items without copying
+them into guest storage. Clearing browser storage removes unsynced local snippets.
+
+The backpack supports up to 50 items per target. The 500,000-character storage
+limit applies per target locally and across targets in the profile. Each snippet
+is limited to 100,000 code characters, with an optional bounded PNG preview and
+portable extension references. Blocked/full local storage reports a save error
+instead of silently using memory. Backpack contents are not added to project shares
+or exports unless explicitly inserted into that project's code. Backend sync is
+covered with a simulated authenticated API, not a live cross-device account test.
+See [the test guide](../tests/project-tools-test/README.md) for limits and manual checks.
+
+## Whiteboard storage and sharing boundary
 
 Notes are stored in `Header.projectNotes`, not in `ScriptText`, asset collections,
 JRES or the package manifest. `ProjectNotes` contains `whiteboards` and

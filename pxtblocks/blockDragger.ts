@@ -1,7 +1,9 @@
 import * as Blockly from "blockly";
+import { clearBackpackDragState, refreshBackpackDragTargets } from "./backpack";
 
 export class BlockDragger extends Blockly.dragging.Dragger {
     onDrag(e: PointerEvent, totalDelta: Blockly.utils.Coordinate): void {
+        refreshBackpackDragTargets(this.draggable.workspace);
         super.onDrag(e, totalDelta);
 
         const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
@@ -31,7 +33,14 @@ export class BlockDragger extends Blockly.dragging.Dragger {
     }
 
     onDragEnd(e: PointerEvent): void {
-        super.onDragEnd(e);
+        try {
+            if (refreshBackpackDragTargets(this.draggable.workspace) && e instanceof PointerEvent) {
+                this.updateDragTarget(new Blockly.utils.Coordinate(e.clientX, e.clientY));
+            }
+            super.onDragEnd(e);
+        } finally {
+            clearBackpackDragState(this.draggable.workspace);
+        }
 
         const blocklyToolboxDiv = document.getElementsByClassName('blocklyToolbox')[0] as HTMLElement;
         const blocklyTreeRoot = document.getElementsByClassName('blocklyTreeRoot')[0] as HTMLElement
@@ -41,6 +50,14 @@ export class BlockDragger extends Blockly.dragging.Dragger {
             trashIcon.style.display = 'none';
             blocklyTreeRoot.style.opacity = '1';
             if (blocklyToolboxDiv) pxt.BrowserUtils.removeClass(blocklyToolboxDiv, 'blocklyToolboxDeleting');
+        }
+    }
+
+    onDragRevert(): void {
+        try {
+            super.onDragRevert();
+        } finally {
+            clearBackpackDragState(this.draggable.workspace);
         }
     }
 }

@@ -499,6 +499,13 @@ export function loadAssetFromSaveState(serialized: AssetSaveState) {
 
         const tempAsset = tempProject.lookupAsset(serialized.assetType, serialized.assetId);
 
+        if (tempAsset.type === pxt.AssetType.Tilemap) {
+            // Match the tile deduplication performed by loadTilemapJRes below. Tilemap
+            // equality includes tile ids/metadata, which may have changed on a prior paste.
+            tempAsset.data.tileset.tiles = tempAsset.data.tileset.tiles.map(tile =>
+                tile.isProjectTile ? globalProject.resolveTileByBitmap(tile.bitmap) || tile : tile);
+        }
+
         if (pxt.assetEquals(tempAsset, existing, true)) {
             return existing;
         }
