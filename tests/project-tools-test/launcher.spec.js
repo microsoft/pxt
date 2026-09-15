@@ -90,30 +90,101 @@ describe("responsive project-tools launcher", function () {
                     id: "test-reference", title: "Reference content", srcDoc: "<h1>Reference content</h1>"
                 }));
             }
-            ReactDOM.render(React.createElement(Harness), document.getElementById("root"));
+            window.mountProjectTools = () => {
+                ReactDOM.unmountComponentAtNode(document.getElementById("root"));
+                ReactDOM.render(React.createElement(Harness), document.getElementById("root"));
+            };
+            window.mountProjectTools();
         });
         await page.waitForSelector(more);
     });
-    afterEach(async () => { await page?.close(); });
+    afterEach(async () => {
+        if (!page || page.isClosed()) return;
+        try {
+            // Unmount listeners and let pending polling cleanup finish before
+            // closing the target; late CDP replies can affect the next page.
+            await page.evaluate(() => {
+                const root = document.getElementById("root");
+                if (window.ReactDOM && root) ReactDOM.unmountComponentAtNode(root);
+            });
+        } finally { await page.close(); }
+    });
 
     const focusIs = async id => page.waitForFunction(value => document.activeElement.id === value, {}, id);
     const optionsAre = async hidden => page.waitForFunction(value => {
         const options = document.getElementById("project-tools-options");
         return options.getAttribute("aria-hidden") === String(value) && (value
             ? getComputedStyle(options).visibility === "hidden"
-            : Array.from(options.children).every(el => getComputedStyle(el).transform === "none"));
+            : getComputedStyle(options).visibility === "visible" && Array.from(options.children).every(el => getComputedStyle(el).transform === "none"));
     }, {}, hidden);
+    const showOptions = async () => {
+        if (await page.$eval(more, el => el.getAttribute("aria-expanded")) !== "true") await page.click(more);
+        await optionsAre(false);
+    };
     const openTool = async (selector, width = 390) => {
         await page.setViewport({ width, height: 900 });
         await page.waitForFunction(compact => document.querySelector(".project-tools").classList.contains("project-tools--compact") === compact, {}, width < 1200);
-        if (width < 1200) {
-            await page.click(more);
-            await optionsAre(false);
-        }
+        await optionsAre(width <= 991);
+        await showOptions();
         await page.click(selector);
         await page.waitForFunction(() => !document.getElementById("project-tools-panel").hidden);
         await page.waitForSelector(`${panel} .project-tools__pin`, { visible: true });
     };
+
+    for (const width of [390, 768, 991, 992, 1024, 1199, 1200, 1366]) {
+        it(`starts with ${width > 991 ? "expanded" : "collapsed"} bubbles and an ellipsis at ${width}px without stealing focus`, async () => {
+            await page.setViewport({ width, height: 900 });
+            await page.focus("#outside");
+            await page.evaluate(() => window.mountProjectTools());
+            await page.waitForSelector(more, { visible: true });
+            await optionsAre(width <= 991);
+            await focusIs("outside");
+            assert.equal(await page.$eval(more, el => el.getAttribute("aria-expanded")), String(width > 991));
+            assert.equal(await page.$eval("#project-tools-options", el => el.getAttribute("aria-orientation")), width < 1200 ? "horizontal" : "vertical");
+            assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.length), width > 991 ? 1 : 0);
+            assert.equal(await page.$eval(panel, el => el.hidden), true, "Expanded bubbles must not open a panel");
+            if (width > 991) {
+                const positions = await page.evaluate(() => ["project-tools-launcher", "project-tools-tab-docs", "project-tools-tab-whiteboard"]
+                    .map(id => document.getElementById(id).getBoundingClientRect().toJSON()));
+                const [launcher, docs, whiteboard] = positions;
+                if (width < 1200) {
+                    assert.equal(docs.top, launcher.top);
+                    assert.equal(whiteboard.top, launcher.top);
+                    assert.ok(docs.right < whiteboard.left && whiteboard.right < launcher.left);
+                } else {
+                    assert.equal(docs.left, launcher.left);
+                    assert.equal(whiteboard.left, launcher.left);
+                    assert.ok(launcher.bottom < docs.top && docs.bottom < whiteboard.top);
+                }
+                await page.click("#outside");
+                await optionsAre(false);
+                await focusIs("outside");
+            }
+        });
+    }
+
+    it("preserves desktop disclosure choices across orientation changes and restores defaults at the tablet boundary", async () => {
+        await page.focus("#outside");
+        await page.setViewport({ width: 992, height: 900 });
+        await optionsAre(false);
+        await focusIs("outside");
+        await page.click(more);
+        await optionsAre(true);
+        for (const width of [1200, 1366, 1199, 992]) {
+            await page.setViewport({ width, height: 900 });
+            await page.waitForFunction(compact => document.querySelector(".project-tools").classList.contains("project-tools--compact") === compact, {}, width < 1200);
+            await optionsAre(true);
+            await focusIs("project-tools-launcher");
+            assert.equal(await page.$eval(panel, el => el.hidden), true);
+        }
+        await page.setViewport({ width: 991, height: 900 });
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(resolve)));
+        await optionsAre(true);
+        await page.setViewport({ width: 992, height: 900 });
+        await optionsAre(false);
+        await focusIs("project-tools-launcher");
+        assert.equal(await page.$eval(panel, el => el.hidden), true);
+    });
 
     it("adapts untouched widths to the legacy sidedocs footprint", async () => {
         await openTool(docs);
@@ -237,6 +308,33 @@ describe("responsive project-tools launcher", function () {
         await focusIs("project-tools-launcher");
     });
 
+    for (const width of [1024, 1366]) it(`supports desktop disclosure and tab keyboard navigation at ${width}px`, async () => {
+        await page.setViewport({ width, height: 900 });
+        await optionsAre(false);
+        await page.focus(more);
+        await page.keyboard.press("ArrowDown");
+        await focusIs("project-tools-tab-docs");
+        await page.keyboard.press(width < 1200 ? "ArrowRight" : "ArrowDown");
+        await focusIs("project-tools-tab-whiteboard");
+        assert.equal(await page.$eval(panel, el => el.hidden), true);
+        assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.length), 1);
+        await page.keyboard.press("Enter");
+        await page.waitForSelector("#test-notes", { visible: true });
+        await page.focus("#test-notes");
+        await page.keyboard.press("Escape");
+        await focusIs("project-tools-tab-whiteboard");
+        await optionsAre(false);
+        assert.equal(await page.$eval(panel, el => el.hidden), true);
+        await page.keyboard.press("Escape");
+        await optionsAre(true);
+        await focusIs("project-tools-launcher");
+        assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.length), 0);
+        await page.keyboard.press("ArrowDown");
+        await optionsAre(false);
+        await focusIs("project-tools-tab-whiteboard");
+        assert.equal(await page.$eval(panel, el => el.hidden), true);
+    });
+
     it("dismisses on outside click and Tab without stealing focus", async () => {
         await page.click(more);
         await optionsAre(false);
@@ -252,8 +350,8 @@ describe("responsive project-tools launcher", function () {
     });
 
     for (const [name, selector] of [["documentation", docs], ["whiteboard", whiteboard]]) {
-        it(`closes ${name} and retracts the bubbles when clicking the ellipsis`, async () => {
-            await openTool(selector);
+        for (const width of [390, 1024, 1366]) it(`closes ${name} and retracts the bubbles with the ellipsis at ${width}px`, async () => {
+            await openTool(selector, width);
             let draft;
             if (selector === whiteboard) {
                 await page.waitForSelector("#test-notes", { visible: true });
@@ -283,7 +381,7 @@ describe("responsive project-tools launcher", function () {
                     el.addEventListener("click", () => el.dataset.clicked = "true");
                 });
                 await page.click("#outside");
-                await optionsAre(width < 1200);
+                await optionsAre(width <= 991);
                 await focusIs("outside");
                 assert.equal(await page.$eval(panel, el => el.hidden), true);
                 assert.equal(await page.$eval("#outside", el => el.dataset.clicked), "true");
@@ -291,7 +389,10 @@ describe("responsive project-tools launcher", function () {
         }
     }
 
-    it("closes requested help from the ellipsis even when the options are already hidden", async () => {
+    for (const width of [390, 1024, 1366]) it(`closes requested help with the ellipsis while bubbles are hidden at ${width}px`, async () => {
+        await openTool(docs, width);
+        await page.click(more);
+        await optionsAre(true);
         await page.evaluate(() => window.openHelp());
         await focusIs("project-tools-panel");
         await optionsAre(true);
@@ -339,15 +440,15 @@ describe("responsive project-tools launcher", function () {
                 assert.equal(await page.$eval(pin, el => el.title), "Pin project tools open");
                 assert.equal(await page.$eval(panel, el => el.hidden), false);
                 await page.click("#outside");
-                await optionsAre(width < 1200);
+                await optionsAre(width <= 991);
                 assert.equal(await page.$eval(panel, el => el.hidden), true);
             });
         }
     }
 
-    for (const method of ["bubble", "ellipsis", "Escape"]) {
-        it(`preserves pin when explicitly collapsing with ${method}`, async () => {
-            await openTool(whiteboard);
+    for (const method of ["bubble", "ellipsis", "Escape"]) for (const width of [390, 1024, 1366]) {
+        it(`preserves pin when explicitly collapsing with ${method} at ${width}px`, async () => {
+            await openTool(whiteboard, width);
             await page.click(`${panel} .project-tools__pin`);
             if (method === "bubble") await page.click(whiteboard);
             else if (method === "ellipsis") await page.click(more);
@@ -403,22 +504,21 @@ describe("responsive project-tools launcher", function () {
         await page.type("#test-notes", " edited");
         const draft = await page.$eval("#test-notes", el => el.value);
         await page.setViewport({ width: 1200, height: 844 });
-        await page.waitForSelector(more, { hidden: true });
+        await page.waitForFunction(() => document.getElementById("project-tools-options").getAttribute("aria-orientation") === "vertical");
+        await page.waitForSelector(more, { visible: true });
         await optionsAre(false);
         assert.equal(await page.$eval("#project-tools-options", el => el.getAttribute("aria-orientation")), "vertical");
         await page.focus(whiteboard);
         await page.setViewport({ width: 1199, height: 844 });
-        await page.waitForSelector(more, { visible: true });
-        await optionsAre(true);
-        await focusIs("project-tools-launcher");
+        await page.waitForFunction(() => document.getElementById("project-tools-options").getAttribute("aria-orientation") === "horizontal");
+        await optionsAre(false);
+        await focusIs("project-tools-tab-whiteboard");
         assert.equal(await page.$eval("#test-notes", el => el.value), draft);
         assert.equal(await page.evaluate(() => window.whiteboardMounts), 1);
     });
 
-    it("opens requested documentation while options are hidden", async () => {
-        await page.click(more);
-        await optionsAre(false);
-        await page.click(whiteboard);
+    for (const width of [390, 1024, 1366]) it(`opens requested documentation while options are hidden at ${width}px`, async () => {
+        await openTool(whiteboard, width);
         await page.click(more);
         await optionsAre(true);
         await page.evaluate(() => window.openHelp());
@@ -426,15 +526,27 @@ describe("responsive project-tools launcher", function () {
         await optionsAre(true);
         await page.waitForFunction(() => !document.getElementById("project-tools-docs").hidden);
         assert.equal(await page.$eval(docs, el => el.getAttribute("aria-selected")), "true");
+        await page.click(`${panel} .project-tools__close`);
+        await focusIs("project-tools-launcher");
+        await optionsAre(true);
+    });
+
+    it("moves focus to the ellipsis when tablet defaults hide a desktop tab", async () => {
+        await openTool(docs, 1024);
+        await page.focus(docs);
+        await page.setViewport({ width: 991, height: 900 });
+        await optionsAre(true);
+        await focusIs("project-tools-launcher");
+        assert.equal(await page.$eval(panel, el => el.hidden), false);
+        await page.click(`${panel} .project-tools__close`);
+        await focusIs("project-tools-launcher");
     });
 
     it("keeps the width grip on small desktops and moves focus only when tablet layout hides it", async () => {
-        await page.setViewport({ width: 1366, height: 900 });
-        await page.waitForSelector(more, { hidden: true });
-        await page.click(docs);
+        await openTool(docs, 1366);
         await page.focus(".project-tools__resize--width");
         await page.setViewport({ width: 1199, height: 900 });
-        await page.waitForSelector(more, { visible: true });
+        await page.waitForFunction(() => document.getElementById("project-tools-options").getAttribute("aria-orientation") === "horizontal");
         await page.waitForSelector(".project-tools__resize--width", { visible: true });
         assert.equal(await page.$eval(".project-tools__resize--width", el => el === document.activeElement), true);
         await page.setViewport({ width: 992, height: 900 });
@@ -610,8 +722,8 @@ describe("responsive project-tools launcher", function () {
         await optionsAre(false);
     });
 
-    for (const pinned of [false, true]) it(`${pinned ? "keeps pinned" : "closes unpinned"} documentation when clicking an outside iframe`, async () => {
-        await openTool(docs);
+    for (const pinned of [false, true]) for (const width of [390, 1024, 1366]) it(`${pinned ? "keeps pinned" : "closes unpinned"} documentation when clicking an outside iframe at ${width}px`, async () => {
+        await openTool(docs, width);
         await page.evaluate(() => window.openHelp());
         if (pinned) await page.click(`${panel} .project-tools__pin`);
         const inside = await page.waitForSelector("#test-reference", { visible: true });
@@ -633,13 +745,19 @@ describe("responsive project-tools launcher", function () {
         await outsideFrame.click("#simulator-button");
         await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         assert.equal(await page.$eval(panel, el => el.hidden), !pinned);
-        await optionsAre(!pinned);
+        await optionsAre(!pinned && width <= 991);
         await focusIs("outside-frame");
         assert.equal(await outsideFrame.evaluate(() => document.activeElement.id), "simulator-button");
     });
 
-    for (const rtl of [false, true]) {
-        it(`animates both bubbles from the launcher in ${rtl ? "RTL" : "LTR"}`, async () => {
+    for (const width of [390, 1024, 1366]) for (const rtl of [false, true]) {
+        it(`animates both bubbles from the launcher at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
+            await page.setViewport({ width, height: 900 });
+            await optionsAre(width <= 991);
+            if (width > 991) {
+                await page.click(more);
+                await optionsAre(true);
+            }
             if (rtl) {
                 await page.$eval("style", (el, text) => el.textContent = text, rtlcss.process(css));
                 await page.evaluate(() => window.setRtl(true));
@@ -649,12 +767,12 @@ describe("responsive project-tools launcher", function () {
                     elements.forEach(el => el.getAnimations().forEach(animation => animation.finish()));
                 });
             }
-            const positions = await page.evaluate(() => {
+            const positions = await page.evaluate(horizontal => {
                 const launcher = document.getElementById("project-tools-launcher");
                 const bubbles = Array.from(document.querySelectorAll("#project-tools-options .project-tools__bubble"));
                 const center = el => {
                     const rect = el.getBoundingClientRect();
-                    return rect.x + rect.width / 2;
+                    return horizontal ? rect.x + rect.width / 2 : rect.y + rect.height / 2;
                 };
                 const origin = center(launcher);
                 const start = bubbles.map(center);
@@ -670,12 +788,12 @@ describe("responsive project-tools launcher", function () {
                 const middle = bubbles.map(center);
                 bubbles.forEach(el => el.getAnimations().forEach(animation => animation.finish()));
                 return { origin, start, middle, end: bubbles.map(center), animated, durations };
-            });
+            }, width < 1200);
             assert.equal(positions.animated, true);
             assert.deepEqual(positions.durations, [160, 160]);
             for (let i = 0; i < 2; ++i) {
                 assert.ok(Math.abs(positions.start[i] - positions.origin) < 1, "bubble starts behind the launcher");
-                const direction = rtl ? 1 : -1;
+                const direction = width >= 1200 || rtl ? 1 : -1;
                 const distance = (positions.end[i] - positions.start[i]) * direction;
                 const halfway = (positions.middle[i] - positions.start[i]) * direction;
                 assert.ok(distance > 40 && halfway > 0 && halfway < distance, "bubble travels outward over time");
@@ -687,10 +805,11 @@ describe("responsive project-tools launcher", function () {
         });
     }
 
-    it("respects reduced motion without disabling the launcher", async () => {
+    for (const width of [390, 1024, 1366]) it(`respects reduced motion without disabling the launcher at ${width}px`, async () => {
         await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
-        await page.click(more);
-        await optionsAre(false);
+        await page.setViewport({ width, height: 900 });
+        await optionsAre(width <= 991);
+        await showOptions();
         assert.equal(await page.$eval(docs, el => el.getAnimations().length), 0);
         await page.click(docs);
         await optionsAre(false);
@@ -700,7 +819,9 @@ describe("responsive project-tools launcher", function () {
         await optionsAre(true);
     });
 
-    it("centers all three ellipsis dots in the bubble", async () => {
+    for (const width of [390, 1024, 1366]) it(`centers all three ellipsis dots in the bubble at ${width}px`, async () => {
+        await page.setViewport({ width, height: 900 });
+        await optionsAre(width <= 991);
         const centers = await page.$eval(more, el => {
             const button = el.getBoundingClientRect();
             const dots = Array.from(el.querySelectorAll("circle")).map(dot => dot.getBoundingClientRect());
@@ -718,13 +839,7 @@ describe("responsive project-tools launcher", function () {
 
     for (const width of [390, 768, 1024, 1199, 1200, 1366]) {
         it(`keeps tools below the experiments banner at ${width}px`, async () => {
-            await page.setViewport({ width, height: 900 });
-            await page.waitForFunction(compact => document.querySelector(".project-tools").classList.contains("project-tools--compact") === compact, {}, width < 1200);
-            if (width < 1200) {
-                await page.click(more);
-                await optionsAre(false);
-            }
-            await page.click(docs);
+            await openTool(docs, width);
             const positions = () => page.evaluate(() => {
                 const launcher = document.querySelector(".project-tools__launcher").getBoundingClientRect();
                 const panel = document.getElementById("project-tools-panel").getBoundingClientRect();
@@ -746,14 +861,12 @@ describe("responsive project-tools launcher", function () {
             it(`points the panel at its source at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
                 await page.setViewport({ width, height: 900 });
                 await page.waitForFunction(compact => document.querySelector(".project-tools").classList.contains("project-tools--compact") === compact, {}, width < 1200);
+                await optionsAre(width <= 991);
                 if (rtl) {
                     await page.$eval("style", (el, text) => el.textContent = text, rtlcss.process(css));
                     await page.evaluate(() => window.setRtl(true));
                 }
-                if (width < 1200) {
-                    await page.click(more);
-                    await optionsAre(false);
-                }
+                await showOptions();
                 const checkPointer = async selector => {
                     const positions = await page.evaluate(selector => {
                         const pointer = document.querySelector(".project-tools__pointer").getBoundingClientRect();
@@ -776,14 +889,12 @@ describe("responsive project-tools launcher", function () {
                     assert.equal(await page.$eval(panel, el => el.hidden), false);
                     await checkPointer(selector);
                 }
-                if (width < 1200) {
-                    await page.click(more);
-                    await optionsAre(true);
-                    assert.equal(await page.$eval(panel, el => el.hidden), true);
-                    await page.evaluate(() => window.openHelp());
-                    await focusIs("project-tools-panel");
-                    await checkPointer(more);
-                }
+                await page.click(more);
+                await optionsAre(true);
+                assert.equal(await page.$eval(panel, el => el.hidden), true);
+                await page.evaluate(() => window.openHelp());
+                await focusIs("project-tools-panel");
+                await checkPointer(more);
             });
         }
     }

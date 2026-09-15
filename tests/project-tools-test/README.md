@@ -23,8 +23,12 @@ underlying DevTools operation before Mocha's unchanged 30-second hook timeout.
   router using minimal DOM owners, independent stores and editable controls.
   It covers scoped keys, text undo, nested editors and listener/lock teardown.
 - [launcher.spec.js](launcher.spec.js) uses Puppeteer and real React to check the
-  compact bubble animation, persistent options, keyboard focus and dismissal,
-  the 1199/1200px strip breakpoint, and preserving a mounted draft. Small-desktop
+  horizontal/vertical bubble animation, persistent options, keyboard focus and dismissal,
+  the always-visible ellipsis, desktop-expanded versus mobile/tablet-collapsed
+  startup without autofocus, the 1199/1200px strip breakpoint, and preserving a mounted draft.
+  Explicit desktop disclosure choices survive orientation changes; the separate
+  991/992px breakpoint sets the default visibility. Desktop click-away closes the
+  panel without hiding the bubbles. Small-desktop
   checks retain desktop header/footer spacing and both resize grips, with the
   width grip only hiding at the separate 991px tablet breakpoint. It compiles the production
   LESS with test theme variables and checks RTL, reduced-motion behavior, banner
@@ -43,7 +47,8 @@ underlying DevTools operation before Mocha's unchanged 30-second hook timeout.
   whiteboard controller and header menu. Storage and game-asset access are mocked,
   not the controls. It covers new and saved notes, named-board operations, independent
   images/text/undo, confirmed deletion and last-board protection, save errors/retry,
-  all 16 colors on mobile and footer spacing.
+  desktop hide/reveal with retained notes/drawing/undo/pin, all 16 colors on mobile
+  and footer spacing.
   Contrast checks use the production stylesheet order (shared menu styles load
   after project-tools) and the actual theme manager. They check icons, text and
   keyboard focus through idle/hover/pressed/expanded states on mobile and desktop,

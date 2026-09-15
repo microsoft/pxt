@@ -27,12 +27,12 @@ export function ProjectTools(props: ProjectToolsProps) {
     const [heightRange, setHeightRange] = React.useState({ height: 0, max: 0 });
     const [resizing, setResizing] = React.useState(false);
     const [compact, setCompact] = React.useState(() => window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY).matches);
-    const [optionsOpen, setOptionsOpen] = React.useState(false);
+    const [optionsOpen, setOptionsOpen] = React.useState(() => !pxt.BrowserUtils.isTabletSize());
     const [focusedTab, setFocusedTab] = React.useState(0);
     const root = React.useRef<HTMLDivElement>();
     const launcher = React.useRef<HTMLDivElement>();
     const moreButton = React.useRef<HTMLButtonElement>();
-    const pendingFocus = React.useRef<"panel" | "trigger">();
+    const focusTabOnOpen = React.useRef(false);
     const panel = React.useRef<HTMLDivElement>();
     const tabButtons = React.useRef<HTMLButtonElement[]>([]);
     const drag = React.useRef<{ axis: "width" | "height"; position: number; size: number }>();
@@ -62,24 +62,24 @@ export function ProjectTools(props: ProjectToolsProps) {
     pinState.current = { pinned: props.pinned, expanded: props.expanded };
     const dismissTools = React.useCallback((explicit = false) => {
         if (!explicit && pinState.current.pinned && pinState.current.expanded) return;
-        setOptionsOpen(false);
-        props.onExpandedChange(false);
+        // Desktop tabs remain available after click-away; only an explicit
+        // disclosure action hides them. Read the current size for deferred blur.
+        if (explicit || pxt.BrowserUtils.isTabletSize()) setOptionsOpen(false);
+        if (pinState.current.expanded) props.onExpandedChange(false);
     }, [props.onExpandedChange]);
 
     React.useEffect(() => {
         const query = window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY);
         const tabletQuery = window.matchMedia(`(max-width: ${pxt.BREAKPOINT_TABLET}px)`);
-        const onChange = () => {
-            if (launcher.current?.contains(document.activeElement)) pendingFocus.current = "trigger";
-            setCompact(query.matches);
-            setOptionsOpen(false);
-        };
+        // Changing strip direction must not undo an explicit desktop collapse.
+        const onChange = () => setCompact(query.matches);
         const onTabletChange = () => {
-            // Smaller desktops still support width resizing. Only move focus
-            // when the grip actually disappears at the tablet breakpoint.
-            if (tabletQuery.matches && document.activeElement === panel.current?.querySelector(".project-tools__resize--width")) {
-                panel.current?.focus();
+            if (tabletQuery.matches) {
+                // Move focus before hiding tabs, without dismissing an open panel.
+                if (launcher.current?.contains(document.activeElement)) moreButton.current?.focus();
+                else if (document.activeElement === panel.current?.querySelector(".project-tools__resize--width")) panel.current?.focus();
             }
+            setOptionsOpen(!tabletQuery.matches);
         };
         query.addEventListener("change", onChange);
         tabletQuery.addEventListener("change", onTabletChange);
@@ -106,17 +106,13 @@ export function ProjectTools(props: ProjectToolsProps) {
         };
     }, [props.expanded, compact, updateSizeRanges]);
     React.useLayoutEffect(() => {
-        if (!pendingFocus.current) return;
-        const target = pendingFocus.current === "panel" ? panel.current
-            : compact ? moreButton.current : tabButtons.current[tab === "docs" ? 0 : 1];
-        pendingFocus.current = undefined;
-        target?.focus();
-    });
+        // Only user-initiated expansion moves focus, not desktop startup or resize.
+        if (!focusTabOnOpen.current || !optionsOpen) return;
+        focusTabOnOpen.current = false;
+        tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
+    }, [optionsOpen]);
     React.useEffect(() => {
-        if (compact && optionsOpen) tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
-    }, [compact, optionsOpen]);
-    React.useEffect(() => {
-        if (!props.expanded && !(compact && optionsOpen)) return undefined;
+        if (!props.expanded && !optionsOpen) return undefined;
         const onPointerDown = (event: PointerEvent) => {
             if (root.current && !root.current.contains(event.target as Node)) dismissTools();
         };
@@ -168,12 +164,12 @@ export function ProjectTools(props: ProjectToolsProps) {
     React.useEffect(() => {
         if (props.docsUrl) {
             setTab("docs");
-            if (compact && props.expanded) panel.current?.focus();
+            if (props.expanded && (compact || !optionsOpen)) panel.current?.focus();
         }
     }, [props.docsUrl, props.docsRequest]);
     React.useEffect(() => {
         if (props.expanded) {
-            if (compact && !optionsOpen) panel.current?.focus();
+            if (!optionsOpen) panel.current?.focus();
             else tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
         }
     }, [props.expanded]);
@@ -181,9 +177,16 @@ export function ProjectTools(props: ProjectToolsProps) {
         if (props.expanded && tab === "whiteboard") setVisitedWhiteboard(true);
     }, [props.expanded, tab]);
 
+    const openOptions = () => {
+        if (optionsOpen) tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
+        else {
+            focusTabOnOpen.current = true;
+            setOptionsOpen(true);
+        }
+    };
     const collapse = () => {
         props.onExpandedChange(false);
-        if (compact && !optionsOpen) moreButton.current?.focus();
+        if (!optionsOpen) moreButton.current?.focus();
         else tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
     };
     const selectTab = (name: "docs" | "whiteboard") => {
@@ -263,22 +266,21 @@ export function ProjectTools(props: ProjectToolsProps) {
             }
         }}>
         <div className="project-tools__launcher" ref={launcher}>
-            {compact && <button id="project-tools-launcher" type="button" ref={moreButton}
+            <button id="project-tools-launcher" type="button" ref={moreButton}
                 className="project-tools__bubble project-tools__more" aria-label={lf("Project tools")}
                 title={lf("Project tools")} aria-expanded={optionsOpen} aria-controls="project-tools-options"
                 onClick={() => {
                     if (props.expanded || optionsOpen) {
                         dismissTools(true);
                         moreButton.current?.focus();
-                    } else setOptionsOpen(true);
+                    } else openOptions();
                 }} onKeyDown={event => {
                     if (event.key === "Escape") {
                         if (props.expanded) collapse();
                         else if (optionsOpen) setOptionsOpen(false);
                     } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
                         event.preventDefault();
-                        if (optionsOpen) tabButtons.current[tab === "docs" ? 0 : 1]?.focus();
-                        else setOptionsOpen(true);
+                        openOptions();
                     }
                 }}>
                 <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -286,9 +288,9 @@ export function ProjectTools(props: ProjectToolsProps) {
                     <circle cx="12" cy="12" r="2" />
                     <circle cx="19" cy="12" r="2" />
                 </svg>
-            </button>}
+            </button>
             <div id="project-tools-options" className="project-tools__bubbles" role="tablist"
-                aria-hidden={compact && !optionsOpen} aria-orientation={compact ? "horizontal" : "vertical"} aria-label={lf("Project tools")}>
+                aria-hidden={!optionsOpen} aria-orientation={compact ? "horizontal" : "vertical"} aria-label={lf("Project tools")}>
                 {[lf("Documentation"), lf("Whiteboard")].map((label, index) => {
                     const name = index ? "whiteboard" : "docs";
                     const selected = tab === name;
@@ -296,13 +298,13 @@ export function ProjectTools(props: ProjectToolsProps) {
                         className="project-tools__bubble" ref={element => tabButtons.current[index] = element}
                         aria-label={label} title={label} aria-selected={selected && props.expanded}
                         aria-expanded={selected && props.expanded} aria-controls={`project-tools-${name}`}
-                        tabIndex={(compact ? optionsOpen && focusedTab === index : selected) ? 0 : -1}
+                        tabIndex={optionsOpen && (compact ? focusedTab === index : selected) ? 0 : -1}
                         onFocus={() => setFocusedTab(index)} onClick={() => selectTab(name)}
                         onKeyDown={event => {
                             if (event.key === "Escape" && props.expanded) {
                                 event.stopPropagation();
                                 collapse();
-                            } else if (event.key === "Escape" && compact) {
+                            } else if (event.key === "Escape") {
                                 event.stopPropagation();
                                 setOptionsOpen(false);
                                 moreButton.current?.focus();
