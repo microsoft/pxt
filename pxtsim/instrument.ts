@@ -1,11 +1,15 @@
 namespace pxsim {
 
-// this code is used to instrument functions that are exposed to the user from 
-// a target and/or extension. Functions live in namespaces and come in two forms
-// - a shim that has both C++ and JavaScript counterparts, where the JavaScript is
+// Functions in targets live in namespaces and come in two forms
+
+// 1. a shim that has both C++ and JavaScript counterparts, where the JavaScript is
 //   present in pxsim namespace of the target. An example is basic.showString, which
 //   shows up in the JavaScript as pxsim.basic.showString("foo", 150). That is, the
-//   JavaScript namespace syntax is preserved.
+//   JavaScript namespace syntax is preserved. The code below deals with this case;
+//.  It is called from pxtsim/runtime.
+
+// 2. a plain STS function, such as basic.showNumber, is flattened (no namespace) such as
+//    basic_showNumber__P2382_mk(s). this is handled in backjs.ts
 
 type UnknownFunction = (...args: any[]) => any;
 type NamespaceObject = Record<string, any>;
