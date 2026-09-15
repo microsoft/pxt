@@ -33,20 +33,25 @@ projects and when there is no image palette. Other targets can explicitly list
   Untouched widths adapt when the
   viewport changes; manual resizing overrides the default. Dimensions remain
   capped to the screen and the panel can be enlarged whenever needed.
-- On smaller desktops, tablets and phones (less than 1200px wide), a single **…**
-  bubble reveals the other bubbles horizontally above the panel with a 160ms slide
-  out from behind it. The vertical strip is reserved for large desktops (1200px
-  and wider). The bubbles remain visible when
+- The **…** bubble is always available to hide or reveal the other bubbles. They
+  default to expanded on desktop (992px and wider) and collapsed on tablets and
+  phones (991px and narrower), without opening a panel or moving keyboard focus.
+  Smaller desktops still use the horizontal strip above the panel; large desktops
+  (1200px and wider) use a vertical strip below **…**. Bubbles slide from the
+  ellipsis in 160ms. Changing between the two desktop layouts preserves an explicit
+  hide/reveal choice; crossing the tablet breakpoint applies that layout's default.
+  The bubbles remain visible when
   selecting, using, switching or closing a panel, so the active bubble can be
   pressed again to close it. **…** retracts the bubbles and hides the open panel.
-  Unless pinned, clicking outside the tools or tabbing away also dismisses it,
-  including clicks in the simulator on desktop. Interacting inside either
+  Unless pinned, clicking outside the tools or tabbing away dismisses the panel,
+  including clicks in the simulator. Desktop bubbles remain available; tablet and
+  phone bubbles retract. Interacting inside either
   panel (including the documentation iframe) keeps it open. Motion is mirrored in RTL and disabled for reduced-motion
-  preferences. Widening the screen restores the separate bubbles without resetting notes.
+  preferences. Resizing and hiding bubbles never reset the notes or pin setting.
 - The bubbles and panel follow the editor's notification-banner offset, including
   the **Experiments enabled.** banner; dismissing it restores their normal position.
-- A speech-bubble pointer connects the open panel to its active bubble. In compact
-  mode, the pointer targets **…** instead if help opens while the options are
+- A speech-bubble pointer connects the open panel to its active bubble. In either
+  layout, the pointer targets **…** instead if help opens while the options are
   tucked away. Pressing **…** then closes that panel rather than expanding the options.
 - Select a bubble to open its panel, select the other to switch, and select the
   active bubble again to collapse it. Escape also collapses and returns focus.
@@ -60,8 +65,8 @@ projects and when there is no image palette. Other targets can explicitly list
   configured documentation page or auto-open README) starts pinned. Ordinary block
   help does not force pinning, and reloading the current project keeps a manual
   unpin choice. The pin is UI state, not shared project content.
-- Up/Down and Home/End navigate the desktop bubble tabs. Compact options use
-  Left/Right and Home/End, then Enter/Space to select. Collapsing a compact panel
+- Up/Down and Home/End navigate the vertical bubble tabs. Horizontal options use
+  Left/Right and Home/End, then Enter/Space to select. Collapsing a panel
   returns focus to its bubble if visible, otherwise **…**. Escape closes the
   panel first; another Escape from its bubble retracts the options.
 - Subtle dotted grips mark the side and bottom resize edges. Drag the side to

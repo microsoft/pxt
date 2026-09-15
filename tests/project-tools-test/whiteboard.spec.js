@@ -82,7 +82,9 @@ describe("named private whiteboards", function () {
 
     const openWhiteboard = async () => {
         await page.waitForSelector("#project-tools-launcher", { visible: true });
-        await page.click("#project-tools-launcher");
+        if (await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")) !== "true") {
+            await page.click("#project-tools-launcher");
+        }
         await page.waitForFunction(() => getComputedStyle(document.getElementById("project-tools-tab-whiteboard")).transform === "none");
         await page.click("#project-tools-tab-whiteboard");
         await page.waitForSelector(input, { visible: true });
@@ -127,6 +129,28 @@ describe("named private whiteboards", function () {
         assert.deepEqual(Object.keys(notes).sort(), ["activeWhiteboardId", "whiteboards"]);
         assert.equal(notes.whiteboards.length, 1);
         assert.equal(notes.activeWhiteboardId, notes.whiteboards[0].id);
+    });
+
+    for (const width of [1024, 1366]) it(`retains drawing, notes, undo and pin after hiding desktop bubbles at ${width}px`, async () => {
+        await page.setViewport({ width, height: 900 });
+        await page.waitForFunction(horizontal => document.getElementById("project-tools-options").getAttribute("aria-orientation") === (horizontal ? "horizontal" : "vertical"), {}, width < 1200);
+        await page.focus(input);
+        await page.keyboard.press("End");
+        await page.type(input, " retained after hiding");
+        await page.evaluate(() => whiteboardTest.draw(5));
+        await page.click("#project-tools-whiteboard .project-tools__pin");
+        await page.click("#project-tools-launcher");
+        await page.waitForFunction(() => document.getElementById("project-tools-panel").hidden &&
+            getComputedStyle(document.getElementById("project-tools-options")).visibility === "hidden");
+        assert.equal(await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")), "false");
+        await openWhiteboard();
+        assert.equal(await page.$eval(input, el => el.value), "Saved private notes retained after hiding");
+        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 5);
+        assert.equal(await page.$eval("#project-tools-whiteboard .project-tools__pin", el => el.getAttribute("aria-pressed")), "true");
+        await page.evaluate(() => whiteboardTest.undo());
+        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
+        await page.click("#outside");
+        assert.equal(await page.$eval("#project-tools-panel", el => el.hidden), false);
     });
 
     it("adds, renames and switches independent drawings, notes and undo histories", async () => {
@@ -371,6 +395,8 @@ describe("named private whiteboards", function () {
                 };
 
                 await readable("#project-tools-whiteboard h2, #project-notes-privacy, #project-notes-text");
+                await readable("#project-tools-launcher circle", 3);
+                await headerStates("#project-tools-launcher");
                 await readable(".project-tools__resize--height .project-tools__resize-grip circle", 3);
                 await page.hover(".project-tools__resize--height");
                 await readable(".project-tools__resize--height .project-tools__resize-grip circle", 3);
@@ -402,7 +428,7 @@ describe("named private whiteboards", function () {
                 await readable(".project-whiteboard-menu__edit label, .project-whiteboard-menu__edit input, .project-whiteboard-menu__edit button");
                 await page.keyboard.press("Escape");
 
-                if (width < 1200 && await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")) !== "true") {
+                if (await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")) !== "true") {
                     await page.focus("#project-tools-launcher");
                     await page.keyboard.press("ArrowDown");
                 }

@@ -1,5 +1,5 @@
 // Match @largeMonitorBreakpoint (1200px): keep the bubble strip horizontal on
-// smaller desktops without changing the editor's separate tablet breakpoint.
+// smaller desktops. Visibility defaults use the separate tablet breakpoint.
 export const PROJECT_TOOLS_COMPACT_QUERY = "(max-width: 1199px)";
 
 /** Keep project-load defaults separate from explicit pin/unpin and collapse actions. */

@@ -11,6 +11,8 @@
     --tools-bubble-size: 3.25rem;
     --tools-bubble-gap: .75rem;
     --tools-pointer-rotation: 45deg;
+    --tools-slide-x: 0;
+    --tools-slide-y: -1;
 
     &[dir="rtl"] { --tools-pointer-rotation: -45deg; }
 
@@ -35,15 +37,35 @@
 
 .project-tools__launcher {
     position: fixed;
+    width: var(--tools-bubble-size);
     inset-inline-end: 1rem;
     top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
     z-index: @sidedocZIndex;
 }
 
 .project-tools__bubbles {
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + var(--tools-bubble-gap));
     display: flex;
     flex-direction: column;
     gap: var(--tools-bubble-gap);
+    visibility: hidden;
+    pointer-events: none;
+
+    .project-tools__bubble {
+        --tools-bubble-distance: calc(var(--tools-bubble-size) + var(--tools-bubble-gap));
+        // Direction is already handled by the horizontal/vertical slide variables.
+        /* rtl:ignore */
+        transform: translate(calc(var(--tools-slide-x) * var(--tools-bubble-distance)), calc(var(--tools-slide-y) * var(--tools-bubble-distance)));
+        &:last-child { --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * 2); }
+    }
+
+    &[aria-hidden="false"] {
+        visibility: visible;
+        pointer-events: auto;
+        .project-tools__bubble { transform: none; }
+    }
 }
 
 .project-tools__bubble {
@@ -51,6 +73,7 @@
     width: var(--tools-bubble-size);
     height: var(--tools-bubble-size);
     display: flex;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     border: 2px solid var(--tools-border);
@@ -70,6 +93,18 @@
     }
 }
 
+.project-tools__more {
+    z-index: 1;
+    svg {
+        display: block;
+        width: 1.5rem;
+        height: 1.5rem;
+        flex-shrink: 0;
+        fill: currentColor;
+        pointer-events: none;
+    }
+}
+
 .project-tools__bubble-label {
     visibility: hidden;
     position: absolute;
@@ -84,7 +119,7 @@
 }
 
 .project-tools__panel {
-    --tools-pointer-offset: calc(var(--tools-bubble-size) / 2);
+    --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
     --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
     --tools-panel-bottom: calc(@editorToolsCollapsedHeight + 1rem);
     --tools-available-width: calc(100vw - 6rem);
@@ -92,7 +127,7 @@
     --tools-launcher-space: 5rem;
 
     &[data-active-tab="whiteboard"] {
-        --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
+        --tools-pointer-offset: calc(var(--tools-bubble-size) * 2.5 + var(--tools-bubble-gap) * 2);
     }
 
     position: fixed;
@@ -401,48 +436,24 @@
 .project-whiteboard-menu__actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .75rem; }
 
 .project-tools--compact {
-    --tools-slide-direction: 1;
+    --tools-slide-x: 1;
+    --tools-slide-y: 0;
     --tools-bubble-gap: .5rem;
 
-    &[dir="rtl"] { --tools-slide-direction: -1; }
+    &[dir="rtl"] { --tools-slide-x: -1; }
 
     .project-tools__launcher {
-        width: var(--tools-bubble-size);
         top: calc(var(--tools-menu-height) + var(--tools-banner-height) + .5rem);
         inset-inline-end: .5rem;
     }
     .project-tools__bubbles {
-        position: absolute;
         inset-inline-end: calc(100% + var(--tools-bubble-gap));
         top: 0;
         flex-direction: row;
-        visibility: hidden;
-        pointer-events: none;
 
         .project-tools__bubble {
-            --tools-bubble-distance: calc(var(--tools-bubble-size) + var(--tools-bubble-gap));
-            // Direction is already handled by --tools-slide-direction.
-            /* rtl:ignore */
-            transform: translateX(calc(var(--tools-slide-direction) * var(--tools-bubble-distance)));
             &:first-child { --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * 2); }
-        }
-
-        &[aria-hidden="false"] {
-            visibility: visible;
-            pointer-events: auto;
-            .project-tools__bubble { transform: none; }
-        }
-    }
-    .project-tools__bubble { flex-shrink: 0; }
-    .project-tools__more {
-        z-index: 1;
-        svg {
-            display: block;
-            width: 1.5rem;
-            height: 1.5rem;
-            flex-shrink: 0;
-            fill: currentColor;
-            pointer-events: none;
+            &:last-child { --tools-bubble-distance: calc(var(--tools-bubble-size) + var(--tools-bubble-gap)); }
         }
     }
     .project-tools__bubble-label { display: none; }
@@ -465,9 +476,10 @@
         border-inline-end: 0;
         border-inline-start: 1px solid var(--tools-border);
     }
-    &[data-options-open="false"] .project-tools__panel {
-        --tools-pointer-offset: calc(var(--tools-bubble-size) / 2);
-    }
+}
+
+.project-tools[data-options-open="false"] .project-tools__panel {
+    --tools-pointer-offset: calc(var(--tools-bubble-size) / 2);
 }
 
 @media only screen and (min-width: @largeMonitorBreakpoint) {
@@ -486,7 +498,7 @@
 }
 @media (prefers-reduced-motion: no-preference) {
     .project-tools__bubble { transition: border-radius .15s, background-color .15s; }
-    .project-tools--compact .project-tools__bubbles {
+    .project-tools__bubbles {
         transition: visibility 0s linear .16s;
         &[aria-hidden="false"] { transition-delay: 0s; }
         .project-tools__bubble {
