@@ -5,8 +5,14 @@ modules before running the tests. The task is included in `gulp test`.
 
 Browser suites share [browser.js](browser.js). On GitHub Actions only, they use
 `--no-sandbox`, matching the repository's Karma launcher for Ubuntu runners that
-restrict Chromium user namespaces. Local runs retain the Chromium sandbox; this
-test-only setting does not change the editor or its iframe sandbox attributes.
+restrict Chromium user namespaces, and `--disable-gpu` for software rendering.
+Without a usable display, headless Chromium's GPU initialization can stall
+stylesheet/script injection in `beforeEach`; increasing Mocha's timeout does not
+fix that renderer hang. DOM, focus, CSS animation, and 2D canvas tests still use
+the real browser. Local runs retain the Chromium sandbox and normal graphics.
+Neither setting changes the editor or its iframe sandbox attributes.
+Browser protocol commands have a 10-second deadline so a stall reports the
+underlying DevTools operation before Mocha's unchanged 30-second hook timeout.
 
 - [storage.spec.js](storage.spec.js) exercises actual workspace/cloud code with a
   fake persistent provider and authenticated API. No network requests or public
