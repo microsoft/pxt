@@ -8,11 +8,39 @@ Tutorial metadata is optionally specified at the top of the document. Metadata i
 
 ### Explicit hints
 
-If you want the hints to display by default when each step is encountered, specify **@explicitHints** in the metadata at the top of the tutorial page. The default is ``false`` making hints hidden but available for each step.
+If you don't want MakeCode to automatically populate the hint box, specify **@explicitHints** in the metadata at the top of the tutorial.   
+By default, MakeCode will place a code snippit (and everything that follows) in a hint, as well as in some cases images (if text is found on the line before). Enabling explicit hints allows greater control over this.   
 
+With **@explicitHints** enabled, you then must mark any section of text/code/images to be included in the hint box with ```### ~ tutorialhint```
 ```
 ### @explicitHints true
 ```
+An example of using **@explicitHints** is below.
+
+`````
+### @explicitHints true
+
+# Example
+
+## Step 1
+
+Use this code as a start, but make sure to add your own mob.
+```python
+mobs.spawn(MOB_OF_YOUR_CHOICE, pos(0, 0, 0))
+```
+
+### ~ tutorialhint
+
+This section is included within the hint:
+```python
+mobs.spawn(COW, pos(0, 0, 0))
+```
+Or 
+```python
+mobs.spawn(CHICKEN, pos(0, 0, 0))
+```
+
+`````
 
 ### Preferred editor view
 
