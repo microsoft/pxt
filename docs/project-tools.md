@@ -88,8 +88,8 @@ projects and when there is no image palette. Other targets can explicitly list
   removes that board's drawing and notes, saves the remaining collection and
   switches to a neighboring board. At least one board is always kept; deletion
   cannot be undone with the drawing editor's Undo button.
-- An existing single whiteboard becomes **Whiteboard 1**, preserving its drawing,
-  text and palette. Each board uses the existing single-image editor with a
+- A project without notes starts with a blank **Whiteboard 1**; opening the panel
+  does not save metadata until the user edits it. Each board uses the existing single-image editor with a
   separate Redux store and is never registered as a game asset. The canvas sits
   directly below the privacy label without a separate Sketch/Clear drawing row.
   Image resizing is not supported.
@@ -100,12 +100,10 @@ There is no routine saving/saved text. Save errors display a Retry action.
 ## Storage and sharing boundary
 
 Notes are stored in `Header.projectNotes`, not in `ScriptText`, asset collections,
-JRES or the package manifest. Version 2 contains `whiteboards` and
+JRES or the package manifest. `ProjectNotes` contains `whiteboards` and
 `activeWhiteboardId`; each board has an ID, name, up to 4,096 text characters,
-an optional base64 F4 image and its palette. Version 1 remains readable and is
-upgraded when notes are next saved, not merely by opening the panel. Every board,
-name and ID is validated. Image dimensions and encoded lengths are checked before
-decoding/allocating the bitmap.
+an optional base64 F4 image and its palette. Every board, name and ID is validated.
+Image dimensions and encoded lengths are checked before decoding/allocating the bitmap.
 
 | Path | Notes included? |
 | --- | --- |
@@ -148,7 +146,7 @@ tabs retain the draft/store but unmount the canvas and its global listeners.
 ## Validation
 
 - `gulp testpxteditor`: schema validation, bitmap round trips, public-header
-  filtering, legacy migration, bounded collections, add/rename operations,
+  filtering, first-board initialization, bounded collections, add/rename operations,
   experiment availability, and the existing editor tests.
 - `gulp testprojecttools`: real workspace/cloud modules with fake durable storage
   and authenticated API, both share paths, duplicate isolation, cloud round trips,

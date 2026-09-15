@@ -4,7 +4,7 @@ import { MenuDropdown, MenuItem } from "../../../react-common/components/control
 import { MAX_PROJECT_WHITEBOARDS, MAX_WHITEBOARD_NAME_LENGTH, nextWhiteboardName, whiteboardNameError } from "../projectNotes";
 
 interface ProjectWhiteboardMenuProps {
-    notes: pxt.workspace.ProjectNotesV2;
+    notes: pxt.workspace.ProjectNotes;
     onSelect: (id: string) => void;
     onRename: (id: string, name: string) => void;
     onAdd: (name: string) => void;

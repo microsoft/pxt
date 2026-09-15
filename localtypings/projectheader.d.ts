@@ -13,23 +13,16 @@ declare namespace pxt.workspace {
         palette?: string[];
     }
 
-    export interface ProjectNotesV1 extends WhiteboardContent {
-        version: 1;
-    }
-
     export interface ProjectWhiteboard extends WhiteboardContent {
         id: string;
         name: string;
     }
 
-    export interface ProjectNotesV2 {
-        version: 2;
+    /** User-owned project metadata. Never include this in published/exported projects. */
+    export interface ProjectNotes {
         whiteboards: ProjectWhiteboard[];
         activeWhiteboardId: string;
     }
-
-    /** User-owned project metadata. Never include this in published/exported projects. */
-    export type ProjectNotes = ProjectNotesV1 | ProjectNotesV2;
 
     export interface InstallHeader {
         name: string; // script name, should always be in sync with pxt.json name
