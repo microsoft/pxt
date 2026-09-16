@@ -184,6 +184,7 @@ describe("project backpack UI", function () {
             const listeners = new Set();
             const test = window.backpackTest = {
                 user: undefined, identity: true, remote: {}, snapshots: {},
+                recovery: [], deletedEntries: [], warning: undefined,
                 refreshes: 0, adds: [], deletes: [], renames: [], signIns: 0, escapes: 0,
                 failRefresh: false, failDelete: false, failRename: false, failAdd: false, importResult: true,
                 modalOpen: false, modalEvents: [], collapses: 0,
@@ -220,7 +221,13 @@ describe("project backpack UI", function () {
             const backpack = {
                 get MAX_BACKPACK_NAME_LENGTH() { return window.backpackValidation.MAX_BACKPACK_NAME_LENGTH; },
                 validateBackpackItem: value => window.backpackValidation.validateBackpackItem(value),
-                getBackpackItems: () => test.snapshots[test.storeKey()] || [],
+                getBackpackState: () => ({
+                    entries: (test.snapshots[test.storeKey()] || []).map(item => window.backpackValidation.readBackpackEntry(
+                        item.id, item, test.user ? "cloud" : "local")).concat(test.recovery
+                        .filter(entry => !!test.user || entry.source === "local")
+                        .map(entry => window.backpackValidation.readBackpackEntry(entry.id, entry.value, entry.source))),
+                    warning: test.warning
+                }),
                 subscribeBackpack(listener) { listeners.add(listener); return () => listeners.delete(listener); },
                 canImportBackpack: () => test.canImport,
                 async refreshBackpackAsync() {
@@ -253,13 +260,16 @@ describe("project backpack UI", function () {
                     test.snapshots[user] = test.remote[user];
                     test.notify();
                 },
-                async deleteBackpackItemAsync(id) {
-                    const user = test.storeKey();
+                async deleteBackpackEntryAsync(entry) {
+                    const { id, source } = entry;
+                    const user = source === "local" ? "__guest__" : test.user;
                     const fail = test.failDelete;
                     test.deletes.push(id);
+                    test.deletedEntries.push({ id, source });
                     await test.gate;
                     if (fail) throw new Error("Delete failed. Try again.");
-                    test.remote[user] = test.remote[user].filter(item => item.id !== id);
+                    test.remote[user] = (test.remote[user] || []).filter(item => item.id !== id);
+                    test.recovery = test.recovery.filter(entry => entry.id !== id || entry.source !== source);
                     test.snapshots[user] = test.remote[user];
                     test.notify();
                 }
@@ -1058,17 +1068,130 @@ describe("project backpack UI", function () {
         await modalClosed();
     });
 
-    it("reports invalid source metadata without rendering an actionable snippet", async () => {
+    it("reports invalid source metadata with a named trash-only recovery card", async () => {
         await signIn([{ ...item(), projectBlocks: { custom_block: 7 } }]);
-        assert.match(await page.$eval('[role="alert"]', element => element.textContent), /Invalid project-defined blocks/);
-        assert.strictEqual(await page.$(entry), null);
+        assert.match(await page.$eval(".project-backpack__invalid", element => element.textContent), /invalid or oversized/);
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
+        assert.strictEqual(await page.$(add), null);
+        assert.strictEqual(await page.$(rename), null);
+        assert.strictEqual(await page.$eval(remove, button => button.disabled), false);
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds), []);
     });
 
     it("rejects non-PNG previews rather than injecting image or SVG markup", async () => {
         await signIn([{ ...item(), previewUri: "data:image/svg+xml,<svg onload='alert(1)'/>" }]);
-        assert.match(await page.$eval('[role="alert"]', element => element.textContent), /PNG/);
+        assert.match(await page.$eval(".project-backpack__invalid", element => element.textContent), /invalid or oversized/);
         assert.strictEqual(await page.$("img, svg"), null);
+        assert.strictEqual(await page.$eval(remove, button => button.disabled), false);
+    });
+
+    for (const cloud of [false, true]) {
+        it(`keeps valid ${cloud ? "synced" : "guest"} snippets usable beside named recovery cards and deletes only the invalid item`, async () => {
+            const valid = item("Character setup");
+            const invalid = { ...item("Damaged startup", "00000000-0000-0000-0000-000000000002"),
+                blockText: undefined, previewUri: "https://invalid.example/private.png", code: "PRIVATE_INVALID_CODE" };
+            if (cloud) await signIn([invalid, valid]);
+            else await loadGuest([invalid, valid]);
+            const card = '.project-backpack__item--invalid';
+            const trash = `${card} ${remove}`;
+            assert.deepStrictEqual(await visibleNames(), [invalid.name, valid.name]);
+            assert.strictEqual(await page.$(retry), null);
+            assert.doesNotMatch(await text(), /by ID|PRIVATE_INVALID_CODE|invalid.example/);
+            assert.strictEqual(await page.$(`${card} img, ${card} ${add}, ${card} ${rename}`), null);
+            assert.strictEqual(await page.$eval(trash, button => button.getAttribute("aria-label")), "Delete Damaged startup");
+            await page.click(add);
+            await idle();
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds.map(add => add.item)), [valid]);
+            await searchFor("damaged");
+            assert.deepStrictEqual(await visibleNames(), [invalid.name]);
+            await page.click(trash);
+            assert.match(await modalText(), cloud ? /on all devices/ : /in this browser/);
+            await page.keyboard.press("Escape");
+            await modalClosed();
+            assert.strictEqual(await page.$eval(trash, button => button === document.activeElement), true);
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.deletes), []);
+            await page.keyboard.press("Enter");
+            await page.evaluate(() => { backpackTest.failDelete = true; });
+            await page.click(confirmDelete);
+            await idle();
+            assert.match(await modalText(), /Delete failed/);
+            assert.strictEqual(await page.$$eval(card, cards => cards.length), 1);
+            await page.evaluate(() => { backpackTest.failDelete = false; });
+            await page.click(confirmDelete);
+            await idle();
+            await modalClosed();
+            assert.strictEqual(await page.$(card), null);
+            assert.strictEqual(await page.$eval(searchBox, input => input === document.activeElement), true);
+            await page.click(clearSearch);
+            assert.deepStrictEqual(await visibleNames(), [valid.name]);
+            await reopen();
+            await idle();
+            assert.deepStrictEqual(await visibleNames(), [valid.name]);
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.deletedEntries),
+                Array(2).fill({ id: invalid.id, source: cloud ? "cloud" : "local" }));
+        });
+    }
+
+    it("recovers unnamed, mismatched-ID and long literal-name entries by storage key without rendering their payloads", async () => {
+        await signIn([item("Working")]);
+        const key = 'broken/key"[literal]';
+        const literalName = '<img src=x onerror=alert(1)>\n' + "x".repeat(120);
+        await page.evaluate(({ key, literalName }) => {
+            backpackTest.recovery = [
+                { id: key, source: "cloud", value: { id: "wrong", name: literalName, previewUri: "https://private", code: "PRIVATE" } },
+                { id: "no-name", source: "cloud", value: null }
+            ];
+            backpackTest.notify();
+        }, { key, literalName });
+        const names = await visibleNames();
+        assert.strictEqual(names[1], literalName.slice(0, 100).replace(/\n/g, " ").trim());
+        assert.strictEqual(names[2], "Unnamed snippet");
+        assert.strictEqual(await page.$("h3 img, h3 script, .project-backpack__item--invalid img"), null);
+        await searchFor("img");
+        await page.click(remove);
+        assert.strictEqual(await page.$(`${confirm} img, ${confirm} script`), null);
+        await page.click(confirmDelete);
+        await idle();
+        await modalClosed();
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.deletedEntries), [{ id: key, source: "cloud" }]);
+        await page.click(clearSearch);
+        assert.deepStrictEqual(await visibleNames(), ["Working", "Unnamed snippet"]);
+    });
+
+    it("distinguishes local and synced recovery cards sharing a key and retains controls while over quota", async () => {
+        await signIn([item("Working")]);
+        await page.evaluate(() => {
+            backpackTest.warning = "Your backpack is over its storage limit. Delete snippets using their trash buttons to make room.";
+            backpackTest.recovery = [
+                { id: "same-key", source: "cloud", value: { name: "Cloud damaged" } },
+                { id: "same-key", source: "local", value: { name: "Local damaged" } }
+            ];
+            backpackTest.notify();
+        });
+        assert.match(await text(), /storage limit/);
+        assert.strictEqual(await page.$(retry), null);
+        assert.strictEqual(await page.$eval(add, button => button.disabled), false);
+        await searchFor("local damaged");
+        assert.deepStrictEqual(await visibleNames(), ["Local damaged"]);
+        assert.match(await text(), /Saved in this browser only/);
+        await page.click(remove);
+        assert.match(await modalText(), /in this browser/);
+        assert.doesNotMatch(await modalText(), /all devices/);
+        await page.click(confirmDelete);
+        await idle();
+        await modalClosed();
+        await searchFor("cloud damaged");
+        assert.deepStrictEqual(await visibleNames(), ["Cloud damaged"]);
+        await page.click(remove);
+        assert.match(await modalText(), /on all devices/);
+        await page.click(confirmDelete);
+        await idle();
+        await modalClosed();
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.deletedEntries), [
+            { id: "same-key", source: "local" }, { id: "same-key", source: "cloud" }
+        ]);
+        await page.click(clearSearch);
+        assert.deepStrictEqual(await visibleNames(), ["Working"]);
     });
 
     it("imports into the captured project, disables operations while pending, and retries errors", async () => {

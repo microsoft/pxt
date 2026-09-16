@@ -82,7 +82,8 @@ rebuilds the shared library and webapp first.
   devices and simulated native Storage shared by tabs/reloads. Covers guest CRUD,
   import, storage failures/quotas, guest-to-profile upload/cleanup acknowledgements,
   collision and account-change guards, acknowledgement/retry, target isolation,
-  corrupted-data recovery, detached snapshots/imports, and optional `projectBlocks`
+  per-entry corrupted-data recovery, safe display metadata, literal-key deletion,
+  local/cloud isolation, nonblocking quota/promotion warnings, detached snapshots/imports, and optional `projectBlocks`
   validation, bounds, cloning, round-trip persistence/removal and acknowledgement
   mismatch detection. Name-only renames preserve fresh block data and never recreate
   deleted snippets, with validation, quota, retry and account-change coverage.
@@ -90,7 +91,8 @@ rebuilds the shared library and webapp first.
 - [backpack-search.spec.js](backpack-search.spec.js): source-based indexing with the real
   Fuse.js dependency; fuzzy names, nested block types and values, captured labels,
   all extension references, multiple terms, stable ordering, malformed input and no
-  indexing of binary assets or internal IDs. No Blockly loaders or network calls.
+  indexing of binary assets or internal IDs. Recovery cards use only their safe names;
+  local/cloud entries with identical keys remain distinct. No Blockly loaders or network calls.
 - [backpack-ui.spec.js](backpack-ui.spec.js): current panel, real React, Fuse, validator,
   standalone LESS, focus and keyboard behavior; auth, package access and storage/import
   operations are mocked. Covers usable guest contents with/without an identity
@@ -101,6 +103,8 @@ rebuilds the shared library and webapp first.
   optional prefilled Rename dialogs, Enter/Save/Cancel/Escape, rename validation/retry,
   live search and result counts, clear/Escape, filtered rename/delete focus, account
   resets, reindexing and a fixed search field above the scrolling list,
+  named/unnamed trash-only recovery cards, valid neighbors, retry/cancel/focus and
+  source-aware confirmation without injecting invalid preview/code/markup,
   grouped top-right pencil/trash icons and a bottom-right filled confirmation button,
   alignment with long names and RTL, themed hover/disabled button states and text contrast,
   account changes, confirmation/retry/focus, quiet add/delete/rename outcomes,

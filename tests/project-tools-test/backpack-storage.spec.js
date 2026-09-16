@@ -138,6 +138,503 @@ const storageWrites = local => local.calls.filter(call => ["setItem", "removeIte
 const patches = env => env.requests.filter(request => request.method === "PATCH");
 const storageFailure = () => { throw new Error("sensitive storage details"); };
 
+const recoveryError = "This snippet contains invalid or oversized data and can't be added. You can delete it from your backpack.";
+const syncWarning = "Some snippets saved in this browser couldn't be synced. They haven't been removed. Try reopening your backpack, or sign out to manage those local copies.";
+const quotaWarning = "Your backpack is over its storage limit. Delete snippets using their trash buttons to make room.";
+const recoveryEntry = (store, key, source) => store.getBackpackState().entries.find(entry => entry.id === key && entry.source === source);
+function assertRecovery(entry, key, source, name = "Unnamed snippet", createdAt = 0) {
+    assert.deepStrictEqual(clone(entry), { id: key, source, name, createdAt, error: recoveryError });
+    assert.equal(Object.prototype.hasOwnProperty.call(entry, "item"), false);
+}
+function assertSyncWarning(env, expected) {
+    assert.equal(env.store.getBackpackState().warning, syncWarning);
+    assert.deepStrictEqual(clone(env.store.getBackpackItems()), expected);
+    assert.deepStrictEqual(env.telemetry, []);
+}
+
+describe("per-item backpack recovery", () => {
+    // Missing blockText is damaged current-schema data, not a legacy migration.
+    const missingText = n => {
+        const value = metadataItem(n);
+        delete value.blockText;
+        return value;
+    };
+    const localKey = key => `arcade/backpack/guest/${key}`;
+    function fixture(cloud, target) {
+        const env = cloud ? environment() : guestEnvironment();
+        if (cloud) env.remote.set("alice", { language: "fr", backpack: {
+            arcade: clone(target), microbit: { [id(90)]: metadataItem(90) }
+        } });
+        else for (const [key, value] of Object.entries(target)) env.local.data.set(localKey(key), JSON.stringify(value));
+        env.local.data.set(guestKey(90, "microbit"), JSON.stringify(metadataItem(90)));
+        env.local.data.set("unrelated", "keep");
+        return env;
+    }
+    const persisted = (env, cloud) => cloud ? clone(env.remote.get("alice").backpack.arcade)
+        : Object.fromEntries(Array.from(env.local.data).filter(([key]) => key.startsWith(localKey("")))
+            .map(([key, value]) => [key.slice(localKey("").length), JSON.parse(value)]));
+
+    it("salvages bounded names and timestamps without exposing invalid code, previews, metadata or raw errors", () => {
+        const env = environment();
+        const cases = [
+            ["  Recognizable snippet  ", "Recognizable snippet"],
+            ["x".repeat(101), "x".repeat(100)],
+            ["x".repeat(99) + "\nignored", "x".repeat(99)],
+            ["\x00 A\tB\nC\rD\x1fE\x7f ", "A B C D E"],
+            ["\n\t\x7f", "Unnamed snippet"],
+            ["", "Unnamed snippet"], ["   ", "Unnamed snippet"],
+            [undefined, "Unnamed snippet"], [null, "Unnamed snippet"], [42, "Unnamed snippet"],
+            [[], "Unnamed snippet"], [{ toString() { throw new Error("PRIVATE_COERCION"); } }, "Unnamed snippet"],
+            // Storage returns inert display text; escaping belongs to the renderer.
+            ['<img src=x onerror="PRIVATE_HTML">', '<img src=x onerror="PRIVATE_HTML">']
+        ];
+        for (const source of ["local", "cloud"]) {
+            for (const [name, expected] of cases) {
+                const raw = { ...missingText(1), name, previewUri: "javascript:PRIVATE_PREVIEW",
+                    headerId: "PRIVATE_HEADER", files: { "main.ts": "PRIVATE_FILE" }, error: "PRIVATE_RAW_ERROR" };
+                assertRecovery(env.store.readBackpackEntry(id(1), raw, source), id(1), source, expected, 1);
+            }
+            for (const raw of [undefined, null, false, 7, [], "PRIVATE_RAW", '{"name":"PRIVATE_TRUNCATED"', new Date()]) {
+                assertRecovery(env.store.readBackpackEntry(id(1), raw, source), id(1), source);
+            }
+            for (const createdAt of [undefined, null, "42", -1, NaN, Infinity, -Infinity, {}, []]) {
+                assertRecovery(env.store.readBackpackEntry(id(1), { ...missingText(1), createdAt }, source),
+                    id(1), source, "Snippet 1");
+            }
+            const raw = metadataItem(1);
+            const entry = env.store.readBackpackEntry(id(1), raw, source);
+            assert.deepStrictEqual(clone(entry), { id: id(1), source, name: raw.name, createdAt: 1, item: raw });
+            raw.dependencies.core = "file:PRIVATE_CHANGED";
+            raw.projectBlocks.custom_block = "changed.ts";
+            assert.deepStrictEqual(clone(entry.item), metadataItem(1));
+        }
+        assert.deepStrictEqual([env.authCalls, env.requests, env.local.calls, env.telemetry], [[], [], [], []]);
+    });
+
+    for (const cloud of [false, true]) describe(cloud ? "cloud cards" : "guest cards", () => {
+        const source = cloud ? "cloud" : "local";
+
+        it("keeps good snippets visible and importable beside missing-blockText cards without migrating damaged data", async () => {
+            const bad = missingText(2);
+            const original = { [id(1)]: metadataItem(1), [id(2)]: bad, [id(3)]: item(3) };
+            const env = fixture(cloud, original);
+            let notifications = 0;
+            const off = env.store.subscribeBackpack(() => { notifications++; });
+            await env.store.refreshBackpackAsync();
+            assert.equal(notifications, 1);
+            assert.equal(env.store.getBackpackState().warning, undefined);
+            assert.deepStrictEqual(clone(env.store.getBackpackState().entries.map(entry => entry.id)), [id(3), id(2), id(1)]);
+            assertRecovery(recoveryEntry(env.store, id(2), source), id(2), source, "Snippet 2", 2);
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(3), metadataItem(1)]);
+            assert.deepStrictEqual(persisted(env, cloud), original);
+            assert.deepStrictEqual([patches(env), storageWrites(env.local)], [[], []]);
+
+            const detached = env.store.getBackpackState();
+            detached.entries[1].name = "Forged display";
+            detached.entries[1].item = item(2);
+            detached.entries[2].item.dependencies.core = "file:bad";
+            detached.entries.pop();
+            assertRecovery(recoveryEntry(env.store, id(2), source), id(2), source, "Snippet 2", 2);
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(3), metadataItem(1)]);
+            const imported = [];
+            const cleanup = env.store.setBackpackEditor({ headerId: () => "header", canImport: () => true,
+                importAsync: async value => { imported.push(clone(value)); return true; } });
+            try {
+                assert.equal(env.store.canImportBackpack("header"), true);
+                for (const value of env.store.getBackpackItems()) assert.equal(await env.store.importBackpackItemAsync(value, "header"), true);
+                await assert.rejects(env.store.importBackpackItemAsync(bad, "header"), /Backpack block text/);
+                await assert.rejects(env.store.importBackpackItemAsync(recoveryEntry(env.store, id(2), source), "header"));
+                await assert.rejects(env.store.saveBackpackItemAsync(bad), /Backpack block text/);
+                assert.deepStrictEqual(imported, [item(3), metadataItem(1)]);
+                await env.store.renameBackpackItemAsync(id(1), "Usable");
+                assert.deepStrictEqual(persisted(env, cloud)[id(2)], bad);
+                await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(2), source));
+                assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(3), { ...metadataItem(1), name: "Usable" }]);
+                assert.equal(env.store.getBackpackState().entries.length, 2);
+                assert.deepStrictEqual(env.telemetry, []);
+            } finally { cleanup(); off(); }
+        });
+
+        it("deletes a mismatched embedded ID by observed map key without deleting its valid namesake", async () => {
+            const env = fixture(cloud, { [id(1)]: metadataItem(2), [id(2)]: metadataItem(2), [id(3)]: missingText(3) });
+            await env.store.refreshBackpackAsync();
+            const entry = recoveryEntry(env.store, id(1), source);
+            assertRecovery(entry, id(1), source, "Snippet 2", 2);
+            await env.store.deleteBackpackEntryAsync(entry);
+            assert.deepStrictEqual(persisted(env, cloud), { [id(2)]: metadataItem(2), [id(3)]: missingText(3) });
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [metadataItem(2)]);
+            assertRecovery(recoveryEntry(env.store, id(3), source), id(3), source, "Snippet 3", 3);
+        });
+
+        it("publishes fresh neighbors after recovery deletion without rewriting another tab's additions or edits", async () => {
+            const env = fixture(cloud, { [id(1)]: missingText(1), [id(2)]: metadataItem(2), [id(3)]: missingText(3) });
+            await env.store.refreshBackpackAsync();
+            const fresh = { ...metadataItem(2), blockText: "PRIVATE_FRESH_LABELS", code: "PRIVATE_FRESH_CODE" };
+            const editNeighbors = () => {
+                if (cloud) {
+                    env.remote.get("alice").backpack.arcade[id(2)] = fresh;
+                    env.remote.get("alice").backpack.arcade[id(4)] = item(4);
+                    delete env.remote.get("alice").backpack.arcade[id(3)];
+                } else {
+                    env.local.data.set(guestKey(2), JSON.stringify(fresh));
+                    env.local.data.set(guestKey(4), JSON.stringify(item(4)));
+                    env.local.data.delete(guestKey(3));
+                }
+            };
+            if (cloud) env.hook(({ method, run }) => { if (method === "PATCH") editNeighbors(); return run(); });
+            else env.local.hooks.removeItem = ({ run }) => { editNeighbors(); return run(); };
+            await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(1), source));
+            assert.deepStrictEqual(persisted(env, cloud), { [id(2)]: fresh, [id(4)]: item(4) });
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(4), fresh]);
+            assert.equal(env.store.getBackpackState().entries.length, 2);
+            if (cloud) assert.deepStrictEqual(patches(env).map(request => request.data),
+                [[{ op: "remove", path: ["backpack", "arcade", id(1)] }]]);
+            else assert.deepStrictEqual(storageWrites(env.local).map(call => [call.method, call.args[0]]), [["removeItem", guestKey(1)]]);
+        });
+
+        for (const key of ["", "not-a-uuid", "a/b~c.d[0]", "../microbit/backpack/guest/neighbor", "__proto__", "constructor", "prototype"]) {
+            it(`removes observed literal key ${JSON.stringify(key)} without touching neighbors or prototypes`, async () => {
+                const target = Object.fromEntries([[key, missingText(1)], [id(2), metadataItem(2)],
+                    [key + "/neighbor", { name: "Keep neighbor" }], ["a", { b: { keep: true } }]]);
+                const env = fixture(cloud, target);
+                const originalRemote = clone(env.remote.get("alice"));
+                const prototypes = Object.getOwnPropertyDescriptors(Object.prototype);
+                const cloudPrototype = cloud ? Object.getPrototypeOf(env.remote.get("alice").backpack.arcade) : undefined;
+                await env.store.refreshBackpackAsync();
+                assertRecovery(recoveryEntry(env.store, key, source), key, source, "Snippet 1", 1);
+                // The UUID-only API must not become a route for arbitrary keys.
+                await assert.rejects(env.store.deleteBackpackItemAsync(key), /Invalid backpack item ID/);
+                assert.deepStrictEqual([patches(env), storageWrites(env.local)], [[], []]);
+                await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, key, source));
+                const expected = clone(target);
+                delete expected[key];
+                assert.deepStrictEqual(persisted(env, cloud), expected);
+                assert.deepStrictEqual(Object.getOwnPropertyDescriptors(Object.prototype), prototypes);
+                if (cloud) {
+                    assert.strictEqual(Object.getPrototypeOf(env.remote.get("alice").backpack.arcade), cloudPrototype);
+                    assert.deepStrictEqual(patches(env).map(request => request.data),
+                        [[{ op: "remove", path: ["backpack", "arcade", key] }]]);
+                    assert.deepStrictEqual(env.requests.map(request => request.method), ["GET", "GET", "PATCH"]);
+                    assert.deepStrictEqual(env.remote.get("alice").backpack.microbit, originalRemote.backpack.microbit);
+                    assert.equal(env.remote.get("alice").language, "fr");
+                    assert.deepStrictEqual(storageWrites(env.local), []);
+                } else {
+                    assert.deepStrictEqual(storageWrites(env.local).map(call => [call.method, call.args[0]]), [["removeItem", localKey(key)]]);
+                    assert.deepStrictEqual([env.requests, env.authCalls], [[], []]);
+                }
+                assert.equal(env.local.data.get(guestKey(90, "microbit")), JSON.stringify(metadataItem(90)));
+                assert.equal(env.local.data.get("unrelated"), "keep");
+                const reopened = cloud ? environment(env.remote, env.local) : guestEnvironment(env.local);
+                await reopened.store.refreshBackpackAsync();
+                assert.equal(recoveryEntry(reopened.store, key, source), undefined);
+                assert.deepStrictEqual(clone(reopened.store.getBackpackItems()), [metadataItem(2)]);
+                assert.deepStrictEqual([env.telemetry, reopened.telemetry], [[], []]);
+            });
+        }
+
+        it("rejects forged, wrong-source, unobserved and stale descriptors before auth, storage or network", async () => {
+            const env = fixture(cloud, { [id(1)]: missingText(1) });
+            await assert.rejects(env.store.deleteBackpackEntryAsync({ id: id(1), source }), /no longer/);
+            await env.store.refreshBackpackAsync();
+            const observed = recoveryEntry(env.store, id(1), source);
+            const before = persisted(env, cloud);
+            // A persisted but not yet observed key is not deletion authority.
+            if (cloud) env.remote.get("alice").backpack.arcade[id(2)] = missingText(2);
+            else env.local.data.set(guestKey(2), JSON.stringify(missingText(2)));
+            env.requests.length = env.local.calls.length = env.authCalls.length = 0;
+            for (const forged of [undefined, null, {}, { ...observed, id: id(2) }, { ...observed, id: "__proto__" },
+                { ...observed, source: cloud ? "local" : "cloud" }, { ...observed, source: "unknown" },
+                { ...observed, id: [id(1)] }]) {
+                await assert.rejects(env.store.deleteBackpackEntryAsync(forged), /no longer/);
+            }
+            assert.deepStrictEqual([env.requests, env.local.calls, env.authCalls], [[], [], []]);
+            assert.deepStrictEqual(persisted(env, cloud), { ...before, [id(2)]: missingText(2) });
+            // Descriptors are matched by key/source, never trusted for their item payload.
+            await env.store.deleteBackpackEntryAsync({ ...observed, item: metadataItem(2), name: "Forged", error: "PRIVATE_ERROR" });
+            env.requests.length = env.local.calls.length = env.authCalls.length = 0;
+            await assert.rejects(env.store.deleteBackpackEntryAsync(observed), /no longer/);
+            assert.deepStrictEqual([env.requests, env.local.calls, env.authCalls, env.telemetry], [[], [], [], []]);
+            assert.deepStrictEqual(persisted(env, cloud), { [id(2)]: missingText(2) });
+        });
+
+        for (const quota of ["count", "JSON"]) {
+            it(`keeps over-${quota}-quota cards reachable through successive recovery deletes while blocking writes`, async () => {
+                const target = quota === "count" ? Object.fromEntries(Array.from({ length: 52 }, (_, n) =>
+                    [id(n), n === 51 ? missingText(n) : item(n)]))
+                    : { [id(1)]: item(1), [id(2)]: item(2, { code: "PRIVATE_OVERSIZED".padEnd(500001, "x") }), [id(3)]: missingText(3) };
+                const env = fixture(cloud, target);
+                await env.store.refreshBackpackAsync();
+                assert.equal(env.store.getBackpackState().warning, quotaWarning);
+                assert.equal(env.store.getBackpackState().entries.length, Object.keys(target).length);
+                assert.equal(env.store.getBackpackItems().length, quota === "count" ? 51 : 1);
+                await assert.rejects(env.store.saveBackpackItemAsync(item(99)), quota === "count" ? /50/ : /500000/);
+                await assert.rejects(env.store.renameBackpackItemAsync(id(1), "Renamed"), quota === "count" ? /50/ : /500000/);
+                assert.deepStrictEqual([patches(env), storageWrites(env.local)], [[], []]);
+                for (const [index, n] of (quota === "count" ? [51, 50] : [1, 2]).entries()) {
+                    await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(n), source));
+                    assert.equal(env.store.getBackpackState().warning, index === 0 ? quotaWarning : undefined);
+                    assert.equal(recoveryEntry(env.store, id(n), source), undefined);
+                }
+                if (quota === "JSON") assertRecovery(recoveryEntry(env.store, id(3), source), id(3), source, "Snippet 3", 3);
+                await env.store.saveBackpackItemAsync(item(quota === "count" ? 1 : 99));
+                assert.deepStrictEqual(env.telemetry, []);
+            });
+        }
+
+        for (const failure of cloud ? ["GET throw", "PATCH throw", "failed", "noop", "lost ACK", "present ACK", "malformed ACK"]
+            : ["throw", "noop", "readback"]) {
+            it(`retains recovery controls after delete ${failure}, retries and confirms persistence on a fresh page`, async () => {
+                const original = { [id(1)]: missingText(1), [id(2)]: metadataItem(2), [id(3)]: missingText(3) };
+                const env = fixture(cloud, original);
+                await env.store.refreshBackpackAsync();
+                const entry = recoveryEntry(env.store, id(1), source);
+                const before = clone(env.store.getBackpackState());
+                let notifications = 0;
+                env.store.subscribeBackpack(() => { notifications++; });
+                if (cloud) env.hook(({ method, run }) => {
+                    if (method === "GET") {
+                        if (failure === "GET throw") throw new Error("PRIVATE_CODE PRIVATE_PREVIEW alice-session");
+                        return run();
+                    }
+                    if (failure === "PATCH throw") throw new Error("PRIVATE_CODE PRIVATE_PREVIEW alice-session");
+                    if (failure === "failed") return { success: false };
+                    if (failure === "noop") return { success: true, resp: clone(env.remote.get("alice")) };
+                    const result = run();
+                    if (failure === "lost ACK") return { success: false };
+                    if (failure === "present ACK") result.resp.backpack.arcade[id(1)] = missingText(1);
+                    if (failure === "malformed ACK") result.resp.backpack.arcade = [];
+                    return result;
+                });
+                else env.local.hooks.removeItem = ({ run }) => {
+                    if (failure === "throw") return storageFailure();
+                    if (failure === "noop") return;
+                    run(); env.local.hooks.getItem = storageFailure;
+                };
+                await assert.rejects(env.store.deleteBackpackEntryAsync(entry), error =>
+                    /backpack/.test(error.message) && !/PRIVATE_|alice-session|sensitive/.test(error.message));
+                assert.equal(notifications, 0);
+                assert.deepStrictEqual(clone(env.store.getBackpackState()), before);
+                const removed = ["lost ACK", "present ACK", "malformed ACK", "readback"].includes(failure);
+                const expected = clone(original);
+                if (removed) delete expected[id(1)];
+                assert.deepStrictEqual(persisted(env, cloud), expected);
+                env.hook(undefined);
+                delete env.local.hooks.removeItem;
+                delete env.local.hooks.getItem;
+                const fresh = cloud ? environment(env.remote, env.local) : guestEnvironment(env.local);
+                await fresh.store.refreshBackpackAsync();
+                assert.equal(!!recoveryEntry(fresh.store, id(1), source), !removed);
+                const writes = patches(env).length;
+                await env.store.deleteBackpackEntryAsync(entry);
+                assert.equal(notifications, 1);
+                if (cloud) assert.equal(patches(env).length - writes, removed ? 0 : 1);
+                delete expected[id(1)];
+                assert.deepStrictEqual(persisted(env, cloud), expected);
+                assertRecovery(recoveryEntry(env.store, id(3), source), id(3), source, "Snippet 3", 3);
+                assert.deepStrictEqual(clone(env.store.getBackpackItems()), [metadataItem(2)]);
+                const reopened = cloud ? environment(env.remote, env.local) : guestEnvironment(env.local);
+                await reopened.store.refreshBackpackAsync();
+                assert.deepStrictEqual(clone(reopened.store.getBackpackState()), clone(env.store.getBackpackState()));
+                assert.deepStrictEqual([env.telemetry, fresh.telemetry, reopened.telemetry], [[], [], []]);
+            });
+        }
+    });
+
+    it("keeps an invalid card visible until delete ACK and accepts an already-absent key on fresh GET without PATCH", async () => {
+        const env = fixture(true, { [id(1)]: missingText(1), [id(2)]: missingText(2), [id(3)]: item(3) });
+        await env.store.refreshBackpackAsync();
+        const first = recoveryEntry(env.store, id(1), "cloud");
+        const second = recoveryEntry(env.store, id(2), "cloud");
+        const before = clone(env.store.getBackpackState());
+        const entered = deferred(), release = deferred();
+        let notifications = 0;
+        env.store.subscribeBackpack(() => { notifications++; });
+        env.hook(async ({ method, run }) => {
+            if (method === "PATCH") { entered.resolve(); await release.promise; }
+            return run();
+        });
+        const pending = env.store.deleteBackpackEntryAsync(first);
+        await entered.promise;
+        try {
+            assert.deepStrictEqual(clone(env.store.getBackpackState()), before);
+            assert.deepStrictEqual(env.remote.get("alice").backpack.arcade[id(1)], missingText(1));
+            assert.equal(notifications, 0);
+        } finally { release.resolve(); }
+        await pending;
+        assert.equal(notifications, 1);
+        assertRecovery(recoveryEntry(env.store, id(2), "cloud"), id(2), "cloud", "Snippet 2", 2);
+        env.hook(undefined);
+        delete env.remote.get("alice").backpack.arcade[id(2)];
+        const count = env.requests.length;
+        await env.store.deleteBackpackEntryAsync(second);
+        assert.deepStrictEqual(env.requests.slice(count).map(request => request.method), ["GET"]);
+        assert.equal(notifications, 2);
+        assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(3)]);
+        assert.equal(env.store.getBackpackState().entries.length, 1);
+    });
+
+    it("keeps cloud recovery controls and invalid local cards available through a conflicting promotion", async () => {
+        const env = environment();
+        const conflict = { ...metadataItem(1), blockText: "PRIVATE_CLOUD_LABELS" };
+        env.local.data.set(guestKey(1), JSON.stringify(metadataItem(1)));
+        env.local.data.set(guestKey(2), JSON.stringify(missingText(2)));
+        env.remote.set("alice", { backpack: { arcade: { [id(1)]: conflict, [id(3)]: missingText(3), [id(4)]: item(4) } } });
+        const before = Array.from(env.local.data);
+        await env.store.refreshBackpackAsync();
+        assertSyncWarning(env, [item(4), conflict]);
+        assertRecovery(recoveryEntry(env.store, id(2), "local"), id(2), "local", "Snippet 2", 2);
+        assertRecovery(recoveryEntry(env.store, id(3), "cloud"), id(3), "cloud", "Snippet 3", 3);
+        assert.equal(recoveryEntry(env.store, id(1), "local"), undefined, "Valid unpromoted guest content is not a cloud item");
+        assert.deepStrictEqual([patches(env), storageWrites(env.local)], [[], []]);
+        assert.deepStrictEqual(Array.from(env.local.data), before);
+        await assert.rejects(env.store.saveBackpackItemAsync(item(5)), /conflicts/);
+        await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(3), "cloud"));
+        assert.deepStrictEqual(Array.from(env.local.data), before);
+        assertRecovery(recoveryEntry(env.store, id(2), "local"), id(2), "local", "Snippet 2", 2);
+        await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(2), "local"));
+        assert.equal(env.local.data.get(guestKey(1)), before[0][1]);
+        assert.deepStrictEqual(env.remote.get("alice").backpack.arcade, { [id(1)]: conflict, [id(4)]: item(4) });
+        assert.deepStrictEqual(patches(env).map(request => request.data), [[{ op: "remove", path: ["backpack", "arcade", id(3)] }]]);
+        assert.deepStrictEqual(env.telemetry, []);
+    });
+
+    for (const failure of ["failed", "thrown", "lost ACK", "missing blockText ACK", "cleanup"]) {
+        it(`still rejects save promotion ${failure} without publishing the requested item or leaking raw errors`, async () => {
+            const env = environment();
+            env.remote.set("alice", { backpack: { arcade: { [id(3)]: missingText(3), [id(4)]: item(4) } } });
+            await env.store.refreshBackpackAsync();
+            const before = clone(env.store.getBackpackState());
+            env.local.data.set(guestKey(1), JSON.stringify(metadataItem(1)));
+            const localBefore = Array.from(env.local.data);
+            let notifications = 0;
+            env.store.subscribeBackpack(() => { notifications++; });
+            env.hook(({ method, run }) => {
+                if (method !== "PATCH") return run();
+                if (failure === "failed") return { success: false };
+                if (failure === "thrown") throw new Error("PRIVATE_CODE PRIVATE_BLOCK_TEXT alice-session");
+                const result = run();
+                if (failure === "lost ACK") return { success: false };
+                if (failure === "missing blockText ACK") delete result.resp.backpack.arcade[id(1)].blockText;
+                if (failure === "cleanup") env.local.hooks.removeItem = storageFailure;
+                return result;
+            });
+            await assert.rejects(env.store.saveBackpackItemAsync(item(2)), error =>
+                /backpack|local copies|Backpack block text/.test(error.message) && !/PRIVATE_|alice-session|sensitive/.test(error.message));
+            assert.equal(notifications, 0);
+            assert.deepStrictEqual(clone(env.store.getBackpackState()), before);
+            assert.deepStrictEqual(Array.from(env.local.data), localBefore);
+            assert.equal(env.remote.get("alice").backpack.arcade[id(2)], undefined);
+            assert.equal(patches(env).length, 1, "Do not continue to the requested save after failed promotion");
+            assert.deepStrictEqual(patches(env)[0].data.slice(2).map(op => op.path), [["backpack", "arcade", id(1)]]);
+            env.hook(undefined);
+            delete env.local.hooks.removeItem;
+            await env.store.saveBackpackItemAsync(item(2));
+            assert.equal(env.local.data.has(guestKey(1)), false);
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(4), item(2), metadataItem(1)]);
+            assertRecovery(recoveryEntry(env.store, id(3), "cloud"), id(3), "cloud", "Snippet 3", 3);
+            assert.deepStrictEqual(env.telemetry, []);
+        });
+    }
+
+    for (const firstSource of ["local", "cloud"]) {
+        it(`deletes ${firstSource} first without touching a signed-in recovery card with the same key in the other source`, async () => {
+            const env = environment();
+            env.local.data.set(guestKey(1), JSON.stringify(missingText(1)));
+            env.local.data.set(guestKey(3), '{"name":"PRIVATE_TRUNCATED');
+            env.remote.set("alice", { backpack: { arcade: { [id(1)]: missingText(1), [id(2)]: metadataItem(2) } } });
+            await env.store.refreshBackpackAsync();
+            assert.equal(env.store.getBackpackState().entries.length, 4);
+            assertRecovery(recoveryEntry(env.store, id(3), "local"), id(3), "local");
+            assert.deepStrictEqual([patches(env), storageWrites(env.local)], [[], []]);
+            const secondSource = firstSource === "local" ? "cloud" : "local";
+            await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(1), firstSource));
+            assert.equal(env.local.data.has(guestKey(1)), firstSource !== "local");
+            assert.equal(Object.prototype.hasOwnProperty.call(env.remote.get("alice").backpack.arcade, id(1)), firstSource !== "cloud");
+            assertRecovery(recoveryEntry(env.store, id(1), secondSource), id(1), secondSource, "Snippet 1", 1);
+            assert.equal(patches(env).length, firstSource === "cloud" ? 1 : 0);
+            assert.equal(storageWrites(env.local).length, firstSource === "local" ? 1 : 0);
+            await env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(1), secondSource));
+            assert.deepStrictEqual(patches(env).map(request => request.data), [[{ op: "remove", path: ["backpack", "arcade", id(1)] }]]);
+            assert.deepStrictEqual(storageWrites(env.local).map(call => [call.method, call.args[0]]), [["removeItem", guestKey(1)]]);
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [metadataItem(2)]);
+            assert.equal(env.local.data.get(guestKey(3)), '{"name":"PRIVATE_TRUNCATED');
+            const reopened = environment(env.remote, env.local);
+            await reopened.store.refreshBackpackAsync();
+            assert.deepStrictEqual(clone(reopened.store.getBackpackState()), clone(env.store.getBackpackState()));
+            assert.deepStrictEqual([env.telemetry, reopened.telemetry], [[], []]);
+        });
+    }
+
+    for (const source of ["local", "cloud"]) {
+        for (const stage of source === "cloud" ? ["queued", "GET", "PATCH"] : ["queued", "GET"]) {
+            for (const change of ["account", "target", "token", "signout", "client"]) {
+                it(`guards ${source} recovery deletion and its queue on ${change} during ${stage}`, async () => {
+                    const env = environment();
+                    const original = { backpack: { arcade: { [id(1)]: missingText(1), [id(2)]: missingText(2) },
+                        microbit: { [id(1)]: metadataItem(1), [id(2)]: metadataItem(2) } } };
+                    env.remote.set("alice", clone(original));
+                    env.remote.set("bob", clone(original));
+                    env.local.data.set(guestKey(1), JSON.stringify(missingText(1)));
+                    env.local.data.set(guestKey(2), JSON.stringify(missingText(2)));
+                    await env.store.refreshBackpackAsync();
+                    const before = Array.from(env.local.data);
+                    let notifications = 0;
+                    env.store.subscribeBackpack(() => { notifications++; });
+                    const entered = deferred(), release = deferred();
+                    env.hook(async ({ method, run }) => {
+                        if (method === (stage === "queued" ? "GET" : stage)) { entered.resolve(); await release.promise; }
+                        return run();
+                    });
+                    // For queued-only coverage, hold an unrelated refresh ahead of both deletes.
+                    const pending = stage === "queued" ? env.store.refreshBackpackAsync()
+                        : env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(1), source));
+                    const rejected = [assert.rejects(pending, /account|editor changed|session/)];
+                    await entered.promise;
+                    if (stage === "queued") rejected.push(assert.rejects(
+                        env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(1), source)), /account|editor changed|session/));
+                    rejected.push(assert.rejects(env.store.deleteBackpackEntryAsync(recoveryEntry(env.store, id(2), source)),
+                        /account|editor changed|session/));
+                    if (change === "account") env.signIn("bob");
+                    if (change === "target") env.pxt.appTarget.id = "microbit";
+                    if (change === "token") env.signIn("alice", "alice-new-session");
+                    if (change === "signout") env.signIn(undefined);
+                    if (change === "client") env.pxt.auth.client = () => ({ apiAsync() { throw new Error("Wrong client"); } });
+                    release.resolve();
+                    await Promise.all(rejected);
+                    assert.equal(notifications, 0);
+                    assert.deepStrictEqual(Array.from(env.local.data), before);
+                    assert.deepStrictEqual(env.remote.get("bob"), original);
+                    const expected = clone(original);
+                    // A request already sent may complete for its captured owner, never the new one.
+                    if (stage === "PATCH") delete expected.backpack.arcade[id(1)];
+                    assert.deepStrictEqual(env.remote.get("alice"), expected);
+                    assert.equal(patches(env).length, stage === "PATCH" ? 1 : 0);
+                    assert.ok(env.requests.every(request => request.owner === "alice"));
+                    if (change !== "token") assert.deepStrictEqual(clone(env.store.getBackpackState()), { entries: [] });
+                    else assertRecovery(recoveryEntry(env.store, id(1), source), id(1), source, "Snippet 1", 1);
+                    assert.deepStrictEqual(env.telemetry, []);
+                });
+            }
+        }
+    }
+
+    for (const change of ["signin", "target"]) {
+        it(`blocks observed guest deletion queued across ${change}`, async () => {
+            const env = guestEnvironment();
+            env.local.data.set(guestKey(1), JSON.stringify(missingText(1)));
+            await env.store.refreshBackpackAsync();
+            const entry = recoveryEntry(env.store, id(1), "local");
+            const pending = assert.rejects(env.store.deleteBackpackEntryAsync(entry), /account|editor changed/);
+            if (change === "signin") env.signIn("bob");
+            else env.pxt.appTarget.id = "microbit";
+            await pending;
+            await assert.rejects(env.store.deleteBackpackEntryAsync(entry), /no longer/);
+            assert.equal(env.local.data.get(guestKey(1)), JSON.stringify(missingText(1)));
+            assert.deepStrictEqual([storageWrites(env.local), env.requests, env.telemetry], [[], [], []]);
+        });
+    }
+});
+
 describe("required private Backpack block text", () => {
     for (const cloud of [false, true]) {
         const mode = cloud ? "cloud" : "guest";
@@ -559,15 +1056,20 @@ describe("durable guest backpack storage", () => {
             const env = guestEnvironment();
             env.local.data.set(guestKey(1), corrupt);
             env.local.data.set(guestKey(3), JSON.stringify(item(3)));
-            await assert.rejects(env.store.refreshBackpackAsync(), /invalid/);
-            assert.throws(() => env.store.getBackpackItems(), /invalid/);
+            await env.store.refreshBackpackAsync();
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(3)]);
+            const recovery = recoveryEntry(env.store, id(1), "local");
+            assert.equal(recovery.error, recoveryError);
+            assert.equal(recovery.item, undefined);
             await env.store.saveBackpackItemAsync(item(4));
             assert.equal(env.local.data.get(guestKey(1)), corrupt);
             await env.store.deleteBackpackItemAsync(id(3));
             assert.equal(env.local.data.get(guestKey(1)), corrupt);
-            assert.throws(() => env.store.getBackpackItems(), /invalid/);
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(4)]);
+            assert.deepStrictEqual(clone(recoveryEntry(env.store, id(1), "local")), clone(recovery));
             await env.store.deleteBackpackItemAsync(id(1));
             assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(4)]);
+            assert.equal(env.store.getBackpackState().entries.length, 1);
         });
     }
 
@@ -605,9 +1107,13 @@ describe("durable guest backpack storage", () => {
         await env.store.saveBackpackItemAsync(item(50));
         assert.equal(env.store.getBackpackItems().length, 50);
         env.local.data.set(guestKey(51), JSON.stringify(item(51)));
-        await assert.rejects(env.store.refreshBackpackAsync(), /oversized/);
+        await env.store.refreshBackpackAsync();
+        assert.equal(env.store.getBackpackState().warning, quotaWarning);
+        assert.equal(env.store.getBackpackState().entries.length, 51);
+        assert.equal(env.store.getBackpackItems().length, 51);
         await env.store.deleteBackpackItemAsync(id(51));
         assert.equal(env.store.getBackpackItems().length, 50);
+        assert.equal(env.store.getBackpackState().warning, undefined);
         assert.equal(env.local.data.get(guestKey(99, "microbit")), JSON.stringify(item(99)));
     });
 
@@ -631,9 +1137,12 @@ describe("durable guest backpack storage", () => {
         assert.deepStrictEqual(Array.from(env.local.data), before);
         // Recovery must still work for data externally pushed over quota.
         env.local.data.set(guestKey(4), JSON.stringify({ ...entries[4], code: entries[4].code + "x" }));
-        await assert.rejects(env.store.refreshBackpackAsync(), /oversized/);
+        await env.store.refreshBackpackAsync();
+        assert.equal(env.store.getBackpackState().warning, quotaWarning);
+        assert.equal(env.store.getBackpackItems().length, 5);
         await env.store.deleteBackpackItemAsync(id(4));
         assert.equal(env.store.getBackpackItems().length, 4);
+        assert.equal(env.store.getBackpackState().warning, undefined);
     });
 
     for (const change of ["signin", "target"]) {
@@ -760,15 +1269,17 @@ describe("guest to cloud backpack promotion", () => {
                 if (failure === "thrown") throw new Error("PRIVATE_CODE alice-session");
                 return { success: false };
             });
-            await assert.rejects(env.store.refreshBackpackAsync(), /Could not sync your backpack/);
+            await env.store.refreshBackpackAsync();
             assert.deepStrictEqual(Array.from(env.local.data), before);
-            assert.equal(notifications, 0);
-            assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
+            assert.equal(notifications, 1);
+            assertSyncWarning(env, [item(2)]);
+            assert.equal(env.store.getBackpackState().entries.length, 1, "Never publish an unacknowledged upload");
             assert.deepStrictEqual(env.remote.get("alice").backpack.arcade[id(2)], item(2));
             env.hook(undefined);
             await env.store.refreshBackpackAsync();
             assert.equal(env.local.data.size, 0);
             assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(2), metadataItem(1)]);
+            assert.equal(env.store.getBackpackState().warning, undefined);
             assert.equal(patches(env).length, failure === "lost ACK" ? 1 : 2);
             await env.store.refreshBackpackAsync();
             assert.equal(patches(env).length, failure === "lost ACK" ? 1 : 2);
@@ -803,7 +1314,8 @@ describe("guest to cloud backpack promotion", () => {
             const original = clone(env.remote.get("alice")), before = Array.from(env.local.data);
             env.local.calls.length = 0;
             env.signIn("alice");
-            await assert.rejects(env.store.refreshBackpackAsync(), /conflicts/);
+            await env.store.refreshBackpackAsync();
+            assertSyncWarning(env, [clone(differing)]);
             await assert.rejects(env.store.saveBackpackItemAsync(item(3)), /conflicts/);
             assert.deepStrictEqual(patches(env), []);
             assert.deepStrictEqual(storageWrites(env.local), []);
@@ -834,7 +1346,8 @@ describe("guest to cloud backpack promotion", () => {
             const original = clone(env.remote.get("alice")), before = Array.from(env.local.data);
             env.local.calls.length = 0;
             env.signIn("alice");
-            await assert.rejects(env.store.refreshBackpackAsync(), quota === "items" ? /50/ : /500000/);
+            await env.store.refreshBackpackAsync();
+            assertSyncWarning(env, Object.values(target).reverse());
             await assert.rejects(env.store.saveBackpackItemAsync(item(100)), quota === "items" ? /50/ : /500000/);
             assert.deepStrictEqual(patches(env), []);
             assert.deepStrictEqual(storageWrites(env.local), []);
@@ -882,10 +1395,11 @@ describe("guest to cloud backpack promotion", () => {
             });
             let notifications = 0;
             env.store.subscribeBackpack(() => { notifications++; });
-            await assert.rejects(env.store.refreshBackpackAsync(), /Invalid backpack item|could not be synced|Backpack block text/);
+            await env.store.refreshBackpackAsync();
             assert.deepStrictEqual(Array.from(env.local.data), before);
-            assert.equal(notifications, 0);
-            assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
+            assert.equal(notifications, 1);
+            assertSyncWarning(env, []);
+            assert.equal(env.store.getBackpackState().entries.length, 0, "Publish the original GET, not a damaged ACK");
             if (response === "race collision") assert.equal(env.remote.get("alice").backpack.arcade[id(1)].code, "other device");
         });
     }
@@ -914,7 +1428,8 @@ describe("guest to cloud backpack promotion", () => {
         assert.deepStrictEqual(Array.from(env.local.data.keys()).sort(), [guestKey(1), guestKey(3)]);
         assert.equal(JSON.parse(env.local.data.get(guestKey(1))).projectBlocks.custom_block, "edited.ts");
         env.hook(undefined);
-        await assert.rejects(env.store.refreshBackpackAsync(), /conflicts/);
+        await env.store.refreshBackpackAsync();
+        assertSyncWarning(env, [item(2), metadataItem(1)]);
         assert.equal(patches(env).length, 1);
         assert.equal(env.local.data.has(guestKey(3)), true);
     });
@@ -938,7 +1453,8 @@ describe("guest to cloud backpack promotion", () => {
         assert.deepStrictEqual(env.remote.get("alice").backpack.arcade[id(1)], metadataItem(1));
         assert.deepStrictEqual(JSON.parse(env.local.data.get(guestKey(1))), edited);
         env.hook(undefined);
-        await assert.rejects(env.store.refreshBackpackAsync(), /conflicts/);
+        await env.store.refreshBackpackAsync();
+        assertSyncWarning(env, [metadataItem(1)]);
         assert.equal(patches(env).length, 1);
         assert.deepStrictEqual(JSON.parse(env.local.data.get(guestKey(1))), edited);
         assert.deepStrictEqual([env.telemetry, tab.telemetry, tab.requests], [[], [], []]);
@@ -961,9 +1477,10 @@ describe("guest to cloud backpack promotion", () => {
             });
             let notifications = 0;
             env.store.subscribeBackpack(() => { notifications++; });
-            await assert.rejects(env.store.refreshBackpackAsync(), /local copies could not be removed/);
+            await env.store.refreshBackpackAsync();
             assert.deepStrictEqual(Array.from(env.local.data), before);
-            assert.equal(notifications, 0);
+            assert.equal(notifications, 1);
+            assertSyncWarning(env, []);
             assert.deepStrictEqual(env.remote.get("alice").backpack.arcade, { [id(1)]: metadataItem(1), [id(2)]: item(2) });
             env.hook(undefined);
             delete env.local.hooks.getItem;
@@ -986,7 +1503,8 @@ describe("guest to cloud backpack promotion", () => {
             return run();
         };
         env.signIn("alice");
-        await assert.rejects(env.store.refreshBackpackAsync(), /local copies could not be removed/);
+        await env.store.refreshBackpackAsync();
+        assertSyncWarning(env, []);
         const remaining = removed === guestKey(1) ? 2 : 1;
         assert.deepStrictEqual(Array.from(env.local.data), [[guestKey(remaining), JSON.stringify(item(remaining))]]);
         assert.deepStrictEqual(env.remote.get("alice").backpack.arcade, { [id(1)]: item(1), [id(2)]: item(2) });
@@ -1049,16 +1567,23 @@ describe("guest to cloud backpack promotion", () => {
         }
     }
 
-    it("does not skip malformed guest data as if storage were blocked", async () => {
+    it("keeps malformed guest recovery cards local while promoting valid neighbors and saving", async () => {
         const env = environment();
         env.local.data.set(guestKey(1), "{bad JSON");
         env.local.data.set(guestKey(2), JSON.stringify(item(2)));
-        await assert.rejects(env.store.refreshBackpackAsync(), /Invalid/);
-        await assert.rejects(env.store.saveBackpackItemAsync(item(3)), /Invalid/);
-        assert.deepStrictEqual(patches(env), []);
-        assert.deepStrictEqual(storageWrites(env.local), []);
+        await env.store.refreshBackpackAsync();
+        assertRecovery(recoveryEntry(env.store, id(1), "local"), id(1), "local");
+        assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(2)]);
+        await env.store.saveBackpackItemAsync(item(3));
+        assertRecovery(recoveryEntry(env.store, id(1), "local"), id(1), "local");
+        assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(3), item(2)]);
+        assert.deepStrictEqual(patches(env).map(request => request.data[2].path),
+            [["backpack", "arcade", id(2)], ["backpack", "arcade", id(3)]]);
+        assert.deepStrictEqual(storageWrites(env.local).map(call => [call.method, call.args[0]]), [["removeItem", guestKey(2)]]);
         assert.equal(env.local.data.get(guestKey(1)), "{bad JSON");
-        assert.equal(env.local.data.get(guestKey(2)), JSON.stringify(item(2)));
+        assert.equal(env.local.data.has(guestKey(2)), false);
+        assert.deepStrictEqual(env.remote.get("alice").backpack.arcade, { [id(2)]: item(2), [id(3)]: item(3) });
+        assert.equal(env.store.getBackpackState().warning, undefined);
     });
 });
 
@@ -1233,19 +1758,25 @@ describe("private profile backpack storage", () => {
         const env = environment();
         const corrupt = { code: 7, dependencies: { core: "workspace:private" } };
         env.remote.set("alice", { backpack: { arcade: { [id(1)]: item(1), [id(2)]: corrupt } } });
-        await assert.rejects(env.store.refreshBackpackAsync(), /invalid/);
-        assert.throws(() => env.store.getBackpackItems(), /invalid/);
+        await env.store.refreshBackpackAsync();
+        assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(1)]);
+        assertRecovery(recoveryEntry(env.store, id(2), "cloud"), id(2), "cloud");
         await env.store.deleteBackpackItemAsync(id(1));
         assert.deepStrictEqual(env.remote.get("alice").backpack.arcade[id(2)], corrupt);
-        assert.throws(() => env.store.getBackpackItems(), /invalid/);
+        assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
+        assertRecovery(recoveryEntry(env.store, id(2), "cloud"), id(2), "cloud");
         await env.store.deleteBackpackItemAsync(id(2));
         assert.equal(env.store.getBackpackItems().length, 0);
+        assert.deepStrictEqual(patches(env).map(request => request.data), [1, 2].map(n =>
+            [{ op: "remove", path: ["backpack", "arcade", id(n)] }]));
     });
 
     it("rejects malformed collections without replacing them", async () => {
         for (const backpack of [null, [], { arcade: [] }, { arcade: null }, { arcade: "bad" }]) {
             const env = environment(); env.remote.set("alice", { backpack });
             await assert.rejects(env.store.refreshBackpackAsync());
+            assert.throws(() => env.store.getBackpackState(), /could not be read/);
+            assert.throws(() => env.store.getBackpackItems(), /could not be read/);
             await assert.rejects(env.store.saveBackpackItemAsync(item(1)), /malformed/);
             await assert.rejects(env.store.deleteBackpackItemAsync(id(1)), /malformed/);
             assert.ok(env.requests.every(r => r.method === "GET"));
@@ -1254,8 +1785,9 @@ describe("private profile backpack storage", () => {
 
     it("validates cloud key/ID agreement before exposing items", async () => {
         const env = environment(); env.remote.set("alice", { backpack: { arcade: { [id(1)]: item(2) } } });
-        await assert.rejects(env.store.refreshBackpackAsync());
-        assert.throws(() => env.store.getBackpackItems());
+        await env.store.refreshBackpackAsync();
+        assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
+        assertRecovery(recoveryEntry(env.store, id(1), "cloud"), id(1), "cloud", "Snippet 2", 2);
         await env.store.deleteBackpackItemAsync(id(1));
         assert.equal(env.store.getBackpackItems().length, 0);
     });
@@ -1369,8 +1901,9 @@ describe("private profile backpack storage", () => {
             assert.equal(imports, 0);
             assert.equal(env.requests.length, 0);
             env.remote.set("alice", { backpack: { arcade: { [id(1)]: invalid } } });
-            await assert.rejects(env.store.refreshBackpackAsync(), /invalid/);
-            assert.throws(() => env.store.getBackpackItems(), /invalid/);
+            await env.store.refreshBackpackAsync();
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
+            assertRecovery(recoveryEntry(env.store, id(1), "cloud"), id(1), "cloud", "Snippet 1", 1);
             await env.store.deleteBackpackItemAsync(id(1));
             assert.equal(env.store.getBackpackItems().length, 0);
         } finally { cleanup(); }
@@ -1448,8 +1981,9 @@ describe("private profile backpack storage", () => {
         const env = environment();
         const unsafe = item(1, { dependencies: { core: "workspace:private-project" } });
         env.remote.set("alice", { backpack: { arcade: { [id(1)]: unsafe } } });
-        await assert.rejects(env.store.refreshBackpackAsync(), /invalid/);
-        assert.throws(() => env.store.getBackpackItems(), /invalid/);
+        await env.store.refreshBackpackAsync();
+        assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
+        assertRecovery(recoveryEntry(env.store, id(1), "cloud"), id(1), "cloud", "Snippet 1", 1);
         let imported = false;
         env.store.setBackpackEditor({ headerId: () => "header", canImport: () => true,
             importAsync: async () => { imported = true; } });
