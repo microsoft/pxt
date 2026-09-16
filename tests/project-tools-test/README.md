@@ -84,7 +84,9 @@ rebuilds the shared library and webapp first.
   collision and account-change guards, acknowledgement/retry, target isolation,
   corrupted-data recovery, detached snapshots/imports, and optional `projectBlocks`
   validation, bounds, cloning, round-trip persistence/removal and acknowledgement
-  mismatch detection. No real profile data is read or written.
+  mismatch detection. Name-only renames preserve fresh block data and never recreate
+  deleted snippets, with validation, quota, retry and account-change coverage.
+  No real profile data is read or written.
 - [backpack-ui.spec.js](backpack-ui.spec.js): current panel, real React, validator,
   standalone LESS, focus and keyboard behavior; auth, package access and storage/import
   operations are mocked. Covers usable guest contents with/without an identity
@@ -92,7 +94,8 @@ rebuilds the shared library and webapp first.
   changes, literal names/previews/source filenames, deduplicated source requirements,
   missing-only extension requirements and updates as packages change, import restrictions,
   the real shared delete modal and focus trap,
-  confirmation/retry/focus, quiet add/delete outcomes,
+  optional prefilled Rename dialogs, Enter/Save/Cancel/Escape, rename validation/retry,
+  account changes, confirmation/retry/focus, quiet add/delete/rename outcomes,
   mobile overflow/touch sizes and theme/forced-color focus. This suite does not
   install extensions or exercise the source-file popup itself.
 - [backpack-editor.spec.js](backpack-editor.spec.js): extracts the current Blocks
@@ -197,7 +200,14 @@ The implementation lives in [the local/profile store](../../webapp/src/backpack.
    Copy the required code into the destination or publish it as an extension.
    A stale global Blockly registration is insufficient; source requirements are
    checked again after reload. The panel's warning does not itself disable Add.
-6. **Local or synced deletion.** Delete opens a modal asking whether to remove the
+6. **Optional names.** Saving uses the automatic block name without prompting.
+  **Rename** opens a modal with that name selected; Enter or **Save** updates only
+  the Backpack label. Cancel, Close and Escape preserve it and restore button focus.
+  Blank/control-character names are rejected and input is limited to 100 characters.
+  Errors keep the draft available for retry. Check guest persistence after reload
+  and signed-in changes on another device; block data, preview and requirements
+  must stay unchanged. No routine success message is shown.
+7. **Local or synced deletion.** Delete opens a modal asking whether to remove the
   item **in this browser** for guests or **on all devices** when signed in.
   Cancel/Close/Escape preserves it and returns focus without closing the panel.
   During a pending/failed request, the entry remains; errors stay in the modal for

@@ -125,6 +125,13 @@ before installing missing extensions, checks conflicts, preserves current code
 before reloading, and inserts the snippet as one undo group. It does not silently
 replace existing extensions or upgrade an installed version of the same repository.
 
+Names are assigned automatically when saving. The optional **Rename** button opens
+a dialog with the current name selected, so a snippet such as **on start** can be
+called **character setup**. **Save** changes only its Backpack name, not its blocks,
+preview or dependencies. Cancel or Escape keeps the original name. Names are limited
+to 100 characters; empty names are rejected. Guest renames stay in this browser,
+and signed-in renames are saved to the profile.
+
 Blocks defined in the original project's own TypeScript files need those APIs in
 the destination too. The backpack records their filenames, not their source code.
 If a required block is missing, **Project code is required** names the source files

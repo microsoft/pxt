@@ -63,6 +63,12 @@ describe("project backpack UI", function () {
     });
     const entry = ".project-backpack__item";
     const add = `${entry} .project-backpack__actions button:first-child`;
+    const rename = ".project-backpack__rename";
+    const renameModal = ".project-backpack__rename-modal";
+    const nameInput = "#project-backpack-name";
+    const saveName = `${renameModal} .common-modal-footer button:last-child`;
+    const cancelName = `${renameModal} .common-modal-footer button:first-child`;
+    const closeName = `${renameModal} .common-modal-close button`;
     const remove = ".project-backpack__delete";
     const confirm = ".project-backpack__delete-modal";
     const dialog = `${confirm} [role="dialog"]`;
@@ -85,9 +91,10 @@ describe("project backpack UI", function () {
     const modalClosed = async () => {
         // Portal removal is synchronous; shared Modal's aria-hidden restoration
         // and the owner's false notification are passive-effect cleanups.
-        await page.waitForFunction(() => !document.querySelector(".project-backpack__delete-modal")
+        await page.waitForFunction(() => !document.querySelector(".project-backpack__delete-modal, .project-backpack__rename-modal")
             && !document.getElementById("root").hasAttribute("aria-hidden") && !backpackTest.modalOpen);
         assert.strictEqual(await page.$(confirm), null);
+        assert.strictEqual(await page.$(renameModal), null);
         assert.deepStrictEqual(await page.evaluate(() => ({
             hidden: document.getElementById("root").getAttribute("aria-hidden"),
             outsideHidden: document.getElementById("outside").getAttribute("aria-hidden"),
@@ -163,8 +170,8 @@ describe("project backpack UI", function () {
             const listeners = new Set();
             const test = window.backpackTest = {
                 user: undefined, identity: true, remote: {}, snapshots: {},
-                refreshes: 0, adds: [], deletes: [], signIns: 0, escapes: 0,
-                failRefresh: false, failDelete: false, failAdd: false, importResult: true,
+                refreshes: 0, adds: [], deletes: [], renames: [], signIns: 0, escapes: 0,
+                failRefresh: false, failDelete: false, failRename: false, failAdd: false, importResult: true,
                 modalOpen: false, modalEvents: [], collapses: 0,
                 modalChanged(open) {
                     test.modalOpen = open;
@@ -197,6 +204,7 @@ describe("project backpack UI", function () {
                 mainPkg: { deps: {}, getPreferredEditor: () => test.editor }
             };
             const backpack = {
+                get MAX_BACKPACK_NAME_LENGTH() { return window.backpackValidation.MAX_BACKPACK_NAME_LENGTH; },
                 validateBackpackItem: value => window.backpackValidation.validateBackpackItem(value),
                 getBackpackItems: () => test.snapshots[test.storeKey()] || [],
                 subscribeBackpack(listener) { listeners.add(listener); return () => listeners.delete(listener); },
@@ -217,6 +225,19 @@ describe("project backpack UI", function () {
                     await test.gate;
                     if (fail) throw new Error("Import failed. Try again.");
                     return result;
+                },
+                async renameBackpackItemAsync(id, name) {
+                    const user = test.storeKey();
+                    const fail = test.failRename;
+                    const item = test.remote[user].find(item => item.id === id);
+                    const renamed = window.backpackValidation.validateBackpackItem({ ...item, name });
+                    renamed.name = renamed.name.trim();
+                    test.renames.push({ id, name });
+                    await test.gate;
+                    if (fail) throw new Error("Rename failed. Try again.");
+                    test.remote[user] = test.remote[user].map(item => item.id === id ? renamed : item);
+                    test.snapshots[user] = test.remote[user];
+                    test.notify();
                 },
                 async deleteBackpackItemAsync(id) {
                     const user = test.storeKey();
@@ -549,6 +570,196 @@ describe("project backpack UI", function () {
         assert.strictEqual(await page.$('[role="alert"]'), null);
     });
 
+    for (const signedIn of [false, true]) {
+        it(`offers optional ${signedIn ? "profile" : "guest"} renaming without changing blocks or requiring a name on add`, async () => {
+            const snippet = { ...item("on start"), dependencies: { core: "*" }, projectBlocks: { custom: "custom.ts" },
+                previewUri: "data:image/png;base64,iVBORw0KGgo=" };
+            if (signedIn) await signIn([snippet]);
+            else await loadGuest([snippet]);
+            assert.strictEqual(await page.$(renameModal), null);
+            assert.strictEqual(await page.$eval("h3", element => element.textContent), "on start");
+            await page.click(add);
+            await idle();
+            assert.strictEqual(await page.$(renameModal), null);
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.renames), []);
+            await page.focus(rename);
+            await page.keyboard.press("Enter");
+            assert.deepStrictEqual(await page.$eval(nameInput, input => ({
+                value: input.value, focused: input === document.activeElement,
+                selection: [input.selectionStart, input.selectionEnd], max: input.maxLength,
+                label: input.labels[0].textContent
+            })), { value: "on start", focused: true, selection: [0, 8], max: 100, label: "Snippet name" });
+            await page.keyboard.type("  character setup  ");
+            if (signedIn) await page.click(saveName);
+            else await page.keyboard.press("Enter");
+            await idle();
+            await modalClosed();
+            assert.strictEqual(await page.$eval("h3", element => element.textContent), "character setup");
+            assert.strictEqual(await page.$eval(rename, button => button === document.activeElement), true);
+            const renamed = { ...snippet, name: "character setup" };
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.remote[backpackTest.storeKey()]), [renamed]);
+            assert.strictEqual(await page.$eval("img", image => image.alt), "Blocks in character setup");
+            await reopen();
+            await idle();
+            assert.strictEqual(await page.$eval("h3", element => element.textContent), "character setup");
+            await page.click(add);
+            await idle();
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds),
+                [{ item: snippet, headerId: "project" }, { item: renamed, headerId: "project" }]);
+            assert.strictEqual(await page.evaluate(() => backpackTest.signIns), 0);
+            assert.doesNotMatch(await text(), /Renamed|Renaming/);
+        });
+    }
+
+    it("cancels renaming with Cancel, Close or Escape and traps focus without closing the Backpack", async () => {
+        await loadGuest([item("on start")]);
+        assert.strictEqual(await page.$eval(rename, button => button.getAttribute("aria-haspopup")), "dialog");
+        for (const dismiss of ["Cancel", "Close", "Escape"]) {
+            await page.evaluate(() => { backpackTest.modalEvents = []; });
+            await page.click(rename);
+            await page.keyboard.type("discard this name");
+            const accessibility = await page.accessibility.snapshot({ interestingOnly: false });
+            const find = (node, role) => node.role === role ? node : (node.children || []).map(child => find(child, role)).find(Boolean);
+            assert.strictEqual(find(accessibility, "dialog")?.name, "Rename snippet");
+            assert.strictEqual(find(accessibility, "textbox")?.name, "Snippet name");
+            assert.strictEqual(await page.$eval("#root", root => root.getAttribute("aria-hidden")), "true");
+            const events = await page.evaluate(() => backpackTest.modalEvents);
+            assert.deepStrictEqual(events[0], { type: "change", open: true });
+            assert.ok(events.filter(event => event.type === "focus").every(event => event.open));
+            for (const selector of [cancelName, saveName, closeName, nameInput]) {
+                await page.keyboard.press("Tab");
+                assert.strictEqual(await page.$eval(selector, element => element === document.activeElement), true);
+            }
+            if (dismiss === "Escape") await page.keyboard.press("Escape");
+            else await page.click(dismiss === "Cancel" ? cancelName : closeName);
+            await modalClosed();
+            assert.strictEqual(await page.$eval(rename, button => button === document.activeElement), true);
+            assert.strictEqual(await page.$eval("h3", element => element.textContent), "on start");
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.renames), []);
+        }
+    });
+
+    it("validates blank names in the dialog, bounds input length, and lets the user correct the name", async () => {
+        await loadGuest([item()]);
+        await page.click(rename);
+        await page.keyboard.type("   ");
+        await page.keyboard.press("Enter");
+        await idle();
+        assert.match(await page.$eval(`${renameModal} [role="alert"]`, element => element.textContent), /1 to 100/);
+        assert.strictEqual(await page.$eval(nameInput, input => input.getAttribute("aria-invalid")), "true");
+        assert.strictEqual(await page.$eval(nameInput, input => input.getAttribute("aria-describedby")), "project-backpack-name-error");
+        assert.strictEqual(await page.$('#root [role="alert"]'), null);
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.renames), []);
+        await page.focus(nameInput);
+        await page.keyboard.down("Control"); await page.keyboard.press("a"); await page.keyboard.up("Control");
+        await page.keyboard.type("x".repeat(101));
+        assert.strictEqual(await page.$eval(nameInput, input => input.value.length), 100);
+        assert.strictEqual(await page.$('[role="alert"]'), null);
+        await page.click(saveName);
+        await idle();
+        await modalClosed();
+        assert.strictEqual(await page.$eval("h3", element => element.textContent), "x".repeat(100));
+    });
+
+    it("keeps rename errors and drafts in the modal, prevents duplicate submits, and retries without renaming blocks", async () => {
+        await signIn([item()]);
+        await page.click(rename);
+        await page.keyboard.type("<b>character setup</b>");
+        await page.evaluate(() => { backpackTest.failRename = true; backpackTest.hold(); });
+        await page.click(saveName);
+        assert.strictEqual(await page.$eval(nameInput, input => input.disabled), true);
+        assert.strictEqual(await page.$$eval("#root button", buttons => buttons.every(button => button.disabled)), true);
+        assert.strictEqual(await page.$(closeName), null);
+        for (const selector of [cancelName, saveName]) await page.click(selector);
+        await page.keyboard.press("Enter");
+        await page.keyboard.press("Escape");
+        assert.ok(await page.$(renameModal));
+        assert.strictEqual(await page.evaluate(() => backpackTest.renames.length), 1);
+        await page.evaluate(() => backpackTest.release());
+        await idle();
+        assert.strictEqual(await page.$eval(nameInput, input => input.value), "<b>character setup</b>");
+        assert.match(await page.$eval(`${renameModal} [role="alert"]`, element => element.textContent), /Rename failed/);
+        assert.strictEqual(await page.$eval("h3", element => element.textContent), "Jump");
+        await page.evaluate(() => { backpackTest.failRename = false; });
+        await page.click(saveName);
+        await idle();
+        await modalClosed();
+        assert.strictEqual(await page.$eval("h3", element => element.textContent), "<b>character setup</b>");
+        assert.strictEqual(await page.$("h3 b"), null);
+        assert.strictEqual(await page.$eval(rename, button => button === document.activeElement), true);
+    });
+
+    it("allows renaming outside an editable Blocks project and clears abandoned dialogs", async () => {
+        await loadGuest([item()]);
+        await page.evaluate(() => { backpackTest.canImport = false; backpackTest.readOnly = true; backpackTest.notify(); });
+        assert.strictEqual(await page.$eval(rename, button => button.disabled), false);
+        await page.click(rename);
+        await page.keyboard.type("discard on close");
+        await page.evaluate(() => backpackTest.setActive(false));
+        await modalClosed();
+        await page.evaluate(() => backpackTest.setActive(true));
+        await idle();
+        await page.click(rename);
+        assert.strictEqual(await page.$eval(nameInput, input => input.value), "Jump");
+        await page.keyboard.type("character setup");
+        await page.keyboard.press("Enter");
+        await idle();
+        await modalClosed();
+        assert.strictEqual(await page.$eval(rename, button => button === document.activeElement), true);
+    });
+
+    it("discards an old account's rename completion without affecting a new account's dialog", async () => {
+        await signIn([item("Account A")]);
+        await page.click(rename);
+        await page.keyboard.type("Old draft");
+        await page.evaluate(() => { backpackTest.failRename = true; backpackTest.hold(); });
+        await page.click(saveName);
+        await page.evaluate(snippet => {
+            backpackTest.gate = undefined;
+            backpackTest.failRename = false;
+            backpackTest.remote.B = [snippet];
+            backpackTest.account("B");
+        }, item("Account B"));
+        await idle();
+        await modalClosed();
+        assert.doesNotMatch(await text(), /Account A|Old draft/);
+        await page.click(rename);
+        await page.keyboard.type("New draft");
+        await page.evaluate(() => backpackTest.release());
+        assert.strictEqual(await page.$('[role="alert"]'), null);
+        assert.strictEqual(await page.$eval(nameInput, input => input.value), "New draft");
+        assert.strictEqual(await page.$eval(nameInput, input => input === document.activeElement), true);
+        await page.click(cancelName);
+        await modalClosed();
+    });
+
+    it("keeps the rename form touch-sized, responsive, and themed with visible keyboard focus", async () => {
+        await loadGuest([item()]);
+        await page.click(rename);
+        for (const dark of [false, true]) {
+            await page.evaluate(dark => {
+                document.documentElement.style.setProperty("--pxt-neutral-background1", dark ? "rgb(25, 25, 25)" : "rgb(250, 250, 250)");
+                document.documentElement.style.setProperty("--pxt-neutral-foreground1", dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)");
+                document.documentElement.style.setProperty("--pxt-focus-border", dark ? "white" : "black");
+            }, dark);
+            const metrics = await page.$eval(nameInput, input => ({
+                height: input.getBoundingClientRect().height >= 44,
+                fits: input.closest(".common-modal").scrollWidth <= input.closest(".common-modal").clientWidth,
+                color: getComputedStyle(input).color, background: getComputedStyle(input).backgroundColor,
+                focus: getComputedStyle(input).outlineStyle
+            }));
+            assert.deepStrictEqual(metrics, { height: true, fits: true,
+                color: dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)",
+                background: dark ? "rgb(25, 25, 25)" : "rgb(250, 250, 250)", focus: "solid" });
+        }
+        const session = await page.createCDPSession();
+        await session.send("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }] });
+        assert.strictEqual(await page.$eval(nameInput, input => getComputedStyle(input).outlineStyle), "solid");
+        await session.detach();
+        await page.keyboard.press("Escape");
+        await modalClosed();
+    });
+
     it("reports invalid source metadata without rendering an actionable snippet", async () => {
         await signIn([{ ...item(), projectBlocks: { custom_block: 7 } }]);
         assert.match(await page.$eval('[role="alert"]', element => element.textContent), /Invalid project-defined blocks/);
@@ -742,7 +953,7 @@ describe("project backpack UI", function () {
         await modalClosed();
     });
 
-    it("focuses Delete when import is unavailable and the panel after the last deletion", async () => {
+    it("focuses the next available action when import is unavailable and the panel after the last deletion", async () => {
         await signIn([item(), item("Run", "00000000-0000-0000-0000-000000000002")]);
         await page.evaluate(() => { backpackTest.canImport = false; backpackTest.notify(); });
         // Deleting the last row falls back to its previous neighbor.
@@ -750,7 +961,7 @@ describe("project backpack UI", function () {
         await page.click(confirmDelete);
         await idle();
         await modalClosed();
-        assert.strictEqual(await page.$eval(remove, element => element === document.activeElement), true);
+        assert.strictEqual(await page.$eval(rename, element => element === document.activeElement), true);
         await page.click(remove);
         await page.click(confirmDelete);
         await idle();
