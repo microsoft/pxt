@@ -62,15 +62,22 @@ function blockText(item: pxt.auth.BackpackItem): string[] {
 /** Build once per collection update; every query is a local, fuzzy filter in the original item order. */
 export function createBackpackSearch(items: BackpackEntry[], extensionName?: (name: string) => string): (query: string) => BackpackEntry[] {
     const entries: SearchEntry[] = items.map((entry, index) => {
-        const item = entry.item;
+        const item = entry.error ? undefined : entry.item;
+        const summary = entry.error ? undefined : entry.summary;
         const extensions = new Set<string>();
-        for (const [name, version] of Object.entries(item?.dependencies || {})) {
+        for (const [name, version] of Object.entries(summary?.dependencies || item?.dependencies || {})) {
             addText(extensions, name);
             addText(extensions, version);
             addText(extensions, extensionName?.(name));
         }
         // Recovery cards are searchable by their safe name, never by invalid code or metadata.
-        return { index, name: entry.name, blocks: item ? blockText(item) : [], extensions: Array.from(extensions) };
+        const blocks = new Set<string>();
+        if (summary) {
+            addText(blocks, summary.blockText);
+            summary.blockTypes.forEach(type => addText(blocks, type));
+            summary.searchText?.forEach(text => addText(blocks, text));
+        } else if (item) blockText(item).forEach(text => blocks.add(text));
+        return { index, name: entry.name, blocks: Array.from(blocks), extensions: Array.from(extensions) };
     });
     const fuse = new Fuse(entries, {
         keys: ["name", "blocks", "extensions"],

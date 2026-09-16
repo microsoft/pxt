@@ -108,11 +108,16 @@ There is no routine saving/saved text. Save errors display a Retry action.
 ## Backpack
 
 Keep reusable block containers without signing in: they are saved in this
-browser's local storage, separately for each MakeCode target. A centered button at
+browser's IndexedDB, separately for each MakeCode target. A centered button at
 the top offers **Sign in to save your backpack across browsers**. Signing in
-adds local snippets to the profile when the backpack next opens or saves; local
-copies are removed only after the server confirms them. Failed uploads keep the
-local copies, and existing profile snippets are never silently overwritten.
+uploads guest snippets independently when the backpack next opens. Each is claimed
+by that account before uploading and removed locally only after its own server
+acknowledgement and an atomic comparison with the pending payload. One corrupt or
+conflicting snippet does not block the others. Signed-in saves first commit a
+pending record to that user's IndexedDB namespace. Failed uploads retain their
+named cards with **Retry sync**, **Add to project**, and trash controls. Retry uses
+the original UUID and payload; it never overwrites a cloud snippet or later rename.
+Pending records that have already been sent cannot be renamed until synced.
 
 In an editable Blocks project, right-click or hold a container
 (such as an event, loop, if block or function definition) and choose **Add to
@@ -127,7 +132,13 @@ snippet names, contained block names, displayed labels and parameter values, or 
 used extension (including installed extensions). Multiple words can match different
 parts of a snippet. Clear the box or press Escape to show all snippets again.
 Displayed block text is saved with the snippet so it remains searchable without the
-original project's extensions. Searching never installs extensions or changes code.
+original project's extensions. Every page of summary metadata must load before
+search is enabled; a failed later page keeps recovery controls and a Retry button
+without claiming complete results. Cloud search uses summary `blockText`,
+`blockTypes`, `searchText`, and dependencies, not serialized bodies. Searching never installs
+extensions, downloads code or changes code. Code downloads only on **Add to
+project**. Cloud PNG previews load only for visible cards with authenticated binary
+requests; cancellation and object-URL cleanup run on hide, unmount and account changes.
 
 Each entry lists only extensions missing from the current project; the section is
 hidden when none are needed. **Add to project** asks permission
@@ -142,7 +153,9 @@ so a snippet such as **on start** can be
 called **character setup**. **Save** changes only its Backpack name, not its blocks,
 preview or dependencies. Cancel or Escape keeps the original name. Names are limited
 to 100 characters; empty names are rejected. Guest renames stay in this browser,
-and signed-in renames are saved to the profile.
+and signed-in renames use a name-only request with the card's observed ETag.
+The delete dialog also retains its observed ETag. A stale version stays an error
+in the modal; cancel and reopen to refresh rather than silently overwriting.
 
 Blocks defined in the original project's own TypeScript files need those APIs in
 the destination too. The backpack records their filenames, not their source code.
@@ -151,7 +164,8 @@ and stops insertion. Copy the code into the destination or publish it as an
 extension before trying again.
 
 The **Delete** trash icon opens a confirmation modal: it removes the entry from this browser when
-signed out, or from the profile after server acknowledgement when signed in.
+signed out, or from dedicated private Backpack storage after server acknowledgement
+when synced. A pending local row's trash button removes only that browser copy.
 Cancel or Escape closes the modal without deleting. Failures remain in the modal
 for retry; routine add/delete progress and success messages are not shown in the panel.
 An invalid snippet remains visible with its name when recoverable (otherwise
@@ -165,18 +179,52 @@ changes from other tabs or, when signed in, other browsers. Failed saves offer
 retry; sign-out/account changes hide the previous account's items without copying
 them into guest storage. Clearing browser storage removes unsynced local snippets.
 
-The backpack supports up to 50 items per target. The 500,000-character storage
-limit applies per target locally and across targets in the profile. Each snippet
-is limited to 100,000 code characters, with an optional PNG preview of at most
-64,000 characters and portable extension references. New previews render at 2×
-pixel density for sharper text without increasing their displayed size; dense
-previews fall back to a lower density to fit the limit. Existing saved images
-are unchanged; save the blocks again to capture a sharper preview.
-Blocked/full local storage reports a save error
-instead of silently using memory. Backpack contents are not added to project shares
-or exports unless explicitly inserted into that project's code. Backend sync is
-covered with a simulated authenticated API, not a live cross-device account test.
+The dedicated API supports up to **50 entries per target**, **512 KiB UTF-8 code**,
+**64 KiB metadata**, **128 KiB decoded PNG**, **1 MiB create request**, and
+**50 MiB account storage**. The frontend retains the existing capture raster budget
+of 64,000 data-URI characters and the existing 2× / 1.5× / 1× fallback, independent
+of the larger binary API limit. Density-aware `srcset` keeps the original CSS size
+without an extra 1× source. The existing Blockly serializer/importer still has its
+separate 100,000-character code bound; this frontend cutover does not change it.
+Effective server limits/usage arrive with list pages; the server remains authoritative.
+Blocked/full IndexedDB reports a save error instead of silently using memory.
+Pending creates are retried automatically on reopen for at most 24 hours from
+their first upload attempt. After that, insert the local copy in a project and
+capture it again with a fresh ID. This avoids resurrecting expired tombstones.
+Backpack contents are not added to project shares or exports unless explicitly
+inserted into that project's code. Backend sync is covered with a simulated
+authenticated endpoint and real browser IndexedDB, not a live cross-device account test.
 See [the test guide](../tests/project-tools-test/README.md) for limits and manual checks.
+
+### Old development data: explicit export/reset only
+
+Old preference-backed snippets and old native-localStorage guest keys **do not
+transfer**. There is no migration or regular legacy read/fallback. Existing old
+backend data is not automatically deleted, and old guest keys are left untouched.
+Normal auth preference caches and settings diffs exclude the `backpack` property.
+
+While signed in, choose **Old Backpack data…** at the bottom of the panel:
+
+1. **Export old data** explicitly reads old preferences and downloads only their
+  Backpack value as JSON. It is an archive, not an executable import. Store it privately.
+2. **Cancel** leaves everything unchanged.
+3. **Clear old Backpack data** confirms permanent removal of only the old
+  `backpack` preference, across targets. It sends the existing preferences PATCH
+  with `[{ op: "remove", path: ["backpack"] }]`. New API snippets, pending/guest
+  IndexedDB records, and unrelated settings are not reset. Export first if needed.
+
+Do not clear all browser storage to fix a backend preference limit: that would
+also remove unsynced snippets and projects. Old localStorage guest records can be
+archived manually in browser developer tools; the new UI does not touch them.
+
+### Staging contract
+
+The editor uses private `/api/user/backpack` endpoints, captured auth headers and
+cookies, and `x-pxt-target`; localhost development uses the existing `DEV_BACKEND`
+selection. It never falls back to preferences when dedicated routes are unavailable.
+The backend must support conditional `If-Match` requests and credentialed CORS for
+both JSON and binary PNG requests. Uploading an editor target does not deploy the
+backend. Test the actual handler and two devices/accounts before release.
 
 ## Block copy and paste
 

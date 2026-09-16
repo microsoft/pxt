@@ -52,6 +52,20 @@ function matches(search, query, expected) {
 }
 
 describe("backpack search (fresh source, real Fuse)", () => {
+    it("indexes all cloud summary text/types/dependencies without fetching or inventing code", () => {
+        const cloud = { id: "cloud", source: "cloud", name: "Orchard", createdAt: 1,
+            summary: { id: "cloud", name: "Orchard", blockText: "altitude cumulonimbus 8675309",
+                blockTypes: ["radio_sendNumber"], dependencies: { radio: "github:acme/telemetry#v1" },
+                version: "etag", createdAt: 1, updatedAt: 1, status: "ready", hasPreview: true } };
+        Object.defineProperty(cloud, "code", { get: () => assert.fail("No code on a summary") });
+        const search = createBackpackSearch(freeze([entry(2), cloud]), name => name === "radio" ? "Wireless" : undefined);
+        for (const query of ["orchard", "altitude", "cumulonimbus", "8675309", "radio", "send number",
+            "telemetry", "wireless", "orchard altitude telemetry"]) matches(search, query, [cloud]);
+        const invalid = { ...cloud, error: "invalid" };
+        matches(createBackpackSearch([invalid]), "orchard", [invalid]);
+        matches(createBackpackSearch([invalid]), "telemetry", []);
+    });
+
     it("uses the installed Fuse 3.2.0", () => {
         assert.strictEqual(require("fuse.js/package.json").version, "3.2.0");
     });

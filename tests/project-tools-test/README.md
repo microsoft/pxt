@@ -66,8 +66,10 @@ Run `node node_modules/mocha/bin/mocha.js "tests/project-tools-test/backpack-{st
 from PXT for the source-based backpack suites. They transpile the relevant current
 TypeScript in memory; they do not run a build, development server, live sign-in,
 network download, or user program. Browser suites require Puppeteer's Chromium.
-The storage harness uses the existing built JSON-patch utility when available,
-otherwise its source, and always loads the dependency-reference parser from source.
+The storage harness uses the current store source and Chromium's real IndexedDB
+on an intercepted test origin. It needs the already-used Puppeteer browser, not
+fake-indexeddb or an additional dependency. All endpoint replies are synthetic;
+no live backend, user account, or network download is involved.
 
 Run the separate [real asset suite](backpack-assets.spec.js) with
 `node node_modules/mocha/bin/mocha.js tests/project-tools-test/backpack-assets.spec.js --reporter dot`.
@@ -77,19 +79,17 @@ After changing those production sources, stale build output is not evidence that
 the changes pass. Do not use `gulp testprojecttools` for a no-build check: that task
 rebuilds the shared library and webapp first.
 
-- [backpack-storage.spec.js](backpack-storage.spec.js): actual local/profile store and
-  JSON-patch semantics with fake authenticated API responses shared by simulated
-  devices and simulated native Storage shared by tabs/reloads. Covers guest CRUD,
-  import, storage failures/quotas, guest-to-profile upload/cleanup acknowledgements,
-  collision and account-change guards, acknowledgement/retry, target isolation,
-  per-entry corrupted-data recovery, safe display metadata, literal-key deletion,
-  local/cloud isolation, nonblocking quota/promotion warnings, detached snapshots/imports, and optional `projectBlocks`
-  validation, bounds, cloning, round-trip persistence/removal and acknowledgement
-  mismatch detection. Name-only renames preserve fresh block data and never recreate
-  deleted snippets, with validation, quota, retry and account-change coverage.
-  No real profile data is read or written.
+- [backpack-storage.spec.js](backpack-storage.spec.js): dedicated endpoint envelopes
+  and the production IndexedDB adapter. Covers metadata pagination, incomplete lists,
+  code-only-on-Add, >64 KiB creates, ETag rename/delete, 200/204 handling, 401 logout,
+  safe allowlisted errors, durable pending saves, lost ACK/idempotent retry after
+  remote rename, independent guest promotion, account/target/token transitions,
+  compare-and-swap cleanup against concurrent local edits, malformed-key recovery,
+  missing content recovery, private previews, byte/schema validation, unavailable
+  storage, and explicit-only legacy export/reset. It deliberately rejects use of
+  the generic auth API helper, native localStorage, or preference-backed normal storage.
 - [backpack-search.spec.js](backpack-search.spec.js): source-based indexing with the real
-  Fuse.js dependency; fuzzy names, nested block types and values, captured labels,
+  Fuse.js dependency; cloud summary-only indexing, fuzzy names, local nested block types and values, captured labels,
   all extension references, multiple terms, stable ordering, malformed input and no
   indexing of binary assets or internal IDs. Recovery cards use only their safe names;
   local/cloud entries with identical keys remain distinct. No Blockly loaders or network calls.
@@ -108,6 +108,8 @@ rebuilds the shared library and webapp first.
   grouped top-right pencil/trash icons and a bottom-right filled confirmation button,
   alignment with long names and RTL, themed hover/disabled button states and text contrast,
   account changes, confirmation/retry/focus, quiet add/delete/rename outcomes,
+  metadata-only cloud cards, lazy private-preview intersection and object-URL
+  reclamation on account changes, and explicit legacy maintenance confirmation,
   mobile overflow/touch sizes and theme/forced-color focus. This suite does not
   install extensions or exercise the source-file popup itself.
 - [backpack-editor.spec.js](backpack-editor.spec.js): extracts the current Blocks
@@ -156,36 +158,31 @@ The implementation lives in [the local/profile store](../../webapp/src/backpack.
 [project insertion](../../webapp/src/backpackProject.ts), and
 [Blockly serialization/drag targets](../../pxtblocks/backpack.ts).
 
-1. **Local storage and profile sync.** Guests can save, insert and delete snippets
-  without a sign-in dialog. Native localStorage keys are
-  `<targetId>/backpack/guest/<itemId>`: per-entry writes preserve other tabs' data
-  and unrelated keys. Browser-storage failures must not report a memory-only save
-  as durable. The centered top button offers sign-in to save across browsers; it is
-  absent in editors without an identity provider, where local use still works.
-  Signed-in snippets live in preferences at `backpack[targetId][itemId]`, not in
-  project files. On signed-in open/save, local items are added without replacing
-  profile items, validated against quota/collisions before writes, and removed
-  locally only after identical server acknowledgement. Failed/lost replies retain
-  local data and retries must not duplicate uploads. Guest edits during upload
-  are retained. Opening/reopening automatically loads current contents; there is
-  no Refresh button or routine sync-success message. Failed loads offer Retry.
-  This is not continuous push sync. Check a second device
-   with the same account and target, then sign out/switch accounts: old entries
-  must disappear and late operations must not populate the new account's panel
-  or copy profile data into guest storage. Clearing browser storage removes
-  unsynced local snippets.
-2. **Limits and isolation.** Each target/editor holds at most **50 items**.
-   The **500,000-character serialized JSON limit is shared across all targets**
-  in the account's backpack; guest storage applies that limit per target. Each item has
-   a UUID, a 1–100-character nonblank name without control characters, at most
-   100,000 code characters, 100 portable dependencies, and an optional PNG data
-  URI of at most 64,000 characters. New previews start at 2× pixel density and
-  fall back to 1.5× or 1× to fit that limit. Density metadata keeps the displayed
-  size unchanged on standard and high-DPI screens. Optional `projectBlocks` maps at most 500
-   block types to source filenames, each nonempty and at most 256 characters
-   without control characters; unsafe prototype keys are rejected. It records
-   filenames, not source contents. Verify a full target can update/delete existing
-   items and another target's entries/preferences remain untouched.
+1. **IndexedDB and dedicated sync.** Guests can save, insert and delete without
+  signing in. The `pxt-backpack` database has an `items` object store keyed by
+  `[namespace, key]`, with a namespace index. Namespaces are JSON arrays of
+  `[target, "guest", ""]` or `[target, "user", userId]`. Each record has its own
+  serialized payload; writes resolve only on transaction completion. No native
+  localStorage/preference payload writes or memory fallback are allowed. Guest
+  uploads acquire an owner claim before sending; claimed entries are hidden from
+  guests and other users. Each successful upload conditionally deletes only its
+  own unchanged local record. A conflict or invalid guest must not block others.
+  Lost ACKs retain pending named rows and **Retry sync** uses the same original
+  UUID/body; a later remote rename survives. Signed-in saves must commit locally
+  before upload. Verify reload durability, quota/transaction abort errors, and
+  another-tab edits during upload. Reopen retries pending uploads independently;
+  entries older than 24 hours since first attempt require a fresh capture.
+  Sign-out/account/target changes must hide previous-user entries and discard late
+  responses. Never use preferences as an outage fallback.
+2. **Limits and isolation.** API defaults: **50 entries per target**, **512 KiB
+  UTF-8 code**, **64 KiB metadata**, **128 KiB decoded PNG**, **1 MiB request/page**,
+  **50 MiB account total**. The server enforces effective quotas. Captured images
+  retain the conservative 64,000-character raster budget and density fallback;
+  the unchanged Blockly serializer/importer has its own 100,000-character bound.
+  Names stay 1–100 characters without controls; dependencies stay portable and
+  bounded, and optional `projectBlocks` contains filenames, never source code.
+  Check multibyte text boundaries, malformed summaries, recovery trash, and no
+  changes to other targets or unrelated preferences.
 3. **Copy a container.** In an eligible editable Blocks project (not temporary,
    locked/read-only, or an unfinished tutorial), right-click/hold a movable,
    editable block with a statement input and choose **Add to Backpack**. Plain
@@ -234,3 +231,44 @@ The implementation lives in [the local/profile store](../../webapp/src/backpack.
   After acknowledgement, focus goes to the next/previous entry or the panel when
   empty. Reopen in another tab/browser to verify removal. Deleting a backpack
    entry does not remove copies already inserted into projects.
+
+## Dedicated Backpack staging handoff
+
+No frontend suite is a substitute for the actual HTTP handler/infrastructure test.
+The backend integration suite runs the actual PXT XHR client, IndexedDB and Fuse
+against local HTTP and the real Backpack Cosmos class with an SDK-level fake.
+It does not use real cloud credentials or establish cross-device Azure behavior.
+
+- Public storage adapter: `createBackpackLocalStorage(IDBFactory)` returns
+  `BackpackLocalStorage`; `listAsync(namespace)` and atomic
+  `changeAsync(namespace, key, expected, next)` use actual transaction completion.
+  `BackpackLocalRecord` and `backpackLocalNamespace(target, userId?)` describe records.
+  These exports live in [backpack.ts](../../webapp/src/backpack.ts); no test-only global hooks.
+  [backpackStorage.ts](../../webapp/src/backpackStorage.ts) also re-exports this public adapter boundary.
+- Transport injection: supply the existing `pxt.Util.requestAsync` boundary, not
+  `AuthClient.apiAsync`; retain `allowHttpErrors`, credentials, captured authorization,
+  and target headers. Binary previews use `window.fetch` and `AbortSignal` separately.
+- Metadata types: `BackpackSummary`, `BackpackLimits`, `BackpackEntry`, `BackpackState`.
+  Cloud entries carry `summary`, not an `item` with invented code. `complete` is false
+  for interrupted pagination. `getBackpackItems()` now returns only valid local bodies;
+  use `importBackpackEntryAsync(entry, headerId)` for card-based Add.
+- Existing capture `saveBackpackItemAsync` and body import `importBackpackItemAsync`
+  signatures remain. Rename accepts an optional observed `BackpackEntry` as its third
+  argument to preserve a dialog's ETag. `retryBackpackEntryAsync` retries one pending
+  record, and `getBackpackPreviewAsync` returns a private Blob owned by the caller.
+- Verify three pages of metadata, a later-page search match, no content before Add,
+  lazy PNG requests and revoked object URLs. Force missing content and confirm trash
+  remains available and refresh can recover the card.
+- Force PUT 413/409/503, dropped ACK, ID collision, rename/delete 412, expired create
+  retry, blocked/aborted IndexedDB, account changes during all requests, and independent
+  promotion with good/bad/conflicting neighbors. A 2xx create must correspond to a
+  committed backend entry; a local transaction request succeeding is not an ACK.
+  The backend now stores each complete capture in a single Cosmos record. A failed
+  atomic save leaves either no record or the committed record, never a partial
+  server upload; pending recovery lives in the client's IndexedDB.
+- Test **Old Backpack data… → Export old data / Cancel / Clear old Backpack data**.
+  Only these explicit actions may read/remove the legacy preference. No reset endpoint,
+  automatic migration, unrelated settings rewrite, or preference fallback is added.
+- No new dependency is required. Chromium is already required by the UI suite and
+  is now also required by the storage suite. Capture/preview/block/project suites
+  remain separate and should be included in the full regression run.

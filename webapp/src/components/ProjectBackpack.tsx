@@ -6,6 +6,7 @@ import * as backpack from "../backpack";
 import { createBackpackSearch } from "../backpackSearch";
 import * as data from "../data";
 import * as pkg from "../package";
+import { BackpackPreview } from "./BackpackPreview";
 
 export interface ProjectBackpackProps {
     headerId: string;
@@ -20,13 +21,16 @@ function currentUserId(): string {
 }
 
 function entryKey(entry: backpack.BackpackEntry): string {
-    return `${entry.source}:${entry.id}`;
+    return backpack.backpackEntryKey(entry);
 }
 
 export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
     const [, update] = React.useReducer((value: number) => value + 1, 0);
     React.useLayoutEffect(() => {
-        const subscriber: data.DataSubscriber = { subscriptions: [], onDataChanged: () => update() };
+        const subscriber: data.DataSubscriber = { subscriptions: [], onDataChanged: () => {
+            backpack.notifyBackpackEditorChanged();
+            update();
+        } };
         data.subscribe(subscriber, auth.USER_PROFILE);
         data.subscribe(subscriber, auth.LOGGED_IN);
         update();
@@ -34,7 +38,7 @@ export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
     }, []);
     const userId = currentUserId();
     // Guest/account transitions get fresh contents, including pending/error state.
-    return <BackpackContents key={userId ? `user:${userId}` : "guest"} {...props} userId={userId} />;
+    return <BackpackContents key={`${pxt.appTarget?.id}:${userId ? `user:${userId}` : "guest"}`} {...props} userId={userId} />;
 }
 
 function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JSX.Element {
@@ -44,7 +48,9 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const [ready, setReady] = React.useState(false);
     const [pending, setPending] = React.useState(false);
     const [error, setError] = React.useState<string>();
-    const [edit, setEdit] = React.useState<{ kind: "rename" | "delete"; key: string; name: string }>();
+    const [edit, setEdit] = React.useState<{ kind: "rename" | "delete"; key: string; name: string; entry: backpack.BackpackEntry }>();
+    const [legacyOpen, setLegacyOpen] = React.useState(false);
+    const legacyButton = React.useRef<HTMLButtonElement>();
     const [, update] = React.useReducer((value: number) => value + 1, 0);
     const alive = React.useRef(true);
     const active = React.useRef(props.active);
@@ -55,12 +61,13 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const searchInput = React.useRef<HTMLInputElement>();
     const nameInput = React.useRef<HTMLInputElement>();
     const focusAfter = React.useRef<{ key?: string; action?: "rename" | "delete" }>();
-    const isCurrent = () => alive.current && currentUserId() === props.userId;
+    const targetId = React.useRef(pxt.appTarget?.id);
+    const isCurrent = () => alive.current && currentUserId() === props.userId && pxt.appTarget?.id === targetId.current;
 
     const searchItems = (entries: backpack.BackpackEntry[]) => createBackpackSearch(entries,
         name => Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name]?.config?.name : undefined);
     const search = React.useMemo(() => searchItems(items), [items]);
-    const filteredItems = React.useMemo(() => search(query), [search, query]);
+    const filteredItems = React.useMemo(() => search(ready ? query : ""), [search, query, ready]);
 
     const readItems = (): backpack.BackpackState => backpack.getBackpackState();
     const reportError = (reason: unknown) => {
@@ -97,7 +104,17 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         setReady(false);
         setContents({ entries: [] });
         setEdit(undefined);
-        await backpack.refreshBackpackAsync();
+        try { await backpack.refreshBackpackAsync(); }
+        catch (reason) {
+            if (isCurrent()) {
+                const state = readItems();
+                // Only explicitly incomplete new results, not a stale successful
+                // snapshot from before an unavailable session, are recovery rows.
+                setContents(state.complete === false ? state : { entries: [] });
+                loaded.current = true;
+            }
+            throw reason;
+        }
         if (!isCurrent()) return;
         setContents(readItems());
         loaded.current = true;
@@ -106,14 +123,14 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
 
     React.useLayoutEffect(() => { if (props.active) void refresh(); }, [props.active]);
 
-    const editedItem = items.find(item => entryKey(item) === edit?.key);
-    const modalOpen = !!editedItem && (edit.kind === "delete" || !!editedItem.item) && props.active;
+    const editedItem = edit?.entry;
+    const modalOpen = !!editedItem && (edit.kind === "delete" || !editedItem.error) && props.active;
     React.useEffect(() => {
-        props.onModalOpenChange?.(modalOpen);
+        props.onModalOpenChange?.(modalOpen || legacyOpen);
         return () => props.onModalOpenChange?.(false);
-    }, [modalOpen, props.onModalOpenChange]);
+    }, [modalOpen, legacyOpen, props.onModalOpenChange]);
     React.useEffect(() => {
-        if (!props.active) setEdit(undefined);
+        if (!props.active) { setEdit(undefined); setLegacyOpen(false); }
     }, [props.active]);
     React.useEffect(() => {
         if (modalOpen && edit?.kind === "rename") {
@@ -140,12 +157,12 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         setError(undefined);
     };
     const beginEdit = (item: backpack.BackpackEntry, kind: "rename" | "delete"): void => {
-        if (busy.current || !isCurrent() || kind === "rename" && !item.item) return;
+        if (busy.current || !isCurrent() || kind === "rename" && item.error) return;
         // The shared modal takes focus during its mount, before effects run.
         // Keep the owning panel open while focus moves into the portal.
         props.onModalOpenChange?.(true);
         setError(undefined);
-        setEdit({ kind, key: entryKey(item), name: item.name });
+        setEdit({ kind, key: entryKey(item), name: item.name, entry: item });
     };
     const deleteItem = (item: backpack.BackpackEntry) => run(async () => {
         const index = filteredItems.findIndex(entry => entryKey(entry) === entryKey(item));
@@ -159,14 +176,34 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         setEdit(undefined);
     });
     const renameItem = () => run(async () => {
-        await backpack.renameBackpackItemAsync(editedItem.id, edit.name);
+        await backpack.renameBackpackItemAsync(editedItem.id, edit.name, editedItem);
         if (!isCurrent()) return;
         focusAfter.current = { key: edit.key, action: "rename" };
         setContents(readItems());
         setEdit(undefined);
     });
-    const addItem = (item: pxt.auth.BackpackItem) => run(async () => {
-        await backpack.importBackpackItemAsync(item, props.headerId);
+    const addItem = (entry: backpack.BackpackEntry) => run(async () => {
+        await backpack.importBackpackEntryAsync(entry, props.headerId);
+    });
+
+    const closeLegacy = () => {
+        if (busy.current) return;
+        setLegacyOpen(false);
+        setError(undefined);
+        legacyButton.current?.focus();
+    };
+    const exportLegacy = () => run(async () => {
+        const json = await backpack.exportOldBackpackAsync();
+        if (!isCurrent()) return;
+        const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "old-backpack.json";
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        // Allow the browser to begin downloading before releasing the URL.
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
     });
 
     const canImport = backpack.canImportBackpack(props.headerId);
@@ -206,12 +243,13 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                 type="button" onClick={props.onSignIn}>{lf("Sign in to save your backpack across browsers.")}</button>}
             <div role="status">
                 {message && <p>{message}</p>}
-                {ready && warning && <p>{warning}</p>}
+                {warning && <p>{warning}</p>}
+                {!ready && !pending && !!items.length && <p>{lf("Some snippets could not be loaded. Retry to search the complete backpack.")}</p>}
                 {ready && !!items.length && !!query.trim() && <p>{filteredItems.length
                     ? lf("{0} of {1} snippets", filteredItems.length, items.length)
                     : lf("No matching snippets.")}</p>}
             </div>
-            {error && !modalOpen && <>
+            {error && !modalOpen && !legacyOpen && <>
                 <p role="alert">{error}</p>
                 {!ready && <button className="project-backpack__button project-backpack__retry" type="button" disabled={pending}
                     onClick={() => { focusAfter.current = {}; void refresh(); }}>{lf("Retry")}</button>}
@@ -221,9 +259,9 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                 <p>{lf("Your backpack is empty.")}</p>
                 <p>{lf("Right-click or hold a block container and choose Add to Backpack, or drag blocks over the Backpack bubble, then drop them into the backpack.")}</p>
             </div>}
-            {ready && !!filteredItems.length && <ul className="project-backpack__list" aria-label={lf("Backpack snippets")}>
+            {!!filteredItems.length && <ul className="project-backpack__list" aria-label={lf("Backpack snippets")}>
                 {filteredItems.map(entry => {
-                    const item = entry.item;
+                    const item = entry.error ? undefined : entry.summary || entry.item;
                     const missingDependencies = Object.entries(item?.dependencies || {}).filter(([name, version]) => {
                         const dependency = Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name] : undefined;
                         const installed = dependency && (version === "*" || dependency.verProtocol() === "github"
@@ -251,11 +289,15 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             </div>
                         </div>
                         {entry.error && <p className="project-backpack__invalid">{entry.error}</p>}
-                        {!!props.userId && entry.source === "local" && <p>{lf("Saved in this browser only.")}</p>}
+                        {!!props.userId && entry.source === "local" && <p>{entry.local?.firstAttemptAt
+                            ? lf("Pending sync. A copy may already be saved to your account.")
+                            : lf("Saved in this browser only.")}</p>}
+                        {entry.pendingError && <p role="status">{entry.pendingError}</p>}
+                        {!!props.userId && entry.source === "local" && !!entry.item && <button
+                            className="project-backpack__button project-backpack__sync" type="button" disabled={pending}
+                            onClick={() => void run(() => backpack.retryBackpackEntryAsync(entry))}>{lf("Retry sync")}</button>}
                         {item && <>
-                            {item.previewUri && <img className="project-backpack__preview" src={item.previewPixelDensity ? undefined : item.previewUri}
-                                srcSet={item.previewPixelDensity ? `${item.previewUri} ${item.previewPixelDensity}x` : undefined}
-                                alt={lf("Blocks in {0}", item.name)} />}
+                            <BackpackPreview entry={entry} active={props.active} />
                             {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
                                 {lf("Uses project-defined blocks from {0}. Their source code is not included.",
                                     Array.from(new Set(Object.values(item.projectBlocks))).join(", "))}
@@ -273,13 +315,31 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             <div className="project-backpack__actions">
                                 <button className="project-backpack__button project-backpack__add" type="button" disabled={pending || !canImport}
                                     aria-label={lf("Add {0} to project", item.name)} aria-describedby={!canImport ? "project-backpack-import-reason" : undefined}
-                                    onClick={() => void addItem(item)}>{lf("Add to project")}</button>
+                                    onClick={() => void addItem(entry)}>{lf("Add to project")}</button>
                             </div>
                         </>}
                     </li>;
                 })}
             </ul>}
+            {!!props.userId && <button ref={legacyButton} className="project-backpack__button" type="button" disabled={pending}
+                aria-haspopup="dialog" onClick={() => {
+                    props.onModalOpenChange?.(true);
+                    setError(undefined);
+                    setLegacyOpen(true);
+                }}>{lf("Old Backpack data…")}</button>}
         </div>
+        {legacyOpen && props.active && <Modal title={lf("Old Backpack data")}
+            onClose={closeLegacy} hideDismissButton={pending} actions={[
+                { label: lf("Cancel"), className: "neutral", disabled: pending, onClick: closeLegacy },
+                { label: lf("Export old data"), disabled: pending, onClick: () => void exportLegacy() },
+                { label: lf("Clear old Backpack data"), className: "red", disabled: pending, onClick: () => void run(async () => {
+                    await backpack.clearOldBackpackAsync();
+                    if (isCurrent()) { setLegacyOpen(false); legacyButton.current?.focus(); }
+                }) }
+            ]}>
+            <p>{lf("Old development Backpack data does not transfer to the new backpack. Export a copy before clearing it. Clear old Backpack data permanently removes only the old Backpack preference on all targets; it does not remove new snippets or other settings.")}</p>
+            {error && <p role="alert">{error}</p>}
+        </Modal>}
         {modalOpen && <Modal title={edit.kind === "rename" ? lf("Rename snippet") : lf("Delete snippet?")}
             className={`project-backpack__${edit.kind}-modal`}
             ariaDescribedBy={edit.kind === "delete" ? "project-backpack-delete-description" : undefined}
@@ -301,6 +361,8 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             </form> : <div aria-busy={pending}>
                 <p id="project-backpack-delete-description">{editedItem.source === "cloud"
                     ? lf("Delete {0} from your backpack on all devices?", editedItem.name)
+                    : editedItem.local?.firstAttemptAt
+                    ? lf("Delete the pending copy of {0} from this browser? Any copy already synced to your account will not be deleted.", editedItem.name)
                     : lf("Delete {0} from your backpack in this browser?", editedItem.name)}</p>
                 {error && <p role="alert">{error}</p>}
             </div>}

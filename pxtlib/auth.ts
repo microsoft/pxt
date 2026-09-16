@@ -117,7 +117,7 @@ namespace pxt.auth {
         res: UserPreferences;
     }
 
-    /** A private, portable code snippet stored in the user's profile. */
+    /** A private, portable capture sent to the dedicated Backpack API, not preferences. */
     export interface BackpackItem {
         id: string;
         name: string;
@@ -133,8 +133,6 @@ namespace pxt.auth {
         previewPixelDensity?: number;
     }
 
-    export type BackpackState = pxt.Map<pxt.Map<BackpackItem>>;
-
     /**
      * User preference state that should be synced with the cloud.
      */
@@ -144,7 +142,6 @@ namespace pxt.auth {
         screenReaderMode?: boolean;
         colorThemeIds?: ColorThemeIdsState;
         simulatorThemes?: SimulatorThemesState;
-        backpack?: BackpackState;
         reader?: string;
         skillmap?: UserSkillmapState;
         badges?: UserBadgeState;
@@ -161,6 +158,16 @@ namespace pxt.auth {
         skillmap: { mapProgress: {}, completedTags: {} },
         email: false
     });
+
+    /** Exclude unreleased Backpack payloads from settings caches and normal diffs.
+     * This does not delete remote legacy data; explicit maintenance owns that action.
+     */
+    function settingsOnly(preferences: UserPreferences): UserPreferences {
+        if (!preferences) return preferences;
+        const result = { ...preferences };
+        delete (result as pxt.Map<unknown>)["backpack"];
+        return result;
+    }
 
     /**
      * Cloud-synced user state.
@@ -227,10 +234,12 @@ namespace pxt.auth {
     export async function getUserStateAsync(): Promise<Readonly<UserState>> {
         let userState: UserState;
         try { userState = await pxt.storage.shared.getAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY); } catch { userState = {}; }
+        if (userState) userState = { ...userState, preferences: settingsOnly(userState.preferences) };
         cachedUserState = userState;
         return userState;
     }
     async function setUserStateAsync(state: UserState): Promise<void> {
+        state = { ...state, preferences: settingsOnly(state.preferences) };
         cachedUserState = { ...state };
         return await pxt.storage.shared.setAsync(AUTH_CONTAINER, AUTH_USER_STATE_KEY, state);
     }
@@ -490,7 +499,7 @@ namespace pxt.auth {
             const defaultSuccessAsync = async (): Promise<SetPrefResult> => ({ success: true, res: await this.userPreferencesAsync() });
 
             patchOps = Array.isArray(patchOps) ? patchOps : [patchOps];
-            patchOps = patchOps.filter(op => !!op);
+            patchOps = patchOps.filter(op => !!op && op.path?.[0] !== "backpack");
             if (!patchOps.length) { return await defaultSuccessAsync(); }
 
             const patchDiff = (pSrc: UserPreferences, ops: ts.pxtc.jsonPatch.PatchOperation[], filter?: (op: ts.pxtc.jsonPatch.PatchOperation) => boolean) => {
@@ -530,12 +539,13 @@ namespace pxt.auth {
                 // Fetch latest prefs from remote
                 const getResult = await this.apiAsync<Partial<UserPreferences>>('/api/user/preferences');
                 if (!getResult.success) {
-                    pxt.reportError("identity", "failed to fetch preferences for patch", getResult as any);
+                    pxt.reportError("identity", "failed to fetch preferences for patch");
                     return { success: false, res: undefined };
                 }
 
                 // Apply queued patches to the remote state in isolation and develop a final diff to send to the backend
-                const remotePrefs = U.deepCopy(getResult.resp) || DEFAULT_USER_PREFERENCES();
+                const originalPrefs = settingsOnly(getResult.resp) || DEFAULT_USER_PREFERENCES();
+                const remotePrefs = U.deepCopy(originalPrefs);
                 const patchQueue = this.patchQueue;
                 this.patchQueue = []; // Reset the queue
                 patchQueue.forEach(patch => {
@@ -544,16 +554,16 @@ namespace pxt.auth {
                 });
 
                 // Diff the original and patched remote states to get a final set of patch operations
-                const finalOps = pxtc.jsonPatch.diff(getResult.resp, remotePrefs);
+                const finalOps = pxtc.jsonPatch.diff(originalPrefs, remotePrefs);
 
                 const patchResult = await this.apiAsync<UserPreferences>('/api/user/preferences', finalOps, 'PATCH');
                 if (patchResult.success) {
                     // Set user profile from returned value so we stay in sync
                     this.setUserPreferencesAsync(patchResult.resp);
                 } else {
-                    pxt.reportError("identity", "failed to patch preferences", patchResult as any);
+                    pxt.reportError("identity", "failed to patch preferences");
                 }
-                return { success: patchResult.success, res: patchResult.resp };
+                return { success: patchResult.success, res: settingsOnly(patchResult.resp) };
             }
 
             if (opts.immediate) {
@@ -614,6 +624,7 @@ namespace pxt.auth {
         }
 
         private async setUserPreferencesAsync(newPref: Partial<UserPreferences>): Promise<UserPreferences> {
+            newPref = settingsOnly(newPref);
             const state = await getUserStateAsync();
             const oldPref = state?.preferences ?? DEFAULT_USER_PREFERENCES()
             const diff = ts.pxtc.jsonPatch.diff(oldPref, newPref);
