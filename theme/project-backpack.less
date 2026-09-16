@@ -85,7 +85,30 @@
 }
 .project-backpack__requirements ul { padding-inline-start: 1.25rem; }
 .project-backpack__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
-.project-backpack__delete-modal .common-modal-body { overflow-wrap: anywhere; }
+.project-backpack__delete-modal .common-modal-body,
+.project-backpack__rename-modal .common-modal-body { overflow-wrap: anywhere; }
+.project-backpack__rename-form {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+
+    input {
+        width: 100%;
+        min-width: 0;
+        min-height: 44px;
+        padding: .4rem .8rem;
+        border: 1px solid var(--pxt-neutral-foreground3);
+        border-radius: .5rem;
+        color: var(--pxt-neutral-foreground1);
+        background: var(--pxt-neutral-background1);
+        font: inherit;
+
+        &:focus-visible {
+            outline: 3px solid var(--pxt-focus-border);
+            outline-offset: 2px;
+        }
+    }
+}
 .project-backpack--drag-over,
 .project-backpack--drag-over .project-backpack__body,
 .project-backpack--drag-over .project-backpack__icon {
@@ -97,7 +120,8 @@
 
 @media (forced-colors: active) {
     .project-backpack__body:focus-visible,
-    .project-backpack__button:focus-visible { outline-color: Highlight; }
+    .project-backpack__button:focus-visible,
+    .project-backpack__rename-form input:focus-visible { outline-color: Highlight; }
 }
 @media print {
     .project-backpack__body {

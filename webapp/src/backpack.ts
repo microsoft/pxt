@@ -1,4 +1,5 @@
 export const MAX_BACKPACK_ITEMS = 50;
+export const MAX_BACKPACK_NAME_LENGTH = 100;
 export const MAX_BACKPACK_CODE_LENGTH = 100000;
 export const MAX_BACKPACK_DATA_LENGTH = 500000;
 export const MAX_BACKPACK_PREVIEW_LENGTH = 32000;
@@ -51,6 +52,12 @@ function validateId(id: unknown): asserts id is string {
     }
 }
 
+function validateName(name: unknown): asserts name is string {
+    if (typeof name !== "string" || !name.trim() || name.length > MAX_BACKPACK_NAME_LENGTH || hasControlCharacters(name)) {
+        throw new Error(lf("Backpack names must contain 1 to 100 characters without control characters."));
+    }
+}
+
 function portableDependency(name: string, version: string): boolean {
     if (version === "*") return !!pxt.appTarget?.bundledpkgs && own(pxt.appTarget.bundledpkgs, name);
     if (/^pub:[A-Za-z0-9_][A-Za-z0-9_-]{0,127}$/.test(version)) return true;
@@ -64,9 +71,7 @@ function portableDependency(name: string, version: string): boolean {
 export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     if (!isRecord(value)) throw new Error(lf("Invalid backpack item."));
     validateId(value.id);
-    if (typeof value.name !== "string" || !value.name.trim() || value.name.length > 100 || hasControlCharacters(value.name)) {
-        throw new Error(lf("Backpack names must contain 1 to 100 characters without control characters."));
-    }
+    validateName(value.name);
     if (typeof value.code !== "string" || value.code.length > MAX_BACKPACK_CODE_LENGTH) {
         throw new Error(lf("Backpack code must be text of at most {0} characters.", MAX_BACKPACK_CODE_LENGTH));
     }
@@ -379,6 +384,44 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
         const acknowledged = await requestAsync(context, ops);
         const saved = validateBackpackItem(collection(acknowledged, context.targetId)[validated.id]);
         if (!sameItem(saved, validated)) {
+            throw new Error(lf("The backpack item was changed by another device. Please refresh and try again."));
+        }
+        publish(context, acknowledged);
+    });
+}
+
+/** Rename an existing snippet without replacing its blocks or recreating a deleted item. */
+export async function renameBackpackItemAsync(id: string, name: string): Promise<void> {
+    validateId(id);
+    validateName(name);
+    name = name.trim();
+    return enqueue(async context => {
+        const preferences = context.kind === "local"
+            ? localPreferences(context.targetId, readLocalBackpack(context.targetId))
+            : await requestAsync(context);
+        const target = collection(preferences, context.targetId);
+        if (!own(target, id)) throw new Error(lf("This snippet is no longer in your backpack. Please reopen the backpack."));
+        const item = validateBackpackItem(target[id]);
+        if (item.id !== id) throw new Error(lf("A saved backpack item has a mismatched ID."));
+        if (item.name === name) {
+            publish(context, preferences);
+            return;
+        }
+        const renamed = { ...item, name };
+        const updated = { ...target, [id]: renamed };
+        checkCapacity({ ...preferences.backpack, [context.targetId]: updated }, updated);
+        if (context.kind === "local") {
+            writeLocalItem(context, id, renamed);
+            publish(context, localPreferences(context.targetId, readLocalBackpack(context.targetId)));
+            return;
+        }
+        // Patch only the name: another device's block edits must survive, and a
+        // deleted parent item must not be recreated by a stale rename dialog.
+        const acknowledged = await requestAsync(context, [
+            { op: "replace", path: ["backpack", context.targetId, id, "name"], value: name }
+        ]);
+        const saved = validateBackpackItem(collection(acknowledged, context.targetId)[id]);
+        if (saved.id !== id || saved.name !== name) {
             throw new Error(lf("The backpack item was changed by another device. Please refresh and try again."));
         }
         publish(context, acknowledged);

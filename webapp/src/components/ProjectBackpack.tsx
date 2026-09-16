@@ -36,7 +36,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const [ready, setReady] = React.useState(false);
     const [pending, setPending] = React.useState(false);
     const [error, setError] = React.useState<string>();
-    const [confirmId, setConfirmId] = React.useState<string>();
+    const [edit, setEdit] = React.useState<{ kind: "rename" | "delete"; id: string; name: string }>();
     const [, update] = React.useReducer((value: number) => value + 1, 0);
     const alive = React.useRef(true);
     const active = React.useRef(props.active);
@@ -44,7 +44,8 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const busy = React.useRef(false);
     const loaded = React.useRef(false);
     const body = React.useRef<HTMLDivElement>();
-    const focusAfter = React.useRef<{ id?: string; cancel?: boolean }>();
+    const nameInput = React.useRef<HTMLInputElement>();
+    const focusAfter = React.useRef<{ id?: string; action?: "rename" | "delete" }>();
     const isCurrent = () => alive.current && currentUserId() === props.userId;
 
     const readItems = (): pxt.auth.BackpackItem[] => backpack.getBackpackItems().map(backpack.validateBackpackItem);
@@ -81,7 +82,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         loaded.current = false;
         setReady(false);
         setItems([]);
-        setConfirmId(undefined);
+        setEdit(undefined);
         await backpack.refreshBackpackAsync();
         if (!isCurrent()) return;
         setItems(readItems());
@@ -91,15 +92,21 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
 
     React.useLayoutEffect(() => { if (props.active) void refresh(); }, [props.active]);
 
-    const confirmedItem = items.find(item => item.id === confirmId);
-    const modalOpen = !!confirmedItem && props.active;
+    const editedItem = items.find(item => item.id === edit?.id);
+    const modalOpen = !!editedItem && props.active;
     React.useEffect(() => {
         props.onModalOpenChange?.(modalOpen);
         return () => props.onModalOpenChange?.(false);
     }, [modalOpen, props.onModalOpenChange]);
     React.useEffect(() => {
-        if (!props.active) setConfirmId(undefined);
+        if (!props.active) setEdit(undefined);
     }, [props.active]);
+    React.useEffect(() => {
+        if (modalOpen && edit?.kind === "rename") {
+            nameInput.current?.focus();
+            nameInput.current?.select();
+        }
+    }, [modalOpen, edit?.kind, edit?.id]);
     React.useEffect(() => {
         if (pending || !focusAfter.current) return;
         const target = focusAfter.current;
@@ -107,24 +114,24 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         if (!active.current || !isCurrent()) return;
         const entry = Array.from(body.current?.querySelectorAll<HTMLElement>("[data-backpack-id]") || [])
             .find(element => element.dataset.backpackId === target.id);
-        const button = entry?.querySelector<HTMLButtonElement>(target.cancel
-            ? ".project-backpack__delete" : "button:not(:disabled)");
+        const button = entry?.querySelector<HTMLButtonElement>(target.action
+            ? `.project-backpack__${target.action}` : "button:not(:disabled)");
         (button || body.current)?.focus();
-    }, [pending, items, confirmId]);
+    }, [pending, items, edit]);
 
-    const cancelDelete = () => {
+    const cancelEdit = () => {
         if (busy.current) return;
-        focusAfter.current = { id: confirmId, cancel: true };
-        setConfirmId(undefined);
+        focusAfter.current = { id: edit.id, action: edit.kind };
+        setEdit(undefined);
         setError(undefined);
     };
-    const confirmDelete = (item: pxt.auth.BackpackItem): void => {
+    const beginEdit = (item: pxt.auth.BackpackItem, kind: "rename" | "delete"): void => {
         if (busy.current || !isCurrent()) return;
         // The shared modal takes focus during its mount, before effects run.
         // Keep the owning panel open while focus moves into the portal.
         props.onModalOpenChange?.(true);
         setError(undefined);
-        setConfirmId(item.id);
+        setEdit({ kind, id: item.id, name: item.name });
     };
     const deleteItem = (item: pxt.auth.BackpackItem) => run(async () => {
         const index = items.findIndex(entry => entry.id === item.id);
@@ -133,7 +140,14 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         const remaining = readItems();
         focusAfter.current = { id: (remaining[index] || remaining[index - 1])?.id };
         setItems(remaining);
-        setConfirmId(undefined);
+        setEdit(undefined);
+    });
+    const renameItem = () => run(async () => {
+        await backpack.renameBackpackItemAsync(edit.id, edit.name);
+        if (!isCurrent()) return;
+        focusAfter.current = { id: edit.id, action: "rename" };
+        setItems(readItems());
+        setEdit(undefined);
     });
     const addItem = (item: pxt.auth.BackpackItem) => run(async () => {
         await backpack.importBackpackItemAsync(item, props.headerId);
@@ -193,26 +207,41 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             <button className="project-backpack__button" type="button" disabled={pending || !canImport}
                                 aria-label={lf("Add {0} to project", item.name)} aria-describedby={!canImport ? "project-backpack-import-reason" : undefined}
                                 onClick={() => void addItem(item)}>{lf("Add to project")}</button>
+                            <button className="project-backpack__button project-backpack__rename" type="button" disabled={pending}
+                                aria-label={lf("Rename {0}", item.name)} aria-haspopup="dialog"
+                                onClick={() => beginEdit(item, "rename")}>{lf("Rename")}</button>
                             <button className="project-backpack__button project-backpack__delete" type="button" disabled={pending}
                                 aria-label={lf("Delete {0}", item.name)} aria-haspopup="dialog"
-                                onClick={() => confirmDelete(item)}>{lf("Delete")}</button>
+                                onClick={() => beginEdit(item, "delete")}>{lf("Delete")}</button>
                         </div>
                     </li>;
                 })}
             </ul>}
         </div>
-        {modalOpen && <Modal title={lf("Delete snippet?")} className="project-backpack__delete-modal"
-            ariaDescribedBy="project-backpack-delete-description" onClose={cancelDelete} hideDismissButton={pending}
+        {modalOpen && <Modal title={edit.kind === "rename" ? lf("Rename snippet") : lf("Delete snippet?")}
+            className={`project-backpack__${edit.kind}-modal`}
+            ariaDescribedBy={edit.kind === "delete" ? "project-backpack-delete-description" : undefined}
+            onClose={cancelEdit} hideDismissButton={pending}
             actions={[
-                { label: lf("Cancel"), className: "neutral", disabled: pending, onClick: cancelDelete },
-                { label: lf("Delete"), className: "red", disabled: pending, onClick: () => void deleteItem(confirmedItem) }
+                { label: lf("Cancel"), className: "neutral", disabled: pending, onClick: cancelEdit },
+                edit.kind === "rename"
+                    ? { label: lf("Save"), disabled: pending, onClick: () => void renameItem() }
+                    : { label: lf("Delete"), className: "red", disabled: pending, onClick: () => void deleteItem(editedItem) }
             ]}>
-            <div aria-busy={pending}>
+            {edit.kind === "rename" ? <form className="project-backpack__rename-form" aria-busy={pending}
+                onSubmit={event => { event.preventDefault(); void renameItem(); }}>
+                <label htmlFor="project-backpack-name">{lf("Snippet name")}</label>
+                <input id="project-backpack-name" ref={nameInput} type="text" value={edit.name} disabled={pending}
+                    maxLength={backpack.MAX_BACKPACK_NAME_LENGTH} aria-invalid={!!error}
+                    aria-describedby={error ? "project-backpack-name-error" : undefined}
+                    onChange={event => { setEdit({ ...edit, name: event.target.value }); setError(undefined); }} />
+                {error && <p id="project-backpack-name-error" role="alert">{error}</p>}
+            </form> : <div aria-busy={pending}>
                 <p id="project-backpack-delete-description">{props.userId
-                    ? lf("Delete {0} from your backpack on all devices?", confirmedItem.name)
-                    : lf("Delete {0} from your backpack in this browser?", confirmedItem.name)}</p>
+                    ? lf("Delete {0} from your backpack on all devices?", editedItem.name)
+                    : lf("Delete {0} from your backpack in this browser?", editedItem.name)}</p>
                 {error && <p role="alert">{error}</p>}
-            </div>
+            </div>}
         </Modal>}
     </>;
 }

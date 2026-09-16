@@ -87,7 +87,10 @@ function environment(remote = new Map([["alice", {}], ["bob", {}]]), local = sim
                 if (method === "PATCH") {
                     for (const op of data) {
                         assert.equal(op.path[0], "backpack");
-                        assert.ok(op.path.length === 3 || (op.op === "add" && JSON.stringify(op.value) === "{}"));
+                        assert.ok(op.path.length === 3 || (op.op === "add" && JSON.stringify(op.value) === "{}")
+                            || (op.op === "replace" && op.path.length === 4 && op.path[1] === pxt.appTarget.id
+                                && /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(op.path[2])
+                                && op.path[3] === "name" && typeof op.value === "string"));
                     }
                     context.ts.pxtc.jsonPatch.patchInPlace(remote.get(owner), clone(data));
                 }
@@ -129,6 +132,173 @@ function guestEnvironment(local = simulatedStorage(), remote) {
 const storageWrites = local => local.calls.filter(call => ["setItem", "removeItem", "clear"].includes(call.method));
 const patches = env => env.requests.filter(request => request.method === "PATCH");
 const storageFailure = () => { throw new Error("sensitive storage details"); };
+
+describe("name-only backpack renames", () => {
+    for (const cloud of [false, true]) describe(cloud ? "cloud" : "guest", () => {
+        function fixture() {
+            const env = cloud ? environment() : guestEnvironment();
+            env.remote.set("alice", { language: "fr", backpack: { arcade: {}, microbit: { [id(9)]: item(9) } } });
+            env.local.data.set(guestKey(9, "microbit"), JSON.stringify(item(9)));
+            const put = (n, value) => {
+                if (cloud) {
+                    if (value === undefined) delete env.remote.get("alice").backpack.arcade[id(n)];
+                    else env.remote.get("alice").backpack.arcade[id(n)] = clone(value);
+                } else if (value === undefined) env.local.data.delete(guestKey(n));
+                else env.local.data.set(guestKey(n), JSON.stringify(value));
+            };
+            const get = () => cloud ? clone(env.remote.get("alice").backpack.arcade)
+                : Object.fromEntries(Array.from(env.local.data).filter(([key]) => key.startsWith("arcade/backpack/guest/"))
+                    .map(([key, value]) => [key.slice("arcade/backpack/guest/".length), JSON.parse(value)]));
+            [1, 2, 3].forEach(n => put(n, metadataItem(n)));
+            return { ...env, put, get, writes: () => cloud ? patches(env) : storageWrites(env.local) };
+        }
+
+        it("trims and persists only the name, preserving fresh same-item edits, metadata, order and neighbors on reopen", async () => {
+            const env = fixture();
+            await env.store.refreshBackpackAsync();
+            const fresh = { ...metadataItem(2), code: "fresh blocks", dependencies: { core: "*", ext: "pub:new" },
+                projectBlocks: { custom_block: "fresh.ts" }, createdAt: 2.5 };
+            env.put(2, fresh);
+            if (cloud) env.hook(({ method, run }) => {
+                if (method === "PATCH") { fresh.code = "edited between GET and PATCH"; env.put(2, fresh); }
+                return run();
+            });
+            await env.store.renameBackpackItemAsync(id(2), "  Renamed  ");
+            const expected = [metadataItem(3), { ...fresh, name: "Renamed" }, metadataItem(1)];
+            assert.deepStrictEqual(clone(env.store.getBackpackItems()), expected);
+            assert.deepStrictEqual(env.get(), Object.fromEntries(expected.map(entry => [entry.id, entry])));
+            if (cloud) assert.deepStrictEqual(patches(env).map(request => request.data),
+                [[{ op: "replace", path: ["backpack", "arcade", id(2), "name"], value: "Renamed" }]]);
+            else assert.deepStrictEqual(storageWrites(env.local).map(call => [call.method, call.args[0]]), [["setItem", guestKey(2)]]);
+            assert.equal(env.remote.get("alice").language, "fr");
+            assert.deepStrictEqual(env.remote.get("alice").backpack.microbit, { [id(9)]: item(9) });
+            assert.equal(env.local.data.get(guestKey(9, "microbit")), JSON.stringify(item(9)));
+            const reopened = cloud ? environment(env.remote) : guestEnvironment(env.local);
+            await reopened.store.refreshBackpackAsync();
+            assert.deepStrictEqual(clone(reopened.store.getBackpackItems()), expected);
+        });
+
+        for (const state of ["deleted", "mismatched ID", ...(cloud ? ["deleted before PATCH"] : [])]) {
+            it(`refuses ${state} without resurrection or neighbor changes`, async () => {
+                const env = fixture();
+                await env.store.refreshBackpackAsync();
+                if (state === "deleted before PATCH") env.hook(({ method, run }) => {
+                    if (method === "PATCH") env.put(2, undefined);
+                    return run();
+                });
+                else env.put(2, state === "deleted" ? undefined : metadataItem(8));
+                await assert.rejects(env.store.renameBackpackItemAsync(id(2), "Renamed"), /no longer|mismatched|sync|Invalid/);
+                assert.deepStrictEqual(env.get(), { [id(1)]: metadataItem(1), [id(3)]: metadataItem(3),
+                    ...(state === "mismatched ID" ? { [id(2)]: metadataItem(8) } : {}) });
+                if (state !== "deleted before PATCH") assert.equal(env.writes().length, 0);
+            });
+        }
+
+        it("rejects invalid IDs and names before auth, storage or network; unchanged trimmed names never write", async () => {
+            const env = fixture();
+            for (const invalid of [undefined, null, 7, {}, "", " ", "x".repeat(101), "bad\nname", "bad\x00name", "bad\x7fname"]) {
+                await assert.rejects(env.store.renameBackpackItemAsync(id(2), invalid), /names/);
+            }
+            for (const invalid of [undefined, null, 7, {}, "", "constructor", "__proto__", "../bad", id(2) + "/name"]) {
+                await assert.rejects(env.store.renameBackpackItemAsync(invalid, "Valid"), /ID/);
+            }
+            assert.deepStrictEqual([env.authCalls, env.local.calls, env.requests], [[], [], []]);
+            env.put(2, { ...metadataItem(2), code: "fresh no-op" });
+            await env.store.renameBackpackItemAsync(id(2), "  Snippet 2  ");
+            assert.equal(env.writes().length, 0);
+            assert.equal(env.store.getBackpackItems()[1].code, "fresh no-op");
+            for (const name of ["X", "x".repeat(100)]) await env.store.renameBackpackItemAsync(id(2), name);
+            assert.equal(env.get()[id(2)].name.length, 100);
+        });
+
+        for (const failure of ["read", "write", "silent", "lost ACK", ...(cloud ? ["ACK ID", "ACK name"] : [])]) {
+            it(`rejects ${failure}, preserves the snapshot, sanitizes errors and retries`, async () => {
+                const env = fixture();
+                await env.store.refreshBackpackAsync();
+                let notifications = 0;
+                env.store.subscribeBackpack(() => { notifications++; });
+                if (cloud) env.hook(({ method, run }) => {
+                    if (method === "GET") return failure === "read" ? storageFailure() : run();
+                    if (failure === "write") return storageFailure();
+                    if (failure === "silent") return { success: true, resp: clone(env.remote.get("alice")) };
+                    const result = run();
+                    if (failure === "lost ACK") return { success: false };
+                    result.resp.backpack.arcade[id(2)][failure === "ACK ID" ? "id" : "name"] = failure === "ACK ID" ? id(8) : "Wrong";
+                    return result;
+                });
+                else if (failure === "read") env.local.hooks.access = storageFailure;
+                else env.local.hooks.setItem = ({ run }) => {
+                    if (failure === "write") return storageFailure();
+                    if (failure === "silent") return;
+                    run(); env.local.hooks.getItem = storageFailure;
+                };
+                await assert.rejects(env.store.renameBackpackItemAsync(id(2), "Renamed"),
+                    error => /backpack|another device/.test(error.message) && !/sensitive/.test(error.message));
+                assert.equal(notifications, 0);
+                assert.deepStrictEqual(clone(env.store.getBackpackItems()), [metadataItem(3), metadataItem(2), metadataItem(1)]);
+                env.hook(undefined);
+                for (const key of Object.keys(env.local.hooks)) delete env.local.hooks[key];
+                const writes = env.writes().length;
+                await env.store.renameBackpackItemAsync(id(2), "Renamed");
+                assert.equal(env.get()[id(2)].name, "Renamed");
+                assert.equal(env.store.getBackpackItems()[1].name, "Renamed");
+                assert.equal(notifications, 1);
+                assert.equal(env.writes().length - writes, ["lost ACK", "ACK ID", "ACK name"].includes(failure) ? 0 : 1);
+            });
+        }
+
+        it("renames at 50 items and exact total JSON capacity, rejecting growth before writes", async () => {
+            const env = fixture();
+            await env.store.refreshBackpackAsync();
+            for (let n = 0; n < 50; n++) env.put(n, metadataItem(n));
+            await env.store.renameBackpackItemAsync(id(2), "At capacity");
+            assert.equal(Object.keys(env.get()).length, 50);
+            env.put(50, item(50));
+            let writes = env.writes().length;
+            await assert.rejects(env.store.renameBackpackItemAsync(id(2), "Over capacity"), /50/);
+            assert.equal(env.writes().length, writes);
+            for (let n = 0; n <= 50; n++) env.put(n, undefined);
+            const target = Object.fromEntries(Array.from({ length: 5 }, (_, n) => [id(n), metadataItem(n)]));
+            Object.values(target).forEach(entry => { entry.code = "x".repeat(100000); });
+            const backpack = cloud ? { ...env.remote.get("alice").backpack, arcade: target } : { arcade: target };
+            target[id(4)].code = target[id(4)].code.slice(JSON.stringify(backpack).length - 500000);
+            assert.equal(JSON.stringify(backpack).length, 500000);
+            Object.values(target).forEach((entry, n) => env.put(n, entry));
+            await env.store.renameBackpackItemAsync(id(2), "Renamed 2");
+            writes = env.writes().length;
+            const before = env.get();
+            await assert.rejects(env.store.renameBackpackItemAsync(id(2), "Renamed 2!"), /500000/);
+            assert.equal(env.writes().length, writes);
+            assert.deepStrictEqual(env.get(), before);
+            await env.store.renameBackpackItemAsync(id(2), "X");
+            assert.equal(env.get()[id(2)].name, "X");
+        });
+
+        for (const stage of cloud ? ["GET", "PATCH"] : ["queued", "write"]) {
+            it(`rejects account switches while ${stage} and queued, without exposing or writing to the new account`, async () => {
+                const env = fixture(), entered = deferred(), release = deferred();
+                await env.store.refreshBackpackAsync();
+                if (cloud) env.hook(async ({ method, run }) => {
+                    if (method === stage) { entered.resolve(); await release.promise; }
+                    return run();
+                });
+                if (stage === "write") env.local.hooks.setItem = ({ run }) => { run(); env.signIn("bob"); };
+                const pending = env.store.renameBackpackItemAsync(id(2), "Renamed");
+                const rejected = assert.rejects(pending, /account|editor changed|session/);
+                if (cloud) await entered.promise;
+                const queued = assert.rejects(env.store.renameBackpackItemAsync(id(1), "Queued"), /account|editor changed|session/);
+                if (stage !== "write") env.signIn("bob");
+                release.resolve();
+                await Promise.all([rejected, queued]);
+                assert.deepStrictEqual(env.remote.get("bob"), {});
+                assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
+                assert.equal(env.get()[id(1)].name, "Snippet 1");
+                assert.equal(env.writes().length, ["PATCH", "write"].includes(stage) ? 1 : 0);
+                assert.ok(env.requests.every(request => request.owner === "alice"));
+            });
+        }
+    });
+});
 
 describe("durable guest backpack storage", () => {
     it("adds, updates, deletes and reloads native per-entry keys without network or auth calls", async () => {
