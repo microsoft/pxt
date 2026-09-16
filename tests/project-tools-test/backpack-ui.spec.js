@@ -6,6 +6,7 @@ const path = require("path");
 const ts = require("typescript");
 const less = require("less");
 const { launchTestBrowser } = require("./browser");
+const { contrastSamples } = require("./theme-helpers");
 
 // No build output or ProjectTools integration: exercise today's source with
 // real React 17, the shared portal/FocusTrap/Button sources, and their Less.
@@ -630,42 +631,60 @@ describe("project backpack UI", function () {
         }
     });
 
-    it("uses themed confirmation-style Add text with no button outline and retains hover, focus and disabled states", async () => {
+    it("uses a filled confirmation button for Add with themed hover, focus and disabled states", async () => {
         await signIn([item()]);
         for (const dark of [false, true]) {
-            const color = dark ? "rgb(71, 158, 245)" : "rgb(57, 119, 180)";
-            const hover = dark ? "rgb(98, 171, 245)" : "rgb(32, 68, 103)";
-            await page.evaluate(({ dark, color, hover }) => {
+            const background = dark ? "rgb(122, 162, 247)" : "rgb(0, 120, 212)";
+            const hover = dark ? "rgb(143, 180, 255)" : "rgb(2, 110, 193)";
+            const color = dark ? "rgb(22, 22, 30)" : "rgb(255, 255, 255)";
+            const disabledBackground = dark ? "rgb(45, 45, 45)" : "rgb(221, 221, 221)";
+            const disabledColor = dark ? "rgb(243, 242, 241)" : "rgb(102, 102, 102)";
+            await page.evaluate(({ dark, background, hover, color, disabledBackground, disabledColor }) => {
                 const section = document.querySelector("section");
                 section.style.setProperty("--tools-surface", dark ? "rgb(25, 25, 25)" : "rgb(250, 250, 250)");
                 section.style.setProperty("--tools-foreground", dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)");
-                section.style.setProperty("--pxt-link", color);
-                section.style.setProperty("--pxt-link-hover", hover);
+                section.style.setProperty("--tools-accent", background);
+                section.style.setProperty("--tools-on-accent", color);
+                section.style.setProperty("--pxt-primary-background-hover", hover);
+                section.style.setProperty("--pxt-primary-foreground-hover", color);
+                section.style.setProperty("--pxt-neutral-background3", disabledBackground);
+                section.style.setProperty("--pxt-neutral-foreground3", disabledColor);
                 backpackTest.canImport = true;
                 backpackTest.notify();
-            }, { dark, color, hover });
+            }, { dark, background, hover, color, disabledBackground, disabledColor });
             await page.hover("h3");
             assert.deepStrictEqual(await page.$eval(add, button => {
                 const style = getComputedStyle(button);
-                return { text: button.textContent, background: style.backgroundColor, border: style.borderTopStyle,
+                return { text: button.textContent, background: style.backgroundColor, border: style.borderTopStyle, borderColor: style.borderTopColor,
                     color: style.color, weight: style.fontWeight, underline: style.textDecorationLine.includes("underline") };
-            }), { text: "Add to project", background: "rgba(0, 0, 0, 0)", border: "none", color, weight: "600", underline: false });
+            }), { text: "Add to project", background, border: "solid", borderColor: background, color, weight: "600", underline: false });
+            assert.ok((await contrastSamples(page, add))[0].contrast >= 4.5);
             await page.hover(add);
             assert.deepStrictEqual(await page.$eval(add, button => {
                 const style = getComputedStyle(button);
                 return { background: style.backgroundColor, color: style.color, underline: style.textDecorationLine.includes("underline") };
-            }), { background: "rgba(0, 0, 0, 0)", color: hover, underline: true });
+            }), { background: hover, color, underline: false });
+            assert.ok((await contrastSamples(page, add))[0].contrast >= 4.5);
             await page.focus(body);
             for (let i = 0; i < 3; ++i) await page.keyboard.press("Tab");
             assert.strictEqual(await page.$eval(add, button => button === document.activeElement && getComputedStyle(button).outlineStyle === "solid"), true);
             await page.evaluate(() => { backpackTest.canImport = false; backpackTest.notify(); });
             assert.deepStrictEqual(await page.$eval(add, button => ({
-                disabled: button.disabled, opacity: getComputedStyle(button).opacity,
-                color: getComputedStyle(button).color, description: button.getAttribute("aria-describedby")
-            })), { disabled: true, opacity: "0.5", color: dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)", description: "project-backpack-import-reason" });
+                disabled: button.disabled, background: getComputedStyle(button).backgroundColor,
+                color: getComputedStyle(button).color, border: getComputedStyle(button).borderTopStyle,
+                description: button.getAttribute("aria-describedby")
+            })), { disabled: true, background: disabledBackground, color: disabledColor, border: "dashed", description: "project-backpack-import-reason" });
             await page.click(add);
             assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds), []);
         }
+        const session = await page.createCDPSession();
+        await session.send("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }] });
+        await page.evaluate(() => { backpackTest.canImport = true; backpackTest.notify(); });
+        await page.focus(body);
+        for (let i = 0; i < 3; ++i) await page.keyboard.press("Tab");
+        assert.strictEqual(await page.$eval(add, button => button === document.activeElement && getComputedStyle(button).outlineStyle === "solid"), true);
+        assert.ok((await contrastSamples(page, add))[0].contrast >= 4.5);
+        await session.detach();
     });
 
     for (const signedIn of [false, true]) {

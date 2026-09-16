@@ -97,8 +97,8 @@ rebuilds the shared library and webapp first.
   missing-only extension requirements and updates as packages change, import restrictions,
   the real shared delete modal and focus trap,
   optional prefilled Rename dialogs, Enter/Save/Cancel/Escape, rename validation/retry,
-  grouped top-right pencil/trash icons and bottom-right confirmation-style Add text,
-  alignment with long names and RTL, themed hover/disabled text states,
+  grouped top-right pencil/trash icons and a bottom-right filled confirmation button,
+  alignment with long names and RTL, themed hover/disabled button states and text contrast,
   account changes, confirmation/retry/focus, quiet add/delete/rename outcomes,
   mobile overflow/touch sizes and theme/forced-color focus. This suite does not
   install extensions or exercise the source-file popup itself.

@@ -108,17 +108,20 @@
 .project-backpack__requirements ul { padding-inline-start: 1.25rem; }
 .project-backpack__actions { display: flex; justify-content: flex-end; margin-block-start: .5rem; }
 .project-backpack__button.project-backpack__add {
-    border: none;
-    background: none;
-    color: var(--pxt-link, var(--tools-accent));
+    border-color: var(--tools-accent);
+    background: var(--tools-accent);
+    color: var(--tools-on-accent);
     font-weight: 600;
 
     &:hover:not(:disabled) {
-        background: none;
-        color: var(--pxt-link-hover, var(--pxt-link, var(--tools-accent)));
-        text-decoration: underline;
+        background: var(--pxt-primary-background-hover, var(--tools-accent));
+        color: var(--pxt-primary-foreground-hover, var(--tools-on-accent));
     }
-    &:disabled { color: var(--tools-foreground); opacity: .5; }
+    &:disabled {
+        border-color: var(--pxt-neutral-foreground3, var(--tools-border));
+        background: var(--pxt-neutral-background3, var(--tools-surface));
+        color: var(--pxt-neutral-foreground3, var(--tools-foreground));
+    }
 }
 .project-backpack__delete-modal .common-modal-body,
 .project-backpack__rename-modal .common-modal-body { overflow-wrap: anywhere; }

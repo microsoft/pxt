@@ -127,7 +127,7 @@ hidden when none are needed. **Add to project** asks permission
 before installing missing extensions, checks conflicts, preserves current code
 before reloading, and inserts the snippet as one undo group. It does not silently
 replace existing extensions or upgrade an installed version of the same repository.
-The action appears as confirmation-style text at the bottom right of each snippet.
+The action appears as a filled confirmation button at the bottom right of each snippet.
 
 Names are assigned automatically when saving. The optional **Rename** pencil icon
 at the top right, beside the trash icon, opens a dialog with the current name selected,
