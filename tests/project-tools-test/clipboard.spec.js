@@ -122,10 +122,11 @@ function environment() {
     };
     const pxt = {
         CONFIG_NAME: "pxt.json",
-        appTarget: { id: "arcade", versions: { target: "1.0.0" }, appTheme: {}, bundledpkgs: {}, cloud: {} },
+        appTarget: { id: "arcade", versions: { target: "1.0.0", pxt: "13.2.4" }, appTheme: {}, bundledpkgs: {}, cloud: {} },
         shell: { isReadOnly: () => state.readOnly },
         auth: new Proxy({}, { get: () => forbidden }),
-        Util: { isTranslationMode: () => false },
+        Util: { isTranslationMode: () => false,
+            jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } } },
         U: { jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } } },
         github: { parseRepoId: ref => {
             const [owner, project] = ref.slice(7).split("#")[0].split("/");
@@ -586,8 +587,9 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                     const dialogs = [];
                     const header = { id: "browser-project" };
                     const pxt = {
-                        CONFIG_NAME: "pxt.json", appTarget: { id: "arcade", versions: { target: "1" } },
+                        CONFIG_NAME: "pxt.json", appTarget: { id: "arcade", versions: { target: "1.0.0", pxt: "13.2.4" } },
                         shell: { isReadOnly: () => false }, U: { jsonTryParse: JSON.parse },
+                        Util: { jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } } },
                         blocks: { compileInfo: () => ({ definitionNameToParam: {} }) },
                         Package: { parseAndValidConfig: JSON.parse },
                         storage: { setLocal: (key, value) => storage.set(key, value), getLocal: key => storage.get(key) }

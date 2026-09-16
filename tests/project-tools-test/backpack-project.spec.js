@@ -35,6 +35,16 @@ const packageMethods = ["findConflictsAsync", "parseAndValidConfig"].map(name =>
 }).join("\n");
 const conflictSource = compile(`class SourcePackage { ${packageMethods} }; exports.SourcePackage = SourcePackage;`);
 
+const authSource = ts.createSourceFile("auth.ts", read("pxtlib/auth.ts"), ts.ScriptTarget.Latest, true);
+let assetTypeFunction;
+function findAssetTypeFunction(node) {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === "isBackpackAssetType") assetTypeFunction = node;
+    ts.forEachChild(node, findAssetTypeFunction);
+}
+findAssetTypeFunction(authSource);
+assert(assetTypeFunction, "Expected the current asset allowlist helper");
+const assetTypeSource = compile(assetTypeFunction.getText(authSource));
+
 const clone = value => JSON.parse(JSON.stringify(value));
 const config = (name, extra = {}) => ({ name, files: ["main.ts"], dependencies: {}, ...extra });
 const version = name => `github:owner/${name}#v1.2.3`;
@@ -68,7 +78,8 @@ function environment(installed = {}) {
     };
     const pxt = {
         CONFIG_NAME: "pxt.json",
-        appTarget: { bundledpkgs: { core: {} }, appTheme: {}, cloud: { packages: true, githubPackages: true } },
+        appTarget: { id: "arcade", versions: { target: "1.0.0", pxt: "13.2.4" },
+            bundledpkgs: { core: {} }, appTheme: { backpack: true }, cloud: { packages: true, githubPackages: true } },
         github: {
             parseRepoId: ref => {
                 const [fullName, tag] = ref.replace(/^github:/, "").split("#");
@@ -94,6 +105,7 @@ function environment(installed = {}) {
         vm.runInContext(`(function(exports, require) { ${source}\n})`, context)(exports, requireModule);
         return exports;
     }
+    pxt.auth = { ...execute(assetTypeSource), hasIdentity: () => true };
     const SourcePackage = execute(conflictSource).SourcePackage;
     pxt.Package = class extends SourcePackage {
         constructor(id, verspec, parent, addedBy) {
@@ -153,6 +165,14 @@ function environment(installed = {}) {
     const Blockly = {
         Blocks: registry,
         DragTarget: class {},
+        utils: {
+            Coordinate: class { constructor(x, y) { this.x = x; this.y = y; } },
+            svgMath: { screenToWsCoordinates: (workspace, point) => {
+                assert.strictEqual(workspace, host.getWorkspace());
+                events.push("coordinates");
+                return { x: (point.x - workspace.left) / workspace.scale, y: (point.y - workspace.top) / workspace.scale };
+            } }
+        },
         renderManagement: { finishQueuedRenders: () => checkpoint("renders") }
     };
     const constants = execute(sources["pxtblocks/plugins/functions/constants.ts"]);
@@ -163,17 +183,19 @@ function environment(installed = {}) {
     });
     const blockly = {
         ...primitive, builtinBlocks: () => builtins,
-        pasteBackpackBlock: (code, workspace) => {
+        pasteBackpackBlock: (code, workspace, coordinates) => {
             assert(active);
             primitive.parseBackpackCode(code);
             assert.equal(workspace, host.getWorkspace());
+            pastes.push({ workspace, coordinates });
             events.push("paste:one-undo-group");
         }
     };
     const store = execute(sources["webapp/src/backpack.ts"]);
     const core = { confirmAsync: async options => {
         dialogs.push(clone(options));
-        const result = await checkpoint(options.hideCancel ? "popup" : "confirm");
+        const result = await checkpoint(options.hideCancel ? "popup"
+            : options.header === "Different editor version" ? "version-confirm" : "confirm");
         return result === undefined ? 1 : result;
     } };
     const imports = { "blockly": Blockly, "../../pxtblocks": blockly, "./package": pkg, "./core": core, "./backpack": store };
@@ -183,7 +205,8 @@ function environment(installed = {}) {
     };
     const shared = imports["./blockSnippet"] = execute(sources["webapp/src/blockSnippet.ts"], load);
     const api = execute(sources["webapp/src/backpackProject.ts"], load);
-    const workspace = {};
+    const pastes = [];
+    const workspace = { left: 0, top: 0, scale: 1 };
     const target = pxt.appTarget;
     const host = {
         headerId: "project", isCurrent: () => active && pxt.appTarget === target,
@@ -201,6 +224,7 @@ function environment(installed = {}) {
     };
     const item = {
         id: "00000000-0000-4000-8000-000000000000", name: "Snippet", createdAt: 0,
+        kind: "code", versions: { ...pxt.appTarget.versions },
         dependencies: {}, code: codeFor({ type: "container" }), blockText: "Captured container label"
     };
     const requirePackages = (...names) => {
@@ -209,9 +233,9 @@ function environment(installed = {}) {
     };
     return {
         shared, item, host, events, dialogs, configs, hooks, pxt, main, info, registry, file, editor, define,
-        blockly, constants, context, requirePackages,
+        blockly, constants, context, requirePackages, pastes,
         switchAccount: () => { active = false; },
-        run: () => api.addBackpackToProjectAsync(item, host),
+        run: position => api.addBackpackToProjectAsync(item, host, position),
         ensure: (requirements, types) => shared.ensureBlockSnippetAsync(requirements, types, host),
         captureStates: states => clone(shared.getBlockSnippetRequirements(states, info, main)),
         capture: code => clone(api.getBackpackRequirements(code, info, main))
@@ -404,9 +428,63 @@ describe("Backpack project requirements (fresh source)", () => {
 });
 
 describe("Backpack project insertion (fresh source, no network or program execution)", () => {
-    it("saves unsaved code/assets, merges current config, and refreshes required packages before paste", async () => {
+    it("cancels either target or PXT version mismatch before dependency checks or mutations", async () => {
+        for (const field of ["target", "pxt"]) {
+            const e = environment(); e.requirePackages("a");
+            e.item.versions[field] += "-beta.2+capture";
+            e.item.projectBlocks = { missing: "helpers.ts" };
+            e.hooks.set("version-confirm", () => 0);
+            assert.equal(await e.run(), false);
+            assert.deepStrictEqual(e.events, ["version-confirm"]);
+            assert.equal(e.dialogs[0].agreeLbl, "Add anyway");
+            assert(e.dialogs[0].body.includes(e.item.versions[field]));
+            assert(e.dialogs[0].body.includes(e.pxt.appTarget.versions[field]));
+            assert.deepStrictEqual(JSON.parse(e.file.content).dependencies, {});
+        }
+    });
+
+    it("checks common dependency requirements only after version consent", async () => {
+        const e = environment(); e.requirePackages("a");
+        e.item.versions.target = "1.0.0-beta.2";
+        e.hooks.set("confirm", () => 0);
+        assert.equal(await e.run(), false);
+        assert.deepStrictEqual(e.events, ["version-confirm", "confirm"]);
+        assert.deepStrictEqual(JSON.parse(e.file.content).dependencies, {});
+    });
+
+    it("rechecks account and project identity when deferred version consent resolves", async () => {
+        for (const change of [e => e.switchAccount(), e => { e.editor.header.id = "other-project"; }]) {
+            const e = environment(); e.requirePackages("a");
+            e.item.versions.pxt = "13.2.4-beta.1";
+            let release, entered;
+            const pending = new Promise(resolve => { release = resolve; });
+            const confirming = new Promise(resolve => { entered = resolve; });
+            e.hooks.set("version-confirm", () => { entered(); return pending; });
+            const insertion = e.run();
+            await confirming;
+            assert.deepStrictEqual(e.events, ["version-confirm"]);
+            change(e); release(1);
+            await assert.rejects(insertion, /project or account changed/);
+            assert.deepStrictEqual(e.events, ["version-confirm"]);
+            assert.deepStrictEqual(JSON.parse(e.file.content).dependencies, {});
+        }
+    });
+
+    it("matching versions need no warning and drop coordinates use the workspace after extension reload", async () => {
+        const e = environment(); e.requirePackages("a");
+        const fresh = { left: 40, top: 60, scale: 2 };
+        e.hooks.set("definitions-ready", () => { e.host.getWorkspace = () => fresh; });
+        assert.equal(await e.run({ x: 240, y: 160 }), true);
+        assert.deepStrictEqual(e.dialogs.map(dialog => dialog.header), ["Add required extensions?"]);
+        assert.deepStrictEqual(e.events.slice(-5), ["definitions-ready", "coordinates", "paste:one-undo-group", "renders", "save:2"]);
+        assert.strictEqual(e.pastes[0].workspace, fresh);
+        assert.deepStrictEqual(e.pastes[0].coordinates, { x: 100, y: 50 });
+    });
+
+    it("after version consent saves unsaved code/assets, merges config, and refreshes packages before paste", async () => {
         const e = environment({ unrelated: version("unrelated") });
         e.requirePackages("a", "b");
+        e.item.versions.target = "1.0.0-beta.2+capture";
         e.hooks.set("save:1", () => {
             const cfg = JSON.parse(e.file.content);
             cfg.files.push("images.g.jres", "images.g.ts");
@@ -415,12 +493,13 @@ describe("Backpack project insertion (fresh source, no network or program execut
         });
         const untouched = clone(e.item);
         assert.equal(await e.run(), true);
-        assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "fetch:b", "preflight:a", "preflight:b", "save:1", "write",
+        assert.deepStrictEqual(e.events, ["version-confirm", "confirm", "fetch:a", "fetch:b", "preflight:a", "preflight:b", "save:1", "write",
             "reload", "definitions-ready", "paste:one-undo-group", "renders", "save:2"]);
         assert.deepStrictEqual(e.item, untouched);
-        assert.equal(e.dialogs[0].agreeLbl, "Add extensions and snippet");
-        assert(e.dialogs[0].body.includes(`a: ${version("a")}`));
-        assert(e.dialogs[0].body.includes(`b: ${version("b")}`));
+        assert.equal(e.dialogs[0].agreeLbl, "Add anyway");
+        assert.equal(e.dialogs[1].agreeLbl, "Add extensions and snippet");
+        assert(e.dialogs[1].body.includes(`a: ${version("a")}`));
+        assert(e.dialogs[1].body.includes(`b: ${version("b")}`));
         const cfg = JSON.parse(e.file.content);
         assert.equal(cfg.name, "renamed project");
         assert.deepStrictEqual(cfg.files, ["main.ts", "images.g.jres", "images.g.ts"]);
@@ -617,7 +696,8 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.deepStrictEqual(e.events, ["confirm", "fetch:a"]);
     });
 
-    it("inserts real Blockly blocks and removes the complete insertion in one undo", async () => {
+    it("inserts real Blockly blocks and removes the complete insertion in one undo", async function () {
+        this.timeout(10000); // Includes cold-loading Blockly and its native render/event setup.
         const e = environment();
         const Blockly = require("blockly");
         require("blockly/blocks");
@@ -636,10 +716,17 @@ describe("Backpack project insertion (fresh source, no network or program execut
         e.item.code = codeFor({ type: "controls_if", inputs: { IF0: { block: { type: "logic_boolean", fields: { BOOL: "TRUE" } } } } });
         e.registry.logic_boolean = {};
         e.blockly.builtinBlocks = () => ({ controls_if: {}, logic_boolean: {} });
+        const recorded = new Promise(resolve => {
+            const listener = event => {
+                if (event.type !== Blockly.Events.CREATE) return;
+                workspace.removeChangeListener(listener);
+                resolve();
+            };
+            workspace.addChangeListener(listener);
+        });
         try {
             assert.equal(await e.run(), true);
-            // Blockly dispatches recorded undo events asynchronously.
-            await new Promise(resolve => setTimeout(resolve, 0));
+            await recorded;
             assert.equal(workspace.getAllBlocks(false).length, 2);
             const undo = workspace.getUndoStack();
             assert(undo.length);

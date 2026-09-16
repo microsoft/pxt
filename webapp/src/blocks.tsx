@@ -884,7 +884,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.disposeBackpackEditor = backpack.setBackpackEditor({
             headerId: () => this.parent.state.header?.id,
             canImport: () => this.backpackAvailable(),
-            importAsync: item => this.importFromBackpackAsync(item)
+            canDrop: target => target instanceof Element && !target.closest(".blocklyFlyout")
+                && target.closest(".blocklyWorkspace") === this.editor.getSvgGroup(),
+            assetEditorContext: () => ({ blocksInfo: this.blockInfo, gallery: pxt.react.getTilemapProject().saveGallerySnapshot(),
+                palette: pxt.appTarget.runtime.palette.slice() }),
+            importAsync: (item, position) => this.importFromBackpackAsync(item, position)
         });
 
         (this.editor.getSvgGroup() as SVGElement).addEventListener("focusin", this.onWorkspaceFocus);
@@ -2596,7 +2600,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private backpackAvailable(): boolean {
         const header = this.parent.state.header;
-        return !!header && !header.temporary && !(header.tutorial && !header.tutorialCompleted)
+        return backpack.isBackpackEnabled() && !!header && !header.temporary && !header.tutorial && !this.parent.isTutorial()
             && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor
             && this.isVisible && this.parent.isBlocksActive() && !!this.blockInfo
             && !this.loadingXml && !this.delayLoadXml && !!document.getElementById("project-tools-tab-backpack");
@@ -2613,9 +2617,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         try {
             const { code, blockText } = pxtblockly.captureBackpackBlock(block);
             const requirements = getBackpackRequirements(code, this.blockInfo, pkg.mainPkg);
+            const kind: pxt.auth.BackpackKind = pxt.auth.isBackpackAssetType(block.type) ? "asset" : "code";
             item = {
                 id: pxt.U.guidGen(), name: pxtblockly.getBlockText(block).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
-                code, blockText, ...requirements, createdAt: Date.now(), ...await backpackPreviewAsync(block)
+                kind,
+                versions: { target: pxt.appTarget.versions.target, pxt: pxt.appTarget.versions.pxt },
+                code, blockText, ...requirements, createdAt: Date.now(),
+                ...(kind === "code" ? await backpackPreviewAsync(block) : {})
             };
             backpack.validateBackpackItem(item);
         } catch (error) {
@@ -2631,7 +2639,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 await backpack.saveBackpackItemAsync(item);
                 if (!isCurrentAccount()) return;
                 core.infoNotification(lf("Added {0} to Backpack.", item.name));
-                if (this.parent.state.header?.id === headerId) backpack.requestBackpackOpen(headerId, false);
+                if (this.parent.state.header?.id === headerId) backpack.requestBackpackOpen(headerId, false, item.kind);
                 return;
             } catch (error) {
                 if (!isCurrentAccount()) return;
@@ -2643,9 +2651,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    private async importFromBackpackAsync(item: pxt.auth.BackpackItem): Promise<boolean> {
+    private async importFromBackpackAsync(item: pxt.auth.BackpackItem, position?: backpack.BackpackImportPosition): Promise<boolean> {
         if (!this.backpackAvailable()) throw new Error(lf("Open an editable Blocks project to add this snippet."));
-        return addBackpackToProjectAsync(item, this.createSnippetHost());
+        const host = this.createSnippetHost();
+        return addBackpackToProjectAsync(item, { ...host, isCurrent: () => host.isCurrent()
+            && backpack.isBackpackEnabled() && !this.parent.state.header?.tutorial && !this.parent.isTutorial() }, position);
     }
 
     private createSnippetHost(): BackpackProjectHost {

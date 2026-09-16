@@ -4,6 +4,11 @@
 /// <reference path="./ocv.d.ts" />
 /// <reference path="./monaco.d.ts" />
 
+// TilemapProject exposes this shape, but pxtlib's named interface is private.
+declare namespace pxt {
+    export type AssetSnapshot = ReturnType<TilemapProject["saveGallerySnapshot"]>;
+}
+
 declare namespace pxt.editor {
     export interface EditorMessage {
         /**
@@ -1400,10 +1405,26 @@ declare namespace pxt.editor {
         assetType: pxt.AssetType;
     }
 
-    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
+    interface OpenBackpackAssetEditorRequest {
+        type: "open-backpack";
+        id?: string | number;
+        code: string;
+        blocksInfo: pxtc.BlocksInfo;
+        gallery: pxt.AssetSnapshot;
+        palette?: string[];
+    }
+
+    interface SaveBackpackAssetEditorRequest {
+        type: "save-backpack";
+        id?: string | number;
+    }
+
+    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest
+        | OpenBackpackAssetEditorRequest | SaveBackpackAssetEditorRequest;
 
     interface BaseAssetEditorResponse {
-        id?: number;
+        id?: string | number;
+        success?: boolean;
     }
 
     interface OpenAssetEditorResponse extends BaseAssetEditorResponse {
@@ -1423,7 +1444,24 @@ declare namespace pxt.editor {
         type: "duplicate";
     }
 
-    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
+    interface OpenBackpackAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "open-backpack";
+    }
+
+    interface SaveBackpackAssetEditorResponse extends BaseAssetEditorResponse {
+        type: "save-backpack";
+        code: string;
+        blockText: string;
+    }
+
+    interface AssetEditorErrorResponse extends BaseAssetEditorResponse {
+        type: AssetEditorRequest["type"];
+        success: false;
+        error: string;
+    }
+
+    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse
+        | OpenBackpackAssetEditorResponse | SaveBackpackAssetEditorResponse | AssetEditorErrorResponse;
 
     interface AssetEditorRequestSaveEvent {
         type: "event";

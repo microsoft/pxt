@@ -5958,6 +5958,7 @@ export class ProjectView
                 </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed}
                     docsUrl={this.state.sideDocsLoadUrl} bubble={projectTools} header={this.state.header}
+                    tutorial={this.isTutorial() || !!this.state.header?.tutorial}
                     pinned={this.state.sideDocsPinned}
                     projectNotes={this.state.header?.projectNotes} /> : undefined}
                 {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}

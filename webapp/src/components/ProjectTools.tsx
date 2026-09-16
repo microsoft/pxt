@@ -1,17 +1,17 @@
 import * as React from "react";
 import { ProjectWhiteboard } from "./ProjectWhiteboard";
 import { ProjectBackpack } from "./ProjectBackpack";
-import { subscribeBackpackOpen } from "../backpack";
+import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../backpack";
 import { PROJECT_TOOLS_COMPACT_QUERY } from "../projectToolsState";
 
-const tabNames = ["docs", "whiteboard", "backpack"] as const;
-type ProjectToolTab = typeof tabNames[number];
+type ProjectToolTab = "docs" | "whiteboard" | "backpack";
 
 interface ProjectToolsProps {
     header: pxt.workspace.Header;
     notes?: pxt.workspace.ProjectNotes;
     expanded: boolean;
     pinned: boolean;
+    tutorial?: boolean;
     docsUrl?: string;
     docsRequest?: number;
     onExpandedChange: (expanded: boolean) => void;
@@ -23,9 +23,13 @@ interface ProjectToolsProps {
 }
 
 export function ProjectTools(props: ProjectToolsProps) {
-    const [tab, setTab] = React.useState<ProjectToolTab>("docs");
+    const backpackEnabled = isBackpackEnabled() && !props.tutorial && !props.header.tutorial;
+    const tabNames: ProjectToolTab[] = backpackEnabled ? ["docs", "whiteboard", "backpack"] : ["docs", "whiteboard"];
+    const [selectedTab, setTab] = React.useState<ProjectToolTab>("docs");
+    const tab = selectedTab === "backpack" && !backpackEnabled ? "docs" : selectedTab;
     const [visitedWhiteboard, setVisitedWhiteboard] = React.useState(false);
     const [visitedBackpack, setVisitedBackpack] = React.useState(false);
+    const [backpackRequest, setBackpackRequest] = React.useState<BackpackOpenRequest>();
     // Leave initial sizing to the target's responsive sidedocs CSS. An explicit
     // resize is remembered independently of those defaults for this project view.
     const [width, setWidth] = React.useState<number>();
@@ -48,6 +52,15 @@ export function ProjectTools(props: ProjectToolsProps) {
     const drag = React.useRef<{ axis: "width" | "height"; position: number; size: number }>();
     const rtl = pxt.Util.isUserLanguageRtl();
     const tabIndex = tabNames.indexOf(tab);
+    React.useEffect(() => {
+        if (backpackEnabled) return;
+        if (selectedTab === "backpack") {
+            setTab("docs");
+            if (props.expanded) tabButtons.current[0]?.focus();
+        }
+        setFocusedTab(index => Math.min(index, 1));
+        setVisitedBackpack(false);
+    }, [backpackEnabled, selectedTab]);
     const measureWidth = React.useCallback(() => {
         const bounds = panel.current.getBoundingClientRect();
         const style = window.getComputedStyle(panel.current);
@@ -80,15 +93,16 @@ export function ProjectTools(props: ProjectToolsProps) {
     }, [props.onExpandedChange]);
 
     React.useEffect(() => subscribeBackpackOpen(request => {
-        if (request.headerId !== props.header.id) return;
+        if (!backpackEnabled || request.headerId !== props.header.id) return;
         // Native Blockly dragging must retain pointer capture and workspace focus.
         openingFromDrag.current = !request.focus;
         focusTabOnOpen.current = request.focus;
+        setBackpackRequest(request);
         setVisitedBackpack(true);
         setTab("backpack");
         setOptionsOpen(true);
         props.onExpandedChange(true);
-    }), [props.header.id, props.onExpandedChange]);
+    }), [props.header.id, props.onExpandedChange, backpackEnabled]);
     React.useEffect(() => {
         const query = window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY);
         const tabletQuery = window.matchMedia(`(max-width: ${pxt.BREAKPOINT_TABLET}px)`);
@@ -322,8 +336,8 @@ export function ProjectTools(props: ProjectToolsProps) {
             </button>
             <div id="project-tools-options" className="project-tools__bubbles" role="tablist"
                 aria-hidden={!optionsOpen} aria-orientation={compact ? "horizontal" : "vertical"} aria-label={lf("Project tools")}>
-                {[lf("Documentation"), lf("Whiteboard"), lf("Backpack")].map((label, index) => {
-                    const name = tabNames[index];
+                {tabNames.map((name, index) => {
+                    const label = name === "docs" ? lf("Documentation") : name === "whiteboard" ? lf("Whiteboard") : lf("Backpack");
                     const selected = tab === name;
                     return <button key={name} id={`project-tools-tab-${name}`} type="button" role="tab"
                         className="project-tools__bubble" ref={element => tabButtons.current[index] = element}
@@ -430,11 +444,12 @@ export function ProjectTools(props: ProjectToolsProps) {
                 {visitedWhiteboard && <ProjectWhiteboard headerId={props.header.id} notes={props.notes}
                     active={props.expanded && tab === "whiteboard"} renderHeader={renderHeader} />}
             </section>
-            <section id="project-tools-backpack" role="tabpanel" aria-labelledby="project-tools-tab-backpack" hidden={tab !== "backpack"}
+            {backpackEnabled && <section id="project-tools-backpack" role="tabpanel" aria-labelledby="project-tools-tab-backpack" hidden={tab !== "backpack"}
                 className="project-backpack">
                 {visitedBackpack && <ProjectBackpack headerId={props.header.id} active={props.expanded && tab === "backpack"}
-                    renderHeader={renderHeader} onSignIn={props.onSignIn} onModalOpenChange={onModalOpenChange} />}
-            </section>
+                    openRequest={backpackRequest} renderHeader={renderHeader}
+                    onSignIn={props.onSignIn} onModalOpenChange={onModalOpenChange} />}
+            </section>}
         </div>
     </div>;
 }

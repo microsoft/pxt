@@ -12,6 +12,19 @@ const compiled = ts.transpileModule(source, {
 });
 assert.deepStrictEqual(compiled.diagnostics, []);
 
+// Execute the exact current allowlist instead of broadening it in the host stub.
+const authSource = ts.createSourceFile("auth.ts", fs.readFileSync(path.join(root, "pxtlib/auth.ts"), "utf8"), ts.ScriptTarget.Latest, true);
+let assetTypeFunction;
+function findAssetTypeFunction(node) {
+    if (ts.isFunctionDeclaration(node) && node.name?.text === "isBackpackAssetType") assetTypeFunction = node;
+    ts.forEachChild(node, findAssetTypeFunction);
+}
+findAssetTypeFunction(authSource);
+assert(assetTypeFunction, "Expected the current asset allowlist helper");
+const assetTypeSource = ts.transpileModule(assetTypeFunction.getText(authSource), {
+    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
+}).outputText;
+
 // The production adapter uses Chromium transactions on an intercepted test origin;
 // only the transport is mocked. Backend tests cover the actual HTTP handlers.
 describe("dedicated Backpack API and durable IndexedDB (current source)", function () {
@@ -35,16 +48,20 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
             const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
             const item = (n, overrides = {}) => ({ id: id(n), name: `Snippet ${n}`, createdAt: n,
+                kind: "code", versions: { target: "1.0.0", pxt: "13.2.4" },
                 code: JSON.stringify({ blocks: [{ type: "pxt-on-start" }] }), blockText: `captured labels ${n}`,
                 dependencies: { core: "*" }, ...overrides });
+            const asset = (n, overrides = {}) => item(n, { kind: "asset",
+                code: JSON.stringify({ blocks: [{ type: "image_picker", fields: { IMAGE: { data: "pixels" } } }] }), ...overrides });
             const summary = value => ({ id: value.id, name: value.name, createdAt: value.createdAt,
+                kind: value.kind, versions: clone(value.versions),
                 updatedAt: 10, version: '"v1"', status: "ready", hasPreview: !!value.previewUri,
                 ...(value.previewPixelDensity ? { previewPixelDensity: value.previewPixelDensity } : {}),
-                blockText: value.blockText, blockTypes: ["pxt-on-start"], dependencies: value.dependencies,
+                blockText: value.blockText, blockTypes: JSON.parse(value.code).blocks.map(block => block.type), dependencies: value.dependencies,
                 ...(value.projectBlocks ? { projectBlocks: value.projectBlocks } : {}) });
-            const test = window.bt = { id, item, summary, clone, user: "alice", token: "alice-token", requests: [],
-                remote: {}, originals: {}, imports: [], logouts: 0, pageSize: 20, localDev: false,
-                limits: { maxItems: 50, maxCodeBytes: 524288, maxMetadataBytes: 65536, maxPreviewBytes: 131072,
+            const test = window.bt = { id, item, asset, summary, clone, user: "alice", token: "alice-token", requests: [],
+                remote: {}, originals: {}, imports: [], positions: [], logouts: 0, pageSize: 20, localDev: false, identityEnabled: true,
+                limits: { maxItems: 50, maxAssets: 200, maxAssetCodeBytes: 131072, maxCodeBytes: 524288, maxMetadataBytes: 65536, maxPreviewBytes: 131072,
                     maxRequestBytes: 1048576, maxTotalBytes: 52428800, maxPageBytes: 1048576 },
                 signIn(user, token = user ? user + "-token" : undefined) {
                     test.user = user; test.token = token;
@@ -73,17 +90,20 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const forbidden = () => { throw new Error("Unexpected private storage/API/logging"); };
             const client = { apiAsync: forbidden };
             window.pxt = {
-                appTarget: { id: "arcade", bundledpkgs: { core: {} } },
+                appTarget: { id: "arcade", versions: { target: "1.0.0", pxt: "13.2.4" },
+                    appTheme: { backpack: true }, bundledpkgs: { core: {} } },
                 github: { parseRepoId: version => ({ owner: version.split(":")[1].split("/")[0], project: version.split("/")[1] }) },
                 BrowserUtils: { isLocalHostDev: () => test.localDev }, cloud: { DEV_BACKEND: "https://backend.test" },
                 storage: { shared: { getAsync: forbidden, setAsync: forbidden } },
                 log: forbidden, debug: forbidden, tickEvent: forbidden, reportException: forbidden,
                 auth: { client: () => client, cachedHasAuthToken: true, cachedUserState: { profile: { id: "alice" } },
+                    hasIdentity: () => test.identityEnabled,
                     getAuthTokenAsync: async () => test.token,
                     getUserStateAsync: async () => ({ profile: test.user ? { id: test.user } : undefined }),
                     getAuthHeadersAsync: async token => ({ authorization: `mkcd ${token}`, "x-pxt-target": pxt.appTarget.id }),
                     AuthClient: { staticLogoutAsync: async () => { ++test.logouts; test.signIn(undefined); } } },
-                Util: { async requestAsync(options) {
+                Util: { jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } },
+                    async requestAsync(options) {
                     test.requests.push(clone(options));
                     const run = () => {
                         const url = new URL(options.url, "https://backpack.test");
@@ -97,7 +117,8 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
                             const start = Number(url.searchParams.get("cursor") || 0);
                             return { statusCode: 200, json: { entries: clone(entries.slice(start, start + test.pageSize)),
                                 ...(start + test.pageSize < entries.length ? { cursor: String(start + test.pageSize) } : {}),
-                                usage: { count: entries.length, bytes: 100 }, limits: test.limits } };
+                                usage: { count: entries.length, codeCount: entries.filter(entry => entry.kind === "code").length,
+                                    assetCount: entries.filter(entry => entry.kind === "asset").length, bytes: 100 }, limits: test.limits } };
                         }
                         if (options.method === "PUT") {
                             if (test.originals[key] && JSON.stringify(test.originals[key]) !== JSON.stringify(options.data))
@@ -109,6 +130,13 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
                             ? { statusCode: 200, json: { id: key, deleted: true } } : test.fail("backpack_not_found", 404);
                         if (options.headers["If-Match"] !== test.remote[key].version) return test.fail("backpack_version_conflict", 412);
                         if (options.method === "PATCH") {
+                            if (options.data.code !== undefined) {
+                                const edited = store.validateBackpackItem(options.data);
+                                if (edited.kind !== "asset" || test.remote[key].kind !== "asset" || edited.id !== key)
+                                    return test.fail("backpack_invalid_entry", 400);
+                                test.originals[key] = { ...edited, createdAt: test.originals[key].createdAt };
+                                test.remote[key] = summary(test.originals[key]);
+                            }
                             test.remote[key].name = options.data.name;
                             test.remote[key].version = '"v2"';
                             return { statusCode: 200, json: { entry: clone(test.remote[key]) } };
@@ -121,9 +149,12 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             };
             Object.defineProperty(window, "localStorage", { configurable: true, get: forbidden });
         });
+        await page.addScriptTag({ content: `(function(exports) { ${assetTypeSource}\n})(pxt.auth);` });
         await page.addScriptTag({ content: `(function(exports) { ${compiled.outputText}\n})(window.store = {});` });
         await page.evaluate(() => store.setBackpackEditor({ headerId: () => "project", canImport: () => true,
-            importAsync: async value => { bt.imports.push(value); return true; } }));
+            canDrop: target => target === document.body,
+            assetEditorContext: () => ({ blocksInfo: {}, gallery: {}, palette: [] }),
+            importAsync: async (value, position) => { bt.imports.push(value); bt.positions.push(position); return true; } }));
     });
     afterEach(async () => {
         try { assert.deepStrictEqual(errors, []); } finally { await page?.close(); }
@@ -132,18 +163,151 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
     it("pages metadata completely without fetching bodies; Add alone loads content", async () => {
         const result = await page.evaluate(async () => {
             for (let n = 1; n <= 45; n++) bt.seed(n);
+            bt.seed(45, bt.asset(45, { versions: { target: "1.0.0-beta.2+capture", pxt: "13.2.4-beta.1+build.9" } }));
             await store.refreshBackpackAsync();
             const state = store.getBackpackState();
             const before = bt.clone(bt.requests);
-            await store.importBackpackEntryAsync(state.entries[0], "project");
+            await store.importBackpackEntryAsync(state.entries[0], "project", { x: 240, y: 160 });
             return { count: state.entries.length, complete: state.complete, bodies: state.entries.some(entry => !!entry.item),
-                before, after: bt.requests.at(-1), imported: bt.imports.length };
+                before, after: bt.requests.at(-1), imported: bt.imports, positions: bt.positions,
+                summary: state.entries[0].summary, usage: state.usage, limits: state.limits };
         });
         assert.equal(result.count, 45); assert.equal(result.complete, true); assert.equal(result.bodies, false);
         assert.equal(result.before.length, 3);
         assert.ok(result.before.every(request => request.method === "GET" && request.allowHttpErrors && request.withCredentials
             && request.headers.authorization === "mkcd alice-token" && request.headers["x-pxt-target"] === "arcade"));
-        assert.match(result.after.url, /\/content$/); assert.equal(result.imported, 1);
+        assert.match(result.after.url, /\/content$/); assert.equal(result.imported.length, 1);
+        assert.equal(result.summary.kind, "asset"); assert.equal(result.summary.hasPreview, false);
+        assert.equal(result.imported[0].kind, "asset");
+        assert.deepStrictEqual(result.summary.versions, { target: "1.0.0-beta.2+capture", pxt: "13.2.4-beta.1+build.9" });
+        assert.deepStrictEqual(result.imported[0].versions, result.summary.versions);
+        assert.deepStrictEqual(result.positions, [{ x: 240, y: 160 }]);
+        assert.deepStrictEqual(result.usage, { count: 45, codeCount: 44, assetCount: 1, bytes: 100 });
+        assert.equal(result.limits.maxAssets, 200); assert.equal(result.limits.maxAssetCodeBytes, 131072);
+    });
+
+    for (const cloud of [false, true]) it(`round-trips ${cloud ? "cloud" : "local"} asset edits and rejects stale writes`, async () => {
+        const result = await page.evaluate(async cloud => {
+            if (cloud) bt.seed(1, bt.asset(1));
+            else { bt.signIn(undefined); await store.saveBackpackItemAsync(bt.asset(1)); }
+            await store.refreshBackpackAsync();
+            const entry = store.getBackpackState().entries[0], before = bt.clone(bt.requests);
+            const original = await store.loadBackpackAssetAsync(entry);
+            const edited = bt.asset(1, { name: "Edited", createdAt: 999, blockText: "new pixels",
+                versions: { target: "2.0.0-beta.1", pxt: "14.0.0" }, dependencies: {}, code: original.code.replace("pixels", "像素") });
+            const oversized = await bt.outcome(() => store.saveBackpackAssetAsync(entry, { ...edited, code: original.code.replace("pixels", "像".repeat(50000)) }));
+            const code = await bt.outcome(() => store.saveBackpackAssetAsync(entry, bt.item(1)));
+            await store.saveBackpackAssetAsync(entry, edited);
+            const current = store.getBackpackState().entries[0], roundtrip = await store.loadBackpackAssetAsync(current);
+            const stale = await bt.outcome(() => store.saveBackpackAssetAsync(entry, edited));
+            const newer = { ...roundtrip, name: "Another tab/device" };
+            if (cloud) { bt.originals[entry.id] = newer; bt.remote[entry.id] = { ...bt.summary(newer), version: '"v3"' }; }
+            else await bt.putLocal(entry.id, JSON.stringify(newer));
+            const conflict = await bt.outcome(() => store.saveBackpackAssetAsync(current, edited));
+            return { original, edited, roundtrip, before, oversized, code, stale, conflict, newer, requests: bt.requests, imports: bt.imports,
+                stored: cloud ? bt.originals[entry.id] : JSON.parse((await bt.readLocal())[0].payload), summary: current.summary };
+        }, cloud);
+        assert.deepStrictEqual(result.roundtrip, { ...result.edited, createdAt: result.original.createdAt });
+        assert.deepStrictEqual(result.stored, result.newer); assert.deepStrictEqual(result.imports, []);
+        assert.match(result.oversized, /UTF-8 bytes/); assert.notEqual(result.code, "OK");
+        assert.match(result.stale, /no longer current/); assert.match(result.conflict, /another device/);
+        assert(result.before.every(request => !request.url.endsWith("/content")));
+        if (cloud) {
+            const patches = result.requests.filter(request => request.method === "PATCH");
+            assert.deepStrictEqual(patches.map(request => request.headers["If-Match"]), ['"v1"', '"v2"']);
+            assert.deepStrictEqual(patches.map(request => request.data), [result.edited, result.edited]);
+            assert.equal(result.summary.version, '"v2"'); assert.equal(result.summary.createdAt, result.original.createdAt);
+        } else assert.deepStrictEqual(result.requests, []);
+    });
+
+    it("keeps attempted pending asset copies immutable", async () => {
+        const result = await page.evaluate(async () => {
+            bt.hook = (options, run) => { const result = run(); if (options.method === "PUT") throw new Error("Lost ACK"); return result; };
+            await bt.outcome(() => store.saveBackpackItemAsync(bt.asset(1)));
+            const entry = store.getBackpackState().entries[0], before = await bt.readLocal("alice"); bt.requests = [];
+            return { before, load: await bt.outcome(() => store.loadBackpackAssetAsync(entry)),
+                save: await bt.outcome(() => store.saveBackpackAssetAsync(entry, bt.asset(1, { name: "Changed" }))),
+                after: await bt.readLocal("alice"), requests: bt.requests };
+        });
+        assert(result.before[0].firstAttemptAt); assert.deepStrictEqual(result.after, result.before);
+        assert.match(result.load, /Retry syncing/); assert.match(result.save, /Retry syncing/); assert.deepStrictEqual(result.requests, []);
+    });
+
+    it("round-trips beta metadata through guest persistence, direct import, upload, and cloud content", async () => {
+        const result = await page.evaluate(async () => {
+            bt.signIn(undefined);
+            const item = bt.item(1, { versions: { target: "1.0.0-beta.2+capture", pxt: "13.2.4-beta.1" } });
+            await store.saveBackpackItemAsync(item);
+            await store.refreshBackpackAsync();
+            const local = store.getBackpackItems()[0];
+            await store.importBackpackItemAsync(local, "project");
+            bt.signIn("alice"); await store.refreshBackpackAsync();
+            const entry = store.getBackpackState().entries[0];
+            await store.importBackpackEntryAsync(entry, "project");
+            return { item, local, summary: entry.summary, imports: bt.imports,
+                uploaded: bt.requests.find(request => request.method === "PUT").data, records: await bt.readLocal() };
+        });
+        assert.deepStrictEqual(result.local, result.item);
+        assert.deepStrictEqual(result.uploaded, result.item);
+        assert.deepStrictEqual(result.imports, [result.item, result.item]);
+        assert.deepStrictEqual(result.summary.versions, result.item.versions);
+        assert.equal(result.summary.kind, "code"); assert.deepStrictEqual(result.records, []);
+    });
+
+    it("keeps separate guest code and asset quotas and never supplies an asset preview", async () => {
+        const result = await page.evaluate(async () => {
+            bt.signIn(undefined);
+            for (let n = 1; n <= 50; n++) await bt.putLocal(bt.id(n), JSON.stringify(bt.item(n)));
+            await store.saveBackpackItemAsync(bt.asset(51)); // A full code category must not block assets.
+            for (let n = 52; n <= 250; n++) await bt.putLocal(bt.id(n), JSON.stringify(bt.asset(n)));
+            const codeFull = await bt.outcome(() => store.saveBackpackItemAsync(bt.item(251)));
+            const assetFull = await bt.outcome(() => store.saveBackpackItemAsync(bt.asset(252)));
+            await store.refreshBackpackAsync();
+            await store.deleteBackpackEntryAsync(store.getBackpackState().entries.find(entry => entry.id === bt.id(1)));
+            await store.saveBackpackItemAsync(bt.item(251)); // Full assets must not block code either.
+            const items = store.getBackpackItems();
+            window.fetch = () => { throw new Error("Asset previews must not be fetched"); };
+            const preview = await bt.outcome(() => store.getBackpackPreviewAsync(
+                store.getBackpackState().entries.find(entry => entry.item.kind === "asset"), new AbortController().signal));
+            return { codeFull, assetFull, preview, codeCount: items.filter(item => item.kind === "code").length,
+                assets: items.filter(item => item.kind === "asset"), requests: bt.requests };
+        });
+        assert.match(result.codeFull, /full/); assert.match(result.assetFull, /full/);
+        assert.equal(result.codeCount, 50); assert.equal(result.assets.length, 200);
+        assert(result.assets.every(item => !("previewUri" in item) && !("previewPixelDensity" in item)));
+        assert.notEqual(result.preview, "OK"); assert.deepStrictEqual(result.requests, []);
+    });
+
+    it("missing target flag or identity support disables storage and drop, but signed-out guests remain enabled", async () => {
+        const result = await page.evaluate(async () => {
+            bt.signIn(undefined); await store.saveBackpackItemAsync(bt.item(1));
+            const guest = { enabled: store.isBackpackEnabled(), drop: store.canDropBackpack("project", document.body) };
+            const disabled = [];
+            for (const setting of ["flag", "identity"]) {
+                if (setting === "flag") delete pxt.appTarget.appTheme.backpack;
+                else bt.identityEnabled = false;
+                store.notifyBackpackEditorChanged();
+                disabled.push({ enabled: store.isBackpackEnabled(), drop: store.canDropBackpack("project", document.body),
+                    entries: store.getBackpackState().entries,
+                    save: await bt.outcome(() => store.saveBackpackItemAsync(bt.item(2))),
+                    refresh: await bt.outcome(() => store.refreshBackpackAsync()),
+                    import: await bt.outcome(() => store.importBackpackItemAsync(bt.item(1), "project")) });
+                pxt.appTarget.appTheme.backpack = true; bt.identityEnabled = true;
+                store.notifyBackpackEditorChanged();
+                // Re-enabling must not revive the previous identity's snapshot.
+                disabled.at(-1).restoredEntries = store.getBackpackState().entries;
+                await store.refreshBackpackAsync();
+            }
+            return { guest, disabled, records: await bt.readLocal(), requests: bt.requests, imports: bt.imports };
+        });
+        assert.deepStrictEqual(result.guest, { enabled: true, drop: true });
+        for (const state of result.disabled) {
+            assert.equal(state.enabled, false); assert.equal(state.drop, false);
+            assert.deepStrictEqual(state.entries, []); assert.deepStrictEqual(state.restoredEntries, []);
+            for (const action of ["save", "refresh", "import"]) assert.match(state[action], /session/);
+        }
+        assert.equal(result.records.length, 1);
+        assert.deepStrictEqual(result.requests, []); assert.deepStrictEqual(result.imports, []);
     });
 
     it("saves above the old 64 KiB preferences limit, changes summaries in place, and uses If-Match", async () => {
@@ -261,7 +425,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.equal(result.records.length, 1); assert.match(result.records[0].key, /000002$/); assert.deepStrictEqual(result.requests, []);
     });
 
-    for (const transition of ["account", "target", "token"]) it(`discards late responses and queued work after ${transition}`, async () => {
+    for (const transition of ["account", "target", "token", "disabled flag", "disabled identity"]) it(`discards late responses and queued work after ${transition}`, async () => {
         const result = await page.evaluate(async transition => {
             bt.hold(); bt.hook = async (options, run) => { if (options.method === "PUT") { bt.enter(); await bt.gate; } return run(); };
             const first = bt.outcome(() => store.saveBackpackItemAsync(bt.item(1))); await bt.entered;
@@ -269,6 +433,8 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             if (transition === "account") bt.signIn("bob");
             if (transition === "target") pxt.appTarget.id = "microbit";
             if (transition === "token") bt.signIn("alice", "replacement");
+            if (transition === "disabled flag") delete pxt.appTarget.appTheme.backpack;
+            if (transition === "disabled identity") bt.identityEnabled = false;
             bt.release();
             return { results: await Promise.all([first, second]), requests: bt.requests, entries: store.getBackpackState().entries };
         }, transition);
@@ -390,21 +556,58 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
     it("validates UTF-8, dependencies, project metadata, PNG density and bounded recovery names without side effects", async () => {
         const result = await page.evaluate(() => {
             const invalid = [bt.item(1, { blockText: undefined }), bt.item(1, { blockText: "é".repeat(100001) }),
+                ...["kind", "versions"].map(field => { const item = bt.item(1); delete item[field]; return item; }),
+                bt.item(1, { kind: "image" }),
+                ...[undefined, { target: "1.0.0" }, { pxt: "13.2.4" },
+                    { target: "1.0.0", pxt: "13.2.4", extra: "not allowed" },
+                    { target: "beta", pxt: "13.2.4" }, ["1.0.0", "13.2.4"]].map(versions => bt.item(1, { versions })),
                 bt.item(1, { code: "é".repeat(262145) }), bt.item(1, { name: "bad\nname" }),
                 bt.item(1, { dependencies: { ext: "file:private" } }), bt.item(1, { projectBlocks: { type: "bad\nfile" } }),
                 bt.item(1, { previewUri: "javascript:bad" }), bt.item(1, { previewPixelDensity: 2 }),
                 bt.item(1, { previewUri: "data:image/png;base64,iVBORw0KGgo=", previewPixelDensity: 3 })];
-            const rejected = invalid.every(value => { try { store.validateBackpackItem(value); return false; } catch { return true; } });
+            const rejected = invalid.map(value => { try { store.validateBackpackItem(value); return false; } catch { return true; } });
+            const missingSummaries = ["kind", "versions"].map(field => {
+                const summary = bt.summary(bt.item(2)); delete summary[field];
+                return store.readBackpackSummary(summary);
+            });
             const densities = [1, 1.5, 2].map(previewPixelDensity => store.validateBackpackItem(bt.item(1, {
                 previewUri: "data:image/png;base64,iVBORw0KGgo=", previewPixelDensity })).previewPixelDensity);
             const recovery = store.readBackpackEntry("bad", { name: "x".repeat(101), code: "PRIVATE", previewUri: "javascript:bad" }, "local");
             const summary = store.readBackpackSummary({ ...bt.summary(bt.item(2)), code: "PRIVATE", previewUri: "javascript:bad" });
-            return { rejected, densities, recovery, summary, requests: bt.requests };
+            return { rejected, missingSummaries, densities, recovery, summary, requests: bt.requests };
         });
-        assert.equal(result.rejected, true); assert.deepStrictEqual(result.densities, [1, 1.5, 2]);
+        assert(result.rejected.every(Boolean)); assert.deepStrictEqual(result.densities, [1, 1.5, 2]);
+        assert(result.missingSummaries.every(entry => entry.error && !entry.item && entry.summary.status === "invalid"));
         assert.equal(result.recovery.name.length, 100); assert.equal(result.recovery.item, undefined);
         assert.equal(result.summary.item, undefined); assert.doesNotMatch(JSON.stringify(result.summary), /PRIVATE|javascript/);
         assert.deepStrictEqual(result.requests, []);
+    });
+
+    it("rejects non-standalone or misclassified assets, previews, and oversized asset bodies before persistence", async () => {
+        const result = await page.evaluate(async () => {
+            const code = (...blocks) => JSON.stringify({ blocks });
+            const root = { type: "image_picker" };
+            const invalid = [
+                bt.asset(1, { code: code({ type: "not_an_asset_picker" }) }),
+                bt.item(1, { code: code(root) }), bt.asset(1, { code: code({ type: "pxt-on-start" }) }),
+                bt.asset(1, { code: code(root, root) }),
+                bt.asset(1, { code: code({ ...root, next: null }) }),
+                bt.asset(1, { code: code({ ...root, inputs: { IMAGE: { shadow: { type: "text" } } } }) }),
+                bt.asset(1, { code: code({ ...root, inputs: [] }) }),
+                bt.asset(1, { previewUri: "data:image/png;base64,iVBORw0KGgo=" }),
+                bt.asset(1, { previewPixelDensity: undefined }),
+                bt.asset(1, { code: code({ ...root, fields: { IMAGE: "é".repeat(65536) } }) })
+            ];
+            const failures = [];
+            for (const value of invalid) failures.push(await bt.outcome(() => store.saveBackpackItemAsync(value)));
+            const valid = store.validateBackpackItem(bt.asset(2, { code: code({ ...root, inputs: {} }) }));
+            const detached = store.validateBackpackItem(valid);
+            valid.versions.target = "9.0.0";
+            return { failures, detached, records: await bt.readLocal("alice"), requests: bt.requests };
+        });
+        assert(result.failures.every(failure => failure !== "OK"));
+        assert.equal(result.detached.kind, "asset"); assert.equal(result.detached.versions.target, "1.0.0");
+        assert.deepStrictEqual(result.records, []); assert.deepStrictEqual(result.requests, []);
     });
 
 });

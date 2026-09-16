@@ -72,6 +72,8 @@ export abstract class IframeDriver {
     }
 
     protected onMessageReceived = (event: MessageEvent) => {
+        // Before the private port handshake, accept messages only from this frame.
+        if (!this.port && event.source !== this.iframe.contentWindow) return;
         const data = event.data;
 
         if (data) {

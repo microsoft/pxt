@@ -5,6 +5,15 @@ export class AssetEditorDriver extends IframeDriver {
         super(frame);
     }
 
+    async openBackpackAsset(code: string, blocksInfo: pxtc.BlocksInfo, gallery: pxt.AssetSnapshot, palette?: string[]): Promise<void> {
+        await this.sendRequest({ type: "open-backpack", code, blocksInfo, gallery, palette } as pxt.editor.OpenBackpackAssetEditorRequest);
+    }
+
+    async saveBackpackAsset(): Promise<{ code: string; blockText: string }> {
+        const response = await this.sendRequest({ type: "save-backpack" } as pxt.editor.SaveBackpackAssetEditorRequest) as pxt.editor.SaveBackpackAssetEditorResponse;
+        return { code: response.code, blockText: response.blockText };
+    }
+
     async openAsset(assetId: string, assetType: pxt.AssetType, files: pxt.Map<string>, palette?: string[]) {
         await this.sendRequest(
             {

@@ -36,6 +36,11 @@ const compiledPreview = ts.transpileModule(previewSource, {
 assert.deepStrictEqual(compiledPreview.diagnostics, []);
 
 const clone = value => JSON.parse(JSON.stringify(value));
+const enabledSource = ts.createSourceFile("backpack.ts", fs.readFileSync(path.resolve(__dirname, "../../webapp/src/backpack.ts"), "utf8"), ts.ScriptTarget.Latest, true);
+const enabledFunction = enabledSource.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === "isBackpackEnabled");
+const compiledEnabled = ts.transpileModule(enabledFunction.getText(enabledSource), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS }
+}).outputText;
 function deferred() {
     let resolve;
     let reject;
@@ -43,7 +48,7 @@ function deferred() {
     return { promise, resolve, reject };
 }
 
-function environment(user) {
+function environment(user, type = "controls_repeat_ext") {
     const events = [];
     const hooks = {};
     const saves = [];
@@ -52,15 +57,16 @@ function environment(user) {
     const opens = [];
     const imports = [];
     const logins = [];
-    const state = { user, readOnly: false, blocksActive: true, guidCount: 0 };
-    const block = { id: "source-block", data: { text: "unchanged" } };
-    const code = '{"blocks":[{"type":"controls_repeat_ext"}]}';
+    const state = { user, readOnly: false, blocksActive: true, guidCount: 0, identity: true, tutorial: false };
+    const block = { id: "source-block", type, data: { text: "unchanged" } };
+    const versions = { target: "2.0.1-beta.2+target", pxt: "12.0.3-dev.4+pxt" };
+    const code = JSON.stringify({ blocks: [{ type }] });
     const blockText = "repeat four times PRIVATE_BODY_TEXT Displayed choice backpackImage";
     const requirements = { dependencies: { extension: "github:owner/extension#v1.0.0" }, projectBlocks: {} };
     const previewUri = "data:image/png;base64,iVBORw0KGgo=";
     const preview = { previewUri, previewPixelDensity: 2 };
     const importedItem = { id: "00000000-0000-4000-8000-000000000001", name: "Imported snippet",
-        code, blockText, ...requirements, createdAt: 1 };
+        kind: "code", versions, code, blockText, ...requirements, createdAt: 1 };
     const mainPkg = {};
     const step = (name, fallback) => {
         events.push(name);
@@ -69,7 +75,9 @@ function environment(user) {
     const exports = {};
     const pxt = {
         shell: { isReadOnly: () => state.readOnly },
-        appTarget: { appTheme: {} },
+        appTarget: { id: "arcade", appTheme: { backpack: true }, versions },
+        auth: { hasIdentity: () => state.identity,
+            isBackpackAssetType: type => ["image_picker", "animation_editor", "music_song_field_editor"].includes(type) },
         U: { guidGen: () => `snippet-${++state.guidCount}` }
     };
     const context = vm.createContext({
@@ -96,6 +104,7 @@ function environment(user) {
             return step("preview", preview);
         },
         backpack: {
+            isBackpackEnabled: () => exports.isBackpackEnabled(),
             validateBackpackItem: item => {
                 assert.strictEqual(item.code, code);
                 assert.strictEqual(item.blockText, blockText);
@@ -111,11 +120,12 @@ function environment(user) {
             confirmAsync: async options => { dialogs.push(options); return step("confirm", 0); },
             infoNotification: message => { notifications.push(message); step("notify"); }
         },
-        addBackpackToProjectAsync: async (item, host) => {
-            imports.push({ item, host });
+        addBackpackToProjectAsync: async (item, host, position) => {
+            imports.push({ item, host, position });
             return step("import", true);
         }
     });
+    vm.runInContext(compiledEnabled, context);
     vm.runInContext(compiled.outputText, context, { filename: "backpack-editor.extracted.js" });
     const editor = new exports.SourceEditor();
     Object.assign(editor, {
@@ -124,16 +134,17 @@ function environment(user) {
         parent: {
             state: { header: { id: "source-project" } },
             isBlocksActive: () => state.blocksActive,
+            isTutorial: () => state.tutorial,
             showLoginDialog: (...args) => logins.push(args),
             saveProjectAsync: async () => step("project-save"),
             reloadHeaderAsync: async () => step("reload")
         }
     });
     return {
-        editor, state, block, code, blockText, importedItem, requirements, preview, events, hooks, saves,
+        editor, state, block, code, blockText, importedItem, requirements, preview, events, hooks, saves, pxt, versions,
         dialogs, notifications, opens, imports, logins,
         save: () => editor.saveBlockToBackpackAsync(block),
-        import: item => editor.importFromBackpackAsync(item),
+        import: (item, position) => editor.importFromBackpackAsync(item, position),
         hold(name) {
             const gate = deferred();
             const entered = deferred();
@@ -161,13 +172,14 @@ describe("backpack editor integration (fresh source)", () => {
             const item = e.saves[0].item;
             assert.deepStrictEqual(clone(item), {
                 id: "snippet-1", name: "repeat four times", code: e.code, blockText: e.blockText,
+                kind: "code", versions: e.versions,
                 ...e.requirements, createdAt: item.createdAt, ...e.preview
             });
             assert(Number.isFinite(item.createdAt));
             gate.resolve();
             await pending;
             assert.deepStrictEqual(e.notifications, ["Added repeat four times to Backpack."]);
-            assert.deepStrictEqual(e.opens, [["source-project", false]]);
+            assert.deepStrictEqual(e.opens, [["source-project", false, "code"]]);
             assert.deepStrictEqual(e.block, original);
             assert.deepStrictEqual(e.events.slice(-2), ["notify", "open"]);
         });
@@ -216,6 +228,7 @@ describe("backpack editor integration (fresh source)", () => {
         const saved = e.saves[0].item;
         assert.deepStrictEqual(clone(saved), {
             id: "snippet-1", name: "repeat four times", code: e.code, blockText: e.blockText,
+            kind: "code", versions: e.versions,
             ...e.requirements, createdAt: saved.createdAt
         });
         assert.strictEqual(Object.prototype.hasOwnProperty.call(saved, "previewUri"), false);
@@ -224,7 +237,7 @@ describe("backpack editor integration (fresh source)", () => {
         assert.strictEqual(e.imports[0].item, saved);
         assert.deepStrictEqual(e.dialogs, []);
         assert.deepStrictEqual(e.notifications, ["Added repeat four times to Backpack."]);
-        assert.deepStrictEqual(e.opens, [["source-project", false]]);
+        assert.deepStrictEqual(e.opens, [["source-project", false, "code"]]);
         assert.deepStrictEqual(e.block, original);
         assert.strictEqual(removed, 1);
     });
@@ -233,6 +246,10 @@ describe("backpack editor integration (fresh source)", () => {
         for (const change of [
             e => { e.editor.parent.state.header = undefined; },
             e => { e.editor.parent.state.header.tutorial = {}; },
+            e => { Object.assign(e.editor.parent.state.header, { tutorial: {}, tutorialCompleted: true }); },
+            e => { e.state.tutorial = true; },
+            e => { e.pxt.appTarget.appTheme.backpack = false; },
+            e => { e.state.identity = false; },
             e => { e.state.readOnly = true; },
             e => { e.state.blocksActive = false; }
         ]) {
@@ -244,9 +261,16 @@ describe("backpack editor integration (fresh source)", () => {
             assert.deepStrictEqual(e.events, []);
             assert.deepStrictEqual(e.logins, []);
         }
-        const e = environment();
-        Object.assign(e.editor.parent.state.header, { tutorial: {}, tutorialCompleted: true });
-        assert.strictEqual(e.editor.backpackAvailable(), true);
+    });
+
+    it("stores standalone assets as raw code with build metadata, no PNG, and opens the asset tab", async () => {
+        const e = environment(undefined, "image_picker");
+        await e.save();
+        assert.deepStrictEqual(e.events, ["capture", "requirements", "validate", "store", "notify", "open"]);
+        assert.deepStrictEqual(clone(e.saves[0].item), { id: "snippet-1", name: "repeat four times",
+            kind: "asset", versions: e.versions, code: e.code, blockText: e.blockText,
+            ...e.requirements, createdAt: e.saves[0].item.createdAt });
+        assert.deepStrictEqual(e.opens, [["source-project", false, "asset"]]);
     });
 
     // Storage owns away-and-back generation invalidation; backpack-storage.spec.js
@@ -296,12 +320,18 @@ describe("backpack editor integration (fresh source)", () => {
     it("captured import hosts invalidate on project or identity changes, but allow same-project reload", async () => {
         for (const change of [
             e => { e.editor.parent.state.header = { id: "other-project" }; },
-            e => { e.state.user = "account-B"; }
+            e => { e.state.user = "account-B"; },
+            e => { e.editor.parent.state.header.tutorial = {}; },
+            e => { e.state.tutorial = true; },
+            e => { e.pxt.appTarget.appTheme.backpack = false; },
+            e => { e.state.identity = false; }
         ]) {
             const e = environment("account-A");
             const gate = e.hold("import");
-            const pending = e.import(e.importedItem);
+            const position = { x: 321, y: 234 };
+            const pending = e.import(e.importedItem, position);
             await gate.entered;
+            assert.strictEqual(e.imports[0].position, position);
             const host = e.imports[0].host;
             e.editor.parent.state.header = { id: "source-project" };
             e.editor.loadingXml = true;

@@ -5,8 +5,9 @@ const fs = require("fs");
 const { launchTestBrowser } = require("./browser");
 const less = require("less");
 const rtlcss = require("rtlcss");
+const ts = require("typescript");
 
-// Exercise the compiled component with real React, DOM focus and media queries.
+// Compile current source in memory with real React, DOM focus and media queries.
 // The image editor is stubbed here; storage and shortcut tests cover its isolation.
 describe("responsive project-tools launcher", function () {
     this.timeout(30000);
@@ -18,6 +19,8 @@ describe("responsive project-tools launcher", function () {
     const whiteboard = "#project-tools-tab-whiteboard";
     const backpack = "#project-tools-tab-backpack";
     const panel = "#project-tools-panel";
+    const source = file => ts.transpileModule(fs.readFileSync(file, "utf8"), { fileName: file,
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2018, jsx: ts.JsxEmit.React } }).outputText;
     const themeVariables = {
         mainMenuHeight: "4rem", mobileMenuHeight: "3.5rem", editorToolsCollapsedHeight: "4.7rem",
         editorToolsHeight: "10rem", editorToolsCollapsedMobileHeight: "3.4rem",
@@ -56,8 +59,9 @@ describe("responsive project-tools launcher", function () {
             window.backpackOpenListeners = new Set();
             window.backpackSubscriptions = 0;
             window.backpackUnsubscriptions = 0;
-            window.requestBackpackOpen = (headerId, focus) => {
-                const request = { headerId, focus };
+            window.backpackEnabled = true;
+            window.requestBackpackOpen = (headerId, focus, kind) => {
+                const request = { headerId, focus, ...(kind ? { kind } : {}) };
                 window.openRequests.push(request);
                 Array.from(window.backpackOpenListeners).forEach(listener => listener(request));
             };
@@ -66,6 +70,7 @@ describe("responsive project-tools launcher", function () {
                 if (id === "react") return window.React;
                 if (id === "../projectToolsState") return window.projectToolsState;
                 if (id === "../backpack") return {
+                    isBackpackEnabled: () => window.backpackEnabled,
                     subscribeBackpackOpen: listener => {
                         ++window.backpackSubscriptions;
                         window.backpackOpenListeners.add(listener);
@@ -79,6 +84,7 @@ describe("responsive project-tools launcher", function () {
                     ProjectBackpack: props => {
                         React.useEffect(() => { ++window.backpackMounts; }, []);
                         window.backpackProps = { headerId: props.headerId, active: props.active, onSignIn: typeof props.onSignIn };
+                        window.backpackCaptureRequest = props.openRequest;
                         window.setBackpackModalOpen = props.onModalOpenChange;
                         return React.createElement(React.Fragment, null, props.renderHeader("Backpack"),
                             React.createElement("button", { id: "test-backpack-signin", onClick: props.onSignIn }, "Sign in"));
@@ -98,9 +104,9 @@ describe("responsive project-tools launcher", function () {
                 throw new Error(`Unexpected dependency: ${id}`);
             };
         });
-        const stateCode = fs.readFileSync("built/webapp/src/projectToolsState.js", "utf8");
+        const stateCode = source("webapp/src/projectToolsState.ts");
         await page.addScriptTag({ content: `(function(exports) { ${stateCode}\n})(window.projectToolsState = {});` });
-        const code = fs.readFileSync("built/webapp/src/components/ProjectTools.js", "utf8");
+        const code = source("webapp/src/components/ProjectTools.tsx");
         await page.addScriptTag({ content: `(function(require, exports) { ${code}\n})(window.require, window.exports);` });
         await page.evaluate(() => {
             function Harness() {
@@ -108,12 +114,15 @@ describe("responsive project-tools launcher", function () {
                 const [pinned, setPinned] = React.useState(false);
                 const [request, setRequest] = React.useState(0);
                 const [rtl, setRtl] = React.useState(false);
+                const [gate, setGate] = React.useState("");
+                window.setBackpackGate = gate => { window.backpackEnabled = gate !== "disabled"; setGate(gate); };
                 pxt.Util.isUserLanguageRtl = () => rtl;
                 window.setRtl = setRtl;
                 window.openHelp = () => { setRequest(value => value + 1); setExpanded(true); };
                 window.openExample = () => { setPinned(true); window.openHelp(); };
                 return React.createElement(exports.ProjectTools, {
-                    header: { id: "test-project" }, expanded, onExpandedChange: setExpanded,
+                    header: { id: "test-project", tutorial: gate === "header" ? {} : undefined },
+                    tutorial: gate === "tutorial", expanded, onExpandedChange: setExpanded,
                     pinned, onPinnedChange: setPinned,
                     docsUrl: request ? "/reference" : undefined, docsRequest: request,
                     onOpenReference: window.openHelp, onSignIn: () => { ++window.signInRequests; }
@@ -412,13 +421,39 @@ describe("responsive project-tools launcher", function () {
     it("opens backpack from context over whiteboard with a focused tab", async () => {
         await openTool(whiteboard, 1366);
         await page.focus("#test-notes");
-        await page.evaluate(() => window.requestBackpackOpen("test-project", true));
+        await page.evaluate(() => window.requestBackpackOpen("test-project", true, "asset"));
         await page.waitForSelector("#test-backpack-signin", { visible: true });
         await optionsAre(false);
         await focusIs("project-tools-tab-backpack");
         assert.deepEqual(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.map(el => el.id)), ["project-tools-tab-backpack"]);
         assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
-        assert.deepEqual(await page.evaluate(() => window.openRequests), [{ headerId: "test-project", focus: true }]);
+        assert.deepEqual(await page.evaluate(() => window.openRequests), [{ headerId: "test-project", focus: true, kind: "asset" }]);
+        assert.deepEqual(await page.evaluate(() => window.backpackCaptureRequest), { headerId: "test-project", focus: true, kind: "asset" });
+    });
+
+    it("dynamically hides gated backpack, ignores captures and keeps docs/whiteboard keyboard navigation", async () => {
+        await openTool(backpack, 1366);
+        for (const gate of ["disabled", "tutorial", "header"]) {
+            await page.evaluate(gate => window.setBackpackGate(gate), gate);
+            await page.waitForSelector(backpack, { hidden: true });
+            assert.strictEqual(await page.$("#project-tools-backpack"), null);
+            assert.strictEqual(await page.$eval(panel, el => el.dataset.activeTab), "docs");
+            await page.evaluate(() => window.requestBackpackOpen("test-project", true, "asset"));
+            await page.focus(docs);
+            for (const [key, name] of [["End", "whiteboard"], ["ArrowDown", "docs"], ["ArrowUp", "whiteboard"], ["Home", "docs"]]) {
+                await page.keyboard.press(key);
+                await focusIs(`project-tools-tab-${name}`);
+                assert.strictEqual(await page.$eval(panel, el => el.dataset.activeTab), name);
+            }
+            assert.strictEqual(await page.$$eval('#project-tools-options [role="tab"]', tabs => tabs.length), 2);
+            assert.strictEqual(await page.$$eval('#project-tools-options [tabindex="0"]', tabs => tabs.length), 1);
+        }
+        await page.evaluate(() => window.setBackpackGate(""));
+        await page.waitForSelector(backpack, { visible: true });
+        await page.focus(docs);
+        await page.keyboard.press("End");
+        await focusIs("project-tools-tab-backpack");
+        assert.strictEqual(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
     });
 
     it("ignores backpack requests for another header and cleans up subscriptions on remount", async () => {
