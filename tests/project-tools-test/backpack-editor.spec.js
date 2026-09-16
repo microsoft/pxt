@@ -28,6 +28,13 @@ const compiled = ts.transpileModule(`class SourceEditor { ${methods.join("\n")} 
 });
 assert.deepStrictEqual(compiled.diagnostics, []);
 
+const previewSource = fs.readFileSync(path.resolve(__dirname, "../../webapp/src/backpackPreview.ts"), "utf8");
+const compiledPreview = ts.transpileModule(previewSource, {
+    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+    reportDiagnostics: true
+});
+assert.deepStrictEqual(compiledPreview.diagnostics, []);
+
 const clone = value => JSON.parse(JSON.stringify(value));
 function deferred() {
     let resolve;
@@ -50,7 +57,8 @@ function environment(user) {
     const code = '{"blocks":[{"type":"controls_repeat_ext"}]}';
     const blockText = "repeat four times PRIVATE_BODY_TEXT Displayed choice backpackImage";
     const requirements = { dependencies: { extension: "github:owner/extension#v1.0.0" }, projectBlocks: {} };
-    const previewUri = "data:image/png;base64,preview";
+    const previewUri = "data:image/png;base64,iVBORw0KGgo=";
+    const preview = { previewUri, previewPixelDensity: 2 };
     const importedItem = { id: "00000000-0000-4000-8000-000000000001", name: "Imported snippet",
         code, blockText, ...requirements, createdAt: 1 };
     const mainPkg = {};
@@ -85,7 +93,7 @@ function environment(user) {
         },
         backpackPreviewAsync: async actual => {
             assert.strictEqual(actual, block);
-            return step("preview", previewUri);
+            return step("preview", preview);
         },
         backpack: {
             validateBackpackItem: item => {
@@ -122,7 +130,7 @@ function environment(user) {
         }
     });
     return {
-        editor, state, pxt, block, code, blockText, importedItem, requirements, previewUri, events, hooks, saves,
+        editor, state, pxt, block, code, blockText, importedItem, requirements, preview, events, hooks, saves,
         dialogs, notifications, opens, imports, logins,
         save: () => editor.saveBlockToBackpackAsync(block),
         import: item => editor.importFromBackpackAsync(item),
@@ -153,7 +161,7 @@ describe("backpack editor integration (fresh source)", () => {
             const item = e.saves[0].item;
             assert.deepStrictEqual(clone(item), {
                 id: "snippet-1", name: "repeat four times", code: e.code, blockText: e.blockText,
-                ...e.requirements, createdAt: item.createdAt, previewUri: e.previewUri
+                ...e.requirements, createdAt: item.createdAt, ...e.preview
             });
             assert(Number.isFinite(item.createdAt));
             gate.resolve();
@@ -184,6 +192,43 @@ describe("backpack editor integration (fresh source)", () => {
             assert.strictEqual(e.dialogs[0].body, "Durable save failed");
             assert.strictEqual(e.dialogs[0].agreeLbl, "Retry");
         });
+
+        for (const failure of [false, true]) {
+            it(`${mode} saves and imports usable code when preview capture ${failure ? "fails" : "is unavailable"}`, async () => {
+                const e = environment(user);
+                const original = clone(e.block);
+                const exports = {};
+                let removed = 0;
+                const context = vm.createContext({ exports,
+                    require: name => {
+                        assert.ok(["blockly", "../../pxtblocks", "./backpack"].includes(name));
+                        return {};
+                    },
+                    document: { createElementNS: () => ({ remove: () => { removed++; } }) }
+                });
+                vm.runInContext(compiledPreview.outputText, context);
+                // Exercise the real helper's undefined contract, including its caught failure path.
+                e.hooks.preview = () => exports.backpackPreviewAsync({ getSvgRoot: () => failure ? {
+                    cloneNode: () => { throw new Error("Thumbnail capture failed"); }
+                } : undefined });
+                await e.save();
+                assert.strictEqual(e.saves.length, 1);
+                const saved = e.saves[0].item;
+                assert.deepStrictEqual(clone(saved), {
+                    id: "snippet-1", name: "repeat four times", code: e.code, blockText: e.blockText,
+                    ...e.requirements, createdAt: saved.createdAt
+                });
+                assert.strictEqual(Object.prototype.hasOwnProperty.call(saved, "previewUri"), false);
+                assert.strictEqual(Object.prototype.hasOwnProperty.call(saved, "previewPixelDensity"), false);
+                assert.strictEqual(await e.import(saved), true);
+                assert.strictEqual(e.imports[0].item, saved);
+                assert.deepStrictEqual(e.dialogs, []);
+                assert.deepStrictEqual(e.notifications, ["Added repeat four times to Backpack."]);
+                assert.deepStrictEqual(e.opens, [["source-project", false]]);
+                assert.deepStrictEqual(e.block, original);
+                assert.strictEqual(removed, failure ? 1 : 0);
+            });
+        }
     }
 
     const unavailable = {
@@ -232,7 +277,7 @@ describe("backpack editor integration (fresh source)", () => {
                     await gate.entered;
                     e.state.user = after;
                     if (fails) gate.reject(new Error("Operation failed"));
-                    else gate.resolve(e.previewUri);
+                    else gate.resolve(stage === "preview" ? e.preview : undefined);
                     await pending;
                     assert.strictEqual(e.saves.length, stage === "store" ? 1 : 0);
                     for (const save of e.saves) {

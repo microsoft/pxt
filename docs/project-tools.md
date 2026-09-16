@@ -167,8 +167,12 @@ them into guest storage. Clearing browser storage removes unsynced local snippet
 
 The backpack supports up to 50 items per target. The 500,000-character storage
 limit applies per target locally and across targets in the profile. Each snippet
-is limited to 100,000 code characters, with an optional bounded PNG preview and
-portable extension references. Blocked/full local storage reports a save error
+is limited to 100,000 code characters, with an optional PNG preview of at most
+64,000 characters and portable extension references. New previews render at 2×
+pixel density for sharper text without increasing their displayed size; dense
+previews fall back to a lower density to fit the limit. Existing saved images
+are unchanged; save the blocks again to capture a sharper preview.
+Blocked/full local storage reports a save error
 instead of silently using memory. Backpack contents are not added to project shares
 or exports unless explicitly inserted into that project's code. Backend sync is
 covered with a simulated authenticated API, not a live cross-device account test.

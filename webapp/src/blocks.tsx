@@ -2615,7 +2615,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             const requirements = getBackpackRequirements(code, this.blockInfo, pkg.mainPkg);
             item = {
                 id: pxt.U.guidGen(), name: pxtblockly.getBlockText(block).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
-                code, blockText, ...requirements, createdAt: Date.now(), previewUri: await backpackPreviewAsync(block)
+                code, blockText, ...requirements, createdAt: Date.now(), ...await backpackPreviewAsync(block)
             };
             backpack.validateBackpackItem(item);
         } catch (error) {

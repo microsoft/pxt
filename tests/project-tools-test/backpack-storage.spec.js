@@ -713,6 +713,135 @@ describe("required private Backpack block text", () => {
     }
 });
 
+describe("Backpack preview pixel density", () => {
+    it("accepts only 1, 1.5 and 2 with a valid PNG, preserving optional preview semantics", () => {
+        const env = environment();
+        for (const value of [item(1), metadataItem(1), ...[1, 1.5, 2].map(previewPixelDensity =>
+            ({ ...metadataItem(1), previewPixelDensity }))]) {
+            const validated = env.store.validateBackpackItem(value);
+            assert.deepStrictEqual(clone(validated), value);
+            assert.notStrictEqual(validated, value);
+            assert.strictEqual(Object.prototype.hasOwnProperty.call(validated, "previewPixelDensity"),
+                Object.prototype.hasOwnProperty.call(value, "previewPixelDensity"));
+        }
+        const withoutDensity = env.store.validateBackpackItem({ ...metadataItem(1), previewPixelDensity: undefined });
+        assert.deepStrictEqual(clone(withoutDensity), metadataItem(1));
+        assert.strictEqual(Object.prototype.hasOwnProperty.call(withoutDensity, "previewPixelDensity"), false);
+        assert.deepStrictEqual([env.authCalls, env.local.calls, env.requests, env.telemetry], [[], [], [], []]);
+    });
+
+    it("accepts PNG data above the former budget and rejects the first base64-aligned size above 64000", () => {
+        const { store } = environment();
+        assert.strictEqual(store.MAX_BACKPACK_PREVIEW_LENGTH, 64000);
+        // The 22-character URI prefix plus a multiple-of-four payload cannot total exactly 64000.
+        const largest = store.MAX_BACKPACK_PREVIEW_LENGTH - 2;
+        const previewUri = "data:image/png;base64,iVBORw0KGgo".padEnd(largest, "A");
+        for (const previewPixelDensity of [undefined, 1, 1.5, 2]) {
+            const value = { ...metadataItem(1), previewUri,
+                ...(previewPixelDensity === undefined ? {} : { previewPixelDensity }) };
+            assert.deepStrictEqual(clone(store.validateBackpackItem(value)), value);
+            assert.throws(() => store.validateBackpackItem({ ...value, previewUri: previewUri + "AAAA" }), /64000/);
+        }
+    });
+
+    for (const cloud of [false, true]) {
+        const mode = cloud ? "cloud" : "guest";
+        it(`${mode} rejects invalid densities and densities without valid previews before side effects`, async () => {
+            const env = cloud ? environment() : guestEnvironment();
+            const invalid = [null, false, true, "1", "1.5", "2", 0, -1, 1.25, 2.5, 3, NaN, Infinity, -Infinity, [], {}]
+                .map(previewPixelDensity => ({ ...metadataItem(1), previewPixelDensity }));
+            for (const previewPixelDensity of [1, 1.5, 2]) {
+                for (const previewUri of [undefined, null, "", "https://private/image.png",
+                    "data:image/svg+xml;base64,AAAA", "data:image/png;base64,AAAA",
+                    "data:image/png;base64,iVBORw0KGgo"])
+                    invalid.push({ ...metadataItem(1), previewPixelDensity, previewUri });
+            }
+            let imports = 0;
+            const cleanup = env.store.setBackpackEditor({ headerId: () => "header", canImport: () => true,
+                importAsync: async () => { imports++; return true; } });
+            try {
+                for (const value of invalid) {
+                    assert.throws(() => env.store.validateBackpackItem(value), /preview/i);
+                    await assert.rejects(env.store.saveBackpackItemAsync(value), /preview/i);
+                    await assert.rejects(env.store.importBackpackItemAsync(value, "header"), /preview/i);
+                }
+                assert.strictEqual(imports, 0);
+                assert.deepStrictEqual([env.authCalls, env.local.calls, env.requests, env.telemetry], [[], [], [], []]);
+            } finally { cleanup(); }
+        });
+
+        it(`${mode} preserves previews and densities through save, rename, reopen and guest promotion`, async () => {
+            const env = cloud ? environment() : guestEnvironment();
+            const entries = [item(1), metadataItem(2), ...[1, 1.5, 2].map((previewPixelDensity, index) =>
+                ({ ...metadataItem(index + 3), previewPixelDensity }))];
+            for (const entry of entries) await env.store.saveBackpackItemAsync(entry);
+            const persisted = () => cloud ? env.remote.get("alice").backpack.arcade
+                : Object.fromEntries(entries.map(entry => [entry.id,
+                    JSON.parse(env.local.data.get(`arcade/backpack/guest/${entry.id}`))]));
+            assert.deepStrictEqual(persisted(), Object.fromEntries(entries.map(entry => [entry.id, entry])));
+            for (const entry of entries) await env.store.renameBackpackItemAsync(entry.id, `Renamed ${entry.name}`);
+            const expected = entries.map(entry => ({ ...entry, name: `Renamed ${entry.name}` })).reverse();
+            assert.deepStrictEqual(persisted(), Object.fromEntries(expected.map(entry => [entry.id, entry])));
+            const reopened = cloud ? environment(env.remote, env.local) : guestEnvironment(env.local, env.remote);
+            await reopened.store.refreshBackpackAsync();
+            assert.deepStrictEqual(clone(reopened.store.getBackpackItems()), expected);
+            if (!cloud) {
+                assert.deepStrictEqual([env.requests, reopened.requests, env.authCalls, reopened.authCalls], [[], [], [], []]);
+                reopened.signIn("alice");
+                await reopened.store.refreshBackpackAsync();
+                assert.deepStrictEqual(clone(reopened.store.getBackpackItems()), expected);
+                assert.deepStrictEqual(env.remote.get("alice").backpack.arcade,
+                    Object.fromEntries(expected.map(entry => [entry.id, entry])));
+                assert.strictEqual(env.local.data.size, 0);
+                const device = environment(env.remote);
+                await device.store.refreshBackpackAsync();
+                assert.deepStrictEqual(clone(device.store.getBackpackItems()), expected);
+                assert.deepStrictEqual(device.telemetry, []);
+            }
+            assert.deepStrictEqual([env.telemetry, reopened.telemetry], [[], []]);
+        });
+
+        for (const [sent, acknowledged] of [[2, undefined], [2, 1], [2, 1.5], [undefined, 2]]) {
+            it(`${mode} rejects a density-only save acknowledgement mismatch (${sent} -> ${acknowledged}) and permits retry`, async () => {
+                const env = cloud ? environment() : guestEnvironment();
+                const original = metadataItem(1);
+                await env.store.saveBackpackItemAsync(original);
+                const updated = { ...original, ...(sent === undefined ? {} : { previewPixelDensity: sent }) };
+                let notifications = 0;
+                const off = env.store.subscribeBackpack(() => { notifications++; });
+                const corrupt = value => {
+                    if (acknowledged === undefined) delete value.previewPixelDensity;
+                    else value.previewPixelDensity = acknowledged;
+                    return value;
+                };
+                if (cloud) env.hook(({ method, run }) => {
+                    const result = run();
+                    if (method === "PATCH") corrupt(result.resp.backpack.arcade[id(1)]);
+                    return result;
+                });
+                else env.local.hooks.setItem = ({ args, run }) => {
+                    run();
+                    env.local.data.set(args[0], JSON.stringify(corrupt(JSON.parse(args[1]))));
+                };
+                try {
+                    await assert.rejects(env.store.saveBackpackItemAsync(updated), /another device|Could not save your local backpack/);
+                    assert.strictEqual(notifications, 0);
+                    assert.deepStrictEqual(clone(env.store.getBackpackItems()), [original]);
+                    env.hook(undefined);
+                    delete env.local.hooks.setItem;
+                    await env.store.saveBackpackItemAsync(updated);
+                    assert.strictEqual(notifications, 1);
+                    assert.deepStrictEqual(clone(env.store.getBackpackItems()), [updated]);
+                    const reopened = cloud ? environment(env.remote) : guestEnvironment(env.local);
+                    await reopened.store.refreshBackpackAsync();
+                    assert.deepStrictEqual(clone(reopened.store.getBackpackItems()), [updated]);
+                    assert.deepStrictEqual([env.telemetry, reopened.telemetry], [[], []]);
+                } finally { off(); }
+            });
+        }
+    }
+});
+
 describe("name-only backpack renames", () => {
     for (const cloud of [false, true]) describe(cloud ? "cloud" : "guest", () => {
         function fixture() {
@@ -737,12 +866,13 @@ describe("name-only backpack renames", () => {
             const env = fixture();
             await env.store.refreshBackpackAsync();
             const fresh = { ...metadataItem(2), code: "fresh blocks", blockText: "fresh displayed labels", dependencies: { core: "*", ext: "pub:new" },
-                projectBlocks: { custom_block: "fresh.ts" }, createdAt: 2.5 };
+                projectBlocks: { custom_block: "fresh.ts" }, previewPixelDensity: 1.5, createdAt: 2.5 };
             env.put(2, fresh);
             if (cloud) env.hook(({ method, run }) => {
                 if (method === "PATCH") {
                     fresh.code = "edited between GET and PATCH";
                     fresh.blockText = "labels edited between GET and PATCH";
+                    fresh.previewPixelDensity = 2;
                     env.put(2, fresh);
                 }
                 return run();
@@ -1301,14 +1431,14 @@ describe("guest to cloud backpack promotion", () => {
         assert.deepStrictEqual(clone(env.store.getBackpackItems()), [metadataItem(1)]);
     });
 
-    for (const field of ["code", "blockText", "dependencies", "projectBlocks", "previewUri", "createdAt"]) {
+    for (const field of ["code", "blockText", "dependencies", "projectBlocks", "previewUri", "previewPixelDensity", "createdAt"]) {
         it(`refuses differing ID collision (${field}) before any promotion writes`, async () => {
             const env = guestEnvironment();
             await env.store.saveBackpackItemAsync(item(2));
             await env.store.saveBackpackItemAsync(metadataItem(1));
             const differing = { ...metadataItem(1), [field]: {
                 code: "different", blockText: "different labels", dependencies: { core: "*" }, projectBlocks: { custom_block: "different.ts" },
-                previewUri: undefined, createdAt: 42
+                previewUri: undefined, previewPixelDensity: 2, createdAt: 42
             }[field] };
             env.remote.set("alice", { backpack: { arcade: { [id(1)]: differing } } });
             const original = clone(env.remote.get("alice")), before = Array.from(env.local.data);
@@ -1373,10 +1503,10 @@ describe("guest to cloud backpack promotion", () => {
         assert.deepStrictEqual(env.remote.get("alice"), original);
     });
 
-    for (const response of ["missing", "code", "blockText", "missing blockText", "metadata", "race collision"]) {
+    for (const response of ["missing", "code", "blockText", "missing blockText", "metadata", "missing density", "changed density", "race collision"]) {
         it(`keeps all local copies when promotion acknowledgement has ${response}`, async () => {
             const env = guestEnvironment();
-            await env.store.saveBackpackItemAsync(metadataItem(1));
+            await env.store.saveBackpackItemAsync({ ...metadataItem(1), previewPixelDensity: 2 });
             await env.store.saveBackpackItemAsync(item(2));
             const before = Array.from(env.local.data);
             env.signIn("alice");
@@ -1391,6 +1521,8 @@ describe("guest to cloud backpack promotion", () => {
                 if (response === "blockText") result.resp.backpack.arcade[id(1)].blockText = "not identical";
                 if (response === "missing blockText") delete result.resp.backpack.arcade[id(1)].blockText;
                 if (response === "metadata") delete result.resp.backpack.arcade[id(1)].projectBlocks;
+                if (response === "missing density") delete result.resp.backpack.arcade[id(1)].previewPixelDensity;
+                if (response === "changed density") result.resp.backpack.arcade[id(1)].previewPixelDensity = 1.5;
                 return result;
             });
             let notifications = 0;
@@ -1801,7 +1933,7 @@ describe("private profile backpack storage", () => {
             item(1, { dependencies: { constructor: "*" } }), item(1, { dependencies: { prototype: "*" } }),
             item(1, { previewUri: "https://example.com/image.png" }), item(1, { previewUri: "data:image/svg+xml;base64,AAAA" }),
             item(1, { previewUri: "data:image/png;base64,AAAA" }),
-            item(1, { previewUri: "data:image/png;base64,iVBORw0KGgo" + "A".repeat(32000) })];
+            item(1, { previewUri: "data:image/png;base64,iVBORw0KGgo".padEnd(store.MAX_BACKPACK_PREVIEW_LENGTH + 2, "A") })];
         for (const version of ["workspace:x", "file:x", "pkg:x", "https://github.com/a/b", "github:a", "github:a/b/../c", "github:a/b#x:y", "pub:../x", "pub:", "*"]) {
             invalid.push(item(1, { dependencies: { unknown: version } }));
         }

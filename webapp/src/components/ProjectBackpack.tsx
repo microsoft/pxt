@@ -253,7 +253,9 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                         {entry.error && <p className="project-backpack__invalid">{entry.error}</p>}
                         {!!props.userId && entry.source === "local" && <p>{lf("Saved in this browser only.")}</p>}
                         {item && <>
-                            {item.previewUri && <img className="project-backpack__preview" src={item.previewUri} alt={lf("Blocks in {0}", item.name)} />}
+                            {item.previewUri && <img className="project-backpack__preview" src={item.previewPixelDensity ? undefined : item.previewUri}
+                                srcSet={item.previewPixelDensity ? `${item.previewUri} ${item.previewPixelDensity}x` : undefined}
+                                alt={lf("Blocks in {0}", item.name)} />}
                             {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
                                 {lf("Uses project-defined blocks from {0}. Their source code is not included.",
                                     Array.from(new Set(Object.values(item.projectBlocks))).join(", "))}
