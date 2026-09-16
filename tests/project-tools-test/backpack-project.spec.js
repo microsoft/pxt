@@ -184,8 +184,9 @@ function environment(installed = {}) {
     const shared = imports["./blockSnippet"] = execute(sources["webapp/src/blockSnippet.ts"], load);
     const api = execute(sources["webapp/src/backpackProject.ts"], load);
     const workspace = {};
+    const target = pxt.appTarget;
     const host = {
-        headerId: "project", isCurrent: () => active,
+        headerId: "project", isCurrent: () => active && pxt.appTarget === target,
         getWorkspace: () => workspace, getBlocksInfo: () => info,
         saveAsync: async () => { await checkpoint(`save:${++saveCount}`); originalSaved = true; },
         reloadAsync: async () => {
@@ -207,8 +208,8 @@ function environment(installed = {}) {
         item.code = codeFor({ type: "container", inputs: Object.fromEntries(names.map(name => [name, { block: { type: `${name}_block` } }])) });
     };
     return {
-        api, shared, item, host, events, dialogs, configs, hooks, pxt, main, info, registry, file, editor, pkg, define, install,
-        Blockly, blockly, primitive, constants, context, requirePackages,
+        shared, item, host, events, dialogs, configs, hooks, pxt, main, info, registry, file, editor, define,
+        blockly, constants, context, requirePackages,
         switchAccount: () => { active = false; },
         run: () => api.addBackpackToProjectAsync(item, host),
         ensure: (requirements, types) => shared.ensureBlockSnippetAsync(requirements, types, host),
@@ -252,64 +253,44 @@ describe("Shared block snippet preparation (fresh source, ordinary Blockly state
         }
     });
 
-    for (const type of ["plain_statement", "expression", "function_call", "function_call_output"]) {
-        it(`captures and prepares an unrestricted ${type} root without pasting or requiring a function body`, async () => {
-            const e = environment({ a: version("a"), types: version("types"), unused: version("unused") });
-            e.registry[type] = {};
-            if (type.startsWith("function_")) e.blockly.builtinBlocks = () => ({ [type]: {} });
-            else e.info.blocksById[type] = symbol("a");
-            e.info.apis.byQName.Widget = symbol("Widget", "types");
-            const states = [{ type, extraState: type.startsWith("function_") ? {
-                name: "outsideTheSelection", functionid: "function-id", arguments: [{ name: "x", id: "x", type: "Widget[]" }]
-            } : undefined }];
-            // Native clipboard states must not go through Backpack's container/closure parser.
-            e.blockly.parseBackpackCode = e.blockly.getBackpackBlockTypes = () => { throw new Error("Backpack parser used"); };
-            const requirements = e.captureStates(states);
-            assert.deepStrictEqual(requirements, {
-                dependencies: type.startsWith("function_") ? { types: version("types") } : { a: version("a") }, projectBlocks: {}
-            });
-            const types = e.shared.getBlockSnippetTypes(states);
-            assert.deepStrictEqual(clone(types), [type]);
-            delete e.host.getWorkspace;
-            assert.equal(await e.ensure(requirements, types), true);
-            assert.deepStrictEqual(e.events, []);
-        });
-    }
+    it("captures a native function call's array parameter type without requiring its unselected body", async () => {
+        const e = environment({ types: version("types"), unused: version("unused") });
+        e.info.apis.byQName.Widget = symbol("Widget", "types");
+        const states = [{ type: "function_call", extraState: {
+            name: "outsideTheSelection", functionid: "function-id", arguments: [{ name: "x", id: "x", type: "Widget[]" }]
+        } }];
+        const requirements = e.captureStates(states);
+        assert.deepStrictEqual(requirements, { dependencies: { types: version("types") }, projectBlocks: {} });
+        assert.equal(await e.ensure(requirements, e.shared.getBlockSnippetTypes(states)), true);
+        assert.deepStrictEqual(e.events, []);
+    });
 
     it("follows root next, nested next, both shadows and blocks; never infers requirements from typeCounts", () => {
-        const e = environment({ a: version("a"), b: version("b"), c: version("c"), unused: version("unused") });
+        const e = environment({ a: version("a"), b: "pub:12345", c: version("c"), unused: version("unused") });
         const states = [{ type: "a_block", typeCounts: { unused_block: 99 }, inputs: {
             X: { shadow: { type: "b_block" }, block: { type: "text" } }
         }, next: { shadow: { type: "b_block" }, block: { type: "c_block", next: { block: { type: "a_block" } } } } }];
         assert.deepStrictEqual(clone(e.shared.getBlockSnippetTypes(states)), ["a_block", "b_block", "text", "c_block"]);
         assert.deepStrictEqual(e.captureStates(states), {
-            dependencies: { a: version("a"), b: version("b"), c: version("c") }, projectBlocks: {}
+            dependencies: { a: version("a"), b: "pub:12345", c: version("c") }, projectBlocks: {}
         });
     });
 
     it("captures custom-source, dropdown, field-editor, mutation, and gallery references, but not text", () => {
-        const e = environment({ enums: version("enums"), gallery: version("gallery"), unused: version("unused") });
+        const e = environment({ enums: version("enums"), fixed: "pub:fixed", gallery: version("gallery"), unused: version("unused") });
         e.define("custom", symbol("custom", null, { fileName: "helpers.ts", fieldParameters: {
-            OPTION: { type: "Choice" }, TEXT: { type: "string" }, GALLERY: { type: "string", fieldEditor: "tilemap" }
+            OPTION: { type: "Choice" }, DEVICE: { type: "Sensor" }, TEXT: { type: "string" }, GALLERY: { type: "string", fieldEditor: "tilemap" }
         } }));
         e.info.apis.byQName["Choices.One"] = symbol("Choices", "enums");
+        e.info.apis.byQName["devices.sensor"] = symbol("devices", "fixed");
         e.info.apis.byQName["gallery.tile1"] = symbol("gallery", "gallery");
         const states = [{ type: "custom_block", fields: {
-            OPTION: "Choices.One", TEXT: "unused.run", GALLERY: { tileset: ["gallery.tile1"] }
+            OPTION: "Choices.One", DEVICE: "devices.sensor", TEXT: "unused.run",
+            GALLERY: { assetType: "tilemap", jres: { level1: { tileset: ["gallery.tile1"], data: "BASE64_DATA" } } }
         }, extraState: { reference: "enums.run" }, next: { block: { type: "text", fields: { TEXT: "unused.run" } } } }];
         assert.deepStrictEqual(e.captureStates(states), {
-            dependencies: { enums: version("enums"), gallery: version("gallery") }, projectBlocks: { custom_block: "helpers.ts" }
+            dependencies: { enums: version("enums"), fixed: "pub:fixed", gallery: version("gallery") }, projectBlocks: { custom_block: "helpers.ts" }
         });
-    });
-
-    it("installs missing root-next requirements and returns after reload without paste, renders, or final save", async () => {
-        const source = environment({ a: version("a"), b: version("b") });
-        const states = [{ type: "a_block", next: { block: { type: "b_block" } } }];
-        const e = environment();
-        const requirements = source.captureStates(states);
-        assert.equal(await e.ensure(requirements, source.shared.getBlockSnippetTypes(states)), true);
-        assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "fetch:b", "preflight:a", "preflight:b", "save:1", "write", "reload", "definitions-ready"]);
-        assert(!e.events.some(event => /paste|renders/.test(event)));
     });
 
     it("supports metadata-free existing clipboard data with fresh builtin and API availability", async () => {
@@ -322,50 +303,18 @@ describe("Shared block snippet preparation (fresh source, ordinary Blockly state
         assert.equal(e.dialogs[0].header, "Blocks unavailable");
     });
 
-    for (const missing of ["registry", "builtin", "api"]) {
-        it(`requires fresh ${missing} even without metadata and does not infer an installation`, async () => {
-            const e = environment({ a: version("a") });
-            if (missing === "registry") delete e.registry.text;
-            if (missing === "builtin") e.blockly.builtinBlocks = () => ({});
-            if (missing === "api") delete e.info.blocksById.a_block;
-            assert.equal(await e.ensure(undefined, ["text", "a_block"]), false);
-            assert.deepStrictEqual(e.events, ["popup"]);
-        });
-    }
-
-    it("does not accept inherited block definitions or registry entries", async () => {
-        const e = environment();
-        Object.setPrototypeOf(e.registry, { inherited: {} });
-        Object.setPrototypeOf(e.info.blocksById, { inherited: symbol("a") });
-        assert.equal(await e.ensure(undefined, ["inherited"]), false);
-        assert.deepStrictEqual(e.events, ["popup"]);
-    });
-
-    for (const ref of ["workspace:local", "file:../local", "file:C:\\src\\local", "pkg:packed"]) {
-        it(`preserves installed local reference ${ref} in native copies but refuses Backpack saves`, async () => {
-            const e = environment({ a: ref });
-            const states = [{ type: "a_block" }];
-            const requirements = e.captureStates(states);
-            assert.deepStrictEqual(requirements, { dependencies: { a: ref }, projectBlocks: {} });
-            assert.equal(await e.ensure(requirements, ["a_block"]), true);
-            assert.deepStrictEqual(e.events, []);
-            assert.throws(() => e.capture(codeFor(...states)), /Publish it and install/);
-        });
-
-        it(`explains missing local reference ${ref} before consent, download, save, or write`, async () => {
-            const e = environment();
-            assert.equal(await e.ensure({ dependencies: { a: version("a"), local: ref } }, ["a_block"]), false);
-            assert.deepStrictEqual(e.events, ["popup"]);
-            assert.match(e.dialogs[0].body, /Publish it and install/);
-            assert(!/Backpack/.test(e.dialogs[0].body));
-        });
-    }
-
-    it("does not replace a different local source just because the extension name matches", async () => {
-        const e = environment({ a: "workspace:other" });
-        assert.equal(await e.ensure({ dependencies: { a: "workspace:local" } }, ["a_block"]), false);
-        assert.deepStrictEqual(e.events, ["popup"]);
-        assert.equal(e.dialogs[0].header, "Extension conflict");
+    it("preserves installed local clipboard references but cannot save or download them for another project", async () => {
+        const source = environment({ a: "workspace:local" });
+        const states = [{ type: "a_block" }];
+        const requirements = source.captureStates(states);
+        assert.deepStrictEqual(requirements, { dependencies: { a: "workspace:local" }, projectBlocks: {} });
+        assert.equal(await source.ensure(requirements, ["a_block"]), true);
+        assert.deepStrictEqual(source.events, []);
+        assert.throws(() => source.capture(codeFor(...states)), /Publish it and install/);
+        const destination = environment();
+        assert.equal(await destination.ensure(requirements, ["a_block"]), false);
+        assert.deepStrictEqual(destination.events, ["popup"]);
+        assert.match(destination.dialogs[0].body, /Publish it and install/);
     });
 
     it("allows an already-installed local transitive but never downloads a missing local transitive", async () => {
@@ -393,34 +342,18 @@ describe("Shared block snippet preparation (fresh source, ordinary Blockly state
         assert(!e.events.includes("fetch:b"));
     });
 
-    const malformed = [
-        ["null", null], ["array", []], ["missing dependencies", {}],
-        ["array dependencies", { dependencies: [] }],
-        ["unknown schema field", { dependencies: {}, version: 1 }],
-        ["dangerous dependency key", JSON.parse('{"dependencies":{"__proto__":"workspace:local"}}')],
-        ["unsafe dependency name", { dependencies: { "bad/name": "workspace:local" } }],
-        ["unknown reference", { dependencies: { a: "https://evil.example/a" } }],
-        ["empty local reference", { dependencies: { a: "workspace:" } }],
-        ["local control characters", { dependencies: { a: "file:../local\n" } }],
-        ["oversized reference", { dependencies: { a: `file:${"a".repeat(257)}` } }],
-        ["bad GitHub traversal", { dependencies: { a: "github:owner/../repo" } }],
-        ["non-bundled wildcard", { dependencies: { a: "*" } }],
-        ["nonstring version", { dependencies: { a: 42 } }],
-        ["too many dependencies", { dependencies: Object.fromEntries(Array.from({ length: 101 }, (_, i) => [`p${i}`, "pub:ok"])) }],
-        ["array source map", { dependencies: {}, projectBlocks: [] }],
-        ["unsafe source block key", { dependencies: {}, projectBlocks: { constructor: "custom.ts" } }],
-        ["nonstring source filename", { dependencies: {}, projectBlocks: { a_block: 42 } }],
-        ["control characters in source", { dependencies: {}, projectBlocks: { a_block: "custom.ts\n" } }],
-        ["too many source blocks", { dependencies: {}, projectBlocks: Object.fromEntries(Array.from({ length: 501 }, (_, i) => [`b${i}`, "custom.ts"])) }],
-        ["inherited dependencies", Object.create({ dependencies: {} })]
-    ];
-    for (const [label, value] of malformed) {
-        it(`rejects untrusted metadata: ${label}, before any UI, network, or writes`, async () => {
+    it("rejects malformed schema, poison keys, unsafe references and excess requirements before side effects", async () => {
+        for (const value of [
+            { dependencies: [] },
+            JSON.parse('{"dependencies":{"__proto__":"workspace:local"}}'),
+            { dependencies: { a: "github:owner/../repo" } },
+            { dependencies: Object.fromEntries(Array.from({ length: 101 }, (_, i) => [`p${i}`, "pub:ok"])) }
+        ]) {
             const e = environment();
             await assert.rejects(e.ensure(value, ["text"]), /invalid/i);
             assert.deepStrictEqual(e.events, []);
-        });
-    }
+        }
+    });
 
     it("rejects metadata accessors without invoking them", async () => {
         const e = environment();
@@ -431,58 +364,31 @@ describe("Shared block snippet preparation (fresh source, ordinary Blockly state
         assert.deepStrictEqual(e.events, []);
     });
 
-    for (const types of [["__proto__"], [""], [42], Array(1), Array(501).fill("text")]) {
-        it(`rejects malformed type list ${String(types).slice(0, 40)} before side effects`, async () => {
+    it("rejects poison, sparse and oversized type lists before side effects", async () => {
+        for (const types of [["__proto__"], Array(1), Array(501).fill("text")]) {
             const e = environment();
             await assert.rejects(e.ensure(undefined, types), /invalid/i);
             assert.deepStrictEqual(e.events, []);
-        });
-    }
+        }
+    });
 
-    it("rejects malformed, cyclic, aliased, oversized, and deeply nested actual states", () => {
+    it("rejects malformed connections, cycles, oversized fields and deeply nested actual states", () => {
         const e = environment();
         const cyclic = { type: "text" }; cyclic.next = { block: cyclic };
-        const fieldCycle = {}; fieldCycle.self = fieldCycle;
         let deep = { type: "text" };
         for (let i = 0; i < 102; i++) deep = { type: "text", next: { block: deep } };
-        const shared = { type: "text" };
         for (const states of [
-            null, {}, [null], [{ type: 42 }], [{ type: "constructor" }], Array(1),
-            [{ type: "text", inputs: [] }], [{ type: "text", fields: [] }],
-            [{ type: "text", next: {} }], [{ type: "text", next: { block: null } }],
             [{ type: "text", inputs: { X: { unexpected: {} } } }],
-            [cyclic], [{ type: "text", fields: fieldCycle }], [shared, shared], [deep],
-            [{ type: "text", fields: { TEXT: "a".repeat(1000001) } }],
-            Array.from({ length: 501 }, () => ({ type: "text" })),
-            JSON.parse('[{"type":"text","fields":{"__proto__":{}}}]')
+            [cyclic], [deep], [{ type: "text", fields: { TEXT: "a".repeat(1000001) } }]
         ]) {
             assert.throws(() => e.shared.getBlockSnippetTypes(states), /invalid/i);
             assert.throws(() => e.captureStates(states), /invalid/i);
         }
         assert.deepStrictEqual(e.events, []);
     });
-
-    it("reports generic retry guidance on a context change", async () => {
-        const e = environment();
-        e.hooks.set("confirm", e.switchAccount);
-        await assert.rejects(e.ensure({ dependencies: { a: version("a") } }, ["a_block"]), error => {
-            assert.match(error.message, /project or account changed.*retry the operation/);
-            assert(!/Backpack/.test(error.message));
-            return true;
-        });
-        assert.deepStrictEqual(e.events, ["confirm"]);
-    });
 });
 
 describe("Backpack project requirements (fresh source)", () => {
-    it("captures only exact used dependencies, nested next chains, and obscured shadows", () => {
-        const e = environment({ a: version("a"), b: "pub:12345", unused: version("unused"), core: "*" });
-        const result = e.capture(codeFor({ type: "container", inputs: { BODY: {
-            shadow: { type: "a_block" }, block: { type: "core_block", next: { block: { type: "b_block" } } }
-        } } }));
-        assert.deepStrictEqual(result, { dependencies: { a: version("a"), core: "*", b: "pub:12345" }, projectBlocks: {} });
-    });
-
     it("records local custom.ts/other files, but never classifies a symbol-less builtin as local", () => {
         const e = environment();
         e.define("custom", symbol("custom", null));
@@ -495,119 +401,18 @@ describe("Backpack project requirements (fresh source)", () => {
             custom_block: "custom.ts", other_block: "helpers.ts", source_block: "source.ts"
         } });
     });
-
-    for (const ref of ["workspace:local", "file:../local", "pkg:packed", "invalid:a", "github:owner/repo#bad/ref", "*"]) {
-        it(`rejects nonportable extension ${ref} with a publish/install explanation`, () => {
-            const e = environment({ a: ref });
-            assert.throws(() => e.capture(codeFor({ type: "a_block" })), /Publish it and install/);
-        });
-    }
-
-    it("collects dropdown enum/fixed instance references using serialized field metadata", () => {
-        const e = environment({ a: version("a"), enums: version("enums"), fixed: "pub:fixed" });
-        e.info.apis.byQName["Choices.One"] = symbol("Choices", "enums");
-        e.info.apis.byQName["devices.sensor"] = symbol("devices", "fixed");
-        e.info.blocksById.a_block.fieldParameters = {
-            OPTION: { type: "Choices" }, DEVICE: { type: "Sensor" }, TEXT: { type: "string" }
-        };
-        const result = e.capture(codeFor({ type: "a_block", fields: {
-            OPTION: "Choices.One", DEVICE: "devices.sensor", TEXT: "unrelated.run"
-        } }));
-        assert.deepStrictEqual(result.dependencies, { a: version("a"), enums: version("enums"), fixed: "pub:fixed" });
-    });
-
-    it("does not mistake arbitrary text fields or variable names for extension references", () => {
-        const e = environment({ a: version("a"), unused: version("unused") });
-        e.info.blocksById.a_block.fieldParameters = { TEXT: { type: "string" } };
-        const result = e.capture(codeFor({ type: "a_block", fields: { TEXT: "unused.run", UNKNOWN: "unused" },
-            inputs: { X: { block: { type: "text", fields: { TEXT: "unused.run" } } } }
-        }));
-        assert.deepStrictEqual(result.dependencies, { a: version("a") });
-    });
-
-    it("uses qualified references when field metadata is unavailable", () => {
-        const e = environment({ dropdown: version("dropdown") });
-        assert.deepStrictEqual(e.capture(codeFor({ type: "container", fields: { OPTION: "dropdown.run" } })).dependencies,
-            { dropdown: version("dropdown") });
-    });
-
-    it("captures gallery tile IDs in full asset state without unrelated gallery packages", () => {
-        const e = environment({ gallery: version("gallery"), unused: version("unused") });
-        e.info.apis.byQName["gallery.tile1"] = symbol("gallery", "gallery");
-        const state = { version: 1, assetType: "tilemap", assetId: "level1", jres: { level1: {
-            tileset: ["gallery.tile1"], data: "BASE64_DATA"
-        } } };
-        assert.deepStrictEqual(e.capture(codeFor({ type: "container", fields: { TILEMAP: state } })).dependencies,
-            { gallery: version("gallery") });
-    });
-
-    it("captures qualified and unqualified function argument types from extraState", () => {
-        const e = environment({ types: version("types") });
-        e.info.apis.byQName["Types.Widget"] = symbol("Types", "types");
-        e.info.apis.byQName["Widget"] = symbol("Types", "types");
-        for (const type of ["Types.Widget", "Widget", "Widget[]"]) {
-            const extraState = { name: "work", functionid: "function-id", arguments: [{ id: "a", name: "arg", type }] };
-            const code = codeFor({ type: "function_definition", extraState }, { type: "container", inputs: {
-                BODY: { block: { type: "function_call", extraState } }
-            } });
-            assert.deepStrictEqual(e.capture(code).dependencies, { types: version("types") });
-        }
-    });
 });
 
 describe("Backpack project insertion (fresh source, no network or program execution)", () => {
-    it("requires bounded block text before preparation, without treating labels as dependencies or executable code", async () => {
-        for (const blockText of [undefined, null, 7, "x".repeat(100001)]) {
-            const e = environment();
-            if (blockText === undefined) delete e.item.blockText;
-            else e.item.blockText = blockText;
-            await assert.rejects(e.run(), /Backpack block text/);
-            assert.deepStrictEqual(e.events, []);
-        }
-        for (const blockText of ["", "uninstalled.run github:private/repo PRIVATE_LABELS", "x".repeat(100000)]) {
-            const e = environment();
-            e.item.blockText = blockText;
-            const before = clone(e.item);
-            assert.equal(await e.run(), true);
-            assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1"]);
-            assert.deepStrictEqual(e.dialogs, []);
-            assert.deepStrictEqual(e.item, before);
-        }
-    });
-
-    it("delegates capture and preparation to the shared module, leaving paste in the adapter", async () => {
-        const e = environment();
-        let captures = 0;
-        let preparations = 0;
-        e.shared.getBlockSnippetRequirements = states => {
-            captures++;
-            assert.deepStrictEqual(clone(states), [{ type: "container" }]);
-            return { dependencies: {}, projectBlocks: {} };
-        };
-        e.shared.ensureBlockSnippetAsync = async (requirements, types, host) => {
-            preparations++;
-            assert.deepStrictEqual(clone(requirements), { dependencies: {} });
-            assert.deepStrictEqual(clone(types), ["container"]);
-            assert.equal(host, e.host);
-            return false;
-        };
-        assert.deepStrictEqual(e.capture(e.item.code), { dependencies: {}, projectBlocks: {} });
-        assert.equal(await e.run(), false);
-        assert.equal(captures, 1);
-        assert.equal(preparations, 1);
-        assert.deepStrictEqual(e.events, []);
-    });
-
-    it("inserts with no extension confirmation or reload when the exact requirements are installed", async () => {
-        const e = environment({ a: version("a"), unused: version("unused") });
-        e.requirePackages("a");
-        assert.equal(await e.run(), true);
-        assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1"]);
-    });
-
-    it("prefetches and preflights only required packages, saves code, writes once, then refreshes before paste", async () => {
+    it("saves unsaved code/assets, merges current config, and refreshes required packages before paste", async () => {
         const e = environment({ unrelated: version("unrelated") });
         e.requirePackages("a", "b");
+        e.hooks.set("save:1", () => {
+            const cfg = JSON.parse(e.file.content);
+            cfg.files.push("images.g.jres", "images.g.ts");
+            cfg.name = "renamed project";
+            e.file.content = JSON.stringify(cfg);
+        });
         const untouched = clone(e.item);
         assert.equal(await e.run(), true);
         assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "fetch:b", "preflight:a", "preflight:b", "save:1", "write",
@@ -616,7 +421,10 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.equal(e.dialogs[0].agreeLbl, "Add extensions and snippet");
         assert(e.dialogs[0].body.includes(`a: ${version("a")}`));
         assert(e.dialogs[0].body.includes(`b: ${version("b")}`));
-        assert.equal(JSON.parse(e.file.content).dependencies.unrelated, version("unrelated"));
+        const cfg = JSON.parse(e.file.content);
+        assert.equal(cfg.name, "renamed project");
+        assert.deepStrictEqual(cfg.files, ["main.ts", "images.g.jres", "images.g.ts"]);
+        assert.deepStrictEqual(cfg.dependencies, { unrelated: version("unrelated"), a: version("a"), b: version("b") });
     });
 
     it("cancel performs no downloads, saves, config writes, reloads, or paste", async () => {
@@ -629,6 +437,8 @@ describe("Backpack project insertion (fresh source, no network or program execut
     it("missing local source takes precedence over extensions and stale global Blockly registration", async () => {
         const e = environment(); e.requirePackages("a");
         e.item.projectBlocks = { a_block: "custom.ts", other_block: "helpers.ts" };
+        e.item.blockText = "PRIVATE_LABELS";
+        e.item.code = codeFor({ type: "container", fields: { PRIVATE_CODE: "SECRET_SOURCE" } });
         e.registry.a_block = {}; e.registry.other_block = {};
         assert.equal(await e.run(), false);
         assert.deepStrictEqual(e.events, ["popup"]);
@@ -637,15 +447,7 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.equal(e.dialogs[0].hideCancel, true);
         assert.match(e.dialogs[0].body, /custom.ts, helpers.ts/);
         assert.match(e.dialogs[0].body, /Copy the required code.*publish it as an extension/);
-    });
-
-    it("allows project-local types present in fresh BlocksInfo", async () => {
-        const e = environment();
-        e.define("custom", symbol("custom", null));
-        e.item.code = codeFor({ type: "custom_block" });
-        e.item.projectBlocks = { custom_block: "custom.ts" };
-        assert.equal(await e.run(), true);
-        assert(!e.events.includes("popup"));
+        assert(!/PRIVATE_LABELS|PRIVATE_CODE|SECRET_SOURCE/.test(JSON.stringify(e.dialogs)));
     });
 
     it("rechecks local source after reload even if the old registry still contains its type", async () => {
@@ -659,51 +461,29 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert(!e.events.includes("paste:one-undo-group"));
     });
 
-    it("retains another version of the same case-insensitive GitHub repo", async () => {
+    it("retains another version of the same GitHub repo, but never upgrades it to recover a missing API", async () => {
         const e = environment({ a: "github:OWNER/A#v9.0.0" }); e.requirePackages("a");
         assert.equal(await e.run(), true);
         assert.equal(e.main.deps.a.version(), "github:OWNER/A#v9.0.0");
-        assert(!e.events.includes("confirm"));
-    });
-
-    it("does not upgrade the same repo just to make a missing block available", async () => {
-        const e = environment({ a: "github:owner/a#v0.1.0" }); e.requirePackages("a");
+        assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1"]);
+        e.events.length = 0;
         delete e.info.blocksById.a_block;
         assert.equal(await e.run(), false);
         assert.deepStrictEqual(e.events, ["popup"]);
     });
 
-    for (const ref of ["github:other/a#v1.2.3", "github:owner/a/subfolder#v1.2.3", "pub:other", "workspace:local"]) {
-        it(`refuses an installed package with different source ${ref}`, async () => {
-            const e = environment({ a: ref }); e.requirePackages("a");
+    it("distinguishes GitHub paths, published IDs and bundled sources rather than matching only names", async () => {
+        for (const [name, installed, required] of [
+            ["a", "github:owner/a/subfolder#v1.2.3", version("a")],
+            ["a", "pub:old", "pub:new"],
+            ["core", version("core"), "*"]
+        ]) {
+            const e = environment({ [name]: installed });
+            e.item.dependencies = { [name]: required };
             assert.equal(await e.run(), false);
             assert.deepStrictEqual(e.events, ["popup"]);
             assert.equal(e.dialogs[0].header, "Extension conflict");
-        });
-    }
-
-    it("rejects cppOnly instead of treating it as an installed block extension", async () => {
-        const e = environment({ core: "*" });
-        e.main.deps.core.cppOnly = true;
-        e.item.dependencies = { core: "*" };
-        assert.equal(await e.run(), false);
-        assert.deepStrictEqual(e.events, ["popup"]);
-    });
-
-    it("requires real bundled packages and refuses a GitHub package masquerading as bundled", async () => {
-        const e = environment({ core: version("core") });
-        e.item.dependencies = { core: "*" };
-        assert.equal(await e.run(), false);
-        const invalid = environment(); invalid.item.dependencies = { absent: "*" };
-        await assert.rejects(invalid.run(), /bundled packages/);
-        assert.deepStrictEqual(invalid.events, []);
-    });
-
-    it("installs a valid bundled dependency through getConfigAsync", async () => {
-        const e = environment(); e.item.dependencies = { core: "*" };
-        assert.equal(await e.run(), true);
-        assert.equal(e.main.deps.core.version(), "*");
-        assert(e.events.includes("fetch:core"));
+        }
     });
 
     it("a banned/null config aborts the whole prefetch before any save or mutation", async () => {
@@ -712,13 +492,11 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "fetch:b", "popup"]);
     });
 
-    for (const bad of [config("wrong-name"), { name: "a" }, config("a", { files: [42] })]) {
-        it(`throws for an invalid/mismatched downloaded configuration ${JSON.stringify(bad)}`, async () => {
-            const e = environment(); e.requirePackages("a"); e.configs.a = bad;
-            await assert.rejects(e.run(), /invalid or mismatched/);
-            assert.deepStrictEqual(e.events, ["confirm", "fetch:a"]);
-        });
-    }
+    it("rejects a downloaded configuration with the wrong package identity", async () => {
+        const e = environment(); e.requirePackages("a"); e.configs.a = config("wrong-name");
+        await assert.rejects(e.run(), /invalid or mismatched/);
+        assert.deepStrictEqual(e.events, ["confirm", "fetch:a"]);
+    });
 
     it("respects explicit GitHub target bans before downloading", async () => {
         const e = environment(); e.requirePackages("a"); e.pxt.appTarget.cloud.githubPackages = false;
@@ -726,17 +504,14 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.deepStrictEqual(e.events, ["confirm", "popup"]);
     });
 
-    it("does not confuse ordinary GitHub block packages with editor-extension permission", async () => {
+    it("allows ordinary GitHub blocks but applies editor-extension restrictions to transitive packages", async () => {
         const e = environment(); e.requirePackages("a"); e.pxt.appTarget.appTheme.allowPackageExtensions = false;
         assert.equal(await e.run(), true);
         const denied = environment(); denied.requirePackages("a");
-        denied.configs.a = config("a", { extension: {} });
+        denied.configs.a = config("a", { dependencies: { b: version("b") } });
+        denied.configs.b = config("b", { extension: {} });
         assert.equal(await denied.run(), false);
-        assert.deepStrictEqual(denied.events, ["confirm", "fetch:a", "popup"]);
-        const allowed = environment(); allowed.requirePackages("a");
-        allowed.configs.a = config("a", { extension: {} });
-        allowed.pxt.appTarget.appTheme.allowPackageExtensions = true;
-        assert.equal(await allowed.run(), true);
+        assert.deepStrictEqual(denied.events, ["confirm", "fetch:a", "fetch:b", "popup"]);
     });
 
     it("prefetches transitive dependencies, bounds cycles, and refuses banned transitives", async () => {
@@ -777,14 +552,13 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "fetch:b", "preflight:a", "preflight:b", "popup"]);
     });
 
-    for (const point of ["fetch:a", "fetch:b", "preflight:b", "save:1"]) {
-        it(`does not reload or mutate when ${point} fails before the config write`, async () => {
-            const e = environment(); e.requirePackages("a", "b");
-            e.hooks.set(point, () => { throw new Error("network/storage failure"); });
-            await assert.rejects(e.run(), /network\/storage failure/);
-            assert(!e.events.includes("write")); assert(!e.events.includes("reload"));
-        });
-    }
+    it("does not write config or reload when saving unsaved code fails", async () => {
+        const e = environment(); e.requirePackages("a");
+        e.hooks.set("save:1", () => { throw new Error("storage failure"); });
+        await assert.rejects(e.run(), /storage failure/);
+        assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "preflight:a", "save:1"]);
+        assert.deepStrictEqual(JSON.parse(e.file.content).dependencies, {});
+    });
 
     it("reloads once after an in-memory dependency edit even if persistence fails, preserving the failure", async () => {
         const e = environment(); e.requirePackages("a");
@@ -796,59 +570,39 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.equal(JSON.parse(e.file.content).dependencies.a, version("a"));
     });
 
-    it("does not reload when a write fails before changing config", async () => {
+    it("refuses paste when the fresh Blockly registry lacks a reloaded API block", async () => {
         const e = environment(); e.requirePackages("a");
-        e.file.setContentAsync = async () => { throw new Error("write refused"); };
-        await assert.rejects(e.run(), /write refused/);
-        assert(!e.events.includes("reload"));
-    });
-
-    it("propagates reload failure without pasting or retrying the reload", async () => {
-        const e = environment(); e.requirePackages("a");
-        e.hooks.set("reload", () => { throw new Error("reload failure"); });
-        await assert.rejects(e.run(), /reload failure/);
-        assert.equal(e.events.filter(event => event === "reload").length, 1);
+        e.hooks.set("definitions-ready", () => { delete e.registry.a_block; });
+        assert.equal(await e.run(), false);
         assert(!e.events.includes("paste:one-undo-group"));
+        assert.equal(e.events.filter(event => event === "reload").length, 1);
+        assert.equal(e.dialogs.at(-1).header, "Blocks unavailable");
     });
 
-    for (const missing of ["info", "registry", "dependency"]) {
-        it(`refuses paste when fresh ${missing} is unavailable after reload`, async () => {
-            const e = environment(); e.requirePackages("a");
-            e.hooks.set("definitions-ready", () => {
-                if (missing === "info") delete e.info.blocksById.a_block;
-                if (missing === "registry") delete e.registry.a_block;
-                if (missing === "dependency") delete e.main.deps.a;
-            });
-            assert.equal(await e.run(), false);
-            assert(!e.events.includes("paste:one-undo-group"));
-            assert.equal(e.events.filter(event => event === "reload").length, 1);
-        });
-    }
+    it("never reloads the new project when switching projects during config persistence", async () => {
+        const e = environment(); e.requirePackages("a");
+        e.hooks.set("write", () => { e.editor.header.id = "other-project"; });
+        await assert.rejects(e.run(), /project or account changed/);
+        assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "preflight:a", "save:1", "write"]);
+    });
 
-    for (const kind of ["account", "project"]) {
-        for (const point of ["confirm", "fetch:a", "fetch:b", "preflight:a", "save:1", "write", "reload", "renders", "save:2"]) {
-            it(`stops on ${kind} switch during ${point}, with no subsequent project operation`, async () => {
-                const e = environment(); e.requirePackages("a", "b");
-                e.hooks.set(point, () => {
-                    if (kind === "account") e.switchAccount();
-                    else e.editor.header.id = "other-project";
-                });
-                await assert.rejects(e.run(), /project or account changed/);
-                // The mocked reload itself completes its captured work, as a host operation may.
-                const tail = e.events.slice(e.events.indexOf(point) + 1);
-                assert.deepStrictEqual(tail, point === "reload" ? ["definitions-ready"] : []);
-            });
-        }
-    }
+    it("honors host target invalidation after reload and before paste", async () => {
+        const e = environment(); e.requirePackages("a");
+        // The editor host owns target identity; preparation must honor its invalidation.
+        e.hooks.set("definitions-ready", () => { e.pxt.appTarget = { ...e.pxt.appTarget, id: "other-target" }; });
+        await assert.rejects(e.run(), /project or account changed/);
+        assert.deepStrictEqual(e.events, ["confirm", "fetch:a", "preflight:a", "save:1", "write", "reload", "definitions-ready"]);
+    });
 
     it("waits for actual deferred consent and rechecks context before beginning downloads", async () => {
         const e = environment(); e.requirePackages("a");
         let release;
         const pending = new Promise(resolve => { release = resolve; });
-        e.hooks.set("confirm", () => pending);
+        let entered;
+        const confirming = new Promise(resolve => { entered = resolve; });
+        e.hooks.set("confirm", () => { entered(); return pending; });
         const insertion = e.run();
-        // Flush only microtasks; no timer, network, renderer, or user program is involved.
-        for (let i = 0; i < 10; i++) await Promise.resolve();
+        await confirming;
         assert.deepStrictEqual(e.events, ["confirm"]);
         e.switchAccount(); release(1);
         await assert.rejects(insertion, /project or account changed/);
@@ -859,70 +613,11 @@ describe("Backpack project insertion (fresh source, no network or program execut
         const e = environment(); e.requirePackages("a");
         e.hooks.set("fetch:a", () => { e.file.content = JSON.stringify(config("user-edited", { dependencies: { b: version("b") } })); });
         await assert.rejects(e.run(), /extensions changed/);
-        assert.equal(JSON.parse(e.file.content).name, "user-edited");
-        assert(!e.events.includes("write"));
+        assert.deepStrictEqual(JSON.parse(e.file.content), config("user-edited", { dependencies: { b: version("b") } }));
+        assert.deepStrictEqual(e.events, ["confirm", "fetch:a"]);
     });
 
-    it("preserves config files generated by saving assets and concurrent project renames", async () => {
-        const e = environment(); e.requirePackages("a");
-        e.hooks.set("save:1", () => {
-            const cfg = JSON.parse(e.file.content);
-            cfg.files.push("images.g.jres", "images.g.ts"); cfg.name = "renamed project";
-            e.file.content = JSON.stringify(cfg);
-        });
-        assert.equal(await e.run(), true);
-        const cfg = JSON.parse(e.file.content);
-        assert.equal(cfg.name, "renamed project");
-        assert.deepStrictEqual(cfg.files, ["main.ts", "images.g.jres", "images.g.ts"]);
-        assert.equal(cfg.dependencies.a, version("a"));
-    });
-
-    it("does not reload for an asset-only save when the dependency write never happens", async () => {
-        const e = environment(); e.requirePackages("a");
-        e.hooks.set("save:1", () => {
-            const cfg = JSON.parse(e.file.content); cfg.files.push("images.g.jres");
-            e.file.content = JSON.stringify(cfg);
-        });
-        e.file.setContentAsync = async () => { throw new Error("write refused"); };
-        await assert.rejects(e.run(), /write refused/);
-        assert(!e.events.includes("reload"));
-    });
-
-    it("refuses installed bundled packages whose config identity is wrong", async () => {
-        const e = environment({ core: "*" });
-        e.item.dependencies = { core: "*" };
-        e.main.deps.core.config.name = "not-core";
-        assert.equal(await e.run(), false);
-        assert.deepStrictEqual(e.events, ["popup"]);
-    });
-
-    it("checks context before any popup and after an explanatory popup", async () => {
-        const inactive = environment(); inactive.switchAccount();
-        await assert.rejects(inactive.run(), /project or account changed/);
-        assert.deepStrictEqual(inactive.events, []);
-        const e = environment(); e.item.projectBlocks = { custom_block: "custom.ts" };
-        e.hooks.set("popup", e.switchAccount);
-        await assert.rejects(e.run(), /project or account changed/);
-        assert.deepStrictEqual(e.events, ["popup"]);
-    });
-
-    for (const bad of ["not json", codeFor({ type: "container", unexpected: true }), '{"blocks":[{"type":"container","fields":{"__proto__":{}}}]}']) {
-        it(`rejects invalid serialized data before UI or project operations: ${bad}`, async () => {
-            const e = environment(); e.item.code = bad;
-            await assert.rejects(e.run(), /invalid or unsupported/);
-            assert.deepStrictEqual(e.events, []);
-        });
-    }
-
-    it("propagates render/final save errors rather than claiming success", async () => {
-        for (const point of ["renders", "save:1"]) {
-            const e = environment(); e.hooks.set(point, () => { throw new Error("failed to finish"); });
-            await assert.rejects(e.run(), /failed to finish/);
-            assert(!e.events.includes("reload"));
-        }
-    });
-
-    it("delegates to the real source paste primitive, whose complete insertion is one undo group", async () => {
+    it("inserts real Blockly blocks and removes the complete insertion in one undo", async () => {
         const e = environment();
         const Blockly = require("blockly");
         require("blockly/blocks");

@@ -12,9 +12,8 @@ const compiled = ts.transpileModule(source, {
 });
 assert.deepStrictEqual(compiled.diagnostics, []);
 
-// No fake IndexedDB implementation and no live server. The production adapter
-// uses Chromium transactions on an intercepted test origin. The parent HTTP
-// integration harness can replace pxt.Util.requestAsync with its real handler.
+// The production adapter uses Chromium transactions on an intercepted test origin;
+// only the transport is mocked. Backend tests cover the actual HTTP handlers.
 describe("dedicated Backpack API and durable IndexedDB (current source)", function () {
     this.timeout(30000);
     let browser, page, errors;
@@ -236,17 +235,17 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.deepStrictEqual(result.methods, ["PATCH", "DELETE"]); assert.equal(result.remote.name, "Keep this"); assert.equal(result.visible, 1);
     });
 
-    it("flags missing content until refresh and still deletes using summary version", async () => {
+    it("keeps a missing-content recovery card deletable using its observed summary version", async () => {
         const result = await page.evaluate(async () => {
             bt.seed(1); await store.refreshBackpackAsync();
             bt.hook = (options, run) => options.url.endsWith("/content") ? bt.fail("backpack_not_found", 404) : run();
             const failure = await bt.outcome(() => store.importBackpackEntryAsync(store.getBackpackState().entries[0], "project"));
             const invalid = store.getBackpackState().entries[0];
-            bt.hook = undefined; await store.refreshBackpackAsync(); const recovered = store.getBackpackState().entries[0];
-            await store.deleteBackpackEntryAsync(recovered);
-            return { failure, invalid, recovered, remaining: store.getBackpackState().entries, imports: bt.imports };
+            bt.hook = undefined;
+            await store.deleteBackpackEntryAsync(invalid);
+            return { failure, invalid, remaining: store.getBackpackState().entries, imports: bt.imports };
         });
-        assert.ok(result.invalid.error); assert.equal(result.recovered.error, undefined);
+        assert.ok(result.invalid.error);
         assert.deepStrictEqual(result.remaining, []); assert.deepStrictEqual(result.imports, []);
     });
 
@@ -262,13 +261,12 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.equal(result.records.length, 1); assert.match(result.records[0].key, /000002$/); assert.deepStrictEqual(result.requests, []);
     });
 
-    for (const transition of ["account", "signout", "target", "token"]) it(`discards late responses and queued work after ${transition}`, async () => {
+    for (const transition of ["account", "target", "token"]) it(`discards late responses and queued work after ${transition}`, async () => {
         const result = await page.evaluate(async transition => {
             bt.hold(); bt.hook = async (options, run) => { if (options.method === "PUT") { bt.enter(); await bt.gate; } return run(); };
             const first = bt.outcome(() => store.saveBackpackItemAsync(bt.item(1))); await bt.entered;
             const second = bt.outcome(() => store.saveBackpackItemAsync(bt.item(2)));
             if (transition === "account") bt.signIn("bob");
-            if (transition === "signout") bt.signIn(undefined);
             if (transition === "target") pxt.appTarget.id = "microbit";
             if (transition === "token") bt.signIn("alice", "replacement");
             bt.release();

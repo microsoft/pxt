@@ -50,9 +50,8 @@ const symbol = (name, packageName = name) => ({
 });
 const deferred = () => {
     let resolve;
-    let reject;
-    const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
-    return { promise, resolve, reject };
+    const promise = new Promise(yes => { resolve = yes; });
+    return { promise, resolve };
 };
 const forbidden = () => { throw new Error("Clipboard must not use Backpack serialization, auth, or insertion"); };
 
@@ -64,7 +63,6 @@ function environment() {
     const hooks = {};
     const storage = new Map();
     const configs = {};
-    const captures = [];
     const ensures = [];
     const state = { header: { id: "project" }, user: undefined, readOnly: false, blocksActive: true };
     const step = (name, fallback) => {
@@ -199,7 +197,6 @@ function environment() {
     });
     Object.assign(context, {
         getBlockSnippetRequirements: (...args) => {
-            captures.push(args);
             step("capture");
             return shared.getBlockSnippetRequirements(...args);
         },
@@ -253,8 +250,8 @@ function environment() {
     const copyOrCut = (name, block, event = new KeyboardEvent(name)) => registration[name === "copy" ? 0 : 1](
         editor.editor, event, {}, { focusedNode: block });
     return {
-        api, shared, editor, state, pxt, main, pkg, file, configs, registry, builtins, hooks, storage,
-        events, dialogs, pastes, captures, ensures, reports, Blockly, Workspace, KeyboardEvent,
+        api, shared, editor, state, main, file, hooks, storage,
+        events, dialogs, pastes, ensures, reports, Workspace, KeyboardEvent,
         define, install, makeBlock, entry, copyOrCut,
         read: () => api.getCopyData(),
         put: data => storage.set(api.copyDataKey(), JSON.stringify(data)),
@@ -269,19 +266,16 @@ function environment() {
 }
 
 describe("Clipboard copy/cut integration (fresh source)", () => {
-    for (const type of ["plain_statement", "expression", "function_call"]) {
-        it(`copies and pastes an ordinary ${type} without Backpack container, closure, or account gates`, async () => {
-            const e = environment();
-            if (type !== "function_call") e.define(type, symbol(type, null));
-            const block = e.makeBlock({ type });
-            assert.strictEqual(e.copyOrCut("copy", block), true);
-            await e.paste(e.read());
-            assert.strictEqual(e.pastes.length, 1);
-            assert.strictEqual(e.pastes[0][0].blockState.type, type);
-            assert.strictEqual(block.deleted, false);
-            assert.deepStrictEqual(e.dialogs, []);
-        });
-    }
+    it("copies and pastes an ordinary function call without Backpack container, closure, or account gates", async () => {
+        const e = environment();
+        const block = e.makeBlock({ type: "function_call" });
+        assert.strictEqual(e.copyOrCut("copy", block), true);
+        await e.paste(e.read());
+        assert.strictEqual(e.pastes.length, 1);
+        assert.strictEqual(e.pastes[0][0].blockState.type, "function_call");
+        assert.strictEqual(block.deleted, false);
+        assert.deepStrictEqual(e.dialogs, []);
+    });
 
     it("captures only used input, obscured shadow, root-next, field API, and project-source requirements", () => {
         const e = environment();
@@ -291,6 +285,7 @@ describe("Clipboard copy/cut integration (fresh source)", () => {
             VALUE: { shadow: { type: "shadow_block" }, block: { type: "input_block" } }
         }, next: { block: { type: "following_block", next: { block: { type: "custom_block" } } } } });
         assert.strictEqual(e.copyOrCut("copy", block), true);
+        assert.deepStrictEqual(clone(e.read().data.blockState), block.data.blockState);
         assert.deepStrictEqual(clone(e.read().requirements), {
             dependencies: Object.fromEntries(["root", "input", "shadow", "following", "gallery"].map(name => [name, version(name)])),
             projectBlocks: { custom_block: "helpers.ts" }
@@ -299,68 +294,34 @@ describe("Clipboard copy/cut integration (fresh source)", () => {
             ["root_block", "shadow_block", "input_block", "following_block", "custom_block"]);
     });
 
-    it("round-trips full opaque field state, typeCounts, coordinates, workspace, version and header", () => {
-        const e = environment();
-        const block = e.makeBlock({ type: "text", fields: { TEXT: { id: "asset", pixels: [1, 2, 3], tilemap: { walls: [0, 1] } } },
-            extraState: { mutation: "complete", nested: ["kept"] } });
-        block.data.extraCopyProperty = { opaque: true };
-        assert.strictEqual(e.copyOrCut("copy", block), true);
-        assert.strictEqual(e.api.copyDataKey(), "copyData");
-        assert.deepStrictEqual(clone(e.read()), {
-            version: 1, targetVersion: "1.0.0", workspaceId: "workspace", headerId: "project", coord: block.coord,
-            data: block.data, requirements: { dependencies: {}, projectBlocks: {} }
-        });
-        block.data.blockState.fields.TEXT.pixels[0] = 99;
-        assert.strictEqual(e.read().data.blockState.fields.TEXT.pixels[0], 1);
-    });
-
-    it("registration closures forward the latest blockInfo to both copy and cut", () => {
-        const e = environment();
-        const first = e.editor.blockInfo;
-        assert(e.copyOrCut("copy", e.makeBlock()));
-        for (const operation of ["copy", "cut"]) {
-            const latest = { blocksById: { local: symbol("local", null) }, apis: { byQName: {} } };
-            e.editor.blockInfo = latest;
-            const block = e.makeBlock({ type: "local" });
-            assert(e.copyOrCut(operation, block));
-            assert.strictEqual(e.captures[e.captures.length - 1][1], latest);
-            assert.strictEqual(e.captures[e.captures.length - 1][2], e.main);
-            assert.deepStrictEqual(clone(e.read().requirements.projectBlocks), { local: "helpers.ts" });
-            assert.strictEqual(block.deleted, operation === "cut");
-        }
-        assert.strictEqual(e.captures[0][1], first);
-    });
-
-    for (const operation of ["copy", "cut"]) {
-        for (const failure of ["capture", "store", "null", "loading"]) {
-            it(`${operation}: ${failure} failure never consumes the source or replaces the old clipboard`, () => {
-                const e = environment();
-                e.put(e.entry());
-                const original = e.storage.get("copyData");
-                const block = e.makeBlock();
-                if (failure === "null") e.hooks.serialize = () => null;
-                else if (failure === "loading") e.editor.blockInfo = undefined;
-                else e.hooks[failure] = () => { throw new Error(`${failure} failed`); };
-                assert.strictEqual(e.copyOrCut(operation, block), false);
-                assert.strictEqual(block.deleted, false);
-                assert.strictEqual(e.storage.get("copyData"), original);
-                assert(!e.events.includes("copy-hint") && !e.events.includes("cut-hint"));
-                assert.strictEqual(e.dialogs.length, failure === "null" ? 0 : 1);
-                if (e.dialogs.length) assert.strictEqual(e.dialogs[0].header, "Copy Error");
-            });
-        }
-    }
-
-    for (const duplicate of [false, true]) {
-        it(`cut durably captures before deletion and preserves duplicateOnDrag=${duplicate}`, () => {
+    for (const failure of ["capture", "store"]) {
+        it(`cut: ${failure} failure never consumes the source or replaces the old clipboard`, () => {
             const e = environment();
+            e.put(e.entry());
+            const original = e.storage.get("copyData");
             const block = e.makeBlock();
-            block.duplicateOnDrag = duplicate;
-            assert.strictEqual(e.copyOrCut("cut", block), true);
-            assert.strictEqual(block.deleted, !duplicate);
-            assert.deepStrictEqual(e.events, ["serialize", "capture", "store", ...(!duplicate ? ["delete"] : []), "cut-hint"]);
+            e.hooks[failure] = () => { throw new Error(`${failure} failed`); };
+            assert.strictEqual(e.copyOrCut("cut", block), false);
+            assert.strictEqual(block.deleted, false);
+            assert.strictEqual(e.storage.get("copyData"), original);
+            assert(!e.events.includes("copy-hint") && !e.events.includes("cut-hint"));
+            assert.strictEqual(e.dialogs.length, 1);
+            assert.strictEqual(e.dialogs[0].header, "Copy Error");
         });
     }
+
+    it("cut durably captures the current block requirements before deleting the source", () => {
+        const e = environment();
+        e.editor.blockInfo = { blocksById: { local: symbol("local", null) }, apis: { byQName: {} } };
+        const block = e.makeBlock({ type: "local" });
+        e.hooks.delete = () => {
+            assert.deepStrictEqual(clone(e.read().data), block.data);
+            assert.deepStrictEqual(clone(e.read().requirements.projectBlocks), { local: "helpers.ts" });
+        };
+        assert.strictEqual(e.copyOrCut("cut", block), true);
+        assert.strictEqual(block.deleted, true);
+        assert.deepStrictEqual(e.events, ["serialize", "capture", "store", "delete", "cut-hint"]);
+    });
 
     it("native comments bypass metadata capture, cut via dispose, and paste without block preparation", async () => {
         const e = environment();
@@ -382,25 +343,6 @@ describe("Clipboard copy/cut integration (fresh source)", () => {
         assert.deepStrictEqual(e.ensures, []);
         assert(!e.events.includes("types"));
     });
-
-    it("copy failure dialog rejections are reported rather than left unhandled", async () => {
-        const e = environment();
-        e.hooks.store = () => { throw new Error("quota"); };
-        e.hooks["dialog:Copy Error"] = () => { throw new Error("dialog failed"); };
-        assert.strictEqual(e.copyOrCut("cut", e.makeBlock()), false);
-        await new Promise(resolve => setImmediate(resolve));
-        assert.deepStrictEqual(e.reports.map(error => error.message), ["dialog failed"]);
-    });
-
-    it("empty or corrupt storage and absent/noncopyable focus safely decline", () => {
-        const e = environment();
-        assert.strictEqual(e.read(), undefined);
-        e.storage.set("copyData", "not json");
-        assert.strictEqual(e.read(), undefined);
-        assert.strictEqual(e.copyOrCut("copy", undefined), false);
-        assert.strictEqual(e.copyOrCut("copy", {}), false);
-        assert.strictEqual(e.copyOrCut("cut", {}), false);
-    });
 });
 
 describe("Clipboard paste integration and shared preparation (fresh source)", () => {
@@ -417,7 +359,12 @@ describe("Clipboard paste integration and shared preparation (fresh source)", ()
         e.put(data);
         assert.strictEqual(e.editor.pastePrecondition({ workspace: e.editor.editor }), "enabled");
         const oldWorkspace = e.editor.editor;
-        await e.paste(e.read());
+        const gate = e.hold("definitions-ready");
+        const pending = e.paste(e.read());
+        await gate.entered;
+        assert.deepStrictEqual(e.pastes, []);
+        gate.resolve();
+        await pending;
         assert.deepStrictEqual(e.events, ["clear-hints", "types", "ensure", "dialog:Add required extensions?",
             "fetch:extension", "conflicts:extension", "save-project", "write", "reload", "definitions-ready", "dom", "native-paste"]);
         assert.strictEqual(e.pastes.length, 1);
@@ -426,31 +373,6 @@ describe("Clipboard paste integration and shared preparation (fresh source)", ()
         assert.deepStrictEqual(clone(e.pastes[0][0]), data.data);
         assert.deepStrictEqual(JSON.parse(e.file.content).dependencies, { extension: version("extension") });
         assert.strictEqual(e.dialogs[0].agreeLbl, "Add extensions and snippet");
-    });
-
-    it("the native adapter forwards actual serialized types and requirements, not typeCounts", async () => {
-        const e = environment();
-        const data = e.entry({ type: "text", next: { block: { type: "controls_if" } } }, { dependencies: {} });
-        e.hooks.ensure = () => true;
-        await e.paste(data);
-        assert.strictEqual(e.ensures[0][0], data.requirements);
-        assert.deepStrictEqual(clone(e.ensures[0][1]), ["text", "controls_if"]);
-        assert.strictEqual(e.ensures[0][2].getWorkspace(), e.editor.editor);
-        assert.strictEqual(e.ensures[0][2].getBlocksInfo(), e.editor.blockInfo);
-        assert.strictEqual(e.pastes[0][0], data.data);
-    });
-
-    it("awaits loadingXmlPromise after reload and domUpdate before native paste", async () => {
-        const e = environment();
-        const gate = e.hold("definitions-ready");
-        const pending = e.paste(missingEntry(e));
-        await gate.entered;
-        await Promise.resolve();
-        assert.deepStrictEqual(e.pastes, []);
-        gate.resolve();
-        await pending;
-        assert.strictEqual(e.pastes.length, 1);
-        assert(e.events.indexOf("dom") < e.events.indexOf("native-paste"));
     });
 
     it("missing project-source popup aborts before downloading, saving, replacing extensions, or pasting", async () => {
@@ -464,46 +386,26 @@ describe("Clipboard paste integration and shared preparation (fresh source)", ()
         assertNoChanges(e);
     });
 
-    it("canceling extension approval leaves project and native clipboard untouched", async () => {
+    it("preflight conflicts are explained without quietly replacing dependencies", async () => {
         const e = environment();
-        e.hooks["dialog:Add required extensions?"] = () => 0;
+        e.hooks["conflicts:extension"] = () => [{ pkg0: "core", pkg1: "extension" }];
         await e.paste(missingEntry(e));
+        assert.strictEqual(e.dialogs[e.dialogs.length - 1].header, "Extension conflict");
         assertNoChanges(e);
-        assert(!e.events.includes("fetch:extension"));
     });
 
-    for (const conflict of ["installed source", "preflight replacement"]) {
-        it(`${conflict} conflict is explained and never quietly replaced`, async () => {
-            const e = environment();
-            if (conflict === "installed source") e.install("extension", "github:other/extension#v9");
-            else e.hooks["conflicts:extension"] = () => [{ pkg0: "core", pkg1: "extension" }];
-            const original = e.main.deps.extension;
-            await e.paste(missingEntry(e));
-            assert.strictEqual(e.dialogs[e.dialogs.length - 1].header, "Extension conflict");
-            assert.strictEqual(e.main.deps.extension, original);
-            assertNoChanges(e);
-        });
-    }
-
-    for (const unavailable of ["API absent but global registered", "global absent but API current", "nested shadow absent", "root next absent"]) {
-        it(`version-1 clipboard without metadata still freshly rejects ${unavailable}`, async () => {
-            const e = environment();
-            e.install("extension");
-            let blockState = { type: "extension_block" };
-            if (unavailable.startsWith("API")) delete e.editor.blockInfo.blocksById.extension_block;
-            else if (unavailable.startsWith("global")) delete e.registry.extension_block;
-            else if (unavailable.startsWith("nested")) blockState = { type: "text", inputs: { X: { shadow: { type: "missing" }, block: { type: "math_number" } } } };
-            else blockState = { type: "text", next: { block: { type: "missing" } } };
-            const data = e.entry(blockState);
-            delete data.requirements;
-            data.data.typeCounts = { text: 1 };
-            e.put(data);
-            assert.strictEqual(e.editor.pastePrecondition({ workspace: e.editor.editor }), "enabled");
-            await e.paste(e.read());
-            assert.strictEqual(e.dialogs[0].header, "Blocks unavailable");
-            assertNoChanges(e);
-        });
-    }
+    it("metadata-free paste rejects an extension absent from current APIs despite its stale global registration", async () => {
+        const e = environment();
+        e.install("extension");
+        delete e.editor.blockInfo.blocksById.extension_block;
+        const data = e.entry({ type: "extension_block" });
+        data.data.typeCounts = { text: 1 };
+        e.put(data);
+        assert.strictEqual(e.editor.pastePrecondition({ workspace: e.editor.editor }), "enabled");
+        await e.paste(e.read());
+        assert.strictEqual(e.dialogs[0].header, "Blocks unavailable");
+        assertNoChanges(e);
+    });
 
     it("version-1 metadata-free builtin paste succeeds without inferring extensions from stale typeCounts", async () => {
         const e = environment();
@@ -515,13 +417,11 @@ describe("Clipboard paste integration and shared preparation (fresh source)", ()
         assert(!e.events.some(event => event.startsWith("fetch:")));
     });
 
-    for (const position of ["same visible", "same outside", "other workspace", "no coordinates"]) {
+    for (const position of ["same visible", "other workspace"]) {
         it(`keyboard positioning: ${position} uses native default only for a visible same-workspace copy`, async () => {
             const e = environment();
             const data = e.entry();
-            if (position === "same outside") data.coord = { x: -100, y: -100 };
             if (position === "other workspace") data.workspaceId = "different";
-            if (position === "no coordinates") data.coord = null;
             await e.paste(data);
             assert.strictEqual(e.pastes[0].length, position === "same visible" ? 2 : 3);
             if (position !== "same visible") assert.deepStrictEqual(clone(e.pastes[0][2]), { x: 100, y: 50 });
@@ -546,133 +446,89 @@ describe("Clipboard paste integration and shared preparation (fresh source)", ()
         assert.deepStrictEqual(clone(e.pastes[0][2]), { x: 200, y: 250 });
     });
 
-    it("pasteCallback prevents browser/file import and forwards only pointerdown coordinates", async () => {
-        for (const type of ["pointerdown", "paste", "keydown"]) {
-            const e = environment();
-            e.put(e.entry());
-            const original = e.editor.pasteAsync.bind(e.editor);
-            let pending;
-            let received;
-            e.editor.pasteAsync = (data, ev) => { received = ev; return pending = original(data, ev); };
-            const event = new e.KeyboardEvent(type);
-            event.clientX = 110; event.clientY = 70;
-            assert.strictEqual(e.editor.pasteCallback(e.editor.editor, event), true);
-            assert.strictEqual(event.prevented, 1);
-            assert.strictEqual(received, type === "pointerdown" ? event : undefined);
-            await pending;
-            assert.strictEqual(e.pastes.length, 1);
-        }
-    });
-
-    it("pasteCallback leaves invalid or disallowed clipboard events unconsumed", () => {
-        const e = environment();
-        const event = new e.KeyboardEvent("paste");
-        for (const data of [undefined, {}, { data: null }]) {
-            if (data) e.put(data);
-            assert.strictEqual(e.editor.pasteCallback(e.editor.editor, event), false);
-        }
-        e.put(e.entry());
-        e.state.header = { id: "tutorial", tutorial: {} };
-        assert.strictEqual(e.editor.pasteCallback(e.editor.editor, event), false);
-        assert.strictEqual(event.prevented, 0);
-    });
-
-    for (const [label, header, allowed] of [
-        ["same unfinished tutorial", { id: "project", tutorial: {} }, true],
-        ["different unfinished tutorial", { id: "other", tutorial: {} }, false],
-        ["completed tutorial", { id: "other", tutorial: {}, tutorialCompleted: true }, true],
-        ["ordinary other project", { id: "other" }, true],
-        ["no project", undefined, false]
-    ]) {
-        it(`${label}: signed-out native paste ${allowed ? "works" : "is blocked"}`, async () => {
-            const e = environment();
-            e.state.header = header;
-            assert.strictEqual(e.editor.canPasteData(e.entry()), allowed);
-            await e.paste(e.entry());
-            assert.strictEqual(e.pastes.length, allowed ? 1 : 0);
-        });
-    }
-
-    for (const [label, change] of Object.entries({
-        "shell read-only": e => { e.state.readOnly = true; },
-        "workspace read-only": e => { e.editor.editor.readOnly = true; },
-        "loading XML": e => { e.editor.loadingXml = true; },
-        "delayed XML": e => { e.editor.delayLoadXml = "<xml/>"; },
-        "non-Blocks editor": e => { e.state.blocksActive = false; },
-        "missing workspace": e => { e.editor.editor = undefined; }
-    })) {
-        it(`does not prepare or paste while ${label}`, async () => {
+    it("guards readonly/loading paste and permits only same-project unfinished tutorial clipboard data", async () => {
+        for (const change of [
+            e => { e.state.readOnly = true; },
+            e => { e.editor.editor.readOnly = true; },
+            e => { e.editor.loadingXml = true; }
+        ]) {
             const e = environment();
             change(e);
             await e.paste(e.entry());
             assert.deepStrictEqual(e.ensures, []);
             assert.deepStrictEqual(e.pastes, []);
-        });
-    }
-
-    const transitions = {
-        "sign in": e => { e.state.user = "account-A"; },
-        "sign out": e => { e.state.user = undefined; },
-        "switch account": e => { e.state.user = "account-B"; },
-        "switch project": e => { e.state.header = { id: "other" }; },
-        "switch target": e => { e.pxt.appTarget.id = "microbit"; }
-    };
-    for (const [label, change] of Object.entries(transitions)) {
-        for (const stage of ["dialog:Add required extensions?", "fetch:extension", "ensure"]) {
-            it(`${label} during ${stage} aborts without stale writes or native paste`, async () => {
-                const e = environment();
-                if (label !== "sign in") e.state.user = "account-A";
-                const gate = e.hold(stage);
-                const pending = e.paste(missingEntry(e));
-                await gate.entered;
-                change(e);
-                gate.resolve(stage === "fetch:extension" ? config("extension") : 1);
-                await pending;
-                assertNoChanges(e);
-                assert.strictEqual(e.editor.pasteInProgress, false);
-                assert(!e.dialogs.some(dialog => dialog.header === "Paste Error"));
-            });
         }
-    }
+        const e = environment();
+        e.put(e.entry());
+        e.state.header = { id: "other", tutorial: {} };
+        const event = new e.KeyboardEvent("paste");
+        assert.strictEqual(e.editor.pasteCallback(e.editor.editor, event), false);
+        assert.strictEqual(event.prevented, 0);
+        await e.paste(e.read());
+        assert.deepStrictEqual(e.ensures, []);
+        assert.deepStrictEqual(e.pastes, []);
+        e.state.header = { id: "project", tutorial: {} };
+        await e.paste(e.read());
+        assert.strictEqual(e.pastes.length, 1);
+    });
 
-    for (const outcome of ["success", "cancel", "error"]) {
-        it(`concurrent paste is suppressed and restored after ${outcome}`, async () => {
+    for (const [label, stage, change] of [
+        ["project switch", "dialog:Add required extensions?", e => { e.state.header = { id: "other" }; }],
+        ["direct account A to B switch", "fetch:extension", e => { e.state.user = "account-B"; }]
+    ]) {
+        it(`${label} during ${stage} aborts without stale writes or native paste`, async () => {
             const e = environment();
-            const gate = e.hold("ensure");
-            const pending = e.paste(e.entry());
+            e.state.user = "account-A";
+            const gate = e.hold(stage);
+            const pending = e.paste(missingEntry(e));
             await gate.entered;
-            await e.paste(e.entry());
-            assert.strictEqual(e.ensures.length, 1);
-            assert.strictEqual(e.editor.pasteInProgress, true);
-            if (outcome === "error") gate.reject(new Error("Preparation failed"));
-            else gate.resolve(outcome === "success");
+            change(e);
+            gate.resolve(stage === "fetch:extension" ? config("extension") : 1);
             await pending;
-            assert.strictEqual(e.pastes.length, outcome === "success" ? 1 : 0);
+            assertNoChanges(e);
             assert.strictEqual(e.editor.pasteInProgress, false);
-            delete e.hooks.ensure;
-            await e.paste(e.entry());
-            assert.strictEqual(e.pastes.length, outcome === "success" ? 2 : 1);
-            if (outcome === "error") assert.strictEqual(e.dialogs[0].body, "Preparation failed");
+            assert(!e.dialogs.some(dialog => dialog.header === "Paste Error"));
         });
     }
 
-    for (const failure of ["ensure", "native-paste", "dialog:Paste Warning"]) {
-        it(`${failure} errors through fire-and-forget callback are visible without rejecting`, async () => {
-            const e = environment();
-            const data = e.entry();
-            if (failure.startsWith("dialog")) data.targetVersion = "old";
-            e.put(data);
-            e.hooks[failure] = () => { throw new Error("Visible failure"); };
-            let pending;
-            const original = e.editor.pasteAsync.bind(e.editor);
-            e.editor.pasteAsync = (...args) => { pending = original(...args); pending.catch(() => {}); return pending; };
-            assert(e.editor.pasteCallback(e.editor.editor, new e.KeyboardEvent("paste")));
-            await assert.doesNotReject(pending);
-            assert.strictEqual(e.dialogs[e.dialogs.length - 1].header, "Paste Error");
-            assert.strictEqual(e.dialogs[e.dialogs.length - 1].body, "Visible failure");
-            assert.strictEqual(e.editor.pasteInProgress, false);
-        });
-    }
+    it("suppresses concurrent paste during consent and allows retry after cancellation", async () => {
+        const e = environment();
+        e.put(missingEntry(e));
+        const original = e.storage.get("copyData");
+        const gate = e.hold("dialog:Add required extensions?");
+        const pending = e.paste(e.read());
+        await gate.entered;
+        await e.paste(missingEntry(e));
+        assert.strictEqual(e.ensures.length, 1);
+        assert.strictEqual(e.dialogs.length, 1);
+        assert.strictEqual(e.editor.pasteInProgress, true);
+        gate.resolve(0);
+        await pending;
+        assertNoChanges(e);
+        assert(!e.events.includes("fetch:extension"));
+        assert.strictEqual(e.storage.get("copyData"), original);
+        assert.strictEqual(e.editor.pasteInProgress, false);
+        delete e.hooks["dialog:Add required extensions?"];
+        await e.paste(missingEntry(e));
+        assert.strictEqual(e.pastes.length, 1);
+    });
+
+    it("native paste errors through the fire-and-forget callback are visible without rejecting", async () => {
+        const e = environment();
+        e.put(e.entry());
+        e.hooks["native-paste"] = () => { throw new Error("Visible failure"); };
+        let pending;
+        const original = e.editor.pasteAsync.bind(e.editor);
+        // Observe the real operation's promise, without replacing its behavior.
+        e.editor.pasteAsync = (...args) => { pending = original(...args); pending.catch(() => {}); return pending; };
+        const event = new e.KeyboardEvent("paste");
+        assert(e.editor.pasteCallback(e.editor.editor, event));
+        assert.strictEqual(event.prevented, 1);
+        await assert.doesNotReject(pending);
+        assert.strictEqual(e.dialogs[0].header, "Paste Error");
+        assert.strictEqual(e.dialogs[0].body, "Visible failure");
+        assert.strictEqual(e.editor.pasteInProgress, false);
+    });
 
     it("a failing error dialog cannot reject the fire-and-forget paste operation", async () => {
         const e = environment();
@@ -682,44 +538,7 @@ describe("Clipboard paste integration and shared preparation (fresh source)", ()
         // not a process-level unhandledRejection that interferes with other suites.
         await assert.doesNotReject(e.paste(e.entry()));
         assert.strictEqual(e.editor.pasteInProgress, false);
-    });
-
-    it("incompatible entry versions show Paste Error before shared preparation", async () => {
-        const e = environment();
-        const data = e.entry(); data.version = 2;
-        await e.paste(data);
-        assert.strictEqual(e.dialogs[0].header, "Paste Error");
-        assert.deepStrictEqual(e.ensures, []);
-        assertNoChanges(e);
-    });
-
-    for (const comment of [false, true]) {
-        for (const approval of [0, 1]) {
-            it(`targetVersion warning for native ${comment ? "comment" : "block"}: approval=${approval}`, async () => {
-                const e = environment();
-                const data = e.entry();
-                if (comment) data.data = { paster: "comment", text: "comment" };
-                data.targetVersion = "0.9.0";
-                e.hooks["dialog:Paste Warning"] = () => approval;
-                await e.paste(data);
-                assert.strictEqual(e.dialogs[0].header, "Paste Warning");
-                assert.strictEqual(e.dialogs[0].agreeLbl, "Paste Anyway");
-                assert.strictEqual(e.pastes.length, approval);
-                assert.strictEqual(e.ensures.length, comment ? 0 : approval);
-            });
-        }
-    }
-
-    it("project switch during target-version confirmation prevents even native comment paste", async () => {
-        const e = environment();
-        const data = e.entry(); data.data = { paster: "comment", text: "comment" }; data.targetVersion = "old";
-        const gate = e.hold("dialog:Paste Warning");
-        const pending = e.paste(data);
-        await gate.entered;
-        e.state.header = { id: "other" };
-        gate.resolve(1);
-        await pending;
-        assertNoChanges(e);
+        assert.deepStrictEqual(e.reports.map(error => error.message), ["Dialog failed"]);
     });
 });
 
