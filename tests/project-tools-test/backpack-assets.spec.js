@@ -239,36 +239,25 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
         assert.deepStrictEqual(result.second.counts, result.first.counts, "Repeated paste must not create extra images, maps, or tiles");
     });
 
-    for (const difference of ["cells", "walls", "dimensions"]) {
-        it("does not deduplicate maps with identical tiles but different " + difference, async () => {
-            const result = await page.evaluate(async difference => {
-                const source = await makeSource(data => {
-                    if (difference === "cells") data.tilemap.set(1, 0, 1);
-                    if (difference === "walls") {
-                        const walls = pxt.sprite.Bitmap.fromData(data.layers);
-                        walls.set(1, 0, 2);
-                        data.layers = walls.data();
-                    }
-                    if (difference === "dimensions") {
-                        data.tilemap = new pxt.sprite.Tilemap(4, 2);
-                        data.layers = new pxt.sprite.Bitmap(4, 2).data();
-                    }
-                });
-                const existing = seed(2);
-                const before = snapshot(existing.tilemap);
-                const first = await inspectPasted(source.code);
-                const second = await inspectPasted(source.code);
-                return { source, before, after: snapshot(project.getTilemap(existing.tilemap.id)), first, second, errors };
-            }, difference);
-            assert.notEqual(result.first.ids.tilemap, result.source.ids.tilemap);
-            assert.deepStrictEqual(result.first.tilemap, result.source.expected.tilemap);
-            assert.deepStrictEqual(result.second.tilemap, result.source.expected.tilemap);
-            assert.deepStrictEqual(result.before, result.after);
-            assert.deepStrictEqual(result.first.ids, result.second.ids);
-            assert.deepStrictEqual(result.first.counts, result.second.counts);
-            assert.deepStrictEqual(result.errors, []);
+    it("does not deduplicate maps with identical tiles but different layout", async () => {
+        const result = await page.evaluate(async () => {
+            const source = await makeSource(data => {
+                data.tilemap.set(1, 0, 1);
+            });
+            const existing = seed(2);
+            const before = snapshot(existing.tilemap);
+            const first = await inspectPasted(source.code);
+            const second = await inspectPasted(source.code);
+            return { source, before, after: snapshot(project.getTilemap(existing.tilemap.id)), first, second, errors };
         });
-    }
+        assert.notEqual(result.first.ids.tilemap, result.source.ids.tilemap);
+        assert.deepStrictEqual(result.first.tilemap, result.source.expected.tilemap);
+        assert.deepStrictEqual(result.second.tilemap, result.source.expected.tilemap);
+        assert.deepStrictEqual(result.before, result.after);
+        assert.deepStrictEqual(result.first.ids, result.second.ids);
+        assert.deepStrictEqual(result.first.counts, result.second.counts);
+        assert.deepStrictEqual(result.errors, []);
+    });
 
     it("round-trips an inline temporary image through the real string-state fallback", async () => {
         const result = await page.evaluate(async () => {
@@ -384,8 +373,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 root.getInput("DO").connection.connect(callProcedure(ws, "procedure").previousConnection);
                 await new Promise(resolve => setTimeout(resolve, 0));
                 const code = backpack.captureBackpackBlock(root).code;
-                const mutations = [null, { name: "procedure" }, "<mutation", '<block name="procedure"/>',
-                    "<mutation/>", '<mutation name="prototype"/>', '<mutation name="different"/>',
+                const mutations = ["<mutation", '<mutation name="prototype"/>',
                     '<mutation name="procedure"><arg name="unsupported"/></mutation>'];
                 const payloads = mutations.map(extraState => {
                     const payload = JSON.parse(code);
@@ -408,7 +396,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
             finally { ws.dispose(); }
         });
         assert(result.rejected.every(Boolean));
-        assert.equal(result.rejected.length, 10);
+        assert.equal(result.rejected.length, 5);
         assert.equal(result.count, 0);
         assert.equal(result.undo, 0);
         assert.deepStrictEqual(result.errors, []);

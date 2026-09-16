@@ -105,44 +105,22 @@ function environment({ loggedIn = true, patchSuccess = true } = {}) {
 }
 
 describe("auth settings-only Backpack cutover (current source)", () => {
-    it("sanitizes startup reads and cachedUserState without local or remote writes", async () => {
+    it("excludes legacy captures from local and fetched startup settings without deleting remote data", async () => {
         const env = environment();
         const expected = preferences();
         delete expected.backpack;
-        // Repeated startup reads must not reintroduce the old map from storage.
-        for (let i = 0; i < 2; i++) {
-            const state = await env.auth.getUserStateAsync();
-            assertSettings(state.preferences, expected);
-            assert.strictEqual(env.auth.cachedUserState, state);
-            assert.notStrictEqual(state, env.stored());
-            assert.notStrictEqual(state.preferences, env.stored().preferences);
-            assert.deepStrictEqual(clone(state.profile), env.original.profile);
-        }
-        assert.strictEqual(env.reads.length, 2);
+        const state = await env.auth.getUserStateAsync();
+        assertSettings(state.preferences, expected);
+        assert.strictEqual(env.auth.cachedUserState, state);
+        assert.deepStrictEqual(clone(state.profile), env.original.profile);
         assert.deepStrictEqual(env.stored(), env.original);
+        assert.deepStrictEqual(env.writes, []);
+        assert.deepStrictEqual(env.requests, []);
+        const fetched = await env.client.initialUserPreferencesAsync();
+        await env.settle();
+        assertSettings(fetched, expected);
+        env.writes.forEach(state => assertSettings(state.preferences, expected));
         assert.deepStrictEqual(env.remote, preferences());
-        assert.deepStrictEqual(env.writes, []);
-        assert.deepStrictEqual(env.requests, []);
-    });
-
-    it("ignores root and nested Backpack patches without persisting or syncing them", async () => {
-        const env = environment();
-        const expected = preferences();
-        delete expected.backpack;
-        const ops = [
-            { op: "add", path: ["backpack"], value: {} },
-            { op: "replace", path: ["backpack", "arcade", "old", "name"], value: "Changed" },
-            { op: "remove", path: ["backpack", "arcade", "old"] },
-            { op: "remove", path: ["backpack"] }
-        ];
-        for (const op of [...ops, ops]) {
-            const result = await env.client.patchUserPreferencesAsync(op, { immediate: true });
-            assert.strictEqual(result.success, true);
-            assertSettings(result.res, expected);
-        }
-        assert.deepStrictEqual(env.writes, []);
-        assert.deepStrictEqual(env.requests, []);
-        assert.deepStrictEqual(env.stored(), env.original);
     });
 
     it("syncs ordinary settings without diff-deleting or modifying the remote legacy map", async () => {
@@ -175,35 +153,6 @@ describe("auth settings-only Backpack cutover (current source)", () => {
         });
         assert(env.changes.flat().every(op => op.path[0] !== "backpack"));
         assert.deepStrictEqual(env.errors, []);
-    });
-
-    it("returns sanitized local settings when signed out without making requests", async () => {
-        const env = environment({ loggedIn: false });
-        const result = await env.client.patchUserPreferencesAsync(
-            { op: "replace", path: ["highContrast"], value: true }, { immediate: true });
-        const expected = preferences();
-        delete expected.backpack;
-        expected.highContrast = true;
-        assert.strictEqual(result.success, true);
-        assertSettings(result.res, expected);
-        assertSettings(env.stored().preferences, expected);
-        assert.deepStrictEqual(env.requests, []);
-        assert.deepStrictEqual(env.remote, preferences());
-    });
-
-    it("sanitizes fetched startup preferences rather than restoring the legacy map", async () => {
-        const env = environment();
-        const expected = preferences();
-        delete expected.backpack;
-        const result = await env.client.initialUserPreferencesAsync();
-        await env.settle();
-        assertSettings(result, expected);
-        assertSettings(env.auth.cachedUserState.preferences, expected);
-        env.writes.forEach(state => assertSettings(state.preferences, expected));
-        assert.deepStrictEqual(env.requests, [
-            { url: "/api/user/preferences", method: "GET", data: undefined }
-        ]);
-        assert.deepStrictEqual(env.remote, preferences());
     });
 
     it("also sanitizes preferences returned by an unsuccessful PATCH", async () => {

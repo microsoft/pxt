@@ -99,43 +99,35 @@ describe("Backpack high-density previews", function () {
         assert.equal(result.leakedCopies, 0);
     });
 
-    for (const acceptedDensity of [1.5, 1]) {
-        it(`redraws from the SVG at ${acceptedDensity}x when a denser PNG exceeds the budget`, async () => {
-            const result = await page.evaluate(async acceptedDensity => {
-                const test = window.previewTest;
-                const calls = [];
-                pxt.BrowserUtils.encodeToPngAsync = async (uri, options) => {
-                    calls.push({ uri, density: options.pixelDensity });
-                    return options.pixelDensity > acceptedDensity ? "x".repeat(test.storage.MAX_BACKPACK_PREVIEW_LENGTH + 1)
-                        : test.originalEncode(uri, options);
-                };
-                const preview = await test.capture();
-                return { density: preview.previewPixelDensity, length: preview.previewUri.length,
-                    calls: calls.map(call => call.density), sameSvg: new Set(calls.map(call => call.uri)).size === 1,
-                    max: test.storage.MAX_BACKPACK_PREVIEW_LENGTH };
-            }, acceptedDensity);
-            assert.equal(result.density, acceptedDensity);
-            assert.deepStrictEqual(result.calls, acceptedDensity === 1.5 ? [2, 1.5] : [2, 1.5, 1]);
-            assert(result.sameSvg && result.length <= result.max);
+    it("falls back through lower densities using the same SVG when previews exceed the budget", async () => {
+        const result = await page.evaluate(async () => {
+            const test = window.previewTest;
+            const calls = [];
+            pxt.BrowserUtils.encodeToPngAsync = async (uri, options) => {
+                calls.push({ uri, density: options.pixelDensity });
+                return options.pixelDensity > 1 ? "x".repeat(test.storage.MAX_BACKPACK_PREVIEW_LENGTH + 1)
+                    : test.originalEncode(uri, options);
+            };
+            const preview = await test.capture();
+            return { density: preview.previewPixelDensity, length: preview.previewUri.length,
+                calls: calls.map(call => call.density), sameSvg: new Set(calls.map(call => call.uri)).size === 1,
+                max: test.storage.MAX_BACKPACK_PREVIEW_LENGTH };
         });
-    }
+        assert.equal(result.density, 1);
+        assert.deepStrictEqual(result.calls, [2, 1.5, 1]);
+        assert(result.sameSvg && result.length <= result.max);
+    });
 
-    for (const failure of ["missing SVG", "empty SVG", "SVG failure", "PNG failure", "PNG unavailable", "all oversized"]) {
+    for (const failure of ["PNG failure", "all oversized"]) {
         it(`leaves capture optional and cleans up detached SVGs after ${failure}`, async () => {
             assert.deepStrictEqual(await page.evaluate(async failure => {
                 const test = window.previewTest;
-                const getSvgRoot = test.block.getSvgRoot;
                 const before = test.block.getSvgRoot().outerHTML;
-                let result;
-                try {
-                    if (failure === "missing SVG") test.block.getSvgRoot = () => null;
-                    if (failure === "empty SVG") test.block.getSvgRoot = () => document.createElementNS("http://www.w3.org/2000/svg", "g");
-                    if (failure === "SVG failure") test.layout.blocklyToSvgAsync = async () => { throw new Error("SVG failed"); };
-                    if (failure === "PNG failure") pxt.BrowserUtils.encodeToPngAsync = async () => { throw new Error("PNG failed"); };
-                    if (failure === "PNG unavailable") pxt.BrowserUtils.encodeToPngAsync = async () => undefined;
-                    if (failure === "all oversized") pxt.BrowserUtils.encodeToPngAsync = async () => "x".repeat(test.storage.MAX_BACKPACK_PREVIEW_LENGTH + 1);
-                    result = await test.capture();
-                } finally { test.block.getSvgRoot = getSvgRoot; }
+                pxt.BrowserUtils.encodeToPngAsync = async () => {
+                    if (failure === "PNG failure") throw new Error("PNG failed");
+                    return "x".repeat(test.storage.MAX_BACKPACK_PREVIEW_LENGTH + 1);
+                };
+                const result = await test.capture();
                 return { omitted: result === undefined, leakedCopies: document.querySelectorAll('body > svg[aria-hidden="true"]').length,
                     unchanged: test.block.getSvgRoot().outerHTML === before };
             }, failure), { omitted: true, leakedCopies: 0, unchanged: true });

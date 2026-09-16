@@ -46,29 +46,25 @@ function keyboardEnvironment() {
 }
 
 describe("image-editor shortcut ownership", () => {
-    it("does not capture undo or tool keys outside an inline whiteboard", () => {
-        const env = keyboardEnvironment(); const whiteboard = env.makeOwner();
+    it("routes canvas shortcuts to the focused store without intercepting outside or text-input keys", () => {
+        const env = keyboardEnvironment(); const a = env.makeOwner(); const b = env.makeOwner();
         assert.equal(env.send(new env.Element(), "z", true).prevented, undefined);
         env.send(new env.Element(), "e");
-        assert.equal(whiteboard.dispatched.length, 0);
-        whiteboard.remove();
-    });
-
-    it("routes undo and tool keys to the focused editor's own store", () => {
-        const env = keyboardEnvironment(); const a = env.makeOwner(); const b = env.makeOwner();
+        const input = new env.Element(a.root, true);
+        assert.equal(env.send(input, "z", true).prevented, undefined);
+        env.send(input, "Delete"); env.send(input, "e");
+        assert.equal(a.dispatched.length, 0); assert.equal(b.dispatched.length, 0);
         env.send(new env.Element(a.root), "z", true);
         env.send(new env.Element(b.root), "e");
         assert.equal(a.dispatched[0].type, "dispatchUndoImageEdit");
         assert.equal(b.dispatched[0].type, "dispatchChangeImageTool");
         assert.equal(a.dispatched.length, 1); assert.equal(b.dispatched.length, 1);
-    });
-
-    it("leaves editable fields' text undo and deletion alone", () => {
-        const env = keyboardEnvironment(); const owner = env.makeOwner();
-        const input = new env.Element(owner.root, true);
-        assert.equal(env.send(input, "z", true).prevented, undefined);
-        env.send(input, "Delete"); env.send(input, "e");
-        assert.equal(owner.dispatched.length, 0);
+        const lock = env.exports.obtainShortcutLock();
+        env.send(new env.Element(a.root), "z", true);
+        assert.equal(a.dispatched.length, 1);
+        env.exports.releaseShortcutLock(lock);
+        env.send(new env.Element(a.root), "z", true);
+        assert.equal(a.dispatched.length, 2);
     });
 
     it("unmounting one editor preserves the other editor's listeners", () => {
@@ -87,11 +83,4 @@ describe("image-editor shortcut ownership", () => {
         assert.equal(parent.dispatched.length, 1);
     });
 
-    it("honors and releases temporary shortcut locks", () => {
-        const env = keyboardEnvironment(); const owner = env.makeOwner();
-        const lock = env.exports.obtainShortcutLock();
-        env.send(new env.Element(owner.root), "z", true); assert.equal(owner.dispatched.length, 0);
-        env.exports.releaseShortcutLock(lock);
-        env.send(new env.Element(owner.root), "z", true); assert.equal(owner.dispatched.length, 1);
-    });
 });

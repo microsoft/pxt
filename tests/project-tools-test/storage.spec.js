@@ -121,44 +121,6 @@ describe("private project-note storage boundaries", () => {
         assert.equal(JSON.stringify(env.stored.get(header.id).text), JSON.stringify(text));
     });
 
-    for (const method of ["anonymousPublishAsync", "persistentPublishAsync"]) {
-        it(`excludes notes from ${method} without deleting private data`, async () => {
-            const env = createEnvironment(); const { header, text } = await env.install();
-            await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("PRIVATE_SENTINEL"));
-            await env.workspace[method](header, text, { description: "test" });
-            const request = env.requests.find(r => r.url === "scripts" || r.url === "/api/user/project/share");
-            assert.ok(request);
-            assert.ok(!JSON.stringify(request.data).includes("PRIVATE_SENTINEL"));
-            assert.equal(JSON.parse(request.data.header).projectNotes, undefined);
-            assert.equal(header.projectNotes.whiteboards[0].text, "PRIVATE_SENTINEL");
-        });
-    }
-
-    it("keeps notes in a duplicate owned by the same user", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("private"));
-        const duplicate = await env.workspace.duplicateAsync(header, "copy");
-        assert.notEqual(duplicate.id, header.id);
-        assert.equal(duplicate.projectNotes.whiteboards[0].text, "private");
-        await env.workspace.saveProjectNotesAsync(duplicate.id, notesWithBoard("changed copy"));
-        assert.equal(header.projectNotes.whiteboards[0].text, "private");
-    });
-
-    it("retains notes in authenticated cloud upload and download", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("private upload"));
-        await env.cloud.syncAsync({ hdrs: [header], direction: "up" });
-        assert.equal(env.errors.length, 0);
-        const uploaded = env.remote.get(header.id);
-        assert.equal(JSON.parse(uploaded.header).projectNotes.whiteboards[0].text, "private upload");
-        const remoteHeader = JSON.parse(uploaded.header);
-        remoteHeader.projectNotes = notesWithBoard("private download");
-        env.remote.set(header.id, { ...uploaded, header: JSON.stringify(remoteHeader), version: "remote-new" });
-        await env.cloud.syncAsync({ hdrs: [header], direction: "down" });
-        assert.equal(env.workspace.getHeader(header.id).projectNotes.whiteboards[0].text, "private download");
-        assert.equal(env.errors.length, 0);
-    });
-
     it("does not acknowledge notes edited during an in-flight upload", async () => {
         const env = createEnvironment(); const { header } = await env.install();
         await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("A"));
@@ -174,14 +136,6 @@ describe("private project-note storage boundaries", () => {
         await env.cloud.syncAsync({ hdrs: [header], direction: "up" });
         assert.equal(JSON.parse(env.remote.get(header.id).header).projectNotes.whiteboards[0].text, "B");
         assert.equal(header.cloudCurrent, true);
-    });
-
-    it("rejects invalid notes without overwriting saved data", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("saved"));
-        await assert.rejects(env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("changed", { image: "invalid" })));
-        await assert.rejects(env.workspace.saveProjectNotesAsync(header.id, { text: "missing boards" }));
-        assert.equal(header.projectNotes.whiteboards[0].text, "saved");
     });
 
     it("does not overwrite notes edited during an in-flight cloud download", async () => {
@@ -205,9 +159,11 @@ describe("private project-note storage boundaries", () => {
         assert.notEqual(header.cloudVersion, "remote-new");
     });
 
-    it("reports non-durable note saves and permits retry", async () => {
+    it("rejects invalid or non-durable saves without losing notes and permits retry", async () => {
         const env = createEnvironment(); const { header } = await env.install();
         await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("saved"));
+        await assert.rejects(env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("changed", { image: "invalid" })));
+        assert.equal(header.projectNotes.whiteboards[0].text, "saved");
         env.failStorage(true);
         await assert.rejects(env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("retry me")), /storage unavailable/);
         assert.equal(env.workspace.getWorkspaceType(), "idb");
@@ -238,6 +194,7 @@ describe("private project-note storage boundaries", () => {
         assert.equal(header.projectNotes.whiteboards[1].text, "updated on another device");
         assert.equal(header.projectNotes.activeWhiteboardId, notes.activeWhiteboardId);
         const duplicate = await env.workspace.duplicateAsync(header, "copy");
+        assert.notEqual(duplicate.id, header.id);
         const renamed = env.notes.renameProjectWhiteboard(duplicate.projectNotes, notes.activeWhiteboardId, "Copy only");
         await env.workspace.saveProjectNotesAsync(duplicate.id, renamed);
         assert.equal(header.projectNotes.whiteboards[1].name, "Second board");

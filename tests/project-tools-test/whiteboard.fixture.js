@@ -8,17 +8,10 @@ const { ProjectTools } = require("../../built/webapp/src/components/ProjectTools
 const { imageStateToBitmap } = require("../../built/webapp/src/components/ImageEditor/util");
 const { dispatchImageEdit, dispatchUndoImageEdit } = require("../../built/webapp/src/components/ImageEditor/actions/dispatch");
 const { validateProjectNotes } = require("../../built/webapp/src/projectNotes");
-const { ThemeManager } = require("../../built/react-common/components/theming/themeManager");
 
 window.DOMPurify = require("dompurify");
 
 const test = window.whiteboardTest;
-test.switchTheme = theme => {
-    pxt.appTarget.colorThemeMap = { [theme.id]: theme };
-    pxt.appTarget.appTheme.highContrastColorTheme = "pxt-high-contrast";
-    document.body.classList.add("pxt-theme-root");
-    ThemeManager.getInstance().switchColorTheme(theme.id);
-};
 Object.assign(test.workspace, {
     async saveProjectNotesAsync(id, notes) {
         const snapshot = JSON.parse(JSON.stringify(validateProjectNotes(notes)));
@@ -38,6 +31,7 @@ function Harness({ notes }) {
     return React.createElement(ProjectTools, {
         header: { id: "whiteboard-project" }, notes: incoming, expanded,
         pinned, onPinnedChange: setPinned,
+        onSignIn: () => { ++test.signInRequests; },
         onExpandedChange: setExpanded, onOpenReference: () => {}, docsUrl: "/reference",
         docsAction: React.createElement("a", {
             className: "project-tools__external", href: "about:blank", target: "_blank", rel: "noopener noreferrer",
@@ -50,6 +44,7 @@ test.mount = notes => {
     ReactDOM.unmountComponentAtNode(document.getElementById("root"));
     ReactDOM.render(React.createElement(Harness, { notes }), document.getElementById("root"));
 };
+test.unmount = () => ReactDOM.unmountComponentAtNode(document.getElementById("root"));
 test.store = () => {
     const root = document.querySelector(".image-editor-outer");
     let fiber = root[Object.keys(root).find(key => key.startsWith("__reactFiber$"))];

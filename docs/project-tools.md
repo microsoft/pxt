@@ -1,321 +1,51 @@
-# Project tools bubbles, private whiteboards and backpack
+# Project tools
 
-This is a focused port of the tabbed/resizable documentation idea from
-[PR #10888](https://github.com/microsoft/pxt/pull/10888), rebuilt on current PXT.
-It does not include the prototype's chat component, AI integration, build watcher
-changes or old layout overrides.
+Project tools provides **Documentation**, **Whiteboard**, and **Backpack** panels.
+Enable `appTheme.projectTools` in the target, use **Project tools bubbles** under
+**Settings → About → Experiments**, or preview with `?projecttools=1`.
+The feature requires an eligible project editor and image palette.
 
-## Enable
+## Controls
 
-Arcade enables this feature by default through `appTheme.projectTools: true` in
-its target configuration, including target uploads. No experiment setting is
-needed and the default does not trigger an experiments banner on its own.
+- Select a bubble to open or close its panel; **…** hides or reveals the bubbles.
+- Pin the panel to keep it open when working elsewhere. Escape closes it and
+  returns focus without clearing the pin or draft.
+- Arrow keys and Home/End navigate tabs; horizontal tabs use Enter/Space to open.
+- Drag the resize grips, or focus a grip and use arrow keys (Shift for larger
+  steps). Width resizing is available on desktop; height resizing works on mobile.
 
-On other asset-editor targets, open **Settings → About → Experiments**
-and enable **Project tools bubbles**, then reload. For a local preview, add
-`?projecttools=1` to the editor URL. Targets may also opt in with the
-`appTheme.projectTools` flag. Without a target flag, experiment or preview query,
-existing sidedocs behavior is unchanged. Experiment startup never overwrites
-the target's authored default.
+## Whiteboards
 
-The feature is hidden on the home screen, in sandbox/locked editors, for temporary
-projects and when there is no image palette. Other targets can explicitly list
-`projectTools` in their experiments.
+Use the header menu to create, rename, select, or delete up to eight boards.
+Each has independent drawing, text and undo history. Deleting a board requires
+confirmation, keeps at least one board, and cannot be undone with drawing Undo.
 
-## Interaction
-
-- **Documentation**, **Whiteboard** and **Backpack** each have a bubble; the bubbles are the tabs.
-- Hover or keyboard-focus a closed tab to show its label above the panel. The
-  currently open tab has no hover label. **…** shows **Project tools** on hover or
-  keyboard focus whether the other bubbles are visible or hidden.
-- Default widths follow the target's legacy sidedocs variables and breakpoints,
-  rather than a fixed 600px panel. On large desktops, the bubble strip counts
-  toward that width budget to preserve coding space. In Arcade, the panel starts
-  at 344px on smaller desktops (352px including its outer gutter), and 368px on
-  large monitors (448px including the strip), 352px on tablets and 288px on phones.
-  Untouched widths adapt when the
-  viewport changes; manual resizing overrides the default. Dimensions remain
-  capped to the screen and the panel can be enlarged whenever needed.
-- The **…** bubble is always available to hide or reveal the other bubbles. They
-  default to expanded on desktop (992px and wider) and collapsed on tablets and
-  phones (991px and narrower), without opening a panel or moving keyboard focus.
-  Smaller desktops still use the horizontal strip above the panel; large desktops
-  (1200px and wider) use a vertical strip below **…**. Bubbles slide from the
-  ellipsis in 160ms. Changing between the two desktop layouts preserves an explicit
-  hide/reveal choice; crossing the tablet breakpoint applies that layout's default.
-  The bubbles remain visible when
-  selecting, using, switching or closing a panel, so the active bubble can be
-  pressed again to close it. **…** retracts the bubbles and hides the open panel.
-  Unless pinned, clicking outside the tools or tabbing away dismisses the panel,
-  including clicks in the simulator. Desktop bubbles remain available; tablet and
-  phone bubbles retract. Interacting inside any
-  panel (including the documentation iframe) keeps it open. Motion is mirrored in RTL and disabled for reduced-motion
-  preferences. Resizing and hiding bubbles never reset the notes or pin setting.
-- The bubbles and panel follow the editor's notification-banner offset, including
-  the **Experiments enabled.** banner; dismissing it restores their normal position.
-- A speech-bubble pointer connects the open panel to its active bubble. In either
-  layout, the pointer targets **…** instead if help opens while the options are
-  tucked away. Pressing **…** then closes that panel rather than expanding the options.
-- Select a bubble to open its panel, select another to switch, and select the
-  active bubble again to collapse it. Escape also collapses and returns focus.
-- Use the pin icon in any header to keep the tools open while interacting elsewhere.
-  A filled upright pin and a border indicate enabled; an outlined angled pin
-  indicates disabled. Tooltips and an accessible toggle label describe the control.
-  **Collapse**, Escape, the
-  active bubble and **…** still close the panel without clearing the pin. Reopening
-  or switching tabs retains the setting for the current project view.
-- Documentation that automatically opens with a homepage example/project (a
-  configured documentation page or auto-open README) starts pinned. Ordinary block
-  help does not force pinning, and reloading the current project keeps a manual
-  unpin choice. The pin is UI state, not shared project content.
-- Up/Down and Home/End navigate the vertical bubble tabs. Horizontal options use
-  Left/Right and Home/End, then Enter/Space to select. Collapsing a panel
-  returns focus to its bubble if visible, otherwise **…**. Escape closes the
-  panel first; another Escape from its bubble retracts the options.
-- Subtle dotted grips mark the side and bottom resize edges. Drag the side to
-  change width (mirrored in RTL), or the bottom to change height. Keyboard users
-  can use Left/Right for width, Up/Down for height, and Shift for larger steps.
-  Home selects the minimum; End on the bottom grip restores the full available
-  height. Both dimensions are retained across tab switches and collapse/reopen,
-  and height is capped to fit below the header and above the footer. Smaller
-  desktops keep both grips and desktop header/footer spacing even with horizontal
-  bubbles. On tablets and phones (991px or narrower), the width grip is hidden;
-  the bottom grip still adjusts height. Initially panels extend to just above the
-  corresponding editor footer. The whiteboard's palette
-  scrolls independently, so all 16 colors remain available even on short screens.
-- Existing block help, reference, built-in keyboard help and markdown entry points
-  open Documentation. Asking for the same topic again selects Documentation even
-  when Whiteboard is currently active. Collapsing does not reload the docs iframe.
-- Use the **Whiteboards** dropdown in the whiteboard header to select a board,
-  **Rename whiteboard**, or create a **New whiteboard**. A project can have up to
-  eight boards with unique, single-line names of up to 64 characters. Each board
-  has its own 160 × 120 drawing, text notes and undo history; the last selected
-  board is remembered. Undo history is kept during switching, not across reloads.
-- When there is more than one board, **Delete whiteboard** asks for confirmation
-  naming the board. **Cancel** or Escape leaves it unchanged. Confirming **Delete**
-  removes that board's drawing and notes, saves the remaining collection and
-  switches to a neighboring board. At least one board is always kept; deletion
-  cannot be undone with the drawing editor's Undo button.
-- A project without notes starts with a blank **Whiteboard 1**; opening the panel
-  does not save metadata until the user edits it. Each board uses the existing single-image editor with a
-  separate Redux store and is never registered as a game asset. The canvas sits
-  directly below the privacy label without a separate Sketch/Clear drawing row.
-  Image resizing is not supported.
-
-The short privacy label is **“Private project notes: not included when sharing”**.
-There is no routine saving/saved text. Save errors display a Retry action.
+Notes autosave with the project and sync to its signed-in owner. They are **not
+included in public shares, file exports, GitHub source, or game assets**. Undo
+history lasts only for the current editor session. Save failures offer Retry;
+wait for saves/sync before closing or switching devices.
 
 ## Backpack
 
-Keep reusable block containers without signing in: they are saved in this
-browser's IndexedDB, separately for each MakeCode target. A centered button at
-the top offers **Sign in to save your backpack across browsers**. Signing in
-uploads guest snippets independently when the backpack next opens. Each is claimed
-by that account before uploading and removed locally only after its own server
-acknowledgement and an atomic comparison with the pending payload. One corrupt or
-conflicting snippet does not block the others. Signed-in saves first commit a
-pending record to that user's IndexedDB namespace. Failed uploads retain their
-named cards with **Retry sync**, **Add to project**, and trash controls. Retry uses
-the original UUID and payload; it never overwrites a cloud snippet or later rename.
-Pending records that have already been sent cannot be renamed until synced.
+In an editable Blocks project, use **Add to Backpack** on an event, loop, if block
+or function definition, or drag it onto Backpack. This copies its contents,
+referenced Blockly functions and assets—not following siblings or the originals.
 
-In an editable Blocks project, right-click or hold a container
-(such as an event, loop, if block or function definition) and choose **Add to
-Backpack**. Alternatively, drag it onto the Backpack bubble or panel. Hovering
-over the bubble for 500ms opens the panel without taking focus; the **…** bubble
-also accepts the drag when the other bubbles are hidden.
+Guests save in this browser; signing in syncs captures across browsers. Search
+matches names, contained blocks, parameters and extensions. Rename is optional.
+**Add to project** asks permission before installing missing extensions and inserts
+the capture as one undo group. Custom TypeScript source is not included: copy the
+required files or publish an extension if the destination lacks those blocks.
+Ordinary clipboard paste uses the same dependency checks while retaining normal
+Blockly copy/cut/paste behavior.
 
-Saving copies the container's contents, referenced Blockly function definitions
-and assets. It does not include following siblings or remove the original blocks.
-The **Search backpack** box filters as you type using local fuzzy matching. Search
-snippet names, contained block names, displayed labels and parameter values, or any
-used extension (including installed extensions). Multiple words can match different
-parts of a snippet. Clear the box or press Escape to show all snippets again.
-Displayed block text is saved with the snippet so it remains searchable without the
-original project's extensions. Every page of summary metadata must load before
-search is enabled; a failed later page keeps recovery controls and a Retry button
-without claiming complete results. Cloud search uses summary `blockText`,
-`blockTypes`, `searchText`, and dependencies, not serialized bodies. Searching never installs
-extensions, downloads code or changes code. Code downloads only on **Add to
-project**. Cloud PNG previews load only for visible cards with authenticated binary
-requests; cancellation and object-URL cleanup run on hide, unmount and account changes.
+Failed uploads retain a local copy with **Retry sync**. After 24 hours, add that
+copy to a project and capture it again. Invalid entries remain trashable.
+Deleting a pending local copy does **not** delete a cloud copy that may already
+have synced; delete the cloud card separately. Inserted project code is unaffected.
 
-Each entry lists only extensions missing from the current project; the section is
-hidden when none are needed. **Add to project** asks permission
-before installing missing extensions, checks conflicts, preserves current code
-before reloading, and inserts the snippet as one undo group. It does not silently
-replace existing extensions or upgrade an installed version of the same repository.
-The action appears as a filled confirmation button at the bottom right of each snippet.
+Old development data is not migrated. **Old Backpack data…** offers explicit
+export/reset of the previous preferences value; export before clearing it.
+Do not clear all browser storage: that also removes unsynced captures and projects.
 
-Names are assigned automatically when saving. The optional **Rename** pencil icon
-at the top right, beside the trash icon, opens a dialog with the current name selected,
-so a snippet such as **on start** can be
-called **character setup**. **Save** changes only its Backpack name, not its blocks,
-preview or dependencies. Cancel or Escape keeps the original name. Names are limited
-to 100 characters; empty names are rejected. Guest renames stay in this browser,
-and signed-in renames use a name-only request with the card's observed ETag.
-The delete dialog also retains its observed ETag. A stale version stays an error
-in the modal; cancel and reopen to refresh rather than silently overwriting.
-
-Blocks defined in the original project's own TypeScript files need those APIs in
-the destination too. The backpack records their filenames, not their source code.
-If a required block is missing, **Project code is required** names the source files
-and stops insertion. Copy the code into the destination or publish it as an
-extension before trying again.
-
-The **Delete** trash icon opens a confirmation modal: it removes the entry from this browser when
-signed out, or from dedicated private Backpack storage after server acknowledgement
-when synced. A pending local row's trash button removes only that browser copy.
-Cancel or Escape closes the modal without deleting. Failures remain in the modal
-for retry; routine add/delete progress and success messages are not shown in the panel.
-An invalid snippet remains visible with its name when recoverable (otherwise
-**Unnamed snippet**), an explanation, and a trash icon. It cannot be added or
-renamed, and its invalid preview and code are not rendered. Other snippets remain
-usable. Invalid local copies are not uploaded; while signed in they are marked
-**Saved in this browser only** and their trash icon removes only that local copy.
-Storage-limit and local-upload warnings do not hide the cards or their delete actions.
-Copies already inserted in projects remain unchanged. Reopen the panel to receive
-changes from other tabs or, when signed in, other browsers. Failed saves offer
-retry; sign-out/account changes hide the previous account's items without copying
-them into guest storage. Clearing browser storage removes unsynced local snippets.
-
-The dedicated API supports up to **50 entries per target**, **512 KiB UTF-8 code**,
-**64 KiB metadata**, **128 KiB decoded PNG**, **1 MiB create request**, and
-**50 MiB account storage**. The frontend retains the existing capture raster budget
-of 64,000 data-URI characters and the existing 2× / 1.5× / 1× fallback, independent
-of the larger binary API limit. Density-aware `srcset` keeps the original CSS size
-without an extra 1× source. The existing Blockly serializer/importer still has its
-separate 100,000-character code bound; this frontend cutover does not change it.
-Effective server limits/usage arrive with list pages; the server remains authoritative.
-Blocked/full IndexedDB reports a save error instead of silently using memory.
-Pending creates are retried automatically on reopen for at most 24 hours from
-their first upload attempt. After that, insert the local copy in a project and
-capture it again with a fresh ID. This avoids resurrecting expired tombstones.
-Backpack contents are not added to project shares or exports unless explicitly
-inserted into that project's code. Backend sync is covered with a simulated
-authenticated endpoint and real browser IndexedDB, not a live cross-device account test.
-See [the test guide](../tests/project-tools-test/README.md) for limits and manual checks.
-
-### Old development data: explicit export/reset only
-
-Old preference-backed snippets and old native-localStorage guest keys **do not
-transfer**. There is no migration or regular legacy read/fallback. Existing old
-backend data is not automatically deleted, and old guest keys are left untouched.
-Normal auth preference caches and settings diffs exclude the `backpack` property.
-
-While signed in, choose **Old Backpack data…** at the bottom of the panel:
-
-1. **Export old data** explicitly reads old preferences and downloads only their
-  Backpack value as JSON. It is an archive, not an executable import. Store it privately.
-2. **Cancel** leaves everything unchanged.
-3. **Clear old Backpack data** confirms permanent removal of only the old
-  `backpack` preference, across targets. It sends the existing preferences PATCH
-  with `[{ op: "remove", path: ["backpack"] }]`. New API snippets, pending/guest
-  IndexedDB records, and unrelated settings are not reset. Export first if needed.
-
-Do not clear all browser storage to fix a backend preference limit: that would
-also remove unsynced snippets and projects. Old localStorage guest records can be
-archived manually in browser developer tools; the new UI does not touch them.
-
-### Staging contract
-
-The editor uses private `/api/user/backpack` endpoints, captured auth headers and
-cookies, and `x-pxt-target`; localhost development uses the existing `DEV_BACKEND`
-selection. It never falls back to preferences when dedicated routes are unavailable.
-The backend must support conditional `If-Match` requests and credentialed CORS for
-both JSON and binary PNG requests. Uploading an editor target does not deploy the
-backend. Test the actual handler and two devices/accounts before release.
-
-## Block copy and paste
-
-Ordinary **Copy**, **Cut** and **Paste** use the same extension and custom-source
-checks as the backpack, even with project tools disabled or while signed out.
-Copied blocks carry only their used extension references and original source
-filenames. Pasting asks **Add required extensions?** before installing missing
-packages, checks conflicts, saves current code/assets, and waits for the refreshed
-block definitions before inserting. Cancel leaves the destination unchanged.
-
-When a copied block was defined in the original project's custom source and is
-absent in the destination, **Project code is required** names the missing source
-files. Copy that code or publish it as an extension before pasting again. Stale
-Blockly definitions left behind by another project do not count as available.
-Already-installed local extensions can still be copied within a project; a missing
-local extension must be published rather than installed from its private reference.
-
-The clipboard keeps normal Blockly behavior for individual statements, expressions,
-function calls, comments, placement and undo. It does not require a backpack
-container or collect extra function bodies. Copies made before requirement capture
-still work when their blocks are available; recopy in the updated editor to include
-extension/source metadata. A failed copy never removes the source of a Cut.
-
-## Whiteboard storage and sharing boundary
-
-Notes are stored in `Header.projectNotes`, not in `ScriptText`, asset collections,
-JRES or the package manifest. `ProjectNotes` contains `whiteboards` and
-`activeWhiteboardId`; each board has an ID, name, up to 4,096 text characters,
-an optional base64 F4 image and its palette. Every board, name and ID is validated.
-Image dimensions and encoded lengths are checked before decoding/allocating the bitmap.
-
-| Path | Notes included? |
-| --- | --- |
-| Browser/local project storage | Yes |
-| Signed-in account project sync | Yes |
-| Duplicate or conflict copy of your own project | Yes, as separate project data |
-| Anonymous or persistent share request | No |
-| GitHub source/asset commits | No |
-| Project-file, PNG and compiled-source exports | No |
-| Game assets / native program | No |
-
-[The sharing filter](../webapp/src/projectNotes.ts) is deliberately separate from
-the cloud local-only filter: adding notes to the latter would prevent account
-sync. Both publish paths use the filtered header. File exports and GitHub use
-project files, so notes never enter those paths.
-
-Autosave is debounced, flushed when leaving the panel/project, and bound to the
-original project ID. A failed persistent write stays an error rather than silently
-falling back to memory. Existing workspace session ownership prevents saving over
-a project opened by another tab. Cloud transfers do not acknowledge/overwrite
-notes edited while the network request was in flight. Incoming same-project notes
-replace a clean view; a dirty view offers a choice instead of silently overwriting.
-The collection is saved as one snapshot, so switching boards does not race
-independent writes that could drop another board's edits. Cloud conflict choices
-apply to the entire saved collection.
-
-Existing workspace/cloud account isolation and conflict-copy semantics still
-apply. As with normal project saves, closing the browser before an asynchronous
-write finishes cannot guarantee durability. Account sync must complete before
-another device can receive notes.
-
-## Image-editor isolation
-
-Inline editors register scoped shortcut ownership. Typing, undo, delete and
-clipboard operations in a notes field or code editor must not affect the sketch.
-An asset/tile editor retains its own store and listeners while the whiteboard is
-present. Gallery/input shortcut locks are released on teardown. Hidden whiteboard
-tabs retain the draft/store but unmount the canvas and its global listeners.
-
-## Validation
-
-- `gulp testpxteditor`: schema validation, bitmap round trips, public-header
-  filtering, first-board initialization, bounded collections, add/rename operations,
-  experiment availability, and the existing editor tests.
-- `gulp testprojecttools`: real workspace/cloud modules with fake durable storage
-  and authenticated API, both share paths, duplicate isolation, cloud round trips,
-  in-flight edits, persistence failures/retry, and shortcut-owner tests. A
-  Puppeteer component suite uses the production styles to cover compact
-  animation (including RTL and reduced motion), persistent bubbles and repeated
-  toggling, keyboard focus/dismissal, the tablet and large-desktop breakpoints, banner layout,
-  centered launcher dots, panel-pointer alignment, outside/iframe dismissal and
-  pin retention/automatic example defaults and mounted drafts. A real-image-editor browser suite covers the header menu,
-  independent drawings/text/undo, retries, and mobile palette access/footer spacing.
-- Local Arcade browser checks: separate bubbles, keyboard navigation and resizing,
-  drawing/text persistence after collapse and reload, no game-asset registration,
-  text undo isolation, exclusion from the actual project-file export, experiment
-  off/on behavior, and short/narrow viewport spacing. Compact behavior is checked
-  at 390, 768, 826, 991, 992, 1024 and 1199px; vertical desktop bubbles at 1200 and 1366px.
-
-Cloud tests mock the API; no notes were publicly published and no live account
-sync was performed. Cross-device account verification and a full mobile/screen
-reader pass remain useful pre-release checks. The local docs renderer can still
-surface pre-existing snippet-renderer diagnostics; its sandbox and message
-protocol have not changed.
+See [testing](../tests/project-tools-test/README.md) for developer checks.
