@@ -261,19 +261,36 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
         const bad = ["{", codeFor({ type: 1 }),
             codeFor({ ...container(), next: { block: statement } }),
             codeFor({ ...container(), inputs: { BODY: { block: null } } }),
-            codeFor({ ...container(), data: "a".repeat(100000) }),
-            '{"blocks":[{"type":"backpack_test_container","fields":{"__proto__":{}}}]}',
-            codeFor(container({ type: "procedures_callreturn", extraState: { name: "unsupported" } })),
-            codeFor(container({ type: "function_call", extraState: { name: "missing", functionid: "id", arguments: [] } }))
+            '{"blocks":[{"type":"backpack_test_container","fields":{"__proto__":{}}}]}'
         ];
+        for (const code of bad) assert.throws(() => backpack.getBackpackBlockTypes(code), /invalid or unsupported/);
+        const oversized = codeFor({ ...container(), data: "a".repeat(100000) });
+        assert.throws(() => backpack.getBackpackBlockTypes(oversized), error =>
+            /too large.*supporting functions and assets/.test(error.message)
+            && error.message.includes(String(oversized.length)) && error.message.includes("100000"));
         let deep = container();
         for (let i = 0; i < 101; i++) deep = container(deep);
-        bad.push(codeFor(deep));
+        assert.throws(() => backpack.getBackpackBlockTypes(codeFor(deep)), /nested too deeply/);
         const wide = container();
         for (let i = 0; i < 500; i++) wide.inputs["I" + i] = { block: statement };
-        bad.push(codeFor(wide));
-        for (const code of bad) assert.throws(() => backpack.getBackpackBlockTypes(code), /invalid or unsupported/);
+        assert.throws(() => backpack.getBackpackBlockTypes(codeFor(wide)), /too many blocks.*500/);
+        assert.throws(() => backpack.getBackpackBlockTypes(codeFor(container({
+            type: "procedures_callreturn", extraState: { name: "unsupported" }
+        }))), /procedures_callreturn.*not supported/);
+        assert.throws(() => backpack.getBackpackBlockTypes(codeFor(container({
+            type: "function_call", extraState: { name: "missing", functionid: "id", arguments: [] }
+        }))), /function 'missing' is missing/);
         assert.equal(destination.getAllBlocks(false).length, 0);
+    });
+
+    it("explains when supporting function assets make an otherwise small capture too large", () => {
+        const definition = defineFunction(sourceWorkspace, "largeAssets", "large-assets-id");
+        definition.data = "a".repeat(100000);
+        const block = append(sourceWorkspace, container());
+        block.getInput("BODY").connection.connect(callFunction(sourceWorkspace, definition).previousConnection);
+        const before = Blockly.serialization.workspaces.save(sourceWorkspace);
+        assert.throws(() => backpack.captureBackpackBlock(block), /too large.*100000.*supporting functions and assets/);
+        assert.deepStrictEqual(Blockly.serialization.workspaces.save(sourceWorkspace), before);
     });
 
     it("groups nested imports and function dependencies into one undo operation and restores an outer group", async () => {

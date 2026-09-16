@@ -49,8 +49,6 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const [pending, setPending] = React.useState(false);
     const [error, setError] = React.useState<string>();
     const [edit, setEdit] = React.useState<{ kind: "rename" | "delete"; key: string; name: string; entry: backpack.BackpackEntry }>();
-    const [legacyOpen, setLegacyOpen] = React.useState(false);
-    const legacyButton = React.useRef<HTMLButtonElement>();
     const [, update] = React.useReducer((value: number) => value + 1, 0);
     const alive = React.useRef(true);
     const active = React.useRef(props.active);
@@ -126,11 +124,11 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const editedItem = edit?.entry;
     const modalOpen = !!editedItem && (edit.kind === "delete" || !editedItem.error) && props.active;
     React.useEffect(() => {
-        props.onModalOpenChange?.(modalOpen || legacyOpen);
+        props.onModalOpenChange?.(modalOpen);
         return () => props.onModalOpenChange?.(false);
-    }, [modalOpen, legacyOpen, props.onModalOpenChange]);
+    }, [modalOpen, props.onModalOpenChange]);
     React.useEffect(() => {
-        if (!props.active) { setEdit(undefined); setLegacyOpen(false); }
+        if (!props.active) setEdit(undefined);
     }, [props.active]);
     React.useEffect(() => {
         if (modalOpen && edit?.kind === "rename") {
@@ -186,33 +184,14 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         await backpack.importBackpackEntryAsync(entry, props.headerId);
     });
 
-    const closeLegacy = () => {
-        if (busy.current) return;
-        setLegacyOpen(false);
-        setError(undefined);
-        legacyButton.current?.focus();
-    };
-    const exportLegacy = () => run(async () => {
-        const json = await backpack.exportOldBackpackAsync();
-        if (!isCurrent()) return;
-        const url = URL.createObjectURL(new Blob([json], { type: "application/json" }));
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = "old-backpack.json";
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        // Allow the browser to begin downloading before releasing the URL.
-        setTimeout(() => URL.revokeObjectURL(url), 1000);
-    });
-
     const canImport = backpack.canImportBackpack(props.headerId);
     const header = pkg.mainEditorPkg()?.header;
     const importReason = !header || header.id !== props.headerId || header.tutorial || pxt.shell.isReadOnly()
         || pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME
         ? lf("Open an editable Blocks project outside a tutorial to add snippets from your backpack.")
         : lf("Switch to Blocks to add snippets");
-    const message = !ready && !error && props.active ? lf("Loading backpack…") : "";
+    const message = !loaded.current && pending && props.active ? lf("Loading backpack…") : "";
+    const displayedError = error || (!ready && !pending ? warning : undefined);
     const clearSearch = (): void => {
         setQuery("");
         searchInput.current?.focus();
@@ -243,14 +222,14 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                 type="button" onClick={props.onSignIn}>{lf("Sign in to save your backpack across browsers.")}</button>}
             <div role="status">
                 {message && <p>{message}</p>}
-                {warning && <p>{warning}</p>}
+                {warning && warning !== displayedError && <p>{warning}</p>}
                 {!ready && !pending && !!items.length && <p>{lf("Some snippets could not be loaded. Retry to search the complete backpack.")}</p>}
                 {ready && !!items.length && !!query.trim() && <p>{filteredItems.length
                     ? lf("{0} of {1} snippets", filteredItems.length, items.length)
                     : lf("No matching snippets.")}</p>}
             </div>
-            {error && !modalOpen && !legacyOpen && <>
-                <p role="alert">{error}</p>
+            {displayedError && !modalOpen && <>
+                <p role="alert">{displayedError}</p>
                 {!ready && <button className="project-backpack__button project-backpack__retry" type="button" disabled={pending}
                     onClick={() => { focusAfter.current = {}; void refresh(); }}>{lf("Retry")}</button>}
             </>}
@@ -321,25 +300,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                     </li>;
                 })}
             </ul>}
-            {!!props.userId && <button ref={legacyButton} className="project-backpack__button" type="button" disabled={pending}
-                aria-haspopup="dialog" onClick={() => {
-                    props.onModalOpenChange?.(true);
-                    setError(undefined);
-                    setLegacyOpen(true);
-                }}>{lf("Old Backpack data…")}</button>}
         </div>
-        {legacyOpen && props.active && <Modal title={lf("Old Backpack data")}
-            onClose={closeLegacy} hideDismissButton={pending} actions={[
-                { label: lf("Cancel"), className: "neutral", disabled: pending, onClick: closeLegacy },
-                { label: lf("Export old data"), disabled: pending, onClick: () => void exportLegacy() },
-                { label: lf("Clear old Backpack data"), className: "red", disabled: pending, onClick: () => void run(async () => {
-                    await backpack.clearOldBackpackAsync();
-                    if (isCurrent()) { setLegacyOpen(false); legacyButton.current?.focus(); }
-                }) }
-            ]}>
-            <p>{lf("Old development Backpack data does not transfer to the new backpack. Export a copy before clearing it. Clear old Backpack data permanently removes only the old Backpack preference on all targets; it does not remove new snippets or other settings.")}</p>
-            {error && <p role="alert">{error}</p>}
-        </Modal>}
         {modalOpen && <Modal title={edit.kind === "rename" ? lf("Rename snippet") : lf("Delete snippet?")}
             className={`project-backpack__${edit.kind}-modal`}
             ariaDescribedBy={edit.kind === "delete" ? "project-backpack-delete-description" : undefined}

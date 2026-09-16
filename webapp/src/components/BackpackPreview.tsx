@@ -13,6 +13,16 @@ export function BackpackPreview({ entry, active }: BackpackPreviewProps): JSX.El
     const [failed, setFailed] = React.useState(false);
     const localUri = entry.item?.previewUri;
     const density = entry.item?.previewPixelDensity || entry.summary?.previewPixelDensity;
+    const functionCount = React.useMemo(() => {
+        if (entry.error) return 0;
+        if (entry.summary) return entry.summary.functionCount || 0;
+        try {
+            const blocks = JSON.parse(entry.item?.code).blocks;
+            // The selected container is last; count only its supporting definitions.
+            return Array.isArray(blocks) ? blocks.slice(0, -1).filter(block =>
+                block?.type === "function_definition" || block?.type === "procedures_defnoreturn").length : 0;
+        } catch { return 0; }
+    }, [entry.item?.code, entry.summary?.functionCount, entry.error]);
     React.useEffect(() => {
         setImage(undefined);
         setFailed(false);
@@ -49,5 +59,7 @@ export function BackpackPreview({ entry, active }: BackpackPreviewProps): JSX.El
         {uri && <img className="project-backpack__preview" src={density ? undefined : uri}
             srcSet={density ? `${uri} ${density}x` : undefined} alt={lf("Blocks in {0}", entry.name)} />}
         {failed && <p>{lf("Preview unavailable. You can still add this snippet.")}</p>}
+        {functionCount > 0 && <p>{functionCount === 1
+            ? lf("+ 1 other function") : lf("+ {0} other functions", functionCount)}</p>}
     </div>;
 }

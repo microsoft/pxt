@@ -11,7 +11,7 @@ node node_modules/gulp/bin/gulp.js testpxteditor
 also need fresh Blockly/simulator output; run a full `gulp` build after changing
 those modules. Browser tests require Puppeteer's Chromium, not a development server.
 
-- Storage/auth suites own persistence, account isolation and sharing privacy.
+- Storage suites own persistence, account isolation and sharing privacy.
 - Project/clipboard suites own dependency consent, conflicts and editor integration.
 - Block/asset/preview suites exercise real serialization, pixels and undo.
 - UI/launcher/whiteboard/keyboard suites own user interaction and accessibility.

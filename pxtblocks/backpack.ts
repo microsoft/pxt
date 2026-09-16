@@ -33,6 +33,20 @@ function invalidCode(): never {
     throw new Error(lf("This Backpack item contains invalid or unsupported blocks."));
 }
 
+function checkCodeSize(length: number): void {
+    if (length > MAX_CODE_LENGTH) {
+        throw new Error(lf("This snippet is too large for Backpack ({0} characters; limit {1}). This includes its supporting functions and assets. Try saving a smaller block container.", length, MAX_CODE_LENGTH));
+    }
+}
+
+function tooManyBlocks(): never {
+    throw new Error(lf("This snippet contains too many blocks for Backpack. The limit is {0} blocks, including supporting functions. Try saving a smaller block container.", MAX_BLOCKS));
+}
+
+function tooDeep(): never {
+    throw new Error(lf("This snippet is nested too deeply for Backpack. Try saving a smaller block container."));
+}
+
 function isObject(value: unknown): value is JsonObject {
     return !!value && typeof value === "object" && !Array.isArray(value);
 }
@@ -105,7 +119,8 @@ function visitStates(states: State[], visit: (state: State) => void): void {
 
 /** Parse untrusted storage before calling any Blockly loaders or field/mutation hooks. */
 export function parseBackpackCode(code: string): BackpackCode {
-    if (typeof code !== "string" || code.length > MAX_CODE_LENGTH) invalidCode();
+    if (typeof code !== "string") invalidCode();
+    checkCodeSize(code.length);
     let payload: unknown;
     try {
         payload = JSON.parse(code);
@@ -117,7 +132,7 @@ export function parseBackpackCode(code: string): BackpackCode {
     const pending: { value: unknown; depth: number }[] = [{ value: payload, depth: 0 }];
     while (pending.length) {
         const { value, depth } = pending.pop();
-        if (depth > MAX_DEPTH) invalidCode();
+        if (depth > MAX_DEPTH) tooDeep();
         if (value && typeof value === "object") {
             for (const key of Object.keys(value)) {
                 if (forbiddenKeys.has(key)) invalidCode();
@@ -136,10 +151,14 @@ export function parseBackpackCode(code: string): BackpackCode {
         if ("shadow" in value) checkState(value.shadow, depth);
     };
     const checkState = (value: unknown, depth: number): void => {
-        if (++count > MAX_BLOCKS || depth > MAX_DEPTH || !isObject(value) || !isName(value.type)
+        if (++count > MAX_BLOCKS) tooManyBlocks();
+        if (depth > MAX_DEPTH) tooDeep();
+        if (!isObject(value) || !isName(value.type)
             || Object.keys(value).some(key => !stateKeys.has(key))) invalidCode();
         // These stock Blockly blocks are not supported by the PXT compiler.
-        if (value.type === "procedures_defreturn" || value.type === "procedures_callreturn") invalidCode();
+        if (value.type === "procedures_defreturn" || value.type === "procedures_callreturn") {
+            throw new Error(lf("The block '{0}' is not supported by Backpack.", value.type));
+        }
         for (const key of ["id", "data"]) {
             if (key in value && typeof value[key] !== "string") invalidCode();
         }
@@ -200,7 +219,9 @@ export function parseBackpackCode(code: string): BackpackCode {
         if (state.type === FUNCTION_CALL_BLOCK_TYPE || state.type === FUNCTION_CALL_OUTPUT_BLOCK_TYPE
             || isLegacyCall(state.type)) {
             const definition = definitions.get(functionKey(state));
-            if (!definition) invalidCode(); // Never silently create an empty function body.
+            if (!definition) {
+                throw new Error(lf("The function '{0}' is missing from this snippet. Include its definition before saving to Backpack.", functionName(state)));
+            }
             if (isFunction(state.type)) {
                 if (JSON.stringify(state.extraState.arguments) !== JSON.stringify(definition.extraState.arguments)
                     || state.extraState.functionid !== definition.extraState.functionid) invalidCode();
@@ -215,7 +236,9 @@ export function parseBackpackCode(code: string): BackpackCode {
 
 /** Capture this container, its input bodies and function dependencies, plus their displayed text. */
 export function captureBackpackBlock(block: Blockly.Block): { code: string; blockText: string } {
-    if (!isBackpackContainer(block)) invalidCode();
+    if (!isBackpackContainer(block)) {
+        throw new Error(lf("Choose an editable block container, such as an event, loop, if block or function definition, to save to Backpack."));
+    }
     const save = (source: Blockly.Block): State => {
         const state = Blockly.serialization.blocks.save(source, {
             addCoordinates: false, addNextBlocks: false, doFullSerialization: true, saveIds: false,
@@ -228,7 +251,8 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
     const included = new Set<Blockly.Block>([block]);
     for (let i = 0; i < states.length; i++) {
         // A bounded parse is performed below; guard expansion before following dependencies too.
-        if (states.length > MAX_BLOCKS || JSON.stringify({ blocks: states }).length > MAX_CODE_LENGTH) invalidCode();
+        if (states.length > MAX_BLOCKS) tooManyBlocks();
+        checkCodeSize(JSON.stringify({ blocks: states }).length);
         visitStates([states[i]], state => {
             if (state.type !== FUNCTION_CALL_BLOCK_TYPE && state.type !== FUNCTION_CALL_OUTPUT_BLOCK_TYPE
                 && !isLegacyCall(state.type)) return;
@@ -241,7 +265,9 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
                 return !!Blockly.Blocks[candidate.type] && isLegacyDefinition(candidate.type)
                     && candidate.getFieldValue("NAME") === functionName(state);
             });
-            if (!definition) invalidCode();
+            if (!definition) {
+                throw new Error(lf("The function '{0}' is missing from this project. Add its definition before saving to Backpack.", functionName(state)));
+            }
             if (!included.has(definition)) {
                 included.add(definition);
                 states.push(save(definition));

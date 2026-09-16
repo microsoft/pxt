@@ -134,6 +134,8 @@ export interface BackpackSummary {
     blockText: string;
     blockTypes: string[];
     searchText?: string[];
+    /** Supporting definitions included in addition to the selected container. */
+    functionCount?: number;
     dependencies: pxt.Map<string>;
     projectBlocks?: pxt.Map<string>;
     createdAt: number;
@@ -376,6 +378,7 @@ export function backpackErrorMessage(code?: string): string {
         case "backpack_invalid_cursor": return lf("The backpack list changed. Reopen the backpack to load it again.");
         case "backpack_rate_limited": return lf("Too many backpack requests. Wait a moment and try again.");
         case "backpack_account_deleting": return lf("This account is being deleted. Backpack changes are unavailable.");
+        case "backpack_access_denied": return lf("Backpack access was denied. Reload the editor and try signing in again.");
         case "backpack_unavailable": return lf("Backpack sync is temporarily unavailable. Your pending snippets remain in this browser.");
         default: return lf("Could not sync your backpack. Please try again.");
     }
@@ -418,12 +421,14 @@ async function requestAsync(context: CloudContext, path: string, method = "GET",
     if (response.statusCode < 200 || response.statusCode >= 300) {
         const body: unknown = response.json;
         const code = isRecord(body) && isRecord(body.error) && typeof body.error.code === "string" ? body.error.code : undefined;
+        const fallback = response.statusCode === 403 ? "backpack_access_denied"
+            : response.statusCode === 503 ? "backpack_unavailable" : undefined;
         // Store only known codes; never retain unknown backend strings or bodies.
         throw new BackpackRequestError(code?.startsWith("backpack_") && ["backpack_unavailable", "backpack_request_too_large",
             "backpack_entry_too_large", "backpack_preview_too_large", "backpack_quota_exceeded", "backpack_id_conflict",
             "backpack_version_conflict", "backpack_entry_deleted", "backpack_invalid_entry", "backpack_not_found",
             "backpack_invalid_cursor", "backpack_precondition_required", "backpack_rate_limited", "backpack_account_deleting"].includes(code)
-            ? code : undefined);
+            ? code : fallback);
     }
     return response.json;
 }
@@ -495,6 +500,7 @@ export function readBackpackSummary(value: unknown): BackpackEntry {
             || value.blockTypes.some(type => typeof type !== "string" || !type || type.length > 256 || !safeKey(type) || hasControlCharacters(type))
             || value.searchText !== undefined && (!Array.isArray(value.searchText)
                 || value.searchText.length > 50000 || value.searchText.some(text => typeof text !== "string"))
+            || value.functionCount !== undefined && (!validCount(value.functionCount) || (value.functionCount as number) > 2000)
             || typeof value.createdAt !== "number" || !Number.isFinite(value.createdAt) || value.createdAt < 0
             || typeof value.updatedAt !== "number" || !Number.isFinite(value.updatedAt) || value.updatedAt < 0
             || !["ready", "invalid"].includes(value.status as string) || typeof value.hasPreview !== "boolean"
@@ -506,6 +512,7 @@ export function readBackpackSummary(value: unknown): BackpackEntry {
             id: value.id, name: value.name, blockText: value.blockText,
             blockTypes: value.blockTypes.slice() as string[], ...metadata,
             ...(value.searchText === undefined ? {} : { searchText: (value.searchText as string[]).slice() }),
+            ...(value.functionCount === undefined ? {} : { functionCount: value.functionCount as number }),
             createdAt: value.createdAt, updatedAt: value.updatedAt, version: value.version,
             status: value.status as "ready" | "invalid", hasPreview: value.hasPreview,
             ...(value.previewPixelDensity === undefined ? {} : { previewPixelDensity: value.previewPixelDensity as number })
@@ -648,7 +655,9 @@ export function refreshBackpackAsync(): Promise<void> {
             // message rather than replacing it with an account-change error.
             if (!isActive(context)) throw error;
             await verifyAsync(context);
-            publish(context, [...cloud.values(), ...locals], { complete: false, warning: backpackErrorMessage() });
+            publish(context, [...cloud.values(), ...locals], {
+                complete: false, warning: error instanceof Error ? error.message : backpackErrorMessage()
+            });
             throw error;
         }
         publish(context, [...cloud.values(), ...locals], { complete: true, usage, limits, warning });
@@ -888,23 +897,6 @@ export async function getBackpackPreviewAsync(entry: BackpackEntry, signal: Abor
     } catch {
         throw new Error(lf("This snippet's preview is unavailable."));
     }
-}
-
-/** Explicit maintenance only: never called by normal preference or Backpack loading. */
-export async function exportOldBackpackAsync(): Promise<string> {
-    const context = await captureAsync();
-    if (context.kind !== "cloud") throw new Error(lf("Sign in to export old Backpack data."));
-    const preferences = await requestAsync(context, "/api/user/preferences");
-    if (!isRecord(preferences)) throw new BackpackRequestError(undefined);
-    return JSON.stringify(own(preferences, "backpack") ? preferences.backpack : null, null, 2);
-}
-
-/** The UI must obtain explicit confirmation; this removes no dedicated API or IndexedDB records. */
-export function clearOldBackpackAsync(): Promise<void> {
-    return enqueue(async context => {
-        if (context.kind !== "cloud") throw new Error(lf("Sign in to clear old Backpack data."));
-        await requestAsync(context, "/api/user/preferences", "PATCH", [{ op: "remove", path: ["backpack"] }]);
-    });
 }
 
 export function notifyBackpackEditorChanged(): void {

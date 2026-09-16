@@ -44,8 +44,6 @@ copy to a project and capture it again. Invalid entries remain trashable.
 Deleting a pending local copy does **not** delete a cloud copy that may already
 have synced; delete the cloud card separately. Inserted project code is unaffected.
 
-Old development data is not migrated. **Old Backpack data…** offers explicit
-export/reset of the previous preferences value; export before clearing it.
 Do not clear all browser storage: that also removes unsynced captures and projects.
 
 See [testing](../tests/project-tools-test/README.md) for developer checks.
