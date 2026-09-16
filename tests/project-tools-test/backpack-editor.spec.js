@@ -11,7 +11,7 @@ const ts = require("typescript");
 const filename = path.resolve(__dirname, "../../webapp/src/blocks.tsx");
 const source = ts.createSourceFile(filename, fs.readFileSync(filename, "utf8"),
     ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-const names = ["backpackAvailable", "saveBlockToBackpackAsync", "importFromBackpackAsync"];
+const names = ["backpackAvailable", "saveBlockToBackpackAsync", "importFromBackpackAsync", "createSnippetHost"];
 const classes = [];
 function visit(node) {
     if (ts.isClassDeclaration(node) && names.every(name => node.members.some(member =>

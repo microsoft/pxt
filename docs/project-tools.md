@@ -148,6 +148,28 @@ or exports unless explicitly inserted into that project's code. Backend sync is
 covered with a simulated authenticated API, not a live cross-device account test.
 See [the test guide](../tests/project-tools-test/README.md) for limits and manual checks.
 
+## Block copy and paste
+
+Ordinary **Copy**, **Cut** and **Paste** use the same extension and custom-source
+checks as the backpack, even with project tools disabled or while signed out.
+Copied blocks carry only their used extension references and original source
+filenames. Pasting asks **Add required extensions?** before installing missing
+packages, checks conflicts, saves current code/assets, and waits for the refreshed
+block definitions before inserting. Cancel leaves the destination unchanged.
+
+When a copied block was defined in the original project's custom source and is
+absent in the destination, **Project code is required** names the missing source
+files. Copy that code or publish it as an extension before pasting again. Stale
+Blockly definitions left behind by another project do not count as available.
+Already-installed local extensions can still be copied within a project; a missing
+local extension must be published rather than installed from its private reference.
+
+The clipboard keeps normal Blockly behavior for individual statements, expressions,
+function calls, comments, placement and undo. It does not require a backpack
+container or collect extra function bodies. Copies made before requirement capture
+still work when their blocks are available; recopy in the updated editor to include
+extension/source metadata. A failed copy never removes the source of a Cut.
+
 ## Whiteboard storage and sharing boundary
 
 Notes are stored in `Header.projectNotes`, not in `ScriptText`, asset collections,
