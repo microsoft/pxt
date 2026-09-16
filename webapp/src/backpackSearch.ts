@@ -1,7 +1,8 @@
 import Fuse = require("fuse.js");
+import type { BackpackEntry } from "./backpack";
 
 interface SearchEntry {
-    id: string;
+    index: number;
     name: string;
     blocks: string[];
     extensions: string[];
@@ -59,15 +60,17 @@ function blockText(item: pxt.auth.BackpackItem): string[] {
 }
 
 /** Build once per collection update; every query is a local, fuzzy filter in the original item order. */
-export function createBackpackSearch(items: pxt.auth.BackpackItem[], extensionName?: (name: string) => string): (query: string) => pxt.auth.BackpackItem[] {
-    const entries: SearchEntry[] = items.map(item => {
+export function createBackpackSearch(items: BackpackEntry[], extensionName?: (name: string) => string): (query: string) => BackpackEntry[] {
+    const entries: SearchEntry[] = items.map((entry, index) => {
+        const item = entry.item;
         const extensions = new Set<string>();
-        for (const [name, version] of Object.entries(item.dependencies)) {
+        for (const [name, version] of Object.entries(item?.dependencies || {})) {
             addText(extensions, name);
             addText(extensions, version);
             addText(extensions, extensionName?.(name));
         }
-        return { id: item.id, name: item.name, blocks: blockText(item), extensions: Array.from(extensions) };
+        // Recovery cards are searchable by their safe name, never by invalid code or metadata.
+        return { index, name: entry.name, blocks: item ? blockText(item) : [], extensions: Array.from(extensions) };
     });
     const fuse = new Fuse(entries, {
         keys: ["name", "blocks", "extensions"],
@@ -80,13 +83,13 @@ export function createBackpackSearch(items: pxt.auth.BackpackItem[], extensionNa
     return query => {
         const terms = Array.from(new Set(query.trim().toLowerCase().split(/\s+/).filter(Boolean)));
         if (!terms.length) return items;
-        let matches: Set<string>;
+        let matches: Set<number>;
         // Terms can match different fields (e.g. a snippet name plus its extension).
         for (const term of terms) {
-            const ids = new Set(fuse.search<SearchEntry>(term).map(entry => entry.id));
-            matches = matches ? new Set(Array.from(matches).filter(id => ids.has(id))) : ids;
+            const indices = new Set(fuse.search<SearchEntry>(term).map(entry => entry.index));
+            matches = matches ? new Set(Array.from(matches).filter(index => indices.has(index))) : indices;
             if (!matches.size) return [];
         }
-        return items.filter(item => matches.has(item.id));
+        return items.filter((_entry, index) => matches.has(index));
     };
 }

@@ -24,9 +24,25 @@ interface CloudContext extends CloudIdentity {
 
 type OperationContext = LocalIdentity | CloudContext;
 
+export interface BackpackEntry {
+    /** The collection key, not the potentially damaged ID inside the stored item. */
+    id: string;
+    source: "local" | "cloud";
+    name: string;
+    createdAt: number;
+    item?: pxt.auth.BackpackItem;
+    error?: string;
+}
+
+export interface BackpackState {
+    entries: BackpackEntry[];
+    warning?: string;
+}
+
 interface Snapshot {
     identity: Identity;
-    items: pxt.auth.BackpackItem[];
+    entries: BackpackEntry[];
+    warning?: string;
     error?: Error;
 }
 
@@ -233,7 +249,7 @@ function localPreferences(targetId: string, local: LocalBackpack): pxt.auth.User
     return { backpack: { [targetId]: local.items as pxt.Map<pxt.auth.BackpackItem> } };
 }
 
-function writeLocalItem(context: LocalIdentity, id: string, item?: pxt.auth.BackpackItem): void {
+function writeLocalItem(context: OperationContext, id: string, item?: pxt.auth.BackpackItem): void {
     assertActive(context);
     const value = item === undefined ? null : JSON.stringify(item);
     try {
@@ -264,12 +280,29 @@ function checkCapacity(backpack: unknown, target: pxt.Map<unknown>): void {
     if (JSON.stringify(backpack || {}).length > MAX_BACKPACK_DATA_LENGTH) throw new Error(lf("Your backpack exceeds the {0}-character storage limit.", MAX_BACKPACK_DATA_LENGTH));
 }
 
-function itemsFromCollection(target: pxt.Map<unknown>): pxt.auth.BackpackItem[] {
-    return Object.keys(target).map(id => {
-        const item = validateBackpackItem(target[id]);
+/** Expose only validated content, or bounded display metadata for a deletable recovery card. */
+export function readBackpackEntry(id: string, value: unknown, source: "local" | "cloud"): BackpackEntry {
+    try {
+        validateId(id);
+        const item = validateBackpackItem(value);
         if (item.id !== id) throw new Error(lf("A saved backpack item has a mismatched ID."));
-        return item;
-    }).sort((a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id));
+        return { id, source, name: item.name, createdAt: item.createdAt, item };
+    } catch {
+        // Never render the invalid preview/code or coerce arbitrary objects to strings.
+        const name = isRecord(value) && typeof value.name === "string"
+            ? Array.from(value.name.slice(0, MAX_BACKPACK_NAME_LENGTH))
+                .map(character => hasControlCharacters(character) ? " " : character).join("").trim()
+            : "";
+        const createdAt = isRecord(value) && typeof value.createdAt === "number"
+            && Number.isFinite(value.createdAt) && value.createdAt >= 0 ? value.createdAt : 0;
+        return { id, source, name: name || lf("Unnamed snippet"), createdAt,
+            error: lf("This snippet contains invalid or oversized data and can't be added. You can delete it from your backpack.") };
+    }
+}
+
+function entriesFromCollection(target: pxt.Map<unknown>, source: "local" | "cloud"): BackpackEntry[] {
+    return Object.keys(target).map(id => readBackpackEntry(id, target[id], source))
+        .sort((a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id));
 }
 
 function sameItem(left: pxt.auth.BackpackItem, right: pxt.auth.BackpackItem): boolean {
@@ -287,7 +320,9 @@ async function syncLocalBackpackAsync(context: CloudContext, preferences: pxt.au
     assertActive(context);
     const local = readLocalBackpack(context.targetId, true);
     if (!local || !Object.keys(local.items).length) return preferences;
-    const items = itemsFromCollection(local.items);
+    // Invalid local copies stay in this browser as recovery cards; never upload them.
+    const items = entriesFromCollection(local.items, "local").filter(entry => !!entry.item).map(entry => entry.item);
+    if (!items.length) return preferences;
     const target = collection(preferences, context.targetId);
     const updated = { ...target };
     const ops: ts.pxtc.jsonPatch.PatchOperation[] = [
@@ -327,26 +362,37 @@ async function syncLocalBackpackAsync(context: CloudContext, preferences: pxt.au
     return acknowledged;
 }
 
-function publish(context: OperationContext, preferences: pxt.auth.UserPreferences): void {
+function publish(context: OperationContext, preferences: pxt.auth.UserPreferences, warning?: string): void {
     assertActive(context);
-    const next: Snapshot = { identity: context, items: [] };
+    const next: Snapshot = { identity: context, entries: [], warning };
     try {
         const target = collection(preferences, context.targetId);
-        checkCapacity(preferences.backpack, target);
-        next.items = itemsFromCollection(target);
+        next.entries = entriesFromCollection(target, context.kind);
+        // Quotas prevent new writes, not reading or deleting existing snippets.
+        try { checkCapacity(preferences.backpack, target); }
+        catch { next.warning = lf("Your backpack is over its storage limit. Delete snippets using their trash buttons to make room."); }
+        if (context.kind === "cloud") {
+            const local = readLocalBackpack(context.targetId, true);
+            if (local) next.entries.push(...entriesFromCollection(local.items, "local").filter(entry => !entry.item));
+        }
     } catch {
-        next.items = [];
-        next.error = new Error(lf("Your saved backpack contains invalid or oversized data. Delete the affected item by ID to recover."));
+        next.error = new Error(lf("Your saved backpack collection could not be read. Please try again."));
     }
     snapshot = next;
     notifyBackpackEditorChanged();
 }
 
-/** Returns detached items only for the current local/profile backpack and target. */
-export function getBackpackItems(): pxt.auth.BackpackItem[] {
-    if (!snapshot || !isActive(snapshot.identity)) return [];
+/** Returns detached display entries only for the current local/profile backpack and target. */
+export function getBackpackState(): BackpackState {
+    if (!snapshot || !isActive(snapshot.identity)) return { entries: [] };
     if (snapshot.error) throw snapshot.error;
-    return snapshot.items.map(validateBackpackItem);
+    return { entries: snapshot.entries.map(entry => entry.item
+        ? { ...entry, item: validateBackpackItem(entry.item) } : { ...entry }), warning: snapshot.warning };
+}
+
+/** Invalid recovery entries are never exposed as importable snippets. */
+export function getBackpackItems(): pxt.auth.BackpackItem[] {
+    return getBackpackState().entries.filter(entry => !!entry.item).map(entry => entry.item);
 }
 
 /** Call on open to read local changes or sync the signed-in profile. */
@@ -357,9 +403,20 @@ export function refreshBackpackAsync(): Promise<void> {
         return Promise.resolve();
     }
     return enqueue(async context => {
-        const preferences = context.kind === "local"
+        let preferences = context.kind === "local"
             ? localPreferences(context.targetId, readLocalBackpack(context.targetId))
-            : await syncLocalBackpackAsync(context, await requestAsync(context));
+            : await requestAsync(context);
+        if (context.kind === "cloud") {
+            try { preferences = await syncLocalBackpackAsync(context, preferences); }
+            catch {
+                await verifyAsync(context);
+                // A failed promotion must not hide the profile's recovery controls.
+                // Publish only the original GET, not an unacknowledged upload.
+                publish(context, preferences, lf("Some snippets saved in this browser couldn't be synced. They haven't been removed. Try reopening your backpack, or sign out to manage those local copies."));
+                if (snapshot.error) throw snapshot.error;
+                return;
+            }
+        }
         publish(context, preferences);
         if (snapshot.error) throw snapshot.error;
     });
@@ -434,31 +491,45 @@ export async function renameBackpackItemAsync(id: string, name: string): Promise
 
 export async function deleteBackpackItemAsync(id: string): Promise<void> {
     validateId(id);
-    return enqueue(async context => {
-        if (context.kind === "local") {
-            writeLocalItem(context, id);
-            publish(context, localPreferences(context.targetId, readLocalBackpack(context.targetId)));
-            return;
-        }
-        const preferences = await requestAsync(context);
-        const target = collection(preferences, context.targetId);
-        // An absent ID is an acknowledged deletion, including a retry after a lost response.
-        if (!own(target, id)) {
-            publish(context, preferences);
-            return;
-        }
-        const ops: ts.pxtc.jsonPatch.PatchOperation[] = [
-            { op: "add", path: ["backpack"], value: {} },
-            { op: "add", path: ["backpack", context.targetId], value: {} },
-            { op: "remove", path: ["backpack", context.targetId, id] }
-        ];
-        // Do not validate/rewrite neighbors: even a corrupted entry can be deleted by ID.
-        const acknowledged = await requestAsync(context, ops);
-        if (own(collection(acknowledged, context.targetId), id)) {
-            throw new Error(lf("The backpack item could not be deleted. Please try again."));
-        }
-        publish(context, acknowledged);
-    });
+    return enqueue(context => deleteEntryAsync(context, id, context.kind));
+}
+
+/** Delete an observed card, including a malformed key, without trusting any of its damaged content. */
+export async function deleteBackpackEntryAsync(entry: BackpackEntry): Promise<void> {
+    const id = entry?.id;
+    const source = entry?.source;
+    if (!snapshot || !snapshot.entries.some(saved => saved.id === id && saved.source === source)
+        || !isActive(snapshot.identity)) {
+        throw new Error(lf("This snippet is no longer in your backpack. Please reopen the backpack."));
+    }
+    return enqueue(context => deleteEntryAsync(context, id, source));
+}
+
+async function deleteEntryAsync(context: OperationContext, id: string, source: "local" | "cloud"): Promise<void> {
+    if (context.kind === "local") {
+        writeLocalItem(context, id);
+        publish(context, localPreferences(context.targetId, readLocalBackpack(context.targetId)));
+        return;
+    }
+    const preferences = await requestAsync(context);
+    if (source === "local") {
+        writeLocalItem(context, id);
+        publish(context, preferences);
+        return;
+    }
+    const target = collection(preferences, context.targetId);
+    // An absent key is an acknowledged deletion, including a retry after a lost response.
+    if (!own(target, id)) {
+        publish(context, preferences);
+        return;
+    }
+    // Each key is one literal path segment, even when the stored key isn't a UUID.
+    // Never validate, rewrite, or remove neighboring snippets to repair this one.
+    const acknowledged = await requestAsync(context, [{ op: "remove", path: ["backpack", context.targetId, id] }]);
+    if (own(collection(acknowledged, context.targetId), id)) {
+        throw new Error(lf("The backpack item could not be deleted. Please try again."));
+    }
+    publish(context, acknowledged);
 }
 
 export function subscribeBackpack(listener: () => void): () => void {

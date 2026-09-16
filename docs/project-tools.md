@@ -154,6 +154,12 @@ The **Delete** trash icon opens a confirmation modal: it removes the entry from 
 signed out, or from the profile after server acknowledgement when signed in.
 Cancel or Escape closes the modal without deleting. Failures remain in the modal
 for retry; routine add/delete progress and success messages are not shown in the panel.
+An invalid snippet remains visible with its name when recoverable (otherwise
+**Unnamed snippet**), an explanation, and a trash icon. It cannot be added or
+renamed, and its invalid preview and code are not rendered. Other snippets remain
+usable. Invalid local copies are not uploaded; while signed in they are marked
+**Saved in this browser only** and their trash icon removes only that local copy.
+Storage-limit and local-upload warnings do not hide the cards or their delete actions.
 Copies already inserted in projects remain unchanged. Reopen the panel to receive
 changes from other tabs or, when signed in, other browsers. Failed saves offer
 retry; sign-out/account changes hide the previous account's items without copying
