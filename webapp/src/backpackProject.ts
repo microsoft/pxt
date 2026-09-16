@@ -16,7 +16,7 @@ export function getBackpackRequirements(code: string, info: pxtc.BlocksInfo, mai
     for (const name of Object.keys(requirements.dependencies)) {
         try {
             validateBackpackItem({
-                id: "00000000-0000-4000-8000-000000000000", name: "Backpack", code: "", createdAt: 0,
+                id: "00000000-0000-4000-8000-000000000000", name: "Backpack", code: "", blockText: "", createdAt: 0,
                 dependencies: { [name]: requirements.dependencies[name] }
             });
         } catch {

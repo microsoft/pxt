@@ -5,11 +5,12 @@ const fs = require("fs");
 const path = require("path");
 const ts = require("typescript");
 const less = require("less");
+const rtlcss = require("rtlcss");
 const { launchTestBrowser } = require("./browser");
 const { contrastSamples } = require("./theme-helpers");
 
 // No build output or ProjectTools integration: exercise today's source with
-// real React 17, the shared portal/FocusTrap/Button sources, and their Less.
+// real React 17 and Fuse, the shared portal/FocusTrap/Input/Button sources, and their Less.
 describe("project backpack UI", function () {
     this.timeout(30000);
     let browser;
@@ -43,8 +44,8 @@ describe("project backpack UI", function () {
                 visit(dependency);
             }
         };
-        const entry = "react-common/components/controls/Modal.tsx";
-        visit(entry);
+        const entries = ["react-common/components/controls/Modal.tsx", "react-common/components/controls/Input.tsx"];
+        entries.forEach(visit);
         return `(function() {
             const modules = {${Array.from(modules, ([file, { code, imports }]) =>
                 `${JSON.stringify(file)}: [function(require, exports, module) {\n${code}\n}, ${JSON.stringify(imports)}]`).join(",\n")}};
@@ -56,11 +57,11 @@ describe("project backpack UI", function () {
                 factory(name => load(imports[name] || name), module.exports, module);
                 return module.exports;
             }
-            window.backpackControls = load(${JSON.stringify(entry)});
+            window.backpackControls = Object.assign({}, ...${JSON.stringify(entries)}.map(load));
         })();`;
     };
     const item = (name = "Jump", id = "00000000-0000-0000-0000-000000000001") => ({
-        id, name, code: "basic.pause(100)", createdAt: 1, dependencies: {}
+        id, name, code: JSON.stringify({ blocks: [{ type: "pxt-on-start" }] }), blockText: "", createdAt: 1, dependencies: {}
     });
     const entry = ".project-backpack__item";
     const add = ".project-backpack__add";
@@ -79,6 +80,17 @@ describe("project backpack UI", function () {
     const body = ".project-backpack__body";
     const retry = ".project-backpack__retry";
     const signInPrompt = ".project-backpack__sign-in";
+    const searchBox = "#project-backpack-search";
+    const clearSearch = '.project-backpack__search button[aria-label="Clear backpack search"]';
+    const searchFor = async query => {
+        await page.click(searchBox);
+        await page.keyboard.down("Control");
+        await page.keyboard.press("KeyA");
+        await page.keyboard.up("Control");
+        await page.keyboard.press("Backspace");
+        if (query) await page.keyboard.type(query);
+    };
+    const visibleNames = () => page.$$eval(".project-backpack__name", headings => headings.map(heading => heading.textContent));
     const text = () => page.$eval("#root", element => element.textContent);
     const modalText = () => page.$eval(dialog, element => element.innerText);
     const quiet = async () => assert.doesNotMatch(await page.$eval("#root", element => element.innerText),
@@ -128,12 +140,12 @@ describe("project backpack UI", function () {
         css = (await less.render(`
             @modalDimmerZIndex: 1000; @modalFullscreenZIndex: 1001;
             @tabletAndBelow: ~"only screen and (max-width: 991px)";
-            @modalSeparatorBorder: 1px solid #ccc; @pageFont: sans-serif;
+            @modalSeparatorBorder: 1px solid #ccc; @pageFont: sans-serif; @textColor: #000;
             @buttonFocusOutlineLightBackground: 2px solid #000;
             @buttonFocusOutlineDarkBackground: 2px solid #fff;
             @highContrastBackgroundColor: #000; @highContrastTextColor: #fff;
-            @highContrastFocusOutline: 2px solid #fff; @highContrastFocusZIndex: 1002;
-            ${["theme/project-backpack.less", "react-common/styles/controls/Button.less", "react-common/styles/controls/Modal.less"]
+            @highContrastFocusOutline: 2px solid #fff; @highContrastFocusZIndex: 1002; @highContrastHighlightColor: #ff0;
+            ${["theme/project-backpack.less", "react-common/styles/controls/Button.less", "react-common/styles/controls/Input.less", "react-common/styles/controls/Modal.less"]
                 .map(file => fs.readFileSync(path.join(root, file), "utf8")).join("\n")}`)).css;
         browser = await launchTestBrowser();
     });
@@ -159,6 +171,7 @@ describe("project backpack UI", function () {
             ${css}` });
         await page.addScriptTag({ path: require.resolve("react/umd/react.development.js") });
         await page.addScriptTag({ path: require.resolve("react-dom/umd/react-dom.development.js") });
+        await page.addScriptTag({ path: require.resolve("fuse.js") });
         await page.evaluate(() => {
             window.lf = (text, ...args) => text.replace(/\{(\d+)\}/g, (_, i) => args[i]);
             window.pxt = {
@@ -252,8 +265,10 @@ describe("project backpack UI", function () {
                 }
             };
             window.require = id => {
-                const modules = { react: React, "../auth": auth, "../data": data, "../backpack": backpack, "../package": test.pkg };
+                const modules = { react: React, "fuse.js": window.Fuse, "../auth": auth, "../data": data,
+                    "../backpack": backpack, "../backpackSearch": window.backpackSearch, "../package": test.pkg };
                 modules["../../../react-common/components/controls/Modal"] = window.backpackControls;
+                modules["../../../react-common/components/controls/Input"] = window.backpackControls;
                 if (!(id in modules)) throw new Error(`Unexpected import ${id}`);
                 return modules[id];
             };
@@ -266,6 +281,7 @@ describe("project backpack UI", function () {
         await page.addScriptTag({ content: controls });
         // Reuse the actual storage validator without exercising network/auth storage.
         await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpack.ts")}\n})(window.backpackValidation = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
         await page.evaluate(() => {
             function Harness() {
@@ -315,6 +331,171 @@ describe("project backpack UI", function () {
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.paths()), ["auth:profile", "auth:logged-in"]);
         await signIn();
         assert.strictEqual(await page.$(signInPrompt), null);
+    });
+
+    it("filters locally by fuzzy name, contained blocks, displayed values and all used extensions", async () => {
+        const saved = { ...item("Orchard setup"), blockText: "set velocity anticlockwise",
+            dependencies: { core: "*", radio: "github:acme/telemetry#v1" },
+            code: JSON.stringify({ blocks: [{ type: "pxt-on-start", inputs: { HANDLER: { block: {
+                type: "radio_sendNumber", fields: { TEXT: "cumulonimbus", NUM: 8675309 },
+                next: { block: { type: "variables_set", fields: { VAR: { name: "altitude", id: "internal" } } } }
+            } } } }] }) };
+        const other = item("Rocket launch", "00000000-0000-0000-0000-000000000002");
+        await page.evaluate(() => {
+            backpackTest.pkg.mainPkg.deps = {
+                core: { config: { name: "Foundation" }, version: () => "embed:core", verProtocol: () => "embed" },
+                radio: { config: { name: "Wireless messages" }, version: () => "github:acme/telemetry#v1", verProtocol: () => "github" }
+            };
+        });
+        await signIn([other, saved]);
+        const refreshes = await page.evaluate(() => backpackTest.refreshes);
+        assert.strictEqual(await page.$(".project-backpack__requirements"), null);
+        assert.strictEqual(await page.$eval(searchBox, input => input === document.activeElement), false);
+        for (const query of ["orchad", "RADIO", "send number", "anticlockwise", "8675309", "cumulonimbus", "altitude",
+            "telemetry", "wireless", "foundation", "orchard anticlockwise telemetry"]) {
+            await searchFor(query);
+            assert.deepStrictEqual(await visibleNames(), [saved.name], query);
+            assert.strictEqual(await page.$eval(`${body} [role="status"]`, element => element.textContent), "1 of 2 snippets");
+        }
+        await searchFor("zygomorphic");
+        assert.deepStrictEqual(await visibleNames(), []);
+        assert.match(await text(), /No matching snippets/);
+        assert.doesNotMatch(await text(), /Your backpack is empty/);
+        await searchFor("   ");
+        assert.deepStrictEqual(await visibleNames(), [other.name, saved.name]);
+        assert.deepStrictEqual(await page.evaluate(() => ({ refreshes: backpackTest.refreshes, adds: backpackTest.adds,
+            renames: backpackTest.renames, deletes: backpackTest.deletes, remote: backpackTest.remote.A })),
+        { refreshes, adds: [], renames: [], deletes: [], remote: [other, saved] });
+    });
+
+    it("labels search accessibly and supports clear, keyboard import and Escape without closing the panel", async () => {
+        await signIn([item("Orchard"), item("Rocket", "00000000-0000-0000-0000-000000000002")]);
+        const accessibility = await page.accessibility.snapshot({ interestingOnly: false });
+        const find = node => node.role === "searchbox" ? node : (node.children || []).map(find).find(Boolean);
+        assert.strictEqual(find(accessibility)?.name, "Search backpack");
+        await searchFor("orchard");
+        await page.keyboard.press("Tab");
+        assert.strictEqual(await page.$eval(clearSearch, button => button === document.activeElement), true);
+        for (const selector of [rename, remove, add]) {
+            await page.keyboard.press("Tab");
+            assert.strictEqual(await page.$eval(selector, button => button === document.activeElement), true);
+        }
+        await page.keyboard.press("Enter");
+        await idle();
+        assert.strictEqual(await page.evaluate(() => backpackTest.adds[0].item.name), "Orchard");
+        await page.click(clearSearch);
+        await page.waitForFunction(() => document.getElementById("project-backpack-search").value === "");
+        assert.strictEqual(await page.$eval(searchBox, input => input.value === "" && input === document.activeElement), true);
+        assert.deepStrictEqual(await visibleNames(), ["Orchard", "Rocket"]);
+        await searchFor("rocket");
+        await page.keyboard.press("Escape");
+        await page.waitForFunction(() => document.getElementById("project-backpack-search").value === "");
+        assert.strictEqual(await page.$eval(searchBox, input => input.value === "" && input === document.activeElement), true);
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.escapes, backpackTest.collapses]), [0, 0]);
+        await page.keyboard.press("Escape");
+        assert.strictEqual(await page.evaluate(() => backpackTest.escapes), 1, "Empty search keeps the panel's existing Escape behavior");
+    });
+
+    it("reindexes after rename and restores focus when a renamed result no longer matches", async () => {
+        await signIn([item("Orchard"), item("Rocket", "00000000-0000-0000-0000-000000000002")]);
+        await searchFor("orchard");
+        await page.click(rename);
+        await page.keyboard.type("Telescope");
+        await page.keyboard.press("Enter");
+        await idle();
+        await modalClosed();
+        assert.deepStrictEqual(await visibleNames(), []);
+        assert.strictEqual(await page.$eval(searchBox, input => input === document.activeElement), true);
+        await searchFor("telescope");
+        assert.deepStrictEqual(await visibleNames(), ["Telescope"]);
+        await page.click(rename);
+        await page.keyboard.type("Telescope setup");
+        await page.keyboard.press("Enter");
+        await idle();
+        await modalClosed();
+        assert.deepStrictEqual(await visibleNames(), ["Telescope setup"]);
+        assert.strictEqual(await page.$eval(rename, button => button === document.activeElement), true);
+    });
+
+    it("deletes only a matching result and focuses the next visible card or search box", async () => {
+        await signIn([item("Orchard one"), item("Rocket", "00000000-0000-0000-0000-000000000002"),
+            item("Orchard two", "00000000-0000-0000-0000-000000000003")]);
+        await searchFor("orchard");
+        await page.click(remove);
+        await page.click(confirmDelete);
+        await idle();
+        await modalClosed();
+        assert.deepStrictEqual(await visibleNames(), ["Orchard two"]);
+        assert.strictEqual(await page.$eval(rename, button => button === document.activeElement), true);
+        await page.click(remove);
+        await page.click(confirmDelete);
+        await idle();
+        await modalClosed();
+        assert.strictEqual(await page.$eval(searchBox, input => input === document.activeElement), true);
+        await page.click(clearSearch);
+        assert.deepStrictEqual(await visibleNames(), ["Rocket"]);
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.remote.A.map(item => item.name)), ["Rocket"]);
+    });
+
+    it("retains search on reopen, updates after notifications and clears it on account changes", async () => {
+        await loadGuest([item("Orchard")]);
+        await searchFor("gyroscope");
+        await page.evaluate(() => {
+            backpackTest.snapshots.__guest__[0].blockText = "gyroscope";
+            backpackTest.remote.__guest__[0].blockText = "gyroscope";
+            backpackTest.notify();
+        });
+        assert.deepStrictEqual(await visibleNames(), ["Orchard"]);
+        await reopen();
+        await idle();
+        assert.strictEqual(await page.$eval(searchBox, input => input.value), "gyroscope");
+        assert.deepStrictEqual(await visibleNames(), ["Orchard"]);
+        await signIn([item("Rocket")]);
+        assert.strictEqual(await page.$eval(searchBox, input => input.value), "");
+        assert.deepStrictEqual(await visibleNames(), ["Rocket"]);
+        await searchFor("rocket");
+        await page.evaluate(() => backpackTest.account(undefined));
+        await idle();
+        assert.strictEqual(await page.$eval(searchBox, input => input.value), "");
+        assert.deepStrictEqual(await visibleNames(), ["Orchard"]);
+    });
+
+    it("keeps search above the scrolling list, touch-sized, themed and readable in narrow panels and RTL", async () => {
+        await signIn(Array.from({ length: 8 }, (_, i) => item("Orchard " + i, `00000000-0000-0000-0000-${String(i).padStart(12, "0")}`)));
+        await searchFor("orchard");
+        for (const direction of ["ltr", "rtl"]) {
+            await page.addStyleTag({ content: direction === "rtl" ? rtlcss.process(css) : css });
+            for (const dark of [false, true]) {
+                await page.evaluate(({ direction, dark }) => {
+                    document.getElementById("root").style.width = "180px";
+                    const section = document.querySelector("section");
+                    section.dir = direction;
+                    section.style.setProperty("--tools-surface", dark ? "rgb(25, 25, 25)" : "rgb(250, 250, 250)");
+                    section.style.setProperty("--tools-foreground", dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)");
+                    section.style.setProperty("--pxt-focus-border", dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)");
+                }, { direction, dark });
+                assert.deepStrictEqual(await page.$eval(".project-backpack__search", search => {
+                    const rect = search.getBoundingClientRect();
+                    const input = search.querySelector("input").getBoundingClientRect();
+                    const clear = search.querySelector("button").getBoundingClientRect();
+                    const list = document.querySelector(".project-backpack__body");
+                    const before = rect.top;
+                    list.scrollTop = list.scrollHeight;
+                    return { above: rect.bottom <= list.getBoundingClientRect().top,
+                        stationary: before === search.getBoundingClientRect().top,
+                        fits: search.scrollWidth <= search.clientWidth && input.left >= rect.left && input.right <= rect.right,
+                        touch: input.width >= 44 && input.height >= 44 && clear.width >= 44 && clear.height >= 44 };
+                }), { above: true, stationary: true, fits: true, touch: true });
+                assert.ok((await contrastSamples(page, searchBox))[0].contrast >= 4.5);
+                await page.focus(searchBox);
+                assert.strictEqual(await page.$eval(".project-backpack__search .common-input-group",
+                    group => getComputedStyle(group, "::after").borderTopStyle), "solid");
+            }
+        }
+        const session = await page.createCDPSession();
+        await session.send("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }] });
+        assert.ok((await contrastSamples(page, searchBox))[0].contrast >= 4.5);
+        await session.detach();
     });
 
     it("keeps guest contents usable when identity is unavailable without offering sign-in", async () => {

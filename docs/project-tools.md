@@ -122,6 +122,13 @@ also accepts the drag when the other bubbles are hidden.
 
 Saving copies the container's contents, referenced Blockly function definitions
 and assets. It does not include following siblings or remove the original blocks.
+The **Search backpack** box filters as you type using local fuzzy matching. Search
+snippet names, contained block names, displayed labels and parameter values, or any
+used extension (including installed extensions). Multiple words can match different
+parts of a snippet. Clear the box or press Escape to show all snippets again.
+Displayed block text is saved with the snippet so it remains searchable without the
+original project's extensions. Searching never installs extensions or changes code.
+
 Each entry lists only extensions missing from the current project; the section is
 hidden when none are needed. **Add to project** asks permission
 before installing missing extensions, checks conflicts, preserves current code

@@ -213,8 +213,8 @@ export function parseBackpackCode(code: string): BackpackCode {
     return result;
 }
 
-/** Serialize just this container and its input bodies, plus transitive external function definitions. */
-export function serializeBackpackBlock(block: Blockly.Block): string {
+/** Capture this container, its input bodies and function dependencies, plus their displayed text. */
+export function captureBackpackBlock(block: Blockly.Block): { code: string; blockText: string } {
     if (!isBackpackContainer(block)) invalidCode();
     const save = (source: Blockly.Block): State => {
         const state = Blockly.serialization.blocks.save(source, {
@@ -250,7 +250,29 @@ export function serializeBackpackBlock(block: Blockly.Block): string {
     }
     const code = JSON.stringify({ blocks: [...states.slice(1), root] });
     parseBackpackCode(code);
-    return code;
+
+    // Read the existing live fields, never load saved snippets or their mutation hooks for search.
+    const text = new Set<string>();
+    const seen = new Set<Blockly.Block>();
+    const pending = Array.from(included);
+    while (pending.length) {
+        const current = pending.pop();
+        if (seen.has(current)) continue;
+        seen.add(current);
+        for (const input of current.inputList) {
+            for (const field of input.fieldRow) {
+                const custom = field as Blockly.Field & { getFieldDescription?: () => string };
+                const value = (custom.getFieldDescription ? custom.getFieldDescription() : field.getText())
+                    ?.replace(/\s+/g, " ").trim();
+                if (value) text.add(value);
+            }
+            // Follow input bodies and their statement chains, but not a root's following siblings.
+            for (let child = input.connection?.targetBlock(); child; child = child.getNextBlock()) {
+                pending.push(child);
+            }
+        }
+    }
+    return { code, blockText: Array.from(text).join(" ").slice(0, MAX_CODE_LENGTH) };
 }
 
 /** All required types, including obscured shadows and nested next chains. */

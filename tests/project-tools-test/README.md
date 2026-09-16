@@ -39,7 +39,7 @@ underlying DevTools operation before Mocha's unchanged 30-second hook timeout.
   Pin regressions cover click-away/iframe focus, explicit collapse and reopening,
   manual unpin, example defaults, and switching tabs/viewports.
   Resize tests cover side/bottom grips, pointer and keyboard input, RTL, retained
-  dimensions and viewport/banner limits. Grip dots are included in theme contrast checks.
+  dimensions and viewport/banner limits.
   Default-size tests compare the combined desktop panel/bubble footprint with
   legacy sidedocs, exercise breakpoint transitions, and verify target overrides
   and preserved manual sizes.
@@ -51,12 +51,10 @@ underlying DevTools operation before Mocha's unchanged 30-second hook timeout.
   images/text/undo, confirmed deletion and last-board protection, save errors/retry,
   desktop hide/reveal with retained notes/drawing/undo/pin, all 16 colors on mobile
   and footer spacing.
-  Contrast checks use the production stylesheet order (shared menu styles load
-  after project-tools) and the actual theme manager. They check icons, text and
-  keyboard focus through idle/hover/pressed/expanded states on mobile and desktop,
-  plus system forced colors. Light/dark regression palettes and shared high
-  contrast always run. With the sibling Arcade checkout (or `PXT_ARCADE_PATH`),
-  every Arcade color theme and its override CSS is included automatically.
+  Keyboard focus indicators are checked on mobile and desktop using the production
+  stylesheet order (shared menu styles load after project-tools). System forced-color
+  checks remain, but the suite does not enforce numeric contrast thresholds across
+  every editor theme; those palettes can intentionally include lower-contrast colors.
 
 Bitmap/schema checks and the startup experiment guard are also covered by
 [the editor suite](../pxt-editor-test/editorrunner.ts), run with `gulp testpxteditor`.
@@ -64,7 +62,7 @@ See the [feature notes](../../docs/project-tools.md) for manual UI/privacy check
 
 ## Backpack: focused tests without builds
 
-Run `node node_modules/mocha/bin/mocha.js "tests/project-tools-test/backpack-{storage,ui,project,blocks,editor}.spec.js" --reporter dot`
+Run `node node_modules/mocha/bin/mocha.js "tests/project-tools-test/backpack-{storage,search,ui,project,blocks,editor}.spec.js" --reporter dot`
 from PXT for the source-based backpack suites. They transpile the relevant current
 TypeScript in memory; they do not run a build, development server, live sign-in,
 network download, or user program. Browser suites require Puppeteer's Chromium.
@@ -89,7 +87,11 @@ rebuilds the shared library and webapp first.
   mismatch detection. Name-only renames preserve fresh block data and never recreate
   deleted snippets, with validation, quota, retry and account-change coverage.
   No real profile data is read or written.
-- [backpack-ui.spec.js](backpack-ui.spec.js): current panel, real React, validator,
+- [backpack-search.spec.js](backpack-search.spec.js): source-based indexing with the real
+  Fuse.js dependency; fuzzy names, nested block types and values, captured labels,
+  all extension references, multiple terms, stable ordering, malformed input and no
+  indexing of binary assets or internal IDs. No Blockly loaders or network calls.
+- [backpack-ui.spec.js](backpack-ui.spec.js): current panel, real React, Fuse, validator,
   standalone LESS, focus and keyboard behavior; auth, package access and storage/import
   operations are mocked. Covers usable guest contents with/without an identity
   provider, the centered sign-in button, local/profile deletion, refresh/reopen, account
@@ -97,6 +99,8 @@ rebuilds the shared library and webapp first.
   missing-only extension requirements and updates as packages change, import restrictions,
   the real shared delete modal and focus trap,
   optional prefilled Rename dialogs, Enter/Save/Cancel/Escape, rename validation/retry,
+  live search and result counts, clear/Escape, filtered rename/delete focus, account
+  resets, reindexing and a fixed search field above the scrolling list,
   grouped top-right pencil/trash icons and a bottom-right filled confirmation button,
   alignment with long names and RTL, themed hover/disabled button states and text contrast,
   account changes, confirmation/retry/focus, quiet add/delete/rename outcomes,

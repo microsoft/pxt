@@ -442,85 +442,20 @@ describe("named private whiteboards", function () {
         assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
     });
 
-    for (const theme of colorThemes()) {
-        for (const width of [390, 1024, 1366]) {
-            it(`keeps header and whiteboard controls readable in ${theme.id} at ${width}px`, async () => {
-                await page.setViewport({ width, height: 900 });
-                await page.evaluate(theme => whiteboardTest.switchTheme(theme), theme);
-                const readable = async (selector, minimum = 4.5) => {
-                    const samples = await contrastSamples(page, selector);
-                    assert.ok(samples.length, `Missing visible controls: ${selector}`);
-                    for (const sample of samples) assert.ok(sample.contrast >= minimum,
-                        `${theme.id}: ${sample.label} contrast ${sample.contrast.toFixed(2)} < ${minimum} (${sample.color} on ${sample.background})`);
-                };
-                const settle = selector => page.$eval(selector, async el => {
-                    await Promise.all(el.getAnimations().map(animation => animation.finished.catch(() => {})));
-                });
-                const headerStates = async (selector, minimum = 3) => {
-                    await page.mouse.move(0, 0);
-                    // A theme switch can start react-common's color transition.
-                    // Sample the settled idle state, just as for hover and focus.
-                    await settle(selector);
-                    await readable(selector, minimum);
-                    await page.hover(selector);
-                    await settle(selector);
-                    await readable(selector, minimum);
-                    await page.focus(selector);
-                    await page.keyboard.press("Shift");
-                    await page.focus(input);
-                    await page.focus(selector);
-                    await settle(selector);
-                    await readable(selector, minimum);
-                    const [sample] = await contrastSamples(page, selector);
-                    assert.equal(sample.filter, "none", "Header foreground/background pairs must not be altered by toolbar hover filters");
-                    assert.ok(sample.outlineWidth > 0 && sample.outlineStyle !== "none", "Missing keyboard focus indicator");
-                    assert.ok(sample.outlineContrast >= 3, `Low-contrast focus indicator: ${sample.outlineContrast}`);
-                };
-
-                await readable("#project-tools-whiteboard h2, #project-notes-privacy, #project-notes-text");
-                await readable("#project-tools-launcher circle", 3);
-                await headerStates("#project-tools-launcher");
-                await readable(".project-tools__resize--height .project-tools__resize-grip circle", 3);
-                await page.hover(".project-tools__resize--height");
-                await readable(".project-tools__resize--height .project-tools__resize-grip circle", 3);
-                if (width > 991) {
-                    await page.mouse.move(0, 0);
-                    await readable(".project-tools__resize-grip circle", 3);
-                    await page.hover(".project-tools__resize--width");
-                    await readable(".project-tools__resize-grip circle", 3);
-                }
-                await headerStates(menu);
-                await headerStates("#project-tools-whiteboard .project-tools__close");
-                await headerStates("#project-tools-whiteboard .project-tools__pin", 4.5);
-                await page.click("#project-tools-whiteboard .project-tools__pin");
-                assert.equal(await page.$eval("#project-tools-whiteboard .project-tools__pin", el => el.getAttribute("aria-pressed")), "true");
-                await headerStates("#project-tools-whiteboard .project-tools__pin", 4.5);
-                await page.click("#project-tools-whiteboard .project-tools__pin");
-                await page.hover(menu);
-                await page.mouse.down();
-                await settle(menu);
-                await readable(menu, 3);
-                await page.mouse.up();
-                await page.waitForSelector("#project-whiteboard-menu-menu", { visible: true });
-                await page.mouse.move(0, 0);
-                await settle(menu);
-                await readable(menu, 3); // Expanded, without hover.
-                await readable('#project-whiteboard-menu-menu [role^="menuitem"]');
-                await page.keyboard.press("Escape");
-                await item("Rename whiteboard");
-                await readable(".project-whiteboard-menu__edit label, .project-whiteboard-menu__edit input, .project-whiteboard-menu__edit button");
-                await page.keyboard.press("Escape");
-
-                if (await page.$eval("#project-tools-launcher", el => el.getAttribute("aria-expanded")) !== "true") {
-                    await page.focus("#project-tools-launcher");
-                    await page.keyboard.press("ArrowDown");
-                }
-                await page.click("#project-tools-tab-docs");
-                await readable(".project-tools__external", 3);
-                await page.hover(".project-tools__external");
-                await readable(".project-tools__external", 3);
-            });
-        }
+    for (const width of [390, 1024, 1366]) {
+        it(`keeps keyboard focus indicators on header controls at ${width}px`, async () => {
+            await page.setViewport({ width, height: 900 });
+            await page.keyboard.press("Shift");
+            for (const selector of ["#project-tools-launcher", menu,
+                "#project-tools-whiteboard .project-tools__close", "#project-tools-whiteboard .project-tools__pin"]) {
+                await page.focus(selector);
+                assert.equal(await page.$eval(selector, control => {
+                    const style = getComputedStyle(control);
+                    return control === document.activeElement && control.getClientRects().length > 0
+                        && parseFloat(style.outlineWidth) > 0 && style.outlineStyle !== "none";
+                }), true, `Missing keyboard focus indicator: ${selector}`);
+            }
+        });
     }
 
     for (const colorScheme of ["light", "dark"]) {

@@ -73,6 +73,27 @@
     &:disabled { opacity: .5; }
 }
 
+.project-backpack__search {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: .5rem;
+    padding: .75rem .75rem 0;
+    color: var(--tools-foreground);
+    background: var(--tools-surface);
+
+    .project-backpack__search-input { flex: 1; min-width: 0; }
+    .common-input-group {
+        height: 44px;
+        border-color: var(--tools-border);
+        border-radius: .5rem;
+        background: var(--tools-surface);
+    }
+    .common-input { font: inherit; color: var(--tools-foreground); }
+    .common-input::placeholder { color: var(--tools-foreground); opacity: .7; }
+    .common-input-group:focus-within::after { border-radius: .5rem; }
+}
+
 .project-backpack__sign-in {
     display: block;
     width: fit-content;

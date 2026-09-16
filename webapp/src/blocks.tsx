@@ -2611,11 +2611,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             && (!signedIn || auth.userProfile()?.id === userId);
         let item: pxt.auth.BackpackItem;
         try {
-            const code = pxtblockly.serializeBackpackBlock(block);
+            const { code, blockText } = pxtblockly.captureBackpackBlock(block);
             const requirements = getBackpackRequirements(code, this.blockInfo, pkg.mainPkg);
             item = {
                 id: pxt.U.guidGen(), name: pxtblockly.getBlockText(block).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
-                code, ...requirements, createdAt: Date.now(), previewUri: await backpackPreviewAsync(block)
+                code, blockText, ...requirements, createdAt: Date.now(), previewUri: await backpackPreviewAsync(block)
             };
             backpack.validateBackpackItem(item);
         } catch (error) {

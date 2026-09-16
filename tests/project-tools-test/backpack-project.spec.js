@@ -200,7 +200,7 @@ function environment(installed = {}) {
     };
     const item = {
         id: "00000000-0000-4000-8000-000000000000", name: "Snippet", createdAt: 0,
-        dependencies: {}, code: codeFor({ type: "container" })
+        dependencies: {}, code: codeFor({ type: "container" }), blockText: "Captured container label"
     };
     const requirePackages = (...names) => {
         item.dependencies = Object.fromEntries(names.map(name => [name, version(name)]));
@@ -556,6 +556,25 @@ describe("Backpack project requirements (fresh source)", () => {
 });
 
 describe("Backpack project insertion (fresh source, no network or program execution)", () => {
+    it("requires bounded block text before preparation, without treating labels as dependencies or executable code", async () => {
+        for (const blockText of [undefined, null, 7, "x".repeat(100001)]) {
+            const e = environment();
+            if (blockText === undefined) delete e.item.blockText;
+            else e.item.blockText = blockText;
+            await assert.rejects(e.run(), /Backpack block text/);
+            assert.deepStrictEqual(e.events, []);
+        }
+        for (const blockText of ["", "uninstalled.run github:private/repo PRIVATE_LABELS", "x".repeat(100000)]) {
+            const e = environment();
+            e.item.blockText = blockText;
+            const before = clone(e.item);
+            assert.equal(await e.run(), true);
+            assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1"]);
+            assert.deepStrictEqual(e.dialogs, []);
+            assert.deepStrictEqual(e.item, before);
+        }
+    });
+
     it("delegates capture and preparation to the shared module, leaving paste in the adapter", async () => {
         const e = environment();
         let captures = 0;
