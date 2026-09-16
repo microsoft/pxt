@@ -62,7 +62,7 @@ describe("project backpack UI", function () {
         id, name, code: "basic.pause(100)", createdAt: 1, dependencies: {}
     });
     const entry = ".project-backpack__item";
-    const add = `${entry} .project-backpack__actions button:first-child`;
+    const add = ".project-backpack__add";
     const rename = ".project-backpack__rename";
     const renameModal = ".project-backpack__rename-modal";
     const nameInput = "#project-backpack-name";
@@ -570,6 +570,104 @@ describe("project backpack UI", function () {
         assert.strictEqual(await page.$('[role="alert"]'), null);
     });
 
+    it("places labeled icon-only Rename and Delete controls in reading and keyboard order", async () => {
+        await signIn([item("character setup")]);
+        assert.strictEqual(await page.$(`${entry} .project-backpack__actions .project-backpack__icon-button`), null);
+        assert.ok(await page.$(`${entry} .project-backpack__item-header ${rename}`));
+        assert.ok(await page.$(`${entry} .project-backpack__item-header ${remove}`));
+        assert.strictEqual(await page.$$eval(`${entry} .project-backpack__actions button`, buttons => buttons.length), 1);
+        for (const [selector, label, icon] of [[rename, "Rename character setup", "pencil"], [remove, "Delete character setup", "trash"]]) {
+            assert.deepStrictEqual(await page.$eval(selector, button => ({
+                text: button.textContent.trim(), label: button.getAttribute("aria-label"), title: button.title,
+                icon: button.querySelector("i")?.className, hiddenIcon: button.querySelector("i")?.getAttribute("aria-hidden"),
+                popup: button.getAttribute("aria-haspopup"), width: button.getBoundingClientRect().width,
+                height: button.getBoundingClientRect().height
+            })), { text: "", label, title: label, icon: `icon ${icon}`, hiddenIcon: "true", popup: "dialog", width: 44, height: 44 });
+        }
+        const accessibility = await page.accessibility.snapshot({ interestingOnly: false });
+        const buttonNames = node => (node.role === "button" ? [node.name] : []).concat((node.children || []).flatMap(buttonNames));
+        const names = buttonNames(accessibility);
+        assert.ok(names.includes("Rename character setup"));
+        assert.ok(names.includes("Delete character setup"));
+        await page.focus(body);
+        for (const selector of [rename, remove, add]) {
+            await page.keyboard.press("Tab");
+            assert.strictEqual(await page.$eval(selector, element => element === document.activeElement), true);
+            assert.strictEqual(await page.$eval(selector, element => getComputedStyle(element).outlineStyle), "solid");
+        }
+    });
+
+    it("keeps both icons at the top trailing edge and Add at the bottom trailing edge with long names, narrow panels and RTL", async () => {
+        await signIn([item("character setup"), item("x".repeat(100), "00000000-0000-0000-0000-000000000002")]);
+        for (const width of [180, 320, 480]) {
+            for (const direction of ["ltr", "rtl"]) {
+                await page.evaluate(({ width, direction }) => {
+                    document.getElementById("root").style.width = `${width}px`;
+                    document.querySelector("section").dir = direction;
+                }, { width, direction });
+                const metrics = await page.$$eval(".project-backpack__item", (items, direction) => items.map(item => {
+                    const header = item.querySelector(".project-backpack__item-header").getBoundingClientRect();
+                    const name = item.querySelector("h3").getBoundingClientRect();
+                    const rename = item.querySelector(".project-backpack__rename").getBoundingClientRect();
+                    const trash = item.querySelector(".project-backpack__delete").getBoundingClientRect();
+                    const actions = item.querySelector(".project-backpack__item-actions").getBoundingClientRect();
+                    const footer = item.querySelector(".project-backpack__actions").getBoundingClientRect();
+                    const add = item.querySelector(".project-backpack__add").getBoundingClientRect();
+                    return {
+                        top: Math.abs(rename.top - header.top) < 1 && Math.abs(trash.top - header.top) < 1,
+                        opposite: direction === "rtl" ? actions.right <= name.left : actions.left >= name.right,
+                        trailing: Math.abs(direction === "rtl" ? trash.left - header.left : trash.right - header.right) < 1,
+                        grouped: direction === "rtl" ? trash.right === rename.left : rename.right === trash.left,
+                        bottom: add.top >= header.bottom && Math.abs(add.bottom - footer.bottom) < 1,
+                        addTrailing: Math.abs(direction === "rtl" ? add.left - footer.left : add.right - footer.right) < 1,
+                        fits: item.scrollWidth <= item.clientWidth,
+                        touch: [rename, trash, add].every(rect => rect.width >= 44 && rect.height >= 44)
+                    };
+                }), direction);
+                assert.deepStrictEqual(metrics, Array(2).fill({ top: true, opposite: true, trailing: true, grouped: true,
+                    bottom: true, addTrailing: true, fits: true, touch: true }));
+            }
+        }
+    });
+
+    it("uses themed confirmation-style Add text with no button outline and retains hover, focus and disabled states", async () => {
+        await signIn([item()]);
+        for (const dark of [false, true]) {
+            const color = dark ? "rgb(71, 158, 245)" : "rgb(57, 119, 180)";
+            const hover = dark ? "rgb(98, 171, 245)" : "rgb(32, 68, 103)";
+            await page.evaluate(({ dark, color, hover }) => {
+                const section = document.querySelector("section");
+                section.style.setProperty("--tools-surface", dark ? "rgb(25, 25, 25)" : "rgb(250, 250, 250)");
+                section.style.setProperty("--tools-foreground", dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)");
+                section.style.setProperty("--pxt-link", color);
+                section.style.setProperty("--pxt-link-hover", hover);
+                backpackTest.canImport = true;
+                backpackTest.notify();
+            }, { dark, color, hover });
+            await page.hover("h3");
+            assert.deepStrictEqual(await page.$eval(add, button => {
+                const style = getComputedStyle(button);
+                return { text: button.textContent, background: style.backgroundColor, border: style.borderTopStyle,
+                    color: style.color, weight: style.fontWeight, underline: style.textDecorationLine.includes("underline") };
+            }), { text: "Add to project", background: "rgba(0, 0, 0, 0)", border: "none", color, weight: "600", underline: false });
+            await page.hover(add);
+            assert.deepStrictEqual(await page.$eval(add, button => {
+                const style = getComputedStyle(button);
+                return { background: style.backgroundColor, color: style.color, underline: style.textDecorationLine.includes("underline") };
+            }), { background: "rgba(0, 0, 0, 0)", color: hover, underline: true });
+            await page.focus(body);
+            for (let i = 0; i < 3; ++i) await page.keyboard.press("Tab");
+            assert.strictEqual(await page.$eval(add, button => button === document.activeElement && getComputedStyle(button).outlineStyle === "solid"), true);
+            await page.evaluate(() => { backpackTest.canImport = false; backpackTest.notify(); });
+            assert.deepStrictEqual(await page.$eval(add, button => ({
+                disabled: button.disabled, opacity: getComputedStyle(button).opacity,
+                color: getComputedStyle(button).color, description: button.getAttribute("aria-describedby")
+            })), { disabled: true, opacity: "0.5", color: dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)", description: "project-backpack-import-reason" });
+            await page.click(add);
+            assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds), []);
+        }
+    });
+
     for (const signedIn of [false, true]) {
         it(`offers optional ${signedIn ? "profile" : "guest"} renaming without changing blocks or requiring a name on add`, async () => {
             const snippet = { ...item("on start"), dependencies: { core: "*" }, projectBlocks: { custom: "custom.ts" },
@@ -949,7 +1047,7 @@ describe("project backpack UI", function () {
         await page.click(confirmDelete);
         await idle();
         assert.strictEqual((await page.$$(entry)).length, 1);
-        assert.strictEqual(await page.$eval(add, element => element === document.activeElement), true);
+        assert.strictEqual(await page.$eval(rename, element => element === document.activeElement), true);
         await modalClosed();
     });
 
@@ -1165,7 +1263,7 @@ describe("project backpack UI", function () {
                 section.style.setProperty("--tools-surface", dark ? "rgb(25, 25, 25)" : "rgb(250, 250, 250)");
                 section.style.setProperty("--tools-foreground", dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)");
             }, dark);
-            const colors = await page.$eval(add, button => ({ background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color }));
+            const colors = await page.$eval(rename, button => ({ background: getComputedStyle(button).backgroundColor, color: getComputedStyle(button).color }));
             assert.strictEqual(colors.background, dark ? "rgb(25, 25, 25)" : "rgb(250, 250, 250)");
             assert.strictEqual(colors.color, dark ? "rgb(250, 250, 250)" : "rgb(25, 25, 25)");
         }

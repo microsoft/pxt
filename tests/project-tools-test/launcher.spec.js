@@ -5,6 +5,7 @@ const fs = require("fs");
 const { launchTestBrowser } = require("./browser");
 const less = require("less");
 const rtlcss = require("rtlcss");
+const { colorThemes, contrastSamples } = require("./theme-helpers");
 
 // Exercise the compiled component with real React, DOM focus and media queries.
 // The image editor is stubbed here; storage and shortcut tests cover its isolation.
@@ -161,6 +162,100 @@ describe("responsive project-tools launcher", function () {
         await page.waitForFunction(() => !document.getElementById("project-tools-panel").hidden);
         await page.waitForSelector(`${panel} .project-tools__pin`, { visible: true });
     };
+
+    const labelIs = async (selector, visible) => page.waitForFunction(({ selector, visible }) => {
+        const label = document.querySelector(`${selector} .project-tools__bubble-label`);
+        return !!label && (getComputedStyle(label).visibility === "visible" && !!label.getClientRects().length) === visible;
+    }, {}, { selector, visible });
+
+    for (const width of [320, 1024, 1366]) for (const rtl of [false, true]) {
+        it(`shows only inactive tab hover labels above the panel and adds an ellipsis label at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
+            await openTool(backpack, width);
+            if (rtl) {
+                await page.$eval("style", (el, text) => el.textContent = text, rtlcss.process(css));
+                await page.evaluate(() => window.setRtl(true));
+            }
+            await page.hover(backpack);
+            await labelIs(backpack, false);
+            assert.equal(await page.$eval(backpack, el => el.hasAttribute("title")), false, "Do not show a native tooltip for the open tab");
+            for (const [selector, text] of [[docs, "Documentation"], [whiteboard, "Whiteboard"], [more, "Project tools"]]) {
+                await page.hover(selector);
+                await labelIs(selector, true);
+                const actual = await page.$eval(`${selector} .project-tools__bubble-label`, label => {
+                    const bounds = label.getBoundingClientRect();
+                    const style = getComputedStyle(label);
+                    const pointerEvents = style.pointerEvents;
+                    // The real label is click-through. Temporarily enable hit testing
+                    // to check actual paint order rather than just numeric z-indexes.
+                    label.style.pointerEvents = "auto";
+                    const topmost = document.elementFromPoint(bounds.left + bounds.width / 2, bounds.top + bounds.height / 2) === label;
+                    label.style.removeProperty("pointer-events");
+                    return { text: label.textContent, topmost, pointerEvents,
+                        withinViewport: bounds.left >= 0 && bounds.right <= innerWidth && bounds.top >= 0 && bounds.bottom <= innerHeight,
+                        accessibleName: label.parentElement.getAttribute("aria-label"), hiddenFromAT: label.getAttribute("aria-hidden"),
+                        nativeTooltip: label.parentElement.hasAttribute("title") };
+                });
+                assert.deepEqual(actual, { text, topmost: true, pointerEvents: "none", withinViewport: true,
+                    accessibleName: text, hiddenFromAT: "true", nativeTooltip: false });
+                assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "backpack", "Hover must not switch tabs");
+                await labelIs(backpack, false);
+                await page.hover("#outside");
+                await labelIs(selector, false);
+            }
+            await page.click(backpack);
+            assert.equal(await page.$eval(panel, el => el.hidden), true);
+            await labelIs(backpack, true); // The tab may show its label once closed.
+            await page.click(more);
+            await optionsAre(true);
+            await labelIs(more, true); // Ellipsis still labels itself with options hidden.
+            for (const selector of [docs, whiteboard, backpack]) await labelIs(selector, false);
+        });
+    }
+
+    for (const width of [390, 1024, 1366]) {
+        it(`shows keyboard indicators without duplicating the open tab label at ${width}px`, async () => {
+            await openTool(backpack, width);
+            await page.click(more);
+            await optionsAre(true);
+            await page.hover("#outside");
+            await page.keyboard.press("ArrowDown");
+            await focusIs("project-tools-tab-backpack");
+            await labelIs(backpack, true);
+            await page.keyboard.press("Enter");
+            await labelIs(backpack, false);
+            assert.equal(await page.$eval(panel, el => el.hidden), false);
+            await page.keyboard.press("Escape");
+            await labelIs(backpack, true);
+            await page.keyboard.press("Escape");
+            await optionsAre(true);
+            await focusIs("project-tools-launcher");
+            await labelIs(more, true);
+            await labelIs(backpack, false);
+        });
+    }
+
+    it("keeps hover labels readable across editor themes and forced colors", async () => {
+        await openTool(backpack, 1366);
+        for (const theme of colorThemes()) {
+            await page.$eval("#root", (root, colors) => {
+                root.removeAttribute("style");
+                for (const [name, color] of Object.entries(colors)) root.style.setProperty(`--${name}`, color);
+            }, theme.colors);
+            for (const selector of [docs, more]) {
+                await page.hover(selector);
+                await labelIs(selector, true);
+                const [sample] = await contrastSamples(page, `${selector} .project-tools__bubble-label`);
+                assert.ok(sample.contrast >= 4.5, `${theme.id}: ${sample.label} contrast ${sample.contrast.toFixed(2)}`);
+            }
+        }
+        const session = await page.createCDPSession();
+        await session.send("Emulation.setEmulatedMedia", { features: [{ name: "forced-colors", value: "active" }] });
+        await page.hover(docs);
+        await labelIs(docs, true);
+        const [sample] = await contrastSamples(page, `${docs} .project-tools__bubble-label`);
+        assert.ok(sample.contrast >= 4.5);
+        await session.detach();
+    });
 
     for (const width of [390, 1024, 1366]) {
         it(`keeps the unpinned backpack open during modal focus and resumes dismissal afterward at ${width}px`, async () => {

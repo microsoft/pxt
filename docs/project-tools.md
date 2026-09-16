@@ -25,6 +25,9 @@ projects and when there is no image palette. Other targets can explicitly list
 ## Interaction
 
 - **Documentation**, **Whiteboard** and **Backpack** each have a bubble; the bubbles are the tabs.
+- Hover or keyboard-focus a closed tab to show its label above the panel. The
+  currently open tab has no hover label. **…** shows **Project tools** on hover or
+  keyboard focus whether the other bubbles are visible or hidden.
 - Default widths follow the target's legacy sidedocs variables and breakpoints,
   rather than a fixed 600px panel. On large desktops, the bubble strip counts
   toward that width budget to preserve coding space. In Arcade, the panel starts
@@ -124,9 +127,11 @@ hidden when none are needed. **Add to project** asks permission
 before installing missing extensions, checks conflicts, preserves current code
 before reloading, and inserts the snippet as one undo group. It does not silently
 replace existing extensions or upgrade an installed version of the same repository.
+The action appears as confirmation-style text at the bottom right of each snippet.
 
-Names are assigned automatically when saving. The optional **Rename** button opens
-a dialog with the current name selected, so a snippet such as **on start** can be
+Names are assigned automatically when saving. The optional **Rename** pencil icon
+at the top right, beside the trash icon, opens a dialog with the current name selected,
+so a snippet such as **on start** can be
 called **character setup**. **Save** changes only its Backpack name, not its blocks,
 preview or dependencies. Cancel or Escape keeps the original name. Names are limited
 to 100 characters; empty names are rejected. Guest renames stay in this browser,
@@ -138,7 +143,7 @@ If a required block is missing, **Project code is required** names the source fi
 and stops insertion. Copy the code into the destination or publish it as an
 extension before trying again.
 
-**Delete** opens a confirmation modal: it removes the entry from this browser when
+The **Delete** trash icon opens a confirmation modal: it removes the entry from this browser when
 signed out, or from the profile after server acknowledgement when signed in.
 Cancel or Escape closes the modal without deleting. Failures remain in the modal
 for retry; routine add/delete progress and success messages are not shown in the panel.

@@ -40,7 +40,8 @@
     width: var(--tools-bubble-size);
     inset-inline-end: 1rem;
     top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
-    z-index: @sidedocZIndex;
+    // Labels must paint over the panel, which follows the launcher in the DOM.
+    z-index: (@sidedocZIndex + 1);
 }
 
 .project-tools__bubbles {
@@ -87,9 +88,14 @@
         color: var(--tools-on-accent);
         border-radius: 1rem;
     }
-    &:hover .project-tools__bubble-label, &:focus-visible .project-tools__bubble-label {
-        visibility: visible;
-    }
+    &:hover, &:focus-visible { z-index: 2; }
+}
+
+.project-tools__more:hover .project-tools__bubble-label,
+.project-tools__more:focus-visible .project-tools__bubble-label,
+.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-selected="true"]):hover .project-tools__bubble-label,
+.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-selected="true"]):focus-visible .project-tools__bubble-label {
+    visibility: visible;
 }
 
 .project-tools__more {
@@ -450,7 +456,15 @@
             --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * (var(--tools-tab-count) - var(--tools-bubble-index)));
         }
     }
-    .project-tools__bubble-label { display: none; }
+    .project-tools__bubble-label {
+        top: calc(100% + .5rem);
+        inset-inline-start: 0;
+        inset-inline-end: auto;
+    }
+    .project-tools__more .project-tools__bubble-label {
+        inset-inline-start: auto;
+        inset-inline-end: 0;
+    }
     .project-tools__panel {
         --tools-pointer-offset: calc(var(--tools-bubble-size) * (var(--tools-tab-count) - var(--tools-tab-index) + .5) + var(--tools-bubble-gap) * (var(--tools-tab-count) - var(--tools-tab-index)));
         --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 4.75rem);

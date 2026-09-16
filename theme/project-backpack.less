@@ -58,6 +58,21 @@
     &:disabled { cursor: not-allowed; border-style: dashed; }
 }
 
+.project-backpack__icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border-color: transparent;
+    font-size: 1.125rem;
+
+    .icon { margin: 0; pointer-events: none; }
+    &:disabled { opacity: .5; }
+}
+
 .project-backpack__sign-in {
     display: block;
     width: fit-content;
@@ -75,7 +90,14 @@
     border: 1px solid var(--tools-border);
     border-radius: .5rem;
 }
-.project-backpack__name { margin-block: 0 .5rem; font-size: 1rem; }
+.project-backpack__item-header {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-block-end: .5rem;
+}
+.project-backpack__name { flex: 1; min-width: 0; margin: 0; font-size: 1rem; }
+.project-backpack__item-actions { display: flex; flex-shrink: 0; align-self: flex-start; }
 .project-backpack__preview {
     display: block;
     max-width: 100%;
@@ -84,7 +106,20 @@
     margin-block: .5rem;
 }
 .project-backpack__requirements ul { padding-inline-start: 1.25rem; }
-.project-backpack__actions { display: flex; flex-wrap: wrap; gap: .5rem; }
+.project-backpack__actions { display: flex; justify-content: flex-end; margin-block-start: .5rem; }
+.project-backpack__button.project-backpack__add {
+    border: none;
+    background: none;
+    color: var(--pxt-link, var(--tools-accent));
+    font-weight: 600;
+
+    &:hover:not(:disabled) {
+        background: none;
+        color: var(--pxt-link-hover, var(--pxt-link, var(--tools-accent)));
+        text-decoration: underline;
+    }
+    &:disabled { color: var(--tools-foreground); opacity: .5; }
+}
 .project-backpack__delete-modal .common-modal-body,
 .project-backpack__rename-modal .common-modal-body { overflow-wrap: anywhere; }
 .project-backpack__rename-form {

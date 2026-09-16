@@ -298,7 +298,7 @@ export function ProjectTools(props: ProjectToolsProps) {
         <div className="project-tools__launcher" ref={launcher}>
             <button id="project-tools-launcher" type="button" ref={moreButton}
                 className="project-tools__bubble project-tools__more" aria-label={lf("Project tools")}
-                title={lf("Project tools")} aria-expanded={optionsOpen} aria-controls="project-tools-options"
+                aria-expanded={optionsOpen} aria-controls="project-tools-options"
                 onClick={() => {
                     if (props.expanded || optionsOpen) {
                         dismissTools(true);
@@ -318,6 +318,7 @@ export function ProjectTools(props: ProjectToolsProps) {
                     <circle cx="12" cy="12" r="2" />
                     <circle cx="19" cy="12" r="2" />
                 </svg>
+                <span className="project-tools__bubble-label" aria-hidden="true">{lf("Project tools")}</span>
             </button>
             <div id="project-tools-options" className="project-tools__bubbles" role="tablist"
                 aria-hidden={!optionsOpen} aria-orientation={compact ? "horizontal" : "vertical"} aria-label={lf("Project tools")}>
@@ -327,7 +328,7 @@ export function ProjectTools(props: ProjectToolsProps) {
                     return <button key={name} id={`project-tools-tab-${name}`} type="button" role="tab"
                         className="project-tools__bubble" ref={element => tabButtons.current[index] = element}
                         style={{ "--tools-bubble-index": index } as React.CSSProperties}
-                        aria-label={label} title={label} aria-selected={selected && props.expanded}
+                        aria-label={label} aria-selected={selected && props.expanded}
                         aria-expanded={selected && props.expanded} aria-controls={`project-tools-${name}`}
                         tabIndex={optionsOpen && (compact ? focusedTab === index : selected) ? 0 : -1}
                         onFocus={() => setFocusedTab(index)} onClick={() => selectTab(name)}
@@ -344,7 +345,7 @@ export function ProjectTools(props: ProjectToolsProps) {
                         {name === "backpack" ? <svg className="project-backpack__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M9 5V3h6v2M6 7a4 4 0 0 1 4-3h4a4 4 0 0 1 4 3l2 12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L6 7ZM8 13h8v5H8ZM7 9h10" />
                         </svg> : <i className={`icon ${index ? "pencil" : "book"}`} aria-hidden="true" />}
-                        <span className="project-tools__bubble-label">{label}</span>
+                        <span className="project-tools__bubble-label" aria-hidden="true">{label}</span>
                     </button>;
                 })}
             </div>
