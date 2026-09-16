@@ -1,0 +1,2 @@
+/** Public adapter entry point; the dependency-free store also exports these for capture consumers. */
+export { BackpackLocalRecord, BackpackLocalStorage, backpackLocalNamespace, createBackpackLocalStorage } from "./backpack";

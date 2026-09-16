@@ -317,8 +317,20 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 const code = backpack.captureBackpackBlock(root).code;
                 const before = JSON.stringify(Blockly.serialization.blocks.save(existing));
                 destination.clearUndo();
-                const pasted = backpack.pasteBackpackBlock(code, destination);
-                await new Promise(resolve => setTimeout(resolve, 0));
+                let pasted;
+                // Browser Blockly dispatches create events after queued rendering,
+                // not necessarily on the next timeout. Wait for the actual root event.
+                const recorded = new Promise(resolve => {
+                    const listener = event => {
+                        if (event.type === Blockly.Events.CREATE && event.ids?.includes(pasted?.id)) {
+                            destination.removeChangeListener(listener);
+                            resolve();
+                        }
+                    };
+                    destination.addChangeListener(listener);
+                });
+                pasted = backpack.pasteBackpackBlock(code, destination);
+                await recorded;
                 const imported = destination.getTopBlocks(false).filter(block => block.type === "procedures_defnoreturn" && block !== existing);
                 const names = imported.map(block => block.getFieldValue("NAME"));
                 const bodies = imported.map(block => block.getInputTargetBlock("STACK").getProcedureCall());

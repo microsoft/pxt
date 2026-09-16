@@ -20,6 +20,7 @@ describe("project backpack UI", function () {
     let pageErrors;
     const root = path.resolve(__dirname, "../..");
     const source = file => ts.transpileModule(fs.readFileSync(path.join(root, file), "utf8"), {
+        fileName: file,
         compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2018, jsx: ts.JsxEmit.React }
     }).outputText;
     // Resolve the real control dependency graph, including directory barrels, in
@@ -219,17 +220,47 @@ describe("project backpack UI", function () {
                 mainPkg: { deps: {}, getPreferredEditor: () => test.editor }
             };
             const backpack = {
+                backpackEntryKey: entry => JSON.stringify([entry.source, entry.local?.namespace || "", entry.id]),
                 get MAX_BACKPACK_NAME_LENGTH() { return window.backpackValidation.MAX_BACKPACK_NAME_LENGTH; },
                 validateBackpackItem: value => window.backpackValidation.validateBackpackItem(value),
                 getBackpackState: () => ({
-                    entries: (test.snapshots[test.storeKey()] || []).map(item => window.backpackValidation.readBackpackEntry(
-                        item.id, item, test.user ? "cloud" : "local")).concat(test.recovery
+                    entries: (test.snapshots[test.storeKey()] || []).map(item => {
+                        const validated = window.backpackValidation.readBackpackEntry(item.id, item, test.user ? "cloud" : "local");
+                        if (!test.user || validated.error) return validated;
+                        const blockTypes = [];
+                        const words = [];
+                        const walk = value => {
+                            if (!value || typeof value !== "object") return;
+                            if (typeof value.type === "string") blockTypes.push(value.type);
+                            for (const [key, child] of Object.entries(value)) {
+                                if (["id", "functionid", "data", "jres", "bitmap", "pixels"].includes(key)) continue;
+                                if (typeof child === "object") walk(child);
+                                else if (typeof child === "string" || typeof child === "number") words.push(String(child));
+                            }
+                        };
+                        try { walk(JSON.parse(item.code)); } catch { /* Invalid source is covered separately. */ }
+                        return window.backpackValidation.readBackpackSummary({ id: item.id, name: item.name,
+                            createdAt: item.createdAt, updatedAt: item.createdAt, version: '"v1"', status: "ready",
+                            hasPreview: !!item.previewUri, previewPixelDensity: item.previewPixelDensity,
+                            blockTypes, blockText: [item.blockText, ...words].join(" "),
+                            dependencies: item.dependencies, projectBlocks: item.projectBlocks });
+                    }).concat(test.recovery
                         .filter(entry => !!test.user || entry.source === "local")
                         .map(entry => window.backpackValidation.readBackpackEntry(entry.id, entry.value, entry.source))),
                     warning: test.warning
                 }),
                 subscribeBackpack(listener) { listeners.add(listener); return () => listeners.delete(listener); },
+                notifyBackpackEditorChanged: () => test.notify(),
                 canImportBackpack: () => test.canImport,
+                async getBackpackPreviewAsync(entry, signal) {
+                    test.previewRequests = (test.previewRequests || 0) + 1;
+                    const item = (test.snapshots[test.storeKey()] || []).find(item => item.id === entry.id);
+                    const response = await fetch(item.previewUri, { signal });
+                    return response.blob();
+                },
+                async exportOldBackpackAsync() { test.legacyExports = (test.legacyExports || 0) + 1; return '{"old":true}'; },
+                async clearOldBackpackAsync() { test.legacyClears = (test.legacyClears || 0) + 1; },
+                async retryBackpackEntryAsync() { test.syncRetries = (test.syncRetries || 0) + 1; },
                 async refreshBackpackAsync() {
                     const user = test.storeKey();
                     const fail = test.failRefresh;
@@ -239,7 +270,8 @@ describe("project backpack UI", function () {
                     test.snapshots[user] = JSON.parse(JSON.stringify(test.remote[user] || []));
                     test.notify();
                 },
-                async importBackpackItemAsync(item, headerId) {
+                async importBackpackEntryAsync(entry, headerId) {
+                    const item = entry.item || (test.snapshots[test.storeKey()] || []).find(item => item.id === entry.id);
                     const fail = test.failAdd;
                     const result = test.importResult;
                     test.adds.push({ item, headerId });
@@ -277,6 +309,7 @@ describe("project backpack UI", function () {
             window.require = id => {
                 const modules = { react: React, "fuse.js": window.Fuse, "../auth": auth, "../data": data,
                     "../backpack": backpack, "../backpackSearch": window.backpackSearch, "../package": test.pkg };
+                modules["./BackpackPreview"] = window.backpackPreviewUI;
                 modules["../../../react-common/components/controls/Modal"] = window.backpackControls;
                 modules["../../../react-common/components/controls/Input"] = window.backpackControls;
                 if (!(id in modules)) throw new Error(`Unexpected import ${id}`);
@@ -292,6 +325,7 @@ describe("project backpack UI", function () {
         // Reuse the actual storage validator without exercising network/auth storage.
         await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpack.ts")}\n})(window.backpackValidation = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
         await page.evaluate(() => {
             function Harness() {
@@ -684,6 +718,7 @@ describe("project backpack UI", function () {
             };
         });
         await signIn([snippet]);
+        await page.waitForSelector("img");
         assert.strictEqual(await page.$("h3 b"), null);
         assert.strictEqual(await page.$eval("img", image => image.alt), "Blocks in <b>Jump</b>");
         const requirements = await page.$$eval(".project-backpack__requirements li", elements => elements.map(el => el.textContent));
@@ -722,6 +757,48 @@ describe("project backpack UI", function () {
             await page.evaluate(() => { document.getElementById("root").style.width = "180px"; });
             assert.equal(await page.$eval("img", image => image.getBoundingClientRect().width <= image.parentElement.clientWidth), true);
         }
+    });
+
+    it("fetches cloud previews only on intersection and revokes URLs on account changes", async () => {
+        await page.evaluate(() => {
+            window.IntersectionObserver = class {
+                constructor(callback) { backpackTest.intersect = callback; }
+                observe() {}
+                disconnect() {}
+            };
+            const create = URL.createObjectURL.bind(URL), revoke = URL.revokeObjectURL.bind(URL);
+            backpackTest.urls = []; backpackTest.revoked = [];
+            URL.createObjectURL = blob => { const url = create(blob); backpackTest.urls.push(url); return url; };
+            URL.revokeObjectURL = url => { backpackTest.revoked.push(url); revoke(url); };
+        });
+        await signIn([{ ...item(), previewPixelDensity: 2,
+            previewUri: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=" }]);
+        assert.equal(await page.evaluate(() => backpackTest.previewRequests || 0), 0);
+        await page.evaluate(() => backpackTest.intersect([{ isIntersecting: true }]));
+        await page.waitForSelector("img");
+        assert.deepStrictEqual(await page.$eval("img", image => ({ src: image.getAttribute("src"), density: image.srcset.split(" ").pop() })),
+            { src: null, density: "2x" });
+        await page.evaluate(() => backpackTest.account("B"));
+        await idle();
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.revoked), await page.evaluate(() => backpackTest.urls));
+        assert.strictEqual(await page.$("img"), null);
+    });
+
+    it("never reads or clears legacy preferences on open; cleanup requires its explicit dialog action", async () => {
+        await signIn([item()]);
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.legacyExports || 0, backpackTest.legacyClears || 0]), [0, 0]);
+        const legacy = 'button[aria-haspopup="dialog"]';
+        await page.evaluate(selector => Array.from(document.querySelectorAll(selector)).find(button => button.textContent === "Old Backpack data…").click(), legacy);
+        await page.waitForSelector(".common-modal-container");
+        assert.match(await page.$eval(".common-modal-container", element => element.textContent), /does not transfer.*permanently removes/s);
+        await page.keyboard.press("Escape");
+        assert.equal(await page.evaluate(() => backpackTest.legacyClears || 0), 0);
+        await page.evaluate(selector => Array.from(document.querySelectorAll(selector)).find(button => button.textContent === "Old Backpack data…").click(), legacy);
+        await page.evaluate(() => Array.from(document.querySelectorAll(".common-modal-footer button"))
+            .find(button => button.textContent === "Clear old Backpack data").click());
+        await idle();
+        assert.equal(await page.evaluate(() => backpackTest.legacyClears), 1);
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
     });
 
     it("hides the extension section when every requirement is installed without stripping import metadata", async () => {
