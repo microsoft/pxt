@@ -126,14 +126,14 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                     IMAGE: pxt.getTSReferenceForAsset(assets.image), TILEMAP: pxt.getTSReferenceForAsset(assets.tilemap)
                 } }, workspace);
                 await settle();
-                const code = backpack.serializeBackpackBlock(block);
+                const { code, blockText } = backpack.captureBackpackBlock(block);
                 const expected = { image: snapshot(block.getField("IMAGE").getAsset()), tilemap: snapshot(block.getField("TILEMAP").getAsset()) };
                 // Dispose against the SOURCE asset project, then replace the whole global
                 // project, not just the workspace. Retaining the source would hide data loss.
                 workspace.clear();
                 await settle();
                 window.project = new pxt.TilemapProject();
-                return { code, expected, ids: { image: assets.image.id, tilemap: assets.tilemap.id, tile: assets.tile.id } };
+                return { code, blockText, expected, ids: { image: assets.image.id, tilemap: assets.tilemap.id, tile: assets.tile.id } };
             };
             window.inspectPasted = async code => {
                 const block = backpack.pasteBackpackBlock(code, workspace);
@@ -196,6 +196,8 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
             return { source, empty, pasted, errors };
         });
         assert(result.empty);
+        assert(result.source.blockText.includes("backpackImage"));
+        assert(result.source.blockText.includes("backpackLevel"));
         const fields = JSON.parse(result.source.code).blocks[0].fields;
         for (const name of ["IMAGE", "TILEMAP"]) {
             assert.equal(fields[name].version, 1);
@@ -278,7 +280,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
             delete state.blocks[0].data;
             const block = backpack.pasteBackpackBlock(JSON.stringify(state), workspace);
             await settle();
-            const code = backpack.serializeBackpackBlock(block);
+            const code = backpack.captureBackpackBlock(block).code;
             const expected = snapshot(block.getField("IMAGE").getAsset());
             const temporary = block.getField("IMAGE").isTemporaryAsset();
             workspace.clear();
@@ -312,7 +314,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 destination.getVariableMap().createVariable(name + "2");
                 await new Promise(resolve => setTimeout(resolve, 0));
                 const state = Blockly.serialization.blocks.save(call, { doFullSerialization: true, saveIds: false });
-                const code = backpack.serializeBackpackBlock(root);
+                const code = backpack.captureBackpackBlock(root).code;
                 const before = JSON.stringify(Blockly.serialization.blocks.save(existing));
                 destination.clearUndo();
                 const pasted = backpack.pasteBackpackBlock(code, destination);
@@ -322,10 +324,10 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 const bodies = imported.map(block => block.getInputTargetBlock("STACK").getProcedureCall());
                 const pastedState = Blockly.serialization.blocks.save(pasted.getInputTargetBlock("DO"));
                 const pastedName = pasted.getInputTargetBlock("DO").getProcedureCall();
-                const reserialized = backpack.serializeBackpackBlock(pasted);
-                const definitionCode = backpack.serializeBackpackBlock(definition);
+                const reserialized = backpack.captureBackpackBlock(pasted).code;
+                const definitionCode = backpack.captureBackpackBlock(definition).code;
                 const after = JSON.stringify(Blockly.serialization.blocks.save(existing));
-                const sourceUnchanged = backpack.serializeBackpackBlock(root) === code;
+                const sourceUnchanged = backpack.captureBackpackBlock(root).code === code;
                 const count = destination.getAllBlocks(false).length;
                 destination.undo(false);
                 await new Promise(resolve => setTimeout(resolve, 0));
@@ -369,7 +371,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 const root = ws.newBlock("controls_repeat_ext");
                 root.getInput("DO").connection.connect(callProcedure(ws, "procedure").previousConnection);
                 await new Promise(resolve => setTimeout(resolve, 0));
-                const code = backpack.serializeBackpackBlock(root);
+                const code = backpack.captureBackpackBlock(root).code;
                 const mutations = [null, { name: "procedure" }, "<mutation", '<block name="procedure"/>',
                     "<mutation/>", '<mutation name="prototype"/>', '<mutation name="different"/>',
                     '<mutation name="procedure"><arg name="unsupported"/></mutation>'];

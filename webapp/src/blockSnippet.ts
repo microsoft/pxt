@@ -126,7 +126,7 @@ function validateRequirements(value: unknown): BlockSnippetRequirements {
     }
     try {
         const saved = validateBackpackItem({
-            id: "00000000-0000-4000-8000-000000000000", name: "Snippet", code: "", createdAt: 0,
+            id: "00000000-0000-4000-8000-000000000000", name: "Snippet", code: "", blockText: "", createdAt: 0,
             dependencies: portable, projectBlocks: value.projectBlocks
         });
         for (const name of Object.keys(local)) saved.dependencies[name] = local[name];

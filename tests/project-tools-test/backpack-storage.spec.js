@@ -14,7 +14,8 @@ const compiled = ts.transpileModule(source, {
 assert.deepStrictEqual(compiled.diagnostics, []);
 const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
 const id = n => `00000000-0000-4000-8000-${String(n).padStart(12, "0")}`;
-const item = (n, extra = {}) => ({ id: id(n), name: `Snippet ${n}`, code: "PRIVATE_CODE", dependencies: { core: "*" }, createdAt: n, ...extra });
+const item = (n, extra = {}) => ({ id: id(n), name: `Snippet ${n}`, code: "PRIVATE_CODE",
+    blockText: `PRIVATE_BLOCK_TEXT ${n}`, dependencies: { core: "*" }, createdAt: n, ...extra });
 function deferred() {
     let resolve;
     const promise = new Promise(done => { resolve = done; });
@@ -52,6 +53,7 @@ function simulatedStorage(data = new Map()) {
 // Prefer the real built jsonPatch, falling back to the real source utility.
 function environment(remote = new Map([["alice", {}], ["bob", {}]]), local = simulatedStorage()) {
     const requests = [];
+    const telemetry = [];
     const context = vm.createContext({ console: { log() { throw new Error("Unexpected log"); } },
         setTimeout, clearTimeout, Uint8Array, Uint16Array, Uint32Array, ArrayBuffer, DataView,
         TextDecoder, TextEncoder, atob: s => Buffer.from(s, "base64").toString("binary"),
@@ -107,13 +109,16 @@ function environment(remote = new Map([["alice", {}], ["bob", {}]]), local = sim
         getAuthTokenAsync: async () => { authCalls.push("token"); return token; },
         getUserStateAsync: async () => { authCalls.push("state"); return { profile: user ? { id: user } : undefined }; }
     };
-    pxt.log = pxt.debug = pxt.tickEvent = pxt.reportException = () => { throw new Error("Unexpected telemetry"); };
+    pxt.log = pxt.debug = pxt.tickEvent = pxt.reportException = (...args) => {
+        telemetry.push(args);
+        throw new Error("Unexpected telemetry");
+    };
     context.lf = (text, ...args) => text.replace(/\{(\d+)\}/g, (_, n) => args[n]);
     const exports = {};
     vm.runInContext(`(function(exports, require) { ${compiled.outputText}\n})`, context)(exports, () => {
         throw new Error("Backpack must not import project, UI, or Blockly modules");
     });
-    return { store: exports, remote, requests, pxt, local, authCalls,
+    return { store: exports, remote, requests, telemetry, pxt, local, authCalls,
         hook: fn => { hook = fn; },
         signIn(next, nextToken = next ? `${next}-session` : undefined) {
             user = next; token = nextToken;
@@ -132,6 +137,84 @@ function guestEnvironment(local = simulatedStorage(), remote) {
 const storageWrites = local => local.calls.filter(call => ["setItem", "removeItem", "clear"].includes(call.method));
 const patches = env => env.requests.filter(request => request.method === "PATCH");
 const storageFailure = () => { throw new Error("sensitive storage details"); };
+
+describe("required private Backpack block text", () => {
+    for (const cloud of [false, true]) {
+        const mode = cloud ? "cloud" : "guest";
+        it(`${mode} rejects missing, nonstring and oversized text before auth, storage, network or import`, async () => {
+            const env = cloud ? environment() : guestEnvironment();
+            let imports = 0;
+            const cleanup = env.store.setBackpackEditor({ headerId: () => "header", canImport: () => true,
+                importAsync: async () => { imports++; return true; } });
+            try {
+                const missing = item(1);
+                delete missing.blockText;
+                const invalid = [missing, ...[undefined, null, 7, false, [], {},
+                    "x".repeat(env.store.MAX_BACKPACK_CODE_LENGTH + 1)].map(blockText => item(1, { blockText }))];
+                for (const entry of invalid) {
+                    await assert.rejects(env.store.saveBackpackItemAsync(entry), /Backpack block text/);
+                    await assert.rejects(env.store.importBackpackItemAsync(entry, "header"), /Backpack block text/);
+                }
+                assert.equal(imports, 0);
+                assert.deepStrictEqual([env.authCalls, env.local.calls, env.requests, env.telemetry], [[], [], [], []]);
+            } finally { cleanup(); }
+        });
+
+        it(`${mode} preserves empty and maximum-length text on reopen with only the intended private persistence`, async () => {
+            const env = cloud ? environment() : guestEnvironment();
+            const entries = [item(1, { blockText: "" }), item(2, {
+                blockText: "PRIVATE_BLOCK_TEXT ".padEnd(env.store.MAX_BACKPACK_CODE_LENGTH, "x")
+            })];
+            for (const entry of entries) await env.store.saveBackpackItemAsync(entry);
+            const reopened = cloud ? environment(env.remote) : guestEnvironment(env.local);
+            await reopened.store.refreshBackpackAsync();
+            assert.deepStrictEqual(clone(reopened.store.getBackpackItems()), entries.slice().reverse());
+            assert.deepStrictEqual([env.telemetry, reopened.telemetry], [[], []]);
+            if (cloud) {
+                assert.deepStrictEqual(storageWrites(env.local), []);
+                assert.deepStrictEqual(patches(env).map(request => request.data[2].value), entries);
+                assert.ok([...env.requests, ...reopened.requests].every(request =>
+                    request.url === "/api/user/preferences" && request.owner === "alice"
+                    && (request.method === "PATCH" || request.data === undefined)));
+            } else {
+                assert.deepStrictEqual([env.requests, reopened.requests, env.authCalls, reopened.authCalls], [[], [], [], []]);
+            }
+        });
+
+        for (const blockText of [undefined, "", "PRIVATE_CHANGED_LABELS"]) {
+            it(`${mode} refuses a save acknowledgement with ${blockText === undefined ? "missing" : JSON.stringify(blockText)} text and permits retry`, async () => {
+                const env = cloud ? environment() : guestEnvironment();
+                await env.store.saveBackpackItemAsync(item(1));
+                const updated = item(1, { blockText: "PRIVATE_UPDATED_LABELS" });
+                let notifications = 0;
+                const off = env.store.subscribeBackpack(() => { notifications++; });
+                if (cloud) env.hook(({ method, run }) => {
+                    const result = run();
+                    if (method === "PATCH") result.resp.backpack.arcade[id(1)].blockText = blockText;
+                    return result;
+                });
+                else env.local.hooks.setItem = ({ args, run }) => {
+                    run();
+                    env.local.data.set(args[0], JSON.stringify({ ...JSON.parse(args[1]), blockText }));
+                };
+                try {
+                    await assert.rejects(env.store.saveBackpackItemAsync(updated), error =>
+                        /another device|Backpack block text|Could not save your local backpack/.test(error.message)
+                        && !/PRIVATE_/.test(error.message));
+                    assert.equal(notifications, 0);
+                    assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(1)]);
+                    env.hook(undefined);
+                    delete env.local.hooks.setItem;
+                    await env.store.saveBackpackItemAsync(updated);
+                    assert.equal(notifications, 1);
+                    assert.deepStrictEqual(clone(env.store.getBackpackItems()), [updated]);
+                    assert.deepStrictEqual(env.telemetry, []);
+                    if (!cloud) assert.deepStrictEqual(env.requests, []);
+                } finally { off(); }
+            });
+        }
+    }
+});
 
 describe("name-only backpack renames", () => {
     for (const cloud of [false, true]) describe(cloud ? "cloud" : "guest", () => {
@@ -156,11 +239,15 @@ describe("name-only backpack renames", () => {
         it("trims and persists only the name, preserving fresh same-item edits, metadata, order and neighbors on reopen", async () => {
             const env = fixture();
             await env.store.refreshBackpackAsync();
-            const fresh = { ...metadataItem(2), code: "fresh blocks", dependencies: { core: "*", ext: "pub:new" },
+            const fresh = { ...metadataItem(2), code: "fresh blocks", blockText: "fresh displayed labels", dependencies: { core: "*", ext: "pub:new" },
                 projectBlocks: { custom_block: "fresh.ts" }, createdAt: 2.5 };
             env.put(2, fresh);
             if (cloud) env.hook(({ method, run }) => {
-                if (method === "PATCH") { fresh.code = "edited between GET and PATCH"; env.put(2, fresh); }
+                if (method === "PATCH") {
+                    fresh.code = "edited between GET and PATCH";
+                    fresh.blockText = "labels edited between GET and PATCH";
+                    env.put(2, fresh);
+                }
                 return run();
             });
             await env.store.renameBackpackItemAsync(id(2), "  Renamed  ");
@@ -332,6 +419,7 @@ describe("durable guest backpack storage", () => {
         const entry = metadataItem(1), expected = clone(entry);
         const saving = env.store.saveBackpackItemAsync(entry);
         entry.code = "changed";
+        entry.blockText = "changed after invocation";
         entry.dependencies.ext = "pub:changed";
         entry.projectBlocks.custom_block = "changed.ts";
         await saving;
@@ -339,6 +427,7 @@ describe("durable guest backpack storage", () => {
         assert.deepStrictEqual(JSON.parse(env.local.data.get(guestKey(1))), expected);
         const snapshot = env.store.getBackpackItems();
         assert.deepStrictEqual(clone(snapshot), [item(2), expected]);
+        snapshot[1].blockText = "changed snapshot";
         snapshot[1].dependencies.core = "file:bad";
         snapshot[1].projectBlocks.custom_block = "bad.ts";
         snapshot.pop();
@@ -347,6 +436,7 @@ describe("durable guest backpack storage", () => {
             importAsync: async imported => {
                 imports++;
                 assert.deepStrictEqual(clone(imported), expected);
+                imported.blockText = "changed by editor";
                 imported.dependencies.core = "file:bad";
                 imported.projectBlocks.custom_block = "edited.ts";
                 return true;
@@ -355,6 +445,7 @@ describe("durable guest backpack storage", () => {
             assert.equal(env.store.canImportBackpack("header"), true);
             const input = clone(expected);
             const importing = env.store.importBackpackItemAsync(input, "header");
+            input.blockText = "mutated during await";
             input.projectBlocks.custom_block = "mutated during await.ts";
             assert.equal(await importing, true);
             assert.equal(imports, 1);
@@ -461,6 +552,7 @@ describe("durable guest backpack storage", () => {
     });
 
     for (const corrupt of ["{not JSON", "null", "[]", JSON.stringify(item(2)),
+        JSON.stringify(item(1, { blockText: undefined })),
         JSON.stringify(item(1, { projectBlocks: { custom_block: 7 } })),
         JSON.stringify(item(1, { dependencies: { core: "workspace:private" } }))]) {
         it(`preserves corrupt local data (${corrupt.slice(0, 45)}) and permits recovery by key ID`, async () => {
@@ -533,6 +625,7 @@ describe("durable guest backpack storage", () => {
         const before = Array.from(env.local.data);
         env.local.calls.length = 0;
         await assert.rejects(env.store.saveBackpackItemAsync({ ...entries[4], code: entries[4].code + "x" }), /500000/);
+        await assert.rejects(env.store.saveBackpackItemAsync({ ...entries[4], blockText: entries[4].blockText + "x" }), /500000/);
         await assert.rejects(env.store.saveBackpackItemAsync({ ...entries[4], projectBlocks: { ...entries[4].projectBlocks, extra: "source.ts" } }), /500000/);
         assert.deepStrictEqual(storageWrites(env.local), []);
         assert.deepStrictEqual(Array.from(env.local.data), before);
@@ -640,7 +733,15 @@ describe("guest to cloud backpack promotion", () => {
             assert.deepStrictEqual(promotion.slice(0, 2).map(op => op.path), [["backpack"], ["backpack", "arcade"]]);
             assert.deepStrictEqual(promotion.slice(2).map(op => op.path).sort(),
                 [["backpack", "arcade", id(1)], ["backpack", "arcade", id(2)]]);
+            assert.deepStrictEqual(promotion.slice(2).map(op => op.value.blockText).sort(),
+                [metadataItem(1).blockText, item(2).blockText].sort());
             assert.equal(patches(env).length, operation === "refresh" ? 1 : 2);
+            assert.deepStrictEqual(env.telemetry, []);
+            const reopened = environment(env.remote, env.local);
+            await reopened.store.refreshBackpackAsync();
+            assert.deepStrictEqual(clone(reopened.store.getBackpackItems()), Object.values(expected).reverse());
+            assert.deepStrictEqual(patches(reopened), []);
+            assert.deepStrictEqual(reopened.telemetry, []);
         });
     }
 
@@ -689,13 +790,13 @@ describe("guest to cloud backpack promotion", () => {
         assert.deepStrictEqual(clone(env.store.getBackpackItems()), [metadataItem(1)]);
     });
 
-    for (const field of ["code", "dependencies", "projectBlocks", "previewUri", "createdAt"]) {
+    for (const field of ["code", "blockText", "dependencies", "projectBlocks", "previewUri", "createdAt"]) {
         it(`refuses differing ID collision (${field}) before any promotion writes`, async () => {
             const env = guestEnvironment();
             await env.store.saveBackpackItemAsync(item(2));
             await env.store.saveBackpackItemAsync(metadataItem(1));
             const differing = { ...metadataItem(1), [field]: {
-                code: "different", dependencies: { core: "*" }, projectBlocks: { custom_block: "different.ts" },
+                code: "different", blockText: "different labels", dependencies: { core: "*" }, projectBlocks: { custom_block: "different.ts" },
                 previewUri: undefined, createdAt: 42
             }[field] };
             env.remote.set("alice", { backpack: { arcade: { [id(1)]: differing } } });
@@ -759,7 +860,7 @@ describe("guest to cloud backpack promotion", () => {
         assert.deepStrictEqual(env.remote.get("alice"), original);
     });
 
-    for (const response of ["missing", "code", "metadata", "race collision"]) {
+    for (const response of ["missing", "code", "blockText", "missing blockText", "metadata", "race collision"]) {
         it(`keeps all local copies when promotion acknowledgement has ${response}`, async () => {
             const env = guestEnvironment();
             await env.store.saveBackpackItemAsync(metadataItem(1));
@@ -774,12 +875,14 @@ describe("guest to cloud backpack promotion", () => {
                 const result = run();
                 if (response === "missing") delete result.resp.backpack.arcade[id(1)];
                 if (response === "code") result.resp.backpack.arcade[id(1)].code = "not identical";
+                if (response === "blockText") result.resp.backpack.arcade[id(1)].blockText = "not identical";
+                if (response === "missing blockText") delete result.resp.backpack.arcade[id(1)].blockText;
                 if (response === "metadata") delete result.resp.backpack.arcade[id(1)].projectBlocks;
                 return result;
             });
             let notifications = 0;
             env.store.subscribeBackpack(() => { notifications++; });
-            await assert.rejects(env.store.refreshBackpackAsync(), /Invalid backpack item|could not be synced/);
+            await assert.rejects(env.store.refreshBackpackAsync(), /Invalid backpack item|could not be synced|Backpack block text/);
             assert.deepStrictEqual(Array.from(env.local.data), before);
             assert.equal(notifications, 0);
             assert.deepStrictEqual(clone(env.store.getBackpackItems()), []);
@@ -814,6 +917,31 @@ describe("guest to cloud backpack promotion", () => {
         await assert.rejects(env.store.refreshBackpackAsync(), /conflicts/);
         assert.equal(patches(env).length, 1);
         assert.equal(env.local.data.has(guestKey(3)), true);
+    });
+
+    it("retains text-only guest edits during promotion and detects the resulting cloud conflict", async () => {
+        const env = guestEnvironment();
+        const tab = guestEnvironment(env.local);
+        await env.store.saveBackpackItemAsync(metadataItem(1));
+        env.signIn("alice");
+        const entered = deferred(), release = deferred();
+        env.hook(async ({ method, run }) => {
+            if (method === "PATCH") { entered.resolve(); await release.promise; }
+            return run();
+        });
+        const uploading = env.store.refreshBackpackAsync();
+        await entered.promise;
+        const edited = { ...metadataItem(1), blockText: "PRIVATE_NEW_LOCAL_LABELS" };
+        try { await tab.store.saveBackpackItemAsync(edited); }
+        finally { release.resolve(); }
+        await uploading;
+        assert.deepStrictEqual(env.remote.get("alice").backpack.arcade[id(1)], metadataItem(1));
+        assert.deepStrictEqual(JSON.parse(env.local.data.get(guestKey(1))), edited);
+        env.hook(undefined);
+        await assert.rejects(env.store.refreshBackpackAsync(), /conflicts/);
+        assert.equal(patches(env).length, 1);
+        assert.deepStrictEqual(JSON.parse(env.local.data.get(guestKey(1))), edited);
+        assert.deepStrictEqual([env.telemetry, tab.telemetry, tab.requests], [[], [], []]);
     });
 
     for (const failure of ["throw", "noop", "read"]) {
@@ -967,10 +1095,12 @@ describe("private profile backpack storage", () => {
         const entry = item(1);
         const saving = env.store.saveBackpackItemAsync(entry);
         entry.code = "changed outside store";
+        entry.blockText = "changed outside store";
         await Promise.all([saving, env.store.saveBackpackItemAsync(item(2)), env.store.deleteBackpackItemAsync(id(1)),
             env.store.saveBackpackItemAsync(item(2, { name: "updated" }))]);
         assert.deepStrictEqual(env.requests.map(r => r.method), ["GET", "PATCH", "GET", "PATCH", "GET", "PATCH", "GET", "PATCH"]);
         assert.equal(env.requests[1].data[2].value.code, "PRIVATE_CODE");
+        assert.equal(env.requests[1].data[2].value.blockText, item(1).blockText);
         assert.deepStrictEqual(clone(env.store.getBackpackItems()), [item(2, { name: "updated" })]);
     });
 
@@ -1130,7 +1260,7 @@ describe("private profile backpack storage", () => {
         assert.equal(env.store.getBackpackItems().length, 0);
     });
 
-    it("checks names, IDs, code, timestamps, dependencies, and previews", () => {
+    it("checks names, IDs, code, required block text, timestamps, dependencies, and previews", () => {
         const { store } = environment();
         const invalid = [null, [], item(1, { id: "constructor" }), item(1, { id: "../x" }), item(1, { name: " " }),
             item(1, { name: "x".repeat(101) }), item(1, { name: "bad\nname" }), item(1, { code: 7 }),
@@ -1144,10 +1274,19 @@ describe("private profile backpack storage", () => {
             invalid.push(item(1, { dependencies: { unknown: version } }));
         }
         for (const value of invalid) assert.throws(() => store.validateBackpackItem(value));
+        for (const blockText of [undefined, null, 7, false, [], {}, "x".repeat(store.MAX_BACKPACK_CODE_LENGTH + 1)]) {
+            assert.throws(() => store.validateBackpackItem(item(1, { blockText })), /Backpack block text/);
+        }
+        const missing = item(1);
+        delete missing.blockText;
+        assert.throws(() => store.validateBackpackItem(missing), /Backpack block text/);
         const valid = item(1, { code: "", dependencies: { core: "*", ext: "github:owner/repo/sub#v1.2.3", shared: "pub:_safe-id" } });
         valid.previewUri = "data:image/png;base64,iVBORw0KGgo=";
         assert.deepStrictEqual(clone(store.validateBackpackItem(valid)), valid);
         assert.equal(store.validateBackpackItem(item(1, { code: "x".repeat(100000) })).code.length, 100000);
+        for (const blockText of ["", "  Exact\n displayed labels  ", "x".repeat(store.MAX_BACKPACK_CODE_LENGTH)]) {
+            assert.strictEqual(store.validateBackpackItem(item(1, { blockText })).blockText, blockText);
+        }
     });
 
     it("accepts optional projectBlocks, bounded plain/null-prototype maps, and detached metadata", () => {
@@ -1271,8 +1410,9 @@ describe("private profile backpack storage", () => {
 
     it("sanitizes thrown transport errors and continues the queue", async () => {
         const env = environment();
-        env.hook(() => { throw new Error("sensitive request contents"); });
-        await assert.rejects(env.store.saveBackpackItemAsync(item(1)), error => !error.message.includes("sensitive") && /sync/.test(error.message));
+        env.hook(() => { throw new Error(`sensitive request contents ${item(1).blockText}`); });
+        await assert.rejects(env.store.saveBackpackItemAsync(item(1)), error =>
+            !/sensitive|PRIVATE_BLOCK_TEXT/.test(error.message) && /sync/.test(error.message));
         env.hook(undefined); await env.store.saveBackpackItemAsync(item(1));
         assert.equal(env.store.getBackpackItems().length, 1);
     });

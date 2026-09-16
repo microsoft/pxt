@@ -168,7 +168,7 @@ function environment() {
     const pxtblockly = {
         builtinBlocks: () => builtins,
         external: { setPrompt() {}, setCopyPaste: (...args) => { registration = args; } },
-        serializeBackpackBlock: forbidden, parseBackpackCode: forbidden, getBackpackBlockTypes: forbidden,
+        captureBackpackBlock: forbidden, parseBackpackCode: forbidden, getBackpackBlockTypes: forbidden,
         pasteBackpackBlock: forbidden, isBackpackBlock: forbidden
     };
     const core = { confirmAsync: async options => {
@@ -778,7 +778,7 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                         mainEditorPkg: () => ({ header, files: { "pxt.json": { content: '{"dependencies":{}}' } } })
                     };
                     const core = { confirmAsync: async options => { dialogs.push(options); return 1; } };
-                    const pxtblockly = { builtinBlocks: () => ({}), serializeBackpackBlock: fail, pasteBackpackBlock: fail };
+                    const pxtblockly = { builtinBlocks: () => ({}), captureBackpackBlock: fail, pasteBackpackBlock: fail };
                     const globals = {
                         pxt, pkg, core, Blockly: B, pxtblockly, lf: text => text,
                         auth: { loggedIn: () => false, userProfile: () => undefined },

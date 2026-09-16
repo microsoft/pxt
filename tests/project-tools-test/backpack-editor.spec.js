@@ -48,8 +48,11 @@ function environment(user) {
     const state = { user, readOnly: false, blocksActive: true, tab: true, guidCount: 0 };
     const block = { id: "source-block", data: { text: "unchanged" } };
     const code = '{"blocks":[{"type":"controls_repeat_ext"}]}';
+    const blockText = "repeat four times PRIVATE_BODY_TEXT Displayed choice backpackImage";
     const requirements = { dependencies: { extension: "github:owner/extension#v1.0.0" }, projectBlocks: {} };
     const previewUri = "data:image/png;base64,preview";
+    const importedItem = { id: "00000000-0000-4000-8000-000000000001", name: "Imported snippet",
+        code, blockText, ...requirements, createdAt: 1 };
     const mainPkg = {};
     const step = (name, fallback) => {
         events.push(name);
@@ -71,7 +74,7 @@ function environment(user) {
         auth: { loggedIn: () => !!state.user, userProfile: () => state.user ? { id: state.user } : undefined },
         pkg: { mainPkg },
         pxtblockly: {
-            serializeBackpackBlock: actual => { assert.strictEqual(actual, block); return step("serialize", code); },
+            captureBackpackBlock: actual => { assert.strictEqual(actual, block); return step("capture", { code, blockText }); },
             getBlockText: actual => { assert.strictEqual(actual, block); return "  repeat\n  four times  "; }
         },
         getBackpackRequirements: (actual, info, pkg) => {
@@ -85,7 +88,11 @@ function environment(user) {
             return step("preview", previewUri);
         },
         backpack: {
-            validateBackpackItem: item => { assert.strictEqual(item.code, code); step("validate"); },
+            validateBackpackItem: item => {
+                assert.strictEqual(item.code, code);
+                assert.strictEqual(item.blockText, blockText);
+                step("validate");
+            },
             saveBackpackItemAsync: async item => {
                 saves.push({ item, user: state.user });
                 return step("store");
@@ -115,7 +122,7 @@ function environment(user) {
         }
     });
     return {
-        editor, state, pxt, block, code, requirements, previewUri, events, hooks, saves,
+        editor, state, pxt, block, code, blockText, importedItem, requirements, previewUri, events, hooks, saves,
         dialogs, notifications, opens, imports, logins,
         save: () => editor.saveBlockToBackpackAsync(block),
         import: item => editor.importFromBackpackAsync(item),
@@ -137,7 +144,7 @@ describe("backpack editor integration (fresh source)", () => {
             const gate = e.hold("store");
             const pending = e.save();
             await gate.entered;
-            assert.deepStrictEqual(e.events, ["serialize", "requirements", "preview", "validate", "store"]);
+            assert.deepStrictEqual(e.events, ["capture", "requirements", "preview", "validate", "store"]);
             assert.deepStrictEqual(e.logins, []);
             assert.deepStrictEqual(e.dialogs, []);
             assert.deepStrictEqual(e.notifications, []);
@@ -145,7 +152,7 @@ describe("backpack editor integration (fresh source)", () => {
             assert.strictEqual(e.saves[0].user, user);
             const item = e.saves[0].item;
             assert.deepStrictEqual(clone(item), {
-                id: "snippet-1", name: "repeat four times", code: e.code,
+                id: "snippet-1", name: "repeat four times", code: e.code, blockText: e.blockText,
                 ...e.requirements, createdAt: item.createdAt, previewUri: e.previewUri
             });
             assert(Number.isFinite(item.createdAt));
@@ -162,12 +169,17 @@ describe("backpack editor integration (fresh source)", () => {
             e.hooks.store = () => {
                 if (e.saves.length === 1) throw new Error("Durable save failed");
             };
-            e.hooks.confirm = () => 1;
+            e.hooks.confirm = () => {
+                e.block.data.text = "edited while retrying";
+                e.hooks.capture = () => { throw new Error("Must reuse the original capture"); };
+                return 1;
+            };
             await e.save();
             assert.strictEqual(e.saves.length, 2);
             assert.strictEqual(e.saves[0].item, e.saves[1].item);
+            assert.strictEqual(e.saves[1].item.blockText, e.blockText);
             assert.strictEqual(e.state.guidCount, 1);
-            assert.deepStrictEqual(e.events, ["serialize", "requirements", "preview", "validate", "store", "confirm", "store", "notify", "open"]);
+            assert.deepStrictEqual(e.events, ["capture", "requirements", "preview", "validate", "store", "confirm", "store", "notify", "open"]);
             assert.strictEqual(e.dialogs[0].header, "Backpack was not saved");
             assert.strictEqual(e.dialogs[0].body, "Durable save failed");
             assert.strictEqual(e.dialogs[0].agreeLbl, "Retry");
@@ -223,7 +235,11 @@ describe("backpack editor integration (fresh source)", () => {
                     else gate.resolve(e.previewUri);
                     await pending;
                     assert.strictEqual(e.saves.length, stage === "store" ? 1 : 0);
-                    for (const save of e.saves) assert.strictEqual(save.user, before);
+                    for (const save of e.saves) {
+                        assert.strictEqual(save.user, before);
+                        assert.strictEqual(save.item.blockText, e.blockText);
+                    }
+                    assert.strictEqual(e.events.filter(event => event === "capture").length, 1);
                     assert.deepStrictEqual(e.dialogs, []);
                     assert.deepStrictEqual(e.notifications, []);
                     assert.deepStrictEqual(e.opens, []);
@@ -243,13 +259,15 @@ describe("backpack editor integration (fresh source)", () => {
             await pending;
             assert.strictEqual(e.saves.length, 1);
             assert.strictEqual(e.dialogs.length, 1);
+            assert.strictEqual(e.saves[0].item.blockText, e.blockText);
+            assert.strictEqual(e.events.filter(event => event === "capture").length, 1);
             assert.deepStrictEqual(e.notifications, []);
             assert.deepStrictEqual(e.opens, []);
         });
 
         it(`captured import host invalidates on ${label}`, async () => {
             const e = environment(before);
-            await e.import({ id: "imported" });
+            await e.import(e.importedItem);
             const host = e.imports[0].host;
             assert.strictEqual(host.isCurrent(), true);
             e.state.user = after;
@@ -282,10 +300,11 @@ describe("backpack editor integration (fresh source)", () => {
     for (const user of [undefined, "account-A"]) {
         it(`${user ? "cloud" : "guest"} import delegates its item/result and captures a live project host`, async () => {
             const e = environment(user);
-            const item = { id: "imported" };
+            const item = e.importedItem;
             e.hooks.import = () => false;
             assert.strictEqual(await e.import(item), false);
             assert.strictEqual(e.imports[0].item, item);
+            assert.strictEqual(e.imports[0].item.blockText, e.blockText);
             const host = e.imports[0].host;
             assert.strictEqual(host.headerId, "source-project");
             assert.strictEqual(host.isCurrent(), true);
@@ -314,7 +333,7 @@ describe("backpack editor integration (fresh source)", () => {
 
     it("host saves and awaits header reload, DOM update, and pending XML load in order", async () => {
         const e = environment();
-        assert.strictEqual(await e.import({ id: "imported" }), true);
+        assert.strictEqual(await e.import(e.importedItem), true);
         const host = e.imports[0].host;
         await host.saveAsync();
         const reload = e.hold("reload");

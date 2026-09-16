@@ -1,7 +1,9 @@
 import * as React from "react";
+import { Input } from "../../../react-common/components/controls/Input";
 import { Modal } from "../../../react-common/components/controls/Modal";
 import * as auth from "../auth";
 import * as backpack from "../backpack";
+import { createBackpackSearch } from "../backpackSearch";
 import * as data from "../data";
 import * as pkg from "../package";
 
@@ -33,6 +35,7 @@ export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
 
 function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JSX.Element {
     const [items, setItems] = React.useState<pxt.auth.BackpackItem[]>([]);
+    const [query, setQuery] = React.useState("");
     const [ready, setReady] = React.useState(false);
     const [pending, setPending] = React.useState(false);
     const [error, setError] = React.useState<string>();
@@ -44,9 +47,15 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const busy = React.useRef(false);
     const loaded = React.useRef(false);
     const body = React.useRef<HTMLDivElement>();
+    const searchInput = React.useRef<HTMLInputElement>();
     const nameInput = React.useRef<HTMLInputElement>();
     const focusAfter = React.useRef<{ id?: string; action?: "rename" | "delete" }>();
     const isCurrent = () => alive.current && currentUserId() === props.userId;
+
+    const searchItems = (entries: pxt.auth.BackpackItem[]) => createBackpackSearch(entries,
+        name => Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name]?.config?.name : undefined);
+    const search = React.useMemo(() => searchItems(items), [items]);
+    const filteredItems = React.useMemo(() => search(query), [search, query]);
 
     const readItems = (): pxt.auth.BackpackItem[] => backpack.getBackpackItems().map(backpack.validateBackpackItem);
     const reportError = (reason: unknown) => {
@@ -116,8 +125,8 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             .find(element => element.dataset.backpackId === target.id);
         const button = entry?.querySelector<HTMLButtonElement>(target.action
             ? `.project-backpack__${target.action}` : "button:not(:disabled)");
-        (button || body.current)?.focus();
-    }, [pending, items, edit]);
+        (button || (query.trim() ? searchInput.current : body.current))?.focus();
+    }, [pending, items, edit, query]);
 
     const cancelEdit = () => {
         if (busy.current) return;
@@ -134,11 +143,12 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         setEdit({ kind, id: item.id, name: item.name });
     };
     const deleteItem = (item: pxt.auth.BackpackItem) => run(async () => {
-        const index = items.findIndex(entry => entry.id === item.id);
+        const index = filteredItems.findIndex(entry => entry.id === item.id);
         await backpack.deleteBackpackItemAsync(item.id);
         if (!isCurrent()) return;
         const remaining = readItems();
-        focusAfter.current = { id: (remaining[index] || remaining[index - 1])?.id };
+        const visible = searchItems(remaining)(query);
+        focusAfter.current = { id: (visible[index] || visible[index - 1])?.id };
         setItems(remaining);
         setEdit(undefined);
     });
@@ -160,13 +170,40 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         ? lf("Open an editable Blocks project outside a tutorial to add snippets from your backpack.")
         : lf("Switch to Blocks to add snippets");
     const message = !ready && !error && props.active ? lf("Loading backpack…") : "";
+    const clearSearch = (): void => {
+        setQuery("");
+        searchInput.current?.focus();
+    };
 
     return <>
         {props.renderHeader(lf("Backpack"))}
+        <div className="project-backpack__search" role="search" aria-label={lf("Backpack")}
+            onKeyDown={event => {
+                if (event.key === "Escape" && query && !event.nativeEvent.isComposing) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    clearSearch();
+                }
+            }}>
+            <Input id="project-backpack-search" className="project-backpack__search-input" type="search" role="searchbox"
+                ariaLabel={lf("Search backpack")} placeholder={lf("Search backpack")}
+                icon="icon search" initialValue={query} onChange={setQuery} handleInputRef={searchInput}
+                disabled={!ready || pending} />
+            {!!query && <button className="project-backpack__button project-backpack__icon-button"
+                type="button" disabled={!ready || pending} onClick={clearSearch}
+                aria-label={lf("Clear backpack search")} title={lf("Clear backpack search")}>
+                <i className="icon remove" aria-hidden="true" />
+            </button>}
+        </div>
         <div ref={body} className="project-backpack__body" tabIndex={-1} aria-busy={pending}>
             {!props.userId && auth.hasIdentity() && <button className="project-backpack__button project-backpack__sign-in"
                 type="button" onClick={props.onSignIn}>{lf("Sign in to save your backpack across browsers.")}</button>}
-            <div role="status">{message && <p>{message}</p>}</div>
+            <div role="status">
+                {message && <p>{message}</p>}
+                {ready && !!items.length && !!query.trim() && <p>{filteredItems.length
+                    ? lf("{0} of {1} snippets", filteredItems.length, items.length)
+                    : lf("No matching snippets.")}</p>}
+            </div>
             {error && !modalOpen && <>
                 <p role="alert">{error}</p>
                 {!ready && <button className="project-backpack__button project-backpack__retry" type="button" disabled={pending}
@@ -177,8 +214,8 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                 <p>{lf("Your backpack is empty.")}</p>
                 <p>{lf("Right-click or hold a block container and choose Add to Backpack, or drag blocks over the Backpack bubble, then drop them into the backpack.")}</p>
             </div>}
-            {ready && !!items.length && <ul className="project-backpack__list" aria-label={lf("Backpack snippets")}>
-                {items.map(item => {
+            {ready && !!filteredItems.length && <ul className="project-backpack__list" aria-label={lf("Backpack snippets")}>
+                {filteredItems.map(item => {
                     const missingDependencies = Object.entries(item.dependencies).filter(([name, version]) => {
                         const dependency = Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name] : undefined;
                         const installed = dependency && (version === "*" || dependency.verProtocol() === "github"

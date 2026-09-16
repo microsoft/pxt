@@ -57,10 +57,21 @@ Blockly.Blocks.backpack_test_container = {
 Blockly.Blocks.backpack_test_statement = {
     init() { this.setPreviousStatement(true); this.setNextStatement(true); }
 };
+Blockly.Blocks.backpack_test_values = {
+    init() {
+        this.appendDummyInput().appendField("visible action")
+            .appendField(new Blockly.FieldTextInput("secret message"), "TEXT")
+            .appendField(new Blockly.FieldNumber(37), "NUMBER")
+            .appendField(new Blockly.FieldDropdown([["Displayed choice", "InternalEnum.Member"]]), "CHOICE");
+        this.setPreviousStatement(true);
+        this.setNextStatement(true);
+    }
+};
 class AssetField extends Blockly.Field {
     constructor() { super("asset"); this.SERIALIZABLE = true; }
     saveState(full) { return full ? { id: "asset-id", pixels: "FULL_ASSET" } : "asset-id"; }
     loadState(state) { this.loaded = state; }
+    getFieldDescription() { return "  Named\n  asset  "; }
 }
 Blockly.Blocks.backpack_test_asset = {
     init() { this.appendDummyInput().appendField(new AssetField(), "ASSET"); this.setOutput(true); }
@@ -106,7 +117,7 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
         const parent = append(sourceWorkspace, container(container({ ...statement, next: { block: statement } })));
         const nested = parent.getInputTargetBlock("BODY");
         nested.nextConnection.connect(append(sourceWorkspace, statement).previousConnection);
-        const code = backpack.serializeBackpackBlock(nested);
+        const code = backpack.captureBackpackBlock(nested).code;
         const state = JSON.parse(code).blocks[0];
         assert(!state.next && !state.id && state.x === undefined && state.y === undefined);
         assert(state.inputs.BODY.block.next.block);
@@ -124,16 +135,62 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
             }
         });
         const variable = destination.getVariableMap().createVariable("score", "", "destination-var");
-        const code = backpack.serializeBackpackBlock(block);
+        const code = backpack.captureBackpackBlock(block).code;
         const pasted = backpack.pasteBackpackBlock(code, destination);
         assert.deepStrictEqual(pasted.saveExtraState(), block.saveExtraState());
         assert.equal(pasted.getInputTargetBlock("DO0").getFieldValue("VAR"), variable.getId());
         assert(pasted.getInputTargetBlock("DO1") && pasted.getInputTargetBlock("ELSE"));
         const assetContainer = append(sourceWorkspace, { ...container(), inputs: { VALUE: { block: { type: "backpack_test_asset" } } } });
-        const assetCode = backpack.serializeBackpackBlock(assetContainer);
+        const assetCode = backpack.captureBackpackBlock(assetContainer).code;
         assert(assetCode.includes("FULL_ASSET"));
         const asset = backpack.pasteBackpackBlock(assetCode, destination).getInputTargetBlock("VALUE").getField("ASSET");
         assert.deepStrictEqual(asset.loaded, { id: "asset-id", pixels: "FULL_ASSET" });
+    });
+
+    it("captures displayed labels and field values from only the saved graph without mutating the workspace", async () => {
+        const parent = append(sourceWorkspace, container(container({ type: "backpack_test_values",
+            next: { block: { type: "backpack_test_values", fields: { TEXT: "second body statement" } } } })));
+        const block = parent.getInputTargetBlock("BODY");
+        parent.appendDummyInput().appendField("EXCLUDED_ANCESTOR");
+        block.appendDummyInput().appendField("saved container");
+        const sibling = append(sourceWorkspace, { type: "backpack_test_values", fields: { TEXT: "EXCLUDED_SIBLING" } });
+        block.nextConnection.connect(sibling.previousConnection);
+        block.getInput("VALUE").connection.connect(append(sourceWorkspace, { type: "backpack_test_asset" }).outputConnection);
+        await flushEvents();
+        sourceWorkspace.clearUndo();
+        const before = Blockly.serialization.workspaces.save(sourceWorkspace);
+        const blocks = sourceWorkspace.getAllBlocks(false);
+        const events = [];
+        const listener = event => events.push(event);
+        sourceWorkspace.addChangeListener(listener);
+        try {
+            const captured = backpack.captureBackpackBlock(block);
+            for (const text of ["saved container", "visible action", "secret message", "37", "Displayed choice",
+                "second body statement", "Named asset"]) assert(captured.blockText.includes(text), text);
+            for (const text of ["InternalEnum.Member", "EXCLUDED_ANCESTOR", "EXCLUDED_SIBLING", "FULL_ASSET", "asset-id"])
+                assert(!captured.blockText.includes(text), text);
+            const state = JSON.parse(captured.code).blocks[0];
+            assert.equal(state.inputs.BODY.block.fields.CHOICE, "InternalEnum.Member");
+            assert(!state.next);
+            assert(!/EXCLUDED_/.test(captured.code));
+            assert.deepStrictEqual(backpack.captureBackpackBlock(block), captured);
+            await flushEvents();
+            assert.deepStrictEqual(Blockly.serialization.workspaces.save(sourceWorkspace), before);
+            assert.deepStrictEqual(sourceWorkspace.getAllBlocks(false), blocks);
+            assert.strictEqual(parent.getInputTargetBlock("BODY"), block);
+            assert.strictEqual(block.getNextBlock(), sibling);
+            assert.deepStrictEqual(sourceWorkspace.getUndoStack(), []);
+            assert.deepStrictEqual(events, []);
+        } finally { sourceWorkspace.removeChangeListener(listener); }
+    });
+
+    it("allows empty captured text and bounds descriptions independently of serialized code", () => {
+        const block = append(sourceWorkspace, container());
+        assert.strictEqual(backpack.captureBackpackBlock(block).blockText, "");
+        block.appendDummyInput().appendField("x".repeat(100001));
+        const captured = backpack.captureBackpackBlock(block);
+        assert.strictEqual(captured.blockText, "x".repeat(100000));
+        assert(captured.code.length < 100000);
     });
 
     it("collects transitive and recursive native functions and remaps collisions without changing existing calls", async () => {
@@ -142,10 +199,22 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
         const second = defineFunction(sourceWorkspace, "second", "second-id");
         first.getInput("STACK").connection.connect(callFunction(sourceWorkspace, second).previousConnection);
         second.getInput("STACK").connection.connect(callFunction(sourceWorkspace, first).previousConnection);
+        first.getInputTargetBlock("STACK").nextConnection.connect(append(sourceWorkspace,
+            { type: "backpack_test_values", fields: { TEXT: "first function body" } }).previousConnection);
+        second.getInputTargetBlock("STACK").nextConnection.connect(append(sourceWorkspace,
+            { type: "backpack_test_values", fields: { TEXT: "transitive function body" } }).previousConnection);
+        const unrelated = defineFunction(sourceWorkspace, "unrelated", "unrelated-id");
+        unrelated.getInput("STACK").connection.connect(append(sourceWorkspace,
+            { type: "backpack_test_values", fields: { TEXT: "EXCLUDED_FUNCTION" } }).previousConnection);
         const block = append(sourceWorkspace, container());
         block.getInput("BODY").connection.connect(callFunction(sourceWorkspace, first).previousConnection);
         await flushEvents();
-        const code = backpack.serializeBackpackBlock(block);
+        const sourceBefore = Blockly.serialization.workspaces.save(sourceWorkspace);
+        const { code, blockText } = backpack.captureBackpackBlock(block);
+        for (const text of ["first", "second", "amount", "first function body", "transitive function body"])
+            assert(blockText.includes(text), text);
+        assert(!blockText.includes("EXCLUDED_FUNCTION"));
+        assert.deepStrictEqual(Blockly.serialization.workspaces.save(sourceWorkspace), sourceBefore);
         assert.equal(JSON.parse(code).blocks.length, 3);
         const existing = defineFunction(destination, "first", "first-id", args);
         existing.getInput("STACK").connection.connect(append(destination, statement).previousConnection);
@@ -169,8 +238,8 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
         assert.equal(importedFirst.getInputTargetBlock("STACK").getName(), "second");
         assert.equal(existingCall.getName(), "first");
         assert.equal(JSON.stringify(Blockly.serialization.blocks.save(existing)), before);
-        assert.equal(backpack.serializeBackpackBlock(block), code);
-        const definitionCode = backpack.serializeBackpackBlock(first);
+        assert.equal(backpack.captureBackpackBlock(block).code, code);
+        const definitionCode = backpack.captureBackpackBlock(first).code;
         assert.equal(JSON.parse(definitionCode).blocks.at(-1).extraState.name, "first");
     });
 
@@ -183,7 +252,7 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
         } } } });
         defineFunction(destination, "result", "result-id", args);
         await flushEvents();
-        const pasted = backpack.pasteBackpackBlock(backpack.serializeBackpackBlock(block), destination);
+        const pasted = backpack.pasteBackpackBlock(backpack.captureBackpackBlock(block).code, destination);
         await flushEvents();
         const call = pasted.getInputTargetBlock("VALUE");
         const imported = destination.getTopBlocks(false).find(b => b.type === "function_definition" && b.getName() === "result2");
@@ -249,7 +318,7 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
         await flushEvents();
         destination.clearUndo();
         Blockly.Events.setGroup("outer-group");
-        const code = backpack.serializeBackpackBlock(block);
+        const code = backpack.captureBackpackBlock(block).code;
         backpack.pasteBackpackBlock(code, destination);
         assert.equal(Blockly.Events.getGroup(), "outer-group");
         Blockly.Events.setGroup(false);
@@ -306,7 +375,7 @@ describe("Backpack native drag targets (current source, real browser Blockly)", 
             window.enabled = true;
             window.disposeBackpack = backpack.registerBackpackWorkspace(workspace, {
                 isEnabled: () => enabled,
-                save: block => saved.push(backpack.serializeBackpackBlock(block)),
+                save: block => saved.push(backpack.captureBackpackBlock(block).code),
                 open: () => { opened++; document.getElementById("project-tools-backpack").style.display = "block"; }
             });
             window.makeBlock = type => Blockly.serialization.blocks.append({ type }, workspace);
@@ -339,6 +408,38 @@ describe("Backpack native drag targets (current source, real browser Blockly)", 
             if (window.workspace?.dispose) workspace.dispose();
         });
         await page.close(); page = undefined;
+    });
+
+    it("captures labels inside collapsed containers and hidden inputs without expanding or changing them", async () => {
+        const result = await page.evaluate(async () => {
+            const block = Blockly.serialization.blocks.append({ type: "controls_repeat_ext", inputs: {
+                TIMES: { block: { type: "math_number", fields: { NUM: 73 } } },
+                DO: { block: { type: "text_print", inputs: { TEXT: { block: { type: "text",
+                    fields: { TEXT: "hidden contained message" } } } } } }
+            } }, workspace);
+            await Blockly.renderManagement.finishQueuedRenders();
+            const expanded = backpack.captureBackpackBlock(block);
+            block.getInput("DO").setVisible(false);
+            const hidden = backpack.captureBackpackBlock(block);
+            block.setCollapsed(true);
+            await Blockly.renderManagement.finishQueuedRenders();
+            await new Promise(resolve => setTimeout(resolve, 0));
+            workspace.clearUndo();
+            const before = Blockly.serialization.workspaces.save(workspace);
+            const captured = backpack.captureBackpackBlock(block);
+            await new Promise(resolve => setTimeout(resolve, 0));
+            return { expanded, hidden, captured, before, after: Blockly.serialization.workspaces.save(workspace),
+                collapsed: block.isCollapsed(), visible: block.getInput("DO").isVisible(),
+                undo: workspace.getUndoStack().length, errors };
+        });
+        for (const capture of [result.expanded, result.hidden, result.captured]) {
+            for (const text of ["repeat", "print", "73", "hidden contained message"])
+                assert(capture.blockText.includes(text), text);
+        }
+        assert(result.collapsed && !result.visible);
+        assert.deepStrictEqual(result.after, result.before);
+        assert.equal(result.undo, 0);
+        assert.deepStrictEqual(result.errors, []);
     });
 
     it("uses native revertDrag to restore connections/location and never registers DELETE_AREA", async () => {

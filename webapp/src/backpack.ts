@@ -75,6 +75,9 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     if (typeof value.code !== "string" || value.code.length > MAX_BACKPACK_CODE_LENGTH) {
         throw new Error(lf("Backpack code must be text of at most {0} characters.", MAX_BACKPACK_CODE_LENGTH));
     }
+    if (typeof value.blockText !== "string" || value.blockText.length > MAX_BACKPACK_CODE_LENGTH) {
+        throw new Error(lf("Backpack block text must be text of at most {0} characters.", MAX_BACKPACK_CODE_LENGTH));
+    }
     if (typeof value.createdAt !== "number" || !Number.isFinite(value.createdAt) || value.createdAt < 0) {
         throw new Error(lf("Invalid backpack creation time."));
     }
@@ -97,7 +100,7 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
         throw new Error(lf("Backpack previews must be PNG data URIs of at most {0} characters.", MAX_BACKPACK_PREVIEW_LENGTH));
     }
     const result: pxt.auth.BackpackItem = {
-        id: value.id, name: value.name, code: value.code, dependencies, createdAt: value.createdAt
+        id: value.id, name: value.name, code: value.code, blockText: value.blockText, dependencies, createdAt: value.createdAt
     };
     if (value.projectBlocks !== undefined) {
         if (!isRecord(value.projectBlocks) || Object.keys(value.projectBlocks).length > 500) {
@@ -274,6 +277,7 @@ function sameItem(left: pxt.auth.BackpackItem, right: pxt.auth.BackpackItem): bo
         Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(key => own(b, key) && a[key] === b[key]);
     return left.id === right.id && left.name === right.name && left.code === right.code
         && left.createdAt === right.createdAt && left.previewUri === right.previewUri
+        && left.blockText === right.blockText
         && sameMap(left.projectBlocks, right.projectBlocks) && sameMap(left.dependencies, right.dependencies);
 }
 
