@@ -34,6 +34,8 @@ underlying DevTools operation before Mocha's unchanged 30-second hook timeout.
   LESS with test theme variables and checks RTL, reduced-motion behavior, banner
   offsets, ellipsis alignment, speech-bubble pointers, and panel dismissal via
   the ellipsis, outside controls, keyboard focus and the simulator iframe.
+  Hover/focus labels omit the open tab, include the ellipsis, and paint above the
+  panel in both layouts, with RTL positioning and theme/forced-color contrast checks.
   Pin regressions cover click-away/iframe focus, explicit collapse and reopening,
   manual unpin, example defaults, and switching tabs/viewports.
   Resize tests cover side/bottom grips, pointer and keyboard input, RTL, retained
@@ -95,6 +97,8 @@ rebuilds the shared library and webapp first.
   missing-only extension requirements and updates as packages change, import restrictions,
   the real shared delete modal and focus trap,
   optional prefilled Rename dialogs, Enter/Save/Cancel/Escape, rename validation/retry,
+  grouped top-right pencil/trash icons and bottom-right confirmation-style Add text,
+  alignment with long names and RTL, themed hover/disabled text states,
   account changes, confirmation/retry/focus, quiet add/delete/rename outcomes,
   mobile overflow/touch sizes and theme/forced-color focus. This suite does not
   install extensions or exercise the source-file popup itself.

@@ -187,7 +187,23 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                         return !installed;
                     });
                     return <li key={item.id} data-backpack-id={item.id} className="project-backpack__item">
-                        <h3 className="project-backpack__name">{item.name}</h3>
+                        <div className="project-backpack__item-header">
+                            <h3 className="project-backpack__name">{item.name}</h3>
+                            <div className="project-backpack__item-actions">
+                                <button className="project-backpack__button project-backpack__icon-button project-backpack__rename"
+                                    type="button" disabled={pending} title={lf("Rename {0}", item.name)}
+                                    aria-label={lf("Rename {0}", item.name)} aria-haspopup="dialog"
+                                    onClick={() => beginEdit(item, "rename")}>
+                                    <i className="icon pencil" aria-hidden="true" />
+                                </button>
+                                <button className="project-backpack__button project-backpack__icon-button project-backpack__delete"
+                                    type="button" disabled={pending} title={lf("Delete {0}", item.name)}
+                                    aria-label={lf("Delete {0}", item.name)} aria-haspopup="dialog"
+                                    onClick={() => beginEdit(item, "delete")}>
+                                    <i className="icon trash" aria-hidden="true" />
+                                </button>
+                            </div>
+                        </div>
                         {item.previewUri && <img className="project-backpack__preview" src={item.previewUri} alt={lf("Blocks in {0}", item.name)} />}
                         {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
                             {lf("Uses project-defined blocks from {0}. Their source code is not included.",
@@ -204,15 +220,9 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             })}</ul>
                         </div>}
                         <div className="project-backpack__actions">
-                            <button className="project-backpack__button" type="button" disabled={pending || !canImport}
+                            <button className="project-backpack__button project-backpack__add" type="button" disabled={pending || !canImport}
                                 aria-label={lf("Add {0} to project", item.name)} aria-describedby={!canImport ? "project-backpack-import-reason" : undefined}
                                 onClick={() => void addItem(item)}>{lf("Add to project")}</button>
-                            <button className="project-backpack__button project-backpack__rename" type="button" disabled={pending}
-                                aria-label={lf("Rename {0}", item.name)} aria-haspopup="dialog"
-                                onClick={() => beginEdit(item, "rename")}>{lf("Rename")}</button>
-                            <button className="project-backpack__button project-backpack__delete" type="button" disabled={pending}
-                                aria-label={lf("Delete {0}", item.name)} aria-haspopup="dialog"
-                                onClick={() => beginEdit(item, "delete")}>{lf("Delete")}</button>
                         </div>
                     </li>;
                 })}
