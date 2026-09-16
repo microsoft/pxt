@@ -100,12 +100,21 @@ rebuilds the shared library and webapp first.
   account changes during preview/save and captured import-host validity. Storage,
   serialization and project import are stubbed at their tested module boundaries.
 - [backpack-project.spec.js](backpack-project.spec.js): current requirement capture
-  and project insertion with the production package conflict engine. Covers used
+  and the shared [snippet preparation](../../webapp/src/blockSnippet.ts) with the
+  production package conflict engine. Covers ordinary states and backpack adapters, used
   packages only, dropdown/asset/function-type references, local source metadata,
   missing-source popups, consent/cancel, source conflicts, target restrictions,
   transitive dependency preflight, preservation of unsaved code/asset config,
   fresh definitions after reload, and account/project changes during async work.
   Downloads and the host are fake; a focused case uses real Blockly paste/undo.
+- [clipboard.spec.js](clipboard.spec.js): source-extracted Copy/Cut/Paste handlers
+  wired to the real shared preparation module. Covers used extension/source capture,
+  comment/native copy data, cut failures without deletion, metadata-free clipboard
+  entries, installation consent/cancel, source warnings, fresh workspaces after reload,
+  placement, tutorial restrictions, concurrent paste and project/account changes.
+  An isolated Blockly browser case checks full field state on an ordinary expression.
+  Run it directly with `node node_modules/mocha/bin/mocha.js tests/project-tools-test/clipboard.spec.js`.
+  It needs no build, dev server, account, or real network downloads.
 - [backpack-blocks.spec.js](backpack-blocks.spec.js): current serialization, native
   function plugin and dragger with installed Blockly. Covers container boundaries,
   full field state, recursive function remapping, invalid payloads, grouped undo,
