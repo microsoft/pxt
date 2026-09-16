@@ -119,7 +119,8 @@ also accepts the drag when the other bubbles are hidden.
 
 Saving copies the container's contents, referenced Blockly function definitions
 and assets. It does not include following siblings or remove the original blocks.
-Each entry lists its required extensions. **Add to project** asks permission
+Each entry lists only extensions missing from the current project; the section is
+hidden when none are needed. **Add to project** asks permission
 before installing missing extensions, checks conflicts, preserves current code
 before reloading, and inserts the snippet as one undo group. It does not silently
 replace existing extensions or upgrade an installed version of the same repository.

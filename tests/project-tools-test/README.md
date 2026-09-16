@@ -90,7 +90,8 @@ rebuilds the shared library and webapp first.
   operations are mocked. Covers usable guest contents with/without an identity
   provider, the centered sign-in button, local/profile deletion, refresh/reopen, account
   changes, literal names/previews/source filenames, deduplicated source requirements,
-  extension status, import restrictions, the real shared delete modal and focus trap,
+  missing-only extension requirements and updates as packages change, import restrictions,
+  the real shared delete modal and focus trap,
   confirmation/retry/focus, quiet add/delete outcomes,
   mobile overflow/touch sizes and theme/forced-color focus. This suite does not
   install extensions or exercise the source-file popup itself.
@@ -176,8 +177,9 @@ The implementation lives in [the local/profile store](../../webapp/src/backpack.
    hidden. Drop into the backpack and verify original connections/location are
    restored; leaving, Escape, pointer cancellation or disposal clears hover/dwell.
   A failed local save or sync offers Retry using the same captured item ID.
-4. **Required extensions.** Entries list captured package references and whether
-   each is in the current project. Only used packages are captured, not every
+4. **Required extensions.** Entries list only captured package references missing
+  from the current project, with no extension heading or list when all requirements
+  are already installed. Only used packages are captured, not every
    installed extension. Portable sources are bundled `*`, GitHub references and
    published IDs; local/workspace/file packages require publishing and installing
    the published extension first. Add to project requires an eligible Blocks editor.

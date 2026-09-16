@@ -459,13 +459,13 @@ describe("project backpack UI", function () {
         assert.deepStrictEqual(await page.evaluate(() => [backpackTest.subscriberCount(), backpackTest.listenerCount()]), [0, 0]);
     });
 
-    it("renders literal names, validated PNG previews, and all dependency sources/markers", async () => {
+    it("renders literal names, validated PNG previews, and only missing extension requirements", async () => {
         const snippet = item("<b>Jump</b>");
         snippet.previewUri = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
         snippet.dependencies = { core: "*", radio: "github:owner/radio#v1", other: "github:owner/other#v2", absent: "pub:example" };
         await page.evaluate(() => {
             backpackTest.pkg.mainPkg.deps = {
-                core: { config: { name: "Core" }, version: () => "*", verProtocol: () => "" },
+                core: { config: { name: "Core" }, version: () => "embed:core", verProtocol: () => "embed" },
                 radio: { config: { name: "Radio extension" }, version: () => "github:OWNER/RADIO#v9", verProtocol: () => "github" },
                 other: { config: { name: "Other extension" }, version: () => "github:unrelated/repository#v2", verProtocol: () => "github" }
             };
@@ -475,9 +475,50 @@ describe("project backpack UI", function () {
         assert.strictEqual(await page.$eval("img", image => image.alt), "Blocks in <b>Jump</b>");
         const requirements = await page.$$eval(".project-backpack__requirements li", elements => elements.map(el => el.textContent));
         assert.deepStrictEqual(requirements, [
-            "Core — * — In this project", "Radio extension — github:owner/radio#v1 — In this project",
             "Other extension — github:owner/other#v2 — Missing from this project", "absent — pub:example — Missing from this project"
         ]);
+        assert.doesNotMatch(await text(), /In this project/);
+    });
+
+    it("hides the extension section when every requirement is installed without stripping import metadata", async () => {
+        const snippet = { ...item(), dependencies: { core: "*", radio: "github:owner/radio#v1", shared: "pub:example" } };
+        await page.evaluate(() => {
+            backpackTest.pkg.mainPkg.deps = {
+                core: { config: { name: "Core" }, version: () => "embed:core", verProtocol: () => "embed" },
+                radio: { config: { name: "Radio extension" }, version: () => "github:OWNER/RADIO#v9", verProtocol: () => "github" },
+                shared: { config: { name: "Shared extension" }, version: () => "pub:example", verProtocol: () => "pub" }
+            };
+        });
+        await signIn([snippet]);
+        assert.strictEqual(await page.$(".project-backpack__requirements"), null);
+        assert.doesNotMatch(await text(), /Required extensions|In this project|Missing from this project/);
+        assert.strictEqual(await page.$eval(add, button => button.disabled), false);
+        await page.click(add);
+        await idle();
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds), [{ item: snippet, headerId: "project" }]);
+    });
+
+    it("updates missing extensions when the current project's installed packages change", async () => {
+        const snippet = { ...item(), dependencies: { core: "*", radio: "github:owner/radio#v1" } };
+        await page.evaluate(() => {
+            backpackTest.pkg.mainPkg.deps.core = { config: { name: "Core" }, version: () => "embed:core", verProtocol: () => "embed" };
+        });
+        await loadGuest([snippet]);
+        assert.deepStrictEqual(await page.$$eval(".project-backpack__requirements li", elements => elements.map(el => el.textContent)),
+            ["radio — github:owner/radio#v1 — Missing from this project"]);
+        const refreshes = await page.evaluate(() => backpackTest.refreshes);
+        await page.evaluate(() => {
+            backpackTest.pkg.mainPkg.deps.radio = {
+                config: { name: "Radio extension" }, version: () => "github:owner/radio#v1", verProtocol: () => "github"
+            };
+            backpackTest.notify();
+        });
+        assert.strictEqual(await page.$(".project-backpack__requirements"), null);
+        assert.doesNotMatch(await text(), /Required extensions/);
+        await page.evaluate(() => { delete backpackTest.pkg.mainPkg.deps.core; backpackTest.notify(); });
+        assert.deepStrictEqual(await page.$$eval(".project-backpack__requirements li", elements => elements.map(el => el.textContent)),
+            ["core — * — Missing from this project"]);
+        assert.strictEqual(await page.evaluate(() => backpackTest.refreshes), refreshes);
     });
 
     it("omits source requirements for absent or empty projectBlocks", async () => {

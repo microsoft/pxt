@@ -164,35 +164,41 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                 <p>{lf("Right-click or hold a block container and choose Add to Backpack, or drag blocks over the Backpack bubble, then drop them into the backpack.")}</p>
             </div>}
             {ready && !!items.length && <ul className="project-backpack__list" aria-label={lf("Backpack snippets")}>
-                {items.map(item => <li key={item.id} data-backpack-id={item.id} className="project-backpack__item">
-                    <h3 className="project-backpack__name">{item.name}</h3>
-                    {item.previewUri && <img className="project-backpack__preview" src={item.previewUri} alt={lf("Blocks in {0}", item.name)} />}
-                    {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
-                        {lf("Uses project-defined blocks from {0}. Their source code is not included.",
-                            Array.from(new Set(Object.values(item.projectBlocks))).join(", "))}
-                    </p>}
-                    {!!Object.keys(item.dependencies).length && <div className="project-backpack__requirements">
-                        <p>{lf("Required extensions")}</p>
-                        <ul>{Object.entries(item.dependencies).map(([name, version]) => {
-                            const dependency = Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name] : undefined;
-                            const installed = dependency && (version === "*" || dependency.verProtocol() === "github"
-                                && version.startsWith("github:") && dependency.version().split("#")[0].toLowerCase() === version.split("#")[0].toLowerCase()
-                                || dependency.version() === version);
-                            return <li key={name}>
-                                <span>{dependency?.config?.name || name}</span>{" — "}<span>{version}</span>{" — "}
-                                <span>{installed ? lf("In this project") : lf("Missing from this project")}</span>
-                            </li>;
-                        })}</ul>
-                    </div>}
-                    <div className="project-backpack__actions">
-                        <button className="project-backpack__button" type="button" disabled={pending || !canImport}
-                            aria-label={lf("Add {0} to project", item.name)} aria-describedby={!canImport ? "project-backpack-import-reason" : undefined}
-                            onClick={() => void addItem(item)}>{lf("Add to project")}</button>
-                        <button className="project-backpack__button project-backpack__delete" type="button" disabled={pending}
-                            aria-label={lf("Delete {0}", item.name)} aria-haspopup="dialog"
-                            onClick={() => confirmDelete(item)}>{lf("Delete")}</button>
-                    </div>
-                </li>)}
+                {items.map(item => {
+                    const missingDependencies = Object.entries(item.dependencies).filter(([name, version]) => {
+                        const dependency = Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name] : undefined;
+                        const installed = dependency && (version === "*" || dependency.verProtocol() === "github"
+                            && version.startsWith("github:") && dependency.version().split("#")[0].toLowerCase() === version.split("#")[0].toLowerCase()
+                            || dependency.version() === version);
+                        return !installed;
+                    });
+                    return <li key={item.id} data-backpack-id={item.id} className="project-backpack__item">
+                        <h3 className="project-backpack__name">{item.name}</h3>
+                        {item.previewUri && <img className="project-backpack__preview" src={item.previewUri} alt={lf("Blocks in {0}", item.name)} />}
+                        {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
+                            {lf("Uses project-defined blocks from {0}. Their source code is not included.",
+                                Array.from(new Set(Object.values(item.projectBlocks))).join(", "))}
+                        </p>}
+                        {!!missingDependencies.length && <div className="project-backpack__requirements">
+                            <p>{lf("Required extensions")}</p>
+                            <ul>{missingDependencies.map(([name, version]) => {
+                                const dependency = Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name] : undefined;
+                                return <li key={name}>
+                                    <span>{dependency?.config?.name || name}</span>{" — "}<span>{version}</span>{" — "}
+                                    <span>{lf("Missing from this project")}</span>
+                                </li>;
+                            })}</ul>
+                        </div>}
+                        <div className="project-backpack__actions">
+                            <button className="project-backpack__button" type="button" disabled={pending || !canImport}
+                                aria-label={lf("Add {0} to project", item.name)} aria-describedby={!canImport ? "project-backpack-import-reason" : undefined}
+                                onClick={() => void addItem(item)}>{lf("Add to project")}</button>
+                            <button className="project-backpack__button project-backpack__delete" type="button" disabled={pending}
+                                aria-label={lf("Delete {0}", item.name)} aria-haspopup="dialog"
+                                onClick={() => confirmDelete(item)}>{lf("Delete")}</button>
+                        </div>
+                    </li>;
+                })}
             </ul>}
         </div>
         {modalOpen && <Modal title={lf("Delete snippet?")} className="project-backpack__delete-modal"
