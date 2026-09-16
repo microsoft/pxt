@@ -31,6 +31,7 @@ const entry = (id, overrides = {}, source = "local") => {
     const item = {
         id: `00000000-0000-4000-8000-${String(id).padStart(12, "0")}`,
         name: "Saved routine", code: code({ type: "pxt-on-start" }), blockText: "",
+        kind: "code", versions: { target: "1.0.0", pxt: "13.2.4" },
         dependencies: {}, createdAt: 1, ...overrides
     };
     return { id: item.id, source, name: item.name, createdAt: item.createdAt, item };
@@ -55,6 +56,7 @@ describe("backpack search (fresh source, real Fuse)", () => {
     it("searches cloud summary fields and requires every query term without loading code", () => {
         const cloud = { id: "cloud", source: "cloud", name: "Orchard", createdAt: 1,
             summary: { id: "cloud", name: "Orchard", blockText: "altitude cumulonimbus 8675309",
+                kind: "code", versions: { target: "1.0.0-beta.2+capture", pxt: "13.2.4-beta.1" },
                 blockTypes: ["radio_sendNumber"], dependencies: { radio: "github:acme/telemetry#v1" },
                 searchText: ["launchRocket", "wavelength"],
                 version: "etag", createdAt: 1, updatedAt: 1, status: "ready", hasPreview: true } };
@@ -118,6 +120,7 @@ describe("backpack search (fresh source, real Fuse)", () => {
 
     it("does not index binary data, IDs, coordinates, field keys, or unrelated flags", () => {
         const saved = entry(1, {
+            versions: { target: "1.0.0-beta.2+capturebuildsentinel", pxt: "13.2.4" },
             previewUri: "data:image/png;base64,thumbnailpayload", createdAt: 975318642,
             projectBlocks: { privateblock: "privatefilename" },
             code: code({ type: "pxt-on-start", id: "quartzidentifier", x: 918273645, y: 564738291,
@@ -131,9 +134,18 @@ describe("backpack search (fresh source, real Fuse)", () => {
         const search = createBackpackSearch([saved]);
         matches(search, "dandelion", [saved]);
         for (const query of ["thumbnailpayload", "privatefilename", "quartzidentifier", "918273645",
-            "opaqueannotation", "SECRETKEY", "encodedpayload", "rasterpayload", "functionidentifier"]) {
+            "opaqueannotation", "SECRETKEY", "encodedpayload", "rasterpayload", "functionidentifier", "capturebuildsentinel"]) {
             matches(search, query, []);
         }
+    });
+
+    it("searches standalone asset labels and types without indexing image payloads or capture versions", () => {
+        const asset = entry(1, { kind: "asset", name: "Orchard icon", blockText: "Dandelion",
+            versions: { target: "1.0.0-beta.2+capturebuildsentinel", pxt: "13.2.4" },
+            code: code({ type: "image_picker", fields: { IMAGE: { data: "encodedpayload", jres: "resourcepayload" } } }) });
+        const search = createBackpackSearch(freeze([asset, entry(2)]));
+        matches(search, "orchard dandelion image picker", [asset]);
+        for (const query of ["encodedpayload", "resourcepayload", "capturebuildsentinel"]) matches(search, query, []);
     });
 
     it("keeps malformed captures searchable and inspects only safe names on recovery cards", () => {

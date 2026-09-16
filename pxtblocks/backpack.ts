@@ -7,7 +7,7 @@ import {
 } from "./plugins/functions/constants";
 
 export interface BackpackCode {
-    /** Dependency definitions first; the saved container is always last. */
+    /** Dependency definitions first; the selected block is always last. */
     blocks: Blockly.serialization.blocks.State[];
 }
 
@@ -62,6 +62,15 @@ export function isBackpackContainer(block: Blockly.Block): boolean {
         && !block.workspace.options.readOnly && block.isEditable() && block.isMovable()
         && block.inputList.some(input => input.type === Blockly.inputs.inputTypes.STATEMENT);
 }
+
+    /** Asset shadows can be copied without detaching them from their owning statement. */
+    export function isBackpackBlock(block: Blockly.Block): boolean {
+        return isBackpackContainer(block) || !!block && !block.isDisposed() && pxt.auth.isBackpackAssetType(block.type)
+        && !block.isInsertionMarker() && !block.isInFlyout && !block.workspace.isFlyout && !block.workspace.isMutator
+        && !block.workspace.options.readOnly && block.isEditable() && (block.isShadow() || block.isMovable())
+        && !!block.outputConnection && !block.previousConnection && !block.nextConnection
+        && block.inputList.every(input => !input.connection);
+    }
 
 function isFunction(type: string): boolean {
     return type === FUNCTION_DEFINITION_BLOCK_TYPE || type === FUNCTION_CALL_BLOCK_TYPE
@@ -234,10 +243,10 @@ export function parseBackpackCode(code: string): BackpackCode {
     return result;
 }
 
-/** Capture this container, its input bodies and function dependencies, plus their displayed text. */
+/** Capture a container or asset literal, its dependencies, and displayed text. */
 export function captureBackpackBlock(block: Blockly.Block): { code: string; blockText: string } {
-    if (!isBackpackContainer(block)) {
-        throw new Error(lf("Choose an editable block container, such as an event, loop, if block or function definition, to save to Backpack."));
+    if (!isBackpackBlock(block)) {
+        throw new Error(lf("Choose an editable block container or an image, animation, tilemap or music asset to save to Backpack."));
     }
     const save = (source: Blockly.Block): State => {
         const state = Blockly.serialization.blocks.save(source, {
@@ -360,8 +369,8 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
     });
 }
 
-/** Append dependency definitions before the container in one undo group, centered in the visible workspace. */
-export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg): Blockly.BlockSvg {
+/** Append dependencies and the selection in one undo group, at the drop point or viewport center. */
+export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg, coordinates?: Blockly.utils.Coordinate): Blockly.BlockSvg {
     const { blocks } = parseBackpackCode(code); // A fresh object; never mutate the stored item.
     visitStates(blocks, state => {
         if (!Object.prototype.hasOwnProperty.call(Blockly.Blocks, state.type)) {
@@ -376,6 +385,7 @@ export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg
     try {
         let root: Blockly.BlockSvg;
         const view = workspace.rendered ? workspace.getMetricsManager().getViewMetrics(true) : undefined;
+        const center = coordinates || (view && new Blockly.utils.Coordinate(view.left + view.width / 2, view.top + view.height / 2));
         blocks.forEach((state, index) => {
             const appended = Blockly.serialization.blocks.append(state, workspace, { recordUndo: true });
             if (workspace.rendered) {
@@ -383,8 +393,8 @@ export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg
                 const size = svg.getHeightWidth();
                 const position = svg.getRelativeToSurfaceXY();
                 const offset = index === blocks.length - 1 ? 0 : (index + 1) * 40;
-                svg.moveBy(view.left + view.width / 2 + (workspace.RTL ? size.width / 2 : -size.width / 2)
-                    + offset - position.x, view.top + view.height / 2 - size.height / 2 + offset - position.y);
+                svg.moveBy(center.x + (workspace.RTL ? size.width / 2 : -size.width / 2)
+                    + offset - position.x, center.y - size.height / 2 + offset - position.y);
             }
             root = appended as Blockly.BlockSvg;
         });
@@ -438,7 +448,7 @@ class BackpackDragTarget extends Blockly.DragTarget {
 
     private accepts(draggable: Blockly.IDraggable): draggable is Blockly.BlockSvg {
         return draggable instanceof Blockly.BlockSvg && draggable.workspace === this.workspace
-            && isBackpackContainer(draggable);
+            && isBackpackBlock(draggable);
     }
 
     getClientRect(): Blockly.utils.Rect | null {
@@ -533,11 +543,11 @@ export function registerBackpackWorkspace(workspace: Blockly.WorkspaceSvg, optio
             preconditionFn: scope => {
                 const registration = registrations.get(scope.block?.workspace);
                 if (!registration?.options.isEnabled()) return "hidden";
-                return isBackpackContainer(scope.block) ? "enabled" : "disabled";
+                return isBackpackBlock(scope.block) ? "enabled" : "disabled";
             },
             callback: (scope: Blockly.ContextMenuRegistry.Scope) => {
                 const registration = registrations.get(scope.block?.workspace);
-                if (registration?.options.isEnabled() && isBackpackContainer(scope.block)) {
+                if (registration?.options.isEnabled() && isBackpackBlock(scope.block)) {
                     registration.options.save(scope.block);
                 }
             },

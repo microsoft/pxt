@@ -7,10 +7,12 @@ import { createBackpackSearch } from "../backpackSearch";
 import * as data from "../data";
 import * as pkg from "../package";
 import { BackpackPreview } from "./BackpackPreview";
+import { BackpackAssetEditDialog } from "./BackpackAssetEditDialog";
 
 export interface ProjectBackpackProps {
     headerId: string;
     active: boolean;
+    openRequest?: backpack.BackpackOpenRequest;
     renderHeader: (title: string, actions?: React.ReactNode) => React.ReactNode;
     onSignIn: () => void;
     onModalOpenChange?: (open: boolean) => void;
@@ -22,6 +24,10 @@ function currentUserId(): string {
 
 function entryKey(entry: backpack.BackpackEntry): string {
     return backpack.backpackEntryKey(entry);
+}
+
+function entryKind(entry: backpack.BackpackEntry): pxt.auth.BackpackKind {
+    return entry.summary?.kind || entry.item?.kind || "code";
 }
 
 export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
@@ -37,6 +43,7 @@ export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
         return () => data.unsubscribe(subscriber);
     }, []);
     const userId = currentUserId();
+    if (!backpack.isBackpackEnabled() || pkg.mainEditorPkg()?.header?.tutorial) return null;
     // Guest/account transitions get fresh contents, including pending/error state.
     return <BackpackContents key={`${pxt.appTarget?.id}:${userId ? `user:${userId}` : "guest"}`} {...props} userId={userId} />;
 }
@@ -44,28 +51,34 @@ export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
 function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JSX.Element {
     const [contents, setContents] = React.useState<backpack.BackpackState>({ entries: [] });
     const { entries: items, warning } = contents;
+    const [kind, setKind] = React.useState<pxt.auth.BackpackKind>(props.openRequest?.kind || "code");
     const [query, setQuery] = React.useState("");
     const [ready, setReady] = React.useState(false);
     const [pending, setPending] = React.useState(false);
     const [error, setError] = React.useState<string>();
     const [edit, setEdit] = React.useState<{ kind: "rename" | "delete"; key: string; name: string; entry: backpack.BackpackEntry }>();
+    const [assetEdit, setAssetEdit] = React.useState<{ entry: backpack.BackpackEntry; item: pxt.auth.BackpackItem;
+        context: backpack.BackpackAssetEditorContext }>();
     const [, update] = React.useReducer((value: number) => value + 1, 0);
     const alive = React.useRef(true);
     const active = React.useRef(props.active);
     active.current = props.active;
     const busy = React.useRef(false);
+    const dragged = React.useRef<backpack.BackpackEntry>();
     const loaded = React.useRef(false);
     const body = React.useRef<HTMLDivElement>();
     const searchInput = React.useRef<HTMLInputElement>();
     const nameInput = React.useRef<HTMLInputElement>();
+    const kindButtons = React.useRef<HTMLButtonElement[]>([]);
     const focusAfter = React.useRef<{ key?: string; action?: "rename" | "delete" }>();
     const targetId = React.useRef(pxt.appTarget?.id);
     const isCurrent = () => alive.current && currentUserId() === props.userId && pxt.appTarget?.id === targetId.current;
 
-    const searchItems = (entries: backpack.BackpackEntry[]) => createBackpackSearch(entries,
+    const searchItems = (entries: backpack.BackpackEntry[]) => createBackpackSearch(entries.filter(entry => entryKind(entry) === kind),
         name => Object.prototype.hasOwnProperty.call(pkg.mainPkg.deps, name) ? pkg.mainPkg.deps[name]?.config?.name : undefined);
-    const search = React.useMemo(() => searchItems(items), [items]);
+    const search = React.useMemo(() => searchItems(items), [items, kind]);
     const filteredItems = React.useMemo(() => search(ready ? query : ""), [search, query, ready]);
+    const categoryCount = items.filter(entry => entryKind(entry) === kind).length;
 
     const readItems = (): backpack.BackpackState => backpack.getBackpackState();
     const reportError = (reason: unknown) => {
@@ -120,15 +133,21 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     });
 
     React.useLayoutEffect(() => { if (props.active) void refresh(); }, [props.active]);
+    React.useEffect(() => {
+        if (props.openRequest?.kind) {
+            setKind(props.openRequest.kind);
+            setQuery("");
+        }
+    }, [props.openRequest]);
 
     const editedItem = edit?.entry;
-    const modalOpen = !!editedItem && (edit.kind === "delete" || !editedItem.error) && props.active;
+    const modalOpen = (!!assetEdit || !!editedItem && (edit.kind === "delete" || !editedItem.error)) && props.active;
     React.useEffect(() => {
         props.onModalOpenChange?.(modalOpen);
         return () => props.onModalOpenChange?.(false);
     }, [modalOpen, props.onModalOpenChange]);
     React.useEffect(() => {
-        if (!props.active) setEdit(undefined);
+        if (!props.active) { setEdit(undefined); setAssetEdit(undefined); }
     }, [props.active]);
     React.useEffect(() => {
         if (modalOpen && edit?.kind === "rename") {
@@ -146,7 +165,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         const button = entry?.querySelector<HTMLButtonElement>(target.action
             ? `.project-backpack__${target.action}` : "button:not(:disabled)");
         (button || (query.trim() ? searchInput.current : body.current))?.focus();
-    }, [pending, items, edit, query]);
+    }, [pending, items, edit, assetEdit, query]);
 
     const cancelEdit = () => {
         if (busy.current) return;
@@ -180,11 +199,57 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         setContents(readItems());
         setEdit(undefined);
     });
-    const addItem = (entry: backpack.BackpackEntry) => run(async () => {
-        await backpack.importBackpackEntryAsync(entry, props.headerId);
+    const addItem = (entry: backpack.BackpackEntry, position?: backpack.BackpackImportPosition) => run(async () => {
+        await backpack.importBackpackEntryAsync(entry, props.headerId, position);
     });
+    const editAsset = (entry: backpack.BackpackEntry) => run(async () => {
+        const item = await backpack.loadBackpackAssetAsync(entry);
+        if (!isCurrent() || !active.current) return;
+        const context = backpack.getBackpackAssetEditorContext(props.headerId);
+        props.onModalOpenChange?.(true);
+        setAssetEdit({ entry, item, context });
+    });
+    const closeAssetEdit = (): void => {
+        focusAfter.current = { key: entryKey(assetEdit.entry), action: "rename" };
+        setAssetEdit(undefined);
+    };
 
     const canImport = backpack.canImportBackpack(props.headerId);
+    const dragType = "application/x-makecode-backpack";
+    const startDrag = (event: React.DragEvent<HTMLElement>, entry: backpack.BackpackEntry): void => {
+        if (busy.current || !isCurrent() || !active.current || modalOpen || !canImport) {
+            event.preventDefault();
+            return;
+        }
+        // Do not expose the PNG URI to the global project-file drop handler.
+        event.dataTransfer.clearData();
+        event.dataTransfer.setData(dragType, entryKey(entry));
+        event.dataTransfer.effectAllowed = "copy";
+        dragged.current = entry;
+    };
+    React.useEffect(() => {
+        if (!props.active || !canImport || modalOpen) return undefined;
+        const onDrag = (event: DragEvent): void => {
+            if (!dragged.current || !event.dataTransfer?.types.includes(dragType)) return;
+            event.preventDefault();
+            event.stopPropagation();
+            const allowed = !busy.current && isCurrent() && backpack.canDropBackpack(props.headerId, event.target);
+            event.dataTransfer.dropEffect = allowed ? "copy" : "none";
+            if (event.type !== "drop") return;
+            const entry = dragged.current;
+            dragged.current = undefined;
+            if (allowed && event.dataTransfer.getData(dragType) === entryKey(entry)) {
+                void addItem(entry, { x: event.clientX, y: event.clientY });
+            }
+        };
+        document.addEventListener("dragover", onDrag, true);
+        document.addEventListener("drop", onDrag, true);
+        return () => {
+            dragged.current = undefined;
+            document.removeEventListener("dragover", onDrag, true);
+            document.removeEventListener("drop", onDrag, true);
+        };
+    }, [props.active, props.headerId, canImport, modalOpen]);
     const header = pkg.mainEditorPkg()?.header;
     const importReason = !header || header.id !== props.headerId || header.tutorial || pxt.shell.isReadOnly()
         || pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME
@@ -198,7 +263,19 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     };
 
     return <>
-        {props.renderHeader(lf("Backpack"))}
+        {props.renderHeader(lf("Backpack"), <div className="project-backpack__tabs" role="tablist" aria-label={lf("Backpack contents")}>
+            {(["code", "asset"] as const).map((value, index) => <button key={value} id={`project-backpack-tab-${value}`}
+                ref={element => kindButtons.current[index] = element} className="project-backpack__button" type="button" role="tab"
+                aria-selected={kind === value} aria-controls="project-backpack-items" tabIndex={kind === value ? 0 : -1}
+                disabled={pending} onClick={() => { setKind(value); setQuery(""); }} onKeyDown={event => {
+                    if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+                    event.preventDefault();
+                    const next = event.key === "Home" ? 0 : event.key === "End" ? 1 : 1 - index;
+                    setKind(next ? "asset" : "code");
+                    setQuery("");
+                    kindButtons.current[next]?.focus();
+                }}>{value === "code" ? lf("Code") : lf("Assets")}</button>)}
+        </div>)}
         <div className="project-backpack__search" role="search" aria-label={lf("Backpack")}
             onKeyDown={event => {
                 if (event.key === "Escape" && query && !event.nativeEvent.isComposing) {
@@ -217,15 +294,16 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                 <i className="icon remove" aria-hidden="true" />
             </button>}
         </div>
-        <div ref={body} className="project-backpack__body" tabIndex={-1} aria-busy={pending}>
+        <div ref={body} id="project-backpack-items" className="project-backpack__body" tabIndex={-1} aria-busy={pending}
+            role="tabpanel" aria-labelledby={`project-backpack-tab-${kind}`}>
             {!props.userId && auth.hasIdentity() && <button className="project-backpack__button project-backpack__sign-in"
                 type="button" onClick={props.onSignIn}>{lf("Sign in to save your backpack across browsers.")}</button>}
             <div role="status">
                 {message && <p>{message}</p>}
                 {warning && warning !== displayedError && <p>{warning}</p>}
                 {!ready && !pending && !!items.length && <p>{lf("Some snippets could not be loaded. Retry to search the complete backpack.")}</p>}
-                {ready && !!items.length && !!query.trim() && <p>{filteredItems.length
-                    ? lf("{0} of {1} snippets", filteredItems.length, items.length)
+                {ready && !!categoryCount && !!query.trim() && <p>{filteredItems.length
+                    ? lf("{0} of {1} snippets", filteredItems.length, categoryCount)
                     : lf("No matching snippets.")}</p>}
             </div>
             {displayedError && !modalOpen && <>
@@ -234,9 +312,11 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                     onClick={() => { focusAfter.current = {}; void refresh(); }}>{lf("Retry")}</button>}
             </>}
             {!canImport && <p id="project-backpack-import-reason">{importReason}</p>}
-            {ready && !items.length && <div className="project-backpack__empty">
-                <p>{lf("Your backpack is empty.")}</p>
-                <p>{lf("Right-click or hold a block container and choose Add to Backpack, or drag blocks over the Backpack bubble, then drop them into the backpack.")}</p>
+            {ready && !categoryCount && <div className="project-backpack__empty">
+                <p>{!items.length ? lf("Your backpack is empty.") : kind === "asset" ? lf("No saved assets.") : lf("No saved code.")}</p>
+                <p>{kind === "asset"
+                    ? lf("Right-click or drag an image, animation, tilemap or music asset block into Backpack to save it here.")
+                    : lf("Right-click or hold a block container and choose Add to Backpack, or drag blocks over the Backpack bubble, then drop them into the backpack.")}</p>
             </div>}
             {!!filteredItems.length && <ul className="project-backpack__list" aria-label={lf("Backpack snippets")}>
                 {filteredItems.map(entry => {
@@ -254,9 +334,10 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             <h3 className="project-backpack__name">{entry.name}</h3>
                             <div className="project-backpack__item-actions">
                                 {item && <button className="project-backpack__button project-backpack__icon-button project-backpack__rename"
-                                    type="button" disabled={pending} title={lf("Rename {0}", entry.name)}
-                                    aria-label={lf("Rename {0}", entry.name)} aria-haspopup="dialog"
-                                    onClick={() => beginEdit(entry, "rename")}>
+                                    type="button" disabled={pending || item.kind === "asset" && !canImport}
+                                    title={item.kind === "asset" ? lf("Edit {0}", entry.name) : lf("Rename {0}", entry.name)}
+                                    aria-label={item.kind === "asset" ? lf("Edit {0}", entry.name) : lf("Rename {0}", entry.name)} aria-haspopup="dialog"
+                                    onClick={() => item.kind === "asset" ? void editAsset(entry) : beginEdit(entry, "rename")}>
                                     <i className="icon pencil" aria-hidden="true" />
                                 </button>}
                                 <button className="project-backpack__button project-backpack__icon-button project-backpack__delete"
@@ -276,7 +357,9 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             className="project-backpack__button project-backpack__sync" type="button" disabled={pending}
                             onClick={() => void run(() => backpack.retryBackpackEntryAsync(entry))}>{lf("Retry sync")}</button>}
                         {item && <>
-                            <BackpackPreview entry={entry} active={props.active} />
+                            <BackpackPreview entry={entry} active={props.active}
+                                onDragStart={canImport && !pending && !modalOpen ? event => startDrag(event, entry) : undefined}
+                                onDragEnd={() => { dragged.current = undefined; }} />
                             {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
                                 {lf("Uses project-defined blocks from {0}. Their source code is not included.",
                                     Array.from(new Set(Object.values(item.projectBlocks))).join(", "))}
@@ -292,16 +375,28 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                                 })}</ul>
                             </div>}
                             <div className="project-backpack__actions">
-                                <button className="project-backpack__button project-backpack__add" type="button" disabled={pending || !canImport}
+                                <button className="project-backpack__button project-backpack__icon-button project-backpack__add" type="button" disabled={pending || !canImport}
                                     aria-label={lf("Add {0} to project", item.name)} aria-describedby={!canImport ? "project-backpack-import-reason" : undefined}
-                                    onClick={() => void addItem(entry)}>{lf("Add to project")}</button>
+                                    title={lf("Add to project")} onClick={() => void addItem(entry)}>
+                                    <i className="icon plus" aria-hidden="true" />
+                                </button>
                             </div>
                         </>}
                     </li>;
                 })}
             </ul>}
         </div>
-        {modalOpen && <Modal title={edit.kind === "rename" ? lf("Rename snippet") : lf("Delete snippet?")}
+        {assetEdit && props.active && <BackpackAssetEditDialog item={assetEdit.item} context={assetEdit.context}
+            onClose={closeAssetEdit} onSave={async item => {
+                if (!isCurrent() || !backpack.canImportBackpack(props.headerId)) {
+                    throw new Error(lf("Your project or account changed. Close the asset editor and try again."));
+                }
+                await backpack.saveBackpackAssetAsync(assetEdit.entry, item);
+                if (!isCurrent()) return;
+                setContents(readItems());
+                closeAssetEdit();
+            }} />}
+        {modalOpen && editedItem && <Modal title={edit.kind === "rename" ? lf("Rename snippet") : lf("Delete snippet?")}
             className={`project-backpack__${edit.kind}-modal`}
             ariaDescribedBy={edit.kind === "delete" ? "project-backpack-delete-description" : undefined}
             onClose={cancelEdit} hideDismissButton={pending}

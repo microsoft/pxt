@@ -2,7 +2,7 @@ import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 import * as core from "./core";
 import * as pkg from "./package";
-import { validateBackpackItem } from "./backpack";
+import { validateBackpackRequirements } from "./backpack";
 
 export interface BlockSnippetRequirements {
     dependencies: pxt.Map<string>;
@@ -125,10 +125,7 @@ function validateRequirements(value: unknown): BlockSnippetRequirements {
         } else portable[name] = version;
     }
     try {
-        const saved = validateBackpackItem({
-            id: "00000000-0000-4000-8000-000000000000", name: "Snippet", code: "", blockText: "", createdAt: 0,
-            dependencies: portable, projectBlocks: value.projectBlocks
-        });
+        const saved = validateBackpackRequirements({ dependencies: portable, projectBlocks: value.projectBlocks });
         for (const name of Object.keys(local)) saved.dependencies[name] = local[name];
         return { dependencies: saved.dependencies, projectBlocks: saved.projectBlocks };
     } catch {

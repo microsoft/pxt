@@ -27,17 +27,27 @@ wait for saves/sync before closing or switching devices.
 
 ## Backpack
 
+Requires `appTheme.backpack` and sign-in support; hidden during tutorials and in
+offline apps. Guests can use it without signing in when sign-in is available.
+
 In an editable Blocks project, use **Add to Backpack** on an event, loop, if block
 or function definition, or drag it onto Backpack. This copies its contents,
 referenced Blockly functions and assets—not following siblings or the originals.
+Standalone image, animation, tilemap and music blocks go to **Assets** instead of
+**Code**. Limits are 50 code captures and 200 assets per target, with a shared
+50 MiB account cap. Assets do not store PNG previews.
 
 Guests save in this browser; signing in syncs captures across browsers. Search
 matches names, contained blocks, parameters and extensions. Rename is optional.
-**Add to project** asks permission before installing missing extensions and inserts
-the capture as one undo group. Custom TypeScript source is not included: copy the
-required files or publish an extension if the destination lacks those blocks.
+The **+** button or dragging a preview into the workspace asks permission before
+installing missing extensions and inserts the capture as one undo group. Custom
+TypeScript source is not included: copy the required files or publish an extension
+if the destination lacks those blocks.
 Ordinary clipboard paste uses the same dependency checks while retaining normal
 Blockly copy/cut/paste behavior.
+The pencil renames code captures; for assets it opens the native editor in an
+isolated dialog. **Save** updates Backpack, not project assets; **Cancel** discards
+changes. Captures store target/PXT versions and warn before cross-version imports.
 
 Failed uploads retain a local copy with **Retry sync**. After 24 hours, add that
 copy to a project and capture it again. Invalid entries remain trashable.

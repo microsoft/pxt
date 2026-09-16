@@ -7,6 +7,7 @@ import * as ReactDOM from "react-dom";
 import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
 import { IFrameEmbeddedClient } from "../../pxtservices/iframeEmbeddedClient";
+import { BackpackAssetEditor } from "./backpackAssetEditor";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -33,6 +34,11 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     protected galleryTiles: any[];
     protected lastValue: pxt.Asset;
     protected iframeClient: IFrameEmbeddedClient;
+    private backpack: BackpackAssetEditor;
+    private backpackMode = false;
+    private backpackInfo: pxtc.BlocksInfo;
+    private originalTheme: pxt.AppTheme;
+    private messageQueue: Promise<void> = Promise.resolve();
 
     constructor(props: {}) {
         super(props);
@@ -44,8 +50,50 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
     handleMessage = (msg: MessageEvent) => {
         const request = msg.data as pxt.editor.AssetEditorRequest;
+        if (!request || !["create", "open", "duplicate", "save", "open-backpack", "save-backpack"].includes(request.type)) return;
+        this.messageQueue = this.messageQueue.then(() => this.handleRequest(request)).catch(() => {
+            this.sendResponse({ id: request.id, type: request.type, success: false,
+                error: lf("Unable to edit this asset. Close the editor and try again.") });
+        });
+    }
 
+    private async handleRequest(request: pxt.editor.AssetEditorRequest): Promise<void> {
+        if (request.type !== "save" && request.type !== "save-backpack") {
+            await new Promise<void>(resolve => this.setState({ editing: undefined }, resolve));
+            this.backpack?.dispose();
+            this.backpack = undefined;
+            if (this.originalTheme) pxt.appTarget.appTheme = this.originalTheme;
+            this.originalTheme = undefined;
+            this.backpackMode = request.type === "open-backpack";
+            this.lastValue = undefined;
+        }
         switch (request.type) {
+            case "open-backpack":
+                this.setPalette(request.palette);
+                pxt.react.getTilemapProject = () => this.editorProject;
+                this.editorProject = new pxt.TilemapProject();
+                this.backpackInfo = request.blocksInfo;
+                this.originalTheme = pxt.appTarget.appTheme;
+                pxt.appTarget.appTheme = { ...pxt.appTarget.appTheme, assetEditor: true, songEditor: true };
+                this.backpack = new BackpackAssetEditor(this.editorProject);
+                try {
+                    const editing = await this.backpack.open(request);
+                    // Use the native BlocksInfo gallery, whose entries include category tags.
+                    this.galleryTiles = undefined;
+                    await new Promise<void>(resolve => this.setState({ editing, isEmptyAsset: false }, resolve));
+                }
+                catch (e) {
+                    this.backpack.dispose();
+                    this.backpack = undefined;
+                    throw e;
+                }
+                this.sendResponse({ id: request.id, type: request.type });
+                break;
+            case "save-backpack":
+                if (!this.backpackMode || !this.backpack) throw new Error("No Backpack asset is open");
+                this.sendResponse({ id: request.id, type: request.type,
+                    ...this.backpack.save(this.state.editing ? this.editor.getValue() : undefined) });
+                break;
             case "create":
                 this.setPalette(request.palette);
                 this.initTilemapProject(request.files);
@@ -89,6 +137,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 break;
             case "save":
+                if (this.backpackMode) throw new Error("Backpack assets cannot save project files");
                 this.sendResponse({
                     id: request.id,
                     type: request.type,
@@ -104,11 +153,16 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         this.editor.init(this.state.editing, () => {}, {
             galleryTiles: this.galleryTiles,
             hideMyAssets: true,
-            hideCloseButton: true
+            hideCloseButton: true,
+            blocksInfo: this.backpackMode ? this.backpackInfo : undefined
         })
     }
 
     handleKeydown = (e: KeyboardEvent) => {
+        if (this.backpackMode) {
+            if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") e.preventDefault();
+            return;
+        }
         if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
             this.sendSaveRequest();
         }
@@ -131,16 +185,19 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     componentWillUnmount() {
+        this.backpack?.dispose();
+        this.iframeClient?.dispose();
         window.removeEventListener("message", this.handleMessage, null);
         window.removeEventListener("keydown", this.handleKeydown, null);
         window.clearInterval(this.pollingInterval);
     }
 
     pollForUpdates = () => {
-        if (this.state.editing) this.updateAsset();
+        if (!this.backpackMode && this.state.editing) this.updateAsset();
     }
 
     componentDidUpdate(prevProps: Readonly<{}>, prevState: Readonly<AssetEditorState>, snapshot?: any): void {
+        if (this.backpackMode) return;
         if (!!prevState?.editing && prevState.editing !== this.state.editing) {
             this.saveProject.removeChangeListener(
                 prevState.editing.type,
@@ -156,6 +213,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     sendSaveRequest = () => {
+        if (this.backpackMode) return;
         this.sendEvent({
             type: "event",
             kind: "done-clicked"
@@ -179,7 +237,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     protected sendResponse(response: pxt.editor.AssetEditorResponse) {
-        this.postMessage(response);
+        this.postMessage({ success: true, ...response });
     }
 
     protected sendEvent(event: pxt.editor.AssetEditorEvent) {

@@ -11,6 +11,8 @@ const { launchTestBrowser } = require("./browser");
 const root = path.resolve(__dirname, "../..");
 const lf = (text, ...args) => text.replace(/\{(\d+)\}/g, (_, index) => args[index]);
 const pxt = { reportException: error => { throw error; }, warn: () => {}, U: { assert } };
+const assetTypes = ["image_picker", "animation_editor", "music_song_field_editor"];
+pxt.auth = { isBackpackAssetType: type => assetTypes.includes(type) };
 const source = relative => ts.transpileModule(fs.readFileSync(path.join(root, relative), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2017 }
 }).outputText;
@@ -76,6 +78,7 @@ class AssetField extends Blockly.Field {
 Blockly.Blocks.backpack_test_asset = {
     init() { this.appendDummyInput().appendField(new AssetField(), "ASSET"); this.setOutput(true); }
 };
+for (const type of assetTypes) Blockly.Blocks[type] = Blockly.Blocks.backpack_test_asset;
 
 const append = (workspace, state) => Blockly.serialization.blocks.append(state, workspace);
 const container = body => ({ type: "backpack_test_container", inputs: body ? { BODY: { block: body } } : {} });
@@ -111,6 +114,29 @@ describe("Backpack block serialization (current source, installed Blockly)", () 
         sourceWorkspace.options.readOnly = true; assert(!backpack.isBackpackContainer(block));
         sourceWorkspace.options.readOnly = false;
         block.dispose(); assert(!backpack.isBackpackContainer(block));
+    });
+
+    it("copies literal image, animation and music shadows without detaching or changing their source", () => {
+        for (const type of assetTypes) {
+            const parent = append(sourceWorkspace, { ...container(), inputs: { VALUE: { shadow: { type } } } });
+            const shadow = parent.getInputTargetBlock("VALUE");
+            const before = Blockly.serialization.workspaces.save(sourceWorkspace);
+            assert(shadow.isShadow() && backpack.isBackpackBlock(shadow));
+            const { code } = backpack.captureBackpackBlock(shadow);
+            assert.equal(JSON.parse(code).blocks[0].type, type);
+            assert(code.includes("FULL_ASSET"));
+            const pasted = backpack.pasteBackpackBlock(code, destination);
+            assert(backpack.isBackpackBlock(pasted) && !pasted.isShadow());
+            assert.deepStrictEqual(pasted.getField("ASSET").loaded, { id: "asset-id", pixels: "FULL_ASSET" });
+            assert.strictEqual(parent.getInputTargetBlock("VALUE"), shadow);
+            assert.deepStrictEqual(Blockly.serialization.workspaces.save(sourceWorkspace), before);
+            assert.equal(JSON.parse(backpack.captureBackpackBlock(parent).code).blocks[0].type, "backpack_test_container");
+        }
+        for (const type of ["math_number", "backpack_test_asset", "backpack_test_statement"]) {
+            const block = append(sourceWorkspace, { type });
+            assert(!backpack.isBackpackBlock(block));
+            assert.throws(() => backpack.captureBackpackBlock(block), /Choose an editable/);
+        }
     });
 
     it("preserves if mutations, full variable state, and full asset field state", () => {
@@ -334,10 +360,11 @@ describe("Backpack native drag targets (current source, real browser Blockly)", 
         await page.addScriptTag({ path: path.join(blocklyDirectory, "blockly_compressed.js") });
         await page.addScriptTag({ path: path.join(blocklyDirectory, "blocks_compressed.js") });
         await page.addScriptTag({ path: path.join(blocklyDirectory, "msg/en.js") });
-        await page.evaluate(({ constants, backpackSource, draggerSource }) => {
+        await page.evaluate(({ constants, backpackSource, draggerSource, assetTypes }) => {
             window.lf = text => text;
             window.errors = [];
             window.pxt = { reportException: error => errors.push(String(error)), BrowserUtils: { addClass() {}, removeClass() {} } };
+            pxt.auth = { isBackpackAssetType: type => assetTypes.includes(type) };
             const run = (code, dependencies) => {
                 const exports = {};
                 new Function("require", "exports", code)(id => dependencies[id], exports);
@@ -382,7 +409,7 @@ describe("Backpack native drag targets (current source, real browser Blockly)", 
                 const timers = Array.from(dwellTimers.values()); dwellTimers.clear(); timers.forEach(timer => timer());
             };
         }, { constants: source("pxtblocks/plugins/functions/constants.ts"), backpackSource: source("pxtblocks/backpack.ts"),
-            draggerSource: source("pxtblocks/blockDragger.ts") });
+            draggerSource: source("pxtblocks/blockDragger.ts"), assetTypes });
     });
     afterEach(async () => {
         if (!page) return;

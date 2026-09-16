@@ -94,6 +94,7 @@ describe("named private whiteboards", function () {
             Object.assign(whiteboardTest, {
                 backpackMounts: 0, signInRequests: 0, openRequests: [],
                 backpack: {
+                    isBackpackEnabled: () => true,
                     subscribeBackpackOpen: listener => {
                         openListeners.add(listener);
                         return () => openListeners.delete(listener);

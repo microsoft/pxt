@@ -1,9 +1,15 @@
 export const MAX_BACKPACK_ITEMS = 50;
+export const MAX_BACKPACK_ASSETS = 200;
 export const MAX_BACKPACK_NAME_LENGTH = 100;
 export const MAX_BACKPACK_CODE_LENGTH = 524288;
 export const MAX_BACKPACK_DATA_LENGTH = 1048576;
 // Keep capture's existing conservative PNG budget; the API accepts 128 KiB binary.
 export const MAX_BACKPACK_PREVIEW_LENGTH = 64000;
+
+/** Signed-out guests are supported; environments without sign-in are not. */
+export function isBackpackEnabled(): boolean {
+    return !!pxt.appTarget?.appTheme?.backpack && pxt.auth.hasIdentity();
+}
 
 /** Individual durable records. Namespace and key are literal IndexedDB key components. */
 export interface BackpackLocalRecord {
@@ -131,6 +137,9 @@ export interface BackpackEntry {
 export interface BackpackSummary {
     id: string;
     name: string;
+    kind?: pxt.auth.BackpackKind;
+    /** Invalid recovery summaries may lack capture metadata. */
+    versions?: pxt.auth.BackpackVersions;
     blockText: string;
     blockTypes: string[];
     searchText?: string[];
@@ -149,6 +158,8 @@ export interface BackpackSummary {
 
 export interface BackpackLimits {
     maxItems: number;
+    maxAssets: number;
+    maxAssetCodeBytes: number;
     maxCodeBytes: number;
     maxMetadataBytes: number;
     maxPreviewBytes: number;
@@ -161,7 +172,7 @@ export interface BackpackState {
     entries: BackpackEntry[];
     warning?: string;
     complete?: boolean;
-    usage?: { count: number; bytes: number };
+    usage?: { count: number; codeCount: number; assetCount: number; bytes: number };
     limits?: BackpackLimits;
 }
 
@@ -175,7 +186,7 @@ const listeners = new Set<() => void>();
 const own = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
 const safeKey = (key: string): boolean => !["__proto__", "constructor", "prototype"].includes(key);
 
-const DEFAULT_LIMITS: BackpackLimits = { maxItems: 50, maxCodeBytes: 524288, maxMetadataBytes: 65536,
+const DEFAULT_LIMITS: BackpackLimits = { maxItems: 50, maxAssets: 200, maxAssetCodeBytes: 131072, maxCodeBytes: 524288, maxMetadataBytes: 65536,
     maxPreviewBytes: 131072, maxRequestBytes: 1048576, maxTotalBytes: 52428800, maxPageBytes: 1048576 };
 const validCount = (value: unknown): boolean => typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 function utf8Length(value: string): number {
@@ -209,6 +220,15 @@ function validateName(name: unknown): asserts name is string {
     }
 }
 
+function validateVersions(value: unknown): pxt.auth.BackpackVersions {
+    if (!isRecord(value) || Object.keys(value).length !== 2 || !own(value, "target") || !own(value, "pxt")
+        || Object.values(value).some(version => typeof version !== "string" || version.length > 100
+            || !/^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version))) {
+        throw new Error(lf("This backpack item has invalid editor version information."));
+    }
+    return { target: value.target as string, pxt: value.pxt as string };
+}
+
 function portableDependency(name: string, version: string): boolean {
     if (version === "*") return !!pxt.appTarget?.bundledpkgs && own(pxt.appTarget.bundledpkgs, name);
     if (/^pub:[A-Za-z0-9_][A-Za-z0-9_-]{0,127}$/.test(version)) return true;
@@ -223,8 +243,20 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     if (!isRecord(value)) throw new Error(lf("Invalid backpack item."));
     validateId(value.id);
     validateName(value.name);
-    if (typeof value.code !== "string" || utf8Length(value.code) > MAX_BACKPACK_CODE_LENGTH) {
-        throw new Error(lf("Backpack code must be text of at most {0} UTF-8 bytes.", MAX_BACKPACK_CODE_LENGTH));
+    if (value.kind !== "code" && value.kind !== "asset") throw new Error(lf("Invalid backpack item kind."));
+    const versions = validateVersions(value.versions);
+    const maxCodeBytes = value.kind === "asset" ? DEFAULT_LIMITS.maxAssetCodeBytes : MAX_BACKPACK_CODE_LENGTH;
+    if (typeof value.code !== "string" || utf8Length(value.code) > maxCodeBytes) {
+        throw new Error(lf("Backpack code must be text of at most {0} UTF-8 bytes.", maxCodeBytes));
+    }
+    const payload: unknown = pxt.Util.jsonTryParse(value.code);
+    const blocks = isRecord(payload) && Array.isArray(payload.blocks) ? payload.blocks : [];
+    const root = blocks[blocks.length - 1];
+    const asset = isRecord(root) && typeof root.type === "string" && pxt.auth.isBackpackAssetType(root.type);
+    if ((value.kind === "asset") !== asset || asset && (blocks.length !== 1 || own(root, "next")
+        || root.inputs !== undefined && (!isRecord(root.inputs) || !!Object.keys(root.inputs).length)
+        || own(value, "previewUri") || own(value, "previewPixelDensity"))) {
+        throw new Error(lf("Invalid standalone backpack asset."));
     }
     if (typeof value.blockText !== "string" || value.blockText.length > 100000) {
         throw new Error(lf("Backpack block text must be text of at most {0} characters.", 100000));
@@ -232,7 +264,7 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     if (typeof value.createdAt !== "number" || !Number.isFinite(value.createdAt) || value.createdAt < 0) {
         throw new Error(lf("Invalid backpack creation time."));
     }
-    const metadata = validateMetadata(value);
+    const metadata = validateBackpackRequirements(value);
     if (value.previewUri !== undefined && (typeof value.previewUri !== "string"
         || value.previewUri.length > 22 + 4 * Math.ceil(DEFAULT_LIMITS.maxPreviewBytes / 3)
         || !/^data:image\/png;base64,iVBORw0KGgo[A-Za-z0-9+/]*={0,2}$/.test(value.previewUri)
@@ -244,7 +276,8 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
         throw new Error(lf("Invalid backpack preview pixel density."));
     }
     const result: pxt.auth.BackpackItem = {
-        id: value.id, name: value.name, code: value.code, blockText: value.blockText, ...metadata, createdAt: value.createdAt
+        id: value.id, name: value.name, kind: value.kind, versions,
+        code: value.code, blockText: value.blockText, ...metadata, createdAt: value.createdAt
     };
     if (typeof value.previewUri === "string") {
         const base64 = value.previewUri.slice(22);
@@ -257,7 +290,8 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     return result;
 }
 
-function validateMetadata(value: pxt.Map<unknown>): { dependencies: pxt.Map<string>; projectBlocks?: pxt.Map<string> } {
+/** Shared dependency/source policy, independent of a capture's code and editor version. */
+export function validateBackpackRequirements(value: pxt.Map<unknown>): { dependencies: pxt.Map<string>; projectBlocks?: pxt.Map<string> } {
     if (!isRecord(value.dependencies) || Object.keys(value.dependencies).length > 100) {
         throw new Error(lf("Invalid backpack dependencies (maximum 100 packages)."));
     }
@@ -297,7 +331,7 @@ function activeIdentity(): Identity | undefined {
     const client = signedIn ? pxt.auth.client() : undefined;
     const userId = pxt.auth.cachedUserState?.profile?.id;
     // A partially loaded signed-in session must not write to the guest backpack.
-    if (!targetId || !safeKey(targetId) || signedIn && (!client || !userId)) {
+    if (!isBackpackEnabled() || !targetId || !safeKey(targetId) || signedIn && (!client || !userId)) {
         if (lastIdentity) identityGeneration++;
         lastIdentity = undefined;
         return undefined;
@@ -507,9 +541,11 @@ export function readBackpackSummary(value: unknown): BackpackEntry {
             || value.previewPixelDensity !== undefined && (!value.hasPreview || ![1, 1.5, 2].includes(value.previewPixelDensity as number))) {
             throw new Error();
         }
-        const metadata = validateMetadata(value);
+        const metadata = validateBackpackRequirements(value);
+        if (value.kind !== "code" && value.kind !== "asset") throw new Error();
+        const versions = validateVersions(value.versions);
         const summary: BackpackSummary = {
-            id: value.id, name: value.name, blockText: value.blockText,
+            id: value.id, name: value.name, kind: value.kind, versions, blockText: value.blockText,
             blockTypes: value.blockTypes.slice() as string[], ...metadata,
             ...(value.searchText === undefined ? {} : { searchText: (value.searchText as string[]).slice() }),
             ...(value.functionCount === undefined ? {} : { functionCount: value.functionCount as number }),
@@ -635,7 +671,8 @@ export function refreshBackpackAsync(): Promise<void> {
             do {
                 const page = await requestAsync(context, `/api/user/backpack?limit=50${cursor ? `&cursor=${encodeURIComponent(cursor)}` : ""}`);
                 if (!isRecord(page) || !Array.isArray(page.entries) || page.entries.length > 50
-                    || !isRecord(page.usage) || !validCount(page.usage.count) || !validCount(page.usage.bytes)
+                    || !isRecord(page.usage) || ![page.usage.count, page.usage.codeCount, page.usage.assetCount, page.usage.bytes].every(validCount)
+                    || page.usage.count !== (page.usage.codeCount as number) + (page.usage.assetCount as number)
                     || !isRecord(page.limits) || Object.keys(DEFAULT_LIMITS).some(key => !validCount((page.limits as pxt.Map<unknown>)[key]))) {
                     throw new BackpackRequestError(undefined);
                 }
@@ -643,7 +680,8 @@ export function refreshBackpackAsync(): Promise<void> {
                     const entry = readBackpackSummary(value);
                     cloud.set(entry.id, entry);
                 }
-                usage = { count: page.usage.count as number, bytes: page.usage.bytes as number };
+                usage = { count: page.usage.count as number, codeCount: page.usage.codeCount as number,
+                    assetCount: page.usage.assetCount as number, bytes: page.usage.bytes as number };
                 limits = page.limits as unknown as BackpackLimits;
                 if (page.cursor !== undefined && (typeof page.cursor !== "string" || !page.cursor || page.cursor.length > 2048
                     || cursors.has(page.cursor) || cursors.size >= 100)) throw new BackpackRequestError("backpack_invalid_cursor");
@@ -677,7 +715,8 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
     const validated = validateBackpackItem(item);
     // Import validation retains the existing capture bound. New creates must also
     // fit the dedicated service's UTF-8 metadata budget before any persistence.
-    if (utf8Length(JSON.stringify({ id: validated.id, name: validated.name, blockText: validated.blockText,
+    if (utf8Length(JSON.stringify({ id: validated.id, name: validated.name, kind: validated.kind,
+        versions: validated.versions, blockText: validated.blockText,
         dependencies: validated.dependencies, projectBlocks: validated.projectBlocks,
         createdAt: validated.createdAt })) > DEFAULT_LIMITS.maxMetadataBytes) throw new BackpackRequestError("backpack_entry_too_large");
     return enqueue(async context => {
@@ -689,7 +728,12 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
         }
         const payload = JSON.stringify(validated);
         if (previous && previous.payload !== payload && previous.firstAttemptAt) throw new BackpackRequestError("backpack_id_conflict");
-        if (!previous && records.length >= MAX_BACKPACK_ITEMS) throw new BackpackRequestError("backpack_quota_exceeded");
+        const categoryCount = records.filter(record => (localEntry(record).item?.kind || "code") === validated.kind).length;
+        if (!previous && categoryCount >= (validated.kind === "asset" ? MAX_BACKPACK_ASSETS : MAX_BACKPACK_ITEMS)) {
+            throw new BackpackRequestError("backpack_quota_exceeded");
+        }
+        const totalBytes = records.reduce((sum, record) => sum + (record.key === validated.id ? 0 : utf8Length(record.payload)), utf8Length(payload));
+        if (totalBytes > DEFAULT_LIMITS.maxTotalBytes) throw new BackpackRequestError("backpack_quota_exceeded");
         const next: BackpackLocalRecord = { ...previous, namespace: namespace(context), key: validated.id, payload,
             ...(context.kind === "cloud" ? { owner: context.userId } : {}) };
         if (!await localStorage().changeAsync(next.namespace, next.key, previous, next)) throw new BackpackRequestError("backpack_version_conflict");
@@ -774,12 +818,12 @@ export function subscribeBackpack(listener: () => void): () => void {
     return () => { listeners.delete(listener); };
 }
 
-export type BackpackOpenRequest = { headerId: string; focus: boolean };
+export type BackpackOpenRequest = { headerId: string; focus: boolean; kind?: pxt.auth.BackpackKind };
 const openListeners = new Set<(request: BackpackOpenRequest) => void>();
 
-export function requestBackpackOpen(headerId: string, focus: boolean): void {
+export function requestBackpackOpen(headerId: string, focus: boolean, kind?: pxt.auth.BackpackKind): void {
     for (const listener of Array.from(openListeners)) {
-        try { listener({ headerId, focus }); } catch { /* Observers must not break other subscribers. */ }
+        try { listener({ headerId, focus, kind }); } catch { /* Observers must not break other subscribers. */ }
     }
 }
 
@@ -791,7 +835,21 @@ export function subscribeBackpackOpen(listener: (request: BackpackOpenRequest) =
 export interface BackpackEditor {
     headerId: () => string;
     canImport: () => boolean;
-    importAsync: (item: pxt.auth.BackpackItem) => Promise<boolean>;
+    canDrop: (target: EventTarget) => boolean;
+    assetEditorContext: () => BackpackAssetEditorContext;
+    importAsync: (item: pxt.auth.BackpackItem, position?: BackpackImportPosition) => Promise<boolean>;
+}
+
+export interface BackpackAssetEditorContext {
+    blocksInfo: pxtc.BlocksInfo;
+    gallery: pxt.AssetSnapshot;
+    palette: string[];
+}
+
+/** Browser client coordinates, resolved against the workspace after any extension reload. */
+export interface BackpackImportPosition {
+    x: number;
+    y: number;
 }
 
 let registeredEditor: { editor: BackpackEditor };
@@ -812,6 +870,15 @@ export function canImportBackpack(headerId: string): boolean {
     return !!activeIdentity() && !!headerId && !!editor && editor.headerId() === headerId && editor.canImport();
 }
 
+export function canDropBackpack(headerId: string, target: EventTarget): boolean {
+    return canImportBackpack(headerId) && registeredEditor.editor.canDrop(target);
+}
+
+export function getBackpackAssetEditorContext(headerId: string): BackpackAssetEditorContext {
+    if (!canImportBackpack(headerId)) throw new Error(lf("Open an editable Blocks project to edit this asset."));
+    return registeredEditor.editor.assetEditorContext();
+}
+
 export async function importBackpackItemAsync(item: pxt.auth.BackpackItem, headerId: string): Promise<boolean> {
     const validated = validateBackpackItem(item);
     const registration = registeredEditor;
@@ -825,8 +892,8 @@ export async function importBackpackItemAsync(item: pxt.auth.BackpackItem, heade
     return added;
 }
 
-/** Only Add downloads code. A failed content read flags this card until refresh. */
-export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: string): Promise<boolean> {
+/** Add and preview drop share the same guarded import path. */
+export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: string, position?: BackpackImportPosition): Promise<boolean> {
     const saved = observed(entry);
     if (saved.error) throw new BackpackRequestError("backpack_invalid_entry");
     const context = await captureAsync();
@@ -834,6 +901,18 @@ export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: s
     if (!registration || !canImportBackpack(headerId)) {
         throw new Error(lf("Open a compatible project editor to import this backpack item."));
     }
+    const item = await readItemAsync(saved, context);
+    if (registeredEditor !== registration || !canImportBackpack(headerId)) {
+        throw new Error(lf("Open a compatible project editor to import this backpack item."));
+    }
+    // Do not recapture a potentially different identity between fetching and import.
+    const added = await registration.editor.importAsync(item, position);
+    await verifyAsync(context);
+    return added;
+}
+
+/** Fetch code on explicit Add or Edit, never while listing or searching. */
+async function readItemAsync(saved: BackpackEntry, context: OperationContext): Promise<pxt.auth.BackpackItem> {
     let item = saved.item;
     if (saved.source === "cloud") {
         if (context.kind !== "cloud") throw new BackpackRequestError(undefined);
@@ -845,6 +924,7 @@ export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: s
             if (content.version !== saved.summary.version) throw new BackpackRequestError("backpack_version_conflict");
             const summary = saved.summary;
             item = validateBackpackItem({ id: summary.id, name: summary.name, code: content.code,
+                kind: summary.kind, versions: summary.versions,
                 blockText: summary.blockText, dependencies: summary.dependencies, projectBlocks: summary.projectBlocks,
                 createdAt: summary.createdAt });
             // Reject missing/malformed serialized blocks without instantiating Blockly.
@@ -862,13 +942,38 @@ export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: s
         }
     }
     await verifyAsync(context);
-    if (registeredEditor !== registration || !canImportBackpack(headerId)) {
-        throw new Error(lf("Open a compatible project editor to import this backpack item."));
-    }
-    // Do not recapture a potentially different identity between fetching and import.
-    const added = await registration.editor.importAsync(validateBackpackItem(item));
-    await verifyAsync(context);
-    return added;
+    return validateBackpackItem(item);
+}
+
+export async function loadBackpackAssetAsync(entry: BackpackEntry): Promise<pxt.auth.BackpackItem> {
+    const saved = observed(entry);
+    if (saved.error || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
+    if (saved.local?.firstAttemptAt) throw new Error(lf("Retry syncing this asset before editing it."));
+    return readItemAsync(saved, await captureAsync());
+}
+
+/** Only assets can replace content. Code captures remain title-only edits. */
+export function saveBackpackAssetAsync(entry: BackpackEntry, item: pxt.auth.BackpackItem): Promise<void> {
+    const saved = observed(entry);
+    const edited = validateBackpackItem(item);
+    if (saved.error || edited.id !== saved.id || edited.kind !== "asset"
+        || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
+    return enqueue(async context => {
+        if (saved.source === "local") {
+            if (saved.local.firstAttemptAt) throw new Error(lf("Retry syncing this asset before editing it."));
+            const next = { ...saved.local, payload: JSON.stringify({ ...edited, createdAt: saved.item.createdAt }) };
+            const records = await localStorage().listAsync(saved.local.namespace);
+            await verifyAsync(context);
+            if (records.reduce((sum, record) => sum + utf8Length(record.key === saved.id ? next.payload : record.payload), 0)
+                > DEFAULT_LIMITS.maxTotalBytes) throw new BackpackRequestError("backpack_quota_exceeded");
+            if (!await changeLocalAsync(context, saved.local, next)) throw new BackpackRequestError("backpack_version_conflict");
+            upsert(context, localEntry(next));
+        } else {
+            if (context.kind !== "cloud") throw new BackpackRequestError(undefined);
+            const acknowledged = summaryAck(await requestAsync(context, `/api/user/backpack/${saved.id}`, "PATCH", edited, saved.summary.version), saved.id);
+            upsert(context, acknowledged);
+        }
+    });
 }
 
 /** Binary private preview. Caller owns cancellation and the returned Blob's object URL. */

@@ -4,14 +4,27 @@ import { BackpackEntry, getBackpackPreviewAsync } from "../backpack";
 export interface BackpackPreviewProps {
     entry: BackpackEntry;
     active: boolean;
+    onDragStart?: React.DragEventHandler<HTMLElement>;
+    onDragEnd?: React.DragEventHandler<HTMLElement>;
 }
 
 /** Fetch only visible cloud previews; never use a public/bare private image URL. */
-export function BackpackPreview({ entry, active }: BackpackPreviewProps): JSX.Element {
+export function BackpackPreview({ entry, active, onDragStart, onDragEnd }: BackpackPreviewProps): JSX.Element {
     const host = React.useRef<HTMLDivElement>();
     const [image, setImage] = React.useState<{ url: string; version: string }>();
     const [failed, setFailed] = React.useState(false);
     const localUri = entry.item?.previewUri;
+    const asset = (entry.item?.kind || entry.summary?.kind) === "asset";
+    const assetLabel = React.useMemo(() => {
+        if (!asset) return undefined;
+        let type = entry.summary?.blockTypes[0];
+        if (!type) {
+            try { type = JSON.parse(entry.item.code).blocks[0].type; }
+            catch { return lf("Asset"); }
+        }
+        return type.includes("animation") ? lf("Animation") : /music|melody/.test(type) ? lf("Music")
+            : type === "tiles_tilemap_editor" ? lf("Tilemap") : lf("Image");
+    }, [asset, entry.item?.code, entry.summary?.blockTypes]);
     const density = entry.item?.previewPixelDensity || entry.summary?.previewPixelDensity;
     const functionCount = React.useMemo(() => {
         if (entry.error) return 0;
@@ -56,8 +69,15 @@ export function BackpackPreview({ entry, active }: BackpackPreviewProps): JSX.El
     }, [active, entry.id, entry.source, entry.summary?.version, localUri, entry.error]);
     const uri = localUri || (active && image?.version === entry.summary?.version ? image?.url : undefined);
     return <div ref={host} style={{ minHeight: entry.summary?.hasPreview ? 1 : undefined }}>
+        {asset && <div className="project-backpack__asset" draggable={!!onDragStart}
+            onDragStart={onDragStart} onDragEnd={onDragEnd} title={onDragStart ? lf("Drag to add to project") : undefined}>
+            <i className={`icon ${assetLabel === lf("Music") ? "music" : "image"}`} aria-hidden="true" />
+            <span>{assetLabel}</span>
+        </div>}
         {uri && <img className="project-backpack__preview" src={density ? undefined : uri}
-            srcSet={density ? `${uri} ${density}x` : undefined} alt={lf("Blocks in {0}", entry.name)} />}
+            srcSet={density ? `${uri} ${density}x` : undefined} alt={lf("Blocks in {0}", entry.name)}
+            draggable={!!onDragStart} onDragStart={onDragStart} onDragEnd={onDragEnd}
+            title={onDragStart ? lf("Drag to add to project") : undefined} />}
         {failed && <p>{lf("Preview unavailable. You can still add this snippet.")}</p>}
         {functionCount > 0 && <p>{functionCount === 1
             ? lf("+ 1 other function") : lf("+ {0} other functions", functionCount)}</p>}

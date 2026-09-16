@@ -23,7 +23,8 @@ function fieldModules() {
             collect(path.posix.normalize(path.posix.join(path.posix.dirname(id), match[1])));
         }
     }
-    for (const id of ["fields/field_sprite", "fields/field_tilemap", "fields/field_procedure", "backpack"]) collect(id);
+    for (const id of ["fields/field_sprite", "fields/field_animation", "fields/field_musiceditor",
+        "fields/field_tilemap", "fields/field_procedure", "backpack"]) collect(id);
     return modules;
 }
 
@@ -74,6 +75,13 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
             load("fields/field_utils");
             const { FieldSpriteEditor } = load("fields/field_sprite");
             const { FieldTilemap } = load("fields/field_tilemap");
+            for (const [type, Field] of [["image_picker", FieldSpriteEditor],
+                ["animation_editor", load("fields/field_animation").FieldAnimationEditor],
+                ["music_song_field_editor", load("fields/field_musiceditor").FieldMusicEditor]]) {
+                Blockly.Blocks[type] = { init() {
+                    this.appendDummyInput().appendField(new Field("", {}), "ASSET"); this.setOutput(true);
+                } };
+            }
             window.FieldBase = load("fields/field_base").FieldBase;
             Blockly.Blocks.backpack_real_assets = {
                 init() {
@@ -284,10 +292,55 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
         assert.deepStrictEqual(result.errors, []);
     });
 
+    it("preserves named and temporary standalone image, animation and music data in fresh projects", async () => {
+        const result = await page.evaluate(async () => {
+            const pixels = bitmap(5, 7, 4), frames = [pixels, bitmap(5, 7, 9)];
+            const song = pxt.assets.music.getEmptySong(2);
+            song.beatsPerMinute = 137;
+            song.tracks[0].notes = [{ startTick: 0, endTick: 6, notes: [{ note: 28, enharmonicSpelling: 0 }] }];
+            const imageText = data => pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(data), "typescript");
+            const values = [
+                ["image_picker", () => project.createNewProjectImage(pixels, "standaloneImage"), imageText(pixels)],
+                ["animation_editor", () => project.createNewAnimationFromData(frames, 175, "standaloneAnimation"), `[${frames.map(imageText).join(",")}]`],
+                ["music_song_field_editor", () => project.createNewSong(song, "standaloneSong"), `hex\`${pxt.assets.music.encodeSongToHex(song)}\``]
+            ];
+            const data = asset => asset.type === "animation" ? { frames: asset.frames.map(bitmap => snapshot({ bitmap })), interval: asset.interval }
+                : asset.type === "song" ? pxt.assets.music.encodeSongToHex(asset.song) : snapshot(asset);
+            const captures = [];
+            for (const [type, create, literal] of values) for (const named of [true, false]) {
+                const block = Blockly.serialization.blocks.append({ type, fields: {
+                    ASSET: named ? pxt.getTSReferenceForAsset(create()) : literal
+                } }, workspace);
+                await settle();
+                const before = Blockly.serialization.workspaces.save(workspace);
+                const expected = data(block.getField("ASSET").getAsset());
+                const { code } = backpack.captureBackpackBlock(block);
+                const unchanged = JSON.stringify(before) === JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+                workspace.clear(); await settle();
+                window.project = new pxt.TilemapProject();
+                const pasted = backpack.pasteBackpackBlock(code, workspace);
+                await settle();
+                captures.push({ type, named, expected, actual: data(pasted.getField("ASSET").getAsset()), unchanged,
+                    temporary: pasted.getField("ASSET").isTemporaryAsset(), field: JSON.parse(code).blocks[0].fields.ASSET });
+                workspace.clear(); await settle();
+                window.project = new pxt.TilemapProject();
+            }
+            return { captures, errors };
+        });
+        assert.equal(result.captures.length, 6);
+        for (const capture of result.captures) {
+            assert(capture.unchanged, capture.type);
+            assert.strictEqual(capture.temporary, !capture.named, capture.type);
+            assert.equal(typeof capture.field, capture.named ? "object" : "string", capture.type);
+            assert.deepStrictEqual(capture.actual, capture.expected, capture.type);
+        }
+        assert.deepStrictEqual(result.errors, []);
+    });
+
     it("round-trips registered PXT procedure XML, transitive recursion, and colliding names without changing existing callers", async () => {
         const result = await page.evaluate(async () => {
             const ws = new Blockly.Workspace();
-            const destination = new Blockly.Workspace();
+            const destination = workspace;
             try {
                 const name = 'current & "Procedure"';
                 const definition = defineProcedure(ws, name);
@@ -301,7 +354,8 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 existing.getInput("STACK").connection.connect(destination.newBlock("controls_repeat_ext").previousConnection);
                 const existingCall = callProcedure(destination, name);
                 destination.getVariableMap().createVariable(name + "2");
-                await new Promise(resolve => setTimeout(resolve, 0));
+                destination.getAllBlocks(false).forEach(block => { block.initSvg(); block.render(); });
+                await settle();
                 const state = Blockly.serialization.blocks.save(call, { doFullSerialization: true, saveIds: false });
                 const code = backpack.captureBackpackBlock(root).code;
                 const before = JSON.stringify(Blockly.serialization.blocks.save(existing));
@@ -318,7 +372,9 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                     };
                     destination.addChangeListener(listener);
                 });
-                pasted = backpack.pasteBackpackBlock(code, destination);
+                pasted = backpack.pasteBackpackBlock(code, destination, new Blockly.utils.Coordinate(340, 260));
+                const position = pasted.getRelativeToSurfaceXY(), size = pasted.getHeightWidth();
+                const center = { x: position.x + size.width / 2, y: position.y + size.height / 2 };
                 await recorded;
                 const imported = destination.getTopBlocks(false).filter(block => block.type === "procedures_defnoreturn" && block !== existing);
                 const names = imported.map(block => block.getFieldValue("NAME"));
@@ -336,11 +392,11 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 destination.undo(true);
                 await new Promise(resolve => setTimeout(resolve, 0));
                 return { name, state, code, names, bodies, pastedState, pastedName, reserialized, definitionCode,
-                    before, after, sourceUnchanged, existingName: existingCall.getProcedureCall(),
+                    before, after, sourceUnchanged, center, existingName: existingCall.getProcedureCall(),
                     count, undoCount, redoCount: destination.getAllBlocks(false).length,
                     jsonHook: typeof call.saveExtraState, xmlHook: typeof call.mutationToDom, errors };
             }
-            finally { ws.dispose(); destination.dispose(); }
+            finally { ws.dispose(); }
         });
         assert.equal(result.xmlHook, "function");
         assert.equal(result.jsonHook, "undefined");
@@ -359,6 +415,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
         assert.equal(result.before, result.after);
         assert.equal(result.existingName, result.name);
         assert(result.sourceUnchanged);
+        assert.deepStrictEqual(result.center, { x: 340, y: 260 });
         assert.equal(result.undoCount, 3, "One undo removes only the imported procedure graph");
         assert.equal(result.redoCount, result.count);
         assert.deepStrictEqual(result.errors, []);
