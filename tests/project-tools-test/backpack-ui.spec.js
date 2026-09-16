@@ -226,12 +226,12 @@ describe("project backpack UI", function () {
                         return window.backpackValidation.readBackpackSummary({ id: item.id, name: item.name,
                             createdAt: item.createdAt, updatedAt: item.createdAt, version: '"v1"', status: "ready",
                             hasPreview: !!item.previewUri, previewPixelDensity: item.previewPixelDensity,
-                            blockTypes: [], blockText: item.blockText,
+                            blockTypes: [], blockText: item.blockText, functionCount: test.functionCount,
                             dependencies: item.dependencies, projectBlocks: item.projectBlocks });
                     }).concat(test.recovery
                         .filter(entry => !!test.user || entry.source === "local")
                         .map(entry => window.backpackValidation.readBackpackEntry(entry.id, entry.value, entry.source))),
-                    warning: test.warning
+                    warning: test.warning, complete: test.complete
                 }),
                 subscribeBackpack(listener) { listeners.add(listener); return () => listeners.delete(listener); },
                 notifyBackpackEditorChanged: () => test.notify(),
@@ -242,8 +242,6 @@ describe("project backpack UI", function () {
                     const response = await fetch(item.previewUri, { signal });
                     return response.blob();
                 },
-                async exportOldBackpackAsync() { test.legacyExports = (test.legacyExports || 0) + 1; return '{"old":true}'; },
-                async clearOldBackpackAsync() { test.legacyClears = (test.legacyClears || 0) + 1; },
                 async refreshBackpackAsync() {
                     const user = test.storeKey();
                     const fail = test.failRefresh;
@@ -545,7 +543,7 @@ describe("project backpack UI", function () {
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds), [{ item: snippet, headerId: "project" }]);
     });
 
-    it("displays high-density PNGs at their original CSS size and keeps them within narrow cards", async () => {
+    it("displays previews at their original CSS size and labels supporting functions, excluding the root", async () => {
         const previewUri = await page.evaluate(() => {
             const canvas = document.createElement("canvas");
             canvas.width = 400;
@@ -555,7 +553,10 @@ describe("project backpack UI", function () {
             context.fillRect(0, 0, canvas.width, canvas.height);
             return canvas.toDataURL("image/png");
         });
-        await loadGuest([{ ...item(), previewUri, previewPixelDensity: 2 }]);
+        const code = JSON.stringify({ blocks: [{ type: "procedures_defnoreturn" }, { type: "function_definition" }] });
+        await loadGuest([{ ...item(), code, previewUri, previewPixelDensity: 2 }]);
+        assert.ok(await page.$$eval(`${entry} p`, paragraphs => paragraphs.some(p => p.textContent === "+ 1 other function")));
+        assert.doesNotMatch(await text(), /\+ 2 other functions/);
         await page.$eval("img", image => image.decode());
         const metrics = await page.$eval("img", image => ({
             width: image.getBoundingClientRect().width, height: image.getBoundingClientRect().height,
@@ -567,6 +568,12 @@ describe("project backpack UI", function () {
         assert.strictEqual(metrics.alt, "Blocks in Jump");
         await page.evaluate(() => { document.getElementById("root").style.width = "180px"; });
         assert.strictEqual(await page.$eval("img", image => image.getBoundingClientRect().width <= image.parentElement.clientWidth), true);
+        // The note is still useful for captures without a preview.
+        await loadGuest([{ ...item(), code }]);
+        assert.strictEqual(await page.$("img"), null);
+        assert.ok(await page.$$eval(`${entry} p`, paragraphs => paragraphs.some(p => p.textContent === "+ 1 other function")));
+        await loadGuest([item()]);
+        assert.doesNotMatch(await text(), /other function/);
     });
 
     it("fetches cloud previews only on intersection and revokes URLs on account changes", async () => {
@@ -580,10 +587,12 @@ describe("project backpack UI", function () {
             backpackTest.urls = []; backpackTest.revoked = [];
             URL.createObjectURL = blob => { const url = create(blob); backpackTest.urls.push(url); return url; };
             URL.revokeObjectURL = url => { backpackTest.revoked.push(url); revoke(url); };
+            backpackTest.functionCount = 2;
         });
         await signIn([{ ...item(), previewPixelDensity: 2,
             previewUri: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=" }]);
         assert.equal(await page.evaluate(() => backpackTest.previewRequests || 0), 0);
+        assert.match(await text(), /\+ 2 other functions/);
         await page.evaluate(() => backpackTest.intersect([{ isIntersecting: true }]));
         await page.waitForSelector("img");
         await page.$eval("img", image => image.decode());
@@ -593,38 +602,6 @@ describe("project backpack UI", function () {
         await idle();
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.revoked), await page.evaluate(() => backpackTest.urls));
         assert.strictEqual(await page.$("img"), null);
-    });
-
-    it("exports old data only explicitly, cancels without clearing, and resets only old data", async () => {
-        await signIn([item()]);
-        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.legacyExports || 0, backpackTest.legacyClears || 0]), [0, 0]);
-        const legacy = 'button[aria-haspopup="dialog"]';
-        await page.evaluate(selector => Array.from(document.querySelectorAll(selector)).find(button => button.textContent === "Old Backpack data…").click(), legacy);
-        await page.waitForSelector(".common-modal-container");
-        assert.match(await page.$eval(".common-modal-container", element => element.textContent), /does not transfer.*permanently removes/s);
-        await page.evaluate(() => {
-            // Capture the browser download without navigating away from the harness.
-            const create = URL.createObjectURL.bind(URL);
-            URL.createObjectURL = blob => { backpackTest.exportBlob = blob; return create(blob); };
-            HTMLAnchorElement.prototype.click = function () { backpackTest.downloadName = this.download; };
-            Array.from(document.querySelectorAll(".common-modal-footer button"))
-                .find(button => button.textContent === "Export old data").click();
-        });
-        await idle();
-        assert.deepStrictEqual(await page.evaluate(async () => ({
-            exports: backpackTest.legacyExports, data: await backpackTest.exportBlob.text(), name: backpackTest.downloadName
-        })), { exports: 1, data: '{"old":true}', name: "old-backpack.json" });
-        await page.evaluate(() => Array.from(document.querySelectorAll(".common-modal-footer button"))
-            .find(button => button.textContent === "Cancel").click());
-        await modalClosed();
-        assert.equal(await page.evaluate(() => backpackTest.legacyClears || 0), 0);
-        await page.evaluate(selector => Array.from(document.querySelectorAll(selector)).find(button => button.textContent === "Old Backpack data…").click(), legacy);
-        await page.evaluate(() => Array.from(document.querySelectorAll(".common-modal-footer button"))
-            .find(button => button.textContent === "Clear old Backpack data").click());
-        await idle();
-        await modalClosed();
-        assert.equal(await page.evaluate(() => backpackTest.legacyClears), 1);
-        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
     });
 
     it("discards a rename draft with Escape and restores focus without closing the Backpack", async () => {
@@ -852,8 +829,26 @@ describe("project backpack UI", function () {
         await page.evaluate(() => backpackTest.release());
         await idle();
         assert.match(await text(), /Sync failed/);
+        assert.doesNotMatch(await text(), /Loading backpack/);
+        assert.strictEqual(await page.$eval(retry, button => button.disabled), false);
         assert.strictEqual(await page.$(entry), null);
-        await page.evaluate(snippet => { backpackTest.failRefresh = false; backpackTest.remote.A = [snippet]; }, item("Other device"));
+        // Clearing an action error must not turn an incomplete warning back into loading.
+        await page.evaluate(() => {
+            backpackTest.warning = "Sync failed. Try again.";
+            backpackTest.complete = false;
+            backpackTest.recovery = [{ id: "damaged", source: "cloud", value: { name: "Recoverable" } }];
+            backpackTest.notify();
+        });
+        assert.strictEqual((await text()).split("Sync failed. Try again.").length - 1, 1);
+        await page.click(remove);
+        await page.click(cancel);
+        await modalClosed();
+        assert.doesNotMatch(await text(), /Loading backpack/);
+        assert.strictEqual(await page.$eval(retry, button => button.disabled), false);
+        await page.evaluate(snippet => {
+            backpackTest.failRefresh = false; backpackTest.remote.A = [snippet];
+            backpackTest.warning = undefined; backpackTest.complete = true; backpackTest.recovery = [];
+        }, item("Other device"));
         await page.click(retry);
         await idle();
         assert.strictEqual((await page.$$(entry)).length, 1);

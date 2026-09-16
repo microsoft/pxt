@@ -285,6 +285,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             return { failure, state: store.getBackpackState() };
         });
         assert.notEqual(result.failure, "OK"); assert.equal(result.state.complete, false); assert.equal(result.state.entries.length, 20);
+        assert.equal(result.state.warning, result.failure);
     });
 
     it("rejects unavailable IndexedDB before upload without fallback", async () => {
@@ -344,18 +345,28 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.match(result.failure, /account|editor/); assert.deepStrictEqual(result.entries, []); assert.equal(result.records.length, 1);
     });
 
-    it("maps allowlisted errors only, accepts 204 deletion and preserves guarded 401 logout", async () => {
+    it("handles safe errors and empty 403/503 responses, accepts 204 deletion and guards 401 logout", async () => {
         const result = await page.evaluate(async () => {
             bt.seed(1); await store.refreshBackpackAsync();
             const entry = store.getBackpackState().entries[0];
             bt.hook = () => bt.fail("PRIVATE_UNRECOGNIZED", 500);
             const failure = await bt.outcome(() => store.deleteBackpackEntryAsync(entry));
             bt.hook = () => ({ statusCode: 204 }); await store.deleteBackpackEntryAsync(entry);
+            bt.hook = () => ({ statusCode: 403 });
+            const denied = await bt.outcome(() => store.refreshBackpackAsync());
+            const deniedState = store.getBackpackState();
+            bt.hook = () => ({ statusCode: 503 });
+            const unavailable = await bt.outcome(() => store.saveBackpackItemAsync(bt.item(2)));
+            const retained = await bt.readLocal("alice");
             bt.hook = () => ({ statusCode: 401, json: { secret: "PRIVATE" } });
             const unauthorized = await bt.outcome(() => store.refreshBackpackAsync());
-            return { failure, unauthorized, logouts: bt.logouts };
+            return { failure, denied, deniedState, unavailable, retained, unauthorized, logouts: bt.logouts };
         });
         assert.doesNotMatch(result.failure, /PRIVATE/); assert.equal(result.logouts, 1); assert.match(result.unauthorized, /Sign in/);
+        assert.match(result.denied, /access was denied/);
+        assert.equal(result.deniedState.warning, result.denied); assert.equal(result.deniedState.complete, false);
+        assert.match(result.unavailable, /temporarily unavailable.*remain in this browser/);
+        assert.equal(result.retained.length, 1);
     });
 
     it("fetches binary previews privately and rejects late/oversized responses", async () => {
@@ -396,16 +407,4 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.deepStrictEqual(result.requests, []);
     });
 
-    it("touches old preferences only on explicit export/reset, never imports them", async () => {
-        const result = await page.evaluate(async () => {
-            await store.refreshBackpackAsync(); const before = bt.requests.length;
-            bt.hook = options => options.method === "GET" ? { statusCode: 200, json: { language: "fr", backpack: { old: "private" } } }
-                : { statusCode: 204 };
-            const exported = await store.exportOldBackpackAsync(); await store.clearOldBackpackAsync();
-            return { exported, requests: bt.requests.slice(before), entries: store.getBackpackState().entries };
-        });
-        assert.deepStrictEqual(JSON.parse(result.exported), { old: "private" });
-        assert.deepStrictEqual(result.requests.map(request => request.url), ["/api/user/preferences", "/api/user/preferences"]);
-        assert.deepStrictEqual(result.requests[1].data, [{ op: "remove", path: ["backpack"] }]); assert.deepStrictEqual(result.entries, []);
-    });
 });

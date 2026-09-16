@@ -388,7 +388,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 payloads.push(mismatchedField);
                 const rejected = payloads.map(payload => {
                     try { backpack.pasteBackpackBlock(JSON.stringify(payload), workspace); return false; }
-                    catch (error) { return /invalid or unsupported/.test(String(error)); }
+                    catch (error) { return /invalid or unsupported|function 'procedure' is missing/.test(String(error)); }
                 });
                 await settle();
                 return { rejected, count: workspace.getAllBlocks(false).length, undo: workspace.getUndoStack().length, errors };
