@@ -3,7 +3,10 @@ import * as pxtblockly from "../../pxtblocks";
 import { MAX_BACKPACK_PREVIEW_LENGTH } from "./backpack";
 
 /** Rasterize a detached copy: previews must not deserialize assets or mutate the source workspace. */
-export async function backpackPreviewAsync(block: Blockly.BlockSvg): Promise<string | undefined> {
+export async function backpackPreviewAsync(block: Blockly.BlockSvg): Promise<{
+    previewUri: string;
+    previewPixelDensity: number;
+} | undefined> {
     const source = block.getSvgRoot();
     if (!source) return undefined;
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -23,11 +26,23 @@ export async function backpackPreviewAsync(block: Blockly.BlockSvg): Promise<str
         if (!bounds.width || !bounds.height) return undefined;
         svg.removeAttribute("style");
         svg.remove();
-        const scale = Math.min(1, 320 / bounds.width, 160 / bounds.height);
-        const rendered = await pxtblockly.blocklyToSvgAsync(svg, bounds.x - 1, bounds.y - 1, bounds.width + 2, bounds.height + 2, scale);
+        const width = bounds.width + 2;
+        const height = bounds.height + 2;
+        const scale = Math.min(1, 320 / width, 160 / height);
+        const rendered = await pxtblockly.blocklyToSvgAsync(svg, bounds.x - 1, bounds.y - 1, width, height, scale);
         if (!rendered) return undefined;
-        const image = await pxt.BrowserUtils.encodeToPngAsync(rendered.xml, { width: rendered.width, height: rendered.height, pixelDensity: 1 });
-        return image?.length <= MAX_BACKPACK_PREVIEW_LENGTH ? image : undefined;
+        // Start with enough pixels for a high-DPI display. Redraw from the SVG,
+        // not a previously downsampled PNG, if a dense snippet exceeds the budget.
+        for (const pixelDensity of [2, 1.5, 1]) {
+            const image = await pxt.BrowserUtils.encodeToPngAsync(rendered.xml, {
+                width: rendered.width, height: rendered.height, pixelDensity
+            });
+            if (!image) return undefined;
+            if (image.length <= MAX_BACKPACK_PREVIEW_LENGTH) {
+                return { previewUri: image, previewPixelDensity: pixelDensity };
+            }
+        }
+        return undefined;
     } catch {
         // The actual code remains usable when canvas rendering or optional thumbnail capture fails.
         return undefined;

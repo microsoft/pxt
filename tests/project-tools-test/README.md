@@ -115,6 +115,10 @@ rebuilds the shared library and webapp first.
   signed-in context saves without blocking sign-in, same-ID retries, editor guards,
   account changes during preview/save and captured import-host validity. Storage,
   serialization and project import are stubbed at their tested module boundaries.
+- [backpack-preview.spec.js](backpack-preview.spec.js): source-based preview capture
+  with real Blockly SVG cleanup and PNG rasterization. Checks 2× pixels, size-budget
+  fallback, source immutability, following-block exclusion and optional-preview
+  failure cleanup. Requires the built PXT library for the canvas encoder.
 - [backpack-project.spec.js](backpack-project.spec.js): current requirement capture
   and the shared [snippet preparation](../../webapp/src/blockSnippet.ts) with the
   production package conflict engine. Covers ordinary states and backpack adapters, used
@@ -175,7 +179,9 @@ The implementation lives in [the local/profile store](../../webapp/src/backpack.
   in the account's backpack; guest storage applies that limit per target. Each item has
    a UUID, a 1–100-character nonblank name without control characters, at most
    100,000 code characters, 100 portable dependencies, and an optional PNG data
-   URI of at most 32,000 characters. Optional `projectBlocks` maps at most 500
+  URI of at most 64,000 characters. New previews start at 2× pixel density and
+  fall back to 1.5× or 1× to fit that limit. Density metadata keeps the displayed
+  size unchanged on standard and high-DPI screens. Optional `projectBlocks` maps at most 500
    block types to source filenames, each nonempty and at most 256 characters
    without control characters; unsafe prototype keys are rejected. It records
    filenames, not source contents. Verify a full target can update/delete existing

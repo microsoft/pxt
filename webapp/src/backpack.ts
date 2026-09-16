@@ -2,7 +2,7 @@ export const MAX_BACKPACK_ITEMS = 50;
 export const MAX_BACKPACK_NAME_LENGTH = 100;
 export const MAX_BACKPACK_CODE_LENGTH = 100000;
 export const MAX_BACKPACK_DATA_LENGTH = 500000;
-export const MAX_BACKPACK_PREVIEW_LENGTH = 32000;
+export const MAX_BACKPACK_PREVIEW_LENGTH = 64000;
 
 interface LocalIdentity {
     kind: "local";
@@ -115,6 +115,10 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
         || (value.previewUri.length - "data:image/png;base64,".length) % 4 !== 0)) {
         throw new Error(lf("Backpack previews must be PNG data URIs of at most {0} characters.", MAX_BACKPACK_PREVIEW_LENGTH));
     }
+    if (value.previewPixelDensity !== undefined && (!value.previewUri
+        || typeof value.previewPixelDensity !== "number" || ![1, 1.5, 2].includes(value.previewPixelDensity))) {
+        throw new Error(lf("Invalid backpack preview pixel density."));
+    }
     const result: pxt.auth.BackpackItem = {
         id: value.id, name: value.name, code: value.code, blockText: value.blockText, dependencies, createdAt: value.createdAt
     };
@@ -133,6 +137,7 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
         }
     }
     if (typeof value.previewUri === "string") result.previewUri = value.previewUri;
+    if (typeof value.previewPixelDensity === "number") result.previewPixelDensity = value.previewPixelDensity;
     return result;
 }
 
@@ -310,6 +315,7 @@ function sameItem(left: pxt.auth.BackpackItem, right: pxt.auth.BackpackItem): bo
         Object.keys(a).length === Object.keys(b).length && Object.keys(a).every(key => own(b, key) && a[key] === b[key]);
     return left.id === right.id && left.name === right.name && left.code === right.code
         && left.createdAt === right.createdAt && left.previewUri === right.previewUri
+        && left.previewPixelDensity === right.previewPixelDensity
         && left.blockText === right.blockText
         && sameMap(left.projectBlocks, right.projectBlocks) && sameMap(left.dependencies, right.dependencies);
 }

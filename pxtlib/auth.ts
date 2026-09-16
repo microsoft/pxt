@@ -129,6 +129,8 @@ namespace pxt.auth {
         projectBlocks?: pxt.Map<string>;
         createdAt: number;
         previewUri?: string;
+        /** Raster pixels per CSS pixel; an omitted value uses the PNG's natural size. */
+        previewPixelDensity?: number;
     }
 
     export type BackpackState = pxt.Map<pxt.Map<BackpackItem>>;

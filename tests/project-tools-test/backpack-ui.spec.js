@@ -693,6 +693,37 @@ describe("project backpack UI", function () {
         assert.doesNotMatch(await text(), /In this project/);
     });
 
+    it("displays high-density PNGs at their original CSS size and keeps them within narrow cards", async () => {
+        const previewUri = await page.evaluate(() => {
+            const canvas = document.createElement("canvas");
+            canvas.width = 400;
+            canvas.height = 200;
+            const context = canvas.getContext("2d");
+            context.fillStyle = "#2196f3";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL("image/png");
+        });
+        for (const density of [1, 1.5, 2]) {
+            await loadGuest([{ ...item(), previewUri, previewPixelDensity: density }]);
+            await page.$eval("img", image => image.decode());
+            await page.evaluate(() => { document.getElementById("root").style.width = "480px"; });
+            for (const scale of [1, 2]) {
+                await page.setViewport({ width: 600, height: 700, deviceScaleFactor: scale });
+                const metrics = await page.$eval("img", image => ({
+                    width: image.getBoundingClientRect().width, height: image.getBoundingClientRect().height,
+                    source: image.currentSrc, density: image.srcset.split(" ").pop()
+                }));
+                const logicalScale = Math.min(1, 160 / (200 / density));
+                assert.ok(Math.abs(metrics.width - 400 / density * logicalScale) < 1);
+                assert.ok(Math.abs(metrics.height - 200 / density * logicalScale) < 1);
+                assert.equal(metrics.source, previewUri);
+                assert.equal(metrics.density, `${density}x`);
+            }
+            await page.evaluate(() => { document.getElementById("root").style.width = "180px"; });
+            assert.equal(await page.$eval("img", image => image.getBoundingClientRect().width <= image.parentElement.clientWidth), true);
+        }
+    });
+
     it("hides the extension section when every requirement is installed without stripping import metadata", async () => {
         const snippet = { ...item(), dependencies: { core: "*", radio: "github:owner/radio#v1", shared: "pub:example" } };
         await page.evaluate(() => {
