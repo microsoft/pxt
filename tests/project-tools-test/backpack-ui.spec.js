@@ -214,7 +214,7 @@ describe("project backpack UI", function () {
                 canImport: true, readOnly: false, editor: "blocksprj",
                 header: { id: "project" },
                 canEdit: headerId => !!headerId && test.header?.id === headerId && !test.header.temporary
-                    && !test.header.tutorial && !test.tutorial && !test.readOnly && !pxt.appTarget.appTheme.lockedEditor
+                    && !test.readOnly && !pxt.appTarget.appTheme.lockedEditor
                     && window.backpackValidation.isBackpackEnabled(),
                 account(user) {
                     test.user = user;
@@ -263,9 +263,11 @@ describe("project backpack UI", function () {
                 }),
                 subscribeBackpack(listener) { listeners.add(listener); return () => listeners.delete(listener); },
                 notifyBackpackEditorChanged: () => test.notify(),
-                canImportBackpack: () => test.canImport,
+                canImportBackpack: (_headerId, kind = "code") => test.canImport
+                    && (kind === "asset" || !test.tutorial && !test.header.tutorial),
                 canEditBackpackAsset: headerId => test.canEdit(headerId),
-                canDropBackpack: (headerId, target) => headerId === test.header.id && test.canImport
+                canDropBackpack: (headerId, target, kind = "code") => headerId === test.header.id && test.canImport
+                    && (kind === "asset" || !test.tutorial && !test.header.tutorial)
                     && window.backpackCanDrop.call({ editor: { getSvgGroup: () => document.getElementById("workspace") } }, target),
                 async getBackpackPreviewAsync(entry, signal) {
                     test.previewRequests = (test.previewRequests || 0) + 1;
@@ -420,6 +422,7 @@ describe("project backpack UI", function () {
                     onKeyDown: event => { if (event.key === "Escape") ++backpackTest.escapes; }
                 }, React.createElement(backpackUI.ProjectBackpack, {
                     headerId: "project", active, openRequest: backpackTest.openRequest,
+                    tutorial: backpackTest.tutorial,
                     renderHeader: (title, actions) => React.createElement("header", null, React.createElement("h2", null, title), actions),
                     onSignIn: () => ++backpackTest.signIns,
                     onModalOpenChange: backpackTest.modalChanged
@@ -584,12 +587,11 @@ describe("project backpack UI", function () {
         await session.detach();
     });
 
-    it("hides backpack without fetching when identity, target flag or tutorial disallows it", async () => {
-        for (const gate of ["identity", "target", "tutorial"]) {
+    it("hides backpack without fetching when identity or target flag disallows it", async () => {
+        for (const gate of ["identity", "target"]) {
             await page.evaluate(gate => {
                 backpackTest.identity = gate !== "identity";
                 pxt.appTarget.appTheme.backpack = gate !== "target";
-                backpackTest.header.tutorial = gate === "tutorial" ? {} : undefined;
                 backpackTest.rerender();
             }, gate);
             const refreshes = await page.evaluate(() => backpackTest.refreshes);
@@ -598,6 +600,39 @@ describe("project backpack UI", function () {
             assert.strictEqual(await text(), "");
             assert.strictEqual(await page.evaluate(() => backpackTest.refreshes), refreshes);
         }
+    });
+
+    it("defaults tutorials to usable assets and shows only an unavailable message on Code", async () => {
+        const saved = asset("image_picker", 2);
+        await signIn([item(), saved]);
+        for (const mode of ["header", "active"]) {
+            await page.evaluate(mode => {
+                backpackTest.header.tutorial = mode === "header" ? {} : undefined;
+                backpackTest.tutorial = mode === "active";
+                backpackTest.rerender();
+            }, mode);
+            await idle();
+            assert.equal(await page.$eval("#project-backpack-tab-asset", tab => tab.getAttribute("aria-selected")), "true");
+            assert.deepStrictEqual(await visibleNames(), [saved.name]);
+            assert.equal(await page.$eval(add, button => button.disabled), false);
+            await page.click(add); await idle();
+            await page.click(rename); await page.waitForSelector(`${assetModal} input`);
+            await page.click(`${assetModal} .common-modal-footer button:last-child`);
+            await modalClosed();
+            await page.click("#project-backpack-tab-code");
+            assert.match(await text(), /Code snippets aren't available during tutorials/);
+            assert.deepStrictEqual(await visibleNames(), []);
+            assert.equal(await page.$(add), null);
+            assert.equal(await page.$(searchBox), null);
+            await page.keyboard.press("ArrowRight");
+            assert.deepStrictEqual(await visibleNames(), [saved.name]);
+            await page.evaluate(() => {
+                backpackTest.header.tutorial = undefined; backpackTest.tutorial = false; backpackTest.rerender();
+            });
+            await idle();
+        }
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds.map(add => add.item.id)), [saved.id, saved.id]);
+        assert.equal(await page.evaluate(() => backpackTest.assetSaves.length), 2);
     });
 
     it("routes code, assets and invalid recovery through searchable keyboard tabs and capture requests without asset PNG GETs", async () => {
@@ -1253,7 +1288,7 @@ describe("project backpack UI", function () {
         await page.click(add);
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds), []);
         await page.evaluate(() => { backpackTest.readOnly = true; backpackTest.notify(); });
-        assert.match(await text(), /editable Blocks project outside a tutorial/);
+        assert.match(await text(), /editable Blocks project/);
         await page.evaluate(() => {
             backpackTest.readOnly = false;
             backpackTest.editor = "blocksprj";

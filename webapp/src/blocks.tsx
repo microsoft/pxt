@@ -877,13 +877,14 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
         this.disposeBackpackWorkspace = pxtblockly.registerBackpackWorkspace(this.editor, {
-            isEnabled: () => this.backpackAvailable(),
+            isEnabled: () => this.backpackAvailable("asset"),
+            canSave: block => this.backpackAvailable(pxt.auth.isBackpackAssetType(block.type) ? "asset" : "code"),
             save: block => { void this.saveBlockToBackpackAsync(block); },
             open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false)
         });
         this.disposeBackpackEditor = backpack.setBackpackEditor({
             headerId: () => this.parent.state.header?.id,
-            canImport: () => this.backpackAvailable(),
+            canImport: kind => this.backpackAvailable(kind),
             canDrop: target => target instanceof Element && !target.closest(".blocklyFlyout")
                 && target.closest(".blocklyWorkspace") === this.editor.getSvgGroup(),
             assetEditorContext: () => ({ blocksInfo: this.blockInfo, gallery: pxt.react.getTilemapProject().saveGallerySnapshot(),
@@ -2598,16 +2599,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
-    private backpackAvailable(): boolean {
+    private backpackAvailable(kind: pxt.auth.BackpackKind = "code"): boolean {
         const header = this.parent.state.header;
-        return backpack.isBackpackEnabled() && !!header && !header.temporary && !header.tutorial && !this.parent.isTutorial()
+        return backpack.isBackpackEnabled() && !!header && !header.temporary
+            && (kind === "asset" || !header.tutorial && !this.parent.isTutorial())
             && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor
             && this.isVisible && this.parent.isBlocksActive() && !!this.blockInfo
             && !this.loadingXml && !this.delayLoadXml && !!document.getElementById("project-tools-tab-backpack");
     }
 
     private async saveBlockToBackpackAsync(block: Blockly.BlockSvg): Promise<void> {
-        if (!this.backpackAvailable()) return;
+        const kind: pxt.auth.BackpackKind = pxt.auth.isBackpackAssetType(block.type) ? "asset" : "code";
+        if (!this.backpackAvailable(kind)) return;
         const headerId = this.parent.state.header.id;
         const signedIn = auth.loggedIn();
         const userId = auth.userProfile()?.id;
@@ -2617,7 +2620,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         try {
             const { code, blockText } = pxtblockly.captureBackpackBlock(block);
             const requirements = getBackpackRequirements(code, this.blockInfo, pkg.mainPkg);
-            const kind: pxt.auth.BackpackKind = pxt.auth.isBackpackAssetType(block.type) ? "asset" : "code";
             item = {
                 id: pxt.U.guidGen(), name: pxtblockly.getBlockText(block).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
                 kind,
@@ -2652,10 +2654,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private async importFromBackpackAsync(item: pxt.auth.BackpackItem, position?: backpack.BackpackImportPosition): Promise<boolean> {
-        if (!this.backpackAvailable()) throw new Error(lf("Open an editable Blocks project to add this snippet."));
+        if (!this.backpackAvailable(item.kind)) throw new Error(lf("Open an editable Blocks project to add this snippet."));
         const host = this.createSnippetHost();
         return addBackpackToProjectAsync(item, { ...host, isCurrent: () => host.isCurrent()
-            && backpack.isBackpackEnabled() && !this.parent.state.header?.tutorial && !this.parent.isTutorial() }, position);
+            && backpack.isBackpackEnabled() && (item.kind === "asset" || !this.parent.state.header?.tutorial && !this.parent.isTutorial()) }, position);
     }
 
     private createSnippetHost(): BackpackProjectHost {

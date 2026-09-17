@@ -23,7 +23,7 @@ interface ProjectToolsProps {
 }
 
 export function ProjectTools(props: ProjectToolsProps) {
-    const backpackEnabled = isBackpackEnabled() && !props.tutorial && !props.header.tutorial;
+    const backpackEnabled = isBackpackEnabled();
     const tabNames: ProjectToolTab[] = backpackEnabled ? ["docs", "whiteboard", "backpack"] : ["docs", "whiteboard"];
     const [selectedTab, setTab] = React.useState<ProjectToolTab>("docs");
     const tab = selectedTab === "backpack" && !backpackEnabled ? "docs" : selectedTab;
@@ -447,6 +447,7 @@ export function ProjectTools(props: ProjectToolsProps) {
             {backpackEnabled && <section id="project-tools-backpack" role="tabpanel" aria-labelledby="project-tools-tab-backpack" hidden={tab !== "backpack"}
                 className="project-backpack">
                 {visitedBackpack && <ProjectBackpack headerId={props.header.id} active={props.expanded && tab === "backpack"}
+                    tutorial={props.tutorial || !!props.header.tutorial}
                     openRequest={backpackRequest} renderHeader={renderHeader}
                     onSignIn={props.onSignIn} onModalOpenChange={onModalOpenChange} />}
             </section>}

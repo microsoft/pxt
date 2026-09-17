@@ -273,6 +273,23 @@ describe("backpack editor integration (fresh source)", () => {
         assert.deepStrictEqual(e.opens, [["source-project", false, "asset"]]);
     });
 
+    it("allows asset capture and insertion in tutorials while rejecting code, including late transitions", async () => {
+        for (const mode of ["header", "active"]) {
+            const e = environment("account-A", "image_picker");
+            if (mode === "header") e.editor.parent.state.header.tutorial = {};
+            else e.state.tutorial = true;
+            assert.equal(e.editor.backpackAvailable("asset"), true);
+            assert.equal(e.editor.backpackAvailable("code"), false);
+            await e.save();
+            assert.equal(e.saves[0].item.kind, "asset");
+            assert.equal(await e.import(e.saves[0].item), true);
+            assert.equal(e.imports[0].host.isCurrent(), true);
+            await assert.rejects(e.import(e.importedItem), /editable Blocks project/);
+            e.state.readOnly = true;
+            assert.equal(e.editor.backpackAvailable("asset"), false);
+        }
+    });
+
     // Storage owns away-and-back generation invalidation; backpack-storage.spec.js
     // exercises A -> B -> A against the real store. These are the editor's identity checks.
     for (const stage of ["preview", "store"]) {

@@ -835,7 +835,7 @@ export function subscribeBackpackOpen(listener: (request: BackpackOpenRequest) =
 
 export interface BackpackEditor {
     headerId: () => string;
-    canImport: () => boolean;
+    canImport: (kind?: pxt.auth.BackpackKind) => boolean;
     canDrop: (target: EventTarget) => boolean;
     assetEditorContext: () => BackpackAssetEditorContext;
     importAsync: (item: pxt.auth.BackpackItem, position?: BackpackImportPosition) => Promise<boolean>;
@@ -883,13 +883,13 @@ export function setBackpackEditor(editor: BackpackEditor): () => void {
     };
 }
 
-export function canImportBackpack(headerId: string): boolean {
+export function canImportBackpack(headerId: string, kind: pxt.auth.BackpackKind = "code"): boolean {
     const editor = registeredEditor?.editor;
-    return !!activeIdentity() && !!headerId && !!editor && editor.headerId() === headerId && editor.canImport();
+    return !!activeIdentity() && !!headerId && !!editor && editor.headerId() === headerId && editor.canImport(kind);
 }
 
-export function canDropBackpack(headerId: string, target: EventTarget): boolean {
-    return canImportBackpack(headerId) && registeredEditor.editor.canDrop(target);
+export function canDropBackpack(headerId: string, target: EventTarget, kind: pxt.auth.BackpackKind = "code"): boolean {
+    return canImportBackpack(headerId, kind) && registeredEditor.editor.canDrop(target);
 }
 
 export async function getBackpackAssetEditorContextAsync(headerId: string): Promise<BackpackAssetEditorContext> {
@@ -897,7 +897,7 @@ export async function getBackpackAssetEditorContextAsync(headerId: string): Prom
     const host = assetEditorHost;
     const check = (): void => {
         if (assetEditorHost !== host || !canEditBackpackAsset(headerId)) {
-            throw new Error(lf("Open an editable project outside a tutorial to edit this asset."));
+            throw new Error(lf("Open an editable project to edit this asset."));
         }
     };
     check();
@@ -919,7 +919,7 @@ export async function importBackpackItemAsync(item: pxt.auth.BackpackItem, heade
     const registration = registeredEditor;
     const context = await captureAsync();
     await verifyAsync(context);
-    if (!registration || registeredEditor !== registration || !canImportBackpack(headerId)) {
+    if (!registration || registeredEditor !== registration || !canImportBackpack(headerId, validated.kind)) {
         throw new Error(lf("Open a compatible project editor to import this backpack item."));
     }
     const added = await registration.editor.importAsync(validated);
@@ -933,11 +933,11 @@ export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: s
     if (saved.error) throw new BackpackRequestError("backpack_invalid_entry");
     const context = await captureAsync();
     const registration = registeredEditor;
-    if (!registration || !canImportBackpack(headerId)) {
+    if (!registration || !canImportBackpack(headerId, saved.item?.kind || saved.summary?.kind)) {
         throw new Error(lf("Open a compatible project editor to import this backpack item."));
     }
     const item = await readItemAsync(saved, context);
-    if (registeredEditor !== registration || !canImportBackpack(headerId)) {
+    if (registeredEditor !== registration || !canImportBackpack(headerId, item.kind)) {
         throw new Error(lf("Open a compatible project editor to import this backpack item."));
     }
     // Do not recapture a potentially different identity between fetching and import.

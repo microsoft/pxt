@@ -385,6 +385,7 @@ describe("Backpack native drag targets (current source, real browser Blockly)", 
             window.enabled = true;
             window.disposeBackpack = backpack.registerBackpackWorkspace(workspace, {
                 isEnabled: () => enabled,
+                canSave: block => !window.assetsOnly || pxt.auth.isBackpackAssetType(block.type),
                 save: block => saved.push(backpack.captureBackpackBlock(block).code),
                 open: () => { opened++; document.getElementById("project-tools-backpack").style.display = "block"; }
             });
@@ -528,6 +529,24 @@ describe("Backpack native drag targets (current source, real browser Blockly)", 
         assert.deepStrictEqual(result.conditions, ["enabled", "disabled", "hidden", "hidden"]);
         assert.equal(result.opened, 0); assert.equal(result.saved, 0); assert.equal(result.pending, 0);
         assert(!result.hover); assert.equal(result.after, "hidden"); assert.equal(result.targets, 0);
+    });
+
+    it("hides code capture and rejects code drags when the host allows assets only", async () => {
+        const result = await page.evaluate(() => {
+            window.assetsOnly = true;
+            Blockly.Blocks.image_picker = { init() { this.setOutput(true); } };
+            const code = makeBlock("backpack_test_container"), asset = makeBlock("image_picker");
+            const menu = Blockly.ContextMenuRegistry.registry.getItem("pxtBackpackSave");
+            const target = workspace.getComponentManager().getComponents(Blockly.ComponentManager.Capability.DRAG_TARGET, false)
+                .find(target => target.elementId === "project-tools-tab-backpack");
+            const conditions = [menu.preconditionFn({ block: code }), menu.preconditionFn({ block: asset })];
+            target.onDragEnter(code); target.onDrop(code); menu.callback({ block: code });
+            const rejected = saved.length === 0 && !document.querySelector(".project-backpack--drag-over");
+            menu.callback({ block: asset });
+            target.onDragEnter(asset); target.onDrop(asset);
+            return { conditions, rejected, saved: saved.length };
+        });
+        assert.deepStrictEqual(result, { conditions: ["hidden", "enabled"], rejected: true, saved: 2 });
     });
 
     it("uses the launcher only when the tab is invisible, and rejects foreign/non-container draggables", async () => {

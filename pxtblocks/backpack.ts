@@ -13,6 +13,7 @@ export interface BackpackCode {
 
 export interface BackpackWorkspaceOptions {
     isEnabled: () => boolean;
+    canSave?: (block: Blockly.Block) => boolean;
     save: (block: Blockly.BlockSvg) => void;
     /** Open without moving focus (including when invoked by a dwell timer). */
     open: () => void;
@@ -448,7 +449,7 @@ class BackpackDragTarget extends Blockly.DragTarget {
 
     private accepts(draggable: Blockly.IDraggable): draggable is Blockly.BlockSvg {
         return draggable instanceof Blockly.BlockSvg && draggable.workspace === this.workspace
-            && isBackpackBlock(draggable);
+            && isBackpackBlock(draggable) && (!this.options.canSave || this.options.canSave(draggable));
     }
 
     getClientRect(): Blockly.utils.Rect | null {
@@ -543,11 +544,13 @@ export function registerBackpackWorkspace(workspace: Blockly.WorkspaceSvg, optio
             preconditionFn: scope => {
                 const registration = registrations.get(scope.block?.workspace);
                 if (!registration?.options.isEnabled()) return "hidden";
+                if (registration.options.canSave && !registration.options.canSave(scope.block)) return "hidden";
                 return isBackpackBlock(scope.block) ? "enabled" : "disabled";
             },
             callback: (scope: Blockly.ContextMenuRegistry.Scope) => {
                 const registration = registrations.get(scope.block?.workspace);
-                if (registration?.options.isEnabled() && isBackpackBlock(scope.block)) {
+                if (registration?.options.isEnabled() && isBackpackBlock(scope.block)
+                    && (!registration.options.canSave || registration.options.canSave(scope.block))) {
                     registration.options.save(scope.block);
                 }
             },
