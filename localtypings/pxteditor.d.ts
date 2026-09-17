@@ -1405,23 +1405,7 @@ declare namespace pxt.editor {
         assetType: pxt.AssetType;
     }
 
-    interface OpenBackpackAssetEditorRequest {
-        type: "open-backpack";
-        id?: string | number;
-        code: string;
-        name?: string;
-        blocksInfo: pxtc.BlocksInfo;
-        gallery: pxt.AssetSnapshot;
-        palette?: string[];
-    }
-
-    interface SaveBackpackAssetEditorRequest {
-        type: "save-backpack";
-        id?: string | number;
-    }
-
-    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest
-        | OpenBackpackAssetEditorRequest | SaveBackpackAssetEditorRequest;
+    type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
 
     interface BaseAssetEditorResponse {
         id?: string | number;
@@ -1445,25 +1429,7 @@ declare namespace pxt.editor {
         type: "duplicate";
     }
 
-    interface OpenBackpackAssetEditorResponse extends BaseAssetEditorResponse {
-        type: "open-backpack";
-    }
-
-    interface SaveBackpackAssetEditorResponse extends BaseAssetEditorResponse {
-        type: "save-backpack";
-        code: string;
-        blockText: string;
-        name?: string;
-    }
-
-    interface AssetEditorErrorResponse extends BaseAssetEditorResponse {
-        type: AssetEditorRequest["type"];
-        success: false;
-        error: string;
-    }
-
-    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse
-        | OpenBackpackAssetEditorResponse | SaveBackpackAssetEditorResponse | AssetEditorErrorResponse;
+    type AssetEditorResponse = OpenAssetEditorResponse | CreateAssetEditorResponse | SaveAssetEditorResponse | DuplicateAssetEditorResponse;
 
     interface AssetEditorRequestSaveEvent {
         type: "event";
@@ -1473,7 +1439,6 @@ declare namespace pxt.editor {
     interface AssetEditorReadyEvent {
         type: "event";
         kind: "ready";
-        backpack?: boolean;
     }
 
     type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;
