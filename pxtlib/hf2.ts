@@ -182,19 +182,40 @@ namespace pxt.HF2 {
             pxt.debug("HF2: " + msg)
     }
 
+    export class ProtocolError extends Error {
+        constructor(public readonly status: number, message: string) {
+            super(message);
+        }
+    }
+
     export class Wrapper implements pxt.packetio.PacketIOWrapper {
         private initialized = false;
         private cmdSeq = U.randomUint32();
+        private frames: Uint8Array[] = [];
+        private connectionId = 0;
+        private operationId = 0;
+        private reconnectPromise: Promise<void>;
+        private switchingPromise: Promise<void>;
+        private expectAppMode = false;
 
         constructor(public readonly io: pxt.packetio.PacketIO) {
-            let frames: Uint8Array[] = []
-            io.onDeviceConnectionChanged = connect =>
-                this.disconnectAsync()
-                    .then(() => connect && this.reconnectAsync());
+            io.onDeviceConnectionChanged = connect => {
+                if (!connect) {
+                    this.resetState();
+                } else if (!this.flashing && !this.switchingPromise && !this.reconnectPromise) {
+                    this.reconnectAsync().catch(err => log("reconnect error: " + err.message));
+                }
+                // A flash owns the app/bootloader transition. USB events must not
+                // close or reconnect its newly enumerated bootloader underneath it.
+            };
             io.onSerial = (b, e) => this.onSerial(b, e)
             io.onData = buf => {
                 let tp = buf[0] & HF2_FLAG_MASK
                 let len = buf[0] & 63
+                if (!buf.length || len > buf.length - 1) {
+                    io.onError(new Error("Invalid HF2 packet length"));
+                    return;
+                }
                 //pxt.log(`msg tp=${tp} len=${len}`)
                 let frame = new Uint8Array(len)
                 U.memcpy(frame, 0, buf, 1, len)
@@ -202,20 +223,24 @@ namespace pxt.HF2 {
                     this.onSerial(frame, tp == HF2_FLAG_SERIAL_ERR)
                     return
                 }
-                frames.push(frame)
+                this.frames.push(frame)
                 if (tp == HF2_FLAG_CMDPKT_BODY) {
                     return
                 } else {
                     U.assert(tp == HF2_FLAG_CMDPKT_LAST)
                     let total = 0
-                    for (let f of frames) total += f.length
+                    for (let f of this.frames) total += f.length
                     let r = new Uint8Array(total)
                     let ptr = 0
-                    for (let f of frames) {
+                    for (let f of this.frames) {
                         U.memcpy(r, ptr, f)
                         ptr += f.length
                     }
-                    frames = []
+                    this.frames = []
+                    if (r.length < 4) {
+                        io.onError(new Error("Invalid HF2 response length"));
+                        return;
+                    }
                     if (r[2] & HF2_STATUS_EVENT) {
                         // asynchronous event
                         io.onEvent(r)
@@ -235,16 +260,10 @@ namespace pxt.HF2 {
             }
             io.onError = err => {
                 log("recv error: " + err.message)
-                if (this.autoReconnect) {
-                    this.autoReconnect = false
-                    this.reconnectAsync()
-                        .then(() => {
-                            this.autoReconnect = true
-                        }, err => {
-                            log("reconnect error: " + err.message)
-                        })
+                this.resetState();
+                if (this.autoReconnect && !this.flashing && !this.switchingPromise && !this.reconnectPromise) {
+                    this.reconnectAsync().catch(err => log("reconnect error: " + err.message));
                 }
-                //this.msgs.pushError(err)
             }
             this.onEvent(HF2_EV_JDS_PACKET, buf => {
                 this.onCustomEvent(CUSTOM_EV_JACDAC, buf)
@@ -273,15 +292,27 @@ namespace pxt.HF2 {
         onConnectionChanged = () => { };
 
         private resetState() {
+            ++this.connectionId;
             this.initialized = false
-            this.lock = new U.PromiseQueue()
+            this.frames = [];
             this.info = null
             this.infoRaw = null
             this.pageSize = null
             this.flashSize = null
             this.maxMsgSize = 63
+            this.familyID = 0;
+            this.jacdacAvailable = false;
             this.bootloaderMode = false
             this.msgs.drain()
+            this.io.onConnectionChanged();
+        }
+
+        private checkOperation(operationId: number): void {
+            if (operationId !== this.operationId) throw new Error("Download cancelled");
+        }
+
+        private checkConnection(connectionId: number): void {
+            if (connectionId !== this.connectionId) throw new Error("Disconnected");
         }
 
         onEvent(id: number, f: (buf: Uint8Array) => void) {
@@ -304,37 +335,89 @@ namespace pxt.HF2 {
         }
 
         isConnecting(): boolean {
-            return this.io.isConnecting() || (this.io.isConnected() && !this.initialized)
+            return !!this.reconnectPromise || !!this.switchingPromise || this.io.isConnecting() || (this.io.isConnected() && !this.initialized)
         }
 
         reconnectAsync(): Promise<void> {
-            this.resetState()
-            log(`reconnect raw=${this.rawMode}`);
-
-            return this.io.reconnectAsync()
-                .then(() => this.initAsync())
-                .catch(e => {
-                    if (this.reconnectTries < 5) {
-                        this.reconnectTries++
-                        log(`error ${e.message}; reconnecting attempt #${this.reconnectTries}`)
-                        return U.delay(500)
-                            .then(() => this.reconnectAsync())
-                    } else {
-                        throw e
-                    }
-                })
+            if (this.flashing) return Promise.reject(new Error("A download is already in progress"));
+            return this.reconnectCoreAsync(this.expectAppMode ? false : undefined);
         }
 
-        disconnectAsync() {
+        private isUnsupportedCommandError(error: Error): boolean {
+            return error instanceof ProtocolError ? error.status === HF2_STATUS_INVALID_CMD :
+                // The legacy HID bridge transports error messages, not Error subclasses.
+                !!this.io.talksAsync && /\binvalid command\b/.test(error.message);
+        }
+
+        private reconnectCoreAsync(bootloaderMode?: boolean): Promise<void> {
+            if (this.reconnectPromise) return this.reconnectPromise;
+            const operationId = this.operationId;
+            this.reconnectPromise = Promise.resolve().then(() => this.reconnectLoopAsync(operationId, bootloaderMode))
+                .finally(() => {
+                    this.reconnectPromise = undefined;
+                    this.io.onConnectionChanged();
+                });
+            return this.reconnectPromise;
+        }
+
+        private async reconnectLoopAsync(operationId: number, bootloaderMode?: boolean): Promise<void> {
+            log(`reconnect raw=${this.rawMode}`);
+            // Re-enumeration (particularly through Windows/hubs) can take several
+            // seconds. Each attempt must enumerate afresh, not reuse an old device list.
+            const deadline = Date.now() + 10000;
+            this.reconnectTries = 0;
+            while (true) {
+                this.checkOperation(operationId);
+                this.resetState();
+                try {
+                    await this.io.reconnectAsync();
+                    this.checkOperation(operationId);
+                    await this.initAsync();
+                    this.checkOperation(operationId);
+                    if (bootloaderMode !== undefined && this.bootloaderMode !== bootloaderMode)
+                        throw new Error(bootloaderMode ? "Device is not in bootloader mode" : "Device is still in bootloader mode");
+                    this.reconnectTries = 0;
+                    if (bootloaderMode === false) this.expectAppMode = false;
+                    return;
+                } catch (e) {
+                    this.checkOperation(operationId);
+                    this.resetState();
+                    await this.io.disconnectAsync();
+                    this.checkOperation(operationId);
+                    if (Date.now() >= deadline) throw e;
+                    log(`error ${e.message}; reconnecting attempt #${++this.reconnectTries}`);
+                    await U.delay(500);
+                }
+            }
+        }
+
+        async disconnectAsync(): Promise<void> {
             log(`disconnect`);
-            return this.io.disconnectAsync()
+            ++this.operationId;
+            this.autoReconnect = false;
+            this.resetState();
+            await this.io.disconnectAsync();
+            // A cancelled reconnect must settle before a new owner can reuse the IO.
+            if (this.reconnectPromise) await this.reconnectPromise.catch(() => { });
         }
 
         error(m: string) {
             return this.io.error(m)
         }
 
-        talkAsync(cmd: number, data?: Uint8Array) {
+        talkAsync(cmd: number, data?: Uint8Array, responseTimeout = cmd === HF2_CMD_WRITE_FLASH_PAGE ? 5000 : 1000): Promise<Uint8Array> {
+            const connectionId = this.connectionId;
+            // HF2 permits only one outstanding command, not just one packet sender.
+            // Keep this queue across resets so old queued work cannot interleave with init.
+            return this.lock.enqueue("talk", async () => {
+                this.checkConnection(connectionId);
+                const result = await this.talkCoreAsync(cmd, data, responseTimeout);
+                this.checkConnection(connectionId);
+                return result;
+            });
+        }
+
+        private talkCoreAsync(cmd: number, data: Uint8Array, responseTimeout: number): Promise<Uint8Array> {
             if (this.io.talksAsync)
                 return this.io.talksAsync([{ cmd, data }])
                     .then(v => v[0])
@@ -348,13 +431,12 @@ namespace pxt.HF2 {
             write16(pkt, 6, 0);
             if (data)
                 U.memcpy(pkt, 8, data, 0, data.length)
-            let numSkipped = 0
+            let deadline: number;
             let handleReturnAsync = (): Promise<Uint8Array> =>
-                this.msgs.shiftAsync(1000) // we wait up to a second
+                this.msgs.shiftAsync(Math.max(1, deadline - Date.now()))
                     .then(res => {
                         if (read16(res, 0) != seq) {
-                            if (numSkipped < 3) {
-                                numSkipped++
+                            if (Date.now() < deadline) {
                                 log(`message out of sync, (${seq} vs ${read16(res, 0)}); will re-try`)
                                 return handleReturnAsync()
                             }
@@ -367,20 +449,19 @@ namespace pxt.HF2 {
                             case HF2_STATUS_OK:
                                 return res.slice(4)
                             case HF2_STATUS_INVALID_CMD:
-                                this.error("invalid command" + info)
-                                break
+                                throw new ProtocolError(res[2], "invalid command" + info);
                             case HF2_STATUS_EXEC_ERR:
-                                this.error("execution error" + info)
-                                break
+                                throw new ProtocolError(res[2], "execution error" + info);
                             default:
-                                this.error("error " + res[2] + info)
-                                break
+                                throw new ProtocolError(res[2], "error " + res[2] + info);
                         }
-                        return null
                     })
 
             return this.sendMsgAsync(pkt)
-                .then(handleReturnAsync)
+                .then(() => {
+                    deadline = Date.now() + responseTimeout;
+                    return handleReturnAsync();
+                });
         }
 
         private sendMsgAsync(buf: Uint8Array) {
@@ -395,8 +476,10 @@ namespace pxt.HF2 {
 
         private sendMsgCoreAsync(buf: Uint8Array, serial: number = 0) {
             // Util.assert(buf.length <= this.maxMsgSize)
+            const connectionId = this.connectionId;
             let frame = new Uint8Array(64)
             let loop = (pos: number): Promise<void> => {
+                this.checkConnection(connectionId);
                 let len = buf.length - pos
                 if (len <= 0) return Promise.resolve()
                 if (len > 63) {
@@ -409,54 +492,91 @@ namespace pxt.HF2 {
                 frame[0] |= len;
                 for (let i = 0; i < len; ++i)
                     frame[i + 1] = buf[pos + i]
-                return this.io.sendPacketAsync(frame)
+                return U.promiseTimeout(5000, this.io.sendPacketAsync(frame), "HF2 send timed out")
+                    .catch(async e => {
+                        if (e === "HF2 send timed out") {
+                            if (connectionId === this.connectionId) {
+                                // Invalidate queued serial/command traffic before the
+                                // output queue is released; native OUT may still be pending.
+                                this.resetState();
+                                await this.io.disconnectAsync();
+                            }
+                            throw new Error("Timeout");
+                        }
+                        throw e;
+                    })
                     .then(() => loop(pos + len))
             }
-            return this.lock.enqueue("out", () => loop(0))
+            return this.lock.enqueue("out", async () => loop(0))
         }
 
-        switchToBootloaderAsync() {
-            if (this.bootloaderMode)
-                return Promise.resolve()
-            log(`Switching into bootloader mode`)
-            if (this.io.isSwitchingToBootloader) {
-                this.io.isSwitchingToBootloader();
+        switchToBootloaderAsync(): Promise<void> {
+            if (!this.switchingPromise) {
+                const operationId = this.operationId;
+                this.switchingPromise = Promise.resolve().then(() => this.switchToBootloaderCoreAsync(operationId))
+                    .finally(() => this.switchingPromise = undefined);
             }
-            return this.maybeReconnectAsync()
-                .then(() => this.talkAsync(HF2_CMD_START_FLASH)
-                    .then(() => { }, err =>
-                        this.talkAsync(HF2_CMD_RESET_INTO_BOOTLOADER)
-                            .then(() => { }, err => { })
-                            .then(() =>
-                                this.reconnectAsync()
-                                    .catch(err => {
-                                        if (err.type === "devicenotfound")
-                                            err.type = "repairbootloader"
-                                        throw err
-                                    }))
-                    ))
-                .then(() => this.initAsync())
-                .then(() => {
-                    if (!this.bootloaderMode)
-                        this.error("cannot switch into bootloader mode")
-                })
+            return this.switchingPromise;
+        }
+
+        private async switchToBootloaderCoreAsync(operationId: number): Promise<void> {
+            this.checkOperation(operationId);
+            await this.maybeReconnectAsync();
+            this.checkOperation(operationId);
+            if (this.bootloaderMode) return;
+
+            log("Switching into bootloader mode");
+            this.io.isSwitchingToBootloader?.();
+            try {
+                await this.talkAsync(HF2_CMD_START_FLASH);
+                this.checkOperation(operationId);
+                // Some boards hand USB directly to the bootloader; others acknowledge
+                // START_FLASH and then re-enumerate. The acknowledgement alone is not
+                // proof that the current connection is ready for flash writes.
+                await this.initAsync();
+                this.checkOperation(operationId);
+                if (this.bootloaderMode) return;
+            } catch (e) {
+                this.checkOperation(operationId);
+                log("handover requires reconnect: " + e.message);
+            }
+
+            if (this.io.isConnected()) {
+                try {
+                    await this.talkAsync(HF2_CMD_RESET_INTO_BOOTLOADER);
+                } catch (e) {
+                    this.checkOperation(operationId);
+                    // Reset normally disconnects without responding. An explicit
+                    // protocol rejection, however, must not be reported as success.
+                    if (e instanceof ProtocolError) throw e;
+                }
+            }
+            this.checkOperation(operationId);
+            try {
+                await this.reconnectCoreAsync(true);
+            } catch (e) {
+                if (e.type === "devicenotfound") e.type = "repairbootloader";
+                throw e;
+            }
         }
 
         isFlashing(): boolean {
             return !!this.flashing;
         }
 
-        reflashAsync(resp: pxtc.CompileResult): Promise<void> {
+        async reflashAsync(resp: pxtc.CompileResult, progressCallback?: (percentageComplete: number) => void): Promise<void> {
             log(`reflash`)
             U.assert(pxt.appTarget.compile.useUF2);
-            const f = resp.outfiles[pxtc.BINARY_UF2]
-            const blocks = pxtc.UF2.parseFile(pxt.Util.stringToUint8Array(atob(f)))
-            this.flashing = true;
-            return this.io.reconnectAsync()
-                .then(() => this.flashAsync(blocks))
-                .then(() => U.delay(100))
-                .finally(() => this.flashing = false)
-                .then(() => this.reconnectAsync())
+            const f = resp.outfiles[pxtc.BINARY_UF2];
+            if (!f) throw new Error("Missing UF2 output");
+            const bytes = pxt.Util.stringToUint8Array(atob(f));
+            const blocks = pxtc.UF2.parseFile(bytes);
+            // parseFile deliberately ignores bad blocks for other consumers. A
+            // download must not silently flash a truncated/corrupt subset instead.
+            if (!bytes.length || bytes.length % 512 || blocks.length * 512 !== bytes.length ||
+                blocks.some((block, index) => block.payloadSize !== read32(bytes, index * 512 + 16)))
+                throw new Error("Invalid UF2 output");
+            await this.flashAsync(blocks, progressCallback);
         }
 
         writeWordsAsync(addr: number, words: number[]) {
@@ -472,6 +592,10 @@ namespace pxt.HF2 {
             write32(args, 4, numwords)
             U.assert(numwords <= 64) // just sanity check
             return this.talkAsync(HF2_CMD_READ_WORDS, args)
+                .then(buf => {
+                    if (buf.length !== numwords * 4) this.error("invalid memory read length");
+                    return buf;
+                });
         }
 
         pingAsync() {
@@ -482,56 +606,91 @@ namespace pxt.HF2 {
         }
 
         maybeReconnectAsync() {
+            const operationId = this.operationId;
+            if (!this.isConnected()) return this.reconnectCoreAsync();
             return this.pingAsync()
-                .catch(e =>
-                    this.reconnectAsync()
-                        .then(() => this.pingAsync()))
+                .catch(e => {
+                    this.checkOperation(operationId);
+                    return this.reconnectCoreAsync();
+                });
         }
 
-        flashAsync(blocks: pxtc.UF2.Block[]) {
-            let start = Date.now()
-            let fstart = 0
-            let loopAsync = (pos: number): Promise<void> => {
-                if (pos >= blocks.length)
-                    return Promise.resolve()
-                let b = blocks[pos]
-                //U.assert(b.payloadSize == this.pageSize)
-                let buf = new Uint8Array(4 + b.payloadSize)
-                write32(buf, 0, b.targetAddr)
-                U.memcpy(buf, 4, b.data, 0, b.payloadSize)
-                return this.talkAsync(HF2_CMD_WRITE_FLASH_PAGE, buf)
-                    .then(() => loopAsync(pos + 1))
-            }
-            return this.switchToBootloaderAsync()
-                .then(() => {
-                    let size = blocks.length * 256
-                    log(`Starting flash (${Math.round(size / 1024)}kB).`)
-                    fstart = Date.now()
-                    // only try partial flash when page size is small
-                    if (this.pageSize > 16 * 1024)
-                        return blocks
-                    return onlyChangedBlocksAsync(blocks, (a, l) => this.readWordsAsync(a, l))
-                })
-                .then(res => {
-                    if (res.length != blocks.length) {
-                        blocks = res
-                        let size = blocks.length * 256
-                        log(`Performing partial flash (${Math.round(size / 1024)}kB).`)
+        async flashAsync(blocks: pxtc.UF2.Block[], progressCallback?: (percentageComplete: number) => void): Promise<void> {
+            if (this.flashing) throw new Error("A download is already in progress");
+            blocks = blocks.filter(b => !(b.flags & (pxtc.UF2.UF2_FLAG_NOFLASH | pxtc.UF2.UF2_FLAG_FILE)));
+            if (!blocks.length || blocks.some(b => !b.payloadSize || b.payloadSize !== b.data.length ||
+                b.payloadSize % 4 || b.targetAddr % 4))
+                throw new Error("Invalid UF2 flash blocks");
+
+            const operationId = this.operationId;
+            const start = Date.now();
+            this.flashing = true;
+            this.expectAppMode = false;
+            try {
+                progressCallback?.(0);
+                await this.switchToBootloaderAsync();
+                this.checkOperation(operationId);
+                if (blocks.some(b => (b.familyId && this.familyID && b.familyId !== this.familyID) ||
+                    b.payloadSize + 12 > this.maxMsgSize))
+                    this.error("UF2 does not match the connected device");
+
+                let toWrite = blocks;
+                if (this.pageSize <= 16 * 1024) {
+                    try {
+                        toWrite = await onlyChangedBlocksAsync(blocks, (a, l) => this.readWordsAsync(a, l));
+                    } catch (e) {
+                        // READ_WORDS is optional. Unsupported checksum reads should
+                        // disable the optimization, not prevent a full download.
+                        if (!this.isUnsupportedCommandError(e)) throw e;
+                        log("checksum reads unsupported; performing full flash");
                     }
-                })
-                .then(() => loopAsync(0))
-                .then(() => {
-                    let n = Date.now()
-                    let t0 = n - start
-                    let t1 = n - fstart
-                    log(`Flashing done at ${Math.round(blocks.length * 256 / t1 * 1000 / 1024)} kB/s in ${t0}ms (reset ${t0 - t1}ms). Resetting.`)
-                })
-                .then(() =>
-                    this.talkAsync(HF2_CMD_RESET_INTO_APP)
-                        .catch(e => {
-                            // error expected here - device is resetting
-                        }))
-                .then(() => { })
+                }
+                this.checkOperation(operationId);
+                log(`Starting flash (${toWrite.length} blocks, ${blocks.length - toWrite.length} unchanged).`);
+                let lastProgress = 0;
+                for (let i = 0; i < toWrite.length; ++i) {
+                    this.checkOperation(operationId);
+                    const b = toWrite[i];
+                    const buf = new Uint8Array(4 + b.payloadSize);
+                    write32(buf, 0, b.targetAddr);
+                    U.memcpy(buf, 4, b.data, 0, b.payloadSize);
+                    await this.talkAsync(HF2_CMD_WRITE_FLASH_PAGE, buf);
+                    this.checkOperation(operationId);
+                    const progress = Math.floor(99 * (i + 1) / toWrite.length);
+                    if (progress !== lastProgress) {
+                        lastProgress = progress;
+                        progressCallback?.(progress / 100);
+                    }
+                }
+
+                // Some bootloaders ACK before writing. A single subsequent command
+                // is a completion barrier without the USB cost of reading back the
+                // entire image. This confirms mode/readiness, not byte verification.
+                const binfo = await this.talkAsync(HF2_CMD_BININFO, undefined, 5000);
+                this.checkOperation(operationId);
+                if (binfo.length < 16 || read32(binfo, 0) !== HF2_MODE_BOOTLOADER)
+                    this.error("device left bootloader mode during download");
+                log(`Flashing done in ${Date.now() - start}ms. Resetting.`);
+                try {
+                    await this.talkAsync(HF2_CMD_RESET_INTO_APP);
+                } catch (e) {
+                    this.checkOperation(operationId);
+                    if (e instanceof ProtocolError) throw e;
+                    // Reset commands normally disconnect without a response.
+                }
+                this.checkOperation(operationId);
+                this.expectAppMode = true;
+                progressCallback?.(1);
+            } finally {
+                // Retire bootloader reads even on failure. The caller owns the single
+                // reconnect into the app; keep flashing set until cleanup is finished.
+                this.resetState();
+                try {
+                    await this.io.disconnectAsync();
+                } finally {
+                    this.flashing = false;
+                }
+            }
         }
 
         private initAsync() {
@@ -540,14 +699,21 @@ namespace pxt.HF2 {
                 return Promise.resolve()
             }
 
+            const connectionId = this.connectionId;
             return Promise.resolve()
                 .then(() => this.talkAsync(HF2_CMD_BININFO))
                 .then(binfo => {
-                    this.bootloaderMode = binfo[0] == HF2_MODE_BOOTLOADER;
+                    const mode = read32(binfo, 0);
+                    if (binfo.length < 16 || (binfo.length > 16 && binfo.length < 20) ||
+                        (mode !== HF2_MODE_BOOTLOADER && mode !== HF2_MODE_USERSPACE))
+                        this.error("invalid bootloader information");
+                    this.bootloaderMode = mode === HF2_MODE_BOOTLOADER;
                     this.pageSize = read32(binfo, 4)
                     this.flashSize = read32(binfo, 8) * this.pageSize
                     this.maxMsgSize = read32(binfo, 12)
                     this.familyID = read32(binfo, 16)
+                    if (!this.maxMsgSize || (this.bootloaderMode && (!this.pageSize || !this.flashSize)))
+                        this.error("invalid flash geometry");
                     log(`Connected; msgSize ${this.maxMsgSize}B; flash ${this.flashSize / 1024}kB; ${this.bootloaderMode ? "bootloader" : "application"} mode; family=0x${this.familyID.toString(16)}`)
                     return this.talkAsync(HF2_CMD_INFO)
                 })
@@ -574,13 +740,21 @@ namespace pxt.HF2 {
                         }
                     log(`Board-ID: ${this.info.BoardID} v${this.info.Parsed.Version} f${this.info.Parsed.Features}`)
                 })
-                .then(() => this.talkAsync(HF2_CMD_JDS_CONFIG, new Uint8Array([1]))
-                    .then(() => {
-                        this.jacdacAvailable = true
-                    }, _err => {
-                        this.jacdacAvailable = false
-                    }))
                 .then(() => {
+                    this.jacdacAvailable = false;
+                    if (this.bootloaderMode) return Promise.resolve();
+                    return this.talkAsync(HF2_CMD_JDS_CONFIG, new Uint8Array([1]))
+                        .then(() => {
+                            this.jacdacAvailable = true;
+                        }, err => {
+                            // Jacdac support is optional in older application firmware.
+                            // Preserve that compatibility, but never mask a lost session.
+                            this.checkConnection(connectionId);
+                            if (!this.io.isConnected()) throw err;
+                        });
+                })
+                .then(() => {
+                    this.checkConnection(connectionId);
                     this.reconnectTries = 0
                     this.initialized = true
                     this.io.onConnectionChanged()
