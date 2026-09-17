@@ -177,6 +177,50 @@ describe("responsive project-tools launcher", function () {
         return !!label && (getComputedStyle(label).visibility === "visible" && !!label.getClientRects().length) === visible;
     }, {}, { selector, visible });
 
+    it("covers the pointer inside a scrolling Backpack but preserves its outside tip", async () => {
+        const backpackStyles = (await less.render(fs.readFileSync("theme/project-backpack.less", "utf8"), {
+            modifyVars: { blocklyWidgetDivZIndex: "1002" }
+        })).css;
+        await page.addStyleTag({ content: backpackStyles + `
+            .project-backpack__body::-webkit-scrollbar { width: 16px; }
+            .project-backpack__body::-webkit-scrollbar-track { background: transparent; }
+            .project-backpack__body::-webkit-scrollbar-thumb { background: GrayText; }
+            .project-tools__pointer { pointer-events: auto; }` });
+        await openTool(backpack, 1366);
+        await page.click("#project-tools-backpack .project-tools__pin");
+        await page.evaluate(() => {
+            const body = document.createElement("div");
+            body.className = "project-backpack__body";
+            const contents = document.createElement("div");
+            contents.style.height = "2000px";
+            contents.textContent = "Saved assets";
+            body.appendChild(contents);
+            document.getElementById("project-tools-backpack").appendChild(body);
+        });
+        for (const [width, rtl] of [[1366, false], [1366, true], [390, false]]) {
+            await page.setViewport({ width, height: 900 });
+            await page.evaluate(rtl => window.setRtl(rtl), rtl);
+            await page.waitForFunction(({ width, rtl }) => document.querySelector(".project-tools").dir === (rtl ? "rtl" : "ltr")
+                && document.querySelector(".project-tools").classList.contains("project-tools--compact") === (width < 1200), {}, { width, rtl });
+            for (const scrollTop of [0, 400]) {
+                const result = await page.evaluate(({ scrollTop, width, rtl }) => {
+                    const body = document.querySelector(".project-backpack__body");
+                    body.scrollTop = scrollTop;
+                    const panel = document.getElementById("project-tools-panel").getBoundingClientRect();
+                    const pointer = document.querySelector(".project-tools__pointer");
+                    const tip = pointer.getBoundingClientRect();
+                    const compact = width < 1200;
+                    const x = compact ? tip.left + tip.width / 2 : rtl ? panel.left : panel.right;
+                    const y = compact ? panel.top : tip.top + tip.height / 2;
+                    const inside = document.elementFromPoint(x + (compact ? 0 : rtl ? 3 : -3), y + (compact ? 3 : 0));
+                    const outside = document.elementFromPoint(x + (compact ? 0 : rtl ? -3 : 3), y - (compact ? 3 : 0));
+                    return { covered: !!inside?.closest(".project-backpack"), tipVisible: outside === pointer, scrollTop: body.scrollTop };
+                }, { scrollTop, width, rtl });
+                assert.deepStrictEqual(result, { covered: true, tipVisible: true, scrollTop });
+            }
+        }
+    });
+
     it("shows inactive-tab and ellipsis hover labels above the panel in forced colors", async () => {
         await openTool(backpack, 320);
         const session = await page.createCDPSession();

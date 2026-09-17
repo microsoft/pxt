@@ -1313,16 +1313,42 @@ describe("project backpack UI", function () {
         assert.strictEqual(await page.$('[role="alert"]'), null);
     });
 
+    it("keeps search usable while loading and disables it only for a confirmed empty category", async () => {
+        const snippets = [item("Jump"), item("Run", "00000000-0000-0000-0000-000000000002")];
+        await signIn(snippets);
+        await page.evaluate(() => backpackTest.hold());
+        await reopen();
+        assert.equal(await page.$eval(searchBox, input => input.disabled), false);
+        await searchFor("Jump");
+        assert.equal(await page.$eval(clearSearch, button => button.disabled), false);
+        await page.evaluate(() => backpackTest.release());
+        await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
+        await searchFor("No matches");
+        assert.equal(await page.$eval(searchBox, input => input.disabled), false);
+        await page.click(clearSearch);
+        await page.click("#project-backpack-tab-asset");
+        assert.equal(await page.$eval(searchBox, input => input.disabled), true);
+        await page.evaluate(() => backpackTest.hold());
+        await reopen();
+        assert.equal(await page.$eval(searchBox, input => input.disabled), false);
+        await page.evaluate(() => backpackTest.release());
+        await idle();
+        assert.equal(await page.$eval(searchBox, input => input.disabled), true);
+    });
+
     it("clears cached entries on refresh failure and loads remote changes on retry and reopen", async () => {
         await signIn([item()]);
         await page.evaluate(() => { backpackTest.failRefresh = true; backpackTest.hold(); });
         await reopen();
         assert.strictEqual(await page.$(entry), null);
         assert.match(await text(), /Loading backpack/);
+        assert.strictEqual(await page.$eval(searchBox, input => input.disabled), false);
         await page.evaluate(() => backpackTest.release());
         await idle();
         assert.match(await text(), /Sync failed/);
         assert.doesNotMatch(await text(), /Loading backpack/);
+        assert.strictEqual(await page.$eval(searchBox, input => input.disabled), false, "A failed load is not a confirmed empty backpack");
         assert.strictEqual(await page.$eval(retry, button => button.disabled), false);
         assert.strictEqual(await page.$(entry), null);
         // Clearing an action error must not turn an incomplete warning back into loading.
