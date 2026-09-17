@@ -544,7 +544,7 @@ namespace pxt.auth {
                 // Fetch latest prefs from remote
                 const getResult = await this.apiAsync<Partial<UserPreferences>>('/api/user/preferences');
                 if (!getResult.success) {
-                    pxt.reportError("identity", "failed to fetch preferences for patch");
+                    pxt.reportError("identity", "failed to fetch preferences for patch", getResult as any);
                     return { success: false, res: undefined };
                 }
 
@@ -565,7 +565,7 @@ namespace pxt.auth {
                     // Set user profile from returned value so we stay in sync
                     this.setUserPreferencesAsync(patchResult.resp);
                 } else {
-                    pxt.reportError("identity", "failed to patch preferences");
+                    pxt.reportError("identity", "failed to patch preferences", patchResult as any);
                 }
                 return { success: patchResult.success, res: patchResult.resp };
             }
