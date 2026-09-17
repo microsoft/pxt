@@ -441,18 +441,29 @@ export function getAssetSaveState(asset: pxt.Asset) {
         for (const key of Object.keys(jres)) {
             if (key === "*") continue;
             const entry = jres[key];
-            if (entry.mimeType === pxt.TILEMAP_MIME_TYPE) {
-                if (entry.id !== asset.id) {
-                    delete jres[key];
-                }
+            if (entry.mimeType !== pxt.TILEMAP_MIME_TYPE || entry.id !== asset.id) {
+                delete jres[key];
             }
-            else {
-                const id = addDotToNamespace(jres["*"].namespace) + key;
+        }
 
-                if (!asset.data.tileset.tiles.some(tile => tile.id === id)) {
-                    delete jres[key];
-                }
-            }
+        // Full saves must carry every tile, including gallery tiles unavailable in
+        // another project. Use the tileset itself: project JRES omits gallery tiles
+        // and can collapse imported tiles from different namespaces to one short id.
+        const defaultNamespace = addDotToNamespace(jres["*"].namespace);
+        for (const tile of asset.data.tileset.tiles) {
+            const namespace = tile.id.slice(0, tile.id.lastIndexOf(".") + 1);
+            const isDefaultNamespace = namespace === defaultNamespace;
+            const key = isDefaultNamespace ? tile.id.slice(namespace.length) : tile.id;
+            jres[key] = {
+                data: tile.jresData || pxt.sprite.base64EncodeBitmap(tile.bitmap),
+                mimeType: pxt.IMAGE_MIME_TYPE,
+                tilemapTile: true,
+                displayName: tile.meta.displayName,
+                ...(tile.meta.tags?.length ? { tags: tile.meta.tags.slice() } : {}),
+                // Explicit ids prevent inflateJRes from prefixing the default
+                // namespace; qualified keys avoid collisions with project tiles.
+                ...(!isDefaultNamespace ? { id: tile.id, namespace, dataEncoding: "base64" } : {})
+            };
         }
 
         serialized.jres = jres;

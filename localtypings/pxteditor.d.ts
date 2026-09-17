@@ -1409,6 +1409,7 @@ declare namespace pxt.editor {
         type: "open-backpack";
         id?: string | number;
         code: string;
+        name?: string;
         blocksInfo: pxtc.BlocksInfo;
         gallery: pxt.AssetSnapshot;
         palette?: string[];
@@ -1452,6 +1453,7 @@ declare namespace pxt.editor {
         type: "save-backpack";
         code: string;
         blockText: string;
+        name?: string;
     }
 
     interface AssetEditorErrorResponse extends BaseAssetEditorResponse {
@@ -1471,6 +1473,7 @@ declare namespace pxt.editor {
     interface AssetEditorReadyEvent {
         type: "event";
         kind: "ready";
+        backpack?: boolean;
     }
 
     type AssetEditorEvent = AssetEditorRequestSaveEvent | AssetEditorReadyEvent;

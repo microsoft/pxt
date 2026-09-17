@@ -35,7 +35,8 @@ or function definition, or drag it onto Backpack. This copies its contents,
 referenced Blockly functions and assets—not following siblings or the originals.
 Standalone image, animation, tilemap and music blocks go to **Assets** instead of
 **Code**. Limits are 50 code captures and 200 assets per target, with a shared
-50 MiB account cap. Assets do not store PNG previews.
+50 MiB account cap. Asset previews are generated locally using the gallery renderer,
+not stored as PNGs. Tilemaps include their required tile pixels.
 
 Guests save in this browser; signing in syncs captures across browsers. Search
 matches names, contained blocks, parameters and extensions. Rename is optional.
@@ -46,8 +47,9 @@ if the destination lacks those blocks.
 Ordinary clipboard paste uses the same dependency checks while retaining normal
 Blockly copy/cut/paste behavior.
 The pencil renames code captures; for assets it opens the native editor in an
-isolated dialog. **Save** updates Backpack, not project assets; **Cancel** discards
-changes. Captures store target/PXT versions and warn before cross-version imports.
+isolated popup. Use its bottom name field and **Done**; closing works like the
+Assets tab and saves to Backpack, not project assets. Captures store target/PXT
+versions and warn before cross-version imports.
 
 Failed uploads retain a local copy with **Retry sync**. After 24 hours, add that
 copy to a project and capture it again. Invalid entries remain trashable.

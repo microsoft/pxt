@@ -357,7 +357,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             className="project-backpack__button project-backpack__sync" type="button" disabled={pending}
                             onClick={() => void run(() => backpack.retryBackpackEntryAsync(entry))}>{lf("Retry sync")}</button>}
                         {item && <>
-                            <BackpackPreview entry={entry} active={props.active}
+                            <BackpackPreview entry={entry} headerId={props.headerId} active={props.active}
                                 onDragStart={canImport && !pending && !modalOpen ? event => startDrag(event, entry) : undefined}
                                 onDragEnd={() => { dragged.current = undefined; }} />
                             {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
@@ -387,6 +387,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             </ul>}
         </div>
         {assetEdit && props.active && <BackpackAssetEditDialog item={assetEdit.item} context={assetEdit.context}
+            onOpenError={message => { setError(message); closeAssetEdit(); }}
             onClose={closeAssetEdit} onSave={async item => {
                 if (!isCurrent() || !backpack.canImportBackpack(props.headerId)) {
                     throw new Error(lf("Your project or account changed. Close the asset editor and try again."));

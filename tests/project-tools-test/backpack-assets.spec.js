@@ -218,6 +218,104 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
         assert.deepStrictEqual(result.errors, []);
     });
 
+    it("contains custom, gallery, and transparent tile pixels without source galleries, including id conflicts", async () => {
+        const result = await page.evaluate(async () => {
+            const assets = seed(2);
+            const galleryBitmap = pxt.sprite.Bitmap.fromData(bitmap(16, 16, 5));
+            galleryBitmap.set(0, 0, 0);
+            // Same short name as the custom tile, in a nested extension namespace.
+            project.loadTilemapJRes({
+                "*": { namespace: "gallery.terrain", mimeType: pxt.IMAGE_MIME_TYPE, dataEncoding: "base64" },
+                tile1: { tilemapTile: true, data: pxt.sprite.base64EncodeBitmap(galleryBitmap.data()) }
+            }, false, true);
+            const gallery = project.resolveTile("gallery.terrain.tile1");
+            assets.tilemap.data.tileset.tiles.push(gallery);
+            assets.tilemap.data.tilemap.set(1, 0, 2);
+            project.updateTilemap(assets.tilemap.id, assets.tilemap.data);
+            const block = Blockly.serialization.blocks.append({ type: "backpack_real_assets", fields: {
+                IMAGE: pxt.getTSReferenceForAsset(assets.image), TILEMAP: pxt.getTSReferenceForAsset(assets.tilemap)
+            } }, workspace);
+            await settle();
+            const asset = block.getField("TILEMAP").getAsset();
+            const expected = snapshot(asset);
+            const sourceState = () => JSON.stringify([project.getProjectTilesetJRes(), project.getProjectAssetsJRes(),
+                project.saveGallerySnapshot(), asset, Blockly.serialization.workspaces.save(workspace)]);
+            const before = sourceState();
+            const projectJres = project.getProjectTilesetJRes();
+            const { code } = backpack.captureBackpackBlock(block);
+            const saved = JSON.parse(code).blocks[0].fields.TILEMAP;
+            const clipboard = block.toCopyData().blockState.fields.TILEMAP;
+            const sourceUnchanged = before === sourceState();
+            const savedBefore = JSON.stringify(saved);
+            const inflated = pxt.inflateJRes(saved.jres);
+            const tileIds = asset.data.tileset.tiles.map(tile => tile.id);
+            const entries = tileIds.map(id => inflated[id]);
+            // Use the real JRES loader in an isolated project, as asset consumers do.
+            const isolated = new pxt.TilemapProject();
+            isolated.loadTilemapJRes(saved.jres);
+            const isolatedMap = snapshot(isolated.getTilemap(saved.assetId));
+            const savedUnchanged = savedBefore === JSON.stringify(saved);
+            workspace.clear(); await settle();
+            const pastes = [];
+            for (const conflicts of [false, true]) {
+                window.project = new pxt.TilemapProject();
+                const existing = conflicts ? seed(8) : undefined;
+                const existingGalleryTile = conflicts ? project.createNewTile(bitmap(16, 16, 11), gallery.id) : undefined;
+                const destinationState = () => existing ? [existing.image, existing.tile, existing.tilemap, existingGalleryTile]
+                    .map(asset => snapshot(project.lookupAsset(asset.type, asset.id))) : [];
+                const destinationBefore = destinationState();
+                const emptyGallery = ["image", "tile", "tilemap", "animation", "song", "json"]
+                    .every(type => project.getGalleryAssets(type).length === 0);
+                const first = await inspectPasted(code);
+                const second = await inspectPasted(code);
+                // Imported gallery tiles now belong to the project; re-saving must
+                // still distinguish their ids from the custom tile's short name.
+                const recaptured = load("fields/field_utils").getAssetSaveState(project.getTilemap(first.ids.tilemap));
+                const reloaded = new pxt.TilemapProject();
+                reloaded.loadTilemapJRes(recaptured.jres);
+                pastes.push({ conflicts, emptyGallery, destinationBefore, destinationAfter: destinationState(), first, second,
+                    reloaded: snapshot(reloaded.getTilemap(recaptured.assetId)) });
+                workspace.clear(); await settle();
+            }
+            return { saved, clipboard, projectJres, tileIds, entries, galleryIsProject: gallery.isProjectTile,
+                sourceUnchanged, savedUnchanged, expected, isolatedMap, pastes, errors };
+        });
+        assert.strictEqual(result.galleryIsProject, false);
+        assert(result.sourceUnchanged && result.savedUnchanged);
+        assert.deepStrictEqual(Object.keys(result.saved).sort(), ["assetId", "assetType", "jres", "version"]);
+        assert.equal(result.saved.version, 1);
+        assert.deepStrictEqual(result.clipboard, result.saved);
+        for (const key of Object.keys(result.projectJres)) {
+            assert.deepStrictEqual(result.saved.jres[key], result.projectJres[key], "Existing project JRES stays unchanged: " + key);
+        }
+        assert.deepStrictEqual(result.saved.jres[result.saved.assetId].tileset, result.tileIds);
+        result.entries.forEach((entry, i) => {
+            assert(entry && entry.data, "Missing tile bitmap: " + result.tileIds[i]);
+            assert.equal(entry.id, result.tileIds[i]);
+            assert.equal(entry.namespace, i === 2 ? "gallery.terrain." : "myTiles.");
+            assert.equal(entry.mimeType, "image/x-mkcd-f4");
+            assert.equal(entry.dataEncoding, "base64");
+            assert.strictEqual(entry.tilemapTile, true);
+        });
+        assert.deepStrictEqual(result.isolatedMap, result.expected);
+        for (const paste of result.pastes) {
+            assert(paste.emptyGallery);
+            assert.deepStrictEqual(paste.destinationAfter, paste.destinationBefore);
+            assert.deepStrictEqual(paste.first.tilemap, result.expected);
+            assert.deepStrictEqual(paste.second.tilemap, result.expected);
+            assert.deepStrictEqual(paste.reloaded, result.expected);
+            assert(paste.first.registered && paste.second.registered);
+            assert.deepStrictEqual(paste.first.ids, paste.second.ids);
+            assert.deepStrictEqual(paste.first.tileIds, paste.second.tileIds);
+            assert.deepStrictEqual(paste.first.counts, paste.second.counts);
+            if (paste.conflicts) {
+                assert.notEqual(paste.first.ids.tilemap, result.saved.assetId);
+                for (const id of result.tileIds.slice(1)) assert(!paste.first.tileIds.includes(id));
+            }
+        }
+        assert.deepStrictEqual(result.errors, []);
+    });
+
     it("remaps conflicting image/tilemap/tile ids, preserves destination assets, and deduplicates repeated paste", async () => {
         const result = await page.evaluate(async () => {
             const source = await makeSource();

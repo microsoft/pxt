@@ -408,6 +408,7 @@ export function backpackErrorMessage(code?: string): string {
         case "backpack_precondition_required": return lf("This snippet changed on another device. Cancel and reopen the backpack before trying again.");
         case "backpack_entry_deleted": return lf("This snippet was deleted. Capture the blocks again to save a new copy.");
         case "backpack_invalid_entry": return lf("This snippet contains invalid data. You can delete it or reopen the backpack to check again.");
+        case "backpack_unsupported_entry": return lf("This saved item uses an unsupported Backpack format. Delete it and save a new copy from your project.");
         case "backpack_not_found": return lf("This snippet is no longer available. Reopen the backpack to check again.");
         case "backpack_invalid_cursor": return lf("The backpack list changed. Reopen the backpack to load it again.");
         case "backpack_rate_limited": return lf("Too many backpack requests. Wait a moment and try again.");
@@ -460,7 +461,7 @@ async function requestAsync(context: CloudContext, path: string, method = "GET",
         // Store only known codes; never retain unknown backend strings or bodies.
         throw new BackpackRequestError(code?.startsWith("backpack_") && ["backpack_unavailable", "backpack_request_too_large",
             "backpack_entry_too_large", "backpack_preview_too_large", "backpack_quota_exceeded", "backpack_id_conflict",
-            "backpack_version_conflict", "backpack_entry_deleted", "backpack_invalid_entry", "backpack_not_found",
+            "backpack_version_conflict", "backpack_entry_deleted", "backpack_invalid_entry", "backpack_unsupported_entry", "backpack_not_found",
             "backpack_invalid_cursor", "backpack_precondition_required", "backpack_rate_limited", "backpack_account_deleting"].includes(code)
             ? code : fallback);
     }
@@ -879,6 +880,13 @@ export function getBackpackAssetEditorContext(headerId: string): BackpackAssetEd
     return registeredEditor.editor.assetEditorContext();
 }
 
+export function getBackpackAssetPreviewContext(headerId: string): BackpackAssetEditorContext {
+    if (!isBackpackEnabled() || registeredEditor?.editor.headerId() !== headerId) {
+        throw new Error(lf("The asset preview is unavailable."));
+    }
+    return registeredEditor.editor.assetEditorContext();
+}
+
 export async function importBackpackItemAsync(item: pxt.auth.BackpackItem, headerId: string): Promise<boolean> {
     const validated = validateBackpackItem(item);
     const registration = registeredEditor;
@@ -911,7 +919,7 @@ export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: s
     return added;
 }
 
-/** Fetch code on explicit Add or Edit, never while listing or searching. */
+/** Read code on Add/Edit or for a visible asset preview, never in list responses. */
 async function readItemAsync(saved: BackpackEntry, context: OperationContext): Promise<pxt.auth.BackpackItem> {
     let item = saved.item;
     if (saved.source === "cloud") {
@@ -949,6 +957,13 @@ export async function loadBackpackAssetAsync(entry: BackpackEntry): Promise<pxt.
     const saved = observed(entry);
     if (saved.error || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
     if (saved.local?.firstAttemptAt) throw new Error(lf("Retry syncing this asset before editing it."));
+    return readItemAsync(saved, await captureAsync());
+}
+
+/** Asset PNGs are not stored: visible cards read their bounded content to render locally. */
+export async function loadBackpackAssetPreviewAsync(entry: BackpackEntry): Promise<pxt.auth.BackpackItem> {
+    const saved = observed(entry);
+    if (saved.error || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
     return readItemAsync(saved, await captureAsync());
 }
 

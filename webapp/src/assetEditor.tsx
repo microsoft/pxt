@@ -8,6 +8,7 @@ import { ImageFieldEditor } from "./components/ImageFieldEditor";
 import { setTelemetryFunction } from './components/ImageEditor/store/imageReducer';
 import { IFrameEmbeddedClient } from "../../pxtservices/iframeEmbeddedClient";
 import { BackpackAssetEditor } from "./backpackAssetEditor";
+import { Button } from "../../react-common/components/controls/Button";
 
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -53,7 +54,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         if (!request || !["create", "open", "duplicate", "save", "open-backpack", "save-backpack"].includes(request.type)) return;
         this.messageQueue = this.messageQueue.then(() => this.handleRequest(request)).catch(() => {
             this.sendResponse({ id: request.id, type: request.type, success: false,
-                error: lf("Unable to edit this asset. Close the editor and try again.") });
+                error: request.type === "open-backpack" ? "backpack_asset_unavailable"
+                    : lf("Unable to edit this asset. Close the editor and try again.") });
         });
     }
 
@@ -150,10 +152,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     refHandler = (e: ImageFieldEditor<pxt.Asset>) => {
         if (!e) return;
         this.editor = e;
-        this.editor.init(this.state.editing, () => {}, {
+        this.editor.init(this.state.editing, this.backpackMode ? this.sendBackpackSaveRequest : () => {}, {
             galleryTiles: this.galleryTiles,
             hideMyAssets: true,
-            hideCloseButton: true,
+            hideCloseButton: !this.backpackMode,
             blocksInfo: this.backpackMode ? this.backpackInfo : undefined
         })
     }
@@ -161,6 +163,12 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     handleKeydown = (e: KeyboardEvent) => {
         if (this.backpackMode) {
             if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") e.preventDefault();
+            // ImageFieldEditor owns Escape (including nested tile editors). Scalar
+            // Blockly popups live outside React and may already have been dismissed.
+            if (!this.state.editing && e.key === "Escape") {
+                e.preventDefault();
+                this.sendBackpackSaveRequest();
+            }
             return;
         }
         if (e.ctrlKey && (e.key === "s" || e.key === "S")) {
@@ -175,7 +183,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         window.addEventListener("keydown", this.handleKeydown, null);
         this.sendEvent({
             type: "event",
-            kind: "ready"
+            kind: "ready",
+            backpack: true
         });
         tickAssetEditorEvent("asset-editor-shown");
         this.pollingInterval = setInterval(this.pollForUpdates, 200);
@@ -220,6 +229,10 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
         })
     }
 
+    private sendBackpackSaveRequest = (): void => {
+        this.sendEvent({ type: "event", kind: "done-clicked" });
+    }
+
     render() {
         if (this.state.editing) {
             const editorType = this.state.editing.type === "song" ? "music" : "image";
@@ -227,10 +240,18 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 ref={this.refHandler}
                 singleFrame={this.state.editing.type !== "animation"}
                 editorType={editorType}
-                doneButtonCallback={this.sendSaveRequest}
-                hideDoneButton={true}
+                // Backpack's close callback handles Done, X and Escape once.
+                doneButtonCallback={this.backpackMode ? undefined : this.sendSaveRequest}
+                hideDoneButton={!this.backpackMode}
                 includeSpecialTagsInFilter={true}
             />
+        }
+
+        if (this.backpackMode && this.backpack) {
+            return <div style={{ position: "fixed", bottom: "1rem", right: "1rem", zIndex: 1000, minHeight: "44px", display: "flex" }}>
+                <Button className="image-editor-confirm" label={lf("Done")} title={lf("Done")}
+                    onClick={this.sendBackpackSaveRequest} />
+            </div>;
         }
 
         return <div></div>

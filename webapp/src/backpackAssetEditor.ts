@@ -7,8 +7,10 @@ export class BackpackAssetEditor {
     private block: Blockly.BlockSvg;
     private field: Blockly.Field;
     private asset: pxt.Asset;
+    private editorAssetId: string;
     private div: HTMLDivElement;
     private original: Blockly.serialization.blocks.State;
+    private name: string;
 
     constructor(private project: pxt.TilemapProject) { }
 
@@ -18,6 +20,7 @@ export class BackpackAssetEditor {
         if (blocks.length !== 1 || !pxt.auth.isBackpackAssetType(root.type) || root.next
             || Object.keys(root.inputs || {}).length) throw new Error(lf("Choose a single Backpack asset."));
         this.original = root;
+        this.name = request.name;
 
         // postMessage strips class prototypes. Restore the native snapshot collections,
         // not current-project files or a second field/JRES serialization format.
@@ -82,16 +85,24 @@ export class BackpackAssetEditor {
         if (this.asset.type === pxt.AssetType.Tilemap) {
             pxt.sprite.addMissingTilemapTilesAndReferences(this.project, this.asset);
         }
+        this.editorAssetId = this.asset.id;
         return pxt.cloneAsset(this.asset, true);
     }
 
-    save(edited?: pxt.Asset): { code: string; blockText: string } {
+    save(edited?: pxt.Asset): { code: string; blockText: string; name?: string } {
         // Commit native dropdown edits before capturing their real serialized fields.
         Blockly.DropDownDiv.hideWithoutAnimation();
         Blockly.WidgetDiv.hide();
         if (this.asset) {
             if (!edited || edited.type !== this.asset.type) throw new Error(lf("The asset editor is not ready."));
-            let result = pxt.patchTemporaryAsset(this.asset, pxt.cloneAsset(edited, true), this.project);
+            let result = pxt.cloneAsset(edited, true);
+            // A failed parent save leaves the native editor holding its original
+            // temporary id. Reuse the promoted identity on subsequent captures.
+            if (result.id === this.editorAssetId && this.asset.id !== this.editorAssetId) {
+                result.id = this.asset.id;
+                result.internalID = this.asset.internalID;
+            }
+            result = pxt.patchTemporaryAsset(this.asset, result, this.project);
             if (result.type === pxt.AssetType.Tilemap) pxt.sprite.updateTilemapReferencesFromResult(this.project, result);
             if (this.field instanceof pxtblockly.FieldTileset && result.type === pxt.AssetType.Tile) {
                 // ImageEditor.getTile always marks the result as a project tile,
@@ -114,7 +125,7 @@ export class BackpackAssetEditor {
             if (this.original[key] === undefined) delete payload.blocks[0][key];
             else payload.blocks[0][key] = this.original[key];
         }
-        return { ...captured, code: JSON.stringify(payload) };
+        return { ...captured, code: JSON.stringify(payload), name: this.asset ? edited?.meta?.displayName : this.name };
     }
 
     dispose(): void {
