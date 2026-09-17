@@ -2614,7 +2614,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const headerId = this.parent.state.header.id;
         const signedIn = auth.loggedIn();
         const userId = auth.userProfile()?.id;
-        const isCurrentAccount = (): boolean => auth.loggedIn() === signedIn
+        const targetId = pxt.appTarget.id;
+        const isCurrentCapture = (): boolean => pxt.appTarget.id === targetId && auth.loggedIn() === signedIn
             && (!signedIn || auth.userProfile()?.id === userId);
         let item: pxt.auth.BackpackItem;
         try {
@@ -2627,24 +2628,25 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 code, blockText, ...requirements, createdAt: Date.now(),
                 ...(kind === "code" ? await backpackPreviewAsync(block) : {})
             };
+            if (!isCurrentCapture()) return;
             backpack.validateBackpackItem(item);
         } catch (error) {
-            if (!isCurrentAccount()) return;
+            if (!isCurrentCapture()) return;
             await core.confirmAsync({ header: lf("Cannot save this snippet"),
                 body: error instanceof Error ? error.message : lf("This block could not be saved to your backpack."),
                 hideCancel: true, agreeLbl: lf("OK") });
             return;
         }
         // Retain the captured item/ID for an explicit retry after a failed local save or upload.
-        while (isCurrentAccount()) {
+        while (isCurrentCapture()) {
             try {
                 await backpack.saveBackpackItemAsync(item);
-                if (!isCurrentAccount()) return;
+            if (!isCurrentCapture()) return;
                 core.infoNotification(lf("Added {0} to Backpack.", item.name));
                 if (this.parent.state.header?.id === headerId) backpack.requestBackpackOpen(headerId, false, item.kind);
                 return;
             } catch (error) {
-                if (!isCurrentAccount()) return;
+                if (!isCurrentCapture()) return;
                 const retry = await core.confirmAsync({ header: lf("Backpack was not saved"),
                     body: error instanceof Error ? error.message : lf("Could not save your backpack. Please try again."),
                     agreeLbl: lf("Retry") });
