@@ -19,5 +19,5 @@ those modules. Browser tests require Puppeteer's Chromium, not a development ser
 Test shared behavior once, with representative cases rather than viewport/theme
 or failure-stage matrices. Use [browser.js](browser.js), await actual effects and
 transactions, and unmount before closing pages. Network/account boundaries are
-mocked; check cross-device sync, keyboard/touch and screen readers manually.
+mocked; check cross-device sync, keyboard/touch and screen readers manually
 before release. See [feature usage](../../docs/project-tools.md).

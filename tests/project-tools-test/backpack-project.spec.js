@@ -349,7 +349,7 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.deepStrictEqual(e.events, ["confirm", "fetch:a"]);
     });
 
-    it("inserts real Blockly blocks and removes the complete insertion in one undo", async function () {
+    it("retries saving real Blockly imports without duplicating their single undo group", async function () {
         this.timeout(10000); // Includes cold-loading Blockly and its native render/event setup.
         const e = environment();
         const Blockly = require("blockly");
@@ -369,6 +369,7 @@ describe("Backpack project insertion (fresh source, no network or program execut
         e.item.code = codeFor({ type: "controls_if", inputs: { IF0: { block: { type: "logic_boolean", fields: { BOOL: "TRUE" } } } } });
         e.registry.logic_boolean = {};
         e.blockly.builtinBlocks = () => ({ controls_if: {}, logic_boolean: {} });
+        e.hooks.set("save:1", () => { throw new Error("storage failure"); });
         const recorded = new Promise(resolve => {
             const listener = event => {
                 if (event.type !== Blockly.Events.CREATE) return;
@@ -386,7 +387,16 @@ describe("Backpack project insertion (fresh source, no network or program execut
             assert(undo.every(event => event.group && event.group === undo[0].group));
             workspace.undo(false);
             assert.equal(workspace.getAllBlocks(false).length, 0);
-            assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1"]);
+            assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1", "confirm", "save:2"]);
+            assert.equal(e.dialogs[0].agreeLbl, "Retry save");
+
+            // Dismissing a repeated persistence error also retains a successful import.
+            e.hooks.set("save:3", () => { throw new Error("storage failure"); });
+            e.hooks.set("confirm", () => 0);
+            assert.equal(await e.run(), true);
+            assert.equal(workspace.getAllBlocks(false).length, 2);
+            assert.equal(e.events.filter(event => event === "paste:one-undo-group").length, 2);
+            assert.equal(e.dialogs[1].disagreeLbl, "Keep editing");
         } finally {
             workspace.dispose();
             await new Promise(resolve => setTimeout(resolve, 0));

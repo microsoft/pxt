@@ -55,7 +55,23 @@ export async function addBackpackToProjectAsync(item: pxt.auth.BackpackItem, hos
         new Blockly.utils.Coordinate(position.x, position.y));
     pxtblockly.pasteBackpackBlock(saved.code, workspace, coordinates, saved.kind); // Owns the single undo group and asset remapping.
     await wait(() => Blockly.renderManagement.finishQueuedRenders());
-    await wait(host.saveAsync);
+    // Insertion already succeeded. Retain its undo group and any intervening user
+    // edits; persistence retries must never paste the same blocks again.
+    while (true) {
+        try {
+            await wait(host.saveAsync);
+            break;
+        } catch {
+            assertCurrent();
+            const retry = await wait(() => core.confirmAsync({
+                header: lf("Blocks added, but project not saved"),
+                body: lf("The blocks are already in your workspace. Do not add them again. Retry saving, or keep editing and save your project before leaving."),
+                agreeLbl: lf("Retry save"),
+                disagreeLbl: lf("Keep editing")
+            }));
+            if (!retry) break;
+        }
+    }
     assertCurrent();
     return true;
 }
