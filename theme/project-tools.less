@@ -1,0 +1,515 @@
+.project-tools {
+    --tools-surface: var(--pxt-target-background1, Canvas);
+    --tools-foreground: var(--pxt-target-foreground1, CanvasText);
+    --tools-surface-hover: var(--pxt-target-background1-hover, var(--tools-surface));
+    --tools-foreground-hover: var(--pxt-target-foreground1-hover, var(--tools-foreground));
+    --tools-border: var(--pxt-neutral-stencil1, GrayText);
+    --tools-accent: var(--pxt-primary-background, Highlight);
+    --tools-on-accent: var(--pxt-primary-foreground, HighlightText);
+    --tools-banner-height: 0rem;
+    --tools-menu-height: @mainMenuHeight;
+    --tools-bubble-size: 3.25rem;
+    --tools-bubble-gap: .75rem;
+    --tools-pointer-rotation: 45deg;
+    --tools-slide-x: 0;
+    --tools-slide-y: -1;
+
+    &[dir="rtl"] { --tools-pointer-rotation: -45deg; }
+
+    color: var(--tools-foreground);
+
+    button, a[role="button"] {
+        cursor: pointer;
+        font: inherit;
+    }
+
+    button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, [role="separator"]:focus-visible {
+        outline: 3px solid var(--pxt-focus-border, Highlight);
+        outline-offset: 2px;
+    }
+
+    [hidden] { display: none; }
+}
+
+.notificationBannerVisible .project-tools {
+    --tools-banner-height: @bannerHeight;
+}
+
+.project-tools__launcher {
+    position: fixed;
+    width: var(--tools-bubble-size);
+    inset-inline-end: 1rem;
+    top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
+    z-index: @sidedocZIndex;
+}
+
+.project-tools__bubbles {
+    position: absolute;
+    inset-inline-end: 0;
+    top: calc(100% + var(--tools-bubble-gap));
+    display: flex;
+    flex-direction: column;
+    gap: var(--tools-bubble-gap);
+    visibility: hidden;
+    pointer-events: none;
+
+    .project-tools__bubble {
+        --tools-bubble-distance: calc(var(--tools-bubble-size) + var(--tools-bubble-gap));
+        // Direction is already handled by the horizontal/vertical slide variables.
+        /* rtl:ignore */
+        transform: translate(calc(var(--tools-slide-x) * var(--tools-bubble-distance)), calc(var(--tools-slide-y) * var(--tools-bubble-distance)));
+        &:last-child { --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * 2); }
+    }
+
+    &[aria-hidden="false"] {
+        visibility: visible;
+        pointer-events: auto;
+        .project-tools__bubble { transform: none; }
+    }
+}
+
+.project-tools__bubble {
+    position: relative;
+    width: var(--tools-bubble-size);
+    height: var(--tools-bubble-size);
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--tools-border);
+    border-radius: 50%;
+    background: var(--tools-surface);
+    color: var(--tools-foreground);
+    box-shadow: 0 3px 12px color-mix(in srgb, var(--tools-foreground) 20%, transparent);
+
+    .icon { margin: 0; font-size: 1.35rem; }
+    &[aria-selected="true"] {
+        background: var(--tools-accent);
+        color: var(--tools-on-accent);
+        border-radius: 1rem;
+    }
+    &:hover .project-tools__bubble-label, &:focus-visible .project-tools__bubble-label {
+        visibility: visible;
+    }
+}
+
+.project-tools__more {
+    z-index: 1;
+    svg {
+        display: block;
+        width: 1.5rem;
+        height: 1.5rem;
+        flex-shrink: 0;
+        fill: currentColor;
+        pointer-events: none;
+    }
+}
+
+.project-tools__bubble-label {
+    visibility: hidden;
+    position: absolute;
+    inset-inline-end: calc(100% + .5rem);
+    white-space: nowrap;
+    padding: .4rem .65rem;
+    background: var(--tools-surface);
+    color: var(--tools-foreground);
+    border: 1px solid var(--tools-border);
+    border-radius: .4rem;
+    pointer-events: none;
+}
+
+.project-tools__panel {
+    --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
+    --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
+    --tools-panel-bottom: calc(@editorToolsCollapsedHeight + 1rem);
+    --tools-available-width: calc(100vw - 6rem);
+    --tools-default-width: @sideBarWidth;
+    --tools-launcher-space: 5rem;
+
+    &[data-active-tab="whiteboard"] {
+        --tools-pointer-offset: calc(var(--tools-bubble-size) * 2.5 + var(--tools-bubble-gap) * 2);
+    }
+
+    position: fixed;
+    box-sizing: border-box;
+    z-index: @sidedocZIndex;
+    inset-inline-end: 5rem;
+    top: var(--tools-panel-top);
+    bottom: var(--tools-panel-bottom);
+    // Keep the panel plus its bubble strip within the legacy sidedocs footprint.
+    // Explicit resizing can grow beyond this default without changing the budget.
+    width: calc(var(--tools-default-width) - var(--tools-launcher-space));
+    min-width: ~"min(16rem, var(--tools-available-width))";
+    max-width: var(--tools-available-width);
+    // Leave CSS max() to the browser rather than Less's numeric max() function.
+    max-height: ~"max(0px, calc(100vh - var(--tools-panel-top) - var(--tools-panel-bottom)))";
+    max-height: ~"max(0px, calc(100dvh - var(--tools-panel-top) - var(--tools-panel-bottom)))";
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--tools-border);
+    border-radius: 1rem;
+    background: var(--tools-surface);
+    box-shadow: 0 6px 24px color-mix(in srgb, var(--tools-foreground) 20%, transparent);
+    overflow: visible;
+}
+
+.project-tools__pointer {
+    position: absolute;
+    width: .875rem;
+    height: .875rem;
+    inset-inline-end: calc(-.4375rem - 1px);
+    top: calc(var(--tools-pointer-offset) - .4375rem - 1px);
+    background: var(--tools-surface);
+    border-block-start: 1px solid var(--tools-border);
+    border-inline-end: 1px solid var(--tools-border);
+    pointer-events: none;
+    /* rtl:ignore */
+    transform: rotate(var(--tools-pointer-rotation));
+}
+
+.project-tools__header {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: .25rem;
+    padding: .5rem;
+    border-bottom: 1px solid var(--tools-border);
+}
+
+.project-tools__title {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 1.1rem;
+    margin: 0;
+    padding-inline: .5rem;
+}
+
+.project-tools__close, .project-tools__external, .project-tools__pin {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    flex-shrink: 0;
+    border: 1px solid transparent;
+    border-radius: .5rem;
+    background: transparent;
+    color: var(--tools-foreground);
+    .icon { margin: 0; }
+}
+
+// Header actions sit on a target surface, not the primary toolbar background.
+// Outrank shared menu/link rules even when react-common is imported afterwards.
+.project-tools__header .project-tools__close,
+.project-tools__header .project-tools__external,
+.project-tools__header .project-tools__pin,
+.project-whiteboard-menu .common-button.menu-button {
+    color: var(--tools-foreground);
+    background: transparent;
+    filter: none;
+
+    &:hover, &:focus-visible, &:active, &.expanded, &[aria-pressed="true"] {
+        color: var(--tools-foreground-hover);
+        background: var(--tools-surface-hover);
+    }
+    &:focus-visible::after { outline: none; }
+}
+
+.project-tools__pin {
+    padding: .35rem .5rem;
+    svg {
+        width: 1.2rem;
+        height: 1.2rem;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.75;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        /* rtl:ignore */
+        transform: rotate(35deg);
+    }
+    &[aria-pressed="true"] {
+        border-color: currentColor;
+        svg { transform: none; }
+        .project-tools__pin-head { fill: currentColor; }
+    }
+}
+
+.project-tools__resize {
+    position: absolute;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--tools-foreground);
+    touch-action: none;
+    border-radius: .5rem;
+    &:hover, &:focus-visible { background: var(--tools-accent); }
+    &:hover circle, &:focus-visible circle { fill-opacity: 1; }
+}
+.project-tools__resize--width {
+    inset-inline-start: -.4rem;
+    top: 1rem;
+    bottom: 1rem;
+    width: .75rem;
+    cursor: ew-resize;
+}
+.project-tools__resize--height {
+    inset-inline: 1rem;
+    bottom: -.4rem;
+    height: .75rem;
+    cursor: ns-resize;
+    .project-tools__resize-grip { width: 1.75rem; height: .625rem; }
+}
+.project-tools__resize-grip {
+    flex-shrink: 0;
+    width: .625rem;
+    height: 1.75rem;
+    border-radius: .3rem;
+    background: var(--tools-surface);
+    fill: currentColor;
+    pointer-events: none;
+    circle { fill-opacity: .65; }
+}
+.project-tools__panel--resizing {
+    user-select: none;
+    iframe { pointer-events: none; }
+    .project-tools__resize-grip circle { fill-opacity: 1; }
+}
+
+.project-tools__docs, .project-tools__whiteboard {
+    position: relative;
+    flex: 1;
+    overflow: auto;
+    border-radius: 0 0 1rem 1rem;
+}
+.project-tools__whiteboard {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: visible;
+    border-radius: 0;
+}
+.project-whiteboard__body {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    border-radius: 0 0 1rem 1rem;
+}
+.project-tools__docs #sidedocsframe {
+    display: block;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+.project-tools__empty {
+    padding: 2rem;
+    text-align: center;
+    .icon { font-size: 2rem; margin: 1rem; }
+}
+.project-tools__empty button, .project-whiteboard-menu__edit button,
+.project-whiteboard__status button, .project-whiteboard__invalid button, .project-whiteboard__conflict button {
+    min-height: 2.75rem;
+    padding: .4rem .8rem;
+    border: 1px solid var(--tools-border);
+    border-radius: .5rem;
+    color: var(--tools-foreground);
+    background: var(--tools-surface);
+}
+
+.project-whiteboard {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    padding: .75rem;
+    height: 100%;
+    min-height: 30rem;
+
+    label { font-weight: 600; flex-shrink: 0; }
+    textarea {
+        flex-shrink: 0;
+        min-height: 4rem;
+        max-height: 12rem;
+        padding: .65rem;
+        resize: vertical;
+        font: inherit;
+        line-height: 1.4;
+        border: 1px solid var(--tools-border);
+        border-radius: .5rem;
+        color: var(--tools-foreground);
+        background: var(--tools-surface);
+    }
+}
+.project-whiteboard__privacy { margin: 0; font-size: .85rem; line-height: 1.3; flex-shrink: 0; }
+.project-whiteboard__conflict { flex-shrink: 0; }
+.project-whiteboard__canvas {
+    flex: 1;
+    min-height: 17rem;
+    overflow: hidden;
+    border-radius: .5rem;
+    border: 1px solid var(--tools-border);
+    .image-editor-content { overflow: hidden; min-height: 0; }
+    .image-editor-sidebar {
+        display: flex;
+        flex-direction: column;
+        flex: 0 0 5rem;
+        width: 5rem;
+        min-height: 0;
+    }
+    .image-editor-tool-buttons { flex-shrink: 0; }
+    .image-editor-palette {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overflow-x: hidden;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+        scrollbar-width: thin;
+    }
+    .image-editor-color-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: .25rem;
+        padding: .25rem;
+        .image-editor-button { margin: 0; width: 100%; height: 2rem; }
+    }
+}
+.project-whiteboard__status { min-height: 1.5rem; font-size: .85rem; flex-shrink: 0; }
+.project-whiteboard__invalid { padding: 1rem; }
+
+.project-whiteboard-menu {
+    position: relative;
+    flex-shrink: 0;
+    z-index: 2;
+
+    .common-button.menu-button {
+        min-width: 2.75rem;
+        min-height: 2.75rem;
+        padding: .5rem;
+        border: 1px solid transparent;
+        border-radius: .5rem;
+    }
+    .common-menu-dropdown-pane, .project-whiteboard-menu__edit {
+        position: absolute;
+        inset-inline-start: auto;
+        inset-inline-end: 0;
+        top: 100%;
+        width: 18rem;
+        max-width: calc(100vw - 4rem);
+        max-height: 60vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        border: 1px solid var(--tools-border);
+        border-radius: .5rem;
+        background: var(--tools-surface);
+        color: var(--tools-foreground);
+        box-shadow: 0 3px 12px color-mix(in srgb, var(--tools-foreground) 20%, transparent);
+    }
+    .common-menu-dropdown-pane {
+        li.common-menu-dropdown-item, li.common-menu-dropdown-item.common-button {
+            margin: 0;
+            white-space: normal;
+            overflow-wrap: anywhere;
+            .common-button-flex { white-space: normal; }
+        }
+    }
+}
+.project-whiteboard-menu__edit {
+    padding: .75rem;
+    p { overflow-wrap: anywhere; }
+    label { display: block; margin-bottom: .5rem; font-weight: 600; }
+    input {
+        width: 100%;
+        padding: .5rem;
+        font: inherit;
+        border: 1px solid var(--tools-border);
+        border-radius: .25rem;
+        background: var(--tools-surface);
+        color: var(--tools-foreground);
+    }
+    [role="alert"] { margin-top: .5rem; }
+}
+.project-whiteboard-menu__actions { display: flex; justify-content: flex-end; gap: .5rem; margin-top: .75rem; }
+
+.project-tools--compact {
+    --tools-slide-x: 1;
+    --tools-slide-y: 0;
+    --tools-bubble-gap: .5rem;
+
+    &[dir="rtl"] { --tools-slide-x: -1; }
+
+    .project-tools__launcher {
+        top: calc(var(--tools-menu-height) + var(--tools-banner-height) + .5rem);
+        inset-inline-end: .5rem;
+    }
+    .project-tools__bubbles {
+        inset-inline-end: calc(100% + var(--tools-bubble-gap));
+        top: 0;
+        flex-direction: row;
+
+        .project-tools__bubble {
+            &:first-child { --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * 2); }
+            &:last-child { --tools-bubble-distance: calc(var(--tools-bubble-size) + var(--tools-bubble-gap)); }
+        }
+    }
+    .project-tools__bubble-label { display: none; }
+    .project-tools__panel {
+        --tools-pointer-offset: calc(var(--tools-bubble-size) * 2.5 + var(--tools-bubble-gap) * 2);
+        --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 4.75rem);
+        --tools-available-width: calc(100vw - 1rem);
+        // Keep the half-rem outer gutter within the legacy desktop width budget.
+        --tools-launcher-space: .5rem;
+
+        &[data-active-tab="whiteboard"] {
+            --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
+        }
+
+        inset-inline-end: .5rem;
+    }
+    .project-tools__pointer {
+        top: calc(-.4375rem - 1px);
+        inset-inline-end: calc(var(--tools-pointer-offset) - .4375rem - 1px);
+        border-inline-end: 0;
+        border-inline-start: 1px solid var(--tools-border);
+    }
+}
+
+.project-tools[data-options-open="false"] .project-tools__panel {
+    --tools-pointer-offset: calc(var(--tools-bubble-size) / 2);
+}
+
+@media only screen and (min-width: @largeMonitorBreakpoint) {
+    .project-tools__panel { --tools-default-width: @sideBarWidthLarge; }
+}
+@media only screen and (max-width: @largestTabletScreen) {
+    .project-tools { --tools-menu-height: @mobileMenuHeight; }
+    .project-tools--compact .project-tools__panel {
+        --tools-panel-bottom: calc(@editorToolsCollapsedMobileHeight + .5rem);
+        --tools-launcher-space: 0rem;
+    }
+    .project-tools__resize--width { display: none; }
+}
+@media only screen and (max-width: @largestMobileScreen) {
+    .project-tools__panel { --tools-default-width: @sideBarWidthSmall; }
+}
+@media (prefers-reduced-motion: no-preference) {
+    .project-tools__bubble { transition: border-radius .15s, background-color .15s; }
+    .project-tools__bubbles {
+        transition: visibility 0s linear .16s;
+        &[aria-hidden="false"] { transition-delay: 0s; }
+        .project-tools__bubble {
+            transition: transform .16s cubic-bezier(.22, .61, .36, 1),
+                border-radius .15s, background-color .15s;
+        }
+    }
+}
+@media (forced-colors: active) {
+    .project-tools__panel, .project-tools__bubble, .project-tools__pointer { box-shadow: none; border-color: CanvasText; }
+}
+@media print {
+    .project-tools { display: none; }
+}
