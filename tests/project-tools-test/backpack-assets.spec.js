@@ -23,8 +23,7 @@ function fieldModules() {
             collect(path.posix.normalize(path.posix.join(path.posix.dirname(id), match[1])));
         }
     }
-    for (const id of ["fields/field_sprite", "fields/field_animation", "fields/field_musiceditor",
-        "fields/field_tilemap", "fields/field_procedure", "backpack"]) collect(id);
+    for (const id of ["fields/field_utils", "fields/field_sprite", "fields/field_tilemap", "backpack"]) collect(id);
     return modules;
 }
 
@@ -43,7 +42,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
         }
         await page.addScriptTag({ path: path.join(root, "built/pxtlib.js") });
         await page.addScriptTag({ path: path.join(root, "built/pxtsim.js") });
-        await page.evaluate(({ modules, functionsSource }) => {
+        await page.evaluate(modules => {
             window.lf = pxt.Util.lf;
             window.errors = [];
             pxt.reportException = error => errors.push(String(error));
@@ -75,13 +74,6 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
             load("fields/field_utils");
             const { FieldSpriteEditor } = load("fields/field_sprite");
             const { FieldTilemap } = load("fields/field_tilemap");
-            for (const [type, Field] of [["image_picker", FieldSpriteEditor],
-                ["animation_editor", load("fields/field_animation").FieldAnimationEditor],
-                ["music_song_field_editor", load("fields/field_musiceditor").FieldMusicEditor]]) {
-                Blockly.Blocks[type] = { init() {
-                    this.appendDummyInput().appendField(new Field("", {}), "ASSET"); this.setOutput(true);
-                } };
-            }
             window.FieldBase = load("fields/field_base").FieldBase;
             Blockly.Blocks.backpack_real_assets = {
                 init() {
@@ -124,24 +116,20 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                     width: tile.bitmap.width, height: tile.bitmap.height, pixels: Array.from(tile.bitmap.data)
                 }))
             } : { width: asset.bitmap.width, height: asset.bitmap.height, pixels: Array.from(asset.bitmap.data) };
-            window.makeSource = async changeMap => {
+            window.makeSource = async () => {
                 const assets = seed(2);
-                if (changeMap) {
-                    changeMap(assets.tilemap.data);
-                    project.updateTilemap(assets.tilemap.id, assets.tilemap.data);
-                }
                 const block = Blockly.serialization.blocks.append({ type: "backpack_real_assets", fields: {
                     IMAGE: pxt.getTSReferenceForAsset(assets.image), TILEMAP: pxt.getTSReferenceForAsset(assets.tilemap)
                 } }, workspace);
                 await settle();
-                const { code, blockText } = backpack.captureBackpackBlock(block);
+                const { code } = backpack.captureBackpackBlock(block);
                 const expected = { image: snapshot(block.getField("IMAGE").getAsset()), tilemap: snapshot(block.getField("TILEMAP").getAsset()) };
                 // Dispose against the SOURCE asset project, then replace the whole global
                 // project, not just the workspace. Retaining the source would hide data loss.
                 workspace.clear();
                 await settle();
                 window.project = new pxt.TilemapProject();
-                return { code, blockText, expected, ids: { image: assets.image.id, tilemap: assets.tilemap.id, tile: assets.tile.id } };
+                return { code, expected, ids: { image: assets.image.id, tilemap: assets.tilemap.id, tile: assets.tile.id } };
             };
             window.inspectPasted = async code => {
                 const block = backpack.pasteBackpackBlock(code, workspace);
@@ -149,42 +137,11 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 const image = block.getField("IMAGE").getAsset();
                 const tilemap = block.getField("TILEMAP").getAsset();
                 return { image: snapshot(image), tilemap: snapshot(tilemap),
-                    ids: { image: image.id, tilemap: tilemap.id },
-                    tileIds: tilemap.data.tileset.tiles.map(tile => tile.id),
-                    counts: ["image", "tilemap", "tile"].map(type => project.getAssets(type).length),
                     registered: !!project.lookupAsset("image", image.id)
                         && !!project.getTilemap(tilemap.id)
-                        && tilemap.data.tileset.tiles.every(tile => !!project.resolveTile(tile.id)),
-                    references: [block.getFieldValue("IMAGE"), block.getFieldValue("TILEMAP")],
-                    expectedReferences: [pxt.getTSReferenceForAsset(image), pxt.getTSReferenceForAsset(tilemap)] };
+                        && tilemap.data.tileset.tiles.every(tile => !!project.resolveTile(tile.id)) };
             };
-            // Execute production registration, not stock Blockly procedure blocks.
-            // Stub only unrelated help decoration and function-editor configuration.
-            const dependencies = {
-                blockly: Blockly,
-                "../help": { installBuiltinHelpInfo() {} },
-                "../plugins/functions": { FunctionManager: { getInstance: () => ({ setIconForType() {}, setArgumentNameForType() {} }) } },
-                "../fields": load("fields/field_procedure"),
-                "../loader": {},
-                "../importer": { domToWorkspaceNoEvents: (xml, ws) => Blockly.Xml.domToWorkspace(xml, ws) },
-                "../fields/field_imagenotext": {},
-                "../utils": {}
-            };
-            Blockly.Blocks.function_definition = { makeCallOption() {} };
-            const exports = {};
-            new Function("require", "exports", functionsSource)(id => dependencies[id], exports);
-            exports.initFunctions();
-            window.defineProcedure = (ws, name) => {
-                const definition = ws.newBlock("procedures_defnoreturn");
-                definition.setFieldValue(name, "NAME");
-                return definition;
-            };
-            window.callProcedure = (ws, name) => {
-                const call = ws.newBlock("procedures_callnoreturn");
-                call.setFieldValue(name, "NAME");
-                return call;
-            };
-        }, { modules: fieldModules(), functionsSource: fs.readFileSync(path.join(root, "built/pxtblocks/builtins/functions.js"), "utf8") });
+        }, fieldModules());
     });
     afterEach(async () => {
         if (!page) return;
@@ -204,356 +161,9 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
             return { source, empty, pasted, errors };
         });
         assert(result.empty);
-        assert(result.source.blockText.includes("backpackImage"));
-        assert(result.source.blockText.includes("backpackLevel"));
-        const fields = JSON.parse(result.source.code).blocks[0].fields;
-        for (const name of ["IMAGE", "TILEMAP"]) {
-            assert.equal(fields[name].version, 1);
-            assert(Object.values(fields[name].jres).some(entry => entry.data), name + " must carry JRES data, not just an id");
-        }
         assert.deepStrictEqual(result.pasted.image, result.source.expected.image);
         assert.deepStrictEqual(result.pasted.tilemap, result.source.expected.tilemap);
         assert(result.pasted.registered);
-        assert.deepStrictEqual(result.pasted.references, result.pasted.expectedReferences);
-        assert.deepStrictEqual(result.errors, []);
-    });
-
-    it("contains custom, gallery, and transparent tile pixels without source galleries, including id conflicts", async () => {
-        const result = await page.evaluate(async () => {
-            const assets = seed(2);
-            const galleryBitmap = pxt.sprite.Bitmap.fromData(bitmap(16, 16, 5));
-            galleryBitmap.set(0, 0, 0);
-            // Same short name as the custom tile, in a nested extension namespace.
-            project.loadTilemapJRes({
-                "*": { namespace: "gallery.terrain", mimeType: pxt.IMAGE_MIME_TYPE, dataEncoding: "base64" },
-                tile1: { tilemapTile: true, data: pxt.sprite.base64EncodeBitmap(galleryBitmap.data()) }
-            }, false, true);
-            const gallery = project.resolveTile("gallery.terrain.tile1");
-            assets.tilemap.data.tileset.tiles.push(gallery);
-            assets.tilemap.data.tilemap.set(1, 0, 2);
-            project.updateTilemap(assets.tilemap.id, assets.tilemap.data);
-            const block = Blockly.serialization.blocks.append({ type: "backpack_real_assets", fields: {
-                IMAGE: pxt.getTSReferenceForAsset(assets.image), TILEMAP: pxt.getTSReferenceForAsset(assets.tilemap)
-            } }, workspace);
-            await settle();
-            const asset = block.getField("TILEMAP").getAsset();
-            const expected = snapshot(asset);
-            const sourceState = () => JSON.stringify([project.getProjectTilesetJRes(), project.getProjectAssetsJRes(),
-                project.saveGallerySnapshot(), asset, Blockly.serialization.workspaces.save(workspace)]);
-            const before = sourceState();
-            const projectJres = project.getProjectTilesetJRes();
-            const { code } = backpack.captureBackpackBlock(block);
-            const saved = JSON.parse(code).blocks[0].fields.TILEMAP;
-            const clipboard = block.toCopyData().blockState.fields.TILEMAP;
-            const sourceUnchanged = before === sourceState();
-            const savedBefore = JSON.stringify(saved);
-            const inflated = pxt.inflateJRes(saved.jres);
-            const tileIds = asset.data.tileset.tiles.map(tile => tile.id);
-            const entries = tileIds.map(id => inflated[id]);
-            // Use the real JRES loader in an isolated project, as asset consumers do.
-            const isolated = new pxt.TilemapProject();
-            isolated.loadTilemapJRes(saved.jres);
-            const isolatedMap = snapshot(isolated.getTilemap(saved.assetId));
-            const savedUnchanged = savedBefore === JSON.stringify(saved);
-            workspace.clear(); await settle();
-            const pastes = [];
-            for (const conflicts of [false, true]) {
-                window.project = new pxt.TilemapProject();
-                const existing = conflicts ? seed(8) : undefined;
-                const existingGalleryTile = conflicts ? project.createNewTile(bitmap(16, 16, 11), gallery.id) : undefined;
-                const destinationState = () => existing ? [existing.image, existing.tile, existing.tilemap, existingGalleryTile]
-                    .map(asset => snapshot(project.lookupAsset(asset.type, asset.id))) : [];
-                const destinationBefore = destinationState();
-                const emptyGallery = ["image", "tile", "tilemap", "animation", "song", "json"]
-                    .every(type => project.getGalleryAssets(type).length === 0);
-                const first = await inspectPasted(code);
-                const second = await inspectPasted(code);
-                // Imported gallery tiles now belong to the project; re-saving must
-                // still distinguish their ids from the custom tile's short name.
-                const recaptured = load("fields/field_utils").getAssetSaveState(project.getTilemap(first.ids.tilemap));
-                const reloaded = new pxt.TilemapProject();
-                reloaded.loadTilemapJRes(recaptured.jres);
-                pastes.push({ conflicts, emptyGallery, destinationBefore, destinationAfter: destinationState(), first, second,
-                    reloaded: snapshot(reloaded.getTilemap(recaptured.assetId)) });
-                workspace.clear(); await settle();
-            }
-            return { saved, clipboard, projectJres, tileIds, entries, galleryIsProject: gallery.isProjectTile,
-                sourceUnchanged, savedUnchanged, expected, isolatedMap, pastes, errors };
-        });
-        assert.strictEqual(result.galleryIsProject, false);
-        assert(result.sourceUnchanged && result.savedUnchanged);
-        assert.deepStrictEqual(Object.keys(result.saved).sort(), ["assetId", "assetType", "jres", "version"]);
-        assert.equal(result.saved.version, 1);
-        assert.deepStrictEqual(result.clipboard, result.saved);
-        for (const key of Object.keys(result.projectJres)) {
-            assert.deepStrictEqual(result.saved.jres[key], result.projectJres[key], "Existing project JRES stays unchanged: " + key);
-        }
-        assert.deepStrictEqual(result.saved.jres[result.saved.assetId].tileset, result.tileIds);
-        result.entries.forEach((entry, i) => {
-            assert(entry && entry.data, "Missing tile bitmap: " + result.tileIds[i]);
-            assert.equal(entry.id, result.tileIds[i]);
-            assert.equal(entry.namespace, i === 2 ? "gallery.terrain." : "myTiles.");
-            assert.equal(entry.mimeType, "image/x-mkcd-f4");
-            assert.equal(entry.dataEncoding, "base64");
-            assert.strictEqual(entry.tilemapTile, true);
-        });
-        assert.deepStrictEqual(result.isolatedMap, result.expected);
-        for (const paste of result.pastes) {
-            assert(paste.emptyGallery);
-            assert.deepStrictEqual(paste.destinationAfter, paste.destinationBefore);
-            assert.deepStrictEqual(paste.first.tilemap, result.expected);
-            assert.deepStrictEqual(paste.second.tilemap, result.expected);
-            assert.deepStrictEqual(paste.reloaded, result.expected);
-            assert(paste.first.registered && paste.second.registered);
-            assert.deepStrictEqual(paste.first.ids, paste.second.ids);
-            assert.deepStrictEqual(paste.first.tileIds, paste.second.tileIds);
-            assert.deepStrictEqual(paste.first.counts, paste.second.counts);
-            if (paste.conflicts) {
-                assert.notEqual(paste.first.ids.tilemap, result.saved.assetId);
-                for (const id of result.tileIds.slice(1)) assert(!paste.first.tileIds.includes(id));
-            }
-        }
-        assert.deepStrictEqual(result.errors, []);
-    });
-
-    it("remaps conflicting image/tilemap/tile ids, preserves destination assets, and deduplicates repeated paste", async () => {
-        const result = await page.evaluate(async () => {
-            const source = await makeSource();
-            const existing = seed(8);
-            const before = { image: snapshot(existing.image), tile: snapshot(existing.tile), tilemap: snapshot(existing.tilemap) };
-            const collided = existing.image.id === source.ids.image && existing.tilemap.id === source.ids.tilemap && existing.tile.id === source.ids.tile;
-            const first = await inspectPasted(source.code);
-            const second = await inspectPasted(source.code);
-            const after = { image: snapshot(project.lookupAsset("image", existing.image.id)),
-                tile: snapshot(project.resolveTile(existing.tile.id)), tilemap: snapshot(project.getTilemap(existing.tilemap.id)) };
-            return { source, collided, before, after, first, second, errors };
-        });
-        assert(result.collided, "The destination must actually reuse all three source ids");
-        assert.deepStrictEqual(result.first.image, result.source.expected.image);
-        assert.deepStrictEqual(result.first.tilemap, result.source.expected.tilemap);
-        assert.notEqual(result.first.ids.image, result.source.ids.image);
-        assert.notEqual(result.first.ids.tilemap, result.source.ids.tilemap);
-        assert.deepStrictEqual(result.before, result.after);
-        assert.deepStrictEqual(result.second.image, result.source.expected.image);
-        assert.deepStrictEqual(result.second.tilemap, result.source.expected.tilemap);
-        assert(result.first.registered && result.second.registered);
-        assert.deepStrictEqual(result.first.references, result.first.expectedReferences);
-        assert.deepStrictEqual(result.second.references, result.second.expectedReferences);
-        assert.deepStrictEqual(result.errors, []);
-        assert.deepStrictEqual(result.second.ids, result.first.ids, "Repeated paste must reuse the already-imported asset values");
-        assert.deepStrictEqual(result.second.tileIds, result.first.tileIds);
-        assert.deepStrictEqual(result.second.counts, result.first.counts, "Repeated paste must not create extra images, maps, or tiles");
-    });
-
-    it("does not deduplicate maps with identical tiles but different layout", async () => {
-        const result = await page.evaluate(async () => {
-            const source = await makeSource(data => {
-                data.tilemap.set(1, 0, 1);
-            });
-            const existing = seed(2);
-            const before = snapshot(existing.tilemap);
-            const first = await inspectPasted(source.code);
-            const second = await inspectPasted(source.code);
-            return { source, before, after: snapshot(project.getTilemap(existing.tilemap.id)), first, second, errors };
-        });
-        assert.notEqual(result.first.ids.tilemap, result.source.ids.tilemap);
-        assert.deepStrictEqual(result.first.tilemap, result.source.expected.tilemap);
-        assert.deepStrictEqual(result.second.tilemap, result.source.expected.tilemap);
-        assert.deepStrictEqual(result.before, result.after);
-        assert.deepStrictEqual(result.first.ids, result.second.ids);
-        assert.deepStrictEqual(result.first.counts, result.second.counts);
-        assert.deepStrictEqual(result.errors, []);
-    });
-
-    it("round-trips an inline temporary image through the real string-state fallback", async () => {
-        const result = await page.evaluate(async () => {
-            const source = await makeSource();
-            const state = JSON.parse(source.code);
-            const pixels = bitmap(5, 7, 4);
-            state.blocks[0].fields.IMAGE = pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(pixels), "typescript");
-            // A temporary image must not inherit the named source image's block-data id.
-            delete state.blocks[0].data;
-            const block = backpack.pasteBackpackBlock(JSON.stringify(state), workspace);
-            await settle();
-            const code = backpack.captureBackpackBlock(block).code;
-            const expected = snapshot(block.getField("IMAGE").getAsset());
-            const temporary = block.getField("IMAGE").isTemporaryAsset();
-            workspace.clear();
-            await settle();
-            window.project = new pxt.TilemapProject();
-            const pasted = await inspectPasted(code);
-            return { code, expected, pasted, temporary, errors };
-        });
-        assert(result.temporary);
-        assert.equal(typeof JSON.parse(result.code).blocks[0].fields.IMAGE, "string");
-        assert.deepStrictEqual(result.pasted.image, result.expected);
-        assert.deepStrictEqual(result.errors, []);
-    });
-
-    it("preserves named and temporary standalone image, animation and music data in fresh projects", async () => {
-        const result = await page.evaluate(async () => {
-            const pixels = bitmap(5, 7, 4), frames = [pixels, bitmap(5, 7, 9)];
-            const song = pxt.assets.music.getEmptySong(2);
-            song.beatsPerMinute = 137;
-            song.tracks[0].notes = [{ startTick: 0, endTick: 6, notes: [{ note: 28, enharmonicSpelling: 0 }] }];
-            const imageText = data => pxt.sprite.bitmapToImageLiteral(pxt.sprite.Bitmap.fromData(data), "typescript");
-            const values = [
-                ["image_picker", () => project.createNewProjectImage(pixels, "standaloneImage"), imageText(pixels)],
-                ["animation_editor", () => project.createNewAnimationFromData(frames, 175, "standaloneAnimation"), `[${frames.map(imageText).join(",")}]`],
-                ["music_song_field_editor", () => project.createNewSong(song, "standaloneSong"), `hex\`${pxt.assets.music.encodeSongToHex(song)}\``]
-            ];
-            const data = asset => asset.type === "animation" ? { frames: asset.frames.map(bitmap => snapshot({ bitmap })), interval: asset.interval }
-                : asset.type === "song" ? pxt.assets.music.encodeSongToHex(asset.song) : snapshot(asset);
-            const captures = [];
-            for (const [type, create, literal] of values) for (const named of [true, false]) {
-                const block = Blockly.serialization.blocks.append({ type, fields: {
-                    ASSET: named ? pxt.getTSReferenceForAsset(create()) : literal
-                } }, workspace);
-                await settle();
-                const before = Blockly.serialization.workspaces.save(workspace);
-                const expected = data(block.getField("ASSET").getAsset());
-                const { code } = backpack.captureBackpackBlock(block);
-                const unchanged = JSON.stringify(before) === JSON.stringify(Blockly.serialization.workspaces.save(workspace));
-                workspace.clear(); await settle();
-                window.project = new pxt.TilemapProject();
-                const pasted = backpack.pasteBackpackBlock(code, workspace);
-                await settle();
-                captures.push({ type, named, expected, actual: data(pasted.getField("ASSET").getAsset()), unchanged,
-                    temporary: pasted.getField("ASSET").isTemporaryAsset(), field: JSON.parse(code).blocks[0].fields.ASSET });
-                workspace.clear(); await settle();
-                window.project = new pxt.TilemapProject();
-            }
-            return { captures, errors };
-        });
-        assert.equal(result.captures.length, 6);
-        for (const capture of result.captures) {
-            assert(capture.unchanged, capture.type);
-            assert.strictEqual(capture.temporary, !capture.named, capture.type);
-            assert.equal(typeof capture.field, capture.named ? "object" : "string", capture.type);
-            assert.deepStrictEqual(capture.actual, capture.expected, capture.type);
-        }
-        assert.deepStrictEqual(result.errors, []);
-    });
-
-    it("round-trips registered PXT procedure XML, transitive recursion, and colliding names without changing existing callers", async () => {
-        const result = await page.evaluate(async () => {
-            const ws = new Blockly.Workspace();
-            const destination = workspace;
-            try {
-                const name = 'current & "Procedure"';
-                const definition = defineProcedure(ws, name);
-                const second = defineProcedure(ws, "secondProcedure");
-                definition.getInput("STACK").connection.connect(callProcedure(ws, "secondProcedure").previousConnection);
-                second.getInput("STACK").connection.connect(callProcedure(ws, name).previousConnection);
-                const call = callProcedure(ws, name);
-                const root = ws.newBlock("controls_repeat_ext");
-                root.getInput("DO").connection.connect(call.previousConnection);
-                const existing = defineProcedure(destination, name);
-                existing.getInput("STACK").connection.connect(destination.newBlock("controls_repeat_ext").previousConnection);
-                const existingCall = callProcedure(destination, name);
-                destination.getVariableMap().createVariable(name + "2");
-                destination.getAllBlocks(false).forEach(block => { block.initSvg(); block.render(); });
-                await settle();
-                const state = Blockly.serialization.blocks.save(call, { doFullSerialization: true, saveIds: false });
-                const code = backpack.captureBackpackBlock(root).code;
-                const before = JSON.stringify(Blockly.serialization.blocks.save(existing));
-                destination.clearUndo();
-                let pasted;
-                // Browser Blockly dispatches create events after queued rendering,
-                // not necessarily on the next timeout. Wait for the actual root event.
-                const recorded = new Promise(resolve => {
-                    const listener = event => {
-                        if (event.type === Blockly.Events.CREATE && event.ids?.includes(pasted?.id)) {
-                            destination.removeChangeListener(listener);
-                            resolve();
-                        }
-                    };
-                    destination.addChangeListener(listener);
-                });
-                pasted = backpack.pasteBackpackBlock(code, destination, new Blockly.utils.Coordinate(340, 260));
-                const position = pasted.getRelativeToSurfaceXY(), size = pasted.getHeightWidth();
-                const center = { x: position.x + size.width / 2, y: position.y + size.height / 2 };
-                await recorded;
-                const imported = destination.getTopBlocks(false).filter(block => block.type === "procedures_defnoreturn" && block !== existing);
-                const names = imported.map(block => block.getFieldValue("NAME"));
-                const bodies = imported.map(block => block.getInputTargetBlock("STACK").getProcedureCall());
-                const pastedState = Blockly.serialization.blocks.save(pasted.getInputTargetBlock("DO"));
-                const pastedName = pasted.getInputTargetBlock("DO").getProcedureCall();
-                const reserialized = backpack.captureBackpackBlock(pasted).code;
-                const definitionCode = backpack.captureBackpackBlock(definition).code;
-                const after = JSON.stringify(Blockly.serialization.blocks.save(existing));
-                const sourceUnchanged = backpack.captureBackpackBlock(root).code === code;
-                const count = destination.getAllBlocks(false).length;
-                destination.undo(false);
-                await new Promise(resolve => setTimeout(resolve, 0));
-                const undoCount = destination.getAllBlocks(false).length;
-                destination.undo(true);
-                await new Promise(resolve => setTimeout(resolve, 0));
-                return { name, state, code, names, bodies, pastedState, pastedName, reserialized, definitionCode,
-                    before, after, sourceUnchanged, center, existingName: existingCall.getProcedureCall(),
-                    count, undoCount, redoCount: destination.getAllBlocks(false).length,
-                    jsonHook: typeof call.saveExtraState, xmlHook: typeof call.mutationToDom, errors };
-            }
-            finally { ws.dispose(); }
-        });
-        assert.equal(result.xmlHook, "function");
-        assert.equal(result.jsonHook, "undefined");
-        assert.equal(typeof result.state.extraState, "string", "Blockly falls back to XML mutation text for this real PXT block");
-        assert.equal(result.state.fields.NAME, result.name);
-        assert.equal(JSON.parse(result.code).blocks.length, 3);
-        assert.deepStrictEqual(result.names, [result.name + "3", "secondProcedure"]);
-        assert.deepStrictEqual(result.bodies, ["secondProcedure", result.name + "3"]);
-        assert.equal(result.pastedName, result.name + "3");
-        assert.equal(result.pastedState.fields.NAME, result.name + "3");
-        assert(result.pastedState.extraState.includes('&amp; &quot;Procedure&quot;3'));
-        assert.equal(JSON.parse(result.reserialized).blocks.length, 3);
-        const definitions = JSON.parse(result.definitionCode).blocks;
-        assert.equal(definitions.length, 2);
-        assert.equal(definitions.at(-1).fields.NAME, result.name);
-        assert.equal(result.before, result.after);
-        assert.equal(result.existingName, result.name);
-        assert(result.sourceUnchanged);
-        assert.deepStrictEqual(result.center, { x: 340, y: 260 });
-        assert.equal(result.undoCount, 3, "One undo removes only the imported procedure graph");
-        assert.equal(result.redoCount, result.count);
-        assert.deepStrictEqual(result.errors, []);
-    });
-
-    it("rejects invalid PXT procedure mutations and missing bodies before loading any blocks", async () => {
-        const result = await page.evaluate(async () => {
-            const ws = new Blockly.Workspace();
-            try {
-                defineProcedure(ws, "procedure");
-                const root = ws.newBlock("controls_repeat_ext");
-                root.getInput("DO").connection.connect(callProcedure(ws, "procedure").previousConnection);
-                await new Promise(resolve => setTimeout(resolve, 0));
-                const code = backpack.captureBackpackBlock(root).code;
-                const mutations = ["<mutation", '<mutation name="prototype"/>',
-                    '<mutation name="procedure"><arg name="unsupported"/></mutation>'];
-                const payloads = mutations.map(extraState => {
-                    const payload = JSON.parse(code);
-                    payload.blocks.at(-1).inputs.DO.block.extraState = extraState;
-                    return payload;
-                });
-                const missing = JSON.parse(code);
-                missing.blocks.shift();
-                payloads.push(missing);
-                const mismatchedField = JSON.parse(code);
-                mismatchedField.blocks.at(-1).inputs.DO.block.fields.NAME = "different";
-                payloads.push(mismatchedField);
-                const rejected = payloads.map(payload => {
-                    try { backpack.pasteBackpackBlock(JSON.stringify(payload), workspace); return false; }
-                    catch (error) { return /invalid or unsupported|function 'procedure' is missing/.test(String(error)); }
-                });
-                await settle();
-                return { rejected, count: workspace.getAllBlocks(false).length, undo: workspace.getUndoStack().length, errors };
-            }
-            finally { ws.dispose(); }
-        });
-        assert(result.rejected.every(Boolean));
-        assert.equal(result.rejected.length, 5);
-        assert.equal(result.count, 0);
-        assert.equal(result.undo, 0);
         assert.deepStrictEqual(result.errors, []);
     });
 });

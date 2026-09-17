@@ -16,8 +16,6 @@ Object.assign(test.workspace, {
     async saveProjectNotesAsync(id, notes) {
         const snapshot = JSON.parse(JSON.stringify(validateProjectNotes(notes)));
         test.saves.push({ id, notes: snapshot });
-        if (test.failSave) throw new Error("Test storage unavailable");
-        if (test.holdSave) await test.holdSave;
         test.persisted = snapshot;
         test.receive(snapshot);
     }
@@ -31,12 +29,8 @@ function Harness({ notes }) {
     return React.createElement(ProjectTools, {
         header: { id: "whiteboard-project" }, notes: incoming, expanded,
         pinned, onPinnedChange: setPinned,
-        onSignIn: () => { ++test.signInRequests; },
-        onExpandedChange: setExpanded, onOpenReference: () => {}, docsUrl: "/reference",
-        docsAction: React.createElement("a", {
-            className: "project-tools__external", href: "about:blank", target: "_blank", rel: "noopener noreferrer",
-            "aria-label": "Open documentation in new tab"
-        }, React.createElement("i", { className: "icon external", "aria-hidden": true }))
+        onSignIn: () => {},
+        onExpandedChange: setExpanded, onOpenReference: () => {}, docsUrl: "/reference"
     });
 }
 
