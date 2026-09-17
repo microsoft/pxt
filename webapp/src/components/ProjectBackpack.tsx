@@ -56,6 +56,8 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const [ready, setReady] = React.useState(false);
     const [pending, setPending] = React.useState(false);
     const [error, setError] = React.useState<string>();
+    const [errorEntryKey, setErrorEntryKey] = React.useState<string>();
+    const [openingAssetKey, setOpeningAssetKey] = React.useState<string>();
     const [edit, setEdit] = React.useState<{ kind: "rename" | "delete"; key: string; name: string; entry: backpack.BackpackEntry }>();
     const [assetEdit, setAssetEdit] = React.useState<{ entry: backpack.BackpackEntry; item: pxt.auth.BackpackItem;
         context: backpack.BackpackAssetEditorContext }>();
@@ -67,6 +69,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const dragged = React.useRef<backpack.BackpackEntry>();
     const loaded = React.useRef(false);
     const body = React.useRef<HTMLDivElement>();
+    const entryError = React.useRef<HTMLParagraphElement>();
     const searchInput = React.useRef<HTMLInputElement>();
     const nameInput = React.useRef<HTMLInputElement>();
     const kindButtons = React.useRef<HTMLButtonElement[]>([]);
@@ -97,13 +100,16 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         return () => { alive.current = false; unsubscribe(); };
     }, []);
 
-    const run = async (action: () => Promise<void>): Promise<void> => {
+    const run = async (action: () => Promise<void>, errorKey?: string): Promise<void> => {
         if (busy.current || !isCurrent()) return;
         busy.current = true;
         setPending(true);
         setError(undefined);
+        setErrorEntryKey(undefined);
         try { await action(); }
-        catch (reason) { if (isCurrent()) reportError(reason); }
+        catch (reason) {
+            if (isCurrent()) { setErrorEntryKey(errorKey); reportError(reason); }
+        }
         finally {
             if (isCurrent()) { busy.current = false; setPending(false); }
         }
@@ -142,12 +148,13 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
 
     const editedItem = edit?.entry;
     const modalOpen = (!!assetEdit || !!editedItem && (edit.kind === "delete" || !editedItem.error)) && props.active;
+    const keepPanelOpen = (modalOpen || !!openingAssetKey) && props.active;
     React.useEffect(() => {
-        props.onModalOpenChange?.(modalOpen);
+        props.onModalOpenChange?.(keepPanelOpen);
         return () => props.onModalOpenChange?.(false);
-    }, [modalOpen, props.onModalOpenChange]);
+    }, [keepPanelOpen, props.onModalOpenChange]);
     React.useEffect(() => {
-        if (!props.active) { setEdit(undefined); setAssetEdit(undefined); }
+        if (!props.active) { setEdit(undefined); setAssetEdit(undefined); setOpeningAssetKey(undefined); }
     }, [props.active]);
     React.useEffect(() => {
         if (modalOpen && edit?.kind === "rename") {
@@ -166,6 +173,11 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             ? `.project-backpack__${target.action}` : "button:not(:disabled)");
         (button || (query.trim() ? searchInput.current : body.current))?.focus();
     }, [pending, items, edit, assetEdit, query]);
+    React.useEffect(() => {
+        if (props.active && !pending && !modalOpen && errorEntryKey && error) {
+            entryError.current?.scrollIntoView({ block: "nearest" });
+        }
+    }, [props.active, pending, modalOpen, errorEntryKey, error]);
 
     const cancelEdit = () => {
         if (busy.current) return;
@@ -203,18 +215,30 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         await backpack.importBackpackEntryAsync(entry, props.headerId, position);
     });
     const editAsset = (entry: backpack.BackpackEntry) => run(async () => {
-        const item = await backpack.loadBackpackAssetAsync(entry);
-        if (!isCurrent() || !active.current) return;
-        const context = backpack.getBackpackAssetEditorContext(props.headerId);
+        // Disabling the focused pencil can blur it before a cloud read finishes.
+        // Protect the panel before React commits pending, not just at portal mount.
         props.onModalOpenChange?.(true);
-        setAssetEdit({ entry, item, context });
-    });
+        setOpeningAssetKey(entryKey(entry));
+        try {
+            const item = await backpack.loadBackpackAssetAsync(entry);
+            if (!isCurrent() || !active.current) return;
+            const context = await backpack.getBackpackAssetEditorContextAsync(props.headerId);
+            if (!isCurrent() || !active.current) return;
+            setAssetEdit({ entry, item, context });
+        } catch (reason) {
+            if (isCurrent()) focusAfter.current = { key: entryKey(entry), action: "rename" };
+            throw reason;
+        } finally {
+            if (isCurrent()) setOpeningAssetKey(undefined);
+        }
+    }, entryKey(entry));
     const closeAssetEdit = (): void => {
         focusAfter.current = { key: entryKey(assetEdit.entry), action: "rename" };
         setAssetEdit(undefined);
     };
 
     const canImport = backpack.canImportBackpack(props.headerId);
+    const canEditAsset = backpack.canEditBackpackAsset(props.headerId);
     const dragType = "application/x-makecode-backpack";
     const startDrag = (event: React.DragEvent<HTMLElement>, entry: backpack.BackpackEntry): void => {
         if (busy.current || !isCurrent() || !active.current || modalOpen || !canImport) {
@@ -306,7 +330,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                     ? lf("{0} of {1} snippets", filteredItems.length, categoryCount)
                     : lf("No matching snippets.")}</p>}
             </div>
-            {displayedError && !modalOpen && <>
+            {displayedError && !modalOpen && !errorEntryKey && <>
                 <p role="alert">{displayedError}</p>
                 {!ready && <button className="project-backpack__button project-backpack__retry" type="button" disabled={pending}
                     onClick={() => { focusAfter.current = {}; void refresh(); }}>{lf("Retry")}</button>}
@@ -334,7 +358,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                             <h3 className="project-backpack__name">{entry.name}</h3>
                             <div className="project-backpack__item-actions">
                                 {item && <button className="project-backpack__button project-backpack__icon-button project-backpack__rename"
-                                    type="button" disabled={pending || item.kind === "asset" && !canImport}
+                                    type="button" disabled={pending || item.kind === "asset" && !canEditAsset}
                                     title={item.kind === "asset" ? lf("Edit {0}", entry.name) : lf("Rename {0}", entry.name)}
                                     aria-label={item.kind === "asset" ? lf("Edit {0}", entry.name) : lf("Rename {0}", entry.name)} aria-haspopup="dialog"
                                     onClick={() => item.kind === "asset" ? void editAsset(entry) : beginEdit(entry, "rename")}>
@@ -348,6 +372,8 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                                 </button>
                             </div>
                         </div>
+                        {openingAssetKey === entryKey(entry) && <p role="status">{lf("Opening asset editor…")}</p>}
+                        {error && !modalOpen && errorEntryKey === entryKey(entry) && <p ref={entryError} role="alert">{error}</p>}
                         {entry.error && <p className="project-backpack__invalid">{entry.error}</p>}
                         {!!props.userId && entry.source === "local" && <p>{entry.local?.firstAttemptAt
                             ? lf("Pending sync. A copy may already be saved to your account.")
@@ -387,9 +413,9 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             </ul>}
         </div>
         {assetEdit && props.active && <BackpackAssetEditDialog item={assetEdit.item} context={assetEdit.context}
-            onOpenError={message => { setError(message); closeAssetEdit(); }}
+            onOpenError={message => { setErrorEntryKey(entryKey(assetEdit.entry)); setError(message); closeAssetEdit(); }}
             onClose={closeAssetEdit} onSave={async item => {
-                if (!isCurrent() || !backpack.canImportBackpack(props.headerId)) {
+                if (!isCurrent() || !backpack.canEditBackpackAsset(props.headerId)) {
                     throw new Error(lf("Your project or account changed. Close the asset editor and try again."));
                 }
                 await backpack.saveBackpackAssetAsync(assetEdit.entry, item);

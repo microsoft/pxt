@@ -847,6 +847,23 @@ export interface BackpackAssetEditorContext {
     palette: string[];
 }
 
+interface BackpackAssetEditorHost {
+    headerId: () => string;
+    canEdit: () => boolean;
+    contextAsync: () => Promise<BackpackAssetEditorContext>;
+}
+
+let assetEditorHost: BackpackAssetEditorHost;
+
+/** Asset editing belongs to the project, not to the active Blocks workspace. */
+export function setBackpackAssetEditor(host: BackpackAssetEditorHost): void {
+    assetEditorHost = host;
+}
+
+export function canEditBackpackAsset(headerId: string): boolean {
+    return !!activeIdentity() && !!headerId && assetEditorHost?.headerId() === headerId && assetEditorHost.canEdit();
+}
+
 /** Browser client coordinates, resolved against the workspace after any extension reload. */
 export interface BackpackImportPosition {
     x: number;
@@ -875,9 +892,19 @@ export function canDropBackpack(headerId: string, target: EventTarget): boolean 
     return canImportBackpack(headerId) && registeredEditor.editor.canDrop(target);
 }
 
-export function getBackpackAssetEditorContext(headerId: string): BackpackAssetEditorContext {
-    if (!canImportBackpack(headerId)) throw new Error(lf("Open an editable Blocks project to edit this asset."));
-    return registeredEditor.editor.assetEditorContext();
+export async function getBackpackAssetEditorContextAsync(headerId: string): Promise<BackpackAssetEditorContext> {
+    const identity = await captureAsync();
+    const host = assetEditorHost;
+    const check = (): void => {
+        if (assetEditorHost !== host || !canEditBackpackAsset(headerId)) {
+            throw new Error(lf("Open an editable project outside a tutorial to edit this asset."));
+        }
+    };
+    check();
+    const context = await host.contextAsync();
+    await verifyAsync(identity);
+    check();
+    return context;
 }
 
 export function getBackpackAssetPreviewContext(headerId: string): BackpackAssetEditorContext {

@@ -47,7 +47,8 @@ if the destination lacks those blocks.
 Ordinary clipboard paste uses the same dependency checks while retaining normal
 Blockly copy/cut/paste behavior.
 The pencil renames code captures; for assets it opens the native editor in an
-isolated popup. Use its bottom name field and **Done**; closing works like the
+isolated popup from Blocks, text, or the Assets view. Adding blocks still requires
+the Blocks view. Use its bottom name field and **Done**; closing works like the
 Assets tab and saves to Backpack, not project assets. Captures store target/PXT
 versions and warn before cross-version imports.
 

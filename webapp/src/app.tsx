@@ -43,6 +43,7 @@ import * as greenscreen from "./greenscreen";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as auth from "./auth";
+import * as backpack from "./backpack";
 import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
@@ -1121,6 +1122,19 @@ export class ProjectView
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
         this.assetEditor = new assetEditor.AssetEditor(this);
+        backpack.setBackpackAssetEditor({
+            headerId: () => this.state.header?.id,
+            canEdit: () => !!this.state.header && !this.state.header.temporary && !this.state.header.tutorial
+                && !this.isTutorial() && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor,
+            contextAsync: async () => {
+                // Text/Assets-first projects may not have loaded Blockly's field definitions yet.
+                await this.blocksEditor.loadBlocklyAsync();
+                const blocksInfo = await compiler.getBlocksAsync();
+                pxtblockly.initializeAndInject(blocksInfo);
+                return { blocksInfo, gallery: pxt.react.getTilemapProject().saveGallerySnapshot(),
+                    palette: pxt.appTarget.runtime.palette.slice() };
+            }
+        });
 
         let changeHandler = () => {
             if (this.editorFile) {

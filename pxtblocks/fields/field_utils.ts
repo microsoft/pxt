@@ -558,7 +558,9 @@ export function loadAssetFromSaveState(serialized: AssetSaveState) {
 
 
     if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
-        globalProject.loadTilemapJRes(serialized.jres, true);
+        // Tilemaps remap duplicate tile ids internally. A standalone tile must
+        // retain its id so the lookup below can return the loaded asset.
+        globalProject.loadTilemapJRes(serialized.jres, serialized.assetType === "tilemap");
     }
     else {
         globalProject.loadAssetsJRes(serialized.jres);
