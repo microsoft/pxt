@@ -27,8 +27,10 @@ wait for saves/sync before closing or switching devices.
 
 ## Backpack
 
-Requires `appTheme.backpack` and sign-in support; hidden during tutorials and in
-offline apps. Guests can use it without signing in when sign-in is available.
+Requires `appTheme.backpack` and sign-in support; hidden in offline apps. Guests
+can use it without signing in when sign-in is available. During tutorials it opens
+to **Assets**, where students can save, edit and add their own assets. **Code**
+shows an unavailable message; code snippets cannot be saved or added during tutorials.
 
 In an editable Blocks project, use **Add to Backpack** on an event, loop, if block
 or function definition, or drag it onto Backpack. This copies its contents,

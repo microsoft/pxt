@@ -1124,8 +1124,8 @@ export class ProjectView
         this.assetEditor = new assetEditor.AssetEditor(this);
         backpack.setBackpackAssetEditor({
             headerId: () => this.state.header?.id,
-            canEdit: () => !!this.state.header && !this.state.header.temporary && !this.state.header.tutorial
-                && !this.isTutorial() && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor,
+            canEdit: () => !!this.state.header && !this.state.header.temporary
+                && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor,
             contextAsync: async () => {
                 // Text/Assets-first projects may not have loaded Blockly's field definitions yet.
                 await this.blocksEditor.loadBlocklyAsync();

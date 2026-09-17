@@ -12,6 +12,7 @@ import { BackpackAssetEditDialog } from "./BackpackAssetEditDialog";
 export interface ProjectBackpackProps {
     headerId: string;
     active: boolean;
+    tutorial?: boolean;
     openRequest?: backpack.BackpackOpenRequest;
     renderHeader: (title: string, actions?: React.ReactNode) => React.ReactNode;
     onSignIn: () => void;
@@ -43,15 +44,18 @@ export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
         return () => data.unsubscribe(subscriber);
     }, []);
     const userId = currentUserId();
-    if (!backpack.isBackpackEnabled() || pkg.mainEditorPkg()?.header?.tutorial) return null;
+    if (!backpack.isBackpackEnabled()) return null;
+    const tutorial = props.tutorial || !!pkg.mainEditorPkg()?.header?.tutorial;
     // Guest/account transitions get fresh contents, including pending/error state.
-    return <BackpackContents key={`${pxt.appTarget?.id}:${userId ? `user:${userId}` : "guest"}`} {...props} userId={userId} />;
+    return <BackpackContents key={`${pxt.appTarget?.id}:${userId ? `user:${userId}` : "guest"}:${props.headerId}:${tutorial}`}
+        {...props} tutorial={tutorial} userId={userId} />;
 }
 
 function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JSX.Element {
     const [contents, setContents] = React.useState<backpack.BackpackState>({ entries: [] });
     const { entries: items, warning } = contents;
-    const [kind, setKind] = React.useState<pxt.auth.BackpackKind>(props.openRequest?.kind || "code");
+    const [kind, setKind] = React.useState<pxt.auth.BackpackKind>(props.tutorial ? "asset" : props.openRequest?.kind || "code");
+    const codeUnavailable = props.tutorial && kind === "code";
     const [query, setQuery] = React.useState("");
     const [ready, setReady] = React.useState(false);
     const [pending, setPending] = React.useState(false);
@@ -141,7 +145,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     React.useLayoutEffect(() => { if (props.active) void refresh(); }, [props.active]);
     React.useEffect(() => {
         if (props.openRequest?.kind) {
-            setKind(props.openRequest.kind);
+            setKind(props.tutorial ? "asset" : props.openRequest.kind);
             setQuery("");
         }
     }, [props.openRequest]);
@@ -237,7 +241,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
         setAssetEdit(undefined);
     };
 
-    const canImport = backpack.canImportBackpack(props.headerId);
+    const canImport = !codeUnavailable && backpack.canImportBackpack(props.headerId, kind);
     const canEditAsset = backpack.canEditBackpackAsset(props.headerId);
     const dragType = "application/x-makecode-backpack";
     const startDrag = (event: React.DragEvent<HTMLElement>, entry: backpack.BackpackEntry): void => {
@@ -257,7 +261,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             if (!dragged.current || !event.dataTransfer?.types.includes(dragType)) return;
             event.preventDefault();
             event.stopPropagation();
-            const allowed = !busy.current && isCurrent() && backpack.canDropBackpack(props.headerId, event.target);
+            const allowed = !busy.current && isCurrent() && backpack.canDropBackpack(props.headerId, event.target, entryKind(dragged.current));
             event.dataTransfer.dropEffect = allowed ? "copy" : "none";
             if (event.type !== "drop") return;
             const entry = dragged.current;
@@ -273,11 +277,11 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             document.removeEventListener("dragover", onDrag, true);
             document.removeEventListener("drop", onDrag, true);
         };
-    }, [props.active, props.headerId, canImport, modalOpen]);
+    }, [props.active, props.headerId, canImport, modalOpen, kind]);
     const header = pkg.mainEditorPkg()?.header;
-    const importReason = !header || header.id !== props.headerId || header.tutorial || pxt.shell.isReadOnly()
+    const importReason = !header || header.id !== props.headerId || pxt.shell.isReadOnly()
         || pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME
-        ? lf("Open an editable Blocks project outside a tutorial to add snippets from your backpack.")
+        ? lf("Open an editable Blocks project to add items from your backpack.")
         : lf("Switch to Blocks to add snippets");
     const message = !loaded.current && pending && props.active ? lf("Loading backpack…") : "";
     const displayedError = error || (!ready && !pending ? warning : undefined);
@@ -300,7 +304,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                     kindButtons.current[next]?.focus();
                 }}>{value === "code" ? lf("Code") : lf("Assets")}</button>)}
         </div>)}
-        <div className="project-backpack__search" role="search" aria-label={lf("Backpack")}
+        {!codeUnavailable && <div className="project-backpack__search" role="search" aria-label={lf("Backpack")}
             onKeyDown={event => {
                 if (event.key === "Escape" && query && !event.nativeEvent.isComposing) {
                     event.preventDefault();
@@ -317,9 +321,10 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                 aria-label={lf("Clear backpack search")} title={lf("Clear backpack search")}>
                 <i className="icon remove" aria-hidden="true" />
             </button>}
-        </div>
+        </div>}
         <div ref={body} id="project-backpack-items" className="project-backpack__body" tabIndex={-1} aria-busy={pending}
             role="tabpanel" aria-labelledby={`project-backpack-tab-${kind}`}>
+            {codeUnavailable ? <p>{lf("Code snippets aren't available during tutorials. Use the Assets tab to add your own assets.")}</p> : <>
             {!props.userId && auth.hasIdentity() && <button className="project-backpack__button project-backpack__sign-in"
                 type="button" onClick={props.onSignIn}>{lf("Sign in to save your backpack across browsers.")}</button>}
             <div role="status">
@@ -411,6 +416,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
                     </li>;
                 })}
             </ul>}
+            </>}
         </div>
         {assetEdit && props.active && <BackpackAssetEditDialog item={assetEdit.item} context={assetEdit.context}
             onOpenError={message => { setErrorEntryKey(entryKey(assetEdit.entry)); setError(message); closeAssetEdit(); }}

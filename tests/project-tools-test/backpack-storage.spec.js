@@ -157,7 +157,8 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             bt.assetHost = { headerId: () => bt.headerId, canEdit: () => bt.canEdit,
                 contextAsync: async () => { ++bt.contextLoads; return bt.assetContext; } };
             store.setBackpackAssetEditor(bt.assetHost);
-            bt.unregisterEditor = store.setBackpackEditor({ headerId: () => bt.headerId, canImport: () => bt.canImport,
+            bt.unregisterEditor = store.setBackpackEditor({ headerId: () => bt.headerId,
+                canImport: kind => bt.canImport && (!bt.tutorial || kind === "asset"),
                 canDrop: target => target === document.body,
                 assetEditorContext: () => ({ blocksInfo: {}, gallery: {}, palette: [] }),
                 importAsync: async (value, position) => { bt.imports.push(value); bt.positions.push(position); return true; } });
@@ -165,6 +166,26 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
     });
     afterEach(async () => {
         try { assert.deepStrictEqual(errors, []); } finally { await page?.close(); }
+    });
+
+    it("passes asset kind through direct, cloud and drop eligibility without allowing tutorial code", async () => {
+        const result = await page.evaluate(async () => {
+            bt.tutorial = true;
+            const asset = bt.asset(1);
+            bt.seed(1, asset); bt.seed(2);
+            await store.refreshBackpackAsync();
+            const entries = store.getBackpackState().entries;
+            await store.importBackpackItemAsync(asset, "project");
+            await store.importBackpackEntryAsync(entries.find(entry => entry.id === asset.id), "project");
+            const code = await bt.outcome(() => store.importBackpackEntryAsync(entries.find(entry => entry.id === bt.id(2)), "project"));
+            const forged = await bt.outcome(() => store.importBackpackItemAsync({ ...bt.item(2), kind: "asset" }, "project"));
+            return { imports: bt.imports.map(item => item.kind), code, forged,
+                assetDrop: store.canDropBackpack("project", document.body, "asset"),
+                codeDrop: store.canDropBackpack("project", document.body, "code") };
+        });
+        assert.deepStrictEqual(result.imports, ["asset", "asset"]);
+        assert.notEqual(result.code, "OK"); assert.notEqual(result.forged, "OK");
+        assert.equal(result.assetDrop, true); assert.equal(result.codeDrop, false);
     });
 
     it("loads asset context from the project host without Blocks import eligibility", async () => {

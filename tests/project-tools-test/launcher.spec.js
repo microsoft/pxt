@@ -85,6 +85,7 @@ describe("responsive project-tools launcher", function () {
                         React.useEffect(() => { ++window.backpackMounts; }, []);
                         window.backpackProps = { headerId: props.headerId, active: props.active, onSignIn: typeof props.onSignIn };
                         window.backpackCaptureRequest = props.openRequest;
+                        window.backpackTutorial = props.tutorial;
                         window.setBackpackModalOpen = props.onModalOpenChange;
                         return React.createElement(React.Fragment, null, props.renderHeader("Backpack"),
                             React.createElement("button", { id: "test-backpack-signin", onClick: props.onSignIn }, "Sign in"));
@@ -433,7 +434,7 @@ describe("responsive project-tools launcher", function () {
 
     it("dynamically hides gated backpack, ignores captures and keeps docs/whiteboard keyboard navigation", async () => {
         await openTool(backpack, 1366);
-        for (const gate of ["disabled", "tutorial", "header"]) {
+        for (const gate of ["disabled"]) {
             await page.evaluate(gate => window.setBackpackGate(gate), gate);
             await page.waitForSelector(backpack, { hidden: true });
             assert.strictEqual(await page.$("#project-tools-backpack"), null);
@@ -454,6 +455,17 @@ describe("responsive project-tools launcher", function () {
         await page.keyboard.press("End");
         await focusIs("project-tools-tab-backpack");
         assert.strictEqual(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
+    });
+
+    it("keeps Backpack available for active and header tutorials and passes tutorial mode", async () => {
+        await openTool(backpack, 1366);
+        for (const gate of ["tutorial", "header"]) {
+            await page.evaluate(gate => window.setBackpackGate(gate), gate);
+            await page.waitForFunction(() => window.backpackTutorial === true);
+            assert.equal(await page.$eval(backpack, tab => tab.getAttribute("aria-selected")), "true");
+            assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
+            assert.equal(await page.$$eval('#project-tools-options [role="tab"]', tabs => tabs.length), 3);
+        }
     });
 
     it("ignores backpack requests for another header and cleans up subscriptions on remount", async () => {
