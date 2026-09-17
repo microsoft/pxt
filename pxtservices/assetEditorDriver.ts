@@ -1,17 +1,19 @@
 import { IframeDriver } from "./iframeDriver";
 
 export class AssetEditorDriver extends IframeDriver {
+    private backpackSupported: boolean;
     constructor(frame: HTMLIFrameElement) {
         super(frame);
     }
 
-    async openBackpackAsset(code: string, blocksInfo: pxtc.BlocksInfo, gallery: pxt.AssetSnapshot, palette?: string[]): Promise<void> {
-        await this.sendRequest({ type: "open-backpack", code, blocksInfo, gallery, palette } as pxt.editor.OpenBackpackAssetEditorRequest);
+    async openBackpackAsset(code: string, blocksInfo: pxtc.BlocksInfo, gallery: pxt.AssetSnapshot, palette?: string[], name?: string): Promise<void> {
+        if (this.backpackSupported === false) throw new Error("backpack_editor_incompatible");
+        await this.sendRequest({ type: "open-backpack", code, blocksInfo, gallery, palette, name } as pxt.editor.OpenBackpackAssetEditorRequest);
     }
 
-    async saveBackpackAsset(): Promise<{ code: string; blockText: string }> {
+    async saveBackpackAsset(): Promise<{ code: string; blockText: string; name?: string }> {
         const response = await this.sendRequest({ type: "save-backpack" } as pxt.editor.SaveBackpackAssetEditorRequest) as pxt.editor.SaveBackpackAssetEditorResponse;
-        return { code: response.code, blockText: response.blockText };
+        return { code: response.code, blockText: response.blockText, ...(response.name !== undefined ? { name: response.name } : {}) };
     }
 
     async openAsset(assetId: string, assetType: pxt.AssetType, files: pxt.Map<string>, palette?: string[]) {
@@ -65,6 +67,19 @@ export class AssetEditorDriver extends IframeDriver {
         if (!data) return;
 
         if (data.type === "event") {
+            if (data.kind === "ready") {
+                this.backpackSupported = data.backpack === true;
+                if (!this.backpackSupported) {
+                    // An older deployed iframe silently ignores this new request.
+                    for (const id of Object.keys(this.pendingMessages)) {
+                        const pending = this.pendingMessages[id];
+                        if ((pending.original as unknown as pxt.editor.AssetEditorRequest).type !== "open-backpack") continue;
+                        delete this.pendingMessages[id];
+                        this.messageQueue = this.messageQueue.filter(message => message !== pending.original);
+                        pending.reject(new Error("backpack_editor_incompatible"));
+                    }
+                }
+            }
             this.fireEvent((data as pxt.editor.AssetEditorEvent).kind, data);
         }
         else {

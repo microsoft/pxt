@@ -1,17 +1,20 @@
 import * as React from "react";
-import { BackpackEntry, getBackpackPreviewAsync } from "../backpack";
+import { BackpackEntry, getBackpackAssetPreviewContext, getBackpackPreviewAsync, loadBackpackAssetPreviewAsync } from "../backpack";
+import { backpackAssetPreview, BackpackAssetPreview } from "../backpackAssetPreview";
 
 export interface BackpackPreviewProps {
     entry: BackpackEntry;
+    headerId: string;
     active: boolean;
     onDragStart?: React.DragEventHandler<HTMLElement>;
     onDragEnd?: React.DragEventHandler<HTMLElement>;
 }
 
 /** Fetch only visible cloud previews; never use a public/bare private image URL. */
-export function BackpackPreview({ entry, active, onDragStart, onDragEnd }: BackpackPreviewProps): JSX.Element {
+export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEnd }: BackpackPreviewProps): JSX.Element {
     const host = React.useRef<HTMLDivElement>();
-    const [image, setImage] = React.useState<{ url: string; version: string }>();
+    const imageRef = React.useRef<HTMLImageElement>();
+    const [image, setImage] = React.useState<{ url: string; version: string; asset?: BackpackAssetPreview }>();
     const [failed, setFailed] = React.useState(false);
     const localUri = entry.item?.previewUri;
     const asset = (entry.item?.kind || entry.summary?.kind) === "asset";
@@ -39,7 +42,7 @@ export function BackpackPreview({ entry, active, onDragStart, onDragEnd }: Backp
     React.useEffect(() => {
         setImage(undefined);
         setFailed(false);
-        if (!active || localUri || !entry.summary?.hasPreview || entry.error) return undefined;
+        if (!active || localUri || (!asset && !entry.summary?.hasPreview) || entry.error) return undefined;
         const controller = new AbortController();
         let objectUrl: string;
         let started = false;
@@ -48,11 +51,20 @@ export function BackpackPreview({ entry, active, onDragStart, onDragEnd }: Backp
             if (started) return;
             started = true;
             observer?.disconnect();
-            void getBackpackPreviewAsync(entry, controller.signal).then(blob => {
-                if (controller.signal.aborted) return;
-                objectUrl = URL.createObjectURL(blob);
-                setImage({ url: objectUrl, version: entry.summary.version });
-            }).catch(() => { if (!controller.signal.aborted) setFailed(true); });
+            void (async () => {
+                if (asset) {
+                    const item = await loadBackpackAssetPreviewAsync(entry);
+                    if (controller.signal.aborted) return;
+                    const preview = backpackAssetPreview(item, getBackpackAssetPreviewContext(headerId));
+                    if (!preview) { setFailed(true); return; }
+                    setImage({ url: preview.previewURI, version: entry.summary?.version, asset: preview });
+                } else {
+                    const blob = await getBackpackPreviewAsync(entry, controller.signal);
+                    if (controller.signal.aborted) return;
+                    objectUrl = URL.createObjectURL(blob);
+                    setImage({ url: objectUrl, version: entry.summary.version });
+                }
+            })().catch(() => { if (!controller.signal.aborted) setFailed(true); });
         };
         if (typeof IntersectionObserver === "undefined") load();
         else {
@@ -66,16 +78,35 @@ export function BackpackPreview({ entry, active, onDragStart, onDragEnd }: Backp
             observer?.disconnect();
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
-    }, [active, entry.id, entry.source, entry.summary?.version, localUri, entry.error]);
+    }, [active, headerId, entry.id, entry.source, entry.item?.code, entry.summary?.version, localUri, entry.error, asset]);
     const uri = localUri || (active && image?.version === entry.summary?.version ? image?.url : undefined);
-    return <div ref={host} style={{ minHeight: entry.summary?.hasPreview ? 1 : undefined }}>
-        {asset && <div className="project-backpack__asset" draggable={!!onDragStart}
+    React.useEffect(() => {
+        const frames = image?.asset?.framePreviewURIs;
+        const element = imageRef.current;
+        if (!active || !element || !frames || frames.length < 2) return undefined;
+        let timer: ReturnType<typeof setInterval>;
+        const stop = (): void => { clearInterval(timer); element.src = image.url; };
+        const start = (): void => {
+            stop();
+            let index = 0;
+            timer = setInterval(() => { element.src = frames[index++ % frames.length]; }, Math.max(image.asset.interval || 100, 100));
+        };
+        element.addEventListener("mouseenter", start);
+        element.addEventListener("mouseleave", stop);
+        return () => {
+            stop();
+            element.removeEventListener("mouseenter", start);
+            element.removeEventListener("mouseleave", stop);
+        };
+    }, [active, image]);
+    return <div ref={host} style={{ minHeight: asset || entry.summary?.hasPreview ? 44 : undefined }}>
+        {asset && !uri && <div className="project-backpack__asset" draggable={!!onDragStart}
             onDragStart={onDragStart} onDragEnd={onDragEnd} title={onDragStart ? lf("Drag to add to project") : undefined}>
             <i className={`icon ${assetLabel === lf("Music") ? "music" : "image"}`} aria-hidden="true" />
             <span>{assetLabel}</span>
         </div>}
-        {uri && <img className="project-backpack__preview" src={density ? undefined : uri}
-            srcSet={density ? `${uri} ${density}x` : undefined} alt={lf("Blocks in {0}", entry.name)}
+        {uri && <img ref={imageRef} className={`project-backpack__preview${asset ? " project-backpack__preview--asset" : ""}`} src={density ? undefined : uri}
+            srcSet={density ? `${uri} ${density}x` : undefined} alt={asset ? lf("Preview of {0}", entry.name) : lf("Blocks in {0}", entry.name)}
             draggable={!!onDragStart} onDragStart={onDragStart} onDragEnd={onDragEnd}
             title={onDragStart ? lf("Drag to add to project") : undefined} />}
         {failed && <p>{lf("Preview unavailable. You can still add this snippet.")}</p>}

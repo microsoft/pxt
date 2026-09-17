@@ -160,7 +160,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         try { assert.deepStrictEqual(errors, []); } finally { await page?.close(); }
     });
 
-    it("pages metadata completely without fetching bodies; Add alone loads content", async () => {
+    it("pages metadata completely without fetching bodies; explicit Add loads content", async () => {
         const result = await page.evaluate(async () => {
             for (let n = 1; n <= 45; n++) bt.seed(n);
             bt.seed(45, bt.asset(45, { versions: { target: "1.0.0-beta.2+capture", pxt: "13.2.4-beta.1+build.9" } }));
@@ -225,12 +225,64 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             bt.hook = (options, run) => { const result = run(); if (options.method === "PUT") throw new Error("Lost ACK"); return result; };
             await bt.outcome(() => store.saveBackpackItemAsync(bt.asset(1)));
             const entry = store.getBackpackState().entries[0], before = await bt.readLocal("alice"); bt.requests = [];
-            return { before, load: await bt.outcome(() => store.loadBackpackAssetAsync(entry)),
+            return { before, preview: await store.loadBackpackAssetPreviewAsync(entry), load: await bt.outcome(() => store.loadBackpackAssetAsync(entry)),
                 save: await bt.outcome(() => store.saveBackpackAssetAsync(entry, bt.asset(1, { name: "Changed" }))),
                 after: await bt.readLocal("alice"), requests: bt.requests };
         });
         assert(result.before[0].firstAttemptAt); assert.deepStrictEqual(result.after, result.before);
+        assert.deepStrictEqual(result.preview, JSON.parse(result.before[0].payload));
         assert.match(result.load, /Retry syncing/); assert.match(result.save, /Retry syncing/); assert.deepStrictEqual(result.requests, []);
+    });
+
+    it("loads cloud and updated guest asset previews on demand without storage writes and rejects late account responses", async () => {
+        const result = await page.evaluate(async () => {
+            bt.seed(1, bt.asset(1));
+            await store.refreshBackpackAsync();
+            const entry = store.getBackpackState().entries[0], before = bt.clone(store.getBackpackState());
+            const source = bt.clone(bt.originals), localBefore = await bt.readLocal("alice"), listing = bt.clone(bt.requests);
+            const preview = await store.loadBackpackAssetPreviewAsync(entry);
+            const cloud = { preview, before, after: bt.clone(store.getBackpackState()), source, sourceAfter: bt.clone(bt.originals),
+                localBefore, localAfter: await bt.readLocal("alice"), listing, requests: bt.clone(bt.requests) };
+            bt.hold();
+            bt.hook = async (options, run) => {
+                const response = run();
+                if (options.url.endsWith("/content")) { bt.enter(); await bt.gate; }
+                return response;
+            };
+            const pending = bt.outcome(() => store.loadBackpackAssetPreviewAsync(entry));
+            await bt.entered;
+            bt.signIn("bob"); bt.remote = {}; bt.originals = {};
+            await store.refreshBackpackAsync();
+            const switched = bt.clone(store.getBackpackState());
+            bt.release();
+            const late = await pending, afterLate = bt.clone(store.getBackpackState());
+            bt.hook = undefined; bt.signIn(undefined);
+            await store.saveBackpackItemAsync(bt.asset(2));
+            await store.refreshBackpackAsync();
+            const guestEntry = store.getBackpackState().entries[0], guestBefore = await bt.readLocal();
+            const guestPreview = await store.loadBackpackAssetPreviewAsync(guestEntry), guestAfter = await bt.readLocal();
+            await store.saveBackpackAssetAsync(guestEntry, { ...guestPreview, code: guestPreview.code.replace("pixels", "updated pixels") });
+            const editedEntry = store.getBackpackState().entries[0], editedBefore = await bt.readLocal();
+            const guestRequests = bt.requests.length, updated = await store.loadBackpackAssetPreviewAsync(editedEntry);
+            return { cloud, late, switched, afterLate, guestPreview, guestBefore, guestAfter, updated, editedBefore,
+                editedAfter: await bt.readLocal(), guestRequests, requests: bt.requests, imports: bt.imports };
+        });
+        const { cloud } = result;
+        assert.strictEqual(cloud.listing.length, 1); assert.doesNotMatch(cloud.listing[0].url, /\/content$/);
+        assert.strictEqual(cloud.requests.length, 2); assert.match(cloud.requests[1].url, /\/content$/);
+        assert.strictEqual(cloud.requests[1].headers.authorization, "mkcd alice-token");
+        assert.deepStrictEqual(cloud.preview, Object.values(cloud.source)[0]);
+        assert.deepStrictEqual(cloud.after, cloud.before); assert.deepStrictEqual(cloud.sourceAfter, cloud.source);
+        assert.deepStrictEqual(cloud.localAfter, cloud.localBefore);
+        assert.notStrictEqual(result.late, "OK"); assert.deepStrictEqual(result.afterLate, result.switched);
+        assert.deepStrictEqual(result.afterLate.entries, []);
+        assert.deepStrictEqual(result.guestPreview, JSON.parse(result.guestBefore[0].payload));
+        assert.deepStrictEqual(result.guestAfter, result.guestBefore);
+        assert.deepStrictEqual(result.updated, JSON.parse(result.editedBefore[0].payload));
+        assert.match(result.updated.code, /updated pixels/); assert.deepStrictEqual(result.editedAfter, result.editedBefore);
+        assert.strictEqual(result.requests.length, result.guestRequests);
+        assert(result.requests.every(request => request.method === "GET" && !request.url.endsWith("/preview")));
+        assert.deepStrictEqual(result.imports, []);
     });
 
     it("round-trips beta metadata through guest persistence, direct import, upload, and cloud content", async () => {
@@ -515,8 +567,10 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         const result = await page.evaluate(async () => {
             bt.seed(1); await store.refreshBackpackAsync();
             const entry = store.getBackpackState().entries[0];
-            bt.hook = () => bt.fail("PRIVATE_UNRECOGNIZED", 500);
+            bt.hook = () => bt.fail("backpack_PRIVATE_UNRECOGNIZED", 500);
             const failure = await bt.outcome(() => store.deleteBackpackEntryAsync(entry));
+            bt.hook = () => bt.fail("backpack_unsupported_entry", 400);
+            const unsupported = await bt.outcome(() => store.deleteBackpackEntryAsync(entry));
             bt.hook = () => ({ statusCode: 204 }); await store.deleteBackpackEntryAsync(entry);
             bt.hook = () => ({ statusCode: 403 });
             const denied = await bt.outcome(() => store.refreshBackpackAsync());
@@ -526,9 +580,11 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const retained = await bt.readLocal("alice");
             bt.hook = () => ({ statusCode: 401, json: { secret: "PRIVATE" } });
             const unauthorized = await bt.outcome(() => store.refreshBackpackAsync());
-            return { failure, denied, deniedState, unavailable, retained, unauthorized, logouts: bt.logouts };
+            return { failure, unsupported, denied, deniedState, unavailable, retained, unauthorized, logouts: bt.logouts };
         });
-        assert.doesNotMatch(result.failure, /PRIVATE/); assert.equal(result.logouts, 1); assert.match(result.unauthorized, /Sign in/);
+        assert.doesNotMatch(JSON.stringify(result), /PRIVATE/);
+        assert.match(result.failure, /Could not sync/); assert.match(result.unsupported, /unsupported Backpack format.*Delete it and save a new copy/);
+        assert.equal(result.logouts, 1); assert.match(result.unauthorized, /Sign in/);
         assert.match(result.denied, /access was denied/);
         assert.equal(result.deniedState.warning, result.denied); assert.equal(result.deniedState.complete, false);
         assert.match(result.unavailable, /temporarily unavailable.*remain in this browser/);

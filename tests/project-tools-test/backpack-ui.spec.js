@@ -67,6 +67,20 @@ describe("project backpack UI", function () {
     });
     const asset = (type, index) => ({ ...item(type, `00000000-0000-0000-0000-${String(index).padStart(12, "0")}`),
         kind: "asset", code: JSON.stringify({ blocks: [{ type }] }) });
+    const assetPreviewURI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
+    const assetPreview = ".project-backpack__preview--asset";
+    const controlIntersections = () => page.evaluate(() => {
+        const observers = new Set();
+        window.IntersectionObserver = class {
+            constructor(callback) { this.callback = callback; }
+            observe() { observers.add(this); }
+            disconnect() { observers.delete(this); }
+        };
+        backpackTest.intersect = isIntersecting => {
+            for (const observer of Array.from(observers)) observer.callback([{ isIntersecting }]);
+        };
+        backpackTest.observerCount = () => observers.size;
+    });
     const entry = ".project-backpack__item";
     const add = ".project-backpack__add";
     const rename = ".project-backpack__rename";
@@ -140,6 +154,7 @@ describe("project backpack UI", function () {
         controls = controlBundle();
         css = (await less.render(`
             @modalDimmerZIndex: 1000; @modalFullscreenZIndex: 1001;
+            @blocklyWidgetDivZIndex: 1002;
             @tabletAndBelow: ~"only screen and (max-width: 991px)";
             @modalSeparatorBorder: 1px solid #ccc; @pageFont: sans-serif; @textColor: #000;
             @buttonFocusOutlineLightBackground: 2px solid #000;
@@ -173,7 +188,7 @@ describe("project backpack UI", function () {
         await page.addScriptTag({ path: require.resolve("react/umd/react.development.js") });
         await page.addScriptTag({ path: require.resolve("react-dom/umd/react-dom.development.js") });
         await page.addScriptTag({ path: require.resolve("fuse.js") });
-        await page.evaluate(() => {
+        await page.evaluate(assetPreviewURI => {
             window.lf = (text, ...args) => text.replace(/\{(\d+)\}/g, (_, i) => args[i]);
             window.pxt = {
                 BLOCKS_PROJECT_NAME: "blocksprj",
@@ -190,6 +205,8 @@ describe("project backpack UI", function () {
                 refreshes: 0, adds: [], positions: [], deletes: [], renames: [], signIns: 0, escapes: 0,
                 failRefresh: false, failDelete: false, failRename: false, failAdd: false, importResult: true,
                 modalOpen: false, modalEvents: [], collapses: 0,
+                assetPreviewURI, assetPreviewLoads: 0, assetPreviewRenders: [], previewHeaders: [], versions: {},
+                previewContext: { blocksInfo: {}, gallery: {}, palette: ["#000000"] },
                 modalChanged(open) {
                     test.modalOpen = open;
                     test.modalEvents.push({ type: "change", open });
@@ -232,7 +249,7 @@ describe("project backpack UI", function () {
                         if (!test.user || validated.error) return validated;
                         // Supply summary fields directly; indexing matrices belong to search tests.
                         return window.backpackValidation.readBackpackSummary({ id: item.id, name: item.name, kind: item.kind, versions: item.versions,
-                            createdAt: item.createdAt, updatedAt: item.createdAt, version: '"v1"', status: "ready",
+                            createdAt: item.createdAt, updatedAt: item.createdAt, version: test.versions[item.id] || '"v1"', status: "ready",
                             hasPreview: !!item.previewUri, previewPixelDensity: item.previewPixelDensity,
                             blockTypes: JSON.parse(item.code).blocks.map(block => block.type), blockText: item.blockText, functionCount: test.functionCount,
                             dependencies: item.dependencies, projectBlocks: item.projectBlocks });
@@ -288,11 +305,21 @@ describe("project backpack UI", function () {
                     test.observedAsset = entry;
                     return JSON.parse(JSON.stringify((test.snapshots[test.storeKey()] || []).find(item => item.id === entry.id)));
                 },
+                async loadBackpackAssetPreviewAsync(entry) {
+                    ++test.assetPreviewLoads;
+                    const item = JSON.parse(JSON.stringify(entry.item || (test.snapshots[test.storeKey()] || []).find(item => item.id === entry.id)));
+                    const fail = test.failAssetPreview;
+                    await test.gate;
+                    if (fail) throw new Error("Asset preview unavailable");
+                    return item;
+                },
+                getBackpackAssetPreviewContext(headerId) { test.previewHeaders.push(headerId); return test.previewContext; },
                 getBackpackAssetEditorContext(headerId) { test.contextHeader = headerId; return test.assetContext = { palette: ["#000000"] }; },
                 async saveBackpackAssetAsync(entry, item) {
                     test.assetSaves = (test.assetSaves || []).concat({ sameEntry: entry === test.observedAsset, item });
                     if (test.failAssetSave) throw new Error("Asset save failed");
                     test.remote[test.storeKey()] = test.snapshots[test.storeKey()] = test.remote[test.storeKey()].map(saved => saved.id === item.id ? item : saved);
+                    if (test.user) test.versions[item.id] = '"v2"';
                     test.notify();
                 },
                 async deleteBackpackEntryAsync(entry) {
@@ -313,11 +340,19 @@ describe("project backpack UI", function () {
                 const modules = { react: React, "fuse.js": window.Fuse, "../auth": auth, "../data": data,
                     "../backpack": backpack, "../backpackSearch": window.backpackSearch, "../package": test.pkg };
                 modules["./BackpackPreview"] = window.backpackPreviewUI;
+                // Native rendering is exercised with real fields in backpack-asset-edit.
+                modules["../backpackAssetPreview"] = { backpackAssetPreview: (item, context) => {
+                    test.assetPreviewRenders.push({ item: JSON.parse(JSON.stringify(item)), sameContext: context === test.previewContext });
+                    return test.previewResult === null ? undefined : test.previewResult
+                        || { previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code) };
+                } };
                 // Native editor behavior lives in backpack-asset-edit; keep the real portal/focus controls here.
                 modules["./BackpackAssetEditDialog"] = { BackpackAssetEditDialog: props => {
                     test.assetDialog = props;
                     const [code, setCode] = React.useState(props.item.code);
                     const [error, setError] = React.useState("");
+                    React.useEffect(() => { if (test.failAssetOpen) props.onOpenError(test.failAssetOpen); }, []);
+                    if (test.failAssetOpen) return null;
                     return React.createElement(window.backpackControls.Modal, {
                         title: "Edit Backpack asset", className: "project-backpack__asset-modal", fullscreen: true, onClose: props.onClose,
                         actions: [{ label: "Cancel", onClick: props.onClose }, { label: "Save", onClick: async () => {
@@ -336,7 +371,7 @@ describe("project backpack UI", function () {
                     test.modalEvents.push({ type: "focus", open: test.modalOpen });
                 }
             });
-        });
+        }, assetPreviewURI);
         await page.addScriptTag({ content: controls });
         // Extract the exact current predicates; never use stale pxtlib/editor build output.
         const helper = fs.readFileSync(path.join(root, "pxtlib/auth.ts"), "utf8")
@@ -550,17 +585,19 @@ describe("project backpack UI", function () {
         }
     });
 
-    it("routes code, assets and invalid recovery through searchable keyboard tabs and capture requests without content GETs", async () => {
+    it("routes code, assets and invalid recovery through searchable keyboard tabs and capture requests without asset PNG GETs", async () => {
         const assets = ["image_picker", "animation_editor", "tiles_tilemap_editor", "music_song_field_editor"].map((type, i) => asset(type, i + 10));
         await signIn([item(), ...assets, { ...item("Damaged", "00000000-0000-0000-0000-000000000099"), kind: undefined }]);
-        await page.evaluate(() => { window.fetch = () => { throw new Error("Unexpected content GET"); }; });
+        await page.evaluate(() => { window.fetch = () => { throw new Error("Unexpected asset PNG GET"); }; });
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetPreviewLoads), 0, "The hidden asset tab must not load content");
         assert.deepStrictEqual(await visibleNames(), ["Jump", "Damaged"]);
         await page.focus("#project-backpack-tab-code");
         await page.keyboard.press("ArrowRight");
         assert.deepStrictEqual(await visibleNames(), assets.map(item => item.name));
-        assert.deepStrictEqual(await page.$$eval(".project-backpack__asset span", nodes => nodes.map(node => node.textContent)),
-            ["Image", "Animation", "Tilemap", "Music"]);
-        assert.strictEqual(await page.$("img"), null);
+        const labels = await page.$$eval(entry, nodes => nodes.map(node =>
+            node.querySelector("img")?.alt || node.querySelector(".project-backpack__asset span")?.textContent));
+        labels.forEach((label, i) => assert.ok(label === ["Image", "Animation", "Tilemap", "Music"][i]
+            || label === `Preview of ${assets[i].name}`));
         assert.strictEqual(await page.$eval(body, node => node.getAttribute("aria-labelledby")), "project-backpack-tab-asset");
         await searchFor("animation");
         assert.deepStrictEqual(await visibleNames(), ["animation_editor"]);
@@ -587,7 +624,7 @@ describe("project backpack UI", function () {
         assert.equal(await page.$eval(rename, button => button.getAttribute("aria-label")), "Rename Jump");
         await page.click("#project-backpack-tab-asset");
         assert.equal(await page.$eval(rename, button => button.getAttribute("aria-label")), "Edit image_picker");
-        assert.equal(await page.evaluate(() => backpackTest.observedAsset), undefined, "Listing must not load asset content");
+        assert.equal(await page.evaluate(() => backpackTest.observedAsset), undefined, "Preview loading must not open an editing draft");
         await page.click(rename);
         await page.waitForSelector(`${assetModal}.fullscreen input`);
         assert.equal(await page.$(renameModal), null);
@@ -611,6 +648,21 @@ describe("project backpack UI", function () {
             : Array(2).fill({ sameEntry: true, item: edited }));
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.remote.A), [item(), action === "Cancel" ? saved : edited]);
         assert.equal(await page.$eval(rename, button => button === document.activeElement), true, `${action} must restore focus to the asset pencil`);
+    });
+
+    it("reports asset startup errors in the parent, closes the dialog and restores pencil focus", async () => {
+        const saved = asset("image_picker", 2);
+        const message = "This saved asset could not be opened.";
+        await signIn([saved]);
+        await page.evaluate(message => { backpackTest.failAssetOpen = message; }, message);
+        await page.click("#project-backpack-tab-asset"); await page.click(rename);
+        await page.waitForSelector(`${body} [role="alert"]`);
+        await modalClosed();
+        assert.equal(await page.$(assetModal), null);
+        assert.equal(await page.$eval(`${body} [role="alert"]`, node => node.textContent), message);
+        assert.equal((await page.accessibility.snapshot({ root: await page.$(`${body} [role="alert"]`), interestingOnly: false }))?.role, "alert");
+        assert.equal(await page.$eval(rename, button => button === document.activeElement), true);
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.assetSaves || [], backpackTest.adds, backpackTest.remote.A]), [[], [], [saved]]);
     });
 
     it("unmounts a guest asset draft on sign-in without saving", async () => {
@@ -676,9 +728,16 @@ describe("project backpack UI", function () {
         await idle();
         assert.strictEqual(await page.evaluate(() => backpackTest.adds.length), 3, "Only the explicit pending Add may import");
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.positions), [{ x: 123, y: 234 }]);
-        await page.evaluate(() => backpackTest.account(undefined));
+        await page.evaluate(() => { backpackTest.failAssetPreview = true; backpackTest.account(undefined); });
         await idle();
         await page.click("#project-backpack-tab-asset");
+        await page.waitForFunction(() => document.querySelector(".project-backpack__item").textContent.includes("Preview unavailable"));
+        assert.strictEqual(await page.$(assetPreview), null);
+        assert.strictEqual(await page.$$eval(`${rename}, ${add}`, buttons => buttons.length === 2 && buttons.every(button => !button.disabled)), true);
+        await page.click(rename);
+        await page.waitForSelector(`${assetModal} input`);
+        await page.click(`${assetModal} .common-modal-footer button:first-child`);
+        await modalClosed();
         await drag("dragstart", ".project-backpack__asset", true);
         await drag("drop", "#canvas");
         await idle();
@@ -774,32 +833,127 @@ describe("project backpack UI", function () {
         assert.doesNotMatch(await text(), /other function/);
     });
 
-    it("fetches cloud previews only on intersection and revokes URLs on account changes", async () => {
+    it("loads cloud code PNGs and asset content only on intersection, invalidates versions and ignores late account responses", async () => {
+        await controlIntersections();
         await page.evaluate(() => {
-            window.IntersectionObserver = class {
-                constructor(callback) { backpackTest.intersect = callback; }
-                observe() {}
-                disconnect() {}
-            };
             const create = URL.createObjectURL.bind(URL), revoke = URL.revokeObjectURL.bind(URL);
             backpackTest.urls = []; backpackTest.revoked = [];
             URL.createObjectURL = blob => { const url = create(blob); backpackTest.urls.push(url); return url; };
             URL.revokeObjectURL = url => { backpackTest.revoked.push(url); revoke(url); };
             backpackTest.functionCount = 2;
         });
+        const saved = asset("image_picker", 2);
         await signIn([{ ...item(), previewPixelDensity: 2,
-            previewUri: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=" }]);
+            previewUri: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=" }, saved]);
         assert.equal(await page.evaluate(() => backpackTest.previewRequests || 0), 0);
         assert.match(await text(), /\+ 2 other functions/);
-        await page.evaluate(() => backpackTest.intersect([{ isIntersecting: true }]));
+        await page.evaluate(() => backpackTest.intersect(true));
         await page.waitForSelector("img");
         await page.$eval("img", image => image.decode());
         assert.strictEqual(await page.evaluate(() => backpackTest.previewRequests), 1);
         assert.strictEqual(await page.evaluate(() => backpackTest.urls.length), 1);
+        await page.click("#project-backpack-tab-asset");
+        await page.waitForFunction(() => backpackTest.observerCount() === 1);
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetPreviewLoads), 0);
+        await page.evaluate(() => backpackTest.intersect(false));
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetPreviewLoads), 0);
+        await page.evaluate(() => { backpackTest.hold(); backpackTest.intersect(true); backpackTest.intersect(true); });
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetPreviewLoads), 1);
+        assert.strictEqual(await page.$(assetPreview), null, "Held asset content must not render early");
+        await page.evaluate(() => backpackTest.release());
+        await page.waitForSelector(assetPreview);
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.assetPreviewRenders), [{ item: saved, sameContext: true }]);
+        assert.strictEqual(await page.$eval(assetPreview, image => image.alt), "Preview of image_picker");
+        assert.strictEqual(await page.$(".project-backpack__asset"), null);
+        const originalURI = await page.$eval(assetPreview, image => image.src);
+        await page.evaluate(() => {
+            const saved = backpackTest.remote.A[1];
+            backpackTest.remote.A[1] = { ...saved, code: saved.code.replace('"image_picker"', '"image_picker","fields":{"IMAGE":"updated"}') };
+            backpackTest.snapshots.A = backpackTest.remote.A;
+            backpackTest.versions[saved.id] = '"v2"';
+            backpackTest.notify();
+        });
+        await page.waitForFunction(() => backpackTest.observerCount() === 1);
+        assert.strictEqual(await page.$(assetPreview), null, "Old-version pixels must disappear before replacement content loads");
+        await page.evaluate(() => backpackTest.intersect(true));
+        await page.waitForSelector(assetPreview);
+        assert.notStrictEqual(await page.$eval(assetPreview, image => image.src), originalURI);
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetPreviewLoads), 2);
+        await page.evaluate(() => { backpackTest.versions[backpackTest.remote.A[1].id] = '"v3"'; backpackTest.notify(); });
+        await page.waitForFunction(() => backpackTest.observerCount() === 1);
+        await page.evaluate(() => { backpackTest.hold(); backpackTest.intersect(true); backpackTest.gate = undefined; });
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetPreviewLoads), 3);
         await page.evaluate(() => backpackTest.account("B"));
         await idle();
+        await page.evaluate(async () => { backpackTest.release(); await new Promise(resolve => requestAnimationFrame(resolve)); });
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetPreviewRenders.length), 2, "Late content must not reach the renderer or editor context");
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.previewHeaders), ["project", "project"]);
+        assert.strictEqual(await page.evaluate(() => backpackTest.previewRequests), 1, "Assets never use the code PNG route");
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.revoked), await page.evaluate(() => backpackTest.urls));
         assert.strictEqual(await page.$("img"), null);
+    });
+
+    it("updates guest previews on code changes without mutating source data and abandons inactive loads", async () => {
+        const saved = asset("image_picker", 2);
+        await controlIntersections();
+        await loadGuest([saved]);
+        await page.click("#project-backpack-tab-asset");
+        await page.waitForFunction(() => backpackTest.observerCount() === 1);
+        await page.evaluate(() => backpackTest.intersect(true));
+        await page.waitForSelector(assetPreview);
+        assert.strictEqual(await page.$eval(assetPreview, image => image.draggable), true);
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.remote.__guest__, backpackTest.snapshots.__guest__]), [[saved], [saved]]);
+        const edited = { ...saved, code: JSON.stringify({ blocks: [{ type: "image_picker", fields: { IMAGE: "edited" } }] }) };
+        await page.evaluate(edited => {
+            backpackTest.remote.__guest__ = backpackTest.snapshots.__guest__ = [edited]; backpackTest.notify();
+        }, edited);
+        await page.waitForFunction(() => backpackTest.observerCount() === 1);
+        assert.strictEqual(await page.$(assetPreview), null);
+        await page.evaluate(() => backpackTest.intersect(true));
+        await page.waitForSelector(assetPreview);
+        assert.strictEqual(await page.$eval(assetPreview, image => image.src), assetPreviewURI + "#" + encodeURIComponent(edited.code));
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.assetPreviewRenders), [saved, edited].map(item => ({ item, sameContext: true })));
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.remote.__guest__, backpackTest.snapshots.__guest__,
+            backpackTest.adds, backpackTest.renames, backpackTest.assetSaves || [], backpackTest.previewRequests || 0]), [[edited], [edited], [], [], [], 0]);
+        await page.evaluate(saved => { backpackTest.hold(); backpackTest.snapshots.__guest__ = [saved]; backpackTest.notify(); }, saved);
+        await page.waitForFunction(() => backpackTest.observerCount() === 1);
+        await page.evaluate(() => backpackTest.intersect(true));
+        await page.evaluate(() => backpackTest.setActive(false));
+        await page.waitForFunction(() => backpackTest.observerCount() === 0);
+        await page.evaluate(async () => {
+            backpackTest.notify(); backpackTest.intersect(true); backpackTest.release();
+            await new Promise(resolve => requestAnimationFrame(resolve));
+        });
+        assert.strictEqual(await page.$(assetPreview), null);
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.assetPreviewLoads, backpackTest.assetPreviewRenders.length, backpackTest.observerCount()]), [3, 2, 0]);
+    });
+
+    it("animates asset previews only while hovered, using the supplied interval and restoring the still on leave", async () => {
+        await page.evaluate(() => {
+            const uri = backpackTest.assetPreviewURI;
+            backpackTest.previewResult = { previewURI: uri, framePreviewURIs: [uri + "#first", uri + "#second"], interval: 180 };
+            backpackTest.timers = new Map();
+            let next = 0;
+            window.setInterval = (callback, delay) => { const id = ++next; backpackTest.timers.set(id, { callback, delay }); return id; };
+            window.clearInterval = id => backpackTest.timers.delete(id);
+            backpackTest.tick = () => { for (const timer of backpackTest.timers.values()) timer.callback(); };
+        });
+        await loadGuest([asset("animation_editor", 2)]);
+        await page.click("#project-backpack-tab-asset");
+        await page.waitForSelector(assetPreview);
+        assert.strictEqual(await page.evaluate(() => backpackTest.timers.size), 0);
+        await page.hover(assetPreview);
+        assert.deepStrictEqual(await page.evaluate(() => Array.from(backpackTest.timers.values(), timer => timer.delay)), [180]);
+        await page.evaluate(() => backpackTest.tick());
+        assert.strictEqual(await page.$eval(assetPreview, image => image.src), assetPreviewURI + "#first");
+        await page.evaluate(() => backpackTest.tick());
+        assert.strictEqual(await page.$eval(assetPreview, image => image.src), assetPreviewURI + "#second");
+        await page.hover("header");
+        assert.strictEqual(await page.$eval(assetPreview, image => image.src), assetPreviewURI);
+        assert.strictEqual(await page.evaluate(() => backpackTest.timers.size), 0);
+        await page.hover(assetPreview);
+        await page.evaluate(() => backpackTest.setActive(false));
+        await page.waitForFunction(() => backpackTest.timers.size === 0);
     });
 
     it("discards a rename draft with Escape and restores focus without closing the Backpack", async () => {
