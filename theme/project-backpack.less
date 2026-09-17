@@ -1,4 +1,9 @@
 .project-backpack:not([hidden]) {
+    // Cover the pointer's inner half, including transparent scrollbar tracks.
+    position: relative;
+    z-index: 0;
+    background: var(--tools-surface);
+    border-radius: inherit;
     display: flex;
     flex-direction: column;
     flex: 1;

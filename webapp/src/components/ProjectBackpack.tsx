@@ -315,9 +315,9 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             <Input id="project-backpack-search" className="project-backpack__search-input" type="search" role="searchbox"
                 ariaLabel={lf("Search backpack")} placeholder={lf("Search backpack")}
                 icon="icon search" initialValue={query} onChange={setQuery} handleInputRef={searchInput}
-                disabled={!ready || pending} />
+                disabled={ready && !categoryCount} />
             {!!query && <button className="project-backpack__button project-backpack__icon-button"
-                type="button" disabled={!ready || pending} onClick={clearSearch}
+                type="button" onClick={clearSearch}
                 aria-label={lf("Clear backpack search")} title={lf("Clear backpack search")}>
                 <i className="icon remove" aria-hidden="true" />
             </button>}
