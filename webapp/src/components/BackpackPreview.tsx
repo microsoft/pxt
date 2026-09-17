@@ -15,6 +15,8 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
     const host = React.useRef<HTMLDivElement>();
     const imageRef = React.useRef<HTMLImageElement>();
     const [image, setImage] = React.useState<{ url: string; version: string; asset?: BackpackAssetPreview }>();
+    const loaded = React.useRef(false);
+    const objectUrl = React.useRef<string>();
     const [failed, setFailed] = React.useState(false);
     const localUri = entry.item?.previewUri;
     const asset = (entry.item?.kind || entry.summary?.kind) === "asset";
@@ -40,11 +42,19 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
         } catch { return 0; }
     }, [entry.item?.code, entry.summary?.functionCount, entry.error]);
     React.useEffect(() => {
+        loaded.current = false;
         setImage(undefined);
         setFailed(false);
+        return () => {
+            if (objectUrl.current) URL.revokeObjectURL(objectUrl.current);
+            objectUrl.current = undefined;
+        };
+    }, [headerId, entry.id, entry.source, entry.item?.code, entry.summary?.version, localUri, entry.error, asset]);
+    React.useEffect(() => {
+        if (loaded.current) return undefined;
         if (!active || localUri || (!asset && !entry.summary?.hasPreview) || entry.error) return undefined;
+        setFailed(false);
         const controller = new AbortController();
-        let objectUrl: string;
         let started = false;
         let observer: IntersectionObserver;
         const load = () => {
@@ -57,12 +67,14 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
                     if (controller.signal.aborted) return;
                     const preview = backpackAssetPreview(item, getBackpackAssetPreviewContext(headerId));
                     if (!preview) { setFailed(true); return; }
+                    loaded.current = true;
                     setImage({ url: preview.previewURI, version: entry.summary?.version, asset: preview });
                 } else {
                     const blob = await getBackpackPreviewAsync(entry, controller.signal);
                     if (controller.signal.aborted) return;
-                    objectUrl = URL.createObjectURL(blob);
-                    setImage({ url: objectUrl, version: entry.summary.version });
+                    objectUrl.current = URL.createObjectURL(blob);
+                    loaded.current = true;
+                    setImage({ url: objectUrl.current, version: entry.summary.version });
                 }
             })().catch(() => { if (!controller.signal.aborted) setFailed(true); });
         };
@@ -76,10 +88,9 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
         return () => {
             controller.abort();
             observer?.disconnect();
-            if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
     }, [active, headerId, entry.id, entry.source, entry.item?.code, entry.summary?.version, localUri, entry.error, asset]);
-    const uri = localUri || (active && image?.version === entry.summary?.version ? image?.url : undefined);
+    const uri = localUri || (image?.version === entry.summary?.version ? image?.url : undefined);
     React.useEffect(() => {
         const frames = image?.asset?.framePreviewURIs;
         const element = imageRef.current;
