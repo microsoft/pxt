@@ -86,7 +86,7 @@ export const buildEngines: Map<BuildEngine> = {
     codal: {
         id: "codal",
         updateEngineAsync: updateCodalBuildAsync,
-        buildAsync: () => runBuildCmdAsync("python", "build.py"),
+        buildAsync: () => runBuildCmdAsync("python3", "build.py"),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchCodalHexInfo,
         prepBuildDirAsync: prepCodalBuildDirAsync,
@@ -99,7 +99,7 @@ export const buildEngines: Map<BuildEngine> = {
     dockercodal: {
         id: "dockercodal",
         updateEngineAsync: updateCodalBuildAsync,
-        buildAsync: () => runDockerAsync(["python", "build.py"]),
+        buildAsync: () => runDockerAsync(["python3", "build.py"]),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchCodalHexInfo,
         prepBuildDirAsync: prepCodalBuildDirAsync,
@@ -286,7 +286,7 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
             if (fs.existsSync(fn))
                 existing = fs.readFileSync(fn, "utf8")
             if (existing !== v)
-                nodeutil.writeFileSync(fn, v)
+                nodeutil.writeFileSync(fn, v, U.endsWith(fn, ".a") ? { encoding: "base64" } : undefined)
         })
     }
 
