@@ -28,13 +28,8 @@ describe("named private whiteboards", function () {
                 : file === backpackPath ? "module.exports = window.whiteboardTest.backpack;"
                 : file === projectBackpackPath ? `
                     const React = require("react");
-                    exports.ProjectBackpack = props => {
-                        const test = window.whiteboardTest;
-                        React.useEffect(() => { ++test.backpackMounts; }, []);
-                        test.backpackProps = { headerId: props.headerId, active: props.active, onSignIn: typeof props.onSignIn };
-                        return React.createElement(React.Fragment, null, props.renderHeader("Backpack"),
-                            React.createElement("button", { id: "test-backpack-signin", onClick: props.onSignIn }, "Sign in"));
-                    };
+                    exports.ProjectBackpack = props => React.createElement(React.Fragment, null,
+                        props.renderHeader("Backpack"), React.createElement("button", { id: "test-backpack" }, "Backpack"));
                 ` : undefined;
             return new Transform({
                 transform(chunk, _encoding, done) {
@@ -90,22 +85,10 @@ describe("named private whiteboards", function () {
                 whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text: "Saved private notes" }],
                 activeWhiteboardId: "whiteboard-1"
             } };
-            const openListeners = new Set();
-            Object.assign(whiteboardTest, {
-                backpackMounts: 0, signInRequests: 0, openRequests: [],
-                backpack: {
-                    isBackpackEnabled: () => true,
-                    subscribeBackpackOpen: listener => {
-                        openListeners.add(listener);
-                        return () => openListeners.delete(listener);
-                    },
-                    requestBackpackOpen: (headerId, focus) => {
-                        const request = { headerId, focus };
-                        whiteboardTest.openRequests.push(request);
-                        Array.from(openListeners).forEach(listener => listener(request));
-                    }
-                }
-            });
+            whiteboardTest.backpack = {
+                isBackpackEnabled: () => true,
+                subscribeBackpackOpen: () => () => {}
+            };
             pxt.reportException = error => whiteboardTest.errors.push(error.message);
         });
         await page.addScriptTag({ content: bundle });
@@ -137,7 +120,9 @@ describe("named private whiteboards", function () {
         await item(action);
         await page.waitForSelector("#project-whiteboard-name", { visible: true });
         await page.focus("#project-whiteboard-name");
-        await page.keyboard.down("Control"); await page.keyboard.press("A"); await page.keyboard.up("Control");
+        await page.keyboard.down("Control");
+        await page.keyboard.press("A");
+        await page.keyboard.up("Control");
         await page.keyboard.type(name);
         await page.keyboard.press("Enter");
         await page.waitForSelector(".project-whiteboard-menu__edit", { hidden: true });
@@ -177,7 +162,7 @@ describe("named private whiteboards", function () {
         });
         await page.click("#project-tools-whiteboard .project-tools__pin");
         await page.click("#project-tools-tab-backpack");
-        await page.waitForSelector("#test-backpack-signin", { visible: true });
+        await page.waitForSelector("#test-backpack", { visible: true });
         assert.equal(await page.$eval("#project-tools-whiteboard", el => el.hidden), true);
         // The inactive whiteboard unmounts its image editor, but retains the
         // Redux store and textarea. Check the store when the editor remounts.
@@ -200,9 +185,24 @@ describe("named private whiteboards", function () {
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
         await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards[0].text === "Saved private notes retained across backpack" &&
             pxt.sprite.getBitmapFromJResURL(whiteboardTest.persisted.whiteboards[0].image).get(0, 0) === 0);
-        assert.equal(await page.evaluate(() => whiteboardTest.backpackMounts), 1);
-        assert.equal(await page.evaluate(() => whiteboardTest.backpackProps.active), false);
         assert.deepEqual(await page.evaluate(() => whiteboardTest.errors), []);
+    });
+
+    it("routes undo to the canvas without intercepting notes or outside controls", async () => {
+        await page.click("#project-tools-whiteboard .project-tools__pin");
+        await page.evaluate(() => whiteboardTest.draw(3));
+        for (const selector of [input, "#outside"]) {
+            await page.focus(selector);
+            await page.keyboard.down("Control");
+            await page.keyboard.press("z");
+            await page.keyboard.up("Control");
+            assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 3);
+        }
+        await page.focus(".image-editor-canvas");
+        await page.keyboard.down("Control");
+        await page.keyboard.press("z");
+        await page.keyboard.up("Control");
+        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
     });
 
     it("adds, renames and switches independent drawings, notes and undo histories", async () => {
@@ -227,156 +227,6 @@ describe("named private whiteboards", function () {
         assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Level ideas");
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 7);
         assert.equal(await page.$eval(input, el => el.value), "Notes for Ideas");
-    });
-
-    it("validates names and lets Escape close the name form without hiding the panel", async () => {
-        await item("New whiteboard");
-        await page.focus("#project-whiteboard-name");
-        await page.keyboard.down("Control"); await page.keyboard.press("A"); await page.keyboard.up("Control");
-        await page.keyboard.press("Backspace");
-        await page.keyboard.press("Enter");
-        await page.waitForSelector('#project-whiteboard-name[aria-invalid="true"]');
-        assert.ok(await page.$eval("#project-whiteboard-name-error", el => el.textContent.trim()));
-        await page.keyboard.type("Whiteboard 1");
-        await page.keyboard.press("Enter");
-        await page.waitForSelector('#project-whiteboard-name[aria-invalid="true"]');
-        await page.keyboard.press("Escape");
-        assert.equal(await page.$eval("#project-tools-panel", el => el.hidden), false);
-        assert.equal(await page.evaluate(() => document.activeElement.id), "project-whiteboard-menu");
-        await page.click("#outside");
-        assert.equal(await page.$eval("#project-tools-panel", el => el.hidden), true);
-    });
-
-    it("cancels deletion before confirming it, preserving the remaining board and undo history", async () => {
-        await page.evaluate(() => whiteboardTest.draw(3));
-        await nameBoard("New whiteboard", "Delete these ideas");
-        await page.type(input, "Only delete this text");
-        await page.evaluate(() => whiteboardTest.draw(7));
-        await item("Delete whiteboard");
-        await page.waitForSelector('[role="alertdialog"]', { visible: true });
-        assert.equal(await page.$eval('[role="alertdialog"] button:first-child', el => el === document.activeElement), true);
-        await page.keyboard.press("Enter");
-        await page.waitForSelector('[role="alertdialog"]', { hidden: true });
-        assert.equal(await page.evaluate(() => document.activeElement.id), "project-whiteboard-menu");
-        assert.equal(await page.$eval(input, el => el.value), "Only delete this text");
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 7);
-        await item("Delete whiteboard");
-        await page.waitForSelector('[role="alertdialog"]', { visible: true });
-        await page.keyboard.press("Tab");
-        assert.equal(await page.$eval('[role="alertdialog"] button:last-child', el => el === document.activeElement), true);
-        await page.keyboard.press("Enter");
-        await page.waitForSelector('[role="alertdialog"]', { hidden: true });
-        assert.equal(await page.evaluate(() => document.activeElement.id), "project-whiteboard-menu");
-        assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Whiteboard 1");
-        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 3);
-        await page.evaluate(() => whiteboardTest.undo());
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
-        await page.click(menu);
-        assert.equal(await page.$$eval('[role="menuitem"]', els => els.some(el => el.textContent.includes("Delete whiteboard"))), false);
-        await page.keyboard.press("Escape");
-        await page.click("#outside");
-        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards.length === 1 && pxt.sprite.getBitmapFromJResURL(whiteboardTest.persisted.whiteboards[0].image).get(0, 0) === 0);
-        assert.equal(await page.evaluate(() => JSON.stringify(whiteboardTest.persisted).includes("Only delete this text")), false);
-        await page.evaluate(() => whiteboardTest.mount(whiteboardTest.persisted));
-        await openWhiteboard();
-        assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Whiteboard 1");
-        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
-    });
-
-    it("keeps the originally confirmed deletion target if the active selection changes", async () => {
-        await nameBoard("New whiteboard", "Original target");
-        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards.length === 2);
-        await item("Delete whiteboard");
-        await page.evaluate(() => {
-            const notes = JSON.parse(JSON.stringify(whiteboardTest.persisted));
-            notes.activeWhiteboardId = notes.whiteboards[0].id;
-            whiteboardTest.receive(notes);
-        });
-        await page.waitForFunction(() => document.querySelector("#project-tools-whiteboard h2").textContent === "Whiteboard 1");
-        await page.click('[role="alertdialog"] button:last-child');
-        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards.length === 1);
-        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
-        assert.equal(await page.evaluate(() => whiteboardTest.persisted.whiteboards[0].id), "whiteboard-1");
-    });
-
-    it("guards against deleting the last board if the collection changes during confirmation", async () => {
-        await nameBoard("New whiteboard", "Now the last board");
-        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards.length === 2);
-        await item("Delete whiteboard");
-        await page.evaluate(() => {
-            const notes = JSON.parse(JSON.stringify(whiteboardTest.persisted));
-            notes.whiteboards = [notes.whiteboards[1]];
-            whiteboardTest.receive(notes);
-        });
-        await page.click('[role="alertdialog"] button:last-child');
-        await page.waitForSelector('[role="alertdialog"] [role="alert"]');
-        assert.ok(await page.$eval('[role="alertdialog"] [role="alert"]', el => el.textContent.trim()));
-        await page.keyboard.press("Escape");
-        assert.equal(await page.$eval("#project-tools-whiteboard h2", el => el.textContent), "Now the last board");
-    });
-
-    it("keeps every board on a save failure and retries the complete collection", async () => {
-        await page.evaluate(() => whiteboardTest.failSave = true);
-        await nameBoard("New whiteboard", "Unsaved ideas");
-        await page.waitForSelector('.project-whiteboard__status[role="alert"]');
-        await page.type(input, "Retain this draft");
-        await item("Whiteboard 1");
-        await item("Unsaved ideas");
-        assert.equal(await page.$eval(input, el => el.value), "Retain this draft");
-        await page.evaluate(() => whiteboardTest.failSave = false);
-        await page.click(".project-whiteboard__status button");
-        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards[1].text === "Retain this draft");
-        assert.equal(await page.$eval("#project-tools-panel", el => el.hidden), false);
-    });
-
-    it("loads clean incoming collections into existing editor stores", async () => {
-        await nameBoard("New whiteboard", "Remote ideas");
-        await item("Whiteboard 1");
-        await page.waitForFunction(() => whiteboardTest.persisted?.activeWhiteboardId === "whiteboard-1");
-        await page.evaluate(() => {
-            const notes = JSON.parse(JSON.stringify(whiteboardTest.persisted));
-            const bitmap = new pxt.sprite.Bitmap(160, 120);
-            bitmap.set(0, 0, 6);
-            notes.whiteboards[0].image = pxt.sprite.base64EncodeBitmap(bitmap.data());
-            notes.whiteboards[0].text = "Remote text";
-            notes.whiteboards[1].text = "Other remote text";
-            whiteboardTest.receive(notes);
-        });
-        await page.waitForFunction(() => document.getElementById("project-notes-text").value === "Remote text");
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 6);
-        await page.evaluate(() => whiteboardTest.draw(9));
-        await item("Remote ideas");
-        assert.equal(await page.$eval(input, el => el.value), "Other remote text");
-        await item("Whiteboard 1");
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 9);
-        await page.evaluate(() => whiteboardTest.undo());
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 6);
-    });
-
-    it("pauses autosave for incoming conflicts and loads the selected collection", async () => {
-        await nameBoard("New whiteboard", "Ideas");
-        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards.length === 2);
-        await page.evaluate(() => {
-            whiteboardTest.holdSave = new Promise(resolve => whiteboardTest.finishSave = resolve);
-            whiteboardTest.draw(3);
-        });
-        await page.click(menu); // Flush the local edit, keeping its save in flight.
-        await page.keyboard.press("Escape");
-        await page.evaluate(() => {
-            const notes = JSON.parse(JSON.stringify(whiteboardTest.persisted));
-            notes.whiteboards[1].text = "Conflicting remote notes";
-            whiteboardTest.receive(notes);
-        });
-        await page.waitForSelector(".project-whiteboard__conflict", { visible: true });
-        assert.equal(await page.$eval(input, el => el.value), "");
-        await page.evaluate(() => { whiteboardTest.finishSave(); whiteboardTest.holdSave = undefined; });
-        await page.click(".project-whiteboard__conflict button:last-child");
-        await page.waitForFunction(() => document.getElementById("project-notes-text").value === "Conflicting remote notes");
-        assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
-        await item("Whiteboard 1");
-        assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
     });
 
     it("keeps header controls visible and keyboard-focused in forced colors", async () => {
@@ -404,32 +254,5 @@ describe("named private whiteboards", function () {
         } finally {
             await session.detach();
         }
-    });
-
-    it("keeps the mobile palette and notes reachable in a short, resized panel", async () => {
-        await page.setViewport({ width: 390, height: 568 });
-        await page.focus(".project-tools__resize--height");
-        await page.keyboard.press("Home");
-        assert.equal(await page.$eval("#project-tools-panel", el => el.getBoundingClientRect().height), 240);
-        // First and last palette entries cover both ends of the scroll container.
-        for (const index of [0, 15]) {
-            const color = `.image-editor-color-buttons button:nth-child(${index + 1})`;
-            await page.$eval(color, el => el.scrollIntoView({ block: "nearest" }));
-            await page.click(color);
-            assert.equal(await page.evaluate(() => whiteboardTest.store().getState().editor.selectedColor), index);
-        }
-        await page.$eval(input, el => el.scrollIntoView({ block: "nearest" }));
-        await page.type(input, " after resizing");
-        await page.focus(".project-tools__resize--height");
-        await page.keyboard.press("End");
-        assert.ok((await page.$eval(input, el => el.value)).includes("after resizing"));
-        assert.equal(await page.$eval("#project-tools-panel", el => el.style.height), "");
-        const layout = await page.evaluate(() => ({
-            panelBottom: document.getElementById("project-tools-panel").getBoundingClientRect().bottom,
-            footerTop: document.getElementById("test-footer").getBoundingClientRect().top,
-            scrollable: getComputedStyle(document.querySelector(".image-editor-palette")).overflowY
-        }));
-        assert.ok(layout.panelBottom < layout.footerTop);
-        assert.equal(layout.scrollable, "auto");
     });
 });

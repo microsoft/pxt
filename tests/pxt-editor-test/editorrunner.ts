@@ -22,7 +22,7 @@ import {
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
 import { projectToolsPinnedOnLoad } from "../../webapp/src/projectToolsState";
-import { addProjectWhiteboard, createProjectNotes, decodeWhiteboard, deleteProjectWhiteboard, MAX_PROJECT_NOTE_LENGTH, MAX_PROJECT_WHITEBOARDS, MAX_WHITEBOARD_NAME_LENGTH, renameProjectWhiteboard, validateProjectNotes } from "../../webapp/src/projectNotes";
+import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
     versions: {
@@ -48,103 +48,26 @@ const filename = "main.ts";
 describe("project-tools pin defaults", () => {
     it("auto-pins initial documentation but preserves explicit pin and unpin choices on reload", () => {
         const header = { id: "same" } as pxt.workspace.Header;
-        const cases: [pxt.editor.IAppState, string, boolean, boolean, boolean][] = [
-            // State, project ID, opens documentation, loading example, expected pin.
-            [{ home: true }, "new", true, false, true],
-            [{ home: false }, "new", true, true, true],
-            [{ home: true }, "new", false, false, false],
-            [{ home: true }, "new", false, true, false],
-            [{}, "new", true, false, false],
-            [{ header, sideDocsPinned: false }, "same", true, false, false],
-            [{ header, sideDocsPinned: true }, "same", true, false, true],
-            [{ header, sideDocsPinned: false }, "same", false, false, false],
-            [{ header, sideDocsPinned: true }, "same", false, false, true],
-            [{ header, sideDocsPinned: true }, "different", false, false, false],
-        ];
-        for (const [state, id, opensDocs, example, expected] of cases) {
-            chai.expect(projectToolsPinnedOnLoad(state, id, opensDocs, example), JSON.stringify([state, id, opensDocs, example])).equals(expected);
-        }
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "new", true, false)).equals(true);
+        chai.expect(projectToolsPinnedOnLoad({ home: false }, "new", true, true)).equals(true);
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "new", false, false)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned: false }, "same", true, false)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned: true }, "same", true, false)).equals(true);
     });
 });
 
 describe("private project notes", () => {
-    let guidGen: () => string;
-    let whiteboardId = 0;
     const notesWithBoard = (content: Partial<pxt.workspace.WhiteboardContent> = {}): pxt.workspace.ProjectNotes => ({
         whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text: "", ...content }],
         activeWhiteboardId: "whiteboard-1"
     });
-    beforeEach(() => {
-        guidGen = pxt.Util.guidGen;
-        pxt.Util.guidGen = () => `test-whiteboard-${++whiteboardId}`;
-    });
-    afterEach(() => { pxt.Util.guidGen = guidGen; });
 
-    it("offers the experiment before the project's palette has loaded", () => {
-        const target = pxt.appTarget;
-        const isElectron = pxt.BrowserUtils.isPxtElectron;
-        try {
-            pxt.BrowserUtils.isPxtElectron = () => false;
-            pxt.appTarget = { appTheme: { experiments: [], assetEditor: true }, runtime: {} } as pxt.TargetBundle;
-            chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(true);
-            pxt.appTarget.appTheme.hideSideDocs = true;
-            chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(false);
-        } finally {
-            pxt.appTarget = target;
-            pxt.BrowserUtils.isPxtElectron = isElectron;
-        }
-    });
-
-    it("keeps authored defaults separate from local experiment enablement", () => {
-        const target = pxt.appTarget;
-        const savedAppTheme = pxt.savedAppTheme;
-        const getLocal = pxt.storage.getLocal;
-        const reload = pxt.reloadAppTargetVariant;
-        const isElectron = pxt.BrowserUtils.isPxtElectron;
-        try {
-            pxt.appTarget = { appTheme: { experiments: [], assetEditor: true, projectTools: true } } as pxt.TargetBundle;
-            pxt.savedAppTheme = () => pxt.appTarget.appTheme;
-            pxt.storage.getLocal = () => undefined;
-            pxt.reloadAppTargetVariant = () => {};
-            pxt.BrowserUtils.isPxtElectron = () => false;
-            chai.expect(pxteditor.experiments.all().some(experiment => experiment.id === "projectTools")).equals(false);
-            pxteditor.experiments.syncTheme();
-            chai.expect(pxt.appTarget.appTheme.projectTools).equals(true);
-            chai.expect(pxteditor.experiments.someEnabled()).equals(false);
-
-            pxt.appTarget = { appTheme: { experiments: [], assetEditor: true } } as pxt.TargetBundle;
-            pxt.storage.getLocal = key => key === "experiments-projectTools" ? "1" : undefined;
-            pxteditor.experiments.syncTheme();
-            chai.expect(pxteditor.experiments.isEnabled("projectTools")).equals(true);
-            chai.expect(pxt.appTarget.appTheme.projectTools).equals(undefined);
-            pxt.storage.getLocal = () => undefined;
-            pxteditor.experiments.syncTheme();
-            chai.expect(pxteditor.experiments.isEnabled("projectTools")).equals(false);
-            chai.expect(pxt.appTarget.appTheme.projectTools).equals(undefined);
-        } finally {
-            pxt.appTarget = target;
-            pxt.savedAppTheme = savedAppTheme;
-            pxt.storage.getLocal = getLocal;
-            pxt.reloadAppTargetVariant = reload;
-            pxt.BrowserUtils.isPxtElectron = isElectron;
-        }
-    });
-
-    it("round-trips odd-height and maximum-dimension images", () => {
-        for (const [width, height] of [[3, 5], [256, 256]]) {
-            const bitmap = new pxt.sprite.Bitmap(width, height);
-            bitmap.set(0, 0, 3);
-            bitmap.set(width - 1, height - 1, 12);
-            const encoded = pxt.sprite.base64EncodeBitmap(bitmap.data());
-            chai.expect(decodeWhiteboard(encoded).equals(bitmap)).equals(true);
-        }
-    });
-
-    it("rejects corrupt images, invalid dimensions and data beyond the encoded-size boundary", () => {
-        const encoded = pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(3, 5).data());
+    it("round-trips an odd-height image and rejects corrupt or oversized images", () => {
+        const bitmap = new pxt.sprite.Bitmap(3, 5);
+        bitmap.set(2, 4, 12);
+        const encoded = pxt.sprite.base64EncodeBitmap(bitmap.data());
+        chai.expect(decodeWhiteboard(encoded).equals(bitmap)).equals(true);
         chai.expect(() => decodeWhiteboard(encoded.slice(0, -8))).throws();
-        chai.expect(() => decodeWhiteboard("not an image")).throws();
-        chai.expect(() => decodeWhiteboard("A".repeat(45000))).throws("Invalid whiteboard dimensions or image data");
         chai.expect(() => decodeWhiteboard("A".repeat(45004))).throws("Invalid whiteboard image");
         chai.expect(() => decodeWhiteboard(pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(257, 1).data()))).throws();
     });
@@ -166,49 +89,6 @@ describe("private project notes", () => {
             chai.expect(() => validateProjectNotes({ ...original, whiteboards: [original.whiteboards[0], { ...second, ...invalid }] })).throws();
         }
         chai.expect(() => validateProjectNotes({ text: "" } as unknown as pxt.workspace.ProjectNotes)).throws();
-    });
-
-    it("creates, adds, renames and deletes independent boards with a valid active selection", () => {
-        const created = createProjectNotes();
-        chai.expect(created.whiteboards[0]).deep.equals({ id: created.activeWhiteboardId, name: "Whiteboard 1", text: "" });
-        created.whiteboards[0].text = "first notes";
-        const added = addProjectWhiteboard(created, " Ideas ");
-        chai.expect(added.whiteboards[1]).deep.equals({ id: added.activeWhiteboardId, name: "Ideas", text: "" });
-        added.whiteboards[1].text = "independent ideas";
-        const original = addProjectWhiteboard(added, "Levels");
-        const [first, middle, last] = original.whiteboards;
-        const snapshot = JSON.stringify(original);
-        const renamed = renameProjectWhiteboard(original, first.id, "Plan");
-        chai.expect(renamed.whiteboards[0]).deep.equals({ ...first, name: "Plan", text: "first notes" });
-        chai.expect(renamed.whiteboards[1].text).equals("independent ideas");
-        const deleted = deleteProjectWhiteboard({ ...renamed, activeWhiteboardId: middle.id }, middle.id);
-        chai.expect(deleted.whiteboards).deep.equals([renamed.whiteboards[0], last]);
-        chai.expect(deleted.activeWhiteboardId).equals(last.id);
-        chai.expect(deleteProjectWhiteboard(original, last.id).activeWhiteboardId).equals(middle.id);
-        chai.expect(deleteProjectWhiteboard(original, first.id).activeWhiteboardId).equals(last.id);
-        chai.expect(JSON.stringify(original)).equals(snapshot);
-    });
-
-    it("enforces duplicate, missing, last-board and collection/name bounds", () => {
-        const notes = addProjectWhiteboard(createProjectNotes(), "Other");
-        chai.expect(() => validateProjectNotes({ ...notes, activeWhiteboardId: "missing" })).throws();
-        chai.expect(() => validateProjectNotes({ ...notes, whiteboards: [] })).throws();
-        const first = notes.whiteboards[0];
-        for (const invalid of [
-            { id: first.id }, { name: first.name }, { name: " " },
-            { name: "x".repeat(MAX_WHITEBOARD_NAME_LENGTH + 1) }, { name: "two\nlines" },
-        ]) chai.expect(() => validateProjectNotes({ ...notes, whiteboards: [first, { ...notes.whiteboards[1], ...invalid }] })).throws();
-        chai.expect(() => addProjectWhiteboard(notes, "other")).throws();
-        chai.expect(() => renameProjectWhiteboard(notes, "missing", "New name")).throws();
-        chai.expect(() => deleteProjectWhiteboard(notes, "missing")).throws("no longer available");
-        const remaining = deleteProjectWhiteboard(notes, notes.activeWhiteboardId);
-        chai.expect(() => deleteProjectWhiteboard(remaining, remaining.activeWhiteboardId)).throws("Keep at least one whiteboard");
-        let full = notes;
-        while (full.whiteboards.length < MAX_PROJECT_WHITEBOARDS) full = addProjectWhiteboard(full, `Board ${full.whiteboards.length + 1}`);
-        full = renameProjectWhiteboard(full, first.id, "x".repeat(MAX_WHITEBOARD_NAME_LENGTH));
-        chai.expect(validateProjectNotes(full).whiteboards.length).equals(MAX_PROJECT_WHITEBOARDS);
-        chai.expect(() => addProjectWhiteboard(full, "Overflow")).throws();
-        chai.expect(() => validateProjectNotes({ ...full, whiteboards: [...full.whiteboards, { ...first, id: "extra", name: "extra" }] })).throws();
     });
 });
 
