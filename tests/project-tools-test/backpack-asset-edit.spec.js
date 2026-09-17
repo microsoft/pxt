@@ -196,6 +196,26 @@ describe("Backpack scratch native asset editing", function () {
         assert.equal(result[0].pixel, 2);
     });
 
+    it("opens a named tile whose pixels match a gallery tile without losing its identity", async () => {
+        const result = await page.evaluate(() => {
+            const tile = project.createNewTile(bitmap(), undefined, "savedTile");
+            const code = codeFor("tileset_tile_picker", fieldState(tile));
+            const galleryProject = new pxt.TilemapProject();
+            galleryProject.createNewTile(bitmap(), "gallery.samePixels", "galleryTile");
+            window.project = new pxt.TilemapProject();
+            project.loadTilemapJRes(galleryProject.getProjectTilesetJRes(), false, true);
+            const { editor, asset } = open(code);
+            const saved = editor.save(asset);
+            const reopened = open(saved.code);
+            return { id: asset.id, expectedId: tile.id, name: asset.meta.displayName,
+                reopenedId: reopened.asset.id, liveTiles: project.getAssets(pxt.AssetType.Tile).length };
+        });
+        assert.equal(result.id, result.expectedId);
+        assert.equal(result.reopenedId, result.expectedId);
+        assert.equal(result.name, "savedTile");
+        assert.equal(result.liveTiles, 0);
+    });
+
     it("rehydrates transported gallery collections and makes an edited gallery tile portable", async () => {
         const result = await page.evaluate(async () => {
             project.createNewTile(bitmap(), "myTiles.galleryTile", "galleryTile");

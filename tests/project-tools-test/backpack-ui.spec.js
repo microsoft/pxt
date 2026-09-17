@@ -213,6 +213,9 @@ describe("project backpack UI", function () {
                 },
                 canImport: true, readOnly: false, editor: "blocksprj",
                 header: { id: "project" },
+                canEdit: headerId => !!headerId && test.header?.id === headerId && !test.header.temporary
+                    && !test.header.tutorial && !test.tutorial && !test.readOnly && !pxt.appTarget.appTheme.lockedEditor
+                    && window.backpackValidation.isBackpackEnabled(),
                 account(user) {
                     test.user = user;
                     for (const subscriber of subscribers) subscriber.onDataChanged("auth:profile");
@@ -261,6 +264,7 @@ describe("project backpack UI", function () {
                 subscribeBackpack(listener) { listeners.add(listener); return () => listeners.delete(listener); },
                 notifyBackpackEditorChanged: () => test.notify(),
                 canImportBackpack: () => test.canImport,
+                canEditBackpackAsset: headerId => test.canEdit(headerId),
                 canDropBackpack: (headerId, target) => headerId === test.header.id && test.canImport
                     && window.backpackCanDrop.call({ editor: { getSvgGroup: () => document.getElementById("workspace") } }, target),
                 async getBackpackPreviewAsync(entry, signal) {
@@ -303,6 +307,8 @@ describe("project backpack UI", function () {
                 },
                 async loadBackpackAssetAsync(entry) {
                     test.observedAsset = entry;
+                    await test.assetLoadGate;
+                    if (test.failAssetLoad) throw new Error(test.failAssetLoad);
                     return JSON.parse(JSON.stringify((test.snapshots[test.storeKey()] || []).find(item => item.id === entry.id)));
                 },
                 async loadBackpackAssetPreviewAsync(entry) {
@@ -314,7 +320,11 @@ describe("project backpack UI", function () {
                     return item;
                 },
                 getBackpackAssetPreviewContext(headerId) { test.previewHeaders.push(headerId); return test.previewContext; },
-                getBackpackAssetEditorContext(headerId) { test.contextHeader = headerId; return test.assetContext = { palette: ["#000000"] }; },
+                async getBackpackAssetEditorContextAsync(headerId) {
+                    if (!test.canEdit(headerId)) throw new Error("Open an editable project outside a tutorial to edit this asset.");
+                    test.contextHeader = headerId;
+                    return test.assetContext = { blocksInfo: {}, gallery: {}, palette: ["#000000"] };
+                },
                 async saveBackpackAssetAsync(entry, item) {
                     test.assetSaves = (test.assetSaves || []).concat({ sameEntry: entry === test.observedAsset, item });
                     if (test.failAssetSave) throw new Error("Asset save failed");
@@ -397,10 +407,15 @@ describe("project backpack UI", function () {
                 return React.createElement("section", {
                     className: "project-backpack", hidden: !active,
                     onBlurCapture: event => {
-                        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget) && !backpackTest.modalOpen) {
-                            ++backpackTest.collapses;
-                            setActive(false);
-                        }
+                        const root = event.currentTarget;
+                        const dismiss = target => {
+                            if (!root.contains(target) && !backpackTest.modalOpen) {
+                                ++backpackTest.collapses;
+                                setActive(false);
+                            }
+                        };
+                        if (event.relatedTarget) dismiss(event.relatedTarget);
+                        else if (backpackTest.dismissNullBlur) requestAnimationFrame(() => dismiss(document.activeElement));
                     },
                     onKeyDown: event => { if (event.key === "Escape") ++backpackTest.escapes; }
                 }, React.createElement(backpackUI.ProjectBackpack, {
@@ -650,19 +665,110 @@ describe("project backpack UI", function () {
         assert.equal(await page.$eval(rename, button => button === document.activeElement), true, `${action} must restore focus to the asset pencil`);
     });
 
-    it("reports asset startup errors in the parent, closes the dialog and restores pencil focus", async () => {
+    it("keeps the panel open when a disabled pencil blurs during a cloud read, then releases on close or failure", async () => {
+        await signIn([asset("image_picker", 2)]);
+        await page.click("#project-backpack-tab-asset");
+        for (const fail of [false, true]) {
+            await page.evaluate(fail => {
+                backpackTest.dismissNullBlur = true;
+                backpackTest.failAssetLoad = fail ? "Could not load asset content." : undefined;
+                backpackTest.assetLoadGate = new Promise(resolve => { backpackTest.finishAssetLoad = resolve; });
+            }, fail);
+            await page.focus(rename);
+            await page.click(rename);
+            await page.waitForFunction(() => document.querySelector(".project-backpack__rename").disabled);
+            // Current Edge blurs a focused button when React disables it. Reproduce
+            // that event explicitly on older Chromium used by the test runner.
+            await page.$eval(rename, button => button.blur());
+            await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+            assert.deepStrictEqual(await page.evaluate(() => [backpackTest.modalOpen, backpackTest.collapses]), [true, 0]);
+            assert.equal(await page.$(assetModal), null, "The cloud read is still pending");
+            await page.evaluate(() => backpackTest.finishAssetLoad());
+            await idle();
+            if (fail) {
+                await page.waitForSelector(`${entry} [role="alert"]`);
+                assert.equal(await page.$eval(rename, button => button === document.activeElement), true);
+            } else {
+                await page.waitForSelector(`${assetModal} input`);
+                await page.click(`${assetModal} .common-modal-footer button:first-child`);
+            }
+            await modalClosed();
+        }
+        await page.evaluate(() => {
+            backpackTest.failAssetLoad = undefined;
+            backpackTest.assetLoadGate = new Promise(resolve => { backpackTest.finishAssetLoad = resolve; });
+        });
+        await page.click(rename);
+        await page.evaluate(() => backpackTest.setActive(false));
+        await page.waitForFunction(() => !backpackTest.modalOpen);
+        await page.evaluate(() => backpackTest.finishAssetLoad());
+        await idle();
+        assert.equal(await page.$(assetModal), null, "Explicit collapse must still cancel the pending opening");
+    });
+
+    it("opens and saves an asset in Assets with Add disabled, but still rejects read-only edits", async () => {
+        const saved = asset("image_picker", 2);
+        const edited = { ...saved, code: JSON.stringify({ blocks: [{ type: "image_picker", fields: { IMAGE: { data: "edited pixels" } } }] }) };
+        await page.evaluate(() => { backpackTest.editor = "assets"; backpackTest.canImport = false; });
+        await loadGuest([saved]);
+        await page.click("#project-backpack-tab-asset");
+        assert.strictEqual(await page.$eval(rename, button => button.disabled), false);
+        assert.strictEqual(await page.$eval(add, button => button.disabled), true);
+        await page.click(add);
+        await page.click(rename);
+        await page.waitForSelector(`${assetModal} input`);
+        assert.strictEqual(await page.evaluate(() => backpackTest.assetDialog.context === backpackTest.assetContext), true,
+            "The dialog receives the resolved context, not a function or promise");
+        await page.click(`${assetModal} input`); await page.keyboard.down("Control");
+        await page.keyboard.press("KeyA"); await page.keyboard.up("Control"); await page.keyboard.type(edited.code);
+        await page.evaluate(() => { backpackTest.readOnly = true; backpackTest.notify(); });
+        await page.click(`${assetModal} .common-modal-footer button:last-child`);
+        await page.waitForSelector(`${assetModal} [role="alert"]`);
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.assetSaves || [], backpackTest.remote.__guest__]), [[], [saved]]);
+        await page.evaluate(() => { backpackTest.readOnly = false; backpackTest.notify(); });
+        await page.click(`${assetModal} .common-modal-footer button:last-child`);
+        await modalClosed();
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.assetSaves, backpackTest.remote.__guest__, backpackTest.adds]),
+            [[{ sameEntry: true, item: edited }], [edited], []]);
+        assert.strictEqual(await page.$eval(add, button => button.disabled), true);
+        await page.evaluate(() => { backpackTest.readOnly = true; backpackTest.notify(); });
+        assert.strictEqual(await page.$eval(rename, button => button.disabled), true);
+    });
+
+    it("shows asset startup errors on a scrolled card, closes the dialog and restores pencil focus", async () => {
         const saved = asset("image_picker", 2);
         const message = "This saved asset could not be opened.";
-        await signIn([saved]);
+        const entries = [...Array.from({ length: 8 }, (_, index) => asset("image_picker", index + 10)), saved];
+        await signIn(entries);
+        await page.addStyleTag({ content: ".project-backpack__body { height: 260px; overflow: auto; }" });
         await page.evaluate(message => { backpackTest.failAssetOpen = message; }, message);
-        await page.click("#project-backpack-tab-asset"); await page.click(rename);
+        const pencil = `[data-backpack-id="${saved.id}"] .project-backpack__rename`;
+        await page.click("#project-backpack-tab-asset"); await page.click(pencil);
         await page.waitForSelector(`${body} [role="alert"]`);
         await modalClosed();
         assert.equal(await page.$(assetModal), null);
         assert.equal(await page.$eval(`${body} [role="alert"]`, node => node.textContent), message);
         assert.equal((await page.accessibility.snapshot({ root: await page.$(`${body} [role="alert"]`), interestingOnly: false }))?.role, "alert");
-        assert.equal(await page.$eval(rename, button => button === document.activeElement), true);
-        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.assetSaves || [], backpackTest.adds, backpackTest.remote.A]), [[], [], [saved]]);
+        assert.equal(await page.$eval(pencil, button => button === document.activeElement), true);
+        assert.equal(await page.$eval(`${body} [role="alert"]`, node => node.closest("[data-backpack-id]")?.dataset.backpackId), saved.id);
+        await page.waitForFunction(() => {
+            const body = document.querySelector(".project-backpack__body").getBoundingClientRect();
+            const error = document.querySelector('.project-backpack__body [role="alert"]').getBoundingClientRect();
+            return error.top >= body.top && error.bottom <= body.bottom;
+        });
+        await page.evaluate(() => {
+            backpackTest.failAssetOpen = undefined;
+            backpackTest.failAssetLoad = "Could not load asset content.";
+        });
+        await page.click(pencil); await idle();
+        assert.equal(await page.$eval(`[data-backpack-id="${saved.id}"] [role="alert"]`, node => node.textContent), "Could not load asset content.");
+        await page.evaluate(() => { backpackTest.failAssetLoad = undefined; });
+        await page.click(pencil);
+        await page.waitForSelector(`${assetModal} input`);
+        await page.click(`${assetModal} .common-modal-footer button:first-child`);
+        await modalClosed();
+        assert.equal(await page.$(`${body} [role="alert"]`), null, "Retry clears the old card error");
+        assert.deepStrictEqual(await page.evaluate(() => [backpackTest.assetSaves || [], backpackTest.adds, backpackTest.remote.A]), [[], [], entries]);
     });
 
     it("unmounts a guest asset draft on sign-in without saving", async () => {

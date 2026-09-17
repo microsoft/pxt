@@ -151,13 +151,59 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         });
         await page.addScriptTag({ content: `(function(exports) { ${assetTypeSource}\n})(pxt.auth);` });
         await page.addScriptTag({ content: `(function(exports) { ${compiled.outputText}\n})(window.store = {});` });
-        await page.evaluate(() => store.setBackpackEditor({ headerId: () => "project", canImport: () => true,
-            canDrop: target => target === document.body,
-            assetEditorContext: () => ({ blocksInfo: {}, gallery: {}, palette: [] }),
-            importAsync: async (value, position) => { bt.imports.push(value); bt.positions.push(position); return true; } }));
+        await page.evaluate(() => {
+            bt.headerId = "project"; bt.canImport = true; bt.canEdit = true; bt.contextLoads = 0;
+            bt.assetContext = { blocksInfo: {}, gallery: {}, palette: ["#000000"] };
+            bt.assetHost = { headerId: () => bt.headerId, canEdit: () => bt.canEdit,
+                contextAsync: async () => { ++bt.contextLoads; return bt.assetContext; } };
+            store.setBackpackAssetEditor(bt.assetHost);
+            bt.unregisterEditor = store.setBackpackEditor({ headerId: () => bt.headerId, canImport: () => bt.canImport,
+                canDrop: target => target === document.body,
+                assetEditorContext: () => ({ blocksInfo: {}, gallery: {}, palette: [] }),
+                importAsync: async (value, position) => { bt.imports.push(value); bt.positions.push(position); return true; } });
+        });
     });
     afterEach(async () => {
         try { assert.deepStrictEqual(errors, []); } finally { await page?.close(); }
+    });
+
+    it("loads asset context from the project host without Blocks import eligibility", async () => {
+        const result = await page.evaluate(async () => {
+            bt.canImport = false;
+            const canImport = store.canImportBackpack("project"), canEdit = store.canEditBackpackAsset("project");
+            const context = await store.getBackpackAssetEditorContextAsync("project");
+            bt.unregisterEditor();
+            const withoutBlocks = await store.getBackpackAssetEditorContextAsync("project");
+            const wrongHeader = await bt.outcome(() => store.getBackpackAssetEditorContextAsync("other"));
+            bt.canEdit = false;
+            return { canImport, canEdit, context, sameContext: context === bt.assetContext && withoutBlocks === context,
+                wrongHeader, disabled: store.canEditBackpackAsset("project"),
+                denied: await bt.outcome(() => store.getBackpackAssetEditorContextAsync("project")),
+                loads: bt.contextLoads, requests: bt.requests, imports: bt.imports };
+        });
+        assert.strictEqual(result.canImport, false); assert.strictEqual(result.canEdit, true);
+        assert.deepStrictEqual(result.context, { blocksInfo: {}, gallery: {}, palette: ["#000000"] });
+        assert.strictEqual(result.sameContext, true); assert.strictEqual(result.disabled, false);
+        assert.match(result.wrongHeader, /editable project/); assert.match(result.denied, /editable project/);
+        assert.strictEqual(result.loads, 2, "Ineligible requests must not start loading the host context");
+        assert.deepStrictEqual(result.requests, []); assert.deepStrictEqual(result.imports, []);
+    });
+
+    for (const transition of ["account away/back", "header"]) it(`rejects asset context completing after ${transition} changes`, async () => {
+        const result = await page.evaluate(async transition => {
+            bt.canImport = false; bt.hold();
+            bt.assetHost.contextAsync = async () => { bt.enter(); await bt.gate; return bt.assetContext; };
+            const pending = bt.outcome(() => store.getBackpackAssetEditorContextAsync("project"));
+            await bt.entered;
+            if (transition === "account away/back") {
+                bt.signIn("bob"); store.notifyBackpackEditorChanged();
+                bt.signIn("alice"); store.notifyBackpackEditorChanged();
+            } else bt.headerId = "other";
+            bt.release();
+            return { failure: await pending, requests: bt.requests, imports: bt.imports };
+        }, transition);
+        assert.match(result.failure, transition === "account away/back" ? /account or editor changed/ : /editable project/);
+        assert.deepStrictEqual(result.requests, []); assert.deepStrictEqual(result.imports, []);
     });
 
     it("pages metadata completely without fetching bodies; explicit Add loads content", async () => {
@@ -333,13 +379,16 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
     it("missing target flag or identity support disables storage and drop, but signed-out guests remain enabled", async () => {
         const result = await page.evaluate(async () => {
             bt.signIn(undefined); await store.saveBackpackItemAsync(bt.item(1));
-            const guest = { enabled: store.isBackpackEnabled(), drop: store.canDropBackpack("project", document.body) };
+            const guest = { enabled: store.isBackpackEnabled(), drop: store.canDropBackpack("project", document.body),
+                edit: store.canEditBackpackAsset("project") };
             const disabled = [];
             for (const setting of ["flag", "identity"]) {
                 if (setting === "flag") delete pxt.appTarget.appTheme.backpack;
                 else bt.identityEnabled = false;
                 store.notifyBackpackEditorChanged();
                 disabled.push({ enabled: store.isBackpackEnabled(), drop: store.canDropBackpack("project", document.body),
+                    edit: store.canEditBackpackAsset("project"),
+                    context: await bt.outcome(() => store.getBackpackAssetEditorContextAsync("project")),
                     entries: store.getBackpackState().entries,
                     save: await bt.outcome(() => store.saveBackpackItemAsync(bt.item(2))),
                     refresh: await bt.outcome(() => store.refreshBackpackAsync()),
@@ -352,11 +401,11 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             }
             return { guest, disabled, records: await bt.readLocal(), requests: bt.requests, imports: bt.imports };
         });
-        assert.deepStrictEqual(result.guest, { enabled: true, drop: true });
+        assert.deepStrictEqual(result.guest, { enabled: true, drop: true, edit: true });
         for (const state of result.disabled) {
-            assert.equal(state.enabled, false); assert.equal(state.drop, false);
+            assert.equal(state.enabled, false); assert.equal(state.drop, false); assert.equal(state.edit, false);
             assert.deepStrictEqual(state.entries, []); assert.deepStrictEqual(state.restoredEntries, []);
-            for (const action of ["save", "refresh", "import"]) assert.match(state[action], /session/);
+            for (const action of ["save", "refresh", "import", "context"]) assert.match(state[action], /session/);
         }
         assert.equal(result.records.length, 1);
         assert.deepStrictEqual(result.requests, []); assert.deepStrictEqual(result.imports, []);
