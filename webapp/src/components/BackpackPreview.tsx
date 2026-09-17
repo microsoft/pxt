@@ -95,6 +95,7 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
         const frames = image?.asset?.framePreviewURIs;
         const element = imageRef.current;
         if (!active || !element || !frames || frames.length < 2) return undefined;
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
         let timer: ReturnType<typeof setInterval>;
         const stop = (): void => { clearInterval(timer); element.src = image.url; };
         const start = (): void => {
@@ -102,10 +103,20 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
             let index = 0;
             timer = setInterval(() => { element.src = frames[index++ % frames.length]; }, Math.max(image.asset.interval || 100, 100));
         };
-        element.addEventListener("mouseenter", start);
-        element.addEventListener("mouseleave", stop);
+        const updateMotion = (): void => {
+            stop();
+            element.removeEventListener("mouseenter", start);
+            element.removeEventListener("mouseleave", stop);
+            if (!reducedMotion.matches) {
+                element.addEventListener("mouseenter", start);
+                element.addEventListener("mouseleave", stop);
+            }
+        };
+        updateMotion();
+        reducedMotion.addEventListener("change", updateMotion);
         return () => {
             stop();
+            reducedMotion.removeEventListener("change", updateMotion);
             element.removeEventListener("mouseenter", start);
             element.removeEventListener("mouseleave", stop);
         };

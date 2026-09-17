@@ -127,7 +127,11 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
                 {error ? <p role="alert">{error}</p> : <p role="status">
                     {lf("Saving asset…")}
                 </p>}
-                {error && <Button label={lf("Retry")} title={lf("Retry")} onClick={() => void save()} />}
+                {error && <>
+                    <Button label={lf("Retry")} title={lf("Retry")} onClick={() => void save()} />
+                    <Button label={lf("Close without saving")} title={lf("Close without saving")}
+                        onClick={() => { if (!saving.current) props.onClose(); }} />
+                </>}
             </div>}
         </FocusTrap>
     </div>, document.body);
