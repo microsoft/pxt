@@ -244,7 +244,8 @@ describe("project backpack UI", function () {
                 modules["./BackpackPreview"] = window.backpackPreviewUI;
                 // Native rendering is exercised with real fields in backpack-asset-edit.
                 modules["../backpackAssetPreview"] = { backpackAssetPreview: item => ({
-                    previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code)
+                    previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code),
+                    framePreviewURIs: test.previewFrames
                 }) };
                 // Native editor behavior lives in backpack-asset-edit; keep the real portal/focus controls here.
                 modules["./BackpackAssetEditDialog"] = { BackpackAssetEditDialog: props => {
@@ -338,9 +339,28 @@ describe("project backpack UI", function () {
 
     it("keeps unchanged card nodes and preview URLs through reopen while updating changed metadata inline", async () => {
         const saved = asset("image_picker", 2), removed = asset("image_picker", 3);
+        await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
+        await page.evaluate(() => { backpackTest.previewFrames = [backpackTest.assetPreviewURI + "#frame1", backpackTest.assetPreviewURI + "#frame2"]; });
         await signIn([saved, removed]);
         await page.click("#project-backpack-tab-asset");
         await page.waitForSelector(assetPreview);
+        await page.evaluate(() => {
+            const set = window.setInterval, clear = window.clearInterval;
+            backpackTest.timers = new Set();
+            window.setInterval = (...args) => { const id = set(...args); backpackTest.timers.add(id); return id; };
+            window.clearInterval = id => { backpackTest.timers.delete(id); clear(id); };
+            backpackTest.motionChanges = 0;
+            matchMedia("(prefers-reduced-motion: reduce)").addEventListener("change", () => ++backpackTest.motionChanges);
+        });
+        await page.$eval(assetPreview, image => image.dispatchEvent(new MouseEvent("mouseenter")));
+        assert.equal(await page.evaluate(() => backpackTest.timers.size), 0);
+        await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "no-preference" }]);
+        await page.waitForFunction(() => backpackTest.motionChanges === 1);
+        await page.$eval(assetPreview, image => image.dispatchEvent(new MouseEvent("mouseenter")));
+        assert.equal(await page.evaluate(() => backpackTest.timers.size), 1);
+        await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
+        await page.waitForFunction(() => backpackTest.motionChanges === 2);
+        assert.equal(await page.evaluate(() => backpackTest.timers.size), 0);
         await page.evaluate(id => {
             const row = document.querySelector(`[data-backpack-id="${id}"]`);
             backpackTest.previousRow = row;
