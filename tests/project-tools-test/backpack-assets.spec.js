@@ -123,6 +123,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 } }, workspace);
                 await settle();
                 const { code } = backpack.captureBackpackBlock(block);
+                if (backpack.getBackpackAssetField(block)) throw new Error("A statement containing assets is not an asset literal");
                 const expected = { image: snapshot(block.getField("IMAGE").getAsset()), tilemap: snapshot(block.getField("TILEMAP").getAsset()) };
                 // Dispose against the SOURCE asset project, then replace the whole global
                 // project, not just the workspace. Retaining the source would hide data loss.

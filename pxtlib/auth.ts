@@ -124,13 +124,6 @@ namespace pxt.auth {
 
     export type BackpackKind = "code" | "asset";
 
-    /** Standalone literal editors, not statements that happen to contain assets. */
-    export function isBackpackAssetType(type: string): boolean {
-        return ["image_picker", "screen_image_picker", "background_image_picker", "tilemap_image_picker",
-            "tile_image_picker", "dialog_image_picker", "tileset_tile_picker", "tiles_tilemap_editor",
-            "animation_editor", "light_animation_picker", "melody_editor", "music_sounds", "music_song_field_editor"].includes(type);
-    }
-
     /** A private, portable capture sent to the dedicated Backpack API, not preferences. */
     export interface BackpackItem {
         id: string;

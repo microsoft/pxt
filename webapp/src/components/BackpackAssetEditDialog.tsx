@@ -1,10 +1,13 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as Blockly from "blockly";
 import { Button } from "../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
 import { Action, createStore, Store } from "redux";
 import { BackpackAssetEditorContext } from "../backpack";
 import { BackpackAssetEditor } from "../backpackAssetEditor";
+import { getBackpackRequirements } from "../backpackProject";
+import * as pkg from "../package";
 import { ImageFieldEditor } from "./ImageFieldEditor";
 import { AssetEditorContext } from "./AssetEditorContext";
 import imageReducer, { ImageEditorStore } from "./ImageEditor/store/imageReducer";
@@ -31,6 +34,16 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
     const [error, setError] = React.useState<string>();
 
     React.useLayoutEffect(() => {
+        // Native scalar fields use Blockly's shared popup containers. Keep them
+        // inside the dialog's focus/inert boundary. Blockly positions them
+        // relative to their parent and may reparent them to the scratch workspace.
+        if (!Blockly.WidgetDiv.getDiv()) Blockly.WidgetDiv.createDom();
+        if (!document.querySelector(".blocklyDropDownDiv")) Blockly.DropDownDiv.createDom();
+        const popups = [Blockly.WidgetDiv.getDiv(), Blockly.DropDownDiv.getContentDiv().parentElement]
+            .map(element => ({ element, parent: element.parentElement, next: element.nextSibling }));
+        for (const { element } of popups) {
+            scalarHost.current.appendChild(element);
+        }
         const siblings = Array.from(document.body.children).filter(child => child !== overlay.current)
             .map(child => ({ child, hidden: child.getAttribute("aria-hidden"), inert: child.getAttribute("inert") }));
         for (const { child } of siblings) {
@@ -38,6 +51,11 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
             child.setAttribute("inert", "");
         }
         return () => {
+            Blockly.DropDownDiv.hideWithoutAnimation();
+            Blockly.WidgetDiv.hide();
+            for (const { element, parent, next } of popups) {
+                parent.insertBefore(element, next?.parentNode === parent ? next : null);
+            }
             for (const { child, hidden, inert } of siblings) {
                 if (hidden === null) child.removeAttribute("aria-hidden");
                 else child.setAttribute("aria-hidden", hidden);
@@ -70,7 +88,8 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
         setError(undefined);
         try {
             const result = current.save(editor.current?.getValue());
-            await props.onSave({ ...props.item, ...result, name: result.name || props.item.name,
+            const requirements = getBackpackRequirements(result.code, props.context.blocksInfo, pkg.mainPkg);
+            await props.onSave({ ...props.item, ...result, ...requirements, name: result.name || props.item.name,
                 versions: { target: pxt.appTarget.versions.target, pxt: pxt.appTarget.versions.pxt } });
         } catch (reason) {
             if (session.current === current) setError(reason instanceof Error ? reason.message : lf("Could not save this asset. Please try again."));

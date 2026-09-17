@@ -12,19 +12,6 @@ const compiled = ts.transpileModule(source, {
 });
 assert.deepStrictEqual(compiled.diagnostics, []);
 
-// Execute the exact current allowlist instead of broadening it in the host stub.
-const authSource = ts.createSourceFile("auth.ts", fs.readFileSync(path.join(root, "pxtlib/auth.ts"), "utf8"), ts.ScriptTarget.Latest, true);
-let assetTypeFunction;
-function findAssetTypeFunction(node) {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === "isBackpackAssetType") assetTypeFunction = node;
-    ts.forEachChild(node, findAssetTypeFunction);
-}
-findAssetTypeFunction(authSource);
-assert(assetTypeFunction, "Expected the current asset allowlist helper");
-const assetTypeSource = ts.transpileModule(assetTypeFunction.getText(authSource), {
-    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
-}).outputText;
-
 // The production adapter uses Chromium transactions on an intercepted test origin;
 // only the transport is mocked. Backend tests cover the actual HTTP handlers.
 describe("dedicated Backpack API and durable IndexedDB (current source)", function () {
@@ -52,7 +39,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
                 code: JSON.stringify({ blocks: [{ type: "pxt-on-start" }] }), blockText: `captured labels ${n}`,
                 dependencies: { core: "*" }, ...overrides });
             const asset = (n, overrides = {}) => item(n, { kind: "asset",
-                code: JSON.stringify({ blocks: [{ type: "image_picker", fields: { IMAGE: { data: "pixels" } } }] }), ...overrides });
+                code: JSON.stringify({ blocks: [{ type: "extension_portrait", fields: { IMAGE: { data: "pixels" } } }] }), ...overrides });
             const summary = value => ({ id: value.id, name: value.name, createdAt: value.createdAt,
                 kind: value.kind, versions: clone(value.versions),
                 updatedAt: 10, version: '"v1"', status: "ready", hasPreview: false,
@@ -134,7 +121,6 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             };
             Object.defineProperty(window, "localStorage", { configurable: true, get: forbidden });
         });
-        await page.addScriptTag({ content: `(function(exports) { ${assetTypeSource}\n})(pxt.auth);` });
         await page.addScriptTag({ content: `(function(exports) { ${compiled.outputText}\n})(window.store = {});` });
         await page.evaluate(() => {
             store.setBackpackEditor({ headerId: () => "project",

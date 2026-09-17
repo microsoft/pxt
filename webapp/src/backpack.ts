@@ -267,8 +267,9 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     const payload: unknown = pxt.Util.jsonTryParse(value.code);
     const blocks = isRecord(payload) && Array.isArray(payload.blocks) ? payload.blocks : [];
     const root = blocks[blocks.length - 1];
-    const asset = isRecord(root) && typeof root.type === "string" && pxt.auth.isBackpackAssetType(root.type);
-    if ((value.kind === "asset") !== asset || asset && (blocks.length !== 1 || own(root, "next")
+    // Storage may be read before an extension is installed. Verify the real field on import/edit.
+    if (value.kind === "asset" && (blocks.length !== 1 || !isRecord(root) || typeof root.type !== "string" || !safeKey(root.type)
+        || !root.type || !isRecord(root.fields) || !Object.keys(root.fields).length || own(root, "next")
         || root.inputs !== undefined && (!isRecord(root.inputs) || !!Object.keys(root.inputs).length)
         || own(value, "previewUri") || own(value, "previewPixelDensity"))) {
         throw new Error(lf("Invalid standalone backpack asset."));

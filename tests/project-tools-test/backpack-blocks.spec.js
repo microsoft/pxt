@@ -10,7 +10,6 @@ require("blockly/blocks");
 const root = path.resolve(__dirname, "../..");
 const lf = (text, ...args) => text.replace(/\{(\d+)\}/g, (_, index) => args[index]);
 const pxt = { reportException: error => { throw error; }, warn: () => {}, U: { assert } };
-pxt.auth = { isBackpackAssetType: () => false };
 const source = relative => ts.transpileModule(fs.readFileSync(path.join(root, relative), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2017 }
 }).outputText;

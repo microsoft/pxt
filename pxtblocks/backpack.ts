@@ -1,4 +1,5 @@
 import * as Blockly from "blockly";
+import type { FieldCustom } from "./fields/field_utils";
 import type { CommonFunctionBlock, FunctionDefinitionExtraState } from "./plugins/functions/commonFunctionMixin";
 import {
     FUNCTION_CALL_BLOCK_TYPE,
@@ -64,14 +65,21 @@ export function isBackpackContainer(block: Blockly.Block): boolean {
         && block.inputList.some(input => input.type === Blockly.inputs.inputTypes.STATEMENT);
 }
 
-    /** Asset shadows can be copied without detaching them from their owning statement. */
-    export function isBackpackBlock(block: Blockly.Block): boolean {
-        return isBackpackContainer(block) || !!block && !block.isDisposed() && pxt.auth.isBackpackAssetType(block.type)
+/** Use the registered field, not a list of block IDs, including extension-defined literals. */
+export function getBackpackAssetField(block: Blockly.Block): Blockly.Field | undefined {
+    if (!block || block.isDisposed() || !block.outputConnection || block.previousConnection || block.nextConnection
+        || block.inputList.some(input => !!input.connection)) return undefined;
+    const fields = block.inputList.reduce<Blockly.Field[]>((all, input) => all.concat(input.fieldRow), [])
+        .filter(field => field.EDITABLE && field.SERIALIZABLE);
+    return fields.length === 1 && (fields[0] as Blockly.Field & Partial<FieldCustom>).isBackpackAsset ? fields[0] : undefined;
+}
+
+/** Asset shadows can be copied without detaching them from their owning statement. */
+export function isBackpackBlock(block: Blockly.Block): boolean {
+    return isBackpackContainer(block) || !!getBackpackAssetField(block)
         && !block.isInsertionMarker() && !block.isInFlyout && !block.workspace.isFlyout && !block.workspace.isMutator
-        && !block.workspace.options.readOnly && block.isEditable() && (block.isShadow() || block.isMovable())
-        && !!block.outputConnection && !block.previousConnection && !block.nextConnection
-        && block.inputList.every(input => !input.connection);
-    }
+        && !block.workspace.options.readOnly && block.isEditable() && (block.isShadow() || block.isMovable());
+}
 
 function isFunction(type: string): boolean {
     return type === FUNCTION_DEFINITION_BLOCK_TYPE || type === FUNCTION_CALL_BLOCK_TYPE
@@ -371,7 +379,8 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
 }
 
 /** Append dependencies and the selection in one undo group, at the drop point or viewport center. */
-export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg, coordinates?: Blockly.utils.Coordinate): Blockly.BlockSvg {
+export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg, coordinates?: Blockly.utils.Coordinate,
+    kind?: pxt.auth.BackpackKind): Blockly.BlockSvg {
     const { blocks } = parseBackpackCode(code); // A fresh object; never mutate the stored item.
     visitStates(blocks, state => {
         if (!Object.prototype.hasOwnProperty.call(Blockly.Blocks, state.type)) {
@@ -399,6 +408,8 @@ export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg
             }
             root = appended as Blockly.BlockSvg;
         });
+        // Dependencies have been installed before import; now the actual field is available.
+        if (kind && (kind === "asset") !== !!getBackpackAssetField(root)) invalidCode();
         return root;
     } catch (error) {
         // Custom mutation/field loaders can throw after creating a partial block.

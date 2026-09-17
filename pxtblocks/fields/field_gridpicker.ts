@@ -11,6 +11,8 @@ export interface FieldGridPickerToolTipConfig {
 }
 
 export interface FieldGridPickerOptions extends FieldCustomDropdownOptions {
+    /** Opt asset galleries into Backpack; ordinary enum pickers remain code. */
+    asset?: boolean | string;
     columns?: string;
     maxRows?: string;
     width?: string;
@@ -22,6 +24,7 @@ export interface FieldGridPickerOptions extends FieldCustomDropdownOptions {
 }
 
 export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
+    public readonly isBackpackAsset: boolean;
     private tooltipConfig_: FieldGridPickerToolTipConfig;
 
     private gridTooltip_: HTMLElement;
@@ -51,6 +54,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
     constructor(text: string, options: FieldGridPickerOptions, validator?: Function) {
         super(options.data);
+        this.isBackpackAsset = options.asset === true || options.asset === "true";
 
         this.columns_ = parseInt(options.columns) || 4;
         this.maxRows_ = parseInt(options.maxRows) || 0;

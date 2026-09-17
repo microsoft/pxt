@@ -36,7 +36,11 @@ In an editable Blocks project, use **Add to Backpack** on an event, loop, if blo
 or function definition, or drag it onto Backpack. This copies its contents,
 referenced Blockly functions and assets—not following siblings or the originals.
 Standalone image, animation, tilemap and music blocks go to **Assets** instead of
-**Code**. Limits are 50 code captures and 200 assets per target, with a shared
+**Code**, based on their registered field editor, including extension-defined blocks.
+Required extensions are installed with consent on Add, just as for code snippets.
+Field implementations can opt in with `isBackpackAsset`; asset gallery grid pickers
+use `fieldOptions.asset=true`. New asset editors require no backend type registration.
+Limits are 50 code captures and 200 assets per target, with a shared
 50 MiB account cap. Asset previews are generated locally using the gallery renderer,
 not stored as PNGs. Tilemaps include their required tile pixels.
 Reopening rechecks metadata while keeping the previous cards visible. Returning

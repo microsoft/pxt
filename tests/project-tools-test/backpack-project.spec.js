@@ -35,16 +35,6 @@ const packageMethods = ["findConflictsAsync", "parseAndValidConfig"].map(name =>
 }).join("\n");
 const conflictSource = compile(`class SourcePackage { ${packageMethods} }; exports.SourcePackage = SourcePackage;`);
 
-const authSource = ts.createSourceFile("auth.ts", read("pxtlib/auth.ts"), ts.ScriptTarget.Latest, true);
-let assetTypeFunction;
-function findAssetTypeFunction(node) {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === "isBackpackAssetType") assetTypeFunction = node;
-    ts.forEachChild(node, findAssetTypeFunction);
-}
-findAssetTypeFunction(authSource);
-assert(assetTypeFunction, "Expected the current asset allowlist helper");
-const assetTypeSource = compile(assetTypeFunction.getText(authSource));
-
 const clone = value => JSON.parse(JSON.stringify(value));
 const config = (name, extra = {}) => ({ name, files: ["main.ts"], dependencies: {}, ...extra });
 const version = name => `github:owner/${name}#v1.2.3`;
@@ -104,7 +94,7 @@ function environment(installed = {}) {
         vm.runInContext(`(function(exports, require) { ${source}\n})`, context)(exports, requireModule);
         return exports;
     }
-    pxt.auth = { ...execute(assetTypeSource), hasIdentity: () => true };
+    pxt.auth = { hasIdentity: () => true };
     const SourcePackage = execute(conflictSource).SourcePackage;
     pxt.Package = class extends SourcePackage {
         constructor(id, verspec, parent, addedBy) {
@@ -279,11 +269,22 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.deepStrictEqual(cfg.dependencies, { unrelated: version("unrelated"), a: version("a"), b: version("b") });
     });
 
-    it("cancel performs no downloads, saves, config writes, reloads, or paste", async () => {
-        const e = environment(); e.requirePackages("a");
+    it("captures extension asset requirements and installs them only after consent", async () => {
+        const source = environment({ a: version("a"), gallery: version("gallery") });
+        source.info.apis.byQName["gallery.tile"] = { ...symbol("gallery"), qName: "gallery.tile" };
+        const code = codeFor({ type: "a_block", fields: { ASSET: "gallery.tile" } });
+        const requirements = source.capture(code);
+        assert.deepStrictEqual(requirements.dependencies, { a: version("a"), gallery: version("gallery") });
+        const e = environment();
+        Object.assign(e.item, { kind: "asset", code, ...requirements });
         e.hooks.set("confirm", () => 0);
         assert.equal(await e.run(), false);
         assert.deepStrictEqual(e.events, ["confirm"]);
+        e.hooks.delete("confirm");
+        e.events.length = 0;
+        assert.equal(await e.run(), true);
+        assert.deepStrictEqual(JSON.parse(e.file.content).dependencies, requirements.dependencies);
+        assert(e.events.indexOf("reload") < e.events.indexOf("paste:one-undo-group"));
     });
 
     it("missing local source takes precedence over extensions and stale global Blockly registration", async () => {

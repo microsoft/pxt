@@ -49,7 +49,6 @@ describe("Backpack scratch native asset editing", function () {
                 "#000000", "#ffffff", "#ff2121", "#ff93c4", "#ff8135", "#fff609", "#249ca3", "#78dc52",
                 "#003fad", "#87f2ff", "#8e2ec4", "#a4839f", "#5c406c", "#e5cdc4", "#91463d", "#000000"
             ] } };
-            pxt.auth.isBackpackAssetType = type => ["image_picker", "tiles_tilemap_editor", "tileset_tile_picker"].includes(type);
             const cache = {};
             const load = id => {
                 if (cache[id]) return cache[id].exports;
@@ -67,7 +66,7 @@ describe("Backpack scratch native asset editing", function () {
             const fields = Object.assign({}, ...Object.keys(modules).filter(id => id.startsWith("fields/")).map(load));
             const backpack = load("backpack");
             // Real native fields in minimal, headless asset blocks.
-            for (const [type, Field] of [["image_picker", fields.FieldSpriteEditor],
+            for (const [type, Field] of [["extension_portrait", fields.FieldSpriteEditor],
                 ["tiles_tilemap_editor", fields.FieldTilemap], ["tileset_tile_picker", fields.FieldTileset]]) {
                 Blockly.Blocks[type] = { init() {
                     this.appendDummyInput().appendField(new Field("", {}), "ASSET");
@@ -111,7 +110,7 @@ describe("Backpack scratch native asset editing", function () {
             // Preserve an existing disable scope, rather than unconditionally enabling events.
             Blockly.Events.disable();
             try {
-                const { editor, asset } = open(codeFor("image_picker", "img`2`"));
+                const { editor, asset } = open(codeFor("extension_portrait", "img`2`"));
                 asset.bitmap.data[0] = 3;
                 asset.jresData = pxt.sprite.base64EncodeBitmap(asset.bitmap);
                 const saved = editor.save(asset);
