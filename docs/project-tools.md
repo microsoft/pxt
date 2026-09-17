@@ -39,6 +39,11 @@ Standalone image, animation, tilemap and music blocks go to **Assets** instead o
 **Code**. Limits are 50 code captures and 200 assets per target, with a shared
 50 MiB account cap. Asset previews are generated locally using the gallery renderer,
 not stored as PNGs. Tilemaps include their required tile pixels.
+Reopening rechecks metadata while keeping the previous cards visible. Returning
+to the browser tab or opening a different project shows Loading until metadata
+is refreshed (after closing any open edit dialog). Previews are cached by item
+version in bounded, account-scoped session memory; only new,
+changed or evicted previews are downloaded. Add/Edit still read current content.
 
 Guests save in this browser; signing in syncs captures across browsers. Search
 matches names, contained blocks, parameters and extensions. Rename is optional.

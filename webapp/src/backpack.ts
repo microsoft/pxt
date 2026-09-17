@@ -181,6 +181,21 @@ interface Snapshot extends BackpackState {
 }
 
 let snapshot: Snapshot;
+const MAX_PREVIEW_CACHE_BYTES = 8 * 1024 * 1024;
+interface CachedPreview {
+    id: string;
+    version: string;
+    bytes: number;
+    controller: AbortController;
+    value: Promise<pxt.auth.BackpackItem | Blob>;
+}
+const previewCache = new Map<string, CachedPreview>();
+
+function clearBackpackCache(): void {
+    for (const cached of previewCache.values()) cached.controller.abort();
+    previewCache.clear();
+}
+
 let queue: Promise<void> = Promise.resolve();
 const listeners = new Set<() => void>();
 const own = (value: object, key: string): boolean => Object.prototype.hasOwnProperty.call(value, key);
@@ -333,6 +348,7 @@ function activeIdentity(): Identity | undefined {
     // A partially loaded signed-in session must not write to the guest backpack.
     if (!isBackpackEnabled() || !targetId || !safeKey(targetId) || signedIn && (!client || !userId)) {
         if (lastIdentity) identityGeneration++;
+        clearBackpackCache();
         lastIdentity = undefined;
         return undefined;
     }
@@ -340,6 +356,7 @@ function activeIdentity(): Identity | undefined {
     if (!lastIdentity || lastIdentity.targetId !== targetId || lastIdentity.kind !== kind
         || lastIdentity.kind === "cloud" && (lastIdentity.userId !== userId || lastIdentity.client !== client)) {
         identityGeneration++;
+        clearBackpackCache();
     }
     lastIdentity = signedIn ? { kind: "cloud", client, userId, targetId, generation: identityGeneration }
         : { kind: "local", targetId, generation: identityGeneration };
@@ -449,6 +466,7 @@ async function requestAsync(context: CloudContext, path: string, method = "GET",
         throw new BackpackRequestError(undefined);
     }
     await verifyAsync(context);
+    if (response.statusCode === 401 || response.statusCode === 403) clearBackpackCache();
     if (response.statusCode === 401) {
         try { await pxt.auth.AuthClient.staticLogoutAsync(); } catch { /* Do not expose auth transport details. */ }
         throw new Error(lf("Your session expired. Sign in again to use your backpack."));
@@ -580,6 +598,13 @@ function publish(context: OperationContext, entries: BackpackEntry[], state: Par
     assertActive(context);
     snapshot = { ...(snapshot && isActive(snapshot.identity) ? snapshot : {}), ...state, identity: context,
         entries: entries.slice().sort((a, b) => b.createdAt - a.createdAt || a.id.localeCompare(b.id)) };
+    for (const [key, cached] of previewCache) {
+        const entry = entries.find(entry => entry.source === "cloud" && entry.id === cached.id);
+        if (entry ? entry.error || entry.summary.version !== cached.version : snapshot.complete) {
+            cached.controller.abort();
+            previewCache.delete(key);
+        }
+    }
     notifyBackpackEditorChanged();
 }
 
@@ -650,9 +675,10 @@ async function uploadAsync(context: CloudContext, entry: BackpackEntry): Promise
     }
 }
 
-/** Fetch all pages before exposing complete search; independent pending saves never block neighbors. */
+/** Revalidate metadata on every open; keep the previous list until all pages arrive. */
 export function refreshBackpackAsync(): Promise<void> {
     return enqueue(async context => {
+        const previous = getBackpackState();
         let locals: BackpackEntry[] = [];
         let warning: string;
         try { locals = await localEntriesAsync(context); }
@@ -661,7 +687,9 @@ export function refreshBackpackAsync(): Promise<void> {
             await verifyAsync(context);
             warning = lf("Local pending snippets could not be read. Allow browser storage and reopen the backpack.");
         }
-        publish(context, locals, { complete: false, warning, usage: undefined, limits: undefined });
+        if (!previous.complete && !previous.entries.length) {
+            publish(context, locals, { complete: false, warning, usage: undefined, limits: undefined });
+        }
         if (context.kind === "local") { publish(context, locals, { complete: true }); return; }
         const cloud = new Map<string, BackpackEntry>();
         const cursors = new Set<string>();
@@ -694,7 +722,8 @@ export function refreshBackpackAsync(): Promise<void> {
             // message rather than replacing it with an account-change error.
             if (!isActive(context)) throw error;
             await verifyAsync(context);
-            publish(context, [...cloud.values(), ...locals], {
+            const denied = error instanceof BackpackRequestError && error.code === "backpack_access_denied";
+            publish(context, denied ? [] : previous.entries.length ? previous.entries : [...cloud.values(), ...locals], {
                 complete: false, warning: error instanceof Error ? error.message : backpackErrorMessage()
             });
             throw error;
@@ -970,7 +999,9 @@ async function readItemAsync(saved: BackpackEntry, context: OperationContext): P
         } catch (error) {
             await verifyAsync(context);
             const code = error instanceof BackpackRequestError ? error.code : "backpack_invalid_entry";
-            if (["backpack_invalid_entry", "backpack_not_found", "backpack_entry_deleted"].includes(code)) {
+            if (["backpack_invalid_entry", "backpack_not_found", "backpack_entry_deleted"].includes(code)
+                && currentEntries(context).some(entry => entry.source === "cloud" && entry.id === saved.id
+                    && entry.summary.version === saved.summary.version)) {
                 upsert(context, { ...saved, error: backpackErrorMessage(code) });
             }
             throw new Error(backpackErrorMessage(code));
@@ -987,11 +1018,54 @@ export async function loadBackpackAssetAsync(entry: BackpackEntry): Promise<pxt.
     return readItemAsync(saved, await captureAsync());
 }
 
+/** Session-only LRU; versions come from private list metadata, never public URLs. */
+async function cachedPreviewAsync(saved: BackpackEntry, context: CloudContext, variant: "asset" | "png",
+    load: (signal: AbortSignal) => Promise<pxt.auth.BackpackItem | Blob>): Promise<pxt.auth.BackpackItem | Blob> {
+    await verifyAsync(context);
+    const key = JSON.stringify([saved.id, saved.summary.version, variant]);
+    let cached = previewCache.get(key);
+    if (cached) { previewCache.delete(key); previewCache.set(key, cached); }
+    else {
+        cached = { id: saved.id, version: saved.summary.version, bytes: 0, controller: new AbortController(), value: undefined };
+        const current = cached;
+        // Defer loading until the entry is in the map so overlapping visible cards share it.
+        current.value = Promise.resolve().then(() => load(current.controller.signal)).then(value => {
+            assertActive(context);
+            observed(saved);
+            current.bytes = value instanceof Blob ? value.size : utf8Length(JSON.stringify(value));
+            let total = Array.from(previewCache.values()).reduce((sum, entry) => sum + entry.bytes, 0);
+            while (total > MAX_PREVIEW_CACHE_BYTES && previewCache.size) {
+                const [oldKey, oldest] = previewCache.entries().next().value;
+                total -= oldest.bytes;
+                oldest.controller.abort();
+                previewCache.delete(oldKey);
+            }
+            return value;
+        }).catch(error => {
+            if (previewCache.get(key) === current) previewCache.delete(key);
+            throw error;
+        });
+        previewCache.set(key, current);
+        if (previewCache.size > 128) {
+            const [oldKey, oldest] = previewCache.entries().next().value;
+            oldest.controller.abort();
+            previewCache.delete(oldKey);
+        }
+    }
+    const value = await cached.value;
+    await verifyAsync(context);
+    observed(saved);
+    return value;
+}
+
 /** Asset PNGs are not stored: visible cards read their bounded content to render locally. */
 export async function loadBackpackAssetPreviewAsync(entry: BackpackEntry): Promise<pxt.auth.BackpackItem> {
     const saved = observed(entry);
     if (saved.error || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
-    return readItemAsync(saved, await captureAsync());
+    const context = await captureAsync();
+    if (saved.source !== "cloud" || context.kind !== "cloud") return readItemAsync(saved, context);
+    // Detach cached assets: native field decoding is allowed to mutate its input.
+    return validateBackpackItem(await cachedPreviewAsync(saved, context, "asset", () => readItemAsync(saved, context)));
 }
 
 /** Only assets can replace content. Code captures remain title-only edits. */
@@ -1018,29 +1092,35 @@ export function saveBackpackAssetAsync(entry: BackpackEntry, item: pxt.auth.Back
     });
 }
 
-/** Binary private preview. Caller owns cancellation and the returned Blob's object URL. */
+/** Binary private preview. Cancellation abandons this caller, not another card's shared read. */
 export async function getBackpackPreviewAsync(entry: BackpackEntry, signal: AbortSignal): Promise<Blob> {
     const saved = observed(entry);
     const context = await captureAsync();
     if (context.kind !== "cloud" || saved.error || !saved.summary?.hasPreview) throw new BackpackRequestError(undefined);
-    const headers = await headersAsync(context);
-    await verifyAsync(context);
     try {
-        const response = await window.fetch(apiUrl(`/api/user/backpack/${saved.id}/preview`), {
-            headers, credentials: "include", signal, cache: "no-store"
+        if (signal.aborted) throw new BackpackRequestError(undefined);
+        const blob = await cachedPreviewAsync(saved, context, "png", async requestSignal => {
+            const headers = await headersAsync(context);
+            await verifyAsync(context);
+            const response = await window.fetch(apiUrl(`/api/user/backpack/${saved.id}/preview`), {
+                headers, credentials: "include", signal: requestSignal, cache: "no-store"
+            });
+            await verifyAsync(context);
+            if (response.status === 401) {
+                await pxt.auth.AuthClient.staticLogoutAsync();
+                throw new BackpackRequestError(undefined);
+            }
+            if (!response.ok || response.headers.get("content-type")?.split(";")[0].trim() !== "image/png") {
+                throw new BackpackRequestError(undefined);
+            }
+            if (response.headers.get("etag") !== saved.summary.version) throw new BackpackRequestError("backpack_version_conflict");
+            const blob = await response.blob();
+            await verifyAsync(context);
+            if (blob.size > DEFAULT_LIMITS.maxPreviewBytes) throw new BackpackRequestError(undefined);
+            return blob;
         });
-        await verifyAsync(context);
-        if (response.status === 401) {
-            await pxt.auth.AuthClient.staticLogoutAsync();
-            throw new BackpackRequestError(undefined);
-        }
-        if (!response.ok || response.headers.get("content-type")?.split(";")[0].trim() !== "image/png") {
-            throw new BackpackRequestError(undefined);
-        }
-        const blob = await response.blob();
-        await verifyAsync(context);
-        if (signal.aborted || blob.size > DEFAULT_LIMITS.maxPreviewBytes) throw new BackpackRequestError(undefined);
-        return blob;
+        if (signal.aborted) throw new BackpackRequestError(undefined);
+        return blob as Blob;
     } catch {
         throw new Error(lf("This snippet's preview is unavailable."));
     }

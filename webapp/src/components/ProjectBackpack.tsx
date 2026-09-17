@@ -72,6 +72,10 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const busy = React.useRef(false);
     const dragged = React.useRef<backpack.BackpackEntry>();
     const loaded = React.useRef(false);
+    // Each account/project mount must acknowledge metadata before showing cards.
+    const fullRefresh = React.useRef(true);
+    const refreshQueued = React.useRef(true);
+    const refreshGeneration = React.useRef(0);
     const body = React.useRef<HTMLDivElement>();
     const entryError = React.useRef<HTMLParagraphElement>();
     const searchInput = React.useRef<HTMLInputElement>();
@@ -120,29 +124,96 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     };
 
     const refresh = () => run(async () => {
-        // Do not flash a cached snapshot before a refresh has been acknowledged.
-        loaded.current = false;
-        setReady(false);
-        setContents({ entries: [] });
+        refreshQueued.current = false;
+        const generation = refreshGeneration.current;
+        const force = fullRefresh.current;
+        const previous = force ? { entries: [] } : readItems();
+        loaded.current = !!previous.complete || !!previous.entries.length;
+        setReady(!!previous.complete);
+        setContents(previous);
         setEdit(undefined);
         try { await backpack.refreshBackpackAsync(); }
         catch (reason) {
+            if (generation !== refreshGeneration.current) return;
             if (isCurrent()) {
                 const state = readItems();
-                // Only explicitly incomplete new results, not a stale successful
-                // snapshot from before an unavailable session, are recovery rows.
-                setContents(state.complete === false ? state : { entries: [] });
-                loaded.current = true;
+                // Failed revalidation may retain this session's list, but never
+                // revive unacknowledged contents after a focus/project change.
+                setContents(!force && state.complete === false ? state : { entries: [] });
+                setReady(false);
+                loaded.current = !force;
             }
             throw reason;
         }
-        if (!isCurrent()) return;
+        if (!isCurrent() || generation !== refreshGeneration.current) return;
         setContents(readItems());
         loaded.current = true;
+        fullRefresh.current = false;
         setReady(true);
     });
 
-    React.useLayoutEffect(() => { if (props.active) void refresh(); }, [props.active]);
+    React.useLayoutEffect(() => { if (props.active) refreshQueued.current = true; }, [props.active]);
+    React.useEffect(() => {
+        let away = document.hidden;
+        let blurTimer: number;
+        let focusedFrame: HTMLIFrameElement;
+        let frameWindow: Window;
+        const detachFrameWindow = (): void => {
+            try {
+                frameWindow?.removeEventListener("blur", onBlur);
+                frameWindow?.removeEventListener("focus", onReturn);
+            } catch { /* A frame may have navigated to another origin. */ }
+            frameWindow = undefined;
+        };
+        const attachFrameWindow = (): void => {
+            detachFrameWindow();
+            try {
+                frameWindow = focusedFrame?.contentWindow;
+                frameWindow?.addEventListener("blur", onBlur);
+                frameWindow?.addEventListener("focus", onReturn);
+            } catch { frameWindow = undefined; } // Cross-origin frames still use visibilitychange.
+        };
+        const onBlur = (): void => {
+            window.clearTimeout(blurTimer);
+            blurTimer = window.setTimeout(() => {
+                // Moving focus into the simulator/docs iframe is not leaving the page.
+                if (!document.hasFocus()) away = true;
+                const frame = document.activeElement instanceof HTMLIFrameElement ? document.activeElement : undefined;
+                if (frame !== focusedFrame) {
+                    focusedFrame?.removeEventListener("load", attachFrameWindow);
+                    focusedFrame = frame;
+                    focusedFrame?.addEventListener("load", attachFrameWindow);
+                    attachFrameWindow();
+                }
+            }, 0);
+        };
+        const onReturn = (): void => {
+            if (document.hidden) { away = true; return; }
+            if (!away || !isCurrent()) return;
+            away = false; // Coalesce visibilitychange and window focus on the same return.
+            fullRefresh.current = true;
+            refreshQueued.current = true;
+            refreshGeneration.current++;
+            loaded.current = false;
+            // Removing a focused card must not dismiss the owning disclosure.
+            if (active.current && (body.current?.contains(document.activeElement)
+                || kindButtons.current.some(button => button === document.activeElement))) body.current?.focus();
+            setContents({ entries: [] });
+            setReady(false);
+        };
+        document.addEventListener("visibilitychange", onReturn);
+        window.addEventListener("blur", onBlur);
+        window.addEventListener("focus", onReturn);
+        onBlur(); // The panel may mount while a pinned simulator already has focus.
+        return () => {
+            window.clearTimeout(blurTimer);
+            focusedFrame?.removeEventListener("load", attachFrameWindow);
+            detachFrameWindow();
+            document.removeEventListener("visibilitychange", onReturn);
+            window.removeEventListener("blur", onBlur);
+            window.removeEventListener("focus", onReturn);
+        };
+    }, []);
     React.useEffect(() => {
         if (props.openRequest?.kind) {
             setKind(props.tutorial ? "asset" : props.openRequest.kind);
@@ -153,6 +224,11 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     const editedItem = edit?.entry;
     const modalOpen = (!!assetEdit || !!editedItem && (edit.kind === "delete" || !editedItem.error)) && props.active;
     const keepPanelOpen = (modalOpen || !!openingAssetKey) && props.active;
+    React.useLayoutEffect(() => {
+        // Recheck after pending work/dialogs finish; a return during a request
+        // needs a newer request, not that request's potentially stale response.
+        if (props.active && !document.hidden && !busy.current && !keepPanelOpen && refreshQueued.current) void refresh();
+    });
     React.useEffect(() => {
         props.onModalOpenChange?.(keepPanelOpen);
         return () => props.onModalOpenChange?.(false);

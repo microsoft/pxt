@@ -310,13 +310,16 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const preview = await store.loadBackpackAssetPreviewAsync(entry);
             const cloud = { preview, before, after: bt.clone(store.getBackpackState()), source, sourceAfter: bt.clone(bt.originals),
                 localBefore, localAfter: await bt.readLocal("alice"), listing, requests: bt.clone(bt.requests) };
+            bt.seed(2, bt.asset(2));
+            await store.refreshBackpackAsync();
+            const uncached = store.getBackpackState().entries.find(entry => entry.id === bt.id(2));
             bt.hold();
             bt.hook = async (options, run) => {
                 const response = run();
                 if (options.url.endsWith("/content")) { bt.enter(); await bt.gate; }
                 return response;
             };
-            const pending = bt.outcome(() => store.loadBackpackAssetPreviewAsync(entry));
+            const pending = bt.outcome(() => store.loadBackpackAssetPreviewAsync(uncached));
             await bt.entered;
             bt.signIn("bob"); bt.remote = {}; bt.originals = {};
             await store.refreshBackpackAsync();
@@ -668,15 +671,116 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const requests = [];
             window.fetch = async (url, options) => {
                 requests.push({ url, credentials: options.credentials, headers: options.headers, signal: !!options.signal });
-                return new Response(new Blob(["png"], { type: "image/png" }), { status: 200, headers: { "content-type": "image/png" } });
+                return new Response(new Blob(["png"], { type: "image/png" }), { status: 200,
+                    headers: { "content-type": "image/png", etag: bt.remote[entry.id].version } });
             };
             const blob = await store.getBackpackPreviewAsync(entry, new AbortController().signal);
-            window.fetch = async () => new Response(new Blob([new Uint8Array(131073)]), { headers: { "content-type": "image/png" } });
-            const oversized = await bt.outcome(() => store.getBackpackPreviewAsync(entry, new AbortController().signal));
-            return { size: blob.size, requests, oversized };
+            await store.getBackpackPreviewAsync(entry, new AbortController().signal);
+            bt.remote[entry.id].version = '"v2"';
+            await store.refreshBackpackAsync();
+            window.fetch = async () => new Response(new Blob([new Uint8Array(131073)]), { headers: { "content-type": "image/png", etag: '"v2"' } });
+            const current = store.getBackpackState().entries[0];
+            const oversized = await bt.outcome(() => store.getBackpackPreviewAsync(current, new AbortController().signal));
+            window.fetch = async () => new Response(new Blob(["png"]), { headers: { "content-type": "image/png", etag: '"wrong"' } });
+            const mismatch = await bt.outcome(() => store.getBackpackPreviewAsync(current, new AbortController().signal));
+            return { size: blob.size, requests, oversized, mismatch };
         });
+        assert.equal(result.requests.length, 1); assert.match(result.mismatch, /unavailable/);
         assert.equal(result.size, 3); assert.equal(result.requests[0].credentials, "include"); assert.equal(result.requests[0].signal, true);
         assert.equal(result.requests[0].headers.authorization, "mkcd alice-token"); assert.match(result.oversized, /unavailable/);
+    });
+
+    it("shares pending PNG reads without one hidden card cancelling another, and retries failures", async () => {
+        const result = await page.evaluate(async () => {
+            bt.seed(1, { previewUri: "data:image/png;base64,iVBORw0KGgo=" });
+            await store.refreshBackpackAsync();
+            const entry = store.getBackpackState().entries[0];
+            let requests = 0, release;
+            const gate = new Promise(resolve => { release = resolve; });
+            bt.hold();
+            window.fetch = async () => {
+                requests++; bt.enter(); await gate;
+                return new Response(new Blob(["png"]), { headers: { "content-type": "image/png", etag: entry.summary.version } });
+            };
+            const controller = new AbortController();
+            const first = bt.outcome(() => store.getBackpackPreviewAsync(entry, controller.signal));
+            await bt.entered;
+            const second = store.getBackpackPreviewAsync(entry, new AbortController().signal);
+            controller.abort(); release();
+            const cancelled = await first, size = (await second).size;
+            await store.getBackpackPreviewAsync(entry, new AbortController().signal);
+            const sharedRequests = requests;
+            bt.remote[entry.id].version = '"v2"'; await store.refreshBackpackAsync();
+            const changed = store.getBackpackState().entries[0];
+            window.fetch = async () => { requests++; throw new Error("Offline"); };
+            const failed = await bt.outcome(() => store.getBackpackPreviewAsync(changed, new AbortController().signal));
+            window.fetch = async () => {
+                requests++;
+                return new Response(new Blob(["new"]), { headers: { "content-type": "image/png", etag: '"v2"' } });
+            };
+            await store.getBackpackPreviewAsync(changed, new AbortController().signal);
+            return { cancelled, size, sharedRequests, failed, requests };
+        });
+        assert.match(result.cancelled, /unavailable/); assert.match(result.failed, /unavailable/);
+        assert.equal(result.size, 3); assert.equal(result.sharedRequests, 1); assert.equal(result.requests, 3);
+    });
+
+    it("revalidates metadata in place and fetches only changed asset previews, leaving Add/Edit fresh", async () => {
+        const result = await page.evaluate(async () => {
+            bt.seed(1, bt.asset(1)); bt.seed(2, bt.asset(2));
+            await store.refreshBackpackAsync();
+            const find = n => store.getBackpackState().entries.find(entry => entry.id === bt.id(n));
+            const previews = await Promise.all([store.loadBackpackAssetPreviewAsync(find(1)), store.loadBackpackAssetPreviewAsync(find(1)),
+                store.loadBackpackAssetPreviewAsync(find(2))]);
+            previews[0].name = "Changed by renderer";
+            const detached = await store.loadBackpackAssetPreviewAsync(find(1));
+            bt.hold(); bt.hook = async (options, run) => {
+                const response = run();
+                if (options.url.includes("?limit=")) { bt.enter(); await bt.gate; }
+                return response;
+            };
+            const refresh = store.refreshBackpackAsync(); await bt.entered;
+            const during = store.getBackpackState(); bt.release(); await refresh;
+            bt.hook = undefined;
+            await store.loadBackpackAssetPreviewAsync(find(1)); await store.loadBackpackAssetPreviewAsync(find(2));
+            const beforeChange = bt.requests.filter(r => r.url.endsWith("/content")).length;
+            bt.remote[bt.id(2)].version = '"v2"'; bt.originals[bt.id(2)].code = bt.asset(2).code.replace("pixels", "new pixels");
+            await store.refreshBackpackAsync();
+            await store.loadBackpackAssetPreviewAsync(find(1));
+            const changed = await store.loadBackpackAssetPreviewAsync(find(2));
+            const afterChange = bt.requests.filter(r => r.url.endsWith("/content")).length;
+            await store.loadBackpackAssetAsync(find(1));
+            await store.importBackpackEntryAsync(find(1), "project");
+            const afterActions = bt.requests.filter(r => r.url.endsWith("/content")).length;
+            const deleted = find(1); await store.deleteBackpackEntryAsync(deleted);
+            const stale = await bt.outcome(() => store.loadBackpackAssetPreviewAsync(deleted));
+            bt.signIn("bob"); store.notifyBackpackEditorChanged();
+            bt.signIn("alice"); store.notifyBackpackEditorChanged();
+            const switched = store.getBackpackState(); await store.refreshBackpackAsync();
+            await store.loadBackpackAssetPreviewAsync(find(2));
+            return { during, detached, changed, beforeChange, afterChange, afterActions, stale, switched,
+                finalReads: bt.requests.filter(r => r.url.endsWith("/content")).length };
+        });
+        assert.equal(result.during.complete, true); assert.equal(result.during.entries.length, 2);
+        assert.equal(result.detached.name, "Snippet 1"); assert.match(result.changed.code, /new pixels/);
+        assert.deepStrictEqual([result.beforeChange, result.afterChange, result.afterActions, result.finalReads], [2, 3, 5, 6]);
+        assert.notEqual(result.stale, "OK"); assert.deepStrictEqual(result.switched.entries, []);
+    });
+
+    it("evicts old preview bodies at the memory limit instead of retaining the full account", async () => {
+        const result = await page.evaluate(async () => {
+            for (let i = 1; i <= 86; i++) bt.seed(i, bt.asset(i, {
+                code: JSON.stringify({ blocks: [{ type: "image_picker", fields: { IMAGE: "x".repeat(100000) } }] }) }));
+            await store.refreshBackpackAsync();
+            const entries = store.getBackpackState().entries;
+            for (const entry of entries) await store.loadBackpackAssetPreviewAsync(entry);
+            const before = bt.requests.length;
+            await store.loadBackpackAssetPreviewAsync(entries[entries.length - 1]);
+            const recent = bt.requests.length;
+            await store.loadBackpackAssetPreviewAsync(entries[0]);
+            return { before, recent, after: bt.requests.length };
+        });
+        assert.equal(result.recent, result.before); assert.equal(result.after, result.before + 1);
     });
 
     it("validates UTF-8, dependencies, project metadata, PNG density and bounded recovery names without side effects", async () => {

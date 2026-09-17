@@ -137,6 +137,15 @@ describe("project backpack UI", function () {
         await page.evaluate(() => backpackTest.setActive(false));
         await page.evaluate(() => backpackTest.setActive(true));
     };
+    const returnToTab = async () => {
+        const other = await browser.newPage();
+        try {
+            await other.bringToFront();
+            await page.waitForFunction(() => document.hidden, { polling: 50 });
+            await page.bringToFront();
+            await page.waitForFunction(() => !document.hidden);
+        } finally { await other.close(); }
+    };
     const signIn = async (items = []) => {
         await page.evaluate(items => {
             backpackTest.remote.A = items;
@@ -218,6 +227,7 @@ describe("project backpack UI", function () {
                     && window.backpackValidation.isBackpackEnabled(),
                 account(user) {
                     test.user = user;
+                    test.complete = undefined;
                     for (const subscriber of subscribers) subscriber.onDataChanged("auth:profile");
                 },
                 notify() { for (const listener of listeners) listener(); },
@@ -280,8 +290,9 @@ describe("project backpack UI", function () {
                     const fail = test.failRefresh;
                     ++test.refreshes;
                     await test.gate;
-                    if (fail) throw new Error("Sync failed. Try again.");
+                    if (fail) { test.complete = false; throw new Error("Sync failed. Try again."); }
                     test.snapshots[user] = JSON.parse(JSON.stringify(test.remote[user] || []));
+                    test.complete = true;
                     test.notify();
                 },
                 async importBackpackEntryAsync(entry, headerId, position) {
@@ -421,7 +432,7 @@ describe("project backpack UI", function () {
                     },
                     onKeyDown: event => { if (event.key === "Escape") ++backpackTest.escapes; }
                 }, React.createElement(backpackUI.ProjectBackpack, {
-                    headerId: "project", active, openRequest: backpackTest.openRequest,
+                    headerId: backpackTest.header.id, active, openRequest: backpackTest.openRequest,
                     tutorial: backpackTest.tutorial,
                     renderHeader: (title, actions) => React.createElement("header", null, React.createElement("h2", null, title), actions),
                     onSignIn: () => ++backpackTest.signIns,
@@ -1331,18 +1342,18 @@ describe("project backpack UI", function () {
         assert.equal(await page.$eval(searchBox, input => input.disabled), true);
         await page.evaluate(() => backpackTest.hold());
         await reopen();
-        assert.equal(await page.$eval(searchBox, input => input.disabled), false);
+        assert.equal(await page.$eval(searchBox, input => input.disabled), true, "The last complete category is still empty during revalidation");
         await page.evaluate(() => backpackTest.release());
         await idle();
         assert.equal(await page.$eval(searchBox, input => input.disabled), true);
     });
 
-    it("clears cached entries on refresh failure and loads remote changes on retry and reopen", async () => {
+    it("retains the list during revalidation and reports failures without hiding previous cards", async () => {
         await signIn([item()]);
         await page.evaluate(() => { backpackTest.failRefresh = true; backpackTest.hold(); });
         await reopen();
-        assert.strictEqual(await page.$(entry), null);
-        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
+        assert.doesNotMatch(await text(), /Loading backpack/);
         assert.strictEqual(await page.$eval(searchBox, input => input.disabled), false);
         await page.evaluate(() => backpackTest.release());
         await idle();
@@ -1350,7 +1361,7 @@ describe("project backpack UI", function () {
         assert.doesNotMatch(await text(), /Loading backpack/);
         assert.strictEqual(await page.$eval(searchBox, input => input.disabled), false, "A failed load is not a confirmed empty backpack");
         assert.strictEqual(await page.$eval(retry, button => button.disabled), false);
-        assert.strictEqual(await page.$(entry), null);
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
         // Clearing an action error must not turn an incomplete warning back into loading.
         await page.evaluate(() => {
             backpackTest.warning = "Sync failed. Try again.";
@@ -1379,6 +1390,195 @@ describe("project backpack UI", function () {
         await reopen();
         await idle();
         assert.match(await text(), /Your backpack is empty/);
+    });
+
+    it("keeps unchanged card nodes and preview URLs through reopen while updating changed metadata inline", async () => {
+        const saved = asset("image_picker", 2), removed = asset("image_picker", 3);
+        await signIn([saved, removed]);
+        await page.click("#project-backpack-tab-asset");
+        await page.waitForSelector(assetPreview);
+        await page.evaluate(id => {
+            const row = document.querySelector(`[data-backpack-id="${id}"]`);
+            backpackTest.previousRow = row;
+            backpackTest.previousImage = row.querySelector("img");
+            backpackTest.previousURI = row.querySelector("img").src;
+            backpackTest.previousLoads = backpackTest.assetPreviewLoads;
+            backpackTest.previousRefreshes = backpackTest.refreshes;
+            backpackTest.hold();
+        }, saved.id);
+        const added = asset("animation_editor", 4);
+        await page.evaluate(({ saved, added }) => { backpackTest.remote.A = [{ ...saved, name: "New name" }, added]; }, { saved, added });
+        await reopen();
+        assert.doesNotMatch(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), [saved.name, removed.name]);
+        assert.equal(await page.$('[aria-label="Refresh backpack"]'), null);
+        assert.equal(await page.evaluate(() => backpackTest.assetPreviewLoads), 2);
+        await page.evaluate(() => backpackTest.release()); await idle();
+        assert.deepStrictEqual(await visibleNames(), ["New name", added.name]);
+        assert.deepStrictEqual(await page.evaluate(id => {
+            const row = document.querySelector(`[data-backpack-id="${id}"]`);
+            return [row === backpackTest.previousRow, row.querySelector("img") === backpackTest.previousImage,
+                row.querySelector("img").src === backpackTest.previousURI, backpackTest.refreshes === backpackTest.previousRefreshes + 1];
+        }, saved.id), [true, true, true, true]);
+    });
+
+    it("reloads metadata on tab return without flashing cached cards, including after failure", async () => {
+        await signIn([item()]);
+        await page.focus(add);
+        const before = await page.evaluate(() => {
+            backpackTest.failRefresh = true;
+            backpackTest.hold();
+            return backpackTest.refreshes;
+        });
+        await returnToTab();
+        await page.waitForFunction(count => backpackTest.refreshes === count + 1, {}, before);
+        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), []);
+        assert.equal(await page.$eval(searchBox, input => input.disabled), false);
+        assert.equal(await page.evaluate(() => backpackTest.collapses), 0);
+        await page.evaluate(() => backpackTest.release()); await idle();
+        assert.match(await text(), /Sync failed/);
+        assert.deepStrictEqual(await visibleNames(), []);
+        await page.evaluate(() => backpackTest.notify());
+        assert.deepStrictEqual(await visibleNames(), [], "Subscriptions must not restore an unacknowledged list");
+        await page.evaluate(saved => {
+            backpackTest.failRefresh = false;
+            backpackTest.remote.A = [saved];
+            backpackTest.hold();
+        }, item("Other device"));
+        await page.click(retry);
+        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), []);
+        await page.evaluate(() => backpackTest.release()); await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Other device"]);
+        assert.equal(await page.evaluate(() => backpackTest.refreshes), before + 2, "Focus and visibility return share one refresh");
+        await page.focus("#project-backpack-tab-code");
+        await page.evaluate(() => { backpackTest.dismissNullBlur = true; backpackTest.hold(); });
+        await returnToTab();
+        assert.match(await text(), /Loading backpack/);
+        assert.equal(await page.evaluate(() => backpackTest.collapses), 0);
+        assert.equal(await page.$eval(body, element => element === document.activeElement), true);
+        await page.evaluate(() => backpackTest.release()); await idle();
+    });
+
+    it("requires fresh metadata for a new project and defers hidden-panel tab returns until open", async () => {
+        await signIn([item()]);
+        await page.evaluate(() => {
+            backpackTest.hold();
+            backpackTest.header = { id: "another-project" };
+            backpackTest.rerender();
+        });
+        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), []);
+        await page.evaluate(() => backpackTest.release()); await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
+        await page.evaluate(() => backpackTest.setActive(false));
+        const before = await page.evaluate(() => backpackTest.refreshes);
+        await returnToTab();
+        assert.equal(await page.evaluate(() => backpackTest.refreshes), before);
+        await page.evaluate(() => { backpackTest.hold(); backpackTest.setActive(true); });
+        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), []);
+        await page.evaluate(() => backpackTest.release()); await idle();
+        await page.click(add); await idle();
+        assert.equal(await page.evaluate(() => backpackTest.adds[0].headerId), "another-project");
+    });
+
+    it("keeps edit drafts on tab return and refreshes after the dialog closes", async () => {
+        await signIn([asset("image_picker", 2)]);
+        await page.click("#project-backpack-tab-asset");
+        await page.click(rename);
+        await page.waitForSelector(`${assetModal} input`);
+        await page.$eval(`${assetModal} input`, input => { input.focus(); input.select(); });
+        await page.keyboard.type("unsaved asset draft");
+        const before = await page.evaluate(() => { backpackTest.hold(); return backpackTest.refreshes; });
+        await returnToTab();
+        assert.equal(await page.$eval(`${assetModal} input`, input => input.value), "unsaved asset draft");
+        assert.equal(await page.evaluate(() => backpackTest.refreshes), before);
+        await page.click(`${assetModal} .common-modal-footer button:first-child`);
+        await page.waitForFunction(count => backpackTest.refreshes === count + 1, {}, before);
+        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), []);
+        await page.evaluate(() => backpackTest.release()); await idle();
+        assert.deepStrictEqual(await visibleNames(), ["image_picker"]);
+    });
+
+    it("queues a newer request when tab return interrupts revalidation and ignores iframe focus", async () => {
+        await signIn([item()]);
+        const before = await page.evaluate(() => backpackTest.refreshes);
+        await page.evaluate(() => {
+            const iframe = document.createElement("iframe");
+            iframe.id = "simulator";
+            document.body.appendChild(iframe);
+            iframe.contentWindow.focus();
+        });
+        await page.focus(searchBox);
+        assert.equal(await page.evaluate(() => backpackTest.refreshes), before);
+        await page.evaluate(() => backpackTest.hold());
+        await reopen();
+        await returnToTab();
+        assert.equal(await page.evaluate(() => backpackTest.refreshes), before + 1, "Do not overlap requests");
+        assert.deepStrictEqual(await visibleNames(), []);
+        await page.evaluate(() => {
+            const releaseOld = backpackTest.release;
+            backpackTest.hold();
+            releaseOld();
+        });
+        await page.waitForFunction(count => backpackTest.refreshes === count + 2, {}, before);
+        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), [], "The pre-return response must not restore cards");
+        await page.evaluate(() => backpackTest.release()); await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
+    });
+
+    it("observes window return while a simulator frame owns focus without a visibility change", async () => {
+        await signIn([item()]);
+        const before = await page.evaluate(() => backpackTest.refreshes);
+        await page.evaluate(async () => {
+            const iframe = document.createElement("iframe");
+            iframe.id = "simulator";
+            document.body.appendChild(iframe);
+            iframe.contentWindow.focus();
+            await new Promise(resolve => setTimeout(resolve, 0));
+            // Headless tabs exercise native visibility above. Model an OS-window
+            // switch here: the parent stays visible and only its focused frame blurs.
+            Object.defineProperty(document, "hasFocus", { configurable: true, value: () => false });
+            iframe.contentWindow.dispatchEvent(new FocusEvent("blur"));
+            await new Promise(resolve => setTimeout(resolve, 0));
+            delete document.hasFocus;
+            backpackTest.hold();
+            iframe.contentWindow.dispatchEvent(new FocusEvent("focus"));
+        });
+        await page.waitForFunction(count => backpackTest.refreshes === count + 1, {}, before);
+        assert.match(await text(), /Loading backpack/);
+        assert.deepStrictEqual(await visibleNames(), []);
+        await page.evaluate(() => backpackTest.release()); await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
+    });
+
+    it("waits until visible when pending work finishes after leaving the tab again", async () => {
+        await signIn([item()]);
+        await page.evaluate(() => backpackTest.hold());
+        await page.click(add);
+        await returnToTab();
+        const before = await page.evaluate(() => backpackTest.refreshes);
+        const other = await browser.newPage();
+        try {
+            await other.bringToFront();
+            await page.waitForFunction(() => document.hidden, { polling: 50 });
+            await page.evaluate(() => {
+                const releaseAdd = backpackTest.release;
+                backpackTest.hold();
+                releaseAdd();
+            });
+            await idle();
+            assert.equal(await page.evaluate(() => backpackTest.refreshes), before);
+            await page.bringToFront();
+            await page.waitForFunction(count => backpackTest.refreshes === count + 1, {}, before);
+            assert.match(await text(), /Loading backpack/);
+            assert.deepStrictEqual(await visibleNames(), []);
+            await page.evaluate(() => backpackTest.release()); await idle();
+        } finally { await other.close(); }
     });
 
     it("traps focus in the accessible delete portal and restores it on cancel", async () => {
