@@ -2,8 +2,12 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 import { Button } from "../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
-import { AssetEditorDriver } from "../../../pxtservices/assetEditorDriver";
+import { Action, createStore, Store } from "redux";
 import { BackpackAssetEditorContext } from "../backpack";
+import { BackpackAssetEditor } from "../backpackAssetEditor";
+import { ImageFieldEditor } from "./ImageFieldEditor";
+import { AssetEditorContext } from "./AssetEditorContext";
+import imageReducer, { ImageEditorStore } from "./ImageEditor/store/imageReducer";
 
 interface BackpackAssetEditDialogProps {
     item: pxt.auth.BackpackItem;
@@ -13,24 +17,20 @@ interface BackpackAssetEditDialogProps {
     onOpenError: (message: string) => void;
 }
 
-/** The native editor runs in its own asset project, never the open game's project. */
+/** The same native editor as the Assets tab, with a private project and undo store. */
 export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JSX.Element {
     const overlay = React.useRef<HTMLDivElement>();
-    const frame = React.useRef<HTMLIFrameElement>();
-    const driver = React.useRef<AssetEditorDriver>();
+    const scalarHost = React.useRef<HTMLDivElement>();
+    const editor = React.useRef<ImageFieldEditor<pxt.Asset>>();
+    const session = React.useRef<BackpackAssetEditor>();
+    const store = React.useRef<Store<ImageEditorStore>>();
     const saving = React.useRef(false);
     const saveRef = React.useRef<() => Promise<void>>();
-    const [ready, setReady] = React.useState(false);
+    const [asset, setAsset] = React.useState<pxt.Asset>();
     const [pending, setPending] = React.useState(false);
     const [error, setError] = React.useState<string>();
-    const url = React.useMemo(() => {
-        const result = new URL(pxt.webConfig.asseteditorUrl || "asseteditor.html", window.location.href);
-        result.searchParams.set("frameid", pxt.U.guidGen());
-        return result.toString();
-    }, []);
 
     React.useLayoutEffect(() => {
-        if (!ready) return undefined;
         const siblings = Array.from(document.body.children).filter(child => child !== overlay.current)
             .map(child => ({ child, hidden: child.getAttribute("aria-hidden"), inert: child.getAttribute("inert") }));
         for (const { child } of siblings) {
@@ -45,66 +45,65 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
                 else child.setAttribute("inert", inert);
             }
         };
-    }, [ready]);
+    }, []);
 
-    React.useEffect(() => {
-        const client = new AssetEditorDriver(frame.current);
-        driver.current = client;
-        const onDone = (): void => { void saveRef.current(); };
-        void pxt.U.promiseTimeout(30000, client.openBackpackAsset(props.item.code, props.context.blocksInfo,
-            props.context.gallery, props.context.palette, props.item.name)).then(() => {
-                if (driver.current !== client) return;
-                client.addEventListener("done-clicked", onDone);
-                setReady(true);
-                frame.current?.focus();
-            }).catch(reason => {
-                if (driver.current !== client) return;
-                const code = reason instanceof Error ? reason.message : reason;
-                props.onOpenError(code === "backpack_editor_incompatible"
-                    ? lf("The asset editor is from a different build and cannot open Backpack assets. Reload the editor; if this continues, publish the matching asset-editor build.")
-                    : code === "backpack_asset_unavailable"
-                    ? lf("This saved asset could not be opened. Its block definition or required asset data is unavailable. Delete it and save a new copy from its source project.")
-                    : lf("The asset editor did not finish loading. Reload the editor and try again."));
-            });
+    React.useLayoutEffect(() => {
+        const current = new BackpackAssetEditor(new pxt.TilemapProject());
+        session.current = current;
+        store.current = createStore((state: ImageEditorStore | undefined, action: Action) => imageReducer(state, action, current.project));
+        try {
+            setAsset(current.open({ code: props.item.code, gallery: props.context.gallery, name: props.item.name }, scalarHost.current));
+        } catch {
+            props.onOpenError(lf("This saved asset could not be opened. Its block definition or required asset data is unavailable. Delete it and save a new copy from its source project."));
+        }
         return () => {
-            driver.current = undefined;
-            client.removeEventListener("done-clicked", onDone);
-            client.dispose();
+            session.current = undefined;
+            current.dispose();
         };
     }, []);
 
     const save = async (): Promise<void> => {
-        const client = driver.current;
-        if (!client || !ready || saving.current) return;
+        const current = session.current;
+        if (!current || saving.current) return;
         saving.current = true;
         setPending(true);
         setError(undefined);
         try {
-            const result = await pxt.U.promiseTimeout(30000, client.saveBackpackAsset());
-            if (driver.current !== client) return;
+            const result = current.save(editor.current?.getValue());
             await props.onSave({ ...props.item, ...result, name: result.name || props.item.name,
                 versions: { target: pxt.appTarget.versions.target, pxt: pxt.appTarget.versions.pxt } });
         } catch (reason) {
-            if (driver.current === client) setError(reason instanceof Error ? reason.message : lf("Could not save this asset. Please try again."));
+            if (session.current === current) setError(reason instanceof Error ? reason.message : lf("Could not save this asset. Please try again."));
         } finally {
             saving.current = false;
-            if (driver.current === client) setPending(false);
+            if (session.current === current) setPending(false);
         }
     };
     saveRef.current = save;
 
     const dismiss = (): void => {
         if (saving.current) return;
-        if (ready) void save();
-        else props.onClose();
+        void save();
     };
+    const editorRef = React.useCallback((value: ImageFieldEditor<pxt.Asset>): void => {
+        editor.current = value;
+        if (!value || !asset) return;
+        value.init(asset, () => { void saveRef.current(); }, {
+            blocksInfo: props.context.blocksInfo, hideMyAssets: true, headerVisible: true
+        });
+    }, [asset]);
     return ReactDOM.createPortal(<div ref={overlay} className="project-backpack__asset-modal-overlay"
-        style={{ visibility: ready ? undefined : "hidden" }}
         onMouseDown={event => { if (event.target === event.currentTarget) dismiss(); }}>
         <FocusTrap className="project-backpack__asset-modal" role="dialog" ariaLabel={lf("Backpack asset editor")}
-            onEscape={dismiss} dontStealFocus={!ready}>
-            <iframe ref={frame} src={url} title={lf("Backpack asset editor")} sandbox="allow-scripts"
-                tabIndex={ready && !pending ? 0 : -1} aria-hidden={!ready} aria-busy={!ready || pending} />
+            onEscape={dismiss}>
+            <div className="project-backpack__native-editor" aria-busy={pending}>
+                <div ref={scalarHost} hidden={!!asset} className="project-backpack__scalar-editor" />
+                {asset && <AssetEditorContext.Provider value={session.current.project}>
+                    <ImageFieldEditor ref={editorRef} store={store.current} singleFrame={asset.type !== pxt.AssetType.Animation}
+                        editorType={asset.type === pxt.AssetType.Song ? "music" : "image"} includeSpecialTagsInFilter />
+                </AssetEditorContext.Provider>}
+                {!asset && <Button className="image-editor-confirm" label={lf("Done")} title={lf("Done")} onClick={dismiss} />}
+            </div>
             {(pending || error) && <div className="project-backpack__asset-modal-status">
                 {error ? <p role="alert">{error}</p> : <p role="status">
                     {lf("Saving asset…")}

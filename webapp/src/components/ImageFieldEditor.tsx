@@ -1,11 +1,13 @@
 import * as React from "react";
+import { Store } from "redux";
 
 import { FieldEditorComponent } from '../blocklyFieldView';
+import { AssetEditorContext } from "./AssetEditorContext";
 import { AssetCardView } from "./assetEditor/assetCard";
 import { assetToGalleryItem, getAssets } from "../assets";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardShortcuts";
-import { GalleryTile, setTelemetryFunction } from './ImageEditor/store/imageReducer';
+import { GalleryTile, ImageEditorStore, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 import { FilterPanel } from './FilterPanel';
 import { fireClickOnEnter } from "../util";
 import { EditorToggle } from "../../../react-common/components/controls/EditorToggle";
@@ -19,6 +21,7 @@ import { stopPlayback } from "./musicEditor/playback";
 export interface ImageFieldEditorProps {
     singleFrame: boolean;
     editorType: "image" | "music" | "piano-roll";
+    store?: Store<ImageEditorStore>;
     doneButtonCallback?: () => void;
     hideDoneButton?: boolean;
     includeSpecialTagsInFilter?: boolean;
@@ -50,6 +53,9 @@ export interface AssetEditorCore {
 }
 
 export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<ImageFieldEditorProps, ImageFieldEditorState> implements FieldEditorComponent<U> {
+    static contextType = AssetEditorContext;
+    declare context: React.ContextType<typeof AssetEditorContext>;
+
     protected blocksInfo: pxtc.BlocksInfo;
     protected ref: AssetEditorCore;
     protected closeEditor: () => void;
@@ -188,6 +194,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                                     fieldEditorParams={this.state.options} /> :
                                 <ImageEditor
                                     ref="image-editor"
+                                    store={this.props.store}
                                     singleFrame={this.props.singleFrame}
                                     onDoneClicked={this.onDoneClick}
                                     onTileEditorOpenClose={this.onTileEditorOpenClose}
@@ -331,7 +338,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected updateGalleryAssets() {
-        this.galleryAssets = getAssets(true, this.asset.type);
+        this.galleryAssets = getAssets(true, this.asset.type, undefined, this.context);
     }
 
     protected getAvailableTags(filterAssets: pxt.Asset[], ignoredTags: string[]) {
@@ -568,7 +575,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         stopPlayback();
         this.setImageEditorShortcutsEnabled(false);
         tickImageEditorEvent("gallery-my-assets");
-        this.userAssets = getAssets(undefined, undefined, this.state?.options?.temporaryAssets);
+        this.userAssets = getAssets(undefined, undefined, this.state?.options?.temporaryAssets, this.context);
         this.setState({
             currentView: "my-assets",
             tileGalleryVisible: false
@@ -598,7 +605,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 this.ref.openGalleryAsset(asset);
             }
             else {
-                const project = pxt.react.getTilemapProject();
+                const project = this.context || pxt.react.getTilemapProject();
                 if (this.asset?.type === pxt.AssetType.Tilemap) {
                     pxt.sprite.updateTilemapReferencesFromResult(project, this.asset);
                 }

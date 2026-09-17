@@ -8,7 +8,7 @@ const ts = require("typescript");
 const { launchTestBrowser } = require("./browser");
 const root = path.resolve(__dirname, "../..");
 
-// Current iframe helper, already-built native fields and asset runtime; no field parsers mocked.
+// Current scratch helper, already-built native fields and asset runtime; no field parsers mocked.
 function sources() {
     const modules = {};
     function collect(id) {
@@ -34,14 +34,14 @@ function sources() {
         }).outputText])) };
 }
 
-describe("Backpack iframe native asset editing", function () {
+describe("Backpack scratch native asset editing", function () {
     this.timeout(30000);
     let browser, page;
     before(async () => { browser = await launchTestBrowser(); });
     after(async () => { if (browser) await browser.close(); });
     beforeEach(async () => {
         page = await browser.newPage();
-        await page.setContent("<div></div>");
+        await page.setContent('<div id="scalar-host" style="width:800px;height:600px"></div>');
         const blocklyDirectory = path.dirname(require.resolve("blockly"));
         for (const file of ["blockly_compressed.js", "blocks_compressed.js", "msg/en.js"]) {
             await page.addScriptTag({ path: path.join(blocklyDirectory, file) });
@@ -89,15 +89,19 @@ describe("Backpack iframe native asset editing", function () {
             const module = { exports: {} };
             new Function("require", "module", "exports", helper)(id => id === "blockly" ? Blockly
                 : id === "../../pxtblocks" ? { ...fields, ...backpack, initializeAndInject }
-                : { dismissIfVisible() {}, setEditorBounds() {} }, module, module.exports);
+                : (() => { throw new Error(`Unexpected helper dependency: ${id}`); })(), module, module.exports);
             window.project = new pxt.TilemapProject();
             pxt.react = { getTilemapProject: () => project };
             window.Editor = module.exports.BackpackAssetEditor;
             window.editors = [];
-            window.open = async (code, gallery = project.saveGallerySnapshot(), name) => {
-                const editor = new Editor(project);
+            window.open = (code, gallery = project.saveGallerySnapshot(), name) => {
+                const editor = new Editor(new pxt.TilemapProject());
                 editors.push(editor);
-                const asset = await editor.open({ code, gallery: structuredClone(gallery), blocksInfo: {}, name });
+                const getter = pxt.react.getTilemapProject, enabled = Blockly.Events.isEnabled();
+                const asset = editor.open({ code, gallery, name }, document.getElementById("scalar-host"));
+                if (asset?.then || pxt.react.getTilemapProject !== getter || Blockly.Events.isEnabled() !== enabled) {
+                    throw new Error("Open must return synchronously without leaking project/event globals");
+                }
                 return { editor, asset };
             };
             window.fieldState = fields.getAssetSaveState;
@@ -128,24 +132,6 @@ describe("Backpack iframe native asset editing", function () {
         await page.close();
     });
 
-    it("starts the standalone editor bundle without importing the full app", async () => {
-        const standalone = await browser.newPage();
-        const errors = [];
-        standalone.on("pageerror", error => errors.push(error.message));
-        try {
-            await standalone.setContent('<div id="asset-editor-field-div"></div>');
-            await standalone.addScriptTag({ path: path.join(root, "built/pxtlib.js") });
-            await standalone.evaluate(() => {
-                pxt.appTarget = { id: "arcade", appTheme: {}, runtime: {} };
-                window.lf = pxt.Util.lf;
-            });
-            await standalone.addScriptTag({ path: path.join(root, "built/web/pxtasseteditor.js") });
-            await standalone.evaluate(() => document.dispatchEvent(new Event("DOMContentLoaded")));
-            assert.deepStrictEqual(errors, []);
-            assert(await standalone.evaluate(() => typeof pxt.react.getTilemapProject === "function"));
-        } finally { await standalone.close(); }
-    });
-
     it("preserves inline versus named fields, saves pixels, and disposes prior scratch workspaces", async () => {
         const result = await page.evaluate(async () => {
             const outputs = [];
@@ -163,7 +149,8 @@ describe("Backpack iframe native asset editing", function () {
                 window.project = new pxt.TilemapProject();
                 const reopened = await open(captured.code);
                 outputs.push({ pixel: reopened.asset.bitmap.data[0], fieldType: typeof JSON.parse(captured.code).blocks[0].fields.ASSET,
-                    text: captured.blockText, workspaces: document.querySelectorAll(".blocklySvg").length });
+                    text: captured.blockText, workspaces: Blockly.Workspace.getAll().length,
+                    headless: Blockly.Workspace.getAll().every(ws => !ws.rendered) });
                 reopened.editor.dispose(); editors.pop();
             }
             return outputs;
@@ -171,7 +158,7 @@ describe("Backpack iframe native asset editing", function () {
         assert.deepStrictEqual(result.map(r => r.pixel), [0x22, 0x22]);
         assert.deepStrictEqual(result.map(r => r.fieldType), ["string", "object"]);
         assert(result[1].text.includes("savedImage"));
-        assert(result.every(r => r.workspaces === 1));
+        assert(result.every(r => r.workspaces === 1 && r.headless));
     });
 
     it("returns native edited names and promotes a named temporary image to full portable state", async () => {
@@ -418,9 +405,10 @@ describe("Backpack iframe native asset editing", function () {
     });
 
     it("rejects non-asset roots before creating a workspace", async () => {
-        const result = await page.evaluate(async () => {
-            try { await open(codeFor("controls_repeat_ext", "")); return false; }
-            catch { return document.querySelectorAll(".blocklySvg").length === 0; }
+        const result = await page.evaluate(() => {
+            const getter = pxt.react.getTilemapProject;
+            try { open(codeFor("controls_repeat_ext", "")); return false; }
+            catch { return Blockly.Workspace.getAll().length === 0 && pxt.react.getTilemapProject === getter; }
         });
         assert(result);
     });

@@ -1,12 +1,11 @@
 import { string } from "blockly/core/utils";
 import * as pxtblockly from "../../pxtblocks";
 
-export function isNameTaken(name: string) {
-    return pxt.react.getTilemapProject().isNameTaken(pxt.AssetType.Image, name);
+export function isNameTaken(name: string, project: pxt.TilemapProject = pxt.react.getTilemapProject()) {
+    return project.isNameTaken(pxt.AssetType.Image, name);
 }
 
-export function createNewImageAsset(type: pxt.AssetType.Tile | pxt.AssetType.Image | pxt.AssetType.Animation, width: number, height: number, displayName?: string) {
-    const project = pxt.react.getTilemapProject();
+export function createNewImageAsset(type: pxt.AssetType.Tile | pxt.AssetType.Image | pxt.AssetType.Animation, width: number, height: number, displayName?: string, project: pxt.TilemapProject = pxt.react.getTilemapProject()) {
     switch (type) {
         case pxt.AssetType.Tile:
             return project.createNewTile(new pxt.sprite.Bitmap(width, height).data(), null, displayName);
@@ -18,28 +17,23 @@ export function createNewImageAsset(type: pxt.AssetType.Tile | pxt.AssetType.Ima
     return null;
 }
 
-export function createProjectImage(bitmap: pxt.sprite.BitmapData) {
-    const project = pxt.react.getTilemapProject();
+export function createProjectImage(bitmap: pxt.sprite.BitmapData, project: pxt.TilemapProject = pxt.react.getTilemapProject()) {
     return project.createNewProjectImage(bitmap);
 }
 
-export function createTile(bitmap: pxt.sprite.BitmapData, id?: string, displayName?: string) {
-    const project = pxt.react.getTilemapProject();
+export function createTile(bitmap: pxt.sprite.BitmapData, id?: string, displayName?: string, project: pxt.TilemapProject = pxt.react.getTilemapProject()) {
     return project.createNewTile(bitmap, id, displayName);
 }
 
-export function lookupAsset(type: pxt.AssetType, id: string) {
-    const project = pxt.react.getTilemapProject();
+export function lookupAsset(type: pxt.AssetType, id: string, project: pxt.TilemapProject = pxt.react.getTilemapProject()) {
     return project.lookupAsset(type, id);
 }
 
-export function getNewInternalID() {
-    const project = pxt.react.getTilemapProject();
+export function getNewInternalID(project: pxt.TilemapProject = pxt.react.getTilemapProject()) {
     return project.getNewInternalId();
 }
 
-export function getAssets(gallery = false, firstType = pxt.AssetType.Image, tempAssets: pxt.Asset[] = []): pxt.Asset[] {
-    const project = pxt.react.getTilemapProject();
+export function getAssets(gallery = false, firstType = pxt.AssetType.Image, tempAssets: pxt.Asset[] = [], project: pxt.TilemapProject = pxt.react.getTilemapProject()): pxt.Asset[] {
     const imgConv = new pxt.ImageConverter();
 
     const toGalleryItem = <U extends pxt.Asset>(asset: U) => assetToGalleryItem(asset, imgConv) as U;

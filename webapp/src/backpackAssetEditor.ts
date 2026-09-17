@@ -1,20 +1,44 @@
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 
-/** Owns only the asseteditor.html iframe's scratch workspace and asset project. */
+export interface BackpackAssetEditorOptions {
+    code: string;
+    gallery: pxt.AssetSnapshot;
+    name?: string;
+}
+
+/** Owns a scratch workspace/project; native editor interactions use explicit project context. */
 export class BackpackAssetEditor {
-    private workspace: Blockly.WorkspaceSvg;
-    private block: Blockly.BlockSvg;
+    private workspace: Blockly.Workspace;
+    private block: Blockly.Block;
     private field: Blockly.Field;
     private asset: pxt.Asset;
     private editorAssetId: string;
-    private div: HTMLDivElement;
+    private scalar = false;
     private original: Blockly.serialization.blocks.State;
     private name: string;
 
-    constructor(private project: pxt.TilemapProject) { }
+    constructor(public readonly project: pxt.TilemapProject) { }
 
-    async open(request: pxt.editor.OpenBackpackAssetEditorRequest): Promise<pxt.Asset> {
+    /** Scope legacy field hooks synchronously; never leave the global getter replaced across a render/await. */
+    private withProject<T>(action: () => T): T {
+        const getProject = pxt.react.getTilemapProject;
+        Blockly.Events.disable();
+        try {
+            pxt.react.getTilemapProject = () => this.project;
+            return action();
+        } finally {
+            pxt.react.getTilemapProject = getProject;
+            Blockly.Events.enable();
+        }
+    }
+
+    open(request: BackpackAssetEditorOptions, scalarHost?: HTMLDivElement): pxt.Asset {
+        try { return this.withProject(() => this.openCore(request, scalarHost)); }
+        catch (error) { this.dispose(); throw error; }
+    }
+
+    private openCore(request: BackpackAssetEditorOptions, scalarHost?: HTMLDivElement): pxt.Asset {
         const { blocks } = pxtblockly.parseBackpackCode(request.code);
         const root = blocks[0];
         if (blocks.length !== 1 || !pxt.auth.isBackpackAssetType(root.type) || root.next
@@ -22,11 +46,11 @@ export class BackpackAssetEditor {
         this.original = root;
         this.name = request.name;
 
-        // postMessage strips class prototypes. Restore the native snapshot collections,
-        // not current-project files or a second field/JRES serialization format.
+        // Detach gallery metadata and pixels before native fields can mutate them.
+        const snapshot = structuredClone(request.gallery);
         const gallery = this.project.saveGallerySnapshot();
-        for (const type of Object.keys(request.gallery.assets)) {
-            const collection = request.gallery.assets[type];
+        for (const type of Object.keys(snapshot.assets)) {
+            const collection = snapshot.assets[type];
             Object.setPrototypeOf(collection, Object.getPrototypeOf(gallery.assets[type]));
             if (type === pxt.AssetType.Tilemap) {
                 for (const asset of (collection as unknown as { assets: pxt.ProjectTilemap[] }).assets) {
@@ -37,24 +61,16 @@ export class BackpackAssetEditor {
             gallery.assets[type] = collection;
         }
         this.project.loadGallerySnapshot(gallery);
-        window.addEventListener("resize", this.resize);
-        pxtblockly.initializeAndInject(request.blocksInfo);
-        this.div = document.createElement("div");
-        this.div.style.cssText = "position:absolute;inset:0;visibility:hidden";
-        this.div.setAttribute("aria-label", lf("Backpack asset block"));
-        document.body.appendChild(this.div);
-        this.workspace = Blockly.inject(this.div, { renderer: "pxt", sounds: false,
-            trashcan: false, scrollbars: false, zoom: { startScale: 1.5 } });
-        this.block = Blockly.serialization.blocks.append(root, this.workspace) as Blockly.BlockSvg;
-        pxtblockly.FieldBase.flushInitQueue();
-        this.workspace.render();
-        await Blockly.renderManagement.finishQueuedRenders();
-        this.block.setDeletable(false);
+        this.scalar = root.type === "melody_editor" || root.type === "music_sounds";
+        this.workspace = this.scalar && scalarHost
+            ? Blockly.inject(scalarHost, { renderer: "pxt", sounds: false, trashcan: false, scrollbars: false })
+            : new Blockly.Workspace();
+        this.block = Blockly.serialization.blocks.append(root, this.workspace);
+        const fields = this.block.inputList.reduce<Blockly.Field[]>((all, input) => all.concat(input.fieldRow), []);
+        fields.forEach(field => { if (field instanceof pxtblockly.FieldBase) field.onLoadedIntoWorkspace(); });
         this.block.setEditable(true);
         this.block.setMovable(true); // Required by captureBackpackBlock.
         this.block.setCollapsed(false);
-        this.block.moveBy(32, 32);
-        const fields = this.block.inputList.reduce<Blockly.Field[]>((all, input) => all.concat(input.fieldRow), []);
         this.field = fields.find(field => field instanceof pxtblockly.FieldAssetEditor)
             || fields.find(field => field instanceof pxtblockly.FieldTileset);
         if (this.field instanceof pxtblockly.FieldAssetEditor) {
@@ -75,10 +91,12 @@ export class BackpackAssetEditor {
             this.field = fields.find(field => field instanceof pxtblockly.FieldCustomMelody
                 || root.type === "music_sounds" && field instanceof pxtblockly.FieldGridPicker);
             if (!this.field) throw new Error(lf("This asset has no supported editor."));
-            this.div.style.visibility = "visible";
-            Blockly.svgResize(this.workspace);
-            Blockly.getFocusManager().focusNode(this.block);
-            this.field.showEditor();
+            if (this.workspace.rendered) {
+                const block = this.block as Blockly.BlockSvg;
+                block.moveBy(32, 32);
+                Blockly.svgResize(this.workspace as Blockly.WorkspaceSvg);
+                this.field.showEditor();
+            }
             return undefined;
         }
         if (!this.asset) throw new Error(lf("The saved asset is unavailable."));
@@ -90,9 +108,15 @@ export class BackpackAssetEditor {
     }
 
     save(edited?: pxt.Asset): { code: string; blockText: string; name?: string } {
+        return this.withProject(() => this.saveCore(edited));
+    }
+
+    private saveCore(edited?: pxt.Asset): { code: string; blockText: string; name?: string } {
         // Commit native dropdown edits before capturing their real serialized fields.
-        Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.WidgetDiv.hide();
+        if (this.scalar) {
+            Blockly.DropDownDiv.hideWithoutAnimation();
+            Blockly.WidgetDiv.hide();
+        }
         if (this.asset) {
             if (!edited || edited.type !== this.asset.type) throw new Error(lf("The asset editor is not ready."));
             let result = pxt.cloneAsset(edited, true);
@@ -129,17 +153,13 @@ export class BackpackAssetEditor {
     }
 
     dispose(): void {
-        window.removeEventListener("resize", this.resize);
-        Blockly.DropDownDiv.hideWithoutAnimation();
-        Blockly.WidgetDiv.hide();
-        try { pxtblockly.FieldBase.flushInitQueue(); }
-        finally {
+        this.withProject(() => {
+            if (this.scalar) {
+                Blockly.DropDownDiv.hideWithoutAnimation();
+                Blockly.WidgetDiv.hide();
+            }
             this.workspace?.dispose();
-            this.div?.remove();
-        }
-    }
-
-    private resize = (): void => {
-        if (this.workspace) Blockly.svgResize(this.workspace);
+            this.workspace = undefined;
+        });
     }
 }
