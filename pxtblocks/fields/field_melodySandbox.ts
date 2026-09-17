@@ -13,6 +13,7 @@ const melodyEditorDivId = "melody-editor-div";
 const melodyGalleryDivId = "melody-editor-gallery";
 
 export class FieldCustomMelody<U extends FieldCustomOptions> extends FieldMatrix implements FieldCustom {
+    public readonly isBackpackAsset = true;
     public isFieldCustom_ = true;
     public SERIALIZABLE = true;
 

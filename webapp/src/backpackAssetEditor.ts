@@ -41,7 +41,7 @@ export class BackpackAssetEditor {
     private openCore(request: BackpackAssetEditorOptions, scalarHost?: HTMLDivElement): pxt.Asset {
         const { blocks } = pxtblockly.parseBackpackCode(request.code);
         const root = blocks[0];
-        if (blocks.length !== 1 || !pxt.auth.isBackpackAssetType(root.type) || root.next
+        if (blocks.length !== 1 || root.next
             || Object.keys(root.inputs || {}).length) throw new Error(lf("Choose a single Backpack asset."));
         this.original = root;
         this.name = request.name;
@@ -61,18 +61,24 @@ export class BackpackAssetEditor {
             gallery.assets[type] = collection;
         }
         this.project.loadGallerySnapshot(gallery);
-        this.scalar = root.type === "melody_editor" || root.type === "music_sounds";
-        this.workspace = this.scalar && scalarHost
-            ? Blockly.inject(scalarHost, { renderer: "pxt", sounds: false, trashcan: false, scrollbars: false })
-            : new Blockly.Workspace();
+        this.workspace = new Blockly.Workspace();
         this.block = Blockly.serialization.blocks.append(root, this.workspace);
+        this.field = pxtblockly.getBackpackAssetField(this.block);
+        if (!this.field) throw new Error(lf("This asset has no supported editor."));
+        this.scalar = !(this.field instanceof pxtblockly.FieldAssetEditor || this.field instanceof pxtblockly.FieldTileset);
+        if (this.scalar && scalarHost) {
+            // Scalar custom editors need rendered fields; discover them from the registration first.
+            this.workspace.dispose();
+            this.workspace = Blockly.inject(scalarHost, { renderer: "pxt", sounds: false, trashcan: false, scrollbars: false });
+            this.block = Blockly.serialization.blocks.append(root, this.workspace);
+            this.field = pxtblockly.getBackpackAssetField(this.block);
+            if (!this.field) throw new Error(lf("This asset has no supported editor."));
+        }
         const fields = this.block.inputList.reduce<Blockly.Field[]>((all, input) => all.concat(input.fieldRow), []);
         fields.forEach(field => { if (field instanceof pxtblockly.FieldBase) field.onLoadedIntoWorkspace(); });
         this.block.setEditable(true);
         this.block.setMovable(true); // Required by captureBackpackBlock.
         this.block.setCollapsed(false);
-        this.field = fields.find(field => field instanceof pxtblockly.FieldAssetEditor)
-            || fields.find(field => field instanceof pxtblockly.FieldTileset);
         if (this.field instanceof pxtblockly.FieldAssetEditor) {
             if (this.field.isGreyBlock) throw new Error(lf("This asset cannot be edited."));
             this.asset = this.field.getAsset();
@@ -88,9 +94,6 @@ export class BackpackAssetEditor {
             if (this.asset?.type !== pxt.AssetType.Tile) throw new Error(lf("The saved tile is unavailable."));
         }
         else {
-            this.field = fields.find(field => field instanceof pxtblockly.FieldCustomMelody
-                || root.type === "music_sounds" && field instanceof pxtblockly.FieldGridPicker);
-            if (!this.field) throw new Error(lf("This asset has no supported editor."));
             if (this.workspace.rendered) {
                 const block = this.block as Blockly.BlockSvg;
                 block.moveBy(32, 32);

@@ -21,7 +21,7 @@ export * from "./diff";
 export * from "./legacyMutations";
 export * from "./blockDragger";
 export {
-    BackpackCode, BackpackWorkspaceOptions, isBackpackContainer, isBackpackBlock,
+    BackpackCode, BackpackWorkspaceOptions, isBackpackContainer, isBackpackBlock, getBackpackAssetField,
     captureBackpackBlock, parseBackpackCode, getBackpackBlockTypes, pasteBackpackBlock, registerBackpackWorkspace,
 } from "./backpack";
 export * from "./workspaceSearch";

@@ -66,7 +66,7 @@ describe("project backpack UI", function () {
         code: JSON.stringify({ blocks: [{ type: "pxt-on-start" }] }), blockText: "", createdAt: 1, dependencies: {}
     });
     const asset = (type, index) => ({ ...item(type, `00000000-0000-0000-0000-${String(index).padStart(12, "0")}`),
-        kind: "asset", code: JSON.stringify({ blocks: [{ type }] }) });
+        kind: "asset", code: JSON.stringify({ blocks: [{ type, fields: { ASSET: "pixels" } }] }) });
     const assetPreviewURI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
     const assetPreview = ".project-backpack__preview--asset";
     const add = ".project-backpack__add";
@@ -262,13 +262,6 @@ describe("project backpack UI", function () {
             };
         }, assetPreviewURI);
         await page.addScriptTag({ content: controls });
-        // Extract the validator's current asset predicate, not stale pxtlib output.
-        const helper = fs.readFileSync(path.join(root, "pxtlib/auth.ts"), "utf8")
-            .match(/ {4}export function isBackpackAssetType\(type: string\): boolean \{[\s\S]*?\n {4}\}/);
-        assert.ok(helper, "Current asset helper must be extractable");
-        await page.addScriptTag({ content: ts.transpileModule(`${helper[0].replace("export ", "")}
-            pxt.auth.isBackpackAssetType = isBackpackAssetType;`,
-        { compilerOptions: { target: ts.ScriptTarget.ES2018 } }).outputText });
         // Reuse the actual storage validator without exercising network/auth storage.
         await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpack.ts")}\n})(window.backpackValidation = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });

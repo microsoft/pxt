@@ -53,7 +53,7 @@ export async function addBackpackToProjectAsync(item: pxt.auth.BackpackItem, hos
     const workspace = host.getWorkspace();
     const coordinates = position && Blockly.utils.svgMath.screenToWsCoordinates(workspace,
         new Blockly.utils.Coordinate(position.x, position.y));
-    pxtblockly.pasteBackpackBlock(saved.code, workspace, coordinates); // Owns the single undo group and asset remapping.
+    pxtblockly.pasteBackpackBlock(saved.code, workspace, coordinates, saved.kind); // Owns the single undo group and asset remapping.
     await wait(() => Blockly.renderManagement.finishQueuedRenders());
     await wait(host.saveAsync);
     assertCurrent();

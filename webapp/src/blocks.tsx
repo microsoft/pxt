@@ -878,7 +878,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
         this.disposeBackpackWorkspace = pxtblockly.registerBackpackWorkspace(this.editor, {
             isEnabled: () => this.backpackAvailable("asset"),
-            canSave: block => this.backpackAvailable(pxt.auth.isBackpackAssetType(block.type) ? "asset" : "code"),
+            canSave: block => this.backpackAvailable(pxtblockly.getBackpackAssetField(block) ? "asset" : "code"),
             save: block => { void this.saveBlockToBackpackAsync(block); },
             open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false)
         });
@@ -2609,7 +2609,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private async saveBlockToBackpackAsync(block: Blockly.BlockSvg): Promise<void> {
-        const kind: pxt.auth.BackpackKind = pxt.auth.isBackpackAssetType(block.type) ? "asset" : "code";
+        const kind: pxt.auth.BackpackKind = pxtblockly.getBackpackAssetField(block) ? "asset" : "code";
         if (!this.backpackAvailable(kind)) return;
         const headerId = this.parent.state.header.id;
         const signedIn = auth.loggedIn();
