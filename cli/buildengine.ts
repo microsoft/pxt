@@ -269,6 +269,8 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     let allFiles = U.clone(extInfo.generatedFiles)
     U.jsonCopyFrom(allFiles, extInfo.extensionFiles)
 
+    let libDirs: string[] = []
+
     let writeFiles = () => {
         for (let f of nodeutil.allFiles(buildEngine.buildPath + "/" + buildEngine.appPath, { maxDepth: 8, allowMissing: true })) {
             let bn = f.slice(buildEngine.buildPath.length)
@@ -278,15 +280,22 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 fs.unlinkSync(f)
             }
         }
-
         U.iterMap(allFiles, (fn, v) => {
             fn = buildEngine.buildPath + fn
             nodeutil.mkdirP(path.dirname(fn))
             let existing: string = null
+            let isLib = U.endsWith(fn, ".a")
             if (fs.existsSync(fn))
                 existing = fs.readFileSync(fn, "utf8")
             if (existing !== v)
-                nodeutil.writeFileSync(fn, v, U.endsWith(fn, ".a") ? { encoding: "base64" } : undefined)
+                nodeutil.writeFileSync(fn, v, isLib ? { encoding: "base64" } : undefined)
+            if (isLib) {
+                const dir = path.dirname(fn)
+                if (libDirs.indexOf(dir) < 0) {
+                    pxt.log("adding library directory " + dir)
+                    libDirs.push(dir)
+                }
+            }
         })
     }
 
@@ -313,6 +322,18 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     }
 
     tasks = tasks
+        .then(() => {
+            // update codal.json with the list of library directories
+            const codalJsonPath = buildEngine.buildPath + "/" + "/codal.json"
+            pxt.log("codal.json path: " + codalJsonPath)
+            if (fs.existsSync(codalJsonPath)) {
+                pxt.log("updating codal.json with library directories: " + libDirs.join(", "))
+                let codalJson = JSON.parse(fs.readFileSync(codalJsonPath, "utf8"))
+                const paths = codalJson.config.EXTRA_LIBRARY_PATHS || ""
+                codalJson.config.EXTRA_LIBRARY_PATHS = paths + " " + libDirs.map(p => `-L${p}`).join(" ")
+                fs.writeFileSync(codalJsonPath, JSON.stringify(codalJson, null, 4) + "\n")
+            }
+        })
         .then(buildEngine.buildAsync)
         .then(() => {
             buildCache.sha = extInfo.sha
