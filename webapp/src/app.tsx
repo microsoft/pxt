@@ -43,6 +43,7 @@ import * as greenscreen from "./greenscreen";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as auth from "./auth";
+import * as backpack from "./backpack";
 import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
@@ -1121,6 +1122,19 @@ export class ProjectView
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
         this.assetEditor = new assetEditor.AssetEditor(this);
+        backpack.setBackpackAssetEditor({
+            headerId: () => this.state.header?.id,
+            canEdit: () => !!this.state.header && !this.state.header.temporary
+                && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor,
+            contextAsync: async () => {
+                // Text/Assets-first projects may not have loaded Blockly's field definitions yet.
+                await this.blocksEditor.loadBlocklyAsync();
+                const blocksInfo = await compiler.getBlocksAsync();
+                pxtblockly.initializeAndInject(blocksInfo);
+                return { blocksInfo, gallery: pxt.react.getTilemapProject().saveGallerySnapshot(),
+                    palette: pxt.appTarget.runtime.palette.slice() };
+            }
+        });
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -5815,7 +5829,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const projectTools = sideDocs && inEditor && !targetTheme.lockedEditor && !this.state.header.temporary &&
-            !!pxt.appTarget.runtime?.palette && (targetTheme.projectTools || pxteditor.experiments.isEnabled("projectTools") ||
+            (targetTheme.projectTools || targetTheme.whiteboard || targetTheme.backpack || pxteditor.experiments.isEnabled("projectTools") ||
                 /(?:\?|&)projecttools=1(?:&|$)/i.test(window.location.search));
         const { lightbox, greenScreen } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
@@ -5958,6 +5972,7 @@ export class ProjectView
                 </div> : undefined}
                 {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed}
                     docsUrl={this.state.sideDocsLoadUrl} bubble={projectTools} header={this.state.header}
+                    tutorial={this.isTutorial() || !!this.state.header?.tutorial}
                     pinned={this.state.sideDocsPinned}
                     projectNotes={this.state.header?.projectNotes} /> : undefined}
                 {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}

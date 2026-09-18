@@ -2,6 +2,10 @@
 // smaller desktops. Visibility defaults use the separate tablet breakpoint.
 export const PROJECT_TOOLS_COMPACT_QUERY = "(max-width: 1199px)";
 
+export function isWhiteboardEnabled(): boolean {
+    return !!pxt.appTarget?.appTheme?.whiteboard && !!pxt.appTarget.runtime?.palette?.length;
+}
+
 /** Keep project-load defaults separate from explicit pin/unpin and collapse actions. */
 export function projectToolsPinnedOnLoad(state: pxt.editor.IAppState, headerId: string, opensDocumentation: boolean, loadingExample: boolean): boolean {
     // Homepage examples can open either configured docs or an auto-open README.

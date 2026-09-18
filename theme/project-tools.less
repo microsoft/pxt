@@ -40,7 +40,8 @@
     width: var(--tools-bubble-size);
     inset-inline-end: 1rem;
     top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
-    z-index: @sidedocZIndex;
+    // Labels must paint over the panel, which follows the launcher in the DOM.
+    z-index: (@sidedocZIndex + 1);
 }
 
 .project-tools__bubbles {
@@ -54,11 +55,10 @@
     pointer-events: none;
 
     .project-tools__bubble {
-        --tools-bubble-distance: calc(var(--tools-bubble-size) + var(--tools-bubble-gap));
+        --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * (var(--tools-bubble-index) + 1));
         // Direction is already handled by the horizontal/vertical slide variables.
         /* rtl:ignore */
         transform: translate(calc(var(--tools-slide-x) * var(--tools-bubble-distance)), calc(var(--tools-slide-y) * var(--tools-bubble-distance)));
-        &:last-child { --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * 2); }
     }
 
     &[aria-hidden="false"] {
@@ -88,9 +88,14 @@
         color: var(--tools-on-accent);
         border-radius: 1rem;
     }
-    &:hover .project-tools__bubble-label, &:focus-visible .project-tools__bubble-label {
-        visibility: visible;
-    }
+    &:hover, &:focus-visible { z-index: 2; }
+}
+
+.project-tools__more:hover .project-tools__bubble-label,
+.project-tools__more:focus-visible .project-tools__bubble-label,
+.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-selected="true"]):hover .project-tools__bubble-label,
+.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-selected="true"]):focus-visible .project-tools__bubble-label {
+    visibility: visible;
 }
 
 .project-tools__more {
@@ -119,16 +124,12 @@
 }
 
 .project-tools__panel {
-    --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
+    --tools-pointer-offset: calc(var(--tools-bubble-size) * (var(--tools-tab-index) + 1.5) + var(--tools-bubble-gap) * (var(--tools-tab-index) + 1));
     --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
     --tools-panel-bottom: calc(@editorToolsCollapsedHeight + 1rem);
     --tools-available-width: calc(100vw - 6rem);
     --tools-default-width: @sideBarWidth;
     --tools-launcher-space: 5rem;
-
-    &[data-active-tab="whiteboard"] {
-        --tools-pointer-offset: calc(var(--tools-bubble-size) * 2.5 + var(--tools-bubble-gap) * 2);
-    }
 
     position: fixed;
     box-sizing: border-box;
@@ -452,21 +453,24 @@
         flex-direction: row;
 
         .project-tools__bubble {
-            &:first-child { --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * 2); }
-            &:last-child { --tools-bubble-distance: calc(var(--tools-bubble-size) + var(--tools-bubble-gap)); }
+            --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * (var(--tools-tab-count) - var(--tools-bubble-index)));
         }
     }
-    .project-tools__bubble-label { display: none; }
+    .project-tools__bubble-label {
+        top: calc(100% + .5rem);
+        inset-inline-start: 0;
+        inset-inline-end: auto;
+    }
+    .project-tools__more .project-tools__bubble-label {
+        inset-inline-start: auto;
+        inset-inline-end: 0;
+    }
     .project-tools__panel {
-        --tools-pointer-offset: calc(var(--tools-bubble-size) * 2.5 + var(--tools-bubble-gap) * 2);
+        --tools-pointer-offset: calc(var(--tools-bubble-size) * (var(--tools-tab-count) - var(--tools-tab-index) + .5) + var(--tools-bubble-gap) * (var(--tools-tab-count) - var(--tools-tab-index)));
         --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 4.75rem);
         --tools-available-width: calc(100vw - 1rem);
         // Keep the half-rem outer gutter within the legacy desktop width budget.
         --tools-launcher-space: .5rem;
-
-        &[data-active-tab="whiteboard"] {
-            --tools-pointer-offset: calc(var(--tools-bubble-size) * 1.5 + var(--tools-bubble-gap));
-        }
 
         inset-inline-end: .5rem;
     }
@@ -491,7 +495,7 @@
         --tools-panel-bottom: calc(@editorToolsCollapsedMobileHeight + .5rem);
         --tools-launcher-space: 0rem;
     }
-    .project-tools__resize--width { display: none; }
+    .project-tools__resize--width { width: 1.5rem; }
 }
 @media only screen and (max-width: @largestMobileScreen) {
     .project-tools__panel { --tools-default-width: @sideBarWidthSmall; }

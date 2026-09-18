@@ -798,6 +798,7 @@ export interface SideDocsProps extends ISettingsProps {
     sideDocsCollapsed: boolean;
     pinned?: boolean;
     bubble?: boolean;
+    tutorial?: boolean;
     header?: pxt.workspace.Header;
     projectNotes?: pxt.workspace.ProjectNotes;
 }
@@ -963,6 +964,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             || this.state.docsRequest !== nextState.docsRequest
             || this.props.pinned !== nextProps.pinned
             || this.props.bubble !== nextProps.bubble
+            || this.props.tutorial !== nextProps.tutorial
             || this.props.header?.id !== nextProps.header?.id
             || this.props.projectNotes !== nextProps.projectNotes;
     }
@@ -1000,10 +1002,12 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
         if (this.props.bubble && this.props.header) return <ProjectTools
             key={this.props.header.id} header={this.props.header} notes={this.props.projectNotes}
+            tutorial={this.props.tutorial}
             expanded={sideDocsCollapsed === false} docsUrl={docsUrl} docsRequest={this.state.docsRequest}
             pinned={!!this.props.pinned} onPinnedChange={pinned => this.props.parent.setState({ sideDocsPinned: pinned })}
             onExpandedChange={expanded => this.props.parent.setState({ sideDocsCollapsed: !expanded })}
             onOpenReference={() => this.setPath("/reference", this.props.parent.isBlocksEditor())}
+            onSignIn={() => this.props.parent.showLoginDialog(undefined, { signInMessage: lf("Sign in to sync your backpack across devices.") })}
             docsAction={!lockedEditor && <a className="project-tools__external" title={lf("Open documentation in new tab")}
                 aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}><sui.Icon icon="external" /></a>}>
             {docsUrl && this.renderContent(url, builtIn, lockedEditor)}

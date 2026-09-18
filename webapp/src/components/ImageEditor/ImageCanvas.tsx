@@ -11,6 +11,7 @@ import { GestureTarget, ClientCoordinates, bindGestureEvents, TilemapPatch, crea
 
 import { Edit, EditState, getEdit, getEditState, ToolCursor, tools } from './toolDefinitions';
 import { createTile } from '../../assets';
+import { AssetEditorContext } from '../AssetEditorContext';
 import { shouldHandleShortcut } from './keyboardShortcuts';
 import { LIGHT_MODE_TRANSPARENT } from './ImageEditor';
 
@@ -57,6 +58,9 @@ const WALL_COLOR = 2;
 const overlayLayers = [TileDrawingMode.Wall];
 
 export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> implements GestureTarget {
+    static contextType = AssetEditorContext;
+    declare context: React.ContextType<typeof AssetEditorContext>;
+
     protected canvas: HTMLCanvasElement;
 
     protected imageWidth: number;
@@ -1080,7 +1084,7 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
                 }
             }
 
-            dispatchCreateNewTile(createTile(copiedTile.data()), tileset.tiles.length, backgroundColor);
+            dispatchCreateNewTile(createTile(copiedTile.data(), undefined, undefined, this.context), tileset.tiles.length, backgroundColor);
             tileMapping.push(nextIndex);
             nextIndex++;
         }

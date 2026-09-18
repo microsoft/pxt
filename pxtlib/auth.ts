@@ -117,6 +117,32 @@ namespace pxt.auth {
         res: UserPreferences;
     }
 
+    export interface BackpackVersions {
+        target: string;
+        pxt: string;
+    }
+
+    export type BackpackKind = "code" | "asset";
+
+    /** A private, portable capture sent to the dedicated Backpack API, not preferences. */
+    export interface BackpackItem {
+        id: string;
+        name: string;
+        kind: BackpackKind;
+        /** Actual editor builds at capture time, including prerelease/build suffixes. */
+        versions: BackpackVersions;
+        code: string;
+        /** Displayed block labels and field values, captured without needing the original extensions to search. */
+        blockText: string;
+        dependencies: pxt.Map<string>;
+        /** Block IDs whose definitions live in project files, rather than extensions. */
+        projectBlocks?: pxt.Map<string>;
+        createdAt: number;
+        previewUri?: string;
+        /** Raster pixels per CSS pixel; an omitted value uses the PNG's natural size. */
+        previewPixelDensity?: number;
+    }
+
     /**
      * User preference state that should be synced with the cloud.
      */

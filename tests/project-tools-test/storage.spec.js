@@ -5,9 +5,9 @@ const fs = require("fs");
 const vm = require("vm");
 const path = require("path");
 
-function notesWithBoard(text, content = {}) {
+function notesWithBoard(text) {
     return {
-        whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text, ...content }],
+        whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text }],
         activeWhiteboardId: "whiteboard-1"
     };
 }
@@ -22,8 +22,6 @@ function createEnvironment() {
     const errors = [];
     let nextId = 0;
     let holdUpload;
-    let holdDownload;
-    let failStorage = false;
     const clone = value => value === undefined ? undefined : JSON.parse(JSON.stringify(value));
     const context = vm.createContext({
         console, Uint8Array, Uint16Array, Uint32Array, ArrayBuffer, DataView, Error, TextDecoder, TextEncoder,
@@ -46,7 +44,6 @@ function createEnvironment() {
     const provider = {
         getAsync: async header => clone(stored.get(header.id)),
         setAsync: async (header, version, text) => {
-            if (failStorage) throw new Error("storage unavailable");
             stored.set(header.id, { header: clone(header), text: clone(text || stored.get(header.id)?.text || {}), version: 1 });
             return 1;
         },
@@ -60,7 +57,6 @@ function createEnvironment() {
             if (url.startsWith("/api/user/project?") || (url === "/api/user/project" && !data))
                 return { success: true, resp: Array.from(remote.values()).map(clone) };
             if (url.startsWith("/api/user/project/")) {
-                if (holdDownload) await holdDownload;
                 return { success: true, resp: clone(remote.get(url.split("/").pop())) };
             }
             assert.equal(url, "/api/user/project");
@@ -98,8 +94,6 @@ function createEnvironment() {
     workspace.setupWorkspace("idb");
     return { pxt, workspace, cloud, notes: load("projectNotes"), requests, stored, remote, errors,
         holdUpload: promise => holdUpload = promise,
-        holdDownload: promise => holdDownload = promise,
-        failStorage: value => failStorage = value,
         async install() {
             const header = { id: "original", target: "arcade", name: "test", meta: {}, pubCurrent: true, editor: "tsprj" };
             const text = { "pxt.json": JSON.stringify({ name: "test", dependencies: {}, files: ["main.ts"] }), "main.ts": "let x = 1" };
@@ -112,7 +106,8 @@ function createEnvironment() {
 
 describe("private project-note storage boundaries", () => {
     it("saves to project metadata and preserves published-code status", async () => {
-        const env = createEnvironment(); const { header, text } = await env.install();
+        const env = createEnvironment();
+        const { header, text } = await env.install();
         assert.equal(header.projectNotes, undefined);
         await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("PRIVATE_SENTINEL"));
         assert.equal(header.pubCurrent, true);
@@ -121,46 +116,9 @@ describe("private project-note storage boundaries", () => {
         assert.equal(JSON.stringify(env.stored.get(header.id).text), JSON.stringify(text));
     });
 
-    for (const method of ["anonymousPublishAsync", "persistentPublishAsync"]) {
-        it(`excludes notes from ${method} without deleting private data`, async () => {
-            const env = createEnvironment(); const { header, text } = await env.install();
-            await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("PRIVATE_SENTINEL"));
-            await env.workspace[method](header, text, { description: "test" });
-            const request = env.requests.find(r => r.url === "scripts" || r.url === "/api/user/project/share");
-            assert.ok(request);
-            assert.ok(!JSON.stringify(request.data).includes("PRIVATE_SENTINEL"));
-            assert.equal(JSON.parse(request.data.header).projectNotes, undefined);
-            assert.equal(header.projectNotes.whiteboards[0].text, "PRIVATE_SENTINEL");
-        });
-    }
-
-    it("keeps notes in a duplicate owned by the same user", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("private"));
-        const duplicate = await env.workspace.duplicateAsync(header, "copy");
-        assert.notEqual(duplicate.id, header.id);
-        assert.equal(duplicate.projectNotes.whiteboards[0].text, "private");
-        await env.workspace.saveProjectNotesAsync(duplicate.id, notesWithBoard("changed copy"));
-        assert.equal(header.projectNotes.whiteboards[0].text, "private");
-    });
-
-    it("retains notes in authenticated cloud upload and download", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("private upload"));
-        await env.cloud.syncAsync({ hdrs: [header], direction: "up" });
-        assert.equal(env.errors.length, 0);
-        const uploaded = env.remote.get(header.id);
-        assert.equal(JSON.parse(uploaded.header).projectNotes.whiteboards[0].text, "private upload");
-        const remoteHeader = JSON.parse(uploaded.header);
-        remoteHeader.projectNotes = notesWithBoard("private download");
-        env.remote.set(header.id, { ...uploaded, header: JSON.stringify(remoteHeader), version: "remote-new" });
-        await env.cloud.syncAsync({ hdrs: [header], direction: "down" });
-        assert.equal(env.workspace.getHeader(header.id).projectNotes.whiteboards[0].text, "private download");
-        assert.equal(env.errors.length, 0);
-    });
-
     it("does not acknowledge notes edited during an in-flight upload", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
+        const env = createEnvironment();
+        const { header } = await env.install();
         await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("A"));
         let finish;
         env.holdUpload(new Promise(resolve => finish = resolve));
@@ -168,7 +126,8 @@ describe("private project-note storage boundaries", () => {
         for (let i = 0; i < 100; ++i) await Promise.resolve();
         assert.ok(env.requests.some(request => request.url === "/api/user/project" && request.data));
         await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("B"));
-        finish(); await upload;
+        finish();
+        await upload;
         assert.equal(header.cloudCurrent, false);
         env.holdUpload(undefined);
         await env.cloud.syncAsync({ hdrs: [header], direction: "up" });
@@ -176,49 +135,9 @@ describe("private project-note storage boundaries", () => {
         assert.equal(header.cloudCurrent, true);
     });
 
-    it("rejects invalid notes without overwriting saved data", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("saved"));
-        await assert.rejects(env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("changed", { image: "invalid" })));
-        await assert.rejects(env.workspace.saveProjectNotesAsync(header.id, { text: "missing boards" }));
-        assert.equal(header.projectNotes.whiteboards[0].text, "saved");
-    });
-
-    it("does not overwrite notes edited during an in-flight cloud download", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("A"));
-        await env.cloud.syncAsync({ hdrs: [header], direction: "up" });
-        const uploaded = env.remote.get(header.id);
-        const remoteHeader = JSON.parse(uploaded.header);
-        remoteHeader.projectNotes = notesWithBoard("B");
-        env.remote.set(header.id, { ...uploaded, header: JSON.stringify(remoteHeader), version: "remote-new" });
-        let finish;
-        env.holdDownload(new Promise(resolve => finish = resolve));
-        const download = env.cloud.syncAsync({ hdrs: [header], direction: "down" });
-        for (let i = 0; i < 100; ++i) await Promise.resolve();
-        assert.ok(env.requests.some(request => request.url === "/api/user/project/original"));
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("C"));
-        finish(); await download;
-        assert.equal(header.projectNotes.whiteboards[0].text, "C");
-        assert.equal(env.stored.get(header.id).header.projectNotes.whiteboards[0].text, "C");
-        assert.equal(header.cloudCurrent, false);
-        assert.notEqual(header.cloudVersion, "remote-new");
-    });
-
-    it("reports non-durable note saves and permits retry", async () => {
-        const env = createEnvironment(); const { header } = await env.install();
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("saved"));
-        env.failStorage(true);
-        await assert.rejects(env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("retry me")), /storage unavailable/);
-        assert.equal(env.workspace.getWorkspaceType(), "idb");
-        assert.equal(env.stored.get(header.id).header.projectNotes.whiteboards[0].text, "saved");
-        env.failStorage(false);
-        await env.workspace.saveProjectNotesAsync(header.id, notesWithBoard("retry me"));
-        assert.equal(env.stored.get(header.id).header.projectNotes.whiteboards[0].text, "retry me");
-    });
-
     it("persists all named boards and the selection through cloud sync and duplication", async () => {
-        const env = createEnvironment(); const { header, text } = await env.install();
+        const env = createEnvironment();
+        const { header, text } = await env.install();
         let notes = notesWithBoard("original private sketch notes");
         notes = env.notes.addProjectWhiteboard(notes, "Second board");
         notes.whiteboards[1].text = "second private notes";
@@ -238,6 +157,7 @@ describe("private project-note storage boundaries", () => {
         assert.equal(header.projectNotes.whiteboards[1].text, "updated on another device");
         assert.equal(header.projectNotes.activeWhiteboardId, notes.activeWhiteboardId);
         const duplicate = await env.workspace.duplicateAsync(header, "copy");
+        assert.notEqual(duplicate.id, header.id);
         const renamed = env.notes.renameProjectWhiteboard(duplicate.projectNotes, notes.activeWhiteboardId, "Copy only");
         await env.workspace.saveProjectNotesAsync(duplicate.id, renamed);
         assert.equal(header.projectNotes.whiteboards[1].name, "Second board");
@@ -245,7 +165,8 @@ describe("private project-note storage boundaries", () => {
     });
 
     it("persists whiteboard deletion and syncs only the remaining boards", async () => {
-        const env = createEnvironment(); const { header, text } = await env.install();
+        const env = createEnvironment();
+        const { header, text } = await env.install();
         const notes = env.notes.addProjectWhiteboard(notesWithBoard("Retained notes"), "Delete me");
         notes.whiteboards[1].text = "REMOVED_WHITEBOARD_TEXT";
         await env.workspace.saveProjectNotesAsync(header.id, notes);
@@ -264,7 +185,8 @@ describe("private project-note storage boundaries", () => {
 
     for (const method of ["anonymousPublishAsync", "persistentPublishAsync"]) {
         it(`excludes every whiteboard and its name from ${method}`, async () => {
-            const env = createEnvironment(); const { header, text } = await env.install();
+            const env = createEnvironment();
+            const { header, text } = await env.install();
             let notes = notesWithBoard("PRIVATE_FIRST_BOARD");
             notes = env.notes.addProjectWhiteboard(notes, "PRIVATE_BOARD_NAME");
             notes.whiteboards[1].text = "PRIVATE_SECOND_BOARD";

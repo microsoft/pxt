@@ -131,6 +131,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     componentWillUnmount() {
+        this.iframeClient?.dispose();
         window.removeEventListener("message", this.handleMessage, null);
         window.removeEventListener("keydown", this.handleKeydown, null);
         window.clearInterval(this.pollingInterval);
@@ -179,7 +180,7 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
     }
 
     protected sendResponse(response: pxt.editor.AssetEditorResponse) {
-        this.postMessage(response);
+        this.postMessage({ success: true, ...response });
     }
 
     protected sendEvent(event: pxt.editor.AssetEditorEvent) {
