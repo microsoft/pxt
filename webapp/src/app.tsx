@@ -5829,7 +5829,7 @@ export class ProjectView
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
         const projectTools = sideDocs && inEditor && !targetTheme.lockedEditor && !this.state.header.temporary &&
-            !!pxt.appTarget.runtime?.palette && (targetTheme.projectTools || pxteditor.experiments.isEnabled("projectTools") ||
+            (targetTheme.projectTools || targetTheme.whiteboard || targetTheme.backpack || pxteditor.experiments.isEnabled("projectTools") ||
                 /(?:\?|&)projecttools=1(?:&|$)/i.test(window.location.search));
         const { lightbox, greenScreen } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;

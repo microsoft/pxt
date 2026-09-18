@@ -6,9 +6,13 @@ export const MAX_BACKPACK_DATA_LENGTH = 1048576;
 // Keep capture's existing conservative PNG budget; the API accepts 128 KiB binary.
 export const MAX_BACKPACK_PREVIEW_LENGTH = 64000;
 
-/** Signed-out guests are supported; environments without sign-in are not. */
+/** The target controls availability independently of cloud sign-in. */
 export function isBackpackEnabled(): boolean {
-    return !!pxt.appTarget?.appTheme?.backpack && pxt.auth.hasIdentity();
+    return !!pxt.appTarget?.appTheme?.backpack;
+}
+
+export function isBackpackAssetsEnabled(): boolean {
+    return isBackpackEnabled() && !!pxt.appTarget?.appTheme?.assetEditor;
 }
 
 /** Individual durable records. Namespace and key are literal IndexedDB key components. */
@@ -343,7 +347,7 @@ let lastIdentity: Identity;
 
 function activeIdentity(): Identity | undefined {
     const targetId = pxt.appTarget?.id;
-    const signedIn = pxt.auth.cachedHasAuthToken;
+    const signedIn = pxt.auth.hasIdentity() && pxt.auth.cachedHasAuthToken;
     const client = signedIn ? pxt.auth.client() : undefined;
     const userId = pxt.auth.cachedUserState?.profile?.id;
     // A partially loaded signed-in session must not write to the guest backpack.
@@ -891,7 +895,7 @@ export function setBackpackAssetEditor(host: BackpackAssetEditorHost): void {
 }
 
 export function canEditBackpackAsset(headerId: string): boolean {
-    return !!activeIdentity() && !!headerId && assetEditorHost?.headerId() === headerId && assetEditorHost.canEdit();
+    return isBackpackAssetsEnabled() && !!activeIdentity() && !!headerId && assetEditorHost?.headerId() === headerId && assetEditorHost.canEdit();
 }
 
 /** Browser client coordinates, resolved against the workspace after any extension reload. */
@@ -915,7 +919,8 @@ export function setBackpackEditor(editor: BackpackEditor): () => void {
 
 export function canImportBackpack(headerId: string, kind: pxt.auth.BackpackKind = "code"): boolean {
     const editor = registeredEditor?.editor;
-    return !!activeIdentity() && !!headerId && !!editor && editor.headerId() === headerId && editor.canImport(kind);
+    return (kind !== "asset" || isBackpackAssetsEnabled()) && !!activeIdentity() && !!headerId
+        && !!editor && editor.headerId() === headerId && editor.canImport(kind);
 }
 
 export function canDropBackpack(headerId: string, target: EventTarget, kind: pxt.auth.BackpackKind = "code"): boolean {

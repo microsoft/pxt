@@ -877,7 +877,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
         this.disposeBackpackWorkspace = pxtblockly.registerBackpackWorkspace(this.editor, {
-            isEnabled: () => this.backpackAvailable("asset"),
+            isEnabled: () => this.backpackAvailable("code") || this.backpackAvailable("asset"),
             canSave: block => this.backpackAvailable(pxtblockly.getBackpackAssetField(block) ? "asset" : "code"),
             save: block => { void this.saveBlockToBackpackAsync(block); },
             open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false)
@@ -2602,6 +2602,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private backpackAvailable(kind: pxt.auth.BackpackKind = "code"): boolean {
         const header = this.parent.state.header;
         return backpack.isBackpackEnabled() && !!header && !header.temporary
+            && (kind !== "asset" || backpack.isBackpackAssetsEnabled())
             && (kind === "asset" || !header.tutorial && !this.parent.isTutorial())
             && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor
             && this.isVisible && this.parent.isBlocksActive() && !!this.blockInfo
@@ -2659,7 +2660,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         if (!this.backpackAvailable(item.kind)) throw new Error(lf("Open an editable Blocks project to add this snippet."));
         const host = this.createSnippetHost();
         return addBackpackToProjectAsync(item, { ...host, isCurrent: () => host.isCurrent()
-            && backpack.isBackpackEnabled() && (item.kind === "asset" || !this.parent.state.header?.tutorial && !this.parent.isTutorial()) }, position);
+            && backpack.isBackpackEnabled() && (item.kind !== "asset" || backpack.isBackpackAssetsEnabled())
+            && (item.kind === "asset" || !this.parent.state.header?.tutorial && !this.parent.isTutorial()) }, position);
     }
 
     private createSnippetHost(): BackpackProjectHost {

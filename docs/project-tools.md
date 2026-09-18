@@ -3,7 +3,9 @@
 Project tools provides **Documentation**, **Whiteboard**, and **Backpack** panels.
 Enable `appTheme.projectTools` in the target, use **Project tools bubbles** under
 **Settings → About → Experiments**, or preview with `?projecttools=1`.
-The feature requires an eligible project editor and image palette.
+`appTheme.whiteboard` and `appTheme.backpack` independently enable those panels
+and the launcher in eligible project editors. Set either to `false` to hide it.
+Only Whiteboard requires a runtime image palette.
 
 ## Controls
 
@@ -12,7 +14,7 @@ The feature requires an eligible project editor and image palette.
   returns focus without clearing the pin or draft.
 - Arrow keys and Home/End navigate tabs; horizontal tabs use Enter/Space to open.
 - Drag the resize grips, or focus a grip and use arrow keys (Shift for larger
-  steps). Width resizing is available on desktop; height resizing works on mobile.
+  steps). Both width and height resizing work on desktop and mobile.
 
 ## Whiteboards
 
@@ -27,10 +29,10 @@ wait for saves/sync before closing or switching devices.
 
 ## Backpack
 
-Requires `appTheme.backpack` and sign-in support; hidden in offline apps. Guests
-can use it without signing in when sign-in is available. During tutorials it opens
-to **Assets**, where students can save, edit and add their own assets. **Code**
-shows an unavailable message; code snippets cannot be saved or added during tutorials.
+Requires `appTheme.backpack`. Without sign-in support, captures remain local and
+no sign-in prompt is shown. `appTheme.assetEditor` enables the **Code / Assets**
+toggle; otherwise only code snippets are shown. During tutorials it opens to
+**Assets** when available; code snippets cannot be saved or added during tutorials.
 
 In an editable Blocks project, use **Add to Backpack** on an event, loop, if block
 or function definition, or drag it onto Backpack. This copies its contents,
