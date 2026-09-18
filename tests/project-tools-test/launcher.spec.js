@@ -54,6 +54,7 @@ describe("responsive project-tools launcher", function () {
         await page.evaluate(() => {
             window.lf = text => text;
             window.pxt = {
+                appTarget: { appTheme: { whiteboard: true, backpack: true }, runtime: { palette: ["#000", "#fff"] } },
                 BREAKPOINT_TABLET: 991,
                 BrowserUtils: { isTabletSize: () => window.innerWidth <= 991 },
                 Util: { isUserLanguageRtl: () => false }
@@ -68,7 +69,7 @@ describe("responsive project-tools launcher", function () {
                 if (id === "react") return window.React;
                 if (id === "../projectToolsState") return window.projectToolsState;
                 if (id === "../backpack") return {
-                    isBackpackEnabled: () => true,
+                    isBackpackEnabled: () => pxt.appTarget.appTheme.backpack,
                     subscribeBackpackOpen: listener => {
                         window.backpackOpenListeners.add(listener);
                         return () => window.backpackOpenListeners.delete(listener);
@@ -104,6 +105,8 @@ describe("responsive project-tools launcher", function () {
                 const [pinned, setPinned] = React.useState(false);
                 const [request, setRequest] = React.useState(0);
                 const [rtl, setRtl] = React.useState(false);
+                const [, update] = React.useReducer(value => value + 1, 0);
+                window.setToolsFlags = flags => { Object.assign(pxt.appTarget.appTheme, flags); update(); };
                 pxt.Util.isUserLanguageRtl = () => rtl;
                 window.setRtl = setRtl;
                 window.openHelp = () => {
@@ -168,6 +171,35 @@ describe("responsive project-tools launcher", function () {
         await page.evaluate(() => window.setBackpackModalOpen(false));
         await page.click("#outside");
         await page.waitForFunction(() => document.getElementById("project-tools-panel").hidden);
+    });
+
+    it("independently gates Whiteboard and Backpack and resizes horizontally on a phone", async () => {
+        await openTool(whiteboard);
+        const grip = ".project-tools__resize--width";
+        const width = () => page.$eval(panel, el => el.getBoundingClientRect().width);
+        await page.focus(grip);
+        await page.keyboard.press("Home");
+        const min = await width();
+        await page.keyboard.press("End");
+        assert(await width() > min);
+        assert(await width() <= 390);
+        const bounds = await page.$eval(grip, el => { const r = el.getBoundingClientRect(); return { x: r.x + r.width / 2, y: r.y + r.height / 2 }; });
+        const client = await page.createCDPSession();
+        await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [bounds] });
+        await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: bounds.x + 60, y: bounds.y }] });
+        await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        assert(await width() < 350);
+        await client.detach();
+        await page.evaluate(() => window.setToolsFlags({ whiteboard: false }));
+        assert.equal(await page.$(whiteboard), null);
+        assert.equal(await page.$("#project-tools-whiteboard"), null);
+        assert(await page.$(backpack));
+        await page.evaluate(() => window.setToolsFlags({ whiteboard: true, backpack: false }));
+        assert(await page.$(whiteboard));
+        assert.equal(await page.$(backpack), null);
+        await page.evaluate(() => { pxt.appTarget.runtime.palette = undefined; window.setToolsFlags({ backpack: true }); });
+        assert.equal(await page.$(whiteboard), null);
+        assert(await page.$(backpack));
     });
 
     it("supports manual arrow selection, a single tab stop, and Escape focus", async () => {

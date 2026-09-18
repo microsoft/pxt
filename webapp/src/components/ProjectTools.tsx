@@ -2,7 +2,7 @@ import * as React from "react";
 import { ProjectWhiteboard } from "./ProjectWhiteboard";
 import { ProjectBackpack } from "./ProjectBackpack";
 import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../backpack";
-import { PROJECT_TOOLS_COMPACT_QUERY } from "../projectToolsState";
+import { isWhiteboardEnabled, PROJECT_TOOLS_COMPACT_QUERY } from "../projectToolsState";
 
 type ProjectToolTab = "docs" | "whiteboard" | "backpack";
 
@@ -23,10 +23,13 @@ interface ProjectToolsProps {
 }
 
 export function ProjectTools(props: ProjectToolsProps) {
+    const whiteboardEnabled = isWhiteboardEnabled();
     const backpackEnabled = isBackpackEnabled();
-    const tabNames: ProjectToolTab[] = backpackEnabled ? ["docs", "whiteboard", "backpack"] : ["docs", "whiteboard"];
+    const tabNames: ProjectToolTab[] = ["docs"];
+    if (whiteboardEnabled) tabNames.push("whiteboard");
+    if (backpackEnabled) tabNames.push("backpack");
     const [selectedTab, setTab] = React.useState<ProjectToolTab>("docs");
-    const tab = selectedTab === "backpack" && !backpackEnabled ? "docs" : selectedTab;
+    const tab = tabNames.includes(selectedTab) ? selectedTab : "docs";
     const [visitedWhiteboard, setVisitedWhiteboard] = React.useState(false);
     const [visitedBackpack, setVisitedBackpack] = React.useState(false);
     const [backpackRequest, setBackpackRequest] = React.useState<BackpackOpenRequest>();
@@ -53,14 +56,14 @@ export function ProjectTools(props: ProjectToolsProps) {
     const rtl = pxt.Util.isUserLanguageRtl();
     const tabIndex = tabNames.indexOf(tab);
     React.useEffect(() => {
-        if (backpackEnabled) return;
-        if (selectedTab === "backpack") {
+        if (!tabNames.includes(selectedTab)) {
             setTab("docs");
             if (props.expanded) tabButtons.current[0]?.focus();
         }
-        setFocusedTab(index => Math.min(index, 1));
-        setVisitedBackpack(false);
-    }, [backpackEnabled, selectedTab]);
+        setFocusedTab(index => Math.min(index, tabNames.length - 1));
+        if (!whiteboardEnabled) setVisitedWhiteboard(false);
+        if (!backpackEnabled) setVisitedBackpack(false);
+    }, [whiteboardEnabled, backpackEnabled, selectedTab]);
     const measureWidth = React.useCallback(() => {
         const bounds = panel.current.getBoundingClientRect();
         const style = window.getComputedStyle(panel.current);
@@ -112,7 +115,6 @@ export function ProjectTools(props: ProjectToolsProps) {
             if (tabletQuery.matches) {
                 // Move focus before hiding tabs, without dismissing an open panel.
                 if (launcher.current?.contains(document.activeElement)) moreButton.current?.focus();
-                else if (document.activeElement === panel.current?.querySelector(".project-tools__resize--width")) panel.current?.focus();
             }
             setOptionsOpen(!tabletQuery.matches);
         };
@@ -380,14 +382,6 @@ export function ProjectTools(props: ProjectToolsProps) {
                 aria-controls="project-tools-panel"
                 aria-valuemin={widthRange.min} aria-valuemax={widthRange.max} aria-valuenow={widthRange.width}
                 onFocus={updateSizeRanges}
-                onBlur={event => {
-                    // CSS may hide the grip before the media-query callback runs.
-                    // This is a layout change, not a user clicking away from tools.
-                    if (window.getComputedStyle(event.currentTarget).display === "none") {
-                        event.stopPropagation();
-                        panel.current?.focus();
-                    }
-                }}
                 onPointerDown={event => startResize(event, "width")} onPointerMove={moveResize}
                 onPointerUp={stopResize} onPointerCancel={stopResize} onLostPointerCapture={lostResizeCapture}
                 onKeyDown={event => {
@@ -439,11 +433,11 @@ export function ProjectTools(props: ProjectToolsProps) {
                     <button type="button" onClick={props.onOpenReference}>{lf("Browse reference")}</button>
                 </div>}
             </section>
-            <section id="project-tools-whiteboard" role="tabpanel" aria-labelledby="project-tools-tab-whiteboard" hidden={tab !== "whiteboard"}
+            {whiteboardEnabled && <section id="project-tools-whiteboard" role="tabpanel" aria-labelledby="project-tools-tab-whiteboard" hidden={tab !== "whiteboard"}
                 className="project-tools__whiteboard">
                 {visitedWhiteboard && <ProjectWhiteboard headerId={props.header.id} notes={props.notes}
                     active={props.expanded && tab === "whiteboard"} renderHeader={renderHeader} />}
-            </section>
+            </section>}
             {backpackEnabled && <section id="project-tools-backpack" role="tabpanel" aria-labelledby="project-tools-tab-backpack" hidden={tab !== "backpack"}
                 className="project-backpack">
                 {visitedBackpack && <ProjectBackpack headerId={props.header.id} active={props.expanded && tab === "backpack"}

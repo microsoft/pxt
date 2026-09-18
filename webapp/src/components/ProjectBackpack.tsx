@@ -20,7 +20,7 @@ export interface ProjectBackpackProps {
 }
 
 function currentUserId(): string {
-    return auth.loggedIn() ? auth.userProfile()?.id : undefined;
+    return auth.hasIdentity() && auth.loggedIn() ? auth.userProfile()?.id : undefined;
 }
 
 function entryKey(entry: backpack.BackpackEntry): string {
@@ -46,15 +46,17 @@ export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
     const userId = currentUserId();
     if (!backpack.isBackpackEnabled()) return null;
     const tutorial = props.tutorial || !!pkg.mainEditorPkg()?.header?.tutorial;
+    const assetsEnabled = backpack.isBackpackAssetsEnabled();
     // Guest/account transitions get fresh contents, including pending/error state.
-    return <BackpackContents key={`${pxt.appTarget?.id}:${userId ? `user:${userId}` : "guest"}:${props.headerId}:${tutorial}`}
-        {...props} tutorial={tutorial} userId={userId} />;
+    return <BackpackContents key={`${pxt.appTarget?.id}:${userId ? `user:${userId}` : "guest"}:${props.headerId}:${tutorial}:${assetsEnabled}`}
+        {...props} tutorial={tutorial} userId={userId} assetsEnabled={assetsEnabled} />;
 }
 
-function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JSX.Element {
+function BackpackContents(props: ProjectBackpackProps & { userId?: string; assetsEnabled: boolean }): JSX.Element {
     const [contents, setContents] = React.useState<backpack.BackpackState>({ entries: [] });
     const { entries: items, warning } = contents;
-    const [kind, setKind] = React.useState<pxt.auth.BackpackKind>(props.tutorial ? "asset" : props.openRequest?.kind || "code");
+    const [kind, setKind] = React.useState<pxt.auth.BackpackKind>(props.assetsEnabled
+        ? props.tutorial ? "asset" : props.openRequest?.kind || "code" : "code");
     const codeUnavailable = props.tutorial && kind === "code";
     const [query, setQuery] = React.useState("");
     const [ready, setReady] = React.useState(false);
@@ -216,7 +218,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     }, []);
     React.useEffect(() => {
         if (props.openRequest?.kind) {
-            setKind(props.tutorial ? "asset" : props.openRequest.kind);
+            setKind(props.assetsEnabled ? props.tutorial ? "asset" : props.openRequest.kind : "code");
             setQuery("");
         }
     }, [props.openRequest]);
@@ -367,7 +369,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
     };
 
     return <>
-        {props.renderHeader(lf("Backpack"), <div className="project-backpack__tabs" role="tablist" aria-label={lf("Backpack contents")}>
+        {props.renderHeader(lf("Backpack"), props.assetsEnabled && <div className="project-backpack__tabs" role="tablist" aria-label={lf("Backpack contents")}>
             {(["code", "asset"] as const).map((value, index) => <button key={value} id={`project-backpack-tab-${value}`}
                 ref={element => kindButtons.current[index] = element} className="project-backpack__button" type="button" role="tab"
                 aria-selected={kind === value} aria-controls="project-backpack-items" tabIndex={kind === value ? 0 : -1}
@@ -399,8 +401,11 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string }): JS
             </button>}
         </div>}
         <div ref={body} id="project-backpack-items" className="project-backpack__body" tabIndex={-1} aria-busy={pending}
-            role="tabpanel" aria-labelledby={`project-backpack-tab-${kind}`}>
-            {codeUnavailable ? <p>{lf("Code snippets aren't available during tutorials. Use the Assets tab to add your own assets.")}</p> : <>
+            role={props.assetsEnabled ? "tabpanel" : "region"} aria-label={props.assetsEnabled ? undefined : lf("Backpack snippets")}
+            aria-labelledby={props.assetsEnabled ? `project-backpack-tab-${kind}` : undefined}>
+            {codeUnavailable ? <p>{props.assetsEnabled
+                ? lf("Code snippets aren't available during tutorials. Use the Assets tab to add your own assets.")
+                : lf("Code snippets aren't available during tutorials.")}</p> : <>
             {!props.userId && auth.hasIdentity() && <button className="project-backpack__button project-backpack__sign-in"
                 type="button" onClick={props.onSignIn}>{lf("Sign in to save your backpack across browsers.")}</button>}
             <div role="status">

@@ -68,7 +68,7 @@ function environment(installed = {}) {
     const pxt = {
         CONFIG_NAME: "pxt.json",
         appTarget: { id: "arcade", versions: { target: "1.0.0", pxt: "13.2.4" },
-            bundledpkgs: { core: {} }, appTheme: { backpack: true }, cloud: { packages: true, githubPackages: true } },
+            bundledpkgs: { core: {} }, appTheme: { backpack: true, assetEditor: true }, cloud: { packages: true, githubPackages: true } },
         github: {
             parseRepoId: ref => {
                 const [fullName, tag] = ref.replace(/^github:/, "").split("#");

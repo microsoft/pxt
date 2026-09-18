@@ -149,7 +149,7 @@ describe("project backpack UI", function () {
             window.pxt = {
                 BLOCKS_PROJECT_NAME: "blocksprj",
                 shell: { isReadOnly: () => false },
-                appTarget: { appTheme: { backpack: true }, bundledpkgs: { core: {} } },
+                appTarget: { appTheme: { backpack: true, assetEditor: true }, bundledpkgs: { core: {} } },
                 Util: { jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } } }
             };
             const subscribers = new Set();
@@ -176,7 +176,7 @@ describe("project backpack UI", function () {
             const auth = {
                 USER_PROFILE: "auth:profile", LOGGED_IN: "auth:logged-in",
                 loggedIn: () => !!test.user, userProfile: () => test.user ? { id: test.user } : undefined,
-                hasIdentity: () => true
+                hasIdentity: () => !test.noIdentity
             };
             pxt.auth = auth;
             const data = {
@@ -189,6 +189,7 @@ describe("project backpack UI", function () {
             };
             const backpack = {
                 isBackpackEnabled: () => window.backpackValidation.isBackpackEnabled(),
+                isBackpackAssetsEnabled: () => window.backpackValidation.isBackpackAssetsEnabled(),
                 backpackEntryKey: entry => JSON.stringify([entry.source, entry.id]),
                 getBackpackState: () => ({
                     entries: (test.snapshots[test.storeKey()] || []).map(item => {
@@ -335,6 +336,23 @@ describe("project backpack UI", function () {
         assert.deepStrictEqual(await visibleNames(), [saved.name]);
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds.map(add => add.item.id)), [saved.id]);
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.assetSaves), [{ id: saved.id, item: saved }]);
+        await page.evaluate(() => { pxt.appTarget.appTheme.assetEditor = false; backpackTest.rerender(); });
+        await idle();
+        assert.equal(await page.$('.project-backpack__tabs'), null);
+        assert.match(await text(), /Code snippets aren't available during tutorials/);
+        assert.doesNotMatch(await text(), /Use the Assets tab/);
+        await page.evaluate(items => {
+            backpackTest.tutorial = false;
+            backpackTest.noIdentity = true;
+            backpackTest.remote.__guest__ = items;
+            backpackTest.rerender();
+        }, [item(), saved]);
+        await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Jump"]);
+        assert.equal(await page.$('.project-backpack__sign-in'), null);
+        assert.equal(await page.$eval(body, element => element.getAttribute("aria-labelledby")), null);
+        await page.evaluate(() => { pxt.appTarget.appTheme.backpack = false; backpackTest.rerender(); });
+        assert.equal(await page.$(body), null);
     });
 
     it("keeps unchanged card nodes and preview URLs through reopen while updating changed metadata inline", async () => {

@@ -70,7 +70,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const client = { apiAsync: forbidden };
             window.pxt = {
                 appTarget: { id: "arcade", versions: { target: "1.0.0", pxt: "13.2.4" },
-                    appTheme: { backpack: true }, bundledpkgs: { core: {} } },
+                    appTheme: { backpack: true, assetEditor: true }, bundledpkgs: { core: {} } },
                 github: { parseRepoId: version => ({ owner: version.split(":")[1].split("/")[0], project: version.split("/")[1] }) },
                 BrowserUtils: { isLocalHostDev: () => test.localDev }, cloud: { DEV_BACKEND: "https://backend.test" },
                 storage: { shared: { getAsync: forbidden, setAsync: forbidden } },
@@ -165,12 +165,15 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
 
     it("round-trips beta metadata through guest persistence, direct import, upload, and cloud content", async () => {
         const result = await page.evaluate(async () => {
-            bt.signIn(undefined);
+            // Disabled identity must stay local even if a previous login is cached.
+            pxt.auth.hasIdentity = () => false;
             const item = bt.item(1, { versions: { target: "1.0.0-beta.2+capture", pxt: "13.2.4-beta.1" } });
             await store.saveBackpackItemAsync(item);
             await store.refreshBackpackAsync();
             const local = store.getBackpackItems()[0];
             await store.importBackpackItemAsync(local, "project");
+            if (bt.requests.length) throw new Error("Login-disabled Backpack must not access the cloud");
+            pxt.auth.hasIdentity = () => true;
             bt.signIn("alice"); await store.refreshBackpackAsync();
             const entry = store.getBackpackState().entries[0];
             await store.importBackpackEntryAsync(entry, "project");
