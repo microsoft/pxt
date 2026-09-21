@@ -100,6 +100,12 @@ describe("localized identifier display fields", () => {
             localizationKey: "{id:var}otherSprite",
             suffix: ""
         });
+
+        const nestedSecond = { getName: () => "otherSprite2" } as Blockly.IVariableModel<Blockly.IVariableState>;
+        chai.expect(pxtblockly.getVariableFieldLocalizationInfo(nestedField, nestedSecond, nestedBlockInfo)).to.deep.equal({
+            localizationKey: "{id:var}otherSprite",
+            suffix: "2"
+        });
     });
 
     it("uses localized SpriteKind labels with raw stored values and leaves custom kinds unchanged", () => {
