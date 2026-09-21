@@ -15,6 +15,7 @@ interface Array<T> {
     //% help=arrays/push
     //% shim=Array_::push weight=50
     //% blockId="array_push" block="%list| add value %value| to end" blockNamespace="arrays"
+    //% list.fieldOptions.localizeVariable=true
     //% list.label="list to change" item.label="value to add"
     //% group="Modify"
     push(item: T): void;

@@ -174,6 +174,7 @@ export function getVariableFieldLocalizationInfo(
                 const params = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
                 const param = params.filter(p => p.definitionName === input.name)[0];
                 defaultName = param && pxt.blocks.variableDefaultName(param.defaultValue, param.shadowBlockId);
+                allowNumericSuffix = !!defaultName;
             }
         }
     }
