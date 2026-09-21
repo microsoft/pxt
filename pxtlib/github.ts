@@ -250,8 +250,27 @@ namespace pxt.github {
 
         async loadConfigAsync(repopath: string, tag: string): Promise<pxt.PackageConfig> {
             if (!tag) {
-                pxt.debug(`dep: default to master branch`)
-                tag = "master";
+                pxt.debug(`dep: no tag specified, try master and main`);
+                let res: pxt.PackageConfig;
+                let error: any;
+                try {
+                    res = await this.loadConfigAsync(repopath, "master");
+                }
+                catch (e) {
+                    error = e;
+                    pxt.log(`Error loading default master config for ${repopath}: ${e.message}`);
+                }
+                if (res) return res;
+
+                try {
+                    res = await this.loadConfigAsync(repopath, "main");
+                }
+                catch (e) {
+                    error = e;
+                    pxt.log(`Error loading default main config for ${repopath}: ${e.message}`);
+                }
+                if (res) return res;
+                else throw error;
             }
 
             // cache lookup
@@ -288,8 +307,28 @@ namespace pxt.github {
 
         async loadPackageAsync(repopath: string, tag: string, fallbackPackageFiles?: pxt.Map<string>): Promise<CachedPackage> {
             if (!tag) {
-                pxt.debug(`load pkg: default to master branch`)
-                tag = "master";
+                pxt.debug(`load pkg: no tag specified, try master and main`);
+
+                let res: CachedPackage;
+                let error: any;
+                try {
+                    res = await this.loadPackageAsync(repopath, "master", fallbackPackageFiles);
+                }
+                catch (e) {
+                    error = e;
+                    pxt.log(`Error loading default master package for ${repopath}: ${e.message}`);
+                }
+                if (res) return res;
+
+                try {
+                    res = await this.loadPackageAsync(repopath, "main", fallbackPackageFiles);
+                }
+                catch (e) {
+                    error = e;
+                    pxt.log(`Error loading default main package for ${repopath}: ${e.message}`);
+                }
+                if (res) return res;
+                else throw error;
             }
 
             // try using github proxy first
@@ -626,14 +665,28 @@ namespace pxt.github {
         })
     }
 
-    export function getRefAsync(repopath: string, branch: string) {
-        branch = branch || "master";
-        return ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch)
-            .then(resolveRefAsync)
-            .catch(err => {
-                if (err.statusCode == 404) return undefined;
-                else Promise.reject(err);
-            })
+    export async function getRefAsync(repopath: string, branch: string): Promise<string | undefined> {
+        if (!branch) {
+            // try master and main
+            let res = await getRefAsync(repopath, "master");
+            if (!res)
+                res = await getRefAsync(repopath, "main");
+            return res;
+        }
+
+        try {
+            const ref = await ghGetJsonAsync("https://api.github.com/repos/" + repopath + "/git/refs/heads/" + branch);
+            return resolveRefAsync(ref);
+        }
+        catch (e) {
+            pxt.debug(`Error fetching ref for ${repopath} branch ${branch}: ${e.message}`);
+            if (e.statusCode === 404) {
+                return undefined;
+            }
+            else {
+                throw e;
+            }
+        }
     }
 
     function generateNextRefName(res: RefsResult, pref: string): string {

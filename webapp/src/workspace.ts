@@ -1113,7 +1113,7 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
     // add compiled javascript to be run in github pages
     if (pxt.appTarget.appTheme.githubCompiledJs
         && options.binaryJs
-        && (!parsed.tag || parsed.tag == "master")) {
+        && (!parsed.tag || parsed.tag == "master" || parsed.tag == "main")) {
         const v = cfg.version || "0.0.0";
         const opts: compiler.CompileOptions = {
             jsMetaVersion: v
@@ -1658,6 +1658,7 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
 
 export async function importGithubAsync(id: string): Promise<Header> {
     // if tag is not specified, asssume master
+    // FIXME: should handle the case where default branch is main
     const repoid = pxt.github.normalizeRepoId(id, "master").replace(/^github:/, "")
     const parsed = pxt.github.parseRepoId(repoid)
 

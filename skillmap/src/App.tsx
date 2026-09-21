@@ -51,6 +51,7 @@ import { ThemePickerModal } from '../../react-common/components/theming/ThemePic
 import './App.css';
 
 import { ThemeManager } from 'react-common/components/theming/themeManager';
+import { resetEditorThemesAsync } from '../../react-common/components/theming/themeReset';
 import { FeedbackModal } from 'react-common/components/controls/Feedback/Feedback';
 import { SimulatorThemePickerModal } from './components/SimulatorThemePickerModal';
 import {
@@ -120,6 +121,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.showEditorThemePicker = this.showEditorThemePicker.bind(this);
         this.closeThemePicker = this.closeThemePicker.bind(this);
         this.saveSimulatorTheme = this.saveSimulatorTheme.bind(this);
+        this.resetEditorThemes = this.resetEditorThemes.bind(this);
 
         this.state = {
             cloudSyncCheckHasFinished: false,
@@ -556,6 +558,25 @@ class AppImpl extends React.Component<AppProps, AppState> {
         this.closeThemePicker(false);
     }
 
+    async resetEditorThemes(): Promise<void> {
+        pxt.tickEvent("skillmap.theme.reset", undefined, { interactiveConsent: true });
+        const defaultSimulatorPreference = await resetEditorThemesAsync(
+            pxt.appTarget,
+            theme => this.persistColorTheme(theme),
+            () => authClient.setSimulatorThemePreferenceAsync(undefined)
+        );
+        if (defaultSimulatorPreference) {
+            const resources = await this.ready();
+            await resources.sendMessageAsync?.({
+                type: "pxteditor",
+                action: "setsimulatortheme",
+                preference: defaultSimulatorPreference,
+                savePreference: false,
+            } as pxt.editor.EditorMessageSetSimulatorThemeRequest);
+        }
+        this.closeThemePicker(false);
+    }
+
     private async persistColorTheme(theme: pxt.ColorThemeInfo) {
         pxt.tickEvent(`skillmap.menu.theme.changetheme`, { theme: theme.id });
         this.themeManager.switchColorTheme(theme.id);
@@ -618,6 +639,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     selectedThemeId={this.state.editorThemeId || this.themeManager.getCurrentColorTheme()?.id}
                     onThemeChanged={this.previewColorTheme}
                     onSave={this.changeTheme}
+                    onReset={this.resetEditorThemes}
                     onSimulatorThemeClicked={simulatorThemePresets.length
                         ? this.showSimulatorThemePicker
                         : undefined}
@@ -633,6 +655,7 @@ class AppImpl extends React.Component<AppProps, AppState> {
                     onThemeChanged={simulatorThemePreference => this.setState({ simulatorThemePreference })}
                     onEditorThemeClicked={this.showEditorThemePicker}
                     onSave={this.saveSimulatorTheme}
+                    onReset={this.resetEditorThemes}
                     onClose={this.closeThemePicker} />}
                 { feedbackEnabled && this.props.showFeedback && <FeedbackModal kind="rating" onClose={this.props.dispatchCloseFeedback} />}
             </div>);

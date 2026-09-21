@@ -16,7 +16,7 @@ Also, some strings have replacement tokens (something like `{0}`, `{1}`, or `%1`
 * ``A {0} named '{1}' already exists.``
 * ``%1 set value at %2 to %3``
 
-The content in the strings files comes from a process of text extraction from the website code, code for the editor webapp, and all of the code to make the actual blocks used in the editor. Periodally, all of the new and changed strings from text found in the code are collected, placed in strings files, and uploaded to Crowdin. For example, some code to create a text element in HTML for ``Add a parameter`` looks like this:
+The content in the strings files comes from a process of text extraction from the website code, code for the editor webapp, and all of the code to make the actual blocks used in the editor. Periodically, all of the new and changed strings from text found in the code are collected, placed in strings files, and uploaded to Crowdin. For example, some code to create a text element in HTML for ``Add a parameter`` looks like this:
 
 ```
 <span className="ui text mobile only paramlabel">{lf("Add a parameter")}</span>

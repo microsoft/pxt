@@ -538,13 +538,13 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
             items.push({ role: "separator" });
             items.push({
                 role: "menuitem",
-                className: "ui item",
+                className: "github-menuitem",
                 title: lf("Unlink {0} from GitHub", githubUser.name),
                 onClick: this.signOutGithub,
                 children: <>
                     <div className="avatar" role="presentation">
-                        <img className="ui circular image" src={githubUser.photo} alt={lf("User picture")} />
-                    </div>,
+                        <img src={githubUser.photo} alt={lf("User picture")} />
+                    </div>
                     {lf("Disconnect GitHub")}
                 </>
             });

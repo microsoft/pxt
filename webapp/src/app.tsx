@@ -89,6 +89,7 @@ import { initGitHubDb } from "./idbworkspace";
 import { BlockDefinition, CategoryNameID } from "./toolbox";
 import { FeedbackModal } from "../../react-common/components/controls/Feedback/Feedback";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
 import {
     getDefaultSimulatorThemePreference,
     getSimulatorThemeForLayout,
@@ -257,6 +258,7 @@ export class ProjectView
         this.previewColorTheme = this.previewColorTheme.bind(this);
         this.saveEditorTheme = this.saveEditorTheme.bind(this);
         this.saveSimulatorTheme = this.saveSimulatorTheme.bind(this);
+        this.resetEditorThemes = this.resetEditorThemes.bind(this);
         this.onThemeChanged = this.onThemeChanged.bind(this);
         this.setColorThemeById = this.setColorThemeById.bind(this);
         this.showLoginDialog = this.showLoginDialog.bind(this);
@@ -4916,6 +4918,22 @@ export class ProjectView
         await this.saveThemePickerDrafts();
     }
 
+    async resetEditorThemes(): Promise<void> {
+        pxt.tickEvent("theme.reset", undefined, { interactiveConsent: true });
+        await resetEditorThemesAsync(
+            pxt.appTarget,
+            theme => this.setColorThemeById(theme.id, true, false),
+            () => simulatorThemePreference.setSimulatorThemePreference(undefined)
+        );
+        // Discard previews without restoring the pre-reset editor theme. Project themes stay intact.
+        if (pxt.appTarget.simulator?.themePresets?.length) {
+            this.closeSimulatorThemePicker(false, true, false);
+        } else {
+            this.resetThemePickerDrafts(false);
+            this.setState({ themePickerOpen: false });
+        }
+    }
+
     async setSimulatorThemePreference(preference: pxt.auth.SimulatorThemePreference, savePreference = true) {
         if (savePreference) await simulatorThemePreference.setSimulatorThemePreference(preference);
         else simulatorThemePreference.setSessionSimulatorThemePreference(preference);
@@ -5959,6 +5977,7 @@ export class ProjectView
                     selectedThemeId={this.themePickerColorThemeId}
                     onThemeChanged={this.previewColorTheme}
                     onSave={this.saveEditorTheme}
+                    onReset={this.resetEditorThemes}
                     onSimulatorThemeClicked={pxt.appTarget.simulator?.themePresets?.length
                         ? this.showSimulatorThemePicker
                         : undefined}
@@ -5977,6 +5996,7 @@ export class ProjectView
                     }}
                     onEditorThemeClicked={this.showEditorThemePicker}
                     onSave={this.saveSimulatorTheme}
+                    onReset={this.resetEditorThemes}
                     onClose={this.hideSimulatorThemePicker} />}
             </div>
         );

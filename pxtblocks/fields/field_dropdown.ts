@@ -23,8 +23,11 @@ export class FieldDropdown extends Blockly.FieldDropdown {
         this.clickTargetRect = this.borderRect_!;
         this.clickTargetRect.setAttribute("stroke-opacity", "0");
         this.clickTargetRect.setAttribute("fill-opacity", "0");
-        this.clickTargetRect.style.strokeOpacity = '0';
-        this.clickTargetRect.style.fillOpacity = '0';
+
+        if (!this.hasSiblingLabel()) {
+            this.clickTargetRect.style.strokeOpacity = "0";
+            this.clickTargetRect.style.fillOpacity = "0";
+        }
 
         // Make sure to unset the border rect so that it isn't included in size
         // calculations
@@ -53,6 +56,17 @@ export class FieldDropdown extends Blockly.FieldDropdown {
             return true;
         }
         return super.shouldAddBorderRect_();
+    }
+
+    protected hasSiblingLabel(): boolean {
+        for (const input of this.sourceBlock_.inputList) {
+            for (const field of input.fieldRow) {
+                if (field === this) continue;
+
+                if (field instanceof Blockly.FieldLabel) return true;
+            }
+        }
+        return false;
     }
 
     protected override bindEvents_() {

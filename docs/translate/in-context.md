@@ -27,7 +27,7 @@ Each portion of text that is available for translation will have a colored borde
 
 * Red border: the text has no translation
 * Blue border: the text has a translation but it isn't validated/approved
-* Green border: the text has a valdated/approved translation
+* Green border: the text has a validated/approved translation
 
 For user interface elements, simply click on the icon to translate them.
 
