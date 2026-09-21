@@ -18,16 +18,16 @@ namespace SpriteKind {
         return nextKind++;
     }
 
-    //% isKind
+    //% isKind block="Player" blockIdentity="sprites._spriteType"
     export const Player = create();
 
-    //% isKind
+    //% isKind block="Projectile" blockIdentity="sprites._spriteType"
     export const Projectile = create();
 
-    //% isKind
+    //% isKind block="Food" blockIdentity="sprites._spriteType"
     export const Food = create();
 
-    //% isKind
+    //% isKind block="Enemy" blockIdentity="sprites._spriteType"
     export const Enemy = create();
 }
 

@@ -26,7 +26,7 @@ import { FieldDropdown } from "./fields/field_dropdown";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 import { initCopyPaste } from "./copyPaste";
 export { initCopyPaste } from "./copyPaste";
-import { FieldVariable } from "./plugins/newVariableField/fieldVariable";
+import { FieldVariable, setVariableFieldLocalizeFunction } from "./plugins/newVariableField/fieldVariable";
 import { ArgumentReporterBlock, FieldArgumentReporter, setArgumentReporterLocalizeFunction } from "./plugins/functions";
 import { getArgumentReporterParent } from "./plugins/functions/utils";
 import { isFunctionDefinition } from "./compiler/util";
@@ -110,6 +110,13 @@ export function blockSymbol(type: string): pxtc.SymbolInfo {
 export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     cachedBlockInfo = blockInfo;
 
+    setVariableFieldLocalizeFunction((field, variable) => {
+        const info = getVariableFieldLocalizationInfo(field, variable, blockInfo);
+        if (!info) return undefined;
+        const localized = pxtc.getBlockTranslationsCacheKey(info.localizationKey);
+        return localized ? localized + info.suffix : undefined;
+    });
+
     setDraggableShadowBlocks(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
 
     setArgumentReporterLocalizeFunction((arg, block) => {
@@ -132,6 +139,58 @@ export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
             }
             return fn;
         });
+}
+
+export interface VariableFieldLocalizationInfo {
+    localizationKey: string;
+    suffix: string;
+}
+
+export function getVariableFieldLocalizationInfo(
+    field: FieldVariable,
+    variable: Blockly.IVariableModel<Blockly.IVariableState>,
+    blockInfo: pxtc.BlocksInfo
+): VariableFieldLocalizationInfo {
+    const sourceBlock = field.getSourceBlock();
+    if (!sourceBlock || !blockInfo) return undefined;
+
+    const rawName = variable.getName();
+    let defaultName: string;
+    let allowNumericSuffix = false;
+
+    if (sourceBlock.type === "variables_set") {
+        const valueBlock = sourceBlock.getInputTargetBlock("VALUE");
+        const fn = valueBlock && blockInfo.blocksById[valueBlock.type];
+        defaultName = fn && pxt.blocks.blockSetVariableName(fn);
+        allowNumericSuffix = true;
+    }
+    else if (sourceBlock.type === "variables_get") {
+        const parent = sourceBlock.getParent();
+        const fn = parent && blockInfo.blocksById[parent.type];
+        if (fn) {
+            const input = parent.inputList.filter(i => i.connection?.targetBlock() === sourceBlock)[0];
+            if (input) {
+                const comp = pxt.blocks.compileInfo(fn);
+                const params = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+                const param = params.filter(p => p.definitionName === input.name)[0];
+                defaultName = param && pxt.blocks.variableDefaultName(param.defaultValue, param.shadowBlockId);
+            }
+        }
+    }
+
+    if (!defaultName) return undefined;
+    if (rawName === defaultName) {
+        return { localizationKey: pxt.blocks.variableNameLocalizationKey(defaultName), suffix: "" };
+    }
+
+    if (allowNumericSuffix && rawName.indexOf(defaultName) === 0) {
+        const suffix = rawName.slice(defaultName.length);
+        if (/^[2-9][0-9]*$/.test(suffix)) {
+            return { localizationKey: pxt.blocks.variableNameLocalizationKey(defaultName), suffix };
+        }
+    }
+
+    return undefined;
 }
 
 function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo, blockXml: HTMLElement): boolean {

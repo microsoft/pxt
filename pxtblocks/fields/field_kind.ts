@@ -128,11 +128,12 @@ function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction
         if (sourceBlock?.workspace && !sourceBlock.isInFlyout) {
             const options = sourceBlock.workspace.getVariableMap().getVariablesOfType(kindType(opts.name));
             options.forEach(model => {
-                res.push([model.getName(), model.getName()]);
+                const name = model.getName();
+                res.push([opts.initialMemberDisplayNames?.[name] || name, name]);
             });
         } else {
             // Can't create variables from within the flyout, so we just have to fake it
-            opts.initialMembers.forEach((e) => res.push([e, e]) );
+            opts.initialMembers.forEach((e) => res.push([opts.initialMemberDisplayNames?.[e] || e, e]) );
         }
 
 
