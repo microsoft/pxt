@@ -118,6 +118,8 @@ export const asmChecks: pxt.Map<AsmCheck> = {
         checkDefaultParameters(asm);
         chai.assert(/DpProbe_exact__P\d+_iface:\s+b DpProbe_exact__P\d+_nochk/.test(asm),
             "exact interface entry must reach the common default prologue");
+    },
+
     "loopcapture.ts": (asm, res) => {
         chai.assert(hexSize(res) > 0, "empty loop capture hex output");
         const code = userCode(asm);
@@ -414,6 +416,8 @@ export const externalCases: pxt.Map<AsmCheck> = {
     "tests/compile-test/lang-test0/58defaultinitializers.ts": (asm, res) => {
         chai.assert(codeSize(asm) > 0, "no default initializer code generated");
         chai.assert(hexSize(res) > 0, "no default initializer hex generated");
+    },
+
     "tests/compile-test/lang-test0/58loopcapture.ts": (asm, res) => {
         chai.assert(codeSize(asm) > 0, "no loop capture code generated");
         chai.assert(hexSize(res) > 0, "no loop capture hex generated");
