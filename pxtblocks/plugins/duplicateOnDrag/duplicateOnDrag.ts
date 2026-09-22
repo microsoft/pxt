@@ -3,6 +3,16 @@ import { PathObject } from "../renderer/pathObject";
 
 let draggableShadowAllowlist: string[];
 let duplicateRefs: DuplicateOnDragRef[];
+const draggableShadowInstances = new WeakSet<Blockly.Block>();
+
+export function setDuplicateShadowOnDrag(block: Blockly.Block, enabled: boolean): void {
+    if (enabled) draggableShadowInstances.add(block);
+    else draggableShadowInstances.delete(block);
+}
+
+export function hasDuplicateShadowOnDrag(block: Blockly.Block): boolean {
+    return draggableShadowInstances.has(block);
+}
 
 interface DuplicateOnDragRef {
     parentBlockType: string;
@@ -42,6 +52,7 @@ export function setDuplicateOnDrag(parentBlockType: string, inputName?: string, 
 }
 
 export function isAllowlistedShadow(block: Blockly.Block) {
+    if (hasDuplicateShadowOnDrag(block)) return true;
     if (draggableShadowAllowlist) {
         if (draggableShadowAllowlist.indexOf(block.type) !== -1) {
             return true;

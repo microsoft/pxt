@@ -115,39 +115,17 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
     shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
     shadow.setAttribute("colour", "#fff");
 
-    if (shadowId === COLOR_PICKER_BLOCK_TYPE) {
-        const requestedFormat = p.fieldOptions?.format;
-        const formatName = ["rgb", "hsv", "hsl", "cmyk", "hex"].indexOf(requestedFormat) >= 0 ? requestedFormat : "rgb";
-        const rgb = Number(defaultValue) || 0;
-        const hex = typeof defaultValue === "string" && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(defaultValue)
-            ? defaultValue : fromFormatToHex("rgb", [rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255]);
-        const mutation = document.createElement("mutation");
-        const blockColor = info.blocks.find(block => block.attributes.builtinBlockId === COLOR_PICKER_BLOCK_TYPE)?.attributes.color;
-        if (blockColor) mutation.setAttribute("color", blockColor);
-        const hsv = fromHexToFormat("hsv", hex);
-        ["hue", "saturation", "value"].forEach((name, index) => mutation.setAttribute(name, hsv[index].toString()));
-        shadow.appendChild(mutation);
-
-        const format = document.createElement("field");
-        format.setAttribute("name", "FORMAT");
-        format.textContent = formatName;
-        shadow.appendChild(format);
-
-        if (formatName === "hex") {
-            const hexInput = document.createElement("value");
-            hexInput.setAttribute("name", "HEX_INPUT");
-            hexInput.appendChild(generateColorPickerStringShadowDom(hex));
-            shadow.appendChild(hexInput);
-        }
-        else {
-            const types = getFieldTypesForFormat(formatName);
-            fromHSVToFormat(formatName, hsv).forEach((channel, index) => {
-                const input = document.createElement("value");
-                input.setAttribute("name", "INPUT" + index);
-                input.appendChild(generateColorPickerNumberShadowDom(types[index], channel));
-                shadow.appendChild(input);
-            });
-        }
+    const shadowSymbol = info.blocksById[shadowId];
+    if (shadowId === COLOR_PICKER_BLOCK_TYPE || shadowSymbol?.attributes.builtinBlockId === COLOR_PICKER_BLOCK_TYPE) {
+        const contributor = shadowSymbol || info.blocks.find(block => block.attributes.builtinBlockId === COLOR_PICKER_BLOCK_TYPE);
+        const defaults = contributor && pxt.blocks.compileInfo(contributor).parameters[0];
+        value.replaceChild(createColorPickerBlock(
+            defaultV !== undefined ? defaultV : defaults?.defaultValue,
+            p.fieldOptions?.format || defaults?.fieldOptions?.format,
+            contributor?.attributes.color,
+            true,
+            contributor?.attributes.duplicateShadowOnDrag
+        ), shadow);
         return value;
     }
 
@@ -354,7 +332,7 @@ export function createToolboxBlock(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, c
     let parentInput: HTMLElement;
 
     if (fn.attributes.builtinBlockId) {
-        return createBuiltinBlock(fn);
+        return createBuiltinBlock(fn, comp, isShadow);
     }
 
     if (fn.attributes.toolboxParent) {
@@ -627,60 +605,51 @@ export function createFunctionsFlyoutCategory(workspace: Blockly.WorkspaceSvg) {
     return res;
 };
 
-function createBuiltinBlock(fn: pxtc.SymbolInfo) {
+function createBuiltinBlock(fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo, isShadow: boolean) {
     const id = fn.attributes.builtinBlockId;
-
-    const blockColor = fn.attributes.color;
-
-    if (id === "makecode_color_picker") {
-        // <block type="makecode_color_picker">
-        //     <field name="FORMAT">rgb</field>
-        //     <value name="INPUT0">
-        //         <shadow type="makecode_color_picker_number">
-        //             <field name="NUM">255</field>
-        //         </shadow>
-        //     </value>
-        //     <value name="INPUT1">
-        //         <shadow type="makecode_color_picker_number">
-        //             <field name="NUM">255</field>
-        //         </shadow>
-        //     </value>
-        //     <value name="INPUT2">
-        //         <shadow type="makecode_color_picker_number">
-        //             <field name="NUM">0</field>
-        //         </shadow>
-        //     </value>
-        // </block>
-        const block = document.createElement("block");
-        block.setAttribute("type", "makecode_color_picker");
-
-        const field = document.createElement("field");
-        field.setAttribute("name", "FORMAT");
-        field.textContent = "rgb";
-        block.appendChild(field);
-
-        for (let i = 0; i < 3; i++) {
-            const value = document.createElement("value");
-            value.setAttribute("name", `INPUT${i}`);
-            const shadow = document.createElement("shadow");
-            shadow.setAttribute("type", "makecode_color_picker_number");
-            const numField = document.createElement("field");
-            numField.setAttribute("name", "NUM");
-            numField.textContent = "0";
-            shadow.appendChild(numField);
-            value.appendChild(shadow);
-            block.appendChild(value);
-        }
-
-        if (blockColor) {
-            const mutation = document.createElement("mutation");
-            mutation.setAttribute("color", blockColor);
-            block.appendChild(mutation);
-        }
-
-        return block;
+    if (id === COLOR_PICKER_BLOCK_TYPE) {
+        const defaults = comp.parameters[0];
+        return createColorPickerBlock(defaults?.defaultValue, defaults?.fieldOptions?.format, fn.attributes.color, isShadow, fn.attributes.duplicateShadowOnDrag);
     }
 
     pxt.warn(`Unsupported builtin block id: ${id}`);
     return undefined;
+}
+
+function createColorPickerBlock(defaultValue: string, requestedFormat: string, blockColor: string, isShadow: boolean, duplicateShadowOnDrag = false): HTMLElement {
+    if (defaultValue?.charAt(0) === '"') defaultValue = JSON.parse(defaultValue);
+    const formatName = ["rgb", "hsv", "hsl", "cmyk", "hex"].indexOf(requestedFormat) >= 0 ? requestedFormat : "rgb";
+    const rgb = Number(defaultValue) || 0;
+    const hex = typeof defaultValue === "string" && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(defaultValue)
+        ? defaultValue : fromFormatToHex("rgb", [rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255]);
+    const block = document.createElement(isShadow ? "shadow" : "block");
+    block.setAttribute("type", COLOR_PICKER_BLOCK_TYPE);
+    const mutation = document.createElement("mutation");
+    if (blockColor) mutation.setAttribute("color", blockColor);
+    if (isShadow && duplicateShadowOnDrag) mutation.setAttribute("duplicateondrag", "true");
+    const hsv = fromHexToFormat("hsv", hex);
+    ["hue", "saturation", "value"].forEach((name, index) => mutation.setAttribute(name, hsv[index].toString()));
+    block.appendChild(mutation);
+
+    const format = document.createElement("field");
+    format.setAttribute("name", "FORMAT");
+    format.textContent = formatName;
+    block.appendChild(format);
+
+    if (formatName === "hex") {
+        const input = document.createElement("value");
+        input.setAttribute("name", "HEX_INPUT");
+        input.appendChild(generateColorPickerStringShadowDom(hex));
+        block.appendChild(input);
+    }
+    else {
+        const types = getFieldTypesForFormat(formatName);
+        fromHSVToFormat(formatName, hsv).forEach((channel, index) => {
+            const input = document.createElement("value");
+            input.setAttribute("name", "INPUT" + index);
+            input.appendChild(generateColorPickerNumberShadowDom(types[index], channel));
+            block.appendChild(input);
+        });
+    }
+    return block;
 }

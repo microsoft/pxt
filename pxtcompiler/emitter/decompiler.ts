@@ -686,6 +686,14 @@ ${output}</xml>`;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
+            // Contributed built-ins use their own ID in annotations, but the built-in type in Blockly XML.
+            const contributor = blocksInfo.blocksById[shadowType];
+            shadowType = contributor?.attributes.builtinBlockId || shadowType;
+            if (shadowType === "makecode_color_picker" && value.kind === "expr" && value.type === shadowType) {
+                value.mutation = value.mutation || {};
+                if (contributor?.attributes.color) value.mutation.color = contributor.attributes.color;
+                if (contributor?.attributes.duplicateShadowOnDrag) value.mutation.duplicateondrag = "true";
+            }
             if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
                 // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
                 shadowType = minmaxNumberType;
