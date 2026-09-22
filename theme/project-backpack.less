@@ -97,6 +97,17 @@
     .common-input { font: inherit; color: var(--tools-foreground); }
     .common-input::placeholder { color: var(--tools-foreground); opacity: .7; }
     .common-input-group:focus-within::after { border-radius: .5rem; }
+
+    .common-input-wrapper.disabled {
+        .common-input-group {
+            background: var(--tools-surface);
+            border-color: color-mix(in srgb, var(--tools-foreground) 20%, var(--tools-surface));
+        }
+        .common-input, i {
+            color: color-mix(in srgb, var(--tools-foreground) 60%, var(--tools-surface));
+        }
+        .common-input::placeholder { color: inherit; opacity: 1; }
+    }
 }
 
 .project-backpack__tabs {
