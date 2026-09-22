@@ -336,6 +336,49 @@ function getCurrentDBPrefix() {
     return pxt.appTarget.appTheme.browserDbPrefixes[currentMajor];
 }
 
+export async function downloadProblemProjectsAsync(searchString: string) {
+    const db = await getCurrentDbAsync();
+    const headers = await db.getAllAsync<Header>(HEADERS_TABLE);
+
+    searchString = searchString.toLowerCase();
+
+    const toDownload: Header[] = [];
+
+    for (const header of headers) {
+        if (header.name.toLowerCase().includes(searchString)) {
+            toDownload.push(header);
+        }
+    }
+
+    for (const header of toDownload) {
+        const text = await db.getAsync<StoredText>(TEXTS_TABLE, header.id);
+
+        if (text) {
+            pxt.BrowserUtils.browserDownloadText(JSON.stringify(text.files), header.name + ".txt");
+        }
+    }
+}
+
+export async function deleteProblemProjectsAsync(searchString: string) {
+    const db = await getCurrentDbAsync();
+    const headers = await db.getAllAsync<Header>(HEADERS_TABLE);
+
+    searchString = searchString.toLowerCase();
+
+    const toDelete: Header[] = [];
+
+    for (const header of headers) {
+        if (header.name.toLowerCase().includes(searchString)) {
+            toDelete.push(header);
+        }
+    }
+
+    for (const header of toDelete) {
+        await db.deleteAsync(TEXTS_TABLE, header.id);
+        await db.deleteAsync(HEADERS_TABLE, header.id);
+    }
+}
+
 async function listAsync(): Promise<pxt.workspace.Header[]> {
     await performMigrationsAsync();
     const db = await getCurrentDbAsync();

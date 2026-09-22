@@ -22,6 +22,7 @@ import Cloud = pxt.Cloud;
 import * as pxtblockly from "../../pxtblocks";
 import { HistoryFile, SnapshotEvent, getTextAtTime } from "../../pxteditor/history";
 import { Milestones } from "./constants";
+import { deleteProblemProjectsAsync, downloadProblemProjectsAsync } from "./idbworkspace";
 
 
 // Avoid importing entire crypto-js
@@ -292,18 +293,26 @@ export function getLastCloudSync(): number {
     return Math.min(...cloudHeaders.map(getHeaderLastCloudSync))
 }
 
-export function initAsync() {
+export async function initAsync() {
     if (!impl) {
         impl = indexedDBWorkspace.provider;
         implType = "browser";
     }
 
-    return syncAsync()
-        .then(state => cleanupBackupsAsync().then(() => state))
-        .then(_ => {
-            pxt.perf.recordMilestone(Milestones.WorkspaceInitFinished)
-            return _
-        })
+    if (window.location.search) {
+        const searchParams = new URLSearchParams(window.location.search);
+        if (searchParams.has("downloadkey")) {
+            await downloadProblemProjectsAsync(searchParams.get("downloadkey"));
+        }
+        else if (searchParams.has("deletekey")) {
+            await deleteProblemProjectsAsync(searchParams.get("deletekey"));
+        }
+    }
+
+    const state = await syncAsync();
+    await cleanupBackupsAsync();
+    pxt.perf.recordMilestone(Milestones.WorkspaceInitFinished);
+    return state;
 }
 
 export async function getTextAsync(id: string, getSavedText = false): Promise<ScriptText> {
