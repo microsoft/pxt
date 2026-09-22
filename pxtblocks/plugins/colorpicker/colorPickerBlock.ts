@@ -3,7 +3,7 @@ import { ColorDropdownField } from "./colorPickerDropdown";
 import { ColorPickerNumberBlock, COLOR_NUMBER_BLOCK_TYPE, generateColorPickerNumberShadowDom } from "./colorPickerNumberBlock";
 import { COLOR_STRING_BLOCK_TYPE, generateColorPickerStringShadowDom } from "./colorPickerStringBlock";
 import { FieldColorPickerNumberType, fromFormatToHex, fromFormatToHSV, fromHexToFormat, fromHSVToFormat, getFieldTypesForFormat } from "./util";
-import { hasDuplicateShadowOnDrag, setDuplicateShadowOnDrag, setDuplicateOnDragStrategy } from "../duplicateOnDrag";
+import { hasDuplicateShadowOnDrag, setDuplicateShadowOnDrag, setDuplicateOnDragStrategy, updateDuplicateOnDragState } from "../duplicateOnDrag";
 
 export interface ColorPickerBlock extends Blockly.Block {
     colorHSVLoaded: boolean;
@@ -76,7 +76,10 @@ export function initColorPickerBlock() {
         domToMutation: function (this: ColorPickerBlock, xmlElement: Element) {
             const duplicate = xmlElement.getAttribute("duplicateondrag") === "true";
             setDuplicateShadowOnDrag(this, duplicate);
-            if (duplicate) setDuplicateOnDragStrategy(this);
+            if (duplicate) {
+                setDuplicateOnDragStrategy(this);
+                if (this instanceof Blockly.BlockSvg) updateDuplicateOnDragState(this);
+            }
             if (xmlElement.hasAttribute("hue") && xmlElement.hasAttribute("saturation") && xmlElement.hasAttribute("value")) {
                 this.colorHSVLoaded = true;
                 this.colorHSV = [
