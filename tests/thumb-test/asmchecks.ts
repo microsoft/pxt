@@ -413,7 +413,7 @@ export const variantChecks: VariantCheck[] = [
  */
 export const externalCases: pxt.Map<AsmCheck> = {
 
-    "tests/compile-test/lang-test0/58defaultinitializers.ts": (asm, res) => {
+    "tests/compile-test/lang-test0/59defaultinitializers.ts": (asm, res) => {
         chai.assert(codeSize(asm) > 0, "no default initializer code generated");
         chai.assert(hexSize(res) > 0, "no default initializer hex generated");
     },

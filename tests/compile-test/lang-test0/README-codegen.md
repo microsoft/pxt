@@ -55,7 +55,7 @@ The corpus covers:
 | Arity holes in wrapper-skip -- one member name declared at two arities by two unrelated interfaces | `56ifacedispatch.ts` `testArityCollision`, with the two dispatches interleaved in a loop so neither can be hoisted | testlang, hw-ab | `ar:one1`, `ar:two1`, `ar:mixed` |
 | Missing defaults on dynamic calls, or using a base method's default for an override | `56ifacedispatch.ts` `testDefaults`, `57defaultparamdispatch.ts` | testlang, testthumb (assembly), hw-ab | `opt:iface-default`, `opt:any-default`, `qzdp:iface`, `qzdp:any`, `qzdp:virtual-default` |
 | Replacing supplied falsy values, missing argument holes, or defaulting after constructor-property/closure creation | `57defaultparamdispatch.ts` | testlang, testthumb (assembly), hw-ab | `qzdp:preserve-*`, `qzdp:argument-hole`, `qzdp:boxed-param`, `qzdp:constructor-property` |
-| Default expressions evaluated twice, in the caller's scope, or before explicit arguments | `58defaultinitializers.ts` | testlang, testthumb (assembly), hw-ab | `qzdpi:argument-evaluation-order`, `qzdpi:undefined-default-once`, `qzdpi:lexical`, `qzdpi:fresh-reference`, `qzdpi:destructured-once` |
+| Default expressions evaluated twice, in the caller's scope, or before explicit arguments | `59defaultinitializers.ts` | testlang, testthumb (assembly), hw-ab | `qzdpi:argument-evaluation-order`, `qzdpi:undefined-default-once`, `qzdpi:lexical`, `qzdpi:fresh-reference`, `qzdpi:destructured-once` |
 | Native wrapper bypass also bypasses default initialization, or guards added to functions without defaults | `tests/thumb-test/cases/defaultparameters.ts` with normal, `noIfaceSpec` and `slowMethods` switches | testthumb | Guard-placement, wrapper routing, boxed-parameter or constructor-store assertion fails |
 | Get and call sharing a dispatch bucket -- one member name that is a field on one type and a method on another | `56ifacedispatch.ts` `testGetCallCollision`, through both interface-typed and `any`-typed references | testlang, hw-ab | `gc:get1`, `gc:call1`, `gc:agree`, `gc:get2`, `gc:call2`, `gc:type` |
 | `toString` fixed-slot violation -- an override not reached through concatenation, templates, direct call, interface or `any` | `56ifacedispatch.ts` `testToString`; also present in `tests/thumb-test/cases/ifacebaseline.ts` | testlang, testthumb (shape), hw-ab | `ts:concat`, `ts:template`, `ts:iface`, `ts:any`, `ts:anyconcat` |
@@ -126,7 +126,7 @@ string literal and by computed key. `testDefaults` asserts that concrete,
 interface and `any` calls apply the callee's default, just as an explicit
 `undefined` check in the method body does.
 
-### `57defaultparamdispatch.ts` and `58defaultinitializers.ts`
+### `57defaultparamdispatch.ts` and `59defaultinitializers.ts`
 
 The formerly disabled #11562 repro is active. The dispatch corpus covers
 direct, virtual, interface, `any`, action and object-literal calls; different
