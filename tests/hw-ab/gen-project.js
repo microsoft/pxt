@@ -62,7 +62,7 @@ const CASES = {
     "conditionlowering": "55conditionlowering.ts",
     "ifacedispatch": "56ifacedispatch.ts",
     "defaultparamdispatch": "57defaultparamdispatch.ts",
-    "defaultinitializers": "58defaultinitializers.ts"
+    "defaultinitializers": "58defaultinitializers.ts",
     "loopcapture": "58loopcapture.ts"
 };
 
