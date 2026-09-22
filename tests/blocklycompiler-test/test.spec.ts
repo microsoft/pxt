@@ -391,6 +391,44 @@ describe("blockly compiler", function () {
     });
 
     describe("compiling text", () => {
+        it("should initialize color picker shadows in the parameter's requested mode", async () => {
+            const info = await getBlocksInfoAsync();
+            const coloredInfo = {
+                ...info,
+                blocks: info.blocks.concat({
+                    attributes: { builtinBlockId: "makecode_color_picker", color: "#6554C0" }
+                } as pxtc.SymbolInfo)
+            };
+            const workspace = new Blockly.Workspace();
+            try {
+                for (const format of ["hex", "rgb", "hsv", "hsl", "cmyk", "invalid"]) {
+                    const value = pxtblockly.createShadowValue(coloredInfo, {
+                        definitionName: "color", actualName: "color", type: "number",
+                        shadowBlockId: "makecode_color_picker", defaultValue: "0x7f3fbf",
+                        fieldOptions: { format }
+                    });
+                    const picker = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    chai.assert.isTrue(picker.isShadow());
+                    chai.assert.equal(picker.getColour().toLowerCase(), "#6554c0");
+                    chai.assert.equal(picker.getFieldValue("FORMAT"), format === "invalid" ? "rgb" : format);
+                    chai.assert.equal(pxtblockly.getColorPickerColor(picker), "#7F3FBF");
+                    picker.setFieldValue("rgb", "FORMAT");
+                    chai.assert.deepEqual([0, 1, 2].map(i => Math.round(Number(picker.getInputTargetBlock("INPUT" + i).getFieldValue("NUM")))), [127, 63, 191]);
+                    picker.getInputTargetBlock("INPUT0").setFieldValue("255", "NUM");
+                    picker.updateColorPreview();
+                    chai.assert.include(picker.getField("PREVIEW").getText(), "#FF3FBF");
+                    // An expression has no statically known preview, even if another channel is literal.
+                    const input = picker.getInput("INPUT0");
+                    input.connection.setShadowDom(null);
+                    chai.assert.isUndefined(pxtblockly.getColorPickerColor(picker));
+                    picker.dispose();
+                }
+            }
+            finally {
+                workspace.dispose();
+            }
+        });
+
         it("should handle the text blocks", (done: () => void) => {
             blockTestAsync("text").then(done, done);
         });

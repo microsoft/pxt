@@ -3,6 +3,10 @@
 import * as Blockly from "blockly";
 import { flyoutCategory, getAllFunctionDefinitionBlocks, LOCALIZATION_NAME_MUTATION_KEY } from "./plugins/functions";
 import { DRAGGABLE_PARAM_INPUT_PREFIX } from "./loader";
+import { COLOR_PICKER_BLOCK_TYPE } from "./plugins/colorpicker/colorPickerBlock";
+import { generateColorPickerStringShadowDom } from "./plugins/colorpicker/colorPickerStringBlock";
+import { generateColorPickerNumberShadowDom } from "./plugins/colorpicker/colorPickerNumberBlock";
+import { fromFormatToHex, fromHexToFormat, fromHSVToFormat, getFieldTypesForFormat } from "./plugins/colorpicker/util";
 
 const primitiveTypeRegex = /^(string|number|boolean)$/;
 
@@ -110,6 +114,42 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
 
     shadow.setAttribute("type", shadowId || (isArray ? 'lists_create_with' : typeInfo && typeInfo.block || p.type));
     shadow.setAttribute("colour", "#fff");
+
+    if (shadowId === COLOR_PICKER_BLOCK_TYPE) {
+        const requestedFormat = p.fieldOptions?.format;
+        const formatName = ["rgb", "hsv", "hsl", "cmyk", "hex"].indexOf(requestedFormat) >= 0 ? requestedFormat : "rgb";
+        const rgb = Number(defaultValue) || 0;
+        const hex = typeof defaultValue === "string" && /^#(?:[0-9a-f]{3}|[0-9a-f]{6})$/i.test(defaultValue)
+            ? defaultValue : fromFormatToHex("rgb", [rgb >> 16 & 255, rgb >> 8 & 255, rgb & 255]);
+        const mutation = document.createElement("mutation");
+        const blockColor = info.blocks.find(block => block.attributes.builtinBlockId === COLOR_PICKER_BLOCK_TYPE)?.attributes.color;
+        if (blockColor) mutation.setAttribute("color", blockColor);
+        const hsv = fromHexToFormat("hsv", hex);
+        ["hue", "saturation", "value"].forEach((name, index) => mutation.setAttribute(name, hsv[index].toString()));
+        shadow.appendChild(mutation);
+
+        const format = document.createElement("field");
+        format.setAttribute("name", "FORMAT");
+        format.textContent = formatName;
+        shadow.appendChild(format);
+
+        if (formatName === "hex") {
+            const hexInput = document.createElement("value");
+            hexInput.setAttribute("name", "HEX_INPUT");
+            hexInput.appendChild(generateColorPickerStringShadowDom(hex));
+            shadow.appendChild(hexInput);
+        }
+        else {
+            const types = getFieldTypesForFormat(formatName);
+            fromHSVToFormat(formatName, hsv).forEach((channel, index) => {
+                const input = document.createElement("value");
+                input.setAttribute("name", "INPUT" + index);
+                input.appendChild(generateColorPickerNumberShadowDom(types[index], channel));
+                shadow.appendChild(input);
+            });
+        }
+        return value;
+    }
 
     if (isArray) {
         // if an array of booleans, numbers, or strings

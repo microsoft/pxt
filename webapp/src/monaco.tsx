@@ -1932,7 +1932,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             }
 
             if (fn.attributes.builtinBlockId) {
-                res[ns].push(...snippets.getExtensionContributedBuiltinBlock(fn.attributes.builtinBlockId, fn.attributes.weight || 50));
+                if (!fn.attributes.blockHidden) {
+                    res[ns].push(...snippets.getExtensionContributedBuiltinBlock(fn.attributes.builtinBlockId, fn.attributes.weight || 50));
+                }
                 return;
             }
 
