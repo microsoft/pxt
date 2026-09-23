@@ -289,13 +289,6 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 existing = fs.readFileSync(fn, "utf8")
             if (existing !== v)
                 nodeutil.writeFileSync(fn, v, isLib ? { encoding: "base64" } : undefined)
-            if (isLib) {
-                const dir = path.dirname(fn)
-                if (libDirs.indexOf(dir) < 0) {
-                    pxt.log("adding library directory " + dir)
-                    libDirs.push(dir)
-                }
-            }
         })
     }
 
@@ -322,18 +315,6 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
     }
 
     tasks = tasks
-        .then(() => {
-            // update codal.json with the list of library directories
-            const codalJsonPath = buildEngine.buildPath + "/" + "/codal.json"
-            pxt.log("codal.json path: " + codalJsonPath)
-            if (fs.existsSync(codalJsonPath)) {
-                pxt.log("updating codal.json with library directories: " + libDirs.join(", "))
-                let codalJson = JSON.parse(fs.readFileSync(codalJsonPath, "utf8"))
-                const paths = codalJson.config.EXTRA_LIBRARY_PATHS || ""
-                codalJson.config.EXTRA_LIBRARY_PATHS = paths + " " + libDirs.map(p => `-L${p}`).join(" ")
-                fs.writeFileSync(codalJsonPath, JSON.stringify(codalJson, null, 4) + "\n")
-            }
-        })
         .then(buildEngine.buildAsync)
         .then(() => {
             buildCache.sha = extInfo.sha

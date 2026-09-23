@@ -3375,13 +3375,13 @@ class Host
 
         try {
             // pxt.debug(`reading ${resolved}`)
-                return fs.readFileSync(resolved, U.endsWith(filename, ".a") ? "base64" : "utf8")
+            return fs.readFileSync(resolved, U.endsWith(filename, ".a") ? "base64" : "utf8")
         } catch (e) {
             if (!skipAdditionalFiles && module.config) {
                 for (let addPath of module.config.additionalFilePaths || []) {
                     try {
                         // pxt.debug(`try read: '${dir}' '${addPath}' '${filename}' ${path.join(dir, addPath, filename)}`)
-                            return fs.readFileSync(path.join(dir, addPath, filename), U.endsWith(filename, ".a") ? "base64" : "utf8")
+                        return fs.readFileSync(path.join(dir, addPath, filename), U.endsWith(filename, ".a") ? "base64" : "utf8")
                     } catch (e) {
                     }
                 }
