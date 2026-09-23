@@ -27,6 +27,7 @@ import { MenuDropdown, MenuItem } from "../../react-common/components/controls/M
 import {
     filterHomeSearchCards,
     getAvailableHomeSearchFilters,
+    getHomeSearchFilterOptionCounts,
     hasActiveHomeSearchFilters,
     HomeSearchFilterDefinition,
     HomeSearchFilterSelection,
@@ -40,6 +41,7 @@ interface ProjectsState {
     selectedIndex?: number;
     searchMode?: boolean;
     searchQuery?: string;
+    searchCandidates?: SearchCard[];
     searchResults?: SearchCard[];
     searchFilters?: HomeSearchFilterSelection;
 }
@@ -65,6 +67,16 @@ function getProjectDescriptionFromConfig(configText: string): string {
     const config = pxt.Util.jsonTryParse(configText) as pxt.PackageConfig;
     const description = config?.description?.trim();
     return description || undefined;
+}
+
+function localizedSearchTerms(terms?: string[]): string {
+    const result: string[] = [];
+    (terms || []).forEach(term => {
+        if (result.indexOf(term) === -1) result.push(term);
+        const localized = pxt.Util.rlf(term);
+        if (localized && result.indexOf(localized) === -1) result.push(localized);
+    });
+    return result.join(" ");
 }
 
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
@@ -100,6 +112,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             || this.state.selectedIndex != nextState.selectedIndex
             || this.state.searchMode != nextState.searchMode
             || this.state.searchQuery != nextState.searchQuery
+            || this.state.searchCandidates != nextState.searchCandidates
             || this.state.searchResults != nextState.searchResults
             || this.state.searchFilters != nextState.searchFilters;
     }
@@ -171,8 +184,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     id: key,
                     name: card.name || "",
                     description: card.description || "",
-                    tags: Array.isArray(card.tags) ? card.tags.join(" ") : "",
-                    searchTerms: Array.isArray(card.searchTerms) ? card.searchTerms.join(" ") : ""
+                    tags: localizedSearchTerms(card.tags),
+                    searchTerms: localizedSearchTerms(card.searchTerms)
                 });
             }));
         });
@@ -254,18 +267,19 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             const resetCategory = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory;
             const resetIndex = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex;
             compiler.homeSearchClear();
-            this.setState({ searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
+            this.setState({ searchCandidates: undefined, searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
             return;
         }
 
         const { cards, entries, cardMap } = this.collectSearchEntries(galleries);
         if (!entries.length) {
-            this.setState({ searchResults: [] });
+            this.setState({ searchCandidates: [], searchResults: [] });
             return;
         }
 
         if (!normalized) {
             this.setState({
+                searchCandidates: undefined,
                 searchResults: filterHomeSearchCards(cards, filters),
                 selectedCategory: SEARCH_CATEGORY,
                 selectedIndex: undefined
@@ -277,11 +291,13 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             .then(results => {
                 if (requestId !== this.searchRequestId) return;
 
-                const matches = filterHomeSearchCards(results
+                const candidates = results
                     .map(result => cardMap[result.id])
-                    .filter(card => !!card), filters);
+                    .filter(card => !!card);
+                const matches = filterHomeSearchCards(candidates, filters);
 
                 this.setState({
+                    searchCandidates: candidates,
                     searchResults: matches,
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -291,6 +307,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 if (requestId !== this.searchRequestId) return;
                 pxt.reportException(e);
                 this.setState({
+                    searchCandidates: [],
                     searchResults: [],
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -299,7 +316,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     public setSearchQuery(query: string) {
-        this.setState({ searchQuery: query });
+        this.setState({ searchQuery: query, searchCandidates: undefined });
         this.runSearch(query);
     }
 
@@ -321,7 +338,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.runSearch(this.state.searchQuery || "", searchFilters);
     }
 
-    private renderSearchFilter(definition: HomeSearchFilterDefinition) {
+    private renderSearchFilter(definition: HomeSearchFilterDefinition, optionCounts: pxt.Map<number>) {
         const selectedValues = this.state.searchFilters?.[definition.id] || [];
         const selectedCount = selectedValues.length;
         const label = selectedCount ? lf("{0} ({1})", definition.label, selectedCount) : definition.label;
@@ -330,7 +347,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             : lf("{0} filter", definition.label);
         const items: MenuItem[] = definition.options.map(option => ({
             role: "menuitemcheckbox",
-            label: option.label,
+            label: lf("{0} ({1})", option.label, optionCounts[option.id] || 0),
             isChecked: selectedValues.indexOf(option.id) !== -1,
             onChange: selected => this.setSearchFilter(definition.id, option.id, selected),
         }));
@@ -342,6 +359,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             label={label}
             title={ariaLabel}
             ariaLabel={ariaLabel}
+            showChevron={true}
             items={items}
         />;
     }
@@ -380,6 +398,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setState({
             searchMode: false,
             searchQuery: "",
+            searchCandidates: undefined,
             searchResults: undefined,
             searchFilters: undefined,
             selectedCategory: undefined,
@@ -494,9 +513,17 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const hasSearchFilters = hasActiveHomeSearchFilters(this.state.searchFilters || {});
         const hasSearchCriteria = !!searchQuery.trim() || hasSearchFilters;
         const searchResults = this.state.searchResults || [];
-        const availableSearchFilters = searchMode
-            ? getAvailableHomeSearchFilters(this.collectSearchEntries(this.getSearchGalleries()).cards)
+        const allSearchCards = searchMode
+            ? this.collectSearchEntries(this.getSearchGalleries()).cards
             : [];
+        const availableSearchFilters = getAvailableHomeSearchFilters(allSearchCards);
+        const searchFilterCandidates = searchQuery.trim()
+            ? this.state.searchCandidates || []
+            : allSearchCards;
+        const searchFilterOptionCounts = getHomeSearchFilterOptionCounts(
+            searchFilterCandidates,
+            this.state.searchFilters || {}
+        );
         const searchSelectedIndex = this.state.selectedCategory === SEARCH_CATEGORY ? this.state.selectedIndex : undefined;
         const selectedSearchCard = searchSelectedIndex !== undefined ? searchResults[searchSelectedIndex] : undefined;
         const selectedSearchProjectHeader = selectedSearchCard?.projectHeader;
@@ -610,7 +637,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     {!!availableSearchFilters.length && <div className="home-search-filters" role="group" aria-label={lf("Filter search results")}>
                         <span className="home-search-filters-label">{lf("Filter by")}</span>
                         <div className="home-search-filter-menus">
-                            {availableSearchFilters.map(definition => this.renderSearchFilter(definition))}
+                            {availableSearchFilters.map(definition =>
+                                this.renderSearchFilter(definition, searchFilterOptionCounts[definition.id]))}
                         </div>
                         {hasSearchFilters && <Button
                             className="home-search-clear-filters neutral button"

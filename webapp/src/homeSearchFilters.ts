@@ -13,6 +13,10 @@ export interface HomeSearchFilterDefinition {
     options: HomeSearchFilterOption[];
 }
 
+export interface HomeSearchFilterOptionCounts {
+    [filterId: string]: pxt.Map<number>;
+}
+
 interface HomeSearchFilterRegistryEntry extends HomeSearchFilterDefinition {
     getValues: (card: pxt.CodeCard) => string[];
 }
@@ -174,6 +178,25 @@ export function getAvailableHomeSearchFilters(cards: pxt.CodeCard[]): HomeSearch
 
 export function hasActiveHomeSearchFilters(selection: HomeSearchFilterSelection): boolean {
     return filterRegistry.some(definition => getValidSelectedValues(definition, selection || {}).length > 0);
+}
+
+export function getHomeSearchFilterOptionCounts(cards: pxt.CodeCard[], selection: HomeSearchFilterSelection): HomeSearchFilterOptionCounts {
+    const counts: HomeSearchFilterOptionCounts = {};
+
+    filterRegistry.forEach(definition => {
+        const otherSelections = { ...(selection || {}) };
+        delete otherSelections[definition.id];
+        const candidates = filterHomeSearchCards(cards, otherSelections);
+        const optionCounts: pxt.Map<number> = {};
+
+        definition.options.forEach(option => {
+            optionCounts[option.id] = candidates.filter(card =>
+                definition.getValues(card).indexOf(option.id) !== -1).length;
+        });
+        counts[definition.id] = optionCounts;
+    });
+
+    return counts;
 }
 
 export function filterHomeSearchCards<T extends pxt.CodeCard>(cards: T[], selection: HomeSearchFilterSelection): T[] {

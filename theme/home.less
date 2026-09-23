@@ -364,6 +364,7 @@
                 min-height: 2.75rem;
                 padding: 0.625rem 0.875rem;
                 border: 1px solid var(--pxt-neutral-stencil1);
+                border-radius: 0.25rem;
                 background: var(--pxt-neutral-background1);
                 color: var(--pxt-neutral-foreground1);
             }
@@ -378,6 +379,7 @@
         .home-search-clear-filters {
             min-height: 2.75rem;
             margin-left: auto;
+            border-radius: 0.25rem;
         }
     }
     .import-dialog-btn,
@@ -1012,7 +1014,7 @@
             padding-left: @carouselArrowSizeTablet !important;
         }
     }
-    .homescreen-search-box {
+    .projectsdialog .homescreen-search-box {
         margin: 1em @carouselArrowSizeTablet;
     }
     .projectsdialog {
@@ -1135,7 +1137,7 @@
             display: none;
         }
     }
-    .homescreen-search-box {
+    .projectsdialog .homescreen-search-box {
         margin: 1em @carouselArrowSizeMobile;
     }
     .home-search-filters {
@@ -1150,10 +1152,12 @@
         }
 
         .home-search-filter {
-            flex: 1 1 auto;
+            flex: 0 1 auto;
+            max-width: 100%;
 
             > .menu-button {
-                width: 100%;
+                width: auto;
+                max-width: 100%;
             }
         }
 

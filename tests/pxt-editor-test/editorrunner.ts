@@ -24,6 +24,7 @@ import { resetEditorThemesAsync } from "../../react-common/components/theming/th
 import {
     filterHomeSearchCards,
     getAvailableHomeSearchFilters,
+    getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 
 pxt.appTarget = {
@@ -117,6 +118,26 @@ describe("home search filters", () => {
         });
 
         chai.expect(matches.map(card => card.name)).deep.equals(["Beginner blocks"]);
+    });
+
+    it("counts each option against the query candidates and other active filters", () => {
+        const queryMatches: pxt.CodeCard[] = [
+            { name: "Beginner blocks", cardType: "tutorial", difficulty: "beginner", targetAge: ["9-12"] },
+            { name: "Beginner Python", cardType: "tutorial", editor: "py", difficulty: "beginner", targetAge: ["13-18"] },
+            { name: "Expert Python", cardType: "tutorial", editor: "py", difficulty: "expert", targetAge: ["9-12"] },
+        ];
+        const counts = getHomeSearchFilterOptionCounts(queryMatches, {
+            language: ["blocks", "py"],
+            difficulty: ["beginner"],
+            targetAge: ["9-12"],
+        });
+
+        chai.expect(counts.language.blocks).equals(1);
+        chai.expect(counts.language.py).equals(0);
+        chai.expect(counts.difficulty.beginner).equals(1);
+        chai.expect(counts.difficulty.expert).equals(1);
+        chai.expect(counts.targetAge["9-12"]).equals(1);
+        chai.expect(counts.targetAge["13-18"]).equals(1);
     });
 });
 

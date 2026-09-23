@@ -2098,8 +2098,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                         const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
                         tocmd += `  * [${card.name || card.title}](${url})
 `;
-                        if (card.tags)
-                            card.tags.forEach(tag => targetStrings[tag] = tag);
+                        (card.tags || []).concat(card.searchTerms || [])
+                            .forEach(term => targetStrings[term] = term);
                     }))
             });
 
