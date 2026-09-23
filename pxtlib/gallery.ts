@@ -1,6 +1,8 @@
 
 namespace pxt.gallery {
     const codeCardFilterValues: pxt.Map<string[]> = {
+        activityType: ["tutorial", "example", "skillmap", "video", "project", "community", "hardware", "extension", "resource"],
+        language: ["blocks", "js", "py"],
         difficulty: ["beginner", "intermediate", "expert"],
         duration: ["15-minutes", "30-minutes", "60-minutes", "one-day", "longer"],
         targetAge: ["up-to-8", "9-12", "13-18", "adult"]

@@ -65,6 +65,8 @@ function addUnique(values: string[], value: string) {
 }
 
 function getActivityTypes(card: pxt.CodeCard): string[] {
+    if (card.activityType) return getExplicitValues(card, "activityType");
+
     const values: string[] = [];
     const url = card.url || "";
 
@@ -110,6 +112,8 @@ function getActionEditor(cardType: pxt.CodeCardType, editor?: pxt.CodeCardEditor
 }
 
 function getLanguages(card: pxt.CodeCard): string[] {
+    if (card.language) return getExplicitValues(card, "language");
+
     const values: string[] = [];
     const addAction = (cardType: pxt.CodeCardType, editor?: pxt.CodeCardEditorType) =>
         addUnique(values, getActionEditor(cardType, editor));
@@ -123,7 +127,7 @@ function getLanguages(card: pxt.CodeCard): string[] {
     return values;
 }
 
-function getExplicitValues(card: pxt.CodeCard, property: "difficulty" | "duration" | "targetAge"): string[] {
+function getExplicitValues(card: pxt.CodeCard, property: "activityType" | "language" | "difficulty" | "duration" | "targetAge"): string[] {
     const value = card[property];
     if (!value) return [];
     return Array.isArray(value) ? value : [value];

@@ -3,6 +3,7 @@ declare namespace pxt {
     type CodeCardType = "file" | "example" | "codeExample" | "tutorial" | "side" | "template" | "package" | "hw" | "forumUrl" | "forumExample" | "sharedExample" | "link";
     type CodeCardEditorType = "blocks" | "js" | "py";
     type CodeCardFilterValue<T extends string> = T | T[];
+    type CodeCardActivityType = "tutorial" | "example" | "skillmap" | "video" | "project" | "community" | "hardware" | "extension" | "resource";
     type CodeCardDifficulty = "beginner" | "intermediate" | "expert";
     type CodeCardDuration = "15-minutes" | "30-minutes" | "60-minutes" | "one-day" | "longer";
     type CodeCardTargetAge = "up-to-8" | "9-12" | "13-18" | "adult";
@@ -165,6 +166,8 @@ declare namespace pxt {
         tags?: string[]; // tags shown in home screen, colors specified in theme
         searchTerms?: string[]; // extra terms used to improve home screen search matching
         hideFromSearch?: boolean; // hide card from home screen search results
+        activityType?: CodeCardFilterValue<CodeCardActivityType>;
+        language?: CodeCardFilterValue<CodeCardEditorType>;
         difficulty?: CodeCardFilterValue<CodeCardDifficulty>;
         duration?: CodeCardFilterValue<CodeCardDuration>;
         targetAge?: CodeCardFilterValue<CodeCardTargetAge>;
