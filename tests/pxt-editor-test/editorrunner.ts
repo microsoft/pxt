@@ -21,6 +21,10 @@ import {
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
+import {
+    filterHomeSearchCards,
+    getAvailableHomeSearchFilters,
+} from "../../webapp/src/homeSearchFilters";
 
 pxt.appTarget = {
     versions: {
@@ -52,6 +56,69 @@ const simulatorTheme: pxt.SimulatorTheme = {
     "joystick-handle-stroke": "#666666",
     layout: "default",
 };
+
+describe("home search filters", () => {
+    it("normalizes canonical filter metadata and drops unknown IDs", () => {
+        const lineCard = pxt.gallery.parseCodeCards(`
+* name: Filtered activity
+* difficulty: beginner, expert, beginer
+* duration: 30-minutes
+* targetAge: 9-12, 13-18, teenager
+`)[0];
+        const jsonCard = pxt.gallery.parseCodeCards(JSON.stringify({
+            name: "JSON activity",
+            difficulty: "intermediate",
+            duration: ["15-minutes", "short"],
+            targetAge: ["adult", "adult"],
+        }))[0];
+
+        chai.expect(lineCard.difficulty).deep.equals(["beginner", "expert"]);
+        chai.expect(lineCard.duration).deep.equals(["30-minutes"]);
+        chai.expect(lineCard.targetAge).deep.equals(["9-12", "13-18"]);
+        chai.expect(jsonCard.difficulty).deep.equals(["intermediate"]);
+        chai.expect(jsonCard.duration).deep.equals(["15-minutes"]);
+        chai.expect(jsonCard.targetAge).deep.equals(["adult"]);
+    });
+
+    it("only exposes filter options represented by searchable cards", () => {
+        const filters = getAvailableHomeSearchFilters([
+            {
+                name: "Blocks tutorial",
+                cardType: "tutorial",
+                difficulty: ["beginner"],
+                otherActions: [{ url: "/tutorial", cardType: "tutorial", editor: "py" }],
+            },
+            {
+                name: "Skillmap",
+                cardType: "link",
+                url: "https://example.com/--skillmap#intro",
+            },
+        ]);
+        const byId = pxt.Util.toDictionary(filters, filter => filter.id);
+
+        chai.expect(byId.activityType.options.map(option => option.id)).deep.equals(["tutorial", "skillmap"]);
+        chai.expect(byId.language.options.map(option => option.id)).deep.equals(["blocks", "py"]);
+        chai.expect(byId.difficulty.options.map(option => option.id)).deep.equals(["beginner"]);
+        chai.expect(byId.duration).equals(undefined);
+        chai.expect(byId.targetAge).equals(undefined);
+        chai.expect(byId.activityType.options.some(option => option.id === "extension")).equals(false);
+    });
+
+    it("matches any selected value within a filter and every selected filter", () => {
+        const cards: pxt.CodeCard[] = [
+            { name: "Beginner blocks", cardType: "tutorial", difficulty: "beginner", targetAge: ["9-12"] },
+            { name: "Beginner Python", cardType: "tutorial", editor: "py", difficulty: "beginner", targetAge: ["13-18"] },
+            { name: "Expert Python", cardType: "tutorial", editor: "py", difficulty: "expert", targetAge: ["9-12"] },
+        ];
+        const matches = filterHomeSearchCards(cards, {
+            language: ["blocks", "py"],
+            difficulty: ["beginner"],
+            targetAge: ["9-12"],
+        });
+
+        chai.expect(matches.map(card => card.name)).deep.equals(["Beginner blocks"]);
+    });
+});
 
 describe("simulator themes", () => {
     const defaultSimulatorTheme = simulatorTheme;

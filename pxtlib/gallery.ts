@@ -1,5 +1,11 @@
 
 namespace pxt.gallery {
+    const codeCardFilterValues: pxt.Map<string[]> = {
+        difficulty: ["beginner", "intermediate", "expert"],
+        duration: ["15-minutes", "30-minutes", "60-minutes", "one-day", "longer"],
+        targetAge: ["up-to-8", "9-12", "13-18", "adult"]
+    };
+
     export interface Gallery {
         name: string;
         cards: pxt.CodeCard[];
@@ -113,13 +119,41 @@ namespace pxt.gallery {
         return prj;
     }
 
+    function normalizeCodeCardStringArray(card: pxt.CodeCard, property: keyof pxt.CodeCard, allowedValues?: string[]) {
+        const value = card[property] as string | string[];
+        if (value === undefined || value === null) return;
+
+        const values = (Array.isArray(value) ? value : value.split(","))
+            .map(entry => typeof entry === "string" ? entry.trim() : "")
+            .filter(entry => !!entry && (!allowedValues || allowedValues.indexOf(entry) !== -1))
+            .filter((entry, index, entries) => entries.indexOf(entry) === index);
+
+        if (values.length)
+            (card as any)[property] = values;
+        else
+            delete (card as any)[property];
+    }
+
+    export function normalizeCodeCardMetadata(card: pxt.CodeCard): pxt.CodeCard {
+        normalizeCodeCardStringArray(card, "tags");
+        normalizeCodeCardStringArray(card, "searchTerms");
+        Object.keys(codeCardFilterValues).forEach(property =>
+            normalizeCodeCardStringArray(card, property as keyof pxt.CodeCard, codeCardFilterValues[property]));
+        return card;
+    }
+
+    function normalizeCodeCards(cards: pxt.CodeCard[]): pxt.CodeCard[] {
+        cards?.forEach(normalizeCodeCardMetadata);
+        return cards;
+    }
+
     export function parseCodeCards(md: string): pxt.CodeCard[] {
         // try to parse code cards as JSON
         let cards = Util.jsonTryParse(md) as pxt.CodeCard[];
         if (cards && !Array.isArray(cards))
             cards = [cards];
         if (cards?.length)
-            return cards;
+            return normalizeCodeCards(cards);
 
         // not json, try parsing as sequence of key,value pairs, with line splits
         cards = md.split(/^---$/gm)
@@ -146,7 +180,7 @@ namespace pxt.gallery {
             })
             .filter(cc => !!cc);
         if (cards?.length)
-            return cards;
+            return normalizeCodeCards(cards);
 
         return undefined;
     }
@@ -190,7 +224,7 @@ namespace pxt.gallery {
             cards = pxt.Util.jsonTryParse(el.textContent);
         }
 
-        return !!cards?.length && cards;
+        return !!cards?.length && normalizeCodeCards(cards);
     }
 
     export function parseGalleryMardown(md: string): Gallery[] {
