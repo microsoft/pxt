@@ -1,6 +1,7 @@
 # Microsoft MakeCode Blog
 
 * [Blog](/blog)
+    * [A Decade of Making and Coding](/blog/10th-anniversary)
     * [MakeCode Arcade August 2026 Update](/blog/arcade/update-aug-2026)
     * [MakeCode for the micro:bit 2026 – Accessible Blocks are here!](/blog/microbit/2026-release)
     * [Summer 2026 – MakeCode Professional Development](/blog/csp/summer-pd-2026)
