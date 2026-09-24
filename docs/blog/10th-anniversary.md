@@ -70,7 +70,7 @@ And it's about the incredible community members who translate, share projects, a
 
 >_Now I'm in college majoring in Computer Science, and I owe it all to MakeCode Arcade._
 
-To everyone who has taught with MakeCode, learned with MakeCode, built with MakeCode, contributed to MakeCode, or simply encouraged someone else to give coding a try: Thank you. For putting your trust in this product and using it to inspire new generations of technology creators.
+To everyone who has taught with MakeCode, learned with MakeCode, built with MakeCode, contributed to MakeCode, or simply encouraged someone else to give coding a try: Thank you. We are so grateful for your trust in this product and for your help in inspiring the next generation of technology creators.
 
 ## The next 10 years
 
