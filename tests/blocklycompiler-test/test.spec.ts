@@ -412,6 +412,14 @@ describe("blockly compiler", function () {
                     chai.assert.equal(picker.getColour().toLowerCase(), "#6554c0");
                     chai.assert.equal(picker.getFieldValue("FORMAT"), format === "invalid" ? "rgb" : format);
                     chai.assert.equal(pxtblockly.getColorPickerColor(picker), "#7F3FBF");
+                    const mutation = value.querySelector("mutation");
+                    mutation.removeAttribute("hue");
+                    mutation.removeAttribute("saturation");
+                    mutation.removeAttribute("value");
+                    const restored = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    restored.updateBeforeRender();
+                    chai.assert.include(restored.getField("PREVIEW").getText(), "#7F3FBF");
+                    restored.dispose();
                     picker.setFieldValue("rgb", "FORMAT");
                     chai.assert.deepEqual([0, 1, 2].map(i => Math.round(Number(picker.getInputTargetBlock("INPUT" + i).getFieldValue("NUM")))), [127, 63, 191]);
                     picker.getInputTargetBlock("INPUT0").setFieldValue("255", "NUM");

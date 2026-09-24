@@ -12,6 +12,7 @@ export interface ColorPickerBlock extends Blockly.Block {
     setColorHSV: (hsv: number[]) => void;
     setFormat: (format: string, prevFormat?: string) => void;
     readColorFromInputs: () => void;
+    updateBeforeRender: () => void;
     updateColorPreview: () => void;
 }
 
@@ -59,13 +60,20 @@ export function initColorPickerBlock() {
             });
         },
 
+        updateBeforeRender: function (this: ColorPickerBlock) {
+            this.updateColorPreview();
+        },
+
         updateColorPreview: function (this: ColorPickerBlock) {
             const preview = this.getField("PREVIEW") as Blockly.FieldImage;
             const color = getColorPickerColor(this);
+            const image = previewImage(color);
             // This is derived UI, not an edit: don't add history or invalidate redo.
             Blockly.Events.disable();
             try {
-                preview.setValue(previewImage(color));
+                if (preview.getValue() !== image) {
+                    preview.setValue(image);
+                }
                 preview.setAlt(color ? lf("Color {0}. Choose color", color) : lf("Color depends on input values"));
             }
             finally {
