@@ -15,6 +15,19 @@ namespace testNamespace {
     //% block="Number arg %arg"
     export function numberArgument(arg: number): void {}
 
+    //% blockId=test_color_argument
+    //% block="Color arg %color"
+    //% color.shadow=test_color_picker
+    export function colorArgument(color: number): void {}
+
+    //% block blockId=test_color_picker builtinBlockId=makecode_color_picker
+    //% blockHidden=true duplicateShadowOnDrag=true
+    //% value.fieldOptions.format=hex value.defl=0x7f3fbf
+    //% color="#6554C0"
+    export function __colorPicker(value: number): number {
+        return value;
+    }
+
     //% blockId=test_string_argument
     //% block="String arg %arg"
     export function stringArgument(arg: string): void {}
