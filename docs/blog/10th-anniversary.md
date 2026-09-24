@@ -1,4 +1,4 @@
-# A Decade of Making & Coding 
+# A Decade of Making and Coding 
 
 **Posted on September 25th, 2026 by [Jaqster](https://github.com/jaqster)**
 
