@@ -6,11 +6,11 @@
 
 ## 🎂 Happy 10th Birthday Microsoft MakeCode!
 
-This month, we're celebrating this 10-year milestone to reflect on the impact MakeCode has made, thank the community and partners who made it possible, and blow out the candles to make wishes for the future!
+This month, we're celebrating this 10-year milestone to reflect on the impact MakeCode has made, to thank the community and partners who made it possible, and blow out the candles to make wishes for the future!
 
 When MakeCode began, we had a simple idea: everyone should have the opportunity to learn computer science by creating something meaningful.
 
-We wanted to make programming approachable for beginners without making it less powerful for those ready to go further. Blocks could provide a welcoming entry point, while JavaScript and Python could give learners a path toward text-based programming.
+We wanted to make programming approachable for beginners without making it less powerful for those who were ready to go further. Blocks could provide a welcoming entry point, while JavaScript and Python could give learners a path toward text-based programming.
 
 But we also know that coding is most exciting when you can see your ideas come to life and the end artifact is something you're proud of sharing.
 
@@ -37,7 +37,7 @@ It's about the teacher who spends the extra time prepping for a physical computi
 >Elizabeth Bacon is a middle school computer science teacher at Wildwood School in Los Angeles who is using MakeCode Arcade in a "Build a game for a friend" project to strengthen user-centered design skills and practice collaboration and empathy in the classroom. She is also using MakeCode for micro:bit in the class's capstone project of a mini-golf Putt-Putt Course. We met with her class last week to learn more about the student projects.
 
 >![Ms. Bacon's Class](/static/blog/10th-anniversary/ms-bacon-class.jpg)
-><br/>Ms. Bacon's 6th grade class meeting with the MakeCode Team 
+><br/>_Ms. Bacon's 6th grade class joining with the MakeCode Team_ 
 
 >Stu Lowe is the Learning Technology Specialist at Beacon Hill Elementary School in Hong Kong and a longtime MakeCode user. Here's a short video he put together on why he uses MakeCode in the classroom.
 
@@ -49,6 +49,7 @@ https://youtu.be/KH0FsS8BqsA
 >Prabhath is an 11-year-old who has spent time creating MakeCode games and learning on his own.  We got the chance to meet this young man recently and were inspired by his passion and motivation for game development! He also gave us some really good product feedback and ideas for new features.
 
 >![Prabhath introduction](/static/blog/10th-anniversary/student-intro.png)
+><br/>_Prabhath's MakeCode experiences_
 
 It's about the parent who drives their child every week to a [Code Ninjas](https://www.codeninjas.com/about) center. 
 
@@ -56,13 +57,13 @@ It's about the librarian, camp counselor, volunteer, and instructor who creates 
 
 It's about incredible partners who have helped shaped and expanded what's possible with MakeCode. 
 
-We are an open-source product hosted on GitHub, and we rely on community contributions.  A huge heartfelt ❤️ Thank You to all our Partners – especially the [Micro:bit Educational Foundation](https://microbit.org/about/overview) and the [Minecraft Education Team](https://education.minecraft.net). We would not be here without you. But also Adafruit, the Blockly Team, Calliope, Chibitronics, Code Ninjas, ElecFreaks, Forward Education, GitHub, Kitronik, Kittenbot, Lancaster University, Makey Makey and more! Thank you all for taking a bet on us! 
+We are an open-source product hosted on [GitHub](https://github.com/microsoft/pxt), and we rely on community contributions.  A huge heartfelt ❤️ Thank You to all of our Partners – especially the [Micro:bit Educational Foundation](https://microbit.org/about/overview) and the [Minecraft Education Team](https://education.minecraft.net). We would not be here without you. But also to Adafruit, the Blockly Team, Calliope, Chibitronics, Code Ninjas, ElecFreaks, Forward Education, GitHub, Kitronik, Kittenbot, Lancaster University, Makey Makey and many more! Thank you all for taking a bet on us! 
 
-And it's about the incredible community members who translate, share projects, answer questions, submit issues and PR's, contribute ideas, create extensions, and help others get started. 
+And, finally, it's about the incredible community members who translate, share projects, answer questions, submit issues and PR's, contribute ideas, create extensions, and help others get started. 
 
->Here's a story from one of our [MakeCode Forum]( https://forum.makecode.com/t/share-your-makecode-story/46032) members –  
+>Here's a story I'd like to share from one of our [MakeCode Forum]( https://forum.makecode.com/t/share-your-makecode-story/46032) members –  
 
->The first time I used MakeCode was through the Project Lead The Way program in elementary school. We played with Micro:bits. It was a short, maybe one week activity. Then, in middle school, one of my friends introduced me to Makecode Arcade, and I have been making games ever since. 
+>_The first time I used MakeCode was through the Project Lead The Way program in elementary school. We played with Micro:bits. It was a short, maybe one week activity. Then, in middle school, one of my friends introduced me to Makecode Arcade, and I have been making games ever since._
 
 >_I joined the MakeCode forum when I was 13 and posted very little for 2 years. Then, one day, I started helping people solve their bugs… and it was super fun! Helping others with their code is one of my favorite things to do on the forum now. The puzzle of finding the error, and the satisfaction of fixing it, are what have kept me solving bugs on this forum for so long, not to mention the amazing community, devs, and MakeCode Arcade itself!_
 
@@ -74,7 +75,7 @@ To everyone who has taught with MakeCode, learned with MakeCode, built with Make
 
 ## The next 10 years
 
-The world of technology has changed dramatically since MakeCode launched. Artificial intelligence is transforming how we interact with computers and build things. And the need has never been greater for people of all backgrounds and perspectives to understand computational thinking and to be able to use technology creatively to help us shape the future together.
+The world of technology has changed dramatically since MakeCode launched. Artificial intelligence is transforming how we interact with computers and build things. The need has never been greater for people of all backgrounds and perspectives to understand computational thinking and to be able to use technology creatively to help us shape the future together.
 
 We want to continue making computer science fun and accessible to more learners, supporting educators with high-quality classroom experiences, and giving students opportunities to explore AI and emerging technologies through hands-on creation while preserving the process of learning and discovery.
 
