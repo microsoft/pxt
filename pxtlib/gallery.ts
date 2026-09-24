@@ -119,7 +119,7 @@ namespace pxt.gallery {
         if (cards && !Array.isArray(cards))
             cards = [cards];
         if (cards?.length)
-            return cards;
+            return cards.map(normalizeCodeCardStringArrays);
 
         // not json, try parsing as sequence of key,value pairs, with line splits
         cards = md.split(/^---$/gm)
@@ -146,7 +146,7 @@ namespace pxt.gallery {
             })
             .filter(cc => !!cc);
         if (cards?.length)
-            return cards;
+            return cards.map(normalizeCodeCardStringArrays);
 
         return undefined;
     }
@@ -190,7 +190,17 @@ namespace pxt.gallery {
             cards = pxt.Util.jsonTryParse(el.textContent);
         }
 
-        return !!cards?.length && cards;
+        return !!cards?.length && cards.map(normalizeCodeCardStringArrays);
+    }
+
+    function normalizeCodeCardStringArrays(card: pxt.CodeCard): pxt.CodeCard {
+        ["tags", "searchTerms"].forEach(field => {
+            const value = (<any>card)[field];
+            if (typeof value === "string") {
+                (<any>card)[field] = value.split(',').map(term => term.trim()).filter(term => !!term);
+            }
+        });
+        return card;
     }
 
     export function parseGalleryMardown(md: string): Gallery[] {
