@@ -141,6 +141,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const entries = [] as { id: string; name: string; description?: string; tags?: string; searchTerms?: string; }[];
         const cardMap: pxt.Map<SearchCard> = {};
         const seen = new Set<string>();
+        const localizedTerms = (terms: string[]) => Array.isArray(terms) ? terms.map(term => {
+            const translated = pxt.Util.rlf(term);
+            return translated === term ? term : `${term} ${translated}`;
+        }).join(" ") : "";
 
         Object.keys(galleries).forEach(galleryName => {
             const galProps = galleries[galleryName] as pxt.GalleryProps | string;
@@ -162,8 +166,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     id: key,
                     name: card.name || "",
                     description: card.description || "",
-                    tags: Array.isArray(card.tags) ? card.tags.join(" ") : "",
-                    searchTerms: Array.isArray(card.searchTerms) ? card.searchTerms.join(" ") : ""
+                    tags: localizedTerms(card.tags),
+                    searchTerms: localizedTerms(card.searchTerms)
                 });
             }));
         });
