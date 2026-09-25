@@ -28,7 +28,7 @@ The mission of Microsoft MakeCode is to inspire new generations of technology cr
 
 Over 100 million students have used and hopefully been inspired by MakeCode since it launched.  And it's had a truly global impact – used in 37 different languages and over 156 different countries, and in 51 of those countries over 10,000 students are using MakeCode regularly every month.  Just yesterday, students spent 128,175 hours combined working on their MakeCode projects – that's over 350 years of learning in a single day!  And in a month, 70,239,275 blocks or lines of code are created in MakeCode by students – for comparison, the Linux operating system is 42M lines of code!
 
-### It takes a village 
+## It takes a village 
 
 A milestone like this isn't really about a product though... it's about people. 
 
