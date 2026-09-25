@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "module": "commonjs",
+        "rootDir": "..",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "outDir": "../../built/tests",
+        "newLine": "LF",
+        "lib": ["dom", "es2017", "ES2018.Promise"],
+        "types": ["mocha", "node"],
+        "skipLibCheck": true
+    },
+    "include": ["*.ts"]
+}
