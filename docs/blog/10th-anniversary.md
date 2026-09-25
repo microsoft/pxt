@@ -61,7 +61,7 @@ It's about incredible partners who have helped shaped and expanded what's possib
 
 And, finally, it's about the incredible community members who translate, share projects, answer questions, submit issues and PR's, contribute ideas, create extensions, and help others get started. 
 
->Here's a story I'd like to share from one of our [MakeCode Forum]( https://forum.makecode.com/t/share-your-makecode-story/46032) members –  
+>Here's a story from one of our [MakeCode Forum]( https://forum.makecode.com/t/share-your-makecode-story/46032) members –  
 
 >_The first time I used MakeCode was through the Project Lead The Way program in elementary school. We played with Micro:bits. It was a short, maybe one week activity. Then, in middle school, one of my friends introduced me to Makecode Arcade, and I have been making games ever since._
 
