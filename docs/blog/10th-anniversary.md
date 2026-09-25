@@ -43,9 +43,6 @@ It's about the teacher who spends the extra time prepping for a physical computi
 
 https://youtu.be/KH0FsS8BqsA
 
->[![Watch the video](https://img.youtube.com/vi/KH0FsS8BqsA/0.jpg)](https://www.youtube.com/watch?v=KH0FsS8BqsA&controls=1)
-
-
 >Prabhath is an 11-year-old who has spent time creating MakeCode games and learning on his own.  We got the chance to meet this young man recently and were inspired by his passion and motivation for game development! He also gave us some really good product feedback and ideas for new features.
 
 >![Prabhath introduction](/static/blog/10th-anniversary/student-intro.png)
