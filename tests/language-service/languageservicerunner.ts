@@ -19,6 +19,7 @@ function initGlobals() {
     g.pxtc = pxtc;
     g.btoa = (str: string) => Buffer.from(str, "binary").toString("base64");
     g.atob = (str: string) => Buffer.from(str, "base64").toString("binary");
+    g.Fuse = require("fuse.js");
 }
 
 initGlobals();
@@ -351,6 +352,21 @@ function snippetOp(qName: string, python: boolean): pxtc.service.OpError | strin
 
 
 describe("language service", () => {
+    it("searches visible tags and invisible search terms", () => {
+        const entries: pxtc.service.HomeSearchInfo[] = [{
+            id: "tagged",
+            name: "Unrelated title",
+            tags: "visibletag",
+            searchTerms: "hiddenphrase"
+        }];
+        const search = (term: string) => pxtc.service.performOperation("homeSearch", {
+            homeSearch: { term, entries }
+        }) as pxtc.service.HomeSearchInfo[];
+
+        chai.expect(search("visibletag").map(result => result.id)).deep.equals(["tagged"]);
+        chai.expect(search("hiddenphrase").map(result => result.id)).deep.equals(["tagged"]);
+    });
+
     const completionCases = getCompletionTestCases();
     for (const testCase of completionCases) {
         it("get completions " + testCase.fileName + testCase.position, () => {
