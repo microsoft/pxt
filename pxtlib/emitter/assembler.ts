@@ -1219,8 +1219,12 @@ namespace ts.pxtc.assembler {
             // instruction reading/writing sp, lr, or pc absolutely (as opposed to
             // a relative "add/sub sp, #N") can't be safely relocated, nor can any
             // jump/branch other than a plain call (its target/return semantics
-            // are tied to the enclosing function, not the outlined body).
+            // are tied to the enclosing function, not the outlined body). Loads
+            // from a generated literal pool (ldlitLabel) are PC-relative with a
+            // short range and must stay near where the pool was placed, too.
             const unsafe = mylines.map(l => {
+                if (l.ldlitLabel)
+                    return true;
                 const w = l.words;
                 const op = w[0];
                 if (op != "bl" && op != "blx" && /^b/.test(op))
@@ -1341,8 +1345,23 @@ namespace ts.pxtc.assembler {
             if (!retained.length)
                 return;
 
+            // A call site's compile-time simulated stack depth (used to validate
+            // @stackmark/@stackempty and stack-relative addressing) needs a
+            // compensating @dummystack, since the real push/pop effect of the
+            // replaced span now happens inside the called procedure instead of
+            // inline where the simulator would otherwise see it.
+            const stackDeltaOf = (start: number, n: number) => {
+                let d = 0;
+                for (let k = 0; k < n; k++)
+                    d += mylines[start + k].stack || 0;
+                return d;
+            }
+
             const replacements = retained
-                .map(r => ({ firstIdx: idx[r.start], lastIdx: idx[r.start + r.n - 1], name: procNames[r.groupKey] }))
+                .map(r => ({
+                    firstIdx: idx[r.start], lastIdx: idx[r.start + r.n - 1],
+                    name: procNames[r.groupKey], stackDelta: stackDeltaOf(r.start, r.n)
+                }))
                 .sort((a, b) => a.firstIdx - b.firstIdx);
 
             const newLines: Line[] = [];
@@ -1354,6 +1373,8 @@ namespace ts.pxtc.assembler {
                 if (repI < replacements.length && replacements[repI].firstIdx == li) {
                     const r = replacements[repI];
                     this.buildLine(`    ${callName} ${r.name}`, newLines);
+                    if (r.stackDelta)
+                        this.buildLine(`    @dummystack ${r.stackDelta}`, newLines);
                     skipUntil = r.lastIdx;
                     repI++;
                     continue;
@@ -1361,6 +1382,13 @@ namespace ts.pxtc.assembler {
                 newLines.push(this.lines[li]);
             }
 
+            // The procedure bodies below are re-simulated by the assembler purely
+            // to compute their own encoding/location; their real stack effect was
+            // already accounted for (once per call site) via @dummystack above, so
+            // re-validating stack balance against them here would be both
+            // redundant and wrong (each call site may have a different local
+            // stack depth when it invokes the shared body).
+            this.buildLine("@nostackcheck", newLines);
             this.buildLine(".section code", newLines);
             this.buildLine(".balign 4", newLines);
             const emitted: pxt.Map<boolean> = {};
@@ -1379,11 +1407,13 @@ namespace ts.pxtc.assembler {
 
             // Re-resolve labels/locations for the rewritten line list.
             this.throwOnError = true;
+            this.checkStack = true;
             this.clearLabels();
             this.finalEmit = false;
             this.iterLines();
             if (this.errors.length > 0)
                 return;
+            this.checkStack = true;
             this.finalEmit = true;
             this.reallyFinalEmit = true;
             this.iterLines();
