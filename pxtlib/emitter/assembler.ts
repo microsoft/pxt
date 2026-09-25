@@ -276,6 +276,15 @@ namespace ts.pxtc.assembler {
         private stats = "";
         public throwOnError = false;
         public disablePeepHole = false;
+        // Outlining repeated instruction sequences into shared procedures is
+        // experimental: it hasn't been verified against every processor's
+        // calling convention (e.g. which registers must survive a call), so
+        // it defaults to off and must be opted into explicitly.
+        public disableProcedurize = true;
+        public procedurizeMinLen = 5;
+        public procedurizeMaxLen = 10;
+        public procedurizeMinCount = 3;
+        private outlinedProcSeq = 0;
         public stackAtLabel: pxt.Map<number> = {};
         private prevLabel: string;
 
@@ -1177,6 +1186,212 @@ namespace ts.pxtc.assembler {
             this.stats += lf("; peep hole pass: {0} instructions removed and {1} updated\n", this.peepDel, this.peepOps - this.peepDel)
         }
 
+        // Identify common instruction sequences repeated (non-overlapping) at
+        // least procedurizeMinCount times and, when it's a net size win,
+        // rewrite them as calls to a single shared, generated procedure.
+        private procedurize() {
+            if (this.disableProcedurize)
+                return;
+
+            const callName = this.ei.callInstructionName();
+            if (!callName)
+                return; // this processor doesn't support procedure outlining
+
+            const wordSizeOf = (mnemonic: string) => {
+                const ins = (this.ei.instructions[mnemonic] || [])[0];
+                return ins && this.ei.is32bit(ins) ? 4 : 2;
+            }
+
+            // Only consider real instructions, skipping user-supplied inline assembly.
+            const idx: number[] = [];
+            const mylines: Line[] = [];
+            this.lines.forEach((l, i) => {
+                if (l.type == "instruction" && !/^user/.test(l.scope || "")) {
+                    idx.push(i);
+                    mylines.push(l);
+                }
+            });
+
+            const keys = mylines.map(l => l.words.join(" "));
+
+            // Moving code into a separate procedure pushes {lr} on entry, which
+            // shifts sp by one word for the duration of the call -- so any
+            // instruction reading/writing sp, lr, or pc absolutely (as opposed to
+            // a relative "add/sub sp, #N") can't be safely relocated, nor can any
+            // jump/branch other than a plain call (its target/return semantics
+            // are tied to the enclosing function, not the outlined body).
+            const unsafe = mylines.map(l => {
+                const w = l.words;
+                const op = w[0];
+                if (op != "bl" && op != "blx" && /^b/.test(op))
+                    return true;
+                for (let k = 0; k < w.length; k++) {
+                    if (w[k] == "sp" || w[k] == "lr" || w[k] == "pc") {
+                        if (w[k] == "sp" && k == 1 && (op == "add" || op == "adds" || op == "sub" || op == "subs"))
+                            continue;
+                        return true;
+                    }
+                }
+                return false;
+            });
+
+            // gapOk[k] is true if there's nothing but blank/comment-only lines
+            // between instructions k and k+1 -- i.e. no label (which something
+            // could branch into) and no directive (like @stackmark / @stackempty,
+            // which track exact stack depth and must never be silently dropped).
+            const gapOk: boolean[] = [];
+            for (let k = 0; k < idx.length - 1; k++) {
+                let ok = true;
+                for (let j = idx[k] + 1; ok && j < idx[k + 1]; j++)
+                    if (this.lines[j].type != "empty")
+                        ok = false;
+                gapOk.push(ok);
+            }
+
+            const windowIsSafe = (i: number, n: number) => {
+                for (let k = i; k < i + n; k++)
+                    if (unsafe[k])
+                        return false;
+                for (let k = i; k < i + n - 1; k++)
+                    if (!gapOk[k])
+                        return false;
+                return true;
+            }
+
+            const keyOf = (i: number, n: number) => keys.slice(i, i + n).join("\u0001");
+
+            const candidateSets: pxt.Map<pxt.Map<boolean>> = {};
+            let anyCandidates = false;
+            for (let n = this.procedurizeMinLen; n <= this.procedurizeMaxLen; n++) {
+                const counts: pxt.Map<number> = {};
+                for (let i = 0; i + n <= keys.length; i++) {
+                    if (!windowIsSafe(i, n))
+                        continue;
+                    const key = keyOf(i, n);
+                    counts[key] = (counts[key] || 0) + 1;
+                }
+                const set: pxt.Map<boolean> = {};
+                Object.keys(counts).forEach(key => {
+                    if (counts[key] >= this.procedurizeMinCount && counts[key] >= 2) {
+                        set[key] = true;
+                        anyCandidates = true;
+                    }
+                });
+                candidateSets[n] = set;
+            }
+
+            if (!anyCandidates)
+                return;
+
+            const candidateLens: number[] = [];
+            for (let n = this.procedurizeMaxLen; n >= this.procedurizeMinLen; n--)
+                candidateLens.push(n);
+
+            // Walk the instruction stream left-to-right, at each position taking
+            // the longest qualifying, safe candidate (if any) and skipping past
+            // it -- giving a non-overlapping partition of call sites to outline.
+            interface Match { start: number; n: number; key: string; }
+            const matches: Match[] = [];
+            let i = 0;
+            while (i < keys.length) {
+                let matched = false;
+                for (const n of candidateLens) {
+                    if (i + n > keys.length || !windowIsSafe(i, n))
+                        continue;
+                    const key = keyOf(i, n);
+                    if (candidateSets[n][key]) {
+                        matches.push({ start: i, n, key });
+                        i += n;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched)
+                    i++;
+            }
+
+            const byGroup: pxt.Map<{ n: number; starts: number[] }> = {};
+            matches.forEach(m => {
+                const gk = m.n + "|" + m.key;
+                if (!byGroup[gk])
+                    byGroup[gk] = { n: m.n, starts: [] };
+                byGroup[gk].starts.push(m.start);
+            });
+
+            const callBytes = wordSizeOf(callName);
+            const procOverheadBytes = wordSizeOf("push") + wordSizeOf("pop");
+            const instrBytes = (l: Line) => l.instruction && this.ei.is32bit(l.instruction) ? 4 : 2;
+
+            const procNames: pxt.Map<string> = {};
+            const retained: { start: number; n: number; groupKey: string }[] = [];
+            Object.keys(byGroup).forEach(gk => {
+                const { n, starts } = byGroup[gk];
+                if (starts.length < 2)
+                    return;
+                let seqBytes = 0;
+                for (let k = 0; k < n; k++)
+                    seqBytes += instrBytes(mylines[starts[0] + k]);
+                const savings = starts.length * (seqBytes - callBytes) - (seqBytes + procOverheadBytes);
+                if (savings <= 0)
+                    return;
+                procNames[gk] = `_outlined_proc_${++this.outlinedProcSeq}`;
+                starts.forEach(start => retained.push({ start, n, groupKey: gk }));
+            });
+
+            if (!retained.length)
+                return;
+
+            const replacements = retained
+                .map(r => ({ firstIdx: idx[r.start], lastIdx: idx[r.start + r.n - 1], name: procNames[r.groupKey] }))
+                .sort((a, b) => a.firstIdx - b.firstIdx);
+
+            const newLines: Line[] = [];
+            let repI = 0;
+            let skipUntil = -1;
+            for (let li = 0; li < this.lines.length; li++) {
+                if (li <= skipUntil)
+                    continue;
+                if (repI < replacements.length && replacements[repI].firstIdx == li) {
+                    const r = replacements[repI];
+                    this.buildLine(`    ${callName} ${r.name}`, newLines);
+                    skipUntil = r.lastIdx;
+                    repI++;
+                    continue;
+                }
+                newLines.push(this.lines[li]);
+            }
+
+            this.buildLine(".section code", newLines);
+            this.buildLine(".balign 4", newLines);
+            const emitted: pxt.Map<boolean> = {};
+            retained.forEach(r => {
+                if (emitted[r.groupKey])
+                    return;
+                emitted[r.groupKey] = true;
+                const wrapped = this.ei.wrapProcedureBody(keys.slice(r.start, r.start + r.n));
+                if (!wrapped)
+                    return;
+                this.buildLine(`${procNames[r.groupKey]}:`, newLines);
+                wrapped.forEach(line => this.buildLine(`    ${line}`, newLines));
+            });
+
+            this.lines = newLines;
+
+            // Re-resolve labels/locations for the rewritten line list.
+            this.throwOnError = true;
+            this.clearLabels();
+            this.finalEmit = false;
+            this.iterLines();
+            if (this.errors.length > 0)
+                return;
+            this.finalEmit = true;
+            this.reallyFinalEmit = true;
+            this.iterLines();
+
+            this.stats += lf("; procedurize pass: {0} call sites outlined into {1} shared procedures\n",
+                retained.length, Object.keys(procNames).length)
+        }
+
         public getLabels() {
             if (!this.userLabelsCache)
                 this.userLabelsCache = U.mapMap(this.labels, (k, v) => v + this.baseOffset)
@@ -1218,6 +1433,8 @@ namespace ts.pxtc.assembler {
                 this.peepPass(i == maxPasses);
                 if (this.peepOps == 0) break;
             }
+
+            this.procedurize();
 
             pxt.debug("emit done")
         }
@@ -1311,6 +1528,22 @@ namespace ts.pxtc.assembler {
 
         public isSubSP(opcode: number): boolean {
             return false;
+        }
+
+        // Name of the "call subroutine" instruction (e.g. "bl" for Thumb), or
+        // null if this processor doesn't support outlining repeated code into
+        // shared procedures (see File.procedurize()).
+        public callInstructionName(): string {
+            return null;
+        }
+
+        // Given the instruction text of a would-be procedure body, return the
+        // full instruction text (as separate lines, without the label) needed
+        // to make it a valid, callable, return-safe procedure -- e.g. saving
+        // and restoring the link register around the body. Return null if
+        // this processor doesn't support procedure outlining.
+        public wrapProcedureBody(body: string[]): string[] {
+            return null;
         }
 
         public testAssembler() {
