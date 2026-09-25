@@ -48,6 +48,8 @@ https://youtu.be/KH0FsS8BqsA
 >![Prabhath introduction](/static/blog/10th-anniversary/student-intro.png)
 ><br/>_Prabhath's MakeCode experiences_
 
+It’s about the student who spends an afternoon debugging a function until it finally works.
+
 It's about the parent who drives their child every week to a [Code Ninjas](https://www.codeninjas.com/about) center. 
 
 It's about the librarian, camp counselor, volunteer, and instructor who creates a space where young people can experiment and ask, "What happens if I try this?" 
