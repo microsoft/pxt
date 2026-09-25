@@ -37,6 +37,7 @@ export interface MenuDropdownProps extends ControlProps {
     label?: string | JSX.Element;
     title: string;
     icon?: string;
+    showChevron?: boolean;
     tabIndex?: number;
     disabled?: boolean;
 }
@@ -52,6 +53,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         label,
         title,
         icon,
+        showChevron,
         tabIndex,
         disabled
     } = props;
@@ -133,6 +135,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
             buttonRef={handleButtonRef}
             title={title}
             leftIcon={icon}
+            rightIcon={showChevron ? (expanded ? "fas fa-chevron-up" : "fas fa-chevron-down") : undefined}
             role={role || "button"}
             className={classList("menu-button", expanded && "expanded")}
             onClick={null}

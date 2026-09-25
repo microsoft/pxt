@@ -24,6 +24,14 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import { Dropdown, DropdownItem } from "../../react-common/components/controls/Dropdown";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
+import {
+    filterHomeSearchCards,
+    getAvailableHomeSearchFilters,
+    getHomeSearchFilterOptionCounts,
+    hasActiveHomeSearchFilters,
+    HomeSearchFilterDefinition,
+    HomeSearchFilterSelection,
+} from "./homeSearchFilters";
 
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -33,7 +41,9 @@ interface ProjectsState {
     selectedIndex?: number;
     searchMode?: boolean;
     searchQuery?: string;
+    searchCandidates?: SearchCard[];
     searchResults?: SearchCard[];
+    searchFilters?: HomeSearchFilterSelection;
 }
 
 const SEARCH_CATEGORY = "__search__";
@@ -92,7 +102,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             || this.state.selectedIndex != nextState.selectedIndex
             || this.state.searchMode != nextState.searchMode
             || this.state.searchQuery != nextState.searchQuery
-            || this.state.searchResults != nextState.searchResults;
+            || this.state.searchCandidates != nextState.searchCandidates
+            || this.state.searchResults != nextState.searchResults
+            || this.state.searchFilters != nextState.searchFilters;
     }
 
     setSelected(category: string, index?: number) {
@@ -194,6 +206,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return {
             projectHeader: header,
             cardType: "file",
+            editor: header.editor === pxt.BLOCKS_PROJECT_NAME ? "blocks"
+                : header.editor === pxt.PYTHON_PROJECT_NAME ? "py"
+                    : header.editor === pxt.JAVASCRIPT_PROJECT_NAME ? "js"
+                        : undefined,
             name: (ghid && pxt.github.join(ghid.project, ghid.fileName)) || header.name,
             time: header.modificationTime,
             tutorialStep,
@@ -235,22 +251,33 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return { cards, entries, cardMap };
     }
 
-    private runSearch(query: string) {
+    private runSearch(query: string, filters = this.state.searchFilters || {}) {
         const normalized = (query || "").trim();
         const galleries = this.getSearchGalleries();
         const requestId = ++this.searchRequestId;
+        const hasFilters = hasActiveHomeSearchFilters(filters);
 
-        if (!normalized) {
+        if (!normalized && !hasFilters) {
             const resetCategory = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory;
             const resetIndex = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex;
             compiler.homeSearchClear();
-            this.setState({ searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
+            this.setState({ searchCandidates: undefined, searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
             return;
         }
 
-        const { entries, cardMap } = this.collectSearchEntries(galleries);
+        const { cards, entries, cardMap } = this.collectSearchEntries(galleries);
         if (!entries.length) {
-            this.setState({ searchResults: [] });
+            this.setState({ searchCandidates: [], searchResults: [] });
+            return;
+        }
+
+        if (!normalized) {
+            this.setState({
+                searchCandidates: undefined,
+                searchResults: filterHomeSearchCards(cards, filters),
+                selectedCategory: SEARCH_CATEGORY,
+                selectedIndex: undefined
+            });
             return;
         }
 
@@ -258,11 +285,13 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             .then(results => {
                 if (requestId !== this.searchRequestId) return;
 
-                const matches = results
+                const candidates = results
                     .map(result => cardMap[result.id])
                     .filter(card => !!card);
+                const matches = filterHomeSearchCards(candidates, filters);
 
                 this.setState({
+                    searchCandidates: candidates,
                     searchResults: matches,
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -272,6 +301,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 if (requestId !== this.searchRequestId) return;
                 pxt.reportException(e);
                 this.setState({
+                    searchCandidates: [],
                     searchResults: [],
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -280,8 +310,52 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     public setSearchQuery(query: string) {
-        this.setState({ searchQuery: query });
+        this.setState({ searchQuery: query, searchCandidates: undefined });
         this.runSearch(query);
+    }
+
+    private setSearchFilter(filterId: string, optionId: string, selected: boolean) {
+        const searchFilters = { ...(this.state.searchFilters || {}) };
+        const values = (searchFilters[filterId] || []).filter(value => value !== optionId);
+        if (selected) values.push(optionId);
+
+        if (values.length) searchFilters[filterId] = values;
+        else delete searchFilters[filterId];
+
+        this.setState({ searchFilters });
+        this.runSearch(this.state.searchQuery || "", searchFilters);
+    }
+
+    private clearSearchFilters = () => {
+        const searchFilters = {};
+        this.setState({ searchFilters });
+        this.runSearch(this.state.searchQuery || "", searchFilters);
+    }
+
+    private renderSearchFilter(definition: HomeSearchFilterDefinition, optionCounts: pxt.Map<number>) {
+        const selectedValues = this.state.searchFilters?.[definition.id] || [];
+        const selectedCount = selectedValues.length;
+        const label = selectedCount ? lf("{0} ({1})", definition.label, selectedCount) : definition.label;
+        const ariaLabel = selectedCount
+            ? lf("{0} filter, {1} selected", definition.label, selectedCount)
+            : lf("{0} filter", definition.label);
+        const items: MenuItem[] = definition.options.map(option => ({
+            role: "menuitemcheckbox",
+            label: lf("{0} ({1})", option.label, optionCounts[option.id] || 0),
+            isChecked: selectedValues.indexOf(option.id) !== -1,
+            onChange: selected => this.setSearchFilter(definition.id, option.id, selected),
+        }));
+
+        return <MenuDropdown
+            key={definition.id}
+            id={`home-search-filter-${definition.id}`}
+            className="home-search-filter"
+            label={label}
+            title={ariaLabel}
+            ariaLabel={ariaLabel}
+            showChevron={true}
+            items={items}
+        />;
     }
 
     public getSearchQuery() {
@@ -302,6 +376,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.warmSearchIndex();
         this.setState({
             searchMode: true,
+            searchFilters: {},
             selectedCategory: this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory,
             selectedIndex: this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex,
         });
@@ -317,7 +392,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setState({
             searchMode: false,
             searchQuery: "",
+            searchCandidates: undefined,
             searchResults: undefined,
+            searchFilters: undefined,
             selectedCategory: undefined,
             selectedIndex: undefined,
         }, () => {
@@ -427,8 +504,20 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const galleries = this.getHomeGalleries();
         const searchMode = !!this.state.searchMode;
         const searchQuery = this.state.searchQuery || "";
-        const hasSearchQuery = !!searchQuery.trim();
+        const hasSearchFilters = hasActiveHomeSearchFilters(this.state.searchFilters || {});
+        const hasSearchCriteria = !!searchQuery.trim() || hasSearchFilters;
         const searchResults = this.state.searchResults || [];
+        const allSearchCards = searchMode
+            ? this.collectSearchEntries(this.getSearchGalleries()).cards
+            : [];
+        const availableSearchFilters = getAvailableHomeSearchFilters(allSearchCards);
+        const searchFilterCandidates = searchQuery.trim()
+            ? this.state.searchCandidates || []
+            : allSearchCards;
+        const searchFilterOptionCounts = getHomeSearchFilterOptionCounts(
+            searchFilterCandidates,
+            this.state.searchFilters || {}
+        );
         const searchSelectedIndex = this.state.selectedCategory === SEARCH_CATEGORY ? this.state.selectedIndex : undefined;
         const selectedSearchCard = searchSelectedIndex !== undefined ? searchResults[searchSelectedIndex] : undefined;
         const selectedSearchProjectHeader = selectedSearchCard?.projectHeader;
@@ -436,7 +525,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             ? this.getLocalProjectDescription(selectedSearchProjectHeader) || selectedSearchCard?.description
             : selectedSearchCard?.description;
         const canImport = !!(pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing)) && !searchMode;
-        const searchResultsContent = hasSearchQuery
+        const searchResultsContent = hasSearchCriteria
             ? searchResults.length
                 ? searchResults.map((scr, index) =>
                     <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
@@ -539,6 +628,19 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                         icon="search icon"
                         ariaLabel={lf("Search tutorials, examples, and projects")}
                     />
+                    {!!availableSearchFilters.length && <div className="home-search-filters" role="group" aria-label={lf("Filter search results")}>
+                        <span className="home-search-filters-label">{lf("Filter by")}</span>
+                        <div className="home-search-filter-menus">
+                            {availableSearchFilters.map(definition =>
+                                this.renderSearchFilter(definition, searchFilterOptionCounts[definition.id]))}
+                        </div>
+                        {hasSearchFilters && <Button
+                            className="home-search-clear-filters neutral button"
+                            label={lf("Clear filters")}
+                            title={lf("Clear all search filters")}
+                            onClick={this.clearSearchFilters}
+                        />}
+                    </div>}
                 </div>}
                 {!searchMode && <div className="content">
                     <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />

@@ -203,6 +203,7 @@
 
         &.search-segment {
             padding: 1rem @carouselArrowSize;
+            min-height: 28rem;
 
             .search-results-grid {
                 display: grid;
@@ -334,6 +335,53 @@
     .homescreen-search-box {
         padding-top: 1em;
         margin: 1em @carouselArrowSize;
+    }
+    .home-search-filters {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        min-height: 2.75rem;
+        margin-top: 0.75rem;
+        color: var(--pxt-neutral-foreground1);
+
+        .home-search-filters-label {
+            flex: 0 0 auto;
+            font-weight: 600;
+        }
+
+        .home-search-filter-menus {
+            display: flex;
+            flex: 0 1 auto;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            min-width: 0;
+        }
+
+        .home-search-filter {
+            height: auto;
+
+            > .menu-button {
+                min-height: 2.75rem;
+                padding: 0.625rem 0.875rem;
+                border: 1px solid var(--pxt-neutral-stencil1);
+                border-radius: 0.25rem;
+                background: var(--pxt-neutral-background1);
+                color: var(--pxt-neutral-foreground1);
+            }
+
+            > .common-menu-dropdown-pane {
+                left: 0;
+                right: auto;
+                z-index: @homeDetailViewSelectedCardZIndex + 1;
+            }
+        }
+
+        .home-search-clear-filters {
+            min-height: 2.75rem;
+            margin-left: auto;
+            border-radius: 0.25rem;
+        }
     }
     .import-dialog-btn,
     .home-search-btn,
@@ -967,7 +1015,7 @@
             padding-left: @carouselArrowSizeTablet !important;
         }
     }
-    .homescreen-search-box {
+    .projectsdialog .homescreen-search-box {
         margin: 1em @carouselArrowSizeTablet;
     }
     .projectsdialog {
@@ -1090,8 +1138,33 @@
             display: none;
         }
     }
-    .homescreen-search-box {
+    .projectsdialog .homescreen-search-box {
         margin: 1em @carouselArrowSizeMobile;
+    }
+    .home-search-filters {
+        align-items: stretch;
+
+        .home-search-filters-label {
+            width: 100%;
+        }
+
+        .home-search-filter-menus {
+            flex: 1 1 100%;
+        }
+
+        .home-search-filter {
+            flex: 0 1 auto;
+            max-width: 100%;
+
+            > .menu-button {
+                width: auto;
+                max-width: 100%;
+            }
+        }
+
+        .home-search-clear-filters {
+            margin-left: 0;
+        }
     }
     .projectsdialog {
         .ui.segment.getting-started-segment {
