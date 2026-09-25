@@ -3,7 +3,7 @@
 
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
-import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { DuplicateOnDragConnectionChecker, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
 
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
@@ -392,6 +392,98 @@ describe("blockly compiler", function () {
     });
 
     describe("compiling text", () => {
+        it("should initialize color picker shadows in the parameter's requested mode", async () => {
+            const info = await getBlocksInfoAsync();
+            const coloredInfo = {
+                ...info,
+                blocks: info.blocks.concat({
+                    attributes: { builtinBlockId: "makecode_color_picker", color: "#6554C0" }
+                } as pxtc.SymbolInfo)
+            };
+            const workspace = new Blockly.Workspace();
+            try {
+                for (const format of ["hex", "rgb", "hsv", "hsl", "cmyk", "invalid"]) {
+                    const value = pxtblockly.createShadowValue(coloredInfo, {
+                        definitionName: "color", actualName: "color", type: "number",
+                        shadowBlockId: "makecode_color_picker", defaultValue: "0x7f3fbf",
+                        fieldOptions: { format }
+                    });
+                    const picker = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    chai.assert.isTrue(picker.isShadow());
+                    chai.assert.equal(picker.getColour().toLowerCase(), "#6554c0");
+                    chai.assert.equal(picker.getFieldValue("FORMAT"), format === "invalid" ? "rgb" : format);
+                    chai.assert.equal(pxtblockly.getColorPickerColor(picker), "#7F3FBF");
+                    const mutation = value.querySelector("mutation");
+                    mutation.removeAttribute("hue");
+                    mutation.removeAttribute("saturation");
+                    mutation.removeAttribute("value");
+                    const restored = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    restored.updateBeforeRender();
+                    chai.assert.include(restored.getField("PREVIEW").getText(), "#7F3FBF");
+                    restored.dispose();
+                    picker.setFieldValue("rgb", "FORMAT");
+                    chai.assert.deepEqual([0, 1, 2].map(i => Math.round(Number(picker.getInputTargetBlock("INPUT" + i).getFieldValue("NUM")))), [127, 63, 191]);
+                    picker.getInputTargetBlock("INPUT0").setFieldValue("255", "NUM");
+                    picker.updateColorPreview();
+                    chai.assert.include(picker.getField("PREVIEW").getText(), "#FF3FBF");
+                    // An expression has no statically known preview, even if another channel is literal.
+                    const input = picker.getInput("INPUT0");
+                    input.connection.setShadowDom(null);
+                    chai.assert.isUndefined(pxtblockly.getColorPickerColor(picker));
+                    picker.dispose();
+                }
+            }
+            finally {
+                workspace.dispose();
+            }
+        });
+
+        it("should share named picker defaults without taking another contributor's settings", async () => {
+            const info = await getBlocksInfoAsync();
+            const contributor = (id: string, color: string, format: string, value: string): pxtc.SymbolInfo => ({
+                name: id, namespace: "test", fileName: "test.ts", kind: pxtc.SymbolKind.Function, retType: "number",
+                attributes: {
+                    blockId: id, builtinBlockId: "makecode_color_picker", color,
+                    paramFieldEditorOptions: { value: { format } },
+                    paramDefl: { value }, callingConvention: pxtc.ir.CallingConvention.Plain
+                },
+                parameters: [{ name: "value", type: "number", description: "", default: value }]
+            });
+            const first = contributor("other_picker", "#008800", "rgb", "0xff0000");
+            const selected = contributor("test_color_picker", "#6554C0", "hex", "0x7f3fbf");
+            const namedInfo = {
+                ...info, blocks: info.blocks.concat(first, selected),
+                blocksById: { ...info.blocksById, other_picker: first, test_color_picker: selected }
+            };
+            const shadow = pxtblockly.createShadowValue(namedInfo, {
+                definitionName: "color", actualName: "color", type: "number", shadowBlockId: "test_color_picker"
+            }).firstElementChild;
+            const standalone = pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected));
+            chai.assert.equal(shadow.getAttribute("type"), "makecode_color_picker");
+            chai.assert.equal(shadow.innerHTML, standalone.innerHTML);
+            chai.assert.equal(shadow.querySelector("mutation").getAttribute("color"), "#6554C0");
+            chai.assert.equal(shadow.querySelector('field[name="FORMAT"]').textContent, "hex");
+            chai.assert.equal(shadow.querySelector('field[name="TEXT"]').textContent, "#7F3FBF");
+            selected.attributes.duplicateShadowOnDrag = true;
+            const marked = pxtblockly.createShadowValue(namedInfo, {
+                definitionName: "color", actualName: "color", type: "number", shadowBlockId: "test_color_picker"
+            }).firstElementChild;
+            const workspace = new Blockly.Workspace();
+            try {
+                const picker = Blockly.Xml.domToBlock(marked, workspace);
+                const unmarked = Blockly.Xml.domToBlock(shadow, workspace);
+                const standalonePicker = Blockly.Xml.domToBlock(pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected)), workspace);
+                chai.assert.isTrue(shouldDuplicateOnDrag(picker));
+                chai.assert.isFalse(shouldDuplicateOnDrag(unmarked));
+                chai.assert.isFalse(shouldDuplicateOnDrag(standalonePicker));
+                const restored = Blockly.Xml.domToBlock(Blockly.Xml.blockToDom(picker) as Element, workspace);
+                chai.assert.isTrue(shouldDuplicateOnDrag(restored));
+            }
+            finally {
+                workspace.dispose();
+            }
+        });
+
         it("should handle the text blocks", (done: () => void) => {
             blockTestAsync("text").then(done, done);
         });

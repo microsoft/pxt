@@ -686,6 +686,14 @@ ${output}</xml>`;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
+            const contributor = blocksInfo.blocksById[shadowType];
+            const builtinBlockId = contributor?.attributes.builtinBlockId;
+            // Keep the contributor ID so a fallback shadow can be rebuilt with its configured defaults.
+            if (builtinBlockId === "makecode_color_picker" && value.kind === "expr" && value.type === builtinBlockId) {
+                value.mutation = value.mutation || {};
+                if (contributor?.attributes.color) value.mutation.color = contributor.attributes.color;
+                if (contributor?.attributes.duplicateShadowOnDrag) value.mutation.duplicateondrag = "true";
+            }
             if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
                 // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
                 shadowType = minmaxNumberType;
@@ -4004,8 +4012,10 @@ ${output}</xml>`;
         let emitShadowOnly = false;
 
         if (n.value.kind === "expr") {
-            if (n.value.type !== n.shadowType) {
-                const shadowBlockInfo = blocksInfo.blocksById[n.shadowType];
+            const shadowBlockInfo = blocksInfo.blocksById[n.shadowType];
+            const normalizedShadowType = shadowBlockInfo?.attributes?.builtinBlockId || n.shadowType;
+
+            if (n.value.type !== normalizedShadowType) {
                 let shadowBlockShimType: string;
                 let shadowFieldName: string;
 
@@ -4043,7 +4053,7 @@ ${output}</xml>`;
                 value.type = colorPickerString;
             }
 
-            emitShadowOnly = value.type === n.shadowType;
+            emitShadowOnly = value.type === normalizedShadowType;
             if (!emitShadowOnly) {
                 if (isNumberBlockType(value.type) || isBooleanBlockType(value.type) || isStringBlockType(value.type)) {
                     emitShadowOnly = !n.shadowType
