@@ -1,5 +1,13 @@
 # Microsoft MakeCode Blog
 
+## [A Decade of Making and Coding](/blog/10th-anniversary)
+
+September 25th, 2026 by [Jaqster](https://github.com/jaqster)
+
+Happy 10th Birthday Microsoft MakeCode! This month, we're celebrating this 10-year milestone to reflect on the impact MakeCode has made, to thank the community and partners who made it possible...
+
+**[Continue reading this blog post](/blog/10th-anniversary)**
+
 ## [MakeCode Arcade August 2026 Update](/blog/arcade/update-aug-2026)
 
 August 31st, 2026 by [Jaqster](https://github.com/jaqster)

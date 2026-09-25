@@ -35,6 +35,25 @@ pxt.appTarget = {
 
 const differ = new dmp.diff_match_patch();
 
+describe("gallery code cards", () => {
+    it("parses comma-separated tags and search terms as arrays", () => {
+        const markdownCards = pxt.gallery.parseCodeCards(`
+* name: Tagged project
+* tags: Community Games, User Input, Sprites
+* searchTerms: platformer, jumping, side scroller
+`);
+        const jsonCards = pxt.gallery.parseCodeCards(JSON.stringify({
+            name: "Legacy tagged project",
+            tags: "Community Games, User Input, Sprites",
+            searchTerms: "platformer, jumping, side scroller"
+        }));
+        chai.expect(markdownCards[0].tags).deep.equals(["Community Games", "User Input", "Sprites"]);
+        chai.expect(markdownCards[0].searchTerms).deep.equals(["platformer", "jumping", "side scroller"]);
+        chai.expect(jsonCards[0].tags).deep.equals(["Community Games", "User Input", "Sprites"]);
+        chai.expect(jsonCards[0].searchTerms).deep.equals(["platformer", "jumping", "side scroller"]);
+    });
+});
+
 function diffText(a: string, b: string) {
     return pxt.diff.computePatch(a, b);
 }

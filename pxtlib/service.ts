@@ -913,17 +913,26 @@ namespace ts.pxtc {
             return false;
         }
 
+        if (!!a.thisParameter != !!b.thisParameter
+            || (a.thisParameter && !isEquivalentParameter(a.thisParameter, b.thisParameter))) {
+            pxt.debug(`Localized block's this parameter shadow block or definition name does not match`);
+            return false;
+        }
+
         for (const aParam of a.parameters) {
             const bParam = b.actualNameToParam[aParam.actualName];
-            if (!bParam
-                || aParam.type != bParam.type
-                || aParam.shadowBlockId != bParam.shadowBlockId
-                || aParam.definitionName != bParam.definitionName) {
+            if (!bParam || !isEquivalentParameter(aParam, bParam)) {
                 pxt.debug(`Parameter ${aParam.actualName} type, shadow block, or definition name does not match after localization`);
                 return false;
             }
         }
         return true;
+    }
+
+    function isEquivalentParameter(a: pxt.blocks.BlockParameter, b: pxt.blocks.BlockParameter) {
+        return a.type == b.type
+            && a.shadowBlockId == b.shadowBlockId
+            && a.definitionName == b.definitionName;
     }
 
     export function emptyExtInfo(): ExtensionInfo {
