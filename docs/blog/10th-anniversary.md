@@ -20,7 +20,7 @@ Over the past decade, that vision has grown into a family of products used in cl
 
 ![About MakeCode block graphic](/static/blog/10th-anniversary/about-makecode.png)
 
-Learn more about MakeCode at **https://makecode.com**.
+Learn more about MakeCode at [makecode.com](https://makecode.com)
 
 ## Worldwide Impact 
 
@@ -43,12 +43,12 @@ It's about the teacher who spends the extra time prepping for a physical computi
 
 https://youtu.be/KH0FsS8BqsA
 
+It’s about the student who spends an afternoon debugging a function until it finally works.
+
 >Prabhath is an 11-year-old who has spent time creating MakeCode games and learning on his own.  We got the chance to meet this young man recently and were inspired by his passion and motivation for game development! He also gave us some really good product feedback and ideas for new features.
 
 >![Prabhath introduction](/static/blog/10th-anniversary/student-intro.png)
 ><br/>_Prabhath's MakeCode experiences_
-
-It’s about the student who spends an afternoon debugging a function until it finally works.
 
 It's about the parent who drives their child every week to a [Code Ninjas](https://www.codeninjas.com/about) center. 
 
@@ -56,7 +56,7 @@ It's about the librarian, camp counselor, volunteer, and instructor who creates 
 
 It's about incredible partners who have helped shaped and expanded what's possible with MakeCode. 
 
->A huge heartfelt ❤️ Thank You to all of our Partners – especially the [Micro:bit Educational Foundation](https://microbit.org/about/overview) and the [Minecraft Education Team](https://education.minecraft.net). We would not be here without you. But also to Adafruit, the Blockly Team, Calliope, Chibitronics, Code Ninjas, ElecFreaks, Forward Education, GitHub, Kitronik, Kittenbot, Lancaster University, Makey Makey and many more! Thank you all for taking a bet on us! 
+>A huge heartfelt ❤️ **Thank You** ❤️ to all of our Partners – especially the **[Micro:bit Educational Foundation](https://microbit.org/about/overview)** and the **[Minecraft Education Team](https://education.minecraft.net)**. We would not be here without you. But also to Adafruit, the Blockly Team, Calliope, Chibitronics, Code Ninjas, ElecFreaks, Forward Education, GitHub, Kitronik, Kittenbot, Lancaster University, Makey Makey and many more! Thank you all for taking a bet on us! 
 
 And, finally, it's about the incredible community members who translate, share projects, answer questions, submit issues and PR's, contribute ideas, create extensions, and help others get started. 
 
