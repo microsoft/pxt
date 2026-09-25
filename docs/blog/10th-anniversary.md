@@ -81,7 +81,7 @@ We want to continue making computer science fun and accessible to more learners,
 
 We're excited about where MakeCode can go next, and especially about what you will build with it!
 
-Please share your birthday wishes for MakeCode here: https://www.kudoboard.com/boards/KxJ5V6Cp
+Please share your birthday wishes for MakeCode here: **https://www.kudoboard.com/boards/KxJ5V6Cp**
 
 Happy Making and Coding!
 
