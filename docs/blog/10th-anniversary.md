@@ -16,7 +16,7 @@ But we also know that coding is most exciting when you can see your ideas come t
 
 That's why MakeCode has always connected programming with things young people love to build and explore - gadgets, games, Minecraft, music, and art.
 
-Over the past decade, that vision has grown into a family of experiences used in classrooms, libraries, camps, clubs, homes, and maker spaces around the world.
+Over the past decade, that vision has grown into a family of products used in classrooms, libraries, camps, clubs, homes, and maker spaces around the world.
 
 ![About MakeCode block graphic](/static/blog/10th-anniversary/about-makecode.png)
 
