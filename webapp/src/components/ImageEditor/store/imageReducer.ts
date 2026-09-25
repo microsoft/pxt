@@ -178,7 +178,7 @@ const initialStore: ImageEditorStore = {
     }
 }
 
-const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageEditorStore => {
+const topReducer = (state: ImageEditorStore = initialStore, action: any, project?: pxt.TilemapProject): ImageEditorStore => {
     switch (action.type) {
         case actions.OPEN_TILE_EDITOR:
         case actions.CHANGE_PREVIEW_ANIMATING:
@@ -234,7 +234,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
                 if (pxt.sprite.isEmptyTilemap(tilemapData)) {
                     const tiles = tilemapData.tileset.tiles as pxt.Tile[] || [];
                     const firstTileName = (gallery as GalleryTile[]).find(t => t.tags.indexOf("forest") !== -1)?.qualifiedName;
-                    const firstTile = lookupAsset(pxt.AssetType.Tile, firstTileName) as pxt.Tile;
+                    const firstTile = lookupAsset(pxt.AssetType.Tile, firstTileName, project) as pxt.Tile;
                     if (firstTile && !tiles.find(t => t.id === firstTileName)) {
                         tiles.push(firstTile);
                     }
@@ -342,7 +342,7 @@ const topReducer = (state: ImageEditorStore = initialStore, action: any): ImageE
             };
         default:
             const prevState = state.store.present;
-            const nextState = state.editor.isTilemap ? tilemapReducer(state.store.present as TilemapState, action) : animationReducer(state.store.present as AnimationState, action);
+            const nextState = state.editor.isTilemap ? tilemapReducer(state.store.present as TilemapState, action, project) : animationReducer(state.store.present as AnimationState, action);
 
             let didChange = prevState.kind !== nextState.kind;
 
@@ -579,7 +579,7 @@ const editorReducer = (state: EditorState, action: any, store: EditorStore): Edi
     return state;
 }
 
-const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
+const tilemapReducer = (state: TilemapState, action: any, project?: pxt.TilemapProject): TilemapState => {
     switch (action.type) {
         case actions.TOGGLE_ASPECT_RATIO:
             tickEvent(`toggle-aspect-ratio-lock`);
@@ -605,7 +605,7 @@ const tilemapReducer = (state: TilemapState, action: any): TilemapState => {
                 newTile.isProjectTile = true;
             }
             else {
-                newTile = lookupAsset(pxt.AssetType.Tile, action.qualifiedName) as pxt.Tile;
+                newTile = lookupAsset(pxt.AssetType.Tile, action.qualifiedName, project) as pxt.Tile;
             }
 
             return {

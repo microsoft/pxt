@@ -17,7 +17,9 @@ export function syncTheme() {
     const experiments = all();
     experiments.forEach(experiment => {
         const enabled = isEnabled(experiment);
-        theme[experiment.id] = !!enabled;
+        // Project tools has an authored target default as well as an opt-in
+        // experiment. Its experiment is checked separately by the editor.
+        if (experiment.id !== "projectTools") theme[experiment.id] = !!enabled;
         if (enabled)
             r[experiment.id] = enabled ? 1 : 0;
     })
@@ -32,6 +34,11 @@ export function all(): Experiment[] {
     const ids = pxt.appTarget.appTheme.experiments;
     if (!ids) return [];
     const exps: Experiment[] = [
+        {
+            id: "projectTools",
+            name: lf("Project tools bubbles"),
+            description: lf("Open documentation and a private whiteboard from compact bubble tabs. Notes are not shared or exported.")
+        },
         {
             id: "print",
             name: lf("Print Code"),
@@ -180,7 +187,11 @@ export function all(): Experiment[] {
         },
     ];
 
-    return exps.filter(experiment => ids.indexOf(experiment.id) > -1)
+        return exps.filter(experiment => experiment.id !== "projectTools" || !pxt.appTarget.appTheme.projectTools)
+        .filter(experiment => ids.indexOf(experiment.id) > -1 ||
+                // Palette data is loaded with the project, after startup syncTheme().
+                // Use a stable target capability so saved experiment settings survive reload.
+                (experiment.id === "projectTools" && !pxt.appTarget.appTheme.hideSideDocs && !!pxt.appTarget.appTheme.assetEditor))
         .concat(editorExtensionExperiments || [])
         .filter(experiment => !(pxt.BrowserUtils.isPxtElectron() && experiment.enableOnline));
 }

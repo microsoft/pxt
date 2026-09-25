@@ -17,6 +17,7 @@ import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { ProjectTools } from "./components/ProjectTools";
 
 // common menu items -- do not remove
 // lf("About")
@@ -795,12 +796,18 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
 export interface SideDocsProps extends ISettingsProps {
     docsUrl: string;
     sideDocsCollapsed: boolean;
+    pinned?: boolean;
+    bubble?: boolean;
+    tutorial?: boolean;
+    header?: pxt.workspace.Header;
+    projectNotes?: pxt.workspace.ProjectNotes;
 }
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
 export interface SideDocsState {
     docsUrl?: string;
     sideDocsCollapsed?: boolean;
+    docsRequest?: number;
 }
 
 
@@ -826,6 +833,8 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     constructor(props: SideDocsProps) {
         super(props);
         this.state = {
+            docsUrl: props.docsUrl,
+            sideDocsCollapsed: props.sideDocsCollapsed
         }
 
         this.toggleVisibility = this.toggleVisibility.bind(this);
@@ -864,12 +873,13 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         // to side bar
         const mode = "blocks" // this.props.parent.isBlocksEditor() ? "blocks" : "js";
         const url = `${docsUrl}md:${encodeURIComponent(md)}:${mode}:${pxt.Util.localeInfo()}`;
-        this.props.parent.setState({ sideDocsLoadUrl: url });
+        if (this.props.bubble) this.setUrl(url);
+        else this.props.parent.setState({ sideDocsLoadUrl: url });
     }
 
     toggleBuiltInHelp(help: pxt.editor.BuiltInHelp, focusIfVisible: boolean) {
         const url = `${builtInPrefix}${help}`;
-        const shouldCollapse = this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible;
+        const shouldCollapse = !this.props.bubble && this.state.docsUrl === url && !this.state.sideDocsCollapsed && !focusIfVisible;
 
         pxt.tickEvent(
             `sidedocs.builtin`,
@@ -895,6 +905,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     }
 
     private setUrl(url: string) {
+        if (this.props.bubble) this.setState(state => ({ docsRequest: (state.docsRequest || 0) + 1 }));
         this.props.parent.setState({ sideDocsLoadUrl: url, sideDocsCollapsed: false });
     }
 
@@ -919,13 +930,17 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     toggleVisibility() {
         const state = this.props.parent.state;
         this.props.parent.setState({ sideDocsCollapsed: !state.sideDocsCollapsed });
-        document.getElementById("sidedocstoggle").focus();
+        document.getElementById(this.sideDocsToggleId())?.focus();
+    }
+
+    private sideDocsToggleId(): string {
+        return this.props.bubble ? "project-tools-launcher" : "sidedocstoggle";
     }
 
     componentDidUpdate() {
-        this.props.parent.editor.resize();
+        if (!this.props.bubble) this.props.parent.editor.resize();
 
-        let sidedocstoggle = document.getElementById("sidedocstoggle");
+        let sidedocstoggle = document.getElementById(this.sideDocsToggleId());
         if (this.openingSideDoc && sidedocstoggle) {
             sidedocstoggle.focus();
             this.openingSideDoc = false;
@@ -945,7 +960,13 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
 
     shouldComponentUpdate(nextProps: SideDocsProps, nextState: SideDocsState, nextContext: any): boolean {
         return this.state.sideDocsCollapsed != nextState.sideDocsCollapsed
-            || this.state.docsUrl != nextState.docsUrl;
+            || this.state.docsUrl != nextState.docsUrl
+            || this.state.docsRequest !== nextState.docsRequest
+            || this.props.pinned !== nextProps.pinned
+            || this.props.bubble !== nextProps.bubble
+            || this.props.tutorial !== nextProps.tutorial
+            || this.props.header?.id !== nextProps.header?.id
+            || this.props.projectNotes !== nextProps.projectNotes;
     }
 
     private handleKeyDown = (ev: React.KeyboardEvent<HTMLElement>) => {
@@ -961,9 +982,9 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
         const showLeftChevron = (sideDocsCollapsed || isRTL) && !(sideDocsCollapsed && isRTL); // Collapsed XOR RTL
         const lockedEditor = !!pxt.appTarget.appTheme.lockedEditor;
 
-        if (!docsUrl) return null;
+        if (!docsUrl && !this.props.bubble) return null;
 
-        const url = sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
+        const url = this.props.bubble ? docsUrl || this.rootDocsUrl() : sideDocsCollapsed ? this.rootDocsUrl() : docsUrl;
         const builtIn = url.startsWith(`${builtInPrefix}`)
             ? builtIns[url.slice(builtInPrefix.length) as pxt.editor.BuiltInHelp]
             : undefined;
@@ -978,6 +999,19 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
             role: "button",
             tabIndex: 0,
         };
+
+        if (this.props.bubble && this.props.header) return <ProjectTools
+            key={this.props.header.id} header={this.props.header} notes={this.props.projectNotes}
+            tutorial={this.props.tutorial}
+            expanded={sideDocsCollapsed === false} docsUrl={docsUrl} docsRequest={this.state.docsRequest}
+            pinned={!!this.props.pinned} onPinnedChange={pinned => this.props.parent.setState({ sideDocsPinned: pinned })}
+            onExpandedChange={expanded => this.props.parent.setState({ sideDocsCollapsed: !expanded })}
+            onOpenReference={() => this.setPath("/reference", this.props.parent.isBlocksEditor())}
+            onSignIn={() => this.props.parent.showLoginDialog(undefined, { signInMessage: lf("Sign in to sync your backpack across devices.") })}
+            docsAction={!lockedEditor && <a className="project-tools__external" title={lf("Open documentation in new tab")}
+                aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}><sui.Icon icon="external" /></a>}>
+            {docsUrl && this.renderContent(url, builtIn, lockedEditor)}
+        </ProjectTools>;
 
         const openInNewTab = !lockedEditor && <div key="newTab" className="ui app hide" id="sidedocsbar">
             <a className="ui icon link" aria-label={lf("Open documentation in new tab")} {...openInNewTabLinkProps}>

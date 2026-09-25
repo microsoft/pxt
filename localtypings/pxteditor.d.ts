@@ -4,6 +4,11 @@
 /// <reference path="./ocv.d.ts" />
 /// <reference path="./monaco.d.ts" />
 
+// TilemapProject exposes this shape, but pxtlib's named interface is private.
+declare namespace pxt {
+    export type AssetSnapshot = ReturnType<TilemapProject["saveGallerySnapshot"]>;
+}
+
 declare namespace pxt.editor {
     export interface EditorMessage {
         /**
@@ -789,6 +794,7 @@ declare namespace pxt.editor {
         showFiles?: boolean;
         sideDocsLoadUrl?: string; // set once to load the side docs frame
         sideDocsCollapsed?: boolean;
+        sideDocsPinned?: boolean; // UI state retained when collapsing the current project's tools
         projectName?: string;
         suppressPackageWarning?: boolean;
         tutorialOptions?: pxt.tutorial.TutorialOptions;
@@ -1402,7 +1408,8 @@ declare namespace pxt.editor {
     type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
 
     interface BaseAssetEditorResponse {
-        id?: number;
+        id?: string | number;
+        success?: boolean;
     }
 
     interface OpenAssetEditorResponse extends BaseAssetEditorResponse {

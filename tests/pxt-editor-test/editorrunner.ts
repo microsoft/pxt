@@ -21,6 +21,8 @@ import {
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
+import { projectToolsPinnedOnLoad } from "../../webapp/src/projectToolsState";
+import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
     versions: {
@@ -61,6 +63,53 @@ function patchText(patch: unknown, a: string) {
 }
 
 const filename = "main.ts";
+
+describe("project-tools pin defaults", () => {
+    it("auto-pins initial documentation but preserves explicit pin and unpin choices on reload", () => {
+        const header = { id: "same" } as pxt.workspace.Header;
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "new", true, false)).equals(true);
+        chai.expect(projectToolsPinnedOnLoad({ home: false }, "new", true, true)).equals(true);
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "new", false, false)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned: false }, "same", true, false)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned: true }, "same", true, false)).equals(true);
+    });
+});
+
+describe("private project notes", () => {
+    const notesWithBoard = (content: Partial<pxt.workspace.WhiteboardContent> = {}): pxt.workspace.ProjectNotes => ({
+        whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text: "", ...content }],
+        activeWhiteboardId: "whiteboard-1"
+    });
+
+    it("round-trips an odd-height image and rejects corrupt or oversized images", () => {
+        const bitmap = new pxt.sprite.Bitmap(3, 5);
+        bitmap.set(2, 4, 12);
+        const encoded = pxt.sprite.base64EncodeBitmap(bitmap.data());
+        chai.expect(decodeWhiteboard(encoded).equals(bitmap)).equals(true);
+        chai.expect(() => decodeWhiteboard(encoded.slice(0, -8))).throws();
+        chai.expect(() => decodeWhiteboard("A".repeat(45004))).throws("Invalid whiteboard image");
+        chai.expect(() => decodeWhiteboard(pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(257, 1).data()))).throws();
+    });
+
+    it("validates immutable note content and rejects unsafe palettes, oversized text and invalid schemas", () => {
+        const image = pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(3, 5).data());
+        const original = notesWithBoard({ text: "x".repeat(MAX_PROJECT_NOTE_LENGTH), image, palette: new Array<string>(16).fill("#AbCdEf") });
+        Object.freeze(original.whiteboards[0].palette);
+        Object.freeze(original.whiteboards[0]);
+        Object.freeze(original.whiteboards);
+        chai.expect(validateProjectNotes(Object.freeze(original))).deep.equals(original);
+        const second = { id: "second", name: "Other", text: "" };
+        for (const invalid of [
+            { text: "x".repeat(MAX_PROJECT_NOTE_LENGTH + 1) },
+            { image: "invalid" },
+            { palette: ["#fff"] },
+            { palette: new Array<string>(16).fill("url(https://example.com)") },
+        ]) {
+            chai.expect(() => validateProjectNotes({ ...original, whiteboards: [original.whiteboards[0], { ...second, ...invalid }] })).throws();
+        }
+        chai.expect(() => validateProjectNotes({ text: "" } as unknown as pxt.workspace.ProjectNotes)).throws();
+    });
+});
 
 const simulatorTheme: pxt.SimulatorTheme = {
     "background-color": "#111111",

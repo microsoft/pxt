@@ -1,6 +1,6 @@
 import * as React from 'react';
 
-import { Store } from 'redux';
+import { createStore, Store } from 'redux';
 import { Provider } from 'react-redux';
 import { mainStore, tileEditorStore } from './store/imageStore'
 import { SideBar } from './SideBar';
@@ -10,14 +10,15 @@ import { ImageCanvas } from './ImageCanvas';
 import { Alert, AlertInfo } from './Alert';
 
 import { Timeline } from './Timeline';
-import { addKeyListener, removeKeyListener, setStore } from './keyboardShortcuts';
+import { addKeyListener, setStore } from './keyboardShortcuts';
 
 import { dispatchSetInitialState, dispatchImageEdit, dispatchChangeZoom, dispatchOpenAsset, dispatchCloseTileEditor, dispatchDisableResize, dispatchChangeAssetName, dispatchChangeImageDimensions, dispatchSetFrames } from './actions/dispatch';
-import { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
+import topReducer, { EditorState, AnimationState, TilemapState, GalleryTile, ImageEditorStore } from './store/imageReducer';
 import { imageStateToBitmap, imageStateToTilemap, applyBitmapData } from './util';
 import { Unsubscribe, Action } from 'redux';
 import { createNewImageAsset, getNewInternalID } from '../../assets';
 import { AssetEditorCore } from '../ImageFieldEditor';
+import { AssetEditorContext } from '../AssetEditorContext';
 import { classList } from '../../../../react-common/components/util';
 import { BUILTIN_CATEGORIES } from './tilemap/TilePalette';
 
@@ -39,6 +40,7 @@ export interface ImageEditorProps {
     lightMode?: boolean;
     hideDoneButton?: boolean;
     hideAssetName?: boolean;
+    scopedShortcuts?: boolean; // Nonmodal hosts only handle keys from inside this editor.
 }
 
 export interface ImageEditorState {
@@ -49,7 +51,13 @@ export interface ImageEditorState {
 }
 
 export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorState> implements AssetEditorCore {
+    static contextType = AssetEditorContext;
+    declare context: React.ContextType<typeof AssetEditorContext>;
+
     protected unsubscribeChangeListener: Unsubscribe;
+    private root = React.createRef<HTMLDivElement>();
+    private unsubscribeShortcuts: () => void;
+    private isolatedTileEditorStore?: Store<ImageEditorStore>;
 
     constructor(props: ImageEditorProps) {
         super(props);
@@ -58,7 +66,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     componentDidMount() {
-        addKeyListener();
+        this.unsubscribeShortcuts = addKeyListener(this.root.current, this.getStore(), this.props.scopedShortcuts);
 
         if (this.props.asset) {
             this.openAsset(this.props.asset);
@@ -70,7 +78,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
     }
 
     componentWillUnmount() {
-        if (!this.props.nested) removeKeyListener();
+        this.unsubscribeShortcuts?.();
 
         if (this.unsubscribeChangeListener) {
             this.unsubscribeChangeListener()
@@ -85,13 +93,14 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         const isAnimationEditor = instanceStore.getState().store.present.kind === "Animation"
 
-        return <div className="image-editor-outer">
+        return <div className="image-editor-outer" ref={this.root}
+            onPointerDownCapture={this.activateStore} onFocusCapture={this.activateStore} onClickCapture={this.activateStore}>
             <Provider store={instanceStore}>
                 <div className={classList("image-editor", editingTile && "editing-tile", hideDoneButton && "hide-done-button")}>
                     <TopBar singleFrame={singleFrame} />
                     <div className="image-editor-content">
                         <SideBar lightMode={lightMode} />
-                        <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} />
+                        <ImageCanvas suppressShortcuts={editingTile} lightMode={lightMode} scopedShortcuts={this.props.scopedShortcuts} />
                         {isAnimationEditor && !singleFrame ? <Timeline /> : undefined}
                     </div>
                     <BottomBar singleFrame={singleFrame} onDoneClick={this.onDoneClick} hideDoneButton={!!hideDoneButton} hideAssetName={!!hideAssetName} />
@@ -100,7 +109,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
             </Provider>
             {editingTile &&
                 <ImageEditor
-                    store={tileEditorStore}
+                    store={this.getTileEditorStore()}
                     ref="nested-image-editor"
                     onDoneClicked={this.onTileEditorFinished}
                     asset={tileToEdit}
@@ -157,7 +166,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                     const currentTilemap = current as pxt.ProjectTilemap;
                     const copied = pxt.cloneAsset(asset) as pxt.ProjectTilemap;
 
-                    const project = pxt.react.getTilemapProject();
+                    const project = this.context || pxt.react.getTilemapProject();
                     pxt.sprite.updateTilemapReferencesFromResult(project, currentTilemap);
                     this.prepareGalleryTilemapTemplate(project, currentTilemap, copied);
 
@@ -305,7 +314,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id: state.asset?.id,
-            internalID: state.asset ? state.asset.internalID : getNewInternalID(),
+            internalID: state.asset ? state.asset.internalID : getNewInternalID(this.context),
             type: pxt.AssetType.Image,
             bitmap: data,
             jresData: pxt.sprite.base64EncodeBitmap(data),
@@ -321,7 +330,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id: state.asset?.id,
-            internalID: state.asset ? state.asset.internalID : getNewInternalID(),
+            internalID: state.asset ? state.asset.internalID : getNewInternalID(this.context),
             isProjectTile: true,
             type: pxt.AssetType.Tile,
             bitmap: data,
@@ -338,7 +347,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id: animationState.asset?.id,
-            internalID: animationState.asset ? animationState.asset.internalID : getNewInternalID(),
+            internalID: animationState.asset ? animationState.asset.internalID : getNewInternalID(this.context),
             type: pxt.AssetType.Animation,
             interval: animationState.interval,
             frames: animationState.frames.map(frame => imageStateToBitmap(frame).data()),
@@ -360,7 +369,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         return {
             id: tilemapState.asset?.id,
-            internalID: tilemapState.asset ? tilemapState.asset.internalID : getNewInternalID(),
+            internalID: tilemapState.asset ? tilemapState.asset.internalID : getNewInternalID(this.context),
             type: pxt.AssetType.Tilemap,
             data: out,
             meta
@@ -438,6 +447,18 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
         return this.props.store || mainStore;
     }
 
+    private getTileEditorStore(): Store<ImageEditorStore> {
+        const project = this.context;
+        if (!project) return tileEditorStore;
+
+        if (!this.isolatedTileEditorStore) {
+            this.isolatedTileEditorStore = createStore((state: ImageEditorStore | undefined, action: Action) => topReducer(state, action, project));
+        }
+        return this.isolatedTileEditorStore;
+    }
+
+    private activateStore = () => setStore(this.getStore());
+
     protected onStoreChange = () => {
         if (this.props.onChange) {
             this.props.onChange(this.props.singleFrame ? pxt.sprite.bitmapToImageLiteral(this.getCurrentFrame(), "typescript") : "")
@@ -445,7 +466,6 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
 
         const store = this.getStore();
         const state = store.getState();
-        setStore(store);
 
         if (state.editor) this.setState({ alert: state.editor.alert });
 
@@ -461,7 +481,7 @@ export class ImageEditor extends React.Component<ImageEditorProps, ImageEditorSt
                 }
                 else {
                     const tileWidth = (state.store.present as TilemapState).tileset.tileWidth;
-                    const emptyTile = createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth, lf("myTile")) as pxt.Tile;
+                    const emptyTile = createNewImageAsset(pxt.AssetType.Tile, tileWidth, tileWidth, lf("myTile"), this.context) as pxt.Tile;
                     this.setState({
                         editingTile: true,
                         tileToEdit: emptyTile

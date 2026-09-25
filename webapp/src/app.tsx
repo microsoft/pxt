@@ -43,6 +43,7 @@ import * as greenscreen from "./greenscreen";
 import * as socketbridge from "./socketbridge";
 import * as webusb from "./webusb";
 import * as auth from "./auth";
+import * as backpack from "./backpack";
 import * as cloud from "./cloud";
 import * as user from "./user";
 import * as headerbar from "./headerbar";
@@ -98,6 +99,7 @@ import {
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import { ariaAnnounce } from "./util";
+import { projectToolsPinnedOnLoad } from "./projectToolsState";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -1120,6 +1122,19 @@ export class ProjectView
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
         this.assetEditor = new assetEditor.AssetEditor(this);
+        backpack.setBackpackAssetEditor({
+            headerId: () => this.state.header?.id,
+            canEdit: () => !!this.state.header && !this.state.header.temporary
+                && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor,
+            contextAsync: async () => {
+                // Text/Assets-first projects may not have loaded Blockly's field definitions yet.
+                await this.blocksEditor.loadBlocklyAsync();
+                const blocksInfo = await compiler.getBlocksAsync();
+                pxtblockly.initializeAndInject(blocksInfo);
+                return { blocksInfo, gallery: pxt.react.getTilemapProject().saveGallerySnapshot(),
+                    palette: pxt.appTarget.runtime.palette.slice() };
+            }
+        });
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -1882,6 +1897,11 @@ export class ProjectView
             // Force editor tools to collapse in headless tutorials and blocks mode (essentially hiding file explorer)
             const forceEditorToolsCollapse = pxt.appTarget.simulator.headless && (!!h.tutorial || h.editor === pxt.BLOCKS_PROJECT_NAME);
 
+            const documentation = pkg.mainPkg.config.documentation;
+            const readmeContent = documentation ? undefined : this.getLocalizedReadmeContent();
+            // No auto-popup when editing packages locally or when the README opts out.
+            const autoOpenReadme = !h.githubId && !!readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent);
+
             this.setState({
                 home: false,
                 showFiles: h.githubId ? true : false,
@@ -1891,6 +1911,7 @@ export class ProjectView
                 projectName: h.name,
                 currFile: file,
                 sideDocsLoadUrl: "",
+                sideDocsPinned: projectToolsPinnedOnLoad(this.state, h.id, !!documentation || autoOpenReadme, !!this.loadingExample),
                 debugging: false,
                 isMultiplayerGame: false,
                 collapseEditorTools: forceEditorToolsCollapse || this.state.collapseEditorTools,
@@ -1934,17 +1955,11 @@ export class ProjectView
 
             // load side docs
             const editorForFile = this.pickEditorFor(file);
-            const documentation = pkg?.mainPkg?.config?.documentation;
             if (documentation) {
                 this.setSideDoc(documentation, editorForFile == this.blocksEditor);
             }
-            else {
-                const readmeContent = this.getLocalizedReadmeContent();
-                // no auto-popup when editing packages locally
-                // ### @autoOpen false
-                if (!h.githubId && readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent)) {
-                    this.setSideMarkdown(readmeContent);
-                }
+            else if (autoOpenReadme) {
+                this.setSideMarkdown(readmeContent);
             }
 
             // update recentUse on the header
@@ -5813,6 +5828,9 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
+        const projectTools = sideDocs && inEditor && !targetTheme.lockedEditor && !this.state.header.temporary &&
+            (targetTheme.projectTools || targetTheme.whiteboard || targetTheme.backpack || pxteditor.experiments.isEnabled("projectTools") ||
+                /(?:\?|&)projecttools=1(?:&|$)/i.test(window.location.search));
         const { lightbox, greenScreen } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
@@ -5825,7 +5843,7 @@ export class ProjectView
         const feedbackEnabled = pxt.U.ocvEnabled();
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
-        const showSideDoc = sideDocs && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+        const showSideDoc = sideDocs && !projectTools && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
         const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
         const logoWide = !!targetTheme.logoWide;
@@ -5952,7 +5970,11 @@ export class ProjectView
                         <projects.Projects parent={this} ref={this.handleHomeRef} />
                     </div>
                 </div> : undefined}
-                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed} docsUrl={this.state.sideDocsLoadUrl} /> : undefined}
+                {sideDocs ? <container.SideDocs ref="sidedoc" parent={this} sideDocsCollapsed={this.state.sideDocsCollapsed}
+                    docsUrl={this.state.sideDocsLoadUrl} bubble={projectTools} header={this.state.header}
+                    tutorial={this.isTutorial() || !!this.state.header?.tutorial}
+                    pinned={this.state.sideDocsPinned}
+                    projectNotes={this.state.header?.projectNotes} /> : undefined}
                 {showEditorToolbar && <editortoolbar.EditorToolbar ref="editortools" parent={this} />}
                 {sandbox ? undefined : <scriptsearch.ScriptSearch parent={this} ref={this.handleScriptSearchRef} />}
                 {sandbox ? undefined : <extensions.Extensions parent={this} ref={this.handleExtensionRef} />}

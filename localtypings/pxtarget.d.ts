@@ -392,6 +392,9 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
+        projectTools?: boolean; // Enable the Project tools documentation bubbles by default
+        whiteboard?: boolean; // Enable private project whiteboards (requires a runtime palette)
+        backpack?: boolean; // Enable Backpack; local-only when sign-in is unavailable
         homeScreenHero?: string | CodeCard; // home screen hero image or codecard
         homeScreenHeroGallery?: string; // path to markdown file containing the gallery to display on homescreen
         sideDoc?: string; // deprecated
