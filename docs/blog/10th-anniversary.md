@@ -57,7 +57,7 @@ It's about the librarian, camp counselor, volunteer, and instructor who creates 
 
 It's about incredible partners who have helped shaped and expanded what's possible with MakeCode. 
 
-We are an open-source product hosted on [GitHub](https://github.com/microsoft/pxt), and we rely on community contributions.  A huge heartfelt ❤️ Thank You to all of our Partners – especially the [Micro:bit Educational Foundation](https://microbit.org/about/overview) and the [Minecraft Education Team](https://education.minecraft.net). We would not be here without you. But also to Adafruit, the Blockly Team, Calliope, Chibitronics, Code Ninjas, ElecFreaks, Forward Education, GitHub, Kitronik, Kittenbot, Lancaster University, Makey Makey and many more! Thank you all for taking a bet on us! 
+>A huge heartfelt ❤️ Thank You to all of our Partners – especially the [Micro:bit Educational Foundation](https://microbit.org/about/overview) and the [Minecraft Education Team](https://education.minecraft.net). We would not be here without you. But also to Adafruit, the Blockly Team, Calliope, Chibitronics, Code Ninjas, ElecFreaks, Forward Education, GitHub, Kitronik, Kittenbot, Lancaster University, Makey Makey and many more! Thank you all for taking a bet on us! 
 
 And, finally, it's about the incredible community members who translate, share projects, answer questions, submit issues and PR's, contribute ideas, create extensions, and help others get started. 
 
