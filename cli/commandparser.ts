@@ -15,7 +15,7 @@ export interface CommandFlag {
     possibleValues?: (string | RegExp)[];
     deprecated?: boolean;
     hidden?: boolean;
-
+    repeatable?: boolean; // flag may be given more than once; its values are collected into a string[]
 }
 
 export interface Command {
@@ -40,7 +40,7 @@ export interface Command {
 export interface ParsedCommand {
     name: string;
     args: string[];
-    flags: { [index: string]: boolean | string | number };
+    flags: { [index: string]: boolean | string | number | string[] };
 }
 
 export class CommandParser {
@@ -78,7 +78,7 @@ export class CommandParser {
             args = ["help"];
         const name = args[0];
         const parsedArgs: string[] = [];
-        const flags: { [index: string]: string | boolean | number } = {};
+        const flags: { [index: string]: string | boolean | number | string[] } = {};
 
         const filtered = this.commands.filter(c => c.name === name || c.aliases && c.aliases.indexOf(name) !== -1);
         if (!filtered.length)
@@ -135,7 +135,10 @@ export class CommandParser {
                     pxt.U.userError(`Unknown value for flag '${currentFlag}', '${match[2]}'`);
                 }
 
-                if (!currentFlagDef.type || currentFlagDef.type === "string") {
+                if (currentFlagDef.repeatable) {
+                    flags[currentFlag] = ((flags[currentFlag] as string[]) || []).concat([match[2]]);
+                }
+                else if (!currentFlagDef.type || currentFlagDef.type === "string") {
                     flags[currentFlag] = match[2];
                 }
                 else if (currentFlagDef.type === "boolean") {

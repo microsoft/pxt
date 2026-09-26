@@ -6760,6 +6760,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             return Promise.resolve();
         })
+        .then(() => pxt.github.initLocalReposAsync())
         .then(() => {
             pxt.BrowserUtils.initTheme();
             theme = pxteditor.experiments.syncTheme();
