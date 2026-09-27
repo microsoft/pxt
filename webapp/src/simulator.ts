@@ -9,6 +9,8 @@ import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
+import * as pkg from "./package";
+import { ProjfsHost, ProjfsProject } from "./projfsHost";
 
 
 
@@ -33,6 +35,7 @@ let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
+const projfsHost = new ProjfsHost(getProjfsProject);
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
@@ -271,6 +274,9 @@ export async function initAsync(cfg: SimulatorConfig) {
             postSimEditorEvent("toplevelfinished");
         },
         onMuteButtonStateChange: cfg.onMuteButtonStateChange,
+        onProjfsMessage: (key, msg, reply) => {
+            projfsHost.handleMessageAsync(key, msg, reply);
+        },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim,
@@ -282,6 +288,38 @@ export async function initAsync(cfg: SimulatorConfig) {
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
+}
+
+/**
+ * Returns the open project as simulator extensions read and write it, or undefined
+ * if no project is open. Changes are saved like other programmatic file writes;
+ * they neither reload the project nor restart the simulator.
+ */
+function getProjfsProject(): ProjfsProject | undefined {
+    const epkg = pkg.mainEditorPkg();
+    if (!epkg.header) return undefined;
+    return {
+        getFiles: () => epkg.getAllFiles(),
+        writeFileAsync: (name, content) => {
+            const file = epkg.files[name];
+            if (file) return file.setContentAsync(content);
+            epkg.setFile(name, content);
+            return epkg.saveFileAsync(name);
+        },
+        deleteFileAsync: name => {
+            delete epkg.files[name];
+            data.invalidate("open-meta:");
+            return epkg.saveFilesAsync();
+        },
+        setListedAsync: (name, listed) => epkg.updateConfigAsync(config => {
+            if (listed) {
+                if (config.files.indexOf(name) < 0) config.files.push(name);
+            } else {
+                config.files = config.files.filter(f => f !== name);
+                if (config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
+            }
+        }) || Promise.resolve(),
+    };
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {

@@ -40,6 +40,13 @@ namespace pxsim {
         }>;
         // needed when simulatorExtensions are used to provide to their frame
         userLanguage?: string;
+        /**
+         * Receives the project-file ("projfs") requests of simulator extensions.
+         * @param key the `simulatorExtensions` key the requesting frame was created for
+         * @param msg the request, as received
+         * @param reply posts a message to the requesting frame only
+         */
+        onProjfsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
     }
 
     export enum SimulatorState {
@@ -930,10 +937,27 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
+                case 'projfs': this.handleProjfsMessage(msg, source); break;
                 default:
                     this.postMessage(msg, source);
                     break;
             }
+        }
+
+        /**
+         * Passes a projfs request to `options.onProjfsMessage` with the key of the
+         * simulator extension frame it came from. Requests from any other window,
+         * or from a frame whose key is not in `options.simulatorExtensions`, are dropped.
+         */
+        private handleProjfsMessage(msg: SimulatorMessage, source: Window) {
+            const handler = this.options.onProjfsMessage;
+            if (!handler || !source) return;
+            const frame = this.simFrames().find(f => f.contentWindow === source);
+            const key = frame?.dataset[FRAME_DATA_MESSAGE_CHANNEL];
+            if (!key || !this.options.simulatorExtensions?.[key]) return;
+            handler(key, msg, reply => {
+                if (frame.contentWindow) this.postMessageCore(frame, reply);
+            });
         }
 
         private addEventListeners() {
