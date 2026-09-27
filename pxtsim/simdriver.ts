@@ -437,6 +437,9 @@ namespace pxsim {
                                 // embedded cross-origin.
                                 // searchParams.set() encodes, so don't encode the values here.
                                 url.searchParams.set("parentOrigin", window.location.origin);
+                                // The key the frame is stamped with, so an extension served under
+                                // several keys knows which one it runs as.
+                                url.searchParams.set("channel", messageChannel);
                                 if (this.options.userLanguage)
                                     url.searchParams.set("language", this.options.userLanguage);
                                 startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio);

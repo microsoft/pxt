@@ -1,9 +1,11 @@
 import {
     PROJFS_MESSAGE_TYPE,
+    ProjfsDeleteRequest,
     ProjfsErrorCode,
     ProjfsFileInfo,
     ProjfsReply,
     ProjfsRequest,
+    ProjfsWriteRequest,
 } from "../../pxtservices/projfs";
 
 /** The most UTF-8 bytes the files under one simulator extension's folder may hold. */
@@ -25,6 +27,51 @@ export interface ProjfsProject {
     deleteFileAsync(name: string): Promise<void>;
     /** Adds `name` to the "files" list of pxt.json, or removes it from the "files" and "testFiles" lists. */
     setListedAsync(name: string, listed: boolean): Promise<void>;
+    /**
+     * Passes a change just made to the stored file `name` through the editor's
+     * user-edit pipeline, as {@link applyUserEdit} does. Called after a write or
+     * delete a simulator extension flags `dirty`; absent where no editor takes
+     * user edits, in which case flagged changes apply as artifacts.
+     * @param content the file's new content, or undefined if it was deleted
+     */
+    markDirty?(name: string, content: string | undefined): void;
+}
+
+/** The editor entry points a user edit passes through, as {@link applyUserEdit} uses them. */
+export interface ProjfsEditor {
+    /** Returns true if the editor is showing the project file `name`. */
+    isOpenFile(name: string): boolean;
+    /** Returns true if the text editor is the active editor. */
+    isTextEditor(): boolean;
+    /** Returns true if the blocks editor is the active editor. */
+    isBlocksEditor(): boolean;
+    /** Replaces the text editor's content, which the editor handles as a change the user made. */
+    overrideTypescriptFile(text: string): void;
+    /** Replaces the blocks editor's content, which the editor handles as a change the user made. */
+    overrideBlocksFile(text: string): void;
+    /** Marks the simulator as running outdated code. */
+    setSimulatorDirty(): void;
+    /** Saves the open file and schedules a typecheck, after which the simulator reruns if it runs automatically. */
+    typecheckNow(): void;
+}
+
+/**
+ * Makes a change already saved to the project file `name` take effect as a user
+ * edit would, through the same editor entry points. The editor showing the
+ * file shows `content`; replacing the text editor's content resets its undo
+ * history and cursor. The simulator is marked as running outdated code, and a
+ * typecheck is scheduled; the editor's own debouncing merges the typechecks,
+ * and so the reruns, of changes that arrive in quick succession. The toolbox
+ * is left alone and picks up new blocks the next time it loads.
+ * @param content the file's new content, or undefined if it was deleted
+ */
+export function applyUserEdit(editor: ProjfsEditor, name: string, content: string | undefined): void {
+    if (content !== undefined && editor.isOpenFile(name)) {
+        if (editor.isTextEditor()) editor.overrideTypescriptFile(content);
+        else if (editor.isBlocksEditor()) editor.overrideBlocksFile(content);
+    }
+    editor.setSimulatorDirty();
+    editor.typecheckNow();
 }
 
 /** Returns the size of `content` in UTF-8 bytes. */
@@ -61,11 +108,19 @@ export function getListedFiles(files: pxt.Map<string>): string[] {
         : [];
 }
 
-/** Returns the stored files pxt.json lists, in listed order, with their sizes. */
-export function getVisibleFiles(files: pxt.Map<string>): ProjfsFileInfo[] {
+/**
+ * Returns the files in the folder `scope` that are both stored and listed in
+ * pxt.json, in listed order, with their sizes. Names are relative to `scope`,
+ * and each is a valid relative name.
+ * @param scope the simulator extension's key, e.g. `owner/repo`
+ */
+export function getVisibleFiles(files: pxt.Map<string>, scope: string): ProjfsFileInfo[] {
+    const prefix = scope + "/";
     return getListedFiles(files)
-        .filter(name => Object.prototype.hasOwnProperty.call(files, name))
-        .map(name => ({ name, size: utf8Length(files[name]) }));
+        .filter(name => name.startsWith(prefix) && Object.prototype.hasOwnProperty.call(files, name))
+        .map(name => name.slice(prefix.length))
+        .filter(isValidRelativeName)
+        .map(name => ({ name, size: utf8Length(files[prefix + name]) }));
 }
 
 /** Returns the total size, in UTF-8 bytes, of the stored files under the folder `scope`. */
@@ -84,8 +139,11 @@ class ProjfsRequestError extends Error {
 
 /**
  * Serves the project-file requests of simulator extensions. Each extension
- * reads the files pxt.json lists and writes and deletes files under the folder
- * named by its key. Requests apply one at a time, in the order they arrive.
+ * lists, reads, writes and deletes files in the folder named by its key, by
+ * names relative to that folder; within the folder it lists and reads only the
+ * files pxt.json lists. Requests apply one at a time, in the order they arrive.
+ * Writes and deletes are artifacts unless flagged `dirty`, in which case they
+ * also pass through {@link ProjfsProject.markDirty} once applied.
  */
 export class ProjfsHost {
     protected queue: Promise<void> = Promise.resolve();
@@ -148,19 +206,21 @@ export class ProjfsHost {
 
         switch (request?.subtype) {
             case "list":
-                return { subtype: "files", files: getVisibleFiles(files) };
+                return { subtype: "files", files: getVisibleFiles(files, scope) };
 
             case "read": {
                 const { name } = request;
-                if (typeof name !== "string" || !getVisibleFiles(files).some(f => f.name === name))
-                    throw new ProjfsRequestError("NOT_FOUND", `${name} is not a project file.`);
-                return { subtype: "content", name, content: files[name] };
+                const scoped = this.scopedNameOrThrow(scope, name);
+                if (!getVisibleFiles(files, scope).some(f => f.name === name))
+                    throw new ProjfsRequestError("NOT_FOUND", `${name} is not a file in ${scope}/.`);
+                return { subtype: "content", name, content: files[scoped] };
             }
 
             case "write": {
                 const { content } = request;
                 if (typeof content !== "string")
                     throw new ProjfsRequestError("INVALID_REQUEST", "The content must be a string.");
+                const dirty = this.dirtyOrThrow(request);
                 const name = this.scopedNameOrThrow(scope, request.name);
                 const replaced = Object.prototype.hasOwnProperty.call(files, name) ? utf8Length(files[name]) : 0;
                 const usage = getScopeUsage(files, scope);
@@ -171,10 +231,12 @@ export class ProjfsHost {
                 await project.writeFileAsync(name, content);
                 if (getListedFiles(files).indexOf(name) < 0)
                     await project.setListedAsync(name, true);
-                return { subtype: "ack", name };
+                if (dirty) project.markDirty?.(name, content);
+                return { subtype: "ack", name: request.name };
             }
 
             case "delete": {
+                const dirty = this.dirtyOrThrow(request);
                 const name = this.scopedNameOrThrow(scope, request.name);
                 const stored = Object.prototype.hasOwnProperty.call(files, name);
                 const listed = getListedFiles(files).indexOf(name) >= 0;
@@ -184,12 +246,20 @@ export class ProjfsHost {
                     await project.deleteFileAsync(name);
                 if (listed)
                     await project.setListedAsync(name, false);
-                return { subtype: "ack", name };
+                if (dirty) project.markDirty?.(name, undefined);
+                return { subtype: "ack", name: request.name };
             }
 
             default:
                 throw new ProjfsRequestError("INVALID_REQUEST", `Unknown request ${(request as any)?.subtype}.`);
         }
+    }
+
+    protected dirtyOrThrow(request: ProjfsWriteRequest | ProjfsDeleteRequest): boolean {
+        const dirty: unknown = request.dirty;
+        if (dirty !== undefined && typeof dirty !== "boolean")
+            throw new ProjfsRequestError("INVALID_REQUEST", "The dirty flag must be true or false.");
+        return dirty === true;
     }
 
     protected scopedNameOrThrow(scope: string, name: unknown): string {

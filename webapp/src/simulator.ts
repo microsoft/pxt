@@ -10,7 +10,7 @@ import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
-import { ProjfsHost, ProjfsProject } from "./projfsHost";
+import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject } from "./projfsHost";
 
 
 
@@ -25,6 +25,8 @@ interface SimulatorConfig {
     setState(key: string, value: any): void;
     onMuteButtonStateChange(state: pxt.editor.MuteState): void;
     editor: string;
+    // the editor entry points that simulator extension changes flagged dirty pass through
+    projfsEditor: ProjfsEditor;
 }
 
 export const FAST_TRACE_INTERVAL = 100;
@@ -292,8 +294,10 @@ export async function initAsync(cfg: SimulatorConfig) {
 
 /**
  * Returns the open project as simulator extensions read and write it, or undefined
- * if no project is open. Changes are saved like other programmatic file writes;
- * they neither reload the project nor restart the simulator.
+ * if no project is open. Changes are saved like other programmatic file writes
+ * and never reload the project. By default they leave a running simulator alone;
+ * a change flagged dirty then passes through the editor's user-edit pipeline,
+ * which reruns the simulator as a user edit does.
  */
 function getProjfsProject(): ProjfsProject | undefined {
     const epkg = pkg.mainEditorPkg();
@@ -319,6 +323,9 @@ function getProjfsProject(): ProjfsProject | undefined {
                 if (config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
             }
         }) || Promise.resolve(),
+        markDirty: (name, content) => {
+            if (config?.projfsEditor) applyUserEdit(config.projfsEditor, name, content);
+        },
     };
 }
 

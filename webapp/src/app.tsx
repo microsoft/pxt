@@ -1223,7 +1223,16 @@ export class ProjectView
             setState: (k, v) => {
                 pkg.mainEditorPkg().setSimState(k, v)
             },
-            editor: this.state.header ? this.state.header.editor : ''
+            editor: this.state.header ? this.state.header.editor : '',
+            projfsEditor: {
+                isOpenFile: name => !!this.editorFile && this.editorFile === pkg.mainEditorPkg().files[name],
+                isTextEditor: () => this.isTextEditor(),
+                isBlocksEditor: () => this.isBlocksEditor(),
+                overrideTypescriptFile: text => this.overrideTypescriptFile(text),
+                overrideBlocksFile: text => this.overrideBlocksFile(text),
+                setSimulatorDirty: () => simulator.setDirty(),
+                typecheckNow: () => this.typecheckNow(),
+            }
         });
 
         // we now have editors prepared

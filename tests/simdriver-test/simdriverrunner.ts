@@ -125,3 +125,40 @@ describe("simulator driver projfs messages", () => {
         chai.expect(simxFrame.contentWindow.messages).deep.equals([]);
     });
 });
+
+describe("simulator driver simulator extension frames", () => {
+    it("passes the frame's key to the frame in its URL, beside the parent origin", () => {
+        const mainFrame: FakeFrame = { id: "sim-frame-1", dataset: { origin: EDITOR_ORIGIN, runid: "" }, contentWindow: new FakeWindow() };
+        const frames: FakeFrame[] = [mainFrame];
+        const container = {
+            getElementsByTagName: () => frames,
+            appendChild: (wrapper: { firstElementChild: FakeFrame }) => frames.push(wrapper.firstElementChild),
+        } as unknown as HTMLElement;
+        const driver = new pxsim.SimulatorDriver(container, {
+            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simulatorExtensions: {
+                "someorg/pxt-ext": { index: "index.html", aspectRatio: 1, permanent: true },
+            },
+        });
+        // creating and starting the frame need a DOM; record the URL it is created with instead
+        const urls: string[] = [];
+        const fakeDriver = driver as any;
+        fakeDriver.createFrame = (url: string) => {
+            urls.push(url);
+            return {
+                classList: { add: () => { } },
+                firstElementChild: { id: "sim-frame-2", dataset: { origin: EDITOR_ORIGIN }, contentWindow: new FakeWindow() },
+            };
+        };
+        fakeDriver.startFrame = () => { };
+
+        const packet = { type: "messagepacket", channel: "someorg/pxt-ext", broadcast: true, data: new Uint8Array(0) };
+        driver.postMessage(packet as pxsim.SimulatorMessage, mainFrame.contentWindow as unknown as Window);
+
+        chai.expect(urls.length).equals(1);
+        const url = new URL(urls[0]);
+        chai.expect(url.searchParams.get("channel")).equals("someorg/pxt-ext");
+        chai.expect(url.searchParams.get("parentOrigin")).equals(EDITOR_ORIGIN);
+        chai.expect(frames[1].dataset["messagechannel"]).equals(url.searchParams.get("channel"));
+    });
+});

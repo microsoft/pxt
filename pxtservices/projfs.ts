@@ -2,10 +2,19 @@
  * The project-file ("projfs") messages a simulator extension exchanges with the
  * editor, and a client that wraps them in promises.
  *
- * A simulator extension reads the files its project's pxt.json lists and writes
- * files under its own folder, which the editor names after the extension's key
- * (e.g. `owner/repo`). Requests are posted to the editor window; the editor
- * replies to the requesting frame only, with the request's `id`.
+ * A simulator extension sees and changes only its own folder in the project,
+ * which the editor names after the extension's key (e.g. `owner/repo`) and
+ * identifies from the requesting frame. Requests and replies name files
+ * relative to that folder. Within the folder, only the files pxt.json lists
+ * are visible; writes list their file. Requests are posted to the editor
+ * window; the editor replies to the requesting frame only, with the request's
+ * `id`.
+ *
+ * Writes and deletes come in two classes. By default a change is an artifact:
+ * saved with the project, but the editor and a running simulator are left
+ * alone. A change flagged `dirty` is treated as a user edit: the editor showing
+ * the file shows the new content, the project is typechecked, and the
+ * simulator reruns if it runs automatically, just as after the user types.
  *
  * This module has no dependencies; a simulator extension can import or copy it
  * as-is.
@@ -14,11 +23,32 @@
 export const PROJFS_MESSAGE_TYPE = "projfs";
 
 /**
+ * Returns the key the editor created this simulator extension's frame for,
+ * e.g. `owner/repo`, which the editor passes in the frame URL's `channel`
+ * parameter. The key is the channel the extension's simulator messages
+ * carry; use it to filter those messages or to show which extension is
+ * running. Projfs requests and replies never include it; a file the
+ * extension names `notes.txt` appears in the project as `<key>/notes.txt`.
+ * @param channel the key, for an extension that knows it; returned as-is
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the key, or undefined if neither `channel` nor the URL provides one
+ */
+export function getSimxChannel(channel?: string, search?: string): string | undefined {
+    if (channel) return channel;
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("channel") || undefined;
+}
+
+/**
  * Why a request failed. Clients branch on the code; the message that
  * accompanies it is for people.
  */
 export type ProjfsErrorCode =
-    /** The file is not listed in pxt.json (reads), or is neither stored nor listed in the extension's folder (deletes). */
+    /**
+     * Reads: the extension's folder has no file of that name that pxt.json
+     * lists; a stored file pxt.json does not list is reported the same as a
+     * missing one. Deletes: the folder neither stores nor lists the file.
+     */
     | "NOT_FOUND"
     /** The write would take the extension's folder over its size limit; nothing was written. */
     | "QUOTA_EXCEEDED"
@@ -39,15 +69,15 @@ interface ProjfsMessage {
     id: string;
 }
 
-/** Lists the files the project's pxt.json lists. The reply is a {@link ProjfsFilesReply}. */
+/** Lists the files in the extension's folder that pxt.json lists. The reply is a {@link ProjfsFilesReply}. */
 export interface ProjfsListRequest extends ProjfsMessage {
     subtype: "list";
 }
 
-/** Reads a file the project's pxt.json lists. The reply is a {@link ProjfsContentReply}. */
+/** Reads a file in the extension's folder that pxt.json lists. The reply is a {@link ProjfsContentReply}. */
 export interface ProjfsReadRequest extends ProjfsMessage {
     subtype: "read";
-    /** The name as pxt.json lists it, e.g. `main.ts` or `owner/repo/notes.txt`. */
+    /** The name relative to the extension's folder, e.g. `notes.txt` or `data/level1.json`. */
     name: string;
 }
 
@@ -61,6 +91,8 @@ export interface ProjfsWriteRequest extends ProjfsMessage {
     name: string;
     /** Text, or binary data as a `data:<mime type>;base64,` URI. */
     content: string;
+    /** If present, the write is a user edit rather than an artifact; see {@link ProjfsMutationOptions.dirty}. */
+    dirty?: true;
 }
 
 /**
@@ -71,12 +103,14 @@ export interface ProjfsDeleteRequest extends ProjfsMessage {
     subtype: "delete";
     /** The name relative to the extension's folder. */
     name: string;
+    /** If present, the delete is a user edit rather than an artifact; see {@link ProjfsMutationOptions.dirty}. */
+    dirty?: true;
 }
 
 export type ProjfsRequest = ProjfsListRequest | ProjfsReadRequest | ProjfsWriteRequest | ProjfsDeleteRequest;
 
 export interface ProjfsFileInfo {
-    /** The name as pxt.json lists it. */
+    /** The name relative to the extension's folder. */
     name: string;
     /** Size of the stored content in UTF-8 bytes; a `data:` URI counts at its encoded length. */
     size: number;
@@ -89,13 +123,14 @@ export interface ProjfsFilesReply extends ProjfsMessage {
 
 export interface ProjfsContentReply extends ProjfsMessage {
     subtype: "content";
+    /** The name the request gave, relative to the extension's folder. */
     name: string;
     content: string;
 }
 
 export interface ProjfsAckReply extends ProjfsMessage {
     subtype: "ack";
-    /** The project name of the file written or deleted, e.g. `owner/repo/notes.txt`. */
+    /** The name the request gave, relative to the extension's folder; `read` and `delete` accept it. */
     name: string;
 }
 
@@ -139,6 +174,24 @@ export interface ProjfsClientOptions {
     timeoutMs?: number;
 }
 
+/** How a {@link ProjfsClient} write or delete changes the project. */
+export interface ProjfsMutationOptions {
+    /**
+     * If true, the change dirties the project as a user edit would: the editor
+     * showing the file shows the new content, the project is typechecked, and
+     * the simulator reruns if it runs automatically. Several dirty changes in
+     * quick succession lead to one rerun. Blocks the change defines reach the
+     * toolbox the next time the toolbox loads, as after the user types them.
+     * Replacing the file the text editor shows resets its undo history and
+     * cursor.
+     *
+     * If false or absent, the change is an artifact: it is saved with the
+     * project, and neither the editor nor a running simulator notices it until
+     * the project is next loaded or run.
+     */
+    dirty?: boolean;
+}
+
 interface PendingRequest {
     resolve: (reply: ProjfsReply) => void;
     reject: (error: ProjfsError) => void;
@@ -148,6 +201,11 @@ interface PendingRequest {
 type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
 
 const DEFAULT_TIMEOUT_MS = 10000;
+
+/** Returns the `dirty` field a request carries for `options`: present only for a dirty change. */
+function dirtyField(options: ProjfsMutationOptions | undefined): { dirty?: true } {
+    return options?.dirty ? { dirty: true } : {};
+}
 
 /**
  * Reads and writes project files from a simulator extension. Each method
@@ -171,15 +229,15 @@ export class ProjfsClient {
         this.listener.addEventListener("message", this.onMessage);
     }
 
-    /** Lists the files the project's pxt.json lists. */
+    /** Lists the files in this extension's folder that pxt.json lists, by names relative to the folder. */
     async list(): Promise<ProjfsFileInfo[]> {
         const reply = await this.requestAsync({ subtype: "list" }, "files") as ProjfsFilesReply;
         return reply.files;
     }
 
     /**
-     * Reads a file the project's pxt.json lists.
-     * @param name the name as pxt.json lists it
+     * Reads a file in this extension's folder that pxt.json lists.
+     * @param name the name relative to the extension's folder
      */
     async read(name: string): Promise<string> {
         const reply = await this.requestAsync({ subtype: "read", name }, "content") as ProjfsContentReply;
@@ -190,20 +248,22 @@ export class ProjfsClient {
      * Creates or replaces a file in this extension's folder.
      * @param name the name relative to the extension's folder
      * @param content text, or binary data as a `data:<mime type>;base64,` URI
-     * @returns the file's project name, as `read` and `list` use it
+     * @param options whether the write is a user edit or an artifact (the default)
+     * @returns `name`, which `read` and `delete` accept
      */
-    async write(name: string, content: string): Promise<string> {
-        const reply = await this.requestAsync({ subtype: "write", name, content }, "ack") as ProjfsAckReply;
+    async write(name: string, content: string, options?: ProjfsMutationOptions): Promise<string> {
+        const reply = await this.requestAsync({ subtype: "write", name, content, ...dirtyField(options) }, "ack") as ProjfsAckReply;
         return reply.name;
     }
 
     /**
      * Deletes a file from this extension's folder.
      * @param name the name relative to the extension's folder
-     * @returns the deleted file's project name
+     * @param options whether the delete is a user edit or an artifact (the default)
+     * @returns `name`
      */
-    async delete(name: string): Promise<string> {
-        const reply = await this.requestAsync({ subtype: "delete", name }, "ack") as ProjfsAckReply;
+    async delete(name: string, options?: ProjfsMutationOptions): Promise<string> {
+        const reply = await this.requestAsync({ subtype: "delete", name, ...dirtyField(options) }, "ack") as ProjfsAckReply;
         return reply.name;
     }
 
