@@ -99,7 +99,7 @@ import {
 import { applyPolyfills } from "./polyfills";
 import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/Feedback/FeedbackEventListener";
 import { ariaAnnounce } from "./util";
-import { projectToolsPinnedOnLoad } from "./projectToolsState";
+import { projectToolsPinnedOnLoad, shouldShowProjectTools } from "./projectToolsState";
 
 pxt.blocks.requirePxtBlockly = () => pxtblockly as any;
 pxt.blocks.requireBlockly = () => Blockly;
@@ -5828,9 +5828,9 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const projectTools = sideDocs && inEditor && !targetTheme.lockedEditor && !this.state.header.temporary &&
-            (targetTheme.projectTools || targetTheme.whiteboard || targetTheme.backpack || pxteditor.experiments.isEnabled("projectTools") ||
-                /(?:\?|&)projecttools=1(?:&|$)/i.test(window.location.search));
+        const projectTools = shouldShowProjectTools(sideDocs, inEditor, !!targetTheme.lockedEditor,
+            !!this.state.header?.temporary, pxt.shell.isReadOnly(),
+            !!(targetTheme.projectTools || targetTheme.whiteboard || targetTheme.backpack));
         const { lightbox, greenScreen } = this.state;
         const hideTutorialIteration = inTutorial && tutorialOptions.metadata?.hideIteration;
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;

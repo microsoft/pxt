@@ -357,8 +357,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string; asset
         };
     }, [props.active, props.headerId, canImport, modalOpen, kind]);
     const header = pkg.mainEditorPkg()?.header;
-    const importReason = !header || header.id !== props.headerId || pxt.shell.isReadOnly()
-        || pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME
+    const importReason = !header || header.id !== props.headerId || pkg.mainPkg.getPreferredEditor() === pxt.BLOCKS_PROJECT_NAME
         ? lf("Open an editable Blocks project to add items from your backpack.")
         : lf("Switch to Blocks to add snippets");
     const message = !loaded.current && pending && props.active ? lf("Loading backpack…") : "";

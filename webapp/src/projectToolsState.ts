@@ -6,6 +6,11 @@ export function isWhiteboardEnabled(): boolean {
     return !!pxt.appTarget?.appTheme?.whiteboard && !!pxt.appTarget.runtime?.palette?.length;
 }
 
+export function shouldShowProjectTools(sideDocs: boolean, inEditor: boolean, lockedEditor: boolean,
+    temporary: boolean, readOnly: boolean, enabled: boolean): boolean {
+    return sideDocs && inEditor && !lockedEditor && !temporary && !readOnly && enabled;
+}
+
 /** Keep project-load defaults separate from explicit pin/unpin and collapse actions. */
 export function projectToolsPinnedOnLoad(state: pxt.editor.IAppState, headerId: string, opensDocumentation: boolean, loadingExample: boolean): boolean {
     // Homepage examples can open either configured docs or an auto-open README.

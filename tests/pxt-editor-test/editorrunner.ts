@@ -21,7 +21,7 @@ import {
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
-import { projectToolsPinnedOnLoad } from "../../webapp/src/projectToolsState";
+import { projectToolsPinnedOnLoad, shouldShowProjectTools } from "../../webapp/src/projectToolsState";
 import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
@@ -65,6 +65,11 @@ function patchText(patch: unknown, a: string) {
 const filename = "main.ts";
 
 describe("project-tools pin defaults", () => {
+    it("uses classic side docs instead of project tools in read-only editors", () => {
+        chai.expect(shouldShowProjectTools(true, true, false, false, false, true)).equals(true);
+        chai.expect(shouldShowProjectTools(true, true, false, false, true, true)).equals(false);
+    });
+
     it("auto-pins initial documentation but preserves explicit pin and unpin choices on reload", () => {
         const header = { id: "same" } as pxt.workspace.Header;
         chai.expect(projectToolsPinnedOnLoad({ home: true }, "new", true, false)).equals(true);
