@@ -3,16 +3,6 @@ import { PathObject } from "../renderer/pathObject";
 
 let draggableShadowAllowlist: string[];
 let duplicateRefs: DuplicateOnDragRef[];
-const draggableShadowInstances = new WeakSet<Blockly.Block>();
-
-export function setDuplicateShadowOnDrag(block: Blockly.Block, enabled: boolean): void {
-    if (enabled) draggableShadowInstances.add(block);
-    else draggableShadowInstances.delete(block);
-}
-
-export function hasDuplicateShadowOnDrag(block: Blockly.Block): boolean {
-    return draggableShadowInstances.has(block);
-}
 
 interface DuplicateOnDragRef {
     parentBlockType: string;
@@ -20,8 +10,34 @@ interface DuplicateOnDragRef {
     childBlockType?: string;
 }
 
-export function setDraggableShadowBlocks(ids: string[]) {
-    draggableShadowAllowlist = ids;
+/** Registers draggable shadows, scoping contributed built-ins to inputs that reference their contributor ID. */
+export function setDraggableShadowBlocks(info: pxtc.BlocksInfo) {
+    const contributedBuiltins: pxt.Map<string> = {};
+    draggableShadowAllowlist = info.blocks
+        .filter(fn => fn.attributes.duplicateShadowOnDrag)
+        .map(fn => {
+            if (fn.attributes.builtinBlockId) {
+                contributedBuiltins[fn.attributes.blockId] = fn.attributes.builtinBlockId;
+                return undefined;
+            }
+            return fn.attributes.blockId;
+        })
+        .filter(id => !!id);
+
+    if (!Object.keys(contributedBuiltins).length) return;
+
+    info.blocks.forEach(fn => {
+        const parentBlockType = fn.attributes.builtinBlockId || fn.attributes.blockId;
+        if (!parentBlockType) return;
+        const comp = pxt.blocks.compileInfo(fn);
+        const parameters = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+        parameters.forEach(parameter => {
+            const childBlockType = contributedBuiltins[parameter.shadowBlockId];
+            if (childBlockType) {
+                setDuplicateOnDrag(parentBlockType, parameter.definitionName, childBlockType);
+            }
+        });
+    });
 }
 
 /**
@@ -52,7 +68,6 @@ export function setDuplicateOnDrag(parentBlockType: string, inputName?: string, 
 }
 
 export function isAllowlistedShadow(block: Blockly.Block) {
-    if (hasDuplicateShadowOnDrag(block)) return true;
     if (draggableShadowAllowlist) {
         if (draggableShadowAllowlist.indexOf(block.type) !== -1) {
             return true;

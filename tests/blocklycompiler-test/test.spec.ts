@@ -3,7 +3,7 @@
 
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
-import { DuplicateOnDragConnectionChecker, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { DuplicateOnDragConnectionChecker, setDraggableShadowBlocks, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
 
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
@@ -455,12 +455,33 @@ describe("blockly compiler", function () {
             });
             const first = contributor("other_picker", "#008800", "rgb", "0xff0000");
             const selected = contributor("test_color_picker", "#6554C0", "hex", "0x7f3fbf");
+            selected.attributes.duplicateShadowOnDrag = true;
+            const parent = (id: string, shadowId: string): pxtc.SymbolInfo => {
+                const block = `Use %color=${shadowId}`;
+                return {
+                    name: id, qName: `test.${id}`, namespace: "test", fileName: "test.ts",
+                    kind: pxtc.SymbolKind.Function, retType: "void",
+                    attributes: {
+                        block, blockId: id, _def: pxtc.parseBlockDefinition(block),
+                        paramDefl: {}, callingConvention: pxtc.ir.CallingConvention.Plain
+                    },
+                    parameters: [{ name: "color", type: "number", description: "" }]
+                };
+            };
+            const selectedParent = parent("test_selected_color_parent", "test_color_picker");
+            const otherParent = parent("test_other_color_parent", "other_picker");
             const namedInfo = {
-                ...info, blocks: info.blocks.concat(first, selected),
-                blocksById: { ...info.blocksById, other_picker: first, test_color_picker: selected }
+                ...info, blocks: info.blocks.concat(first, selected, selectedParent, otherParent),
+                blocksById: {
+                    ...info.blocksById, other_picker: first, test_color_picker: selected,
+                    test_selected_color_parent: selectedParent, test_other_color_parent: otherParent
+                }
             };
             const shadow = pxtblockly.createShadowValue(namedInfo, {
                 definitionName: "color", actualName: "color", type: "number", shadowBlockId: "test_color_picker"
+            }).firstElementChild;
+            const otherShadow = pxtblockly.createShadowValue(namedInfo, {
+                definitionName: "color", actualName: "color", type: "number", shadowBlockId: "other_picker"
             }).firstElementChild;
             const standalone = pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected));
             chai.assert.equal(shadow.getAttribute("type"), "makecode_color_picker");
@@ -468,23 +489,39 @@ describe("blockly compiler", function () {
             chai.assert.equal(shadow.querySelector("mutation").getAttribute("color"), "#6554C0");
             chai.assert.equal(shadow.querySelector('field[name="FORMAT"]').textContent, "hex");
             chai.assert.equal(shadow.querySelector('field[name="TEXT"]').textContent, "#7F3FBF");
-            selected.attributes.duplicateShadowOnDrag = true;
+            setDraggableShadowBlocks(namedInfo);
             const marked = pxtblockly.createShadowValue(namedInfo, {
                 definitionName: "color", actualName: "color", type: "number", shadowBlockId: "test_color_picker"
             }).firstElementChild;
+            Blockly.Blocks[selectedParent.attributes.blockId] = {
+                init: function () { this.appendValueInput("color"); }
+            };
+            Blockly.Blocks[otherParent.attributes.blockId] = {
+                init: function () { this.appendValueInput("color"); }
+            };
             const workspace = new Blockly.Workspace();
             try {
                 const picker = Blockly.Xml.domToBlock(marked, workspace);
-                const unmarked = Blockly.Xml.domToBlock(shadow, workspace);
+                const selectedParentBlock = workspace.newBlock(selectedParent.attributes.blockId);
+                selectedParentBlock.getInput("color").connection.connect(picker.outputConnection);
+                const unmarked = Blockly.Xml.domToBlock(otherShadow, workspace);
+                const otherParentBlock = workspace.newBlock(otherParent.attributes.blockId);
+                otherParentBlock.getInput("color").connection.connect(unmarked.outputConnection);
                 const standalonePicker = Blockly.Xml.domToBlock(pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected)), workspace);
+                chai.assert.isFalse(marked.querySelector("mutation").hasAttribute("duplicateondrag"));
                 chai.assert.isTrue(shouldDuplicateOnDrag(picker));
                 chai.assert.isFalse(shouldDuplicateOnDrag(unmarked));
                 chai.assert.isFalse(shouldDuplicateOnDrag(standalonePicker));
-                const restored = Blockly.Xml.domToBlock(Blockly.Xml.blockToDom(picker) as Element, workspace);
+                const restored = Blockly.Xml.domToBlock(Blockly.Xml.blockToDom(picker, true) as Element, workspace);
+                const restoredParent = workspace.newBlock(selectedParent.attributes.blockId);
+                restoredParent.getInput("color").connection.connect(restored.outputConnection);
                 chai.assert.isTrue(shouldDuplicateOnDrag(restored));
             }
             finally {
                 workspace.dispose();
+                delete Blockly.Blocks[selectedParent.attributes.blockId];
+                delete Blockly.Blocks[otherParent.attributes.blockId];
+                setDraggableShadowBlocks(info);
             }
         });
 

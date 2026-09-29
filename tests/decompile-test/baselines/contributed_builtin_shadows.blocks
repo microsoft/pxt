@@ -27,7 +27,7 @@
 <block type="test_color_argument">
 <value name="color">
 <shadow type="makecode_color_picker">
-<mutation color="#6554C0" duplicateondrag="true" />
+<mutation color="#6554C0" />
 <field name="FORMAT">hex</field>
 <value name="HEX_INPUT">
 <shadow type="makecode_color_picker_string">

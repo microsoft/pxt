@@ -692,7 +692,6 @@ ${output}</xml>`;
             if (builtinBlockId === "makecode_color_picker" && value.kind === "expr" && value.type === builtinBlockId) {
                 value.mutation = value.mutation || {};
                 if (contributor?.attributes.color) value.mutation.color = contributor.attributes.color;
-                if (contributor?.attributes.duplicateShadowOnDrag) value.mutation.duplicateondrag = "true";
             }
             if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
                 // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
