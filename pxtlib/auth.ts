@@ -124,7 +124,7 @@ namespace pxt.auth {
 
     export type BackpackKind = "code" | "asset";
 
-    /** A private, portable capture sent to the dedicated Backpack API, not preferences. */
+    /** A private, portable capture sent to the dedicated Backpack API. */
     export interface BackpackItem {
         id: string;
         name: string;

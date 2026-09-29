@@ -1,11 +1,10 @@
 # Project tools
 
 Project tools provides **Documentation**, **Whiteboard**, and **Backpack** panels.
-Enable `appTheme.projectTools` in the target, use **Project tools bubbles** under
-**Settings → About → Experiments**, or preview with `?projecttools=1`.
-`appTheme.whiteboard` and `appTheme.backpack` independently enable those panels
-and the launcher in eligible project editors. Set either to `false` to hide it.
-Only Whiteboard requires a runtime image palette.
+Enable `appTheme.projectTools` in the target. `appTheme.whiteboard` and
+`appTheme.backpack` independently enable those panels and the launcher in
+eligible project editors. Set either to `false` to hide it. Only Whiteboard
+requires a runtime image palette.
 
 ## Controls
 
