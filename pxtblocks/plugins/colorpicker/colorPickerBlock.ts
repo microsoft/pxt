@@ -13,6 +13,7 @@ export interface ColorPickerBlock extends Blockly.Block {
     setFormat: (format: string, prevFormat?: string) => void;
     readColorFromInputs: () => void;
     updateBeforeRender: () => void;
+    updateColorPickerStyle: () => void;
     updateColorPreview: () => void;
 }
 
@@ -20,6 +21,47 @@ const HEX_INPUT_NAME = "HEX_INPUT";
 
 export const COLOR_PICKER_BLOCK_TYPE = "makecode_color_picker";
 
+interface ColorPickerStyle {
+    parentBlockType: string;
+    inputName: string;
+    color: string;
+}
+
+let colorPickerStyles: ColorPickerStyle[] = [];
+
+/** Registers contributed color-picker styles for the parent inputs that reference them. */
+export function setColorPickerBlockStyles(info: pxtc.BlocksInfo): void {
+    const contributorColors: pxt.Map<string> = {};
+    let defaultColor: string;
+    info.blocks.forEach(fn => {
+        if (fn.attributes.builtinBlockId === COLOR_PICKER_BLOCK_TYPE && fn.attributes.color) {
+            defaultColor = defaultColor || fn.attributes.color;
+            if (fn.attributes.blockId) {
+                contributorColors[fn.attributes.blockId] = fn.attributes.color;
+            }
+        }
+    });
+
+    colorPickerStyles = [];
+    info.blocks.forEach(fn => {
+        if (fn.attributes.builtinBlockId === COLOR_PICKER_BLOCK_TYPE) return;
+        const parentBlockType = fn.attributes.builtinBlockId || fn.attributes.blockId;
+        if (!parentBlockType) return;
+        const comp = pxt.blocks.compileInfo(fn);
+        const parameters = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+        parameters.forEach(parameter => {
+            const color = contributorColors[parameter.shadowBlockId]
+                || (parameter.shadowBlockId === COLOR_PICKER_BLOCK_TYPE ? defaultColor : undefined);
+            if (color) {
+                colorPickerStyles.push({
+                    parentBlockType,
+                    inputName: parameter.definitionName,
+                    color
+                });
+            }
+        });
+    });
+}
 
 export function initColorPickerBlock() {
     Blockly.Blocks[COLOR_PICKER_BLOCK_TYPE] = {
@@ -57,13 +99,28 @@ export function initColorPickerBlock() {
                 const moved = event as Blockly.Events.BlockMove;
                 if (event.blockId === this.id || moved.oldParentId === this.id || moved.newParentId === this.id
                     || this.getChildren(false).some(child => child.id === event.blockId)) {
+                    this.updateColorPickerStyle();
                     this.updateColorPreview();
                 }
             });
         },
 
         updateBeforeRender: function (this: ColorPickerBlock) {
+            this.updateColorPickerStyle();
             this.updateColorPreview();
+        },
+
+        updateColorPickerStyle: function (this: ColorPickerBlock) {
+            const targetConnection = this.outputConnection?.targetConnection;
+            const parentBlockType = targetConnection?.getSourceBlock().type;
+            const inputName = targetConnection?.getParentInput()?.name;
+            if (!parentBlockType || !inputName) return;
+
+            const style = colorPickerStyles.find(candidate =>
+                candidate.parentBlockType === parentBlockType && candidate.inputName === inputName);
+            if (style && this.getColour().toLowerCase() !== style.color.toLowerCase()) {
+                this.setColour(style.color);
+            }
         },
 
         updateColorPreview: function (this: ColorPickerBlock) {
@@ -97,13 +154,6 @@ export function initColorPickerBlock() {
 
                 this.setFormat(this.getFieldValue("FORMAT"));
             }
-
-            if (xmlElement.hasAttribute("color")) {
-                const color = xmlElement.getAttribute("color");
-                if (color) {
-                    this.setColour(color);
-                }
-            }
         },
 
         mutationToDom: function () {
@@ -113,7 +163,6 @@ export function initColorPickerBlock() {
                 container.setAttribute("saturation", this.colorHSV[1].toString());
                 container.setAttribute("value", this.colorHSV[2].toString());
             }
-            container.setAttribute("color", this.getColour());
 
             return container;
         },

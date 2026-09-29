@@ -686,13 +686,6 @@ ${output}</xml>`;
         }
 
         function mkValue(name: string, value: ExpressionNode | TextNode, shadowType?: string, shadowMutation?: pxt.Map<string>): ValueNode {
-            const contributor = blocksInfo.blocksById[shadowType];
-            const builtinBlockId = contributor?.attributes.builtinBlockId;
-            // Keep the contributor ID so a fallback shadow can be rebuilt with its configured defaults.
-            if (builtinBlockId === "makecode_color_picker" && value.kind === "expr" && value.type === builtinBlockId) {
-                value.mutation = value.mutation || {};
-                if (contributor?.attributes.color) value.mutation.color = contributor.attributes.color;
-            }
             if ((!shadowType || shadowType === numberType) && shadowMutation && shadowMutation['min'] && shadowMutation['max']) {
                 // Convert a number to a number with a slider (math_number_minmax) if min and max shadow options are defined
                 shadowType = minmaxNumberType;
@@ -2023,11 +2016,6 @@ ${output}</xml>`;
                 }
 
                 r.fields = [getField("FORMAT", info.qName.substring(info.qName.lastIndexOf(".") + 1))];
-
-                const blockDef = blocksInfo.blocks.find(b => b.attributes.builtinBlockId === "makecode_color_picker");
-                if (blockDef && blockDef.attributes.color) {
-                    r.mutation = { color: blockDef.attributes.color };
-                }
 
                 return r;
             }

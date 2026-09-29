@@ -393,29 +393,58 @@ describe("blockly compiler", function () {
     describe("compiling text", () => {
         it("should initialize color picker shadows in the parameter's requested mode", async () => {
             const info = await getBlocksInfoAsync();
+            const contributor = {
+                name: "test_color_picker", namespace: "test", fileName: "test.ts",
+                kind: pxtc.SymbolKind.Function, retType: "number",
+                attributes: {
+                    blockId: "test_color_picker", builtinBlockId: "makecode_color_picker", color: "#6554C0",
+                    paramDefl: {}, callingConvention: pxtc.ir.CallingConvention.Plain
+                },
+                parameters: [{ name: "value", type: "number", description: "" }]
+            } as pxtc.SymbolInfo;
+            const block = "Use %color=test_color_picker";
+            const parent = {
+                name: "test_color_parent", qName: "test.test_color_parent", namespace: "test", fileName: "test.ts",
+                kind: pxtc.SymbolKind.Function, retType: "void",
+                attributes: {
+                    block, blockId: "test_color_parent", _def: pxtc.parseBlockDefinition(block),
+                    paramDefl: {}, callingConvention: pxtc.ir.CallingConvention.Plain
+                },
+                parameters: [{ name: "color", type: "number", description: "" }]
+            } as pxtc.SymbolInfo;
             const coloredInfo = {
                 ...info,
-                blocks: info.blocks.concat({
-                    attributes: { builtinBlockId: "makecode_color_picker", color: "#6554C0" }
-                } as pxtc.SymbolInfo)
+                blocks: info.blocks.concat(contributor, parent),
+                blocksById: {
+                    ...info.blocksById,
+                    test_color_picker: contributor,
+                    test_color_parent: parent
+                }
+            };
+            pxtblockly.setColorPickerBlockStyles(coloredInfo);
+            Blockly.Blocks[parent.attributes.blockId] = {
+                init: function () { this.appendValueInput("color"); }
             };
             const workspace = new Blockly.Workspace();
             try {
                 for (const format of ["hex", "rgb", "hsv", "hsl", "cmyk", "invalid"]) {
                     const value = pxtblockly.createShadowValue(coloredInfo, {
                         definitionName: "color", actualName: "color", type: "number",
-                        shadowBlockId: "makecode_color_picker", defaultValue: "0x7f3fbf",
+                        shadowBlockId: "test_color_picker", defaultValue: "0x7f3fbf",
                         fieldOptions: { format }
                     });
                     const picker = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    const parentBlock = workspace.newBlock(parent.attributes.blockId);
+                    parentBlock.getInput("color").connection.connect(picker.outputConnection);
                     const preview = picker.getField("PREVIEW");
-                    picker.updateColorPreview();
+                    picker.updateBeforeRender();
                     chai.assert.isTrue(picker.isShadow());
                     chai.assert.isTrue(preview.isVisible());
                     chai.assert.equal(picker.getColour().toLowerCase(), "#6554c0");
                     chai.assert.equal(picker.getFieldValue("FORMAT"), format === "invalid" ? "rgb" : format);
                     chai.assert.equal(pxtblockly.getColorPickerColor(picker), "#7F3FBF");
                     const mutation = value.querySelector("mutation");
+                    chai.assert.isFalse(mutation.hasAttribute("color"));
                     mutation.removeAttribute("hue");
                     mutation.removeAttribute("saturation");
                     mutation.removeAttribute("value");
@@ -435,10 +464,13 @@ describe("blockly compiler", function () {
                     picker.updateColorPreview();
                     chai.assert.isFalse(preview.isVisible());
                     picker.dispose();
+                    parentBlock.dispose();
                 }
             }
             finally {
                 workspace.dispose();
+                delete Blockly.Blocks[parent.attributes.blockId];
+                pxtblockly.setColorPickerBlockStyles(info);
             }
         });
 
@@ -486,9 +518,10 @@ describe("blockly compiler", function () {
             const standalone = pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected));
             chai.assert.equal(shadow.getAttribute("type"), "makecode_color_picker");
             chai.assert.equal(shadow.innerHTML, standalone.innerHTML);
-            chai.assert.equal(shadow.querySelector("mutation").getAttribute("color"), "#6554C0");
+            chai.assert.isFalse(shadow.querySelector("mutation").hasAttribute("color"));
             chai.assert.equal(shadow.querySelector('field[name="FORMAT"]').textContent, "hex");
             chai.assert.equal(shadow.querySelector('field[name="TEXT"]').textContent, "#7F3FBF");
+            pxtblockly.setColorPickerBlockStyles(namedInfo);
             setDraggableShadowBlocks(namedInfo);
             const marked = pxtblockly.createShadowValue(namedInfo, {
                 definitionName: "color", actualName: "color", type: "number", shadowBlockId: "test_color_picker"
@@ -501,26 +534,36 @@ describe("blockly compiler", function () {
             };
             const workspace = new Blockly.Workspace();
             try {
-                const picker = Blockly.Xml.domToBlock(marked, workspace);
+                const picker = Blockly.Xml.domToBlock(marked, workspace) as pxtblockly.ColorPickerBlock;
                 const selectedParentBlock = workspace.newBlock(selectedParent.attributes.blockId);
                 selectedParentBlock.getInput("color").connection.connect(picker.outputConnection);
-                const unmarked = Blockly.Xml.domToBlock(otherShadow, workspace);
+                const unmarked = Blockly.Xml.domToBlock(otherShadow, workspace) as pxtblockly.ColorPickerBlock;
                 const otherParentBlock = workspace.newBlock(otherParent.attributes.blockId);
                 otherParentBlock.getInput("color").connection.connect(unmarked.outputConnection);
                 const standalonePicker = Blockly.Xml.domToBlock(pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected)), workspace);
+                picker.updateBeforeRender();
+                unmarked.updateBeforeRender();
                 chai.assert.isFalse(marked.querySelector("mutation").hasAttribute("duplicateondrag"));
+                chai.assert.equal(picker.getColour().toLowerCase(), "#6554c0");
+                chai.assert.equal(unmarked.getColour().toLowerCase(), "#008800");
+                chai.assert.notEqual(standalonePicker.getColour().toLowerCase(), "#6554c0");
                 chai.assert.isTrue(shouldDuplicateOnDrag(picker));
                 chai.assert.isFalse(shouldDuplicateOnDrag(unmarked));
                 chai.assert.isFalse(shouldDuplicateOnDrag(standalonePicker));
-                const restored = Blockly.Xml.domToBlock(Blockly.Xml.blockToDom(picker, true) as Element, workspace);
+                const serialized = Blockly.Xml.blockToDom(picker, true) as Element;
+                chai.assert.isFalse(serialized.querySelector("mutation").hasAttribute("color"));
+                const restored = Blockly.Xml.domToBlock(serialized, workspace);
                 const restoredParent = workspace.newBlock(selectedParent.attributes.blockId);
                 restoredParent.getInput("color").connection.connect(restored.outputConnection);
+                (restored as pxtblockly.ColorPickerBlock).updateBeforeRender();
+                chai.assert.equal(restored.getColour().toLowerCase(), "#6554c0");
                 chai.assert.isTrue(shouldDuplicateOnDrag(restored));
             }
             finally {
                 workspace.dispose();
                 delete Blockly.Blocks[selectedParent.attributes.blockId];
                 delete Blockly.Blocks[otherParent.attributes.blockId];
+                pxtblockly.setColorPickerBlockStyles(info);
                 setDraggableShadowBlocks(info);
             }
         });
