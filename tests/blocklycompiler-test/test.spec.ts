@@ -3,12 +3,23 @@
 
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
-import { DuplicateOnDragConnectionChecker, setDraggableShadowBlocks, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { monkeyPatchShadowDragTargetBlock } from "../../pxtblocks/monkeyPatches/gesture";
+import { DuplicateOnDragConnectionChecker, DuplicateOnDragStrategy, setDraggableShadowBlocks, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
 
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
 
 const WEB_PREFIX = "http://localhost:9876";
+
+class TestDuplicateOnDragStrategy extends DuplicateOnDragStrategy {
+    public getTargetBlockForTest(): Blockly.BlockSvg {
+        return this.getTargetBlock();
+    }
+}
+
+interface TestGestureInternals {
+    targetBlock: Blockly.BlockSvg;
+}
 
 // Blockly crashes if this isn't defined
 (Blockly as any).Msg.DELETE_VARIABLE = "Delete the '%1' variable";
@@ -534,10 +545,10 @@ describe("blockly compiler", function () {
             };
             const workspace = new Blockly.Workspace();
             try {
-                const picker = Blockly.Xml.domToBlock(marked, workspace) as pxtblockly.ColorPickerBlock;
+                const picker = Blockly.Xml.domToBlock(marked, workspace) as pxtblockly.ColorPickerBlock & Blockly.BlockSvg;
                 const selectedParentBlock = workspace.newBlock(selectedParent.attributes.blockId);
                 selectedParentBlock.getInput("color").connection.connect(picker.outputConnection);
-                const unmarked = Blockly.Xml.domToBlock(otherShadow, workspace) as pxtblockly.ColorPickerBlock;
+                const unmarked = Blockly.Xml.domToBlock(otherShadow, workspace) as pxtblockly.ColorPickerBlock & Blockly.BlockSvg;
                 const otherParentBlock = workspace.newBlock(otherParent.attributes.blockId);
                 otherParentBlock.getInput("color").connection.connect(unmarked.outputConnection);
                 const standalonePicker = Blockly.Xml.domToBlock(pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected)), workspace);
@@ -550,6 +561,47 @@ describe("blockly compiler", function () {
                 chai.assert.isTrue(shouldDuplicateOnDrag(picker));
                 chai.assert.isFalse(shouldDuplicateOnDrag(unmarked));
                 chai.assert.isFalse(shouldDuplicateOnDrag(standalonePicker));
+                const strategy = new TestDuplicateOnDragStrategy(picker);
+                chai.assert.equal(strategy.getTargetBlockForTest(), picker);
+                const unmarkedStrategy = new TestDuplicateOnDragStrategy(unmarked);
+                chai.assert.equal(unmarkedStrategy.getTargetBlockForTest(), otherParentBlock);
+
+                const container = document.createElement("div");
+                container.style.width = "800px";
+                container.style.height = "600px";
+                document.body.appendChild(container);
+                monkeyPatchShadowDragTargetBlock();
+                const dragWorkspace = Blockly.inject(container, { renderer: "pxt" });
+                try {
+                    const withShadow = (parentType: string, shadowXml: Element) => {
+                        const parentXml = document.createElement("block");
+                        parentXml.setAttribute("type", parentType);
+                        const valueXml = document.createElement("value");
+                        valueXml.setAttribute("name", "color");
+                        valueXml.appendChild(shadowXml.cloneNode(true));
+                        parentXml.appendChild(valueXml);
+                        return Blockly.Xml.domToBlock(parentXml, dragWorkspace) as Blockly.BlockSvg;
+                    };
+                    const dragParent = withShadow(selectedParent.attributes.blockId, marked);
+                    const dragPicker = dragParent.getInputTargetBlock("color") as Blockly.BlockSvg;
+                    const event = new PointerEvent("pointerdown", { pointerId: 1 });
+                    const gesture = new Blockly.Gesture(event, dragWorkspace);
+                    gesture.setStartBlock(dragPicker);
+                    chai.assert.equal((gesture as unknown as TestGestureInternals).targetBlock, dragPicker);
+                    gesture.dispose();
+
+                    const otherDragParent = withShadow(otherParent.attributes.blockId, otherShadow);
+                    const otherDragPicker = otherDragParent.getInputTargetBlock("color") as Blockly.BlockSvg;
+                    const otherGesture = new Blockly.Gesture(event, dragWorkspace);
+                    otherGesture.setStartBlock(otherDragPicker);
+                    chai.assert.equal((otherGesture as unknown as TestGestureInternals).targetBlock, otherDragParent);
+                    otherGesture.dispose();
+                }
+                finally {
+                    dragWorkspace.dispose();
+                    container.remove();
+                }
+
                 const serialized = Blockly.Xml.blockToDom(picker, true) as Element;
                 chai.assert.isFalse(serialized.querySelector("mutation").hasAttribute("color"));
                 const restored = Blockly.Xml.domToBlock(serialized, workspace);

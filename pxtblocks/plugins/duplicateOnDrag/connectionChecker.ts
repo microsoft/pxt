@@ -1,5 +1,5 @@
 import * as Blockly from "blockly";
-import { isAllowlistedShadow, shouldDuplicateOnDrag } from "./duplicateOnDrag";
+import { shouldDuplicateOnDrag } from "./duplicateOnDrag";
 import { doArgumentReporterDragChecks } from "../functions/utils";
 import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../functions/constants";
 
@@ -21,7 +21,7 @@ export class DuplicateOnDragConnectionChecker extends Blockly.ConnectionChecker 
         if (
             replacedBlock &&
             shouldDuplicateOnDrag(replacedBlock) &&
-            !(replacedBlock.isShadow() && isAllowlistedShadow(replacedBlock))
+            !replacedBlock.isShadow()
         ) {
             return false;
         }
