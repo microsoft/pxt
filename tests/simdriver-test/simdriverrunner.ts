@@ -127,7 +127,12 @@ describe("simulator driver projfs messages", () => {
 });
 
 describe("simulator driver simulator extension frames", () => {
-    it("passes the frame's key to the frame in its URL, beside the parent origin", () => {
+    /**
+     * Starts the simulator extension offered under "someorg/pxt-ext" by posting a
+     * message on its channel from the main simulator frame, and returns the URL the
+     * extension's frame is created with and every frame the driver holds.
+     */
+    function startSimulatorExtension(options: pxsim.SimulatorDriverOptions = {}): { url: URL, frames: FakeFrame[] } {
         const mainFrame: FakeFrame = { id: "sim-frame-1", dataset: { origin: EDITOR_ORIGIN, runid: "" }, contentWindow: new FakeWindow() };
         const frames: FakeFrame[] = [mainFrame];
         const container = {
@@ -139,6 +144,7 @@ describe("simulator driver simulator extension frames", () => {
             simulatorExtensions: {
                 "someorg/pxt-ext": { index: "index.html", aspectRatio: 1, permanent: true },
             },
+            ...options,
         });
         // creating and starting the frame need a DOM; record the URL it is created with instead
         const urls: string[] = [];
@@ -156,9 +162,19 @@ describe("simulator driver simulator extension frames", () => {
         driver.postMessage(packet as pxsim.SimulatorMessage, mainFrame.contentWindow as unknown as Window);
 
         chai.expect(urls.length).equals(1);
-        const url = new URL(urls[0]);
+        return { url: new URL(urls[0]), frames };
+    }
+
+    it("passes the frame's key to the frame in its URL, beside the parent origin", () => {
+        const { url, frames } = startSimulatorExtension();
+
         chai.expect(url.searchParams.get("channel")).equals("someorg/pxt-ext");
         chai.expect(url.searchParams.get("parentOrigin")).equals(EDITOR_ORIGIN);
         chai.expect(frames[1].dataset["messagechannel"]).equals(url.searchParams.get("channel"));
+    });
+
+    it("passes the running target's id to the frame in its URL when the driver is given one", () => {
+        chai.expect(startSimulatorExtension({ targetId: "microbit" }).url.searchParams.get("target")).equals("microbit");
+        chai.expect(startSimulatorExtension().url.searchParams.has("target")).equals(false);
     });
 });

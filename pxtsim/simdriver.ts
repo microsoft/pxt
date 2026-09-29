@@ -40,6 +40,8 @@ namespace pxsim {
         }>;
         // needed when simulatorExtensions are used to provide to their frame
         userLanguage?: string;
+        // id of the running target (e.g. "microbit", "arcade"), passed to simulator extension frames
+        targetId?: string;
         /**
          * Receives the project-file ("projfs") requests of simulator extensions.
          * @param key the `simulatorExtensions` key the requesting frame was created for
@@ -442,6 +444,10 @@ namespace pxsim {
                                 url.searchParams.set("channel", messageChannel);
                                 if (this.options.userLanguage)
                                     url.searchParams.set("language", this.options.userLanguage);
+                                // The target hosting the frame, so one extension served to several
+                                // targets knows which one it runs in. Informational only.
+                                if (this.options.targetId)
+                                    url.searchParams.set("target", this.options.targetId);
                                 startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio);
                             }
                             // not running the current run, restart

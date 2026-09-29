@@ -286,7 +286,8 @@ export async function initAsync(cfg: SimulatorConfig) {
         mpRole,
         messageSimulators: pxt.appTarget?.simulator?.messageSimulators,
         simulatorExtensions,
-        userLanguage: pxt.Util.userLanguage()
+        userLanguage: pxt.Util.userLanguage(),
+        targetId: pxt.appTarget.id
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg

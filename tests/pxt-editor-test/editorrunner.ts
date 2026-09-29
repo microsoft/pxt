@@ -37,6 +37,7 @@ import {
 } from "../../webapp/src/projfsHost";
 import {
     getSimxChannel,
+    getTargetId,
     ProjfsClient,
     ProjfsContentReply,
     ProjfsError,
@@ -1239,6 +1240,12 @@ describe("projfs client", () => {
         chai.expect(getSimxChannel("owner/known", "?channel=owner%2Frepo")).equals("owner/known");
         chai.expect(getSimxChannel(undefined, "?parentOrigin=x")).equals(undefined);
         chai.expect(getSimxChannel(undefined, "")).equals(undefined);
+    });
+
+    it("reads the hosting target's id from the frame URL", () => {
+        chai.expect(getTargetId("?parentOrigin=http%3A%2F%2Flocalhost%3A3232&channel=owner%2Frepo&target=arcade")).equals("arcade");
+        chai.expect(getTargetId("?channel=owner%2Frepo")).equals(undefined);
+        chai.expect(getTargetId("?target=")).equals(undefined);
     });
 
     it("fails with TIMEOUT when the editor does not reply", async () => {

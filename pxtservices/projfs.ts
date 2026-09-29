@@ -40,6 +40,20 @@ export function getSimxChannel(channel?: string, search?: string): string | unde
 }
 
 /**
+ * Returns the id of the MakeCode target hosting this simulator extension's
+ * frame, e.g. `microbit` or `arcade`, which the editor passes in the frame
+ * URL's `target` parameter. Use it to adapt what the extension shows to the
+ * target it runs in. The value is informational: it grants nothing, and
+ * projfs requests and replies never include it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the target id, or undefined if the URL provides none
+ */
+export function getTargetId(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("target") || undefined;
+}
+
+/**
  * Why a request failed. Clients branch on the code; the message that
  * accompanies it is for people.
  */
