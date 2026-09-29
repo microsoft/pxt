@@ -40,12 +40,13 @@ export class DuplicateOnDragStrategy extends Blockly.dragging.BlockDragStrategy 
     let target: Blockly.Connection;
     let xml: Element;
     const isShadow = self.block.isShadow();
+    const duplicate = shouldDuplicateOnDrag(self.block);
 
     if (isShadow) {
         self.block.setShadow(false);
     }
 
-    if (shouldDuplicateOnDrag(self.block)) {
+    if (duplicate) {
         const output = self.block.outputConnection;
 
         if (!output?.targetConnection) return;
