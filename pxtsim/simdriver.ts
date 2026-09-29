@@ -35,6 +35,8 @@ namespace pxsim {
             permanent?: boolean;
             index?: string;
             devUrl?: string;
+            allowPopups?: boolean;
+            allowClipboardWrite?: boolean;
             // Additional fields outside of pxt.SimulatorExtensionConfig
             url?: string; // Computed URL
         }>;
@@ -109,6 +111,12 @@ namespace pxsim {
     const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
     const PERMANENT = "permanent"
+
+    // Permissions a frame gets beyond those of the main simulator frame
+    interface FrameGrants {
+        allowPopups?: boolean; // sandbox gains allow-popups and allow-popups-to-escape-sandbox
+        allowClipboardWrite?: boolean; // allow list gains clipboard-write
+    }
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -410,9 +418,9 @@ namespace pxsim {
                             this.options.simulatorExtensions &&
                             this.options.simulatorExtensions[messageChannel];
 
-                        const startSimulatorExtension = (url: string, permanent: boolean, aspectRatio: number) => {
+                        const startSimulatorExtension = (url: string, permanent: boolean, aspectRatio: number, grants?: FrameGrants) => {
                             aspectRatio = aspectRatio || this._runOptions?.aspectRatio || 1.22;
-                            let wrapper = this.createFrame(url);
+                            let wrapper = this.createFrame(url, grants);
                             this.container.appendChild(wrapper);
                             const messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
                             messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
@@ -448,7 +456,7 @@ namespace pxsim {
                                 // targets knows which one it runs in. Informational only.
                                 if (this.options.targetId)
                                     url.searchParams.set("target", this.options.targetId);
-                                startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio);
+                                startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio, simulatorExtension);
                             }
                             // not running the current run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
@@ -554,7 +562,10 @@ namespace pxsim {
             return urlObject.toString();
         }
 
-        private createFrame(url?: string): HTMLDivElement {
+        /**
+         * @param grants permissions for the frame beyond the main simulator frame's; none if omitted
+         */
+        private createFrame(url?: string, grants?: FrameGrants): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = `simframe ui embed`;
             wrapper.setAttribute('tabindex', '0');
@@ -563,8 +574,14 @@ namespace pxsim {
             frame.id = 'sim-frame-' + this.nextId()
             frame.title = pxsim.localization.lf("Simulator")
             frame.allowFullscreen = true;
-            frame.setAttribute('allow', 'autoplay;microphone');
-            frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            const allow = ['autoplay', 'microphone'];
+            if (grants?.allowClipboardWrite)
+                allow.push('clipboard-write');
+            frame.setAttribute('allow', allow.join(';'));
+            const sandbox = ['allow-same-origin', 'allow-scripts'];
+            if (grants?.allowPopups)
+                sandbox.push('allow-popups', 'allow-popups-to-escape-sandbox');
+            frame.setAttribute('sandbox', sandbox.join(' '));
             frame.className = 'no-select';
 
             let furl = this.setRunOptionQueryParams(url || this.getSimUrl().toString());

@@ -69,6 +69,8 @@ declare namespace pxt {
         permanent?: boolean; // If true, don't recycle the iframe between runs. Default: true.
         devUrl?: string; // URL to load for local development. Pass `simxdev` on URL to enable. Default: undefined.
         index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
+        allowPopups?: boolean; // If true, the iframe sandbox gains allow-popups and allow-popups-to-escape-sandbox. Default: false.
+        allowClipboardWrite?: boolean; // If true, the iframe allow list gains clipboard-write. Default: false.
         // backend-only options
         sha?: string; // The commit to checkout (must exist in the branch/ref). Required.
         repo?: string; // Actual repo to load simulator extension from. Defaults to key of parent in `approvedRepoLib` map.
