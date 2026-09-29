@@ -21,7 +21,7 @@ namespace testNamespace {
     export function colorArgument(color: number): void {}
 
     //% block blockId=test_color_picker builtinBlockId=makecode_color_picker
-    //% blockHidden=true duplicateShadowOnDrag=true
+    //% blockHidden=true
     //% value.fieldOptions.format=hex value.defl=0x7f3fbf
     //% color="#6554C0"
     export function __colorPicker(value: number): number {

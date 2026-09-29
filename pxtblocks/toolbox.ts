@@ -122,6 +122,7 @@ export function createShadowValue(info: pxtc.BlocksInfo, p: pxt.blocks.BlockPara
         value.replaceChild(createColorPickerBlock(
             defaultV !== undefined ? defaultV : defaults?.defaultValue,
             p.fieldOptions?.format || defaults?.fieldOptions?.format,
+            contributor?.attributes.color,
             true
         ), shadow);
         return value;
@@ -607,14 +608,14 @@ function createBuiltinBlock(fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileIn
     const id = fn.attributes.builtinBlockId;
     if (id === COLOR_PICKER_BLOCK_TYPE) {
         const defaults = comp.parameters[0];
-        return createColorPickerBlock(defaults?.defaultValue, defaults?.fieldOptions?.format, isShadow);
+        return createColorPickerBlock(defaults?.defaultValue, defaults?.fieldOptions?.format, fn.attributes.color, isShadow);
     }
 
     pxt.warn(`Unsupported builtin block id: ${id}`);
     return undefined;
 }
 
-function createColorPickerBlock(defaultValue: string, requestedFormat: string, isShadow: boolean): HTMLElement {
+function createColorPickerBlock(defaultValue: string, requestedFormat: string, blockColor: string, isShadow: boolean): HTMLElement {
     if (defaultValue?.charAt(0) === '"') defaultValue = JSON.parse(defaultValue);
     const formatName = ["rgb", "hsv", "hsl", "cmyk", "hex"].indexOf(requestedFormat) >= 0 ? requestedFormat : "rgb";
     const rgb = Number(defaultValue) || 0;
@@ -623,6 +624,7 @@ function createColorPickerBlock(defaultValue: string, requestedFormat: string, i
     const block = document.createElement(isShadow ? "shadow" : "block");
     block.setAttribute("type", COLOR_PICKER_BLOCK_TYPE);
     const mutation = document.createElement("mutation");
+    if (blockColor) mutation.setAttribute("color", blockColor);
     const hsv = fromHexToFormat("hsv", hex);
     ["hue", "saturation", "value"].forEach((name, index) => mutation.setAttribute(name, hsv[index].toString()));
     block.appendChild(mutation);

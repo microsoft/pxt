@@ -5,7 +5,7 @@
  */
 
 import * as Blockly from "blockly";
-import { shouldDuplicateOnDrag, updateDuplicateOnDragState } from "./duplicateOnDrag";
+import { isAllowlistedShadow, shouldDuplicateOnDrag, updateDuplicateOnDragState } from "./duplicateOnDrag";
 
 interface DragStrategyInternals {
   block: Blockly.BlockSvg;
@@ -16,9 +16,9 @@ interface DragStrategyInternals {
 export class DuplicateOnDragStrategy extends Blockly.dragging.BlockDragStrategy {
   protected getTargetBlock(): Blockly.BlockSvg {
     const self = this as unknown as DragStrategyInternals;
-    // Keep the drag on a duplicating shadow so disconnectBlock can extract
+    // Keep the drag on an allowlisted shadow so disconnectBlock can extract
     // it; otherwise Blockly's default would delegate the drag to the parent.
-    if (self.block.isShadow() && shouldDuplicateOnDrag(self.block)) {
+    if (self.block.isShadow() && isAllowlistedShadow(self.block)) {
         return self.block;
     }
     return super.getTargetBlock();
