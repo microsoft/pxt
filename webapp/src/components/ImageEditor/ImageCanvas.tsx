@@ -336,7 +336,6 @@ export class ImageCanvasImpl extends React.Component<ImageCanvasProps, {}> imple
     }
 
     protected onKeyUp = (ev: KeyboardEvent): void => {
-        if (!this.shouldHandleEvent(ev)) return;
         if (this.lastTool != null) {
             this.props.dispatchChangeImageTool(this.lastTool);
             this.lastTool = null;
