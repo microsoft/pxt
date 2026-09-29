@@ -34,7 +34,7 @@ export function initColorPickerBlock() {
             this.setInputsInline(true);
 
             this.appendDummyInput()
-                .appendField(new Blockly.FieldImage(previewImage(), 24, 24, lf("Choose color"), () => {
+                .appendField(new Blockly.FieldImage(previewImage("#000000"), 24, 24, lf("Choose color"), () => {
                     const inputs = [HEX_INPUT_NAME, "INPUT0", "INPUT1", "INPUT2", "INPUT3"];
                     for (const input of inputs) {
                         const child = this.getInputTargetBlock(input);
@@ -67,14 +67,17 @@ export function initColorPickerBlock() {
         updateColorPreview: function (this: ColorPickerBlock) {
             const preview = this.getField("PREVIEW") as Blockly.FieldImage;
             const color = getColorPickerColor(this);
-            const image = previewImage(color);
             // This is derived UI, not an edit: don't add history or invalidate redo.
             Blockly.Events.disable();
             try {
-                if (preview.getValue() !== image) {
-                    preview.setValue(image);
+                if (color) {
+                    const image = previewImage(color);
+                    if (preview.getValue() !== image) {
+                        preview.setValue(image);
+                    }
+                    preview.setAlt(lf("Color {0}. Choose color", color));
                 }
-                preview.setAlt(color ? lf("Color {0}. Choose color", color) : lf("Color depends on input values"));
+                preview.setVisible(!!color);
             }
             finally {
                 Blockly.Events.enable();
@@ -286,9 +289,7 @@ export function getColorPickerColor(block: Blockly.Block): string | undefined {
     return fromFormatToHex(format, values);
 }
 
-function previewImage(color?: string): string {
-    const content = color
-        ? `<rect x="1" y="1" width="22" height="22" fill="${color}" stroke="white"/><rect x="2" y="2" width="20" height="20" fill="none" stroke="black"/>`
-        : '<rect x="1" y="1" width="22" height="22" fill="white" stroke="black"/><text x="12" y="18" text-anchor="middle" font-size="18" fill="black">?</text>';
+function previewImage(color: string): string {
+    const content = `<rect x="1" y="1" width="22" height="22" fill="${color}" stroke="white"/><rect x="2" y="2" width="20" height="20" fill="none" stroke="black"/>`;
     return "data:image/svg+xml," + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24">${content}</svg>`);
 }

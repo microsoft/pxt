@@ -408,7 +408,10 @@ describe("blockly compiler", function () {
                         fieldOptions: { format }
                     });
                     const picker = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    const preview = picker.getField("PREVIEW");
+                    picker.updateColorPreview();
                     chai.assert.isTrue(picker.isShadow());
+                    chai.assert.isTrue(preview.isVisible());
                     chai.assert.equal(picker.getColour().toLowerCase(), "#6554c0");
                     chai.assert.equal(picker.getFieldValue("FORMAT"), format === "invalid" ? "rgb" : format);
                     chai.assert.equal(pxtblockly.getColorPickerColor(picker), "#7F3FBF");
@@ -429,6 +432,8 @@ describe("blockly compiler", function () {
                     const input = picker.getInput("INPUT0");
                     input.connection.setShadowDom(null);
                     chai.assert.isUndefined(pxtblockly.getColorPickerColor(picker));
+                    picker.updateColorPreview();
+                    chai.assert.isFalse(preview.isVisible());
                     picker.dispose();
                 }
             }
