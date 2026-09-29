@@ -5,6 +5,17 @@ export const MAX_WHITEBOARD_DIMENSION = 256;
 export const WHITEBOARD_WIDTH = 160;
 export const WHITEBOARD_HEIGHT = 120;
 
+/** Serializes project-note writes while preserving each caller's result. */
+export class ProjectNotesSaveQueue {
+    private pending: Promise<void> = Promise.resolve();
+
+    public enqueue(saveAsync: () => Promise<void>): Promise<void> {
+        const result = this.pending.then(saveAsync);
+        this.pending = result.then(() => undefined, () => undefined);
+        return result;
+    }
+}
+
 /** A separate boundary from cloud sync: notes are private, not local-only. */
 export function excludePrivateProjectMetadata(header: pxt.workspace.Header): pxt.workspace.Header {
     const shared = { ...header };

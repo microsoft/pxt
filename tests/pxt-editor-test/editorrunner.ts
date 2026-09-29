@@ -22,7 +22,7 @@ import {
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
 import { projectToolsPinnedOnLoad, shouldShowProjectTools } from "../../webapp/src/projectToolsState";
-import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, validateProjectNotes } from "../../webapp/src/projectNotes";
+import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, ProjectNotesSaveQueue, validateProjectNotes } from "../../webapp/src/projectNotes";
 
 pxt.appTarget = {
     versions: {
@@ -113,6 +113,26 @@ describe("private project notes", () => {
             chai.expect(() => validateProjectNotes({ ...original, whiteboards: [original.whiteboards[0], { ...second, ...invalid }] })).throws();
         }
         chai.expect(() => validateProjectNotes({ text: "" } as unknown as pxt.workspace.ProjectNotes)).throws();
+    });
+
+    it("persists a selected saved snapshot after an older local save settles", async () => {
+        const queue = new ProjectNotesSaveQueue();
+        const writes: string[] = [];
+        let release = () => {};
+        const pending = new Promise<void>(resolve => release = resolve);
+        const localSave = queue.enqueue(async () => {
+            await pending;
+            writes.push("local");
+        });
+        const selectedSave = queue.enqueue(async () => {
+            writes.push("saved");
+        });
+
+        await Promise.resolve();
+        chai.expect(writes).deep.equals([]);
+        release();
+        await Promise.all([localSave, selectedSave]);
+        chai.expect(writes).deep.equals(["local", "saved"]);
     });
 });
 

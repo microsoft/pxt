@@ -4,7 +4,7 @@ import { ImageEditor } from "./ImageEditor/ImageEditor";
 import imageReducer, { AnimationState, ImageEditorStore } from "./ImageEditor/store/imageReducer";
 import { dispatchDisableResize, dispatchOpenAsset } from "./ImageEditor/actions/dispatch";
 import { imageStateToBitmap } from "./ImageEditor/util";
-import { addProjectWhiteboard, createProjectNotes, decodeWhiteboard, deleteProjectWhiteboard, MAX_PROJECT_NOTE_LENGTH, renameProjectWhiteboard, validateProjectNotes, WHITEBOARD_HEIGHT, WHITEBOARD_WIDTH } from "../projectNotes";
+import { addProjectWhiteboard, createProjectNotes, decodeWhiteboard, deleteProjectWhiteboard, MAX_PROJECT_NOTE_LENGTH, ProjectNotesSaveQueue, renameProjectWhiteboard, validateProjectNotes, WHITEBOARD_HEIGHT, WHITEBOARD_WIDTH } from "../projectNotes";
 import { ProjectWhiteboardMenu } from "./ProjectWhiteboardMenu";
 import * as workspace from "../workspace";
 
@@ -51,24 +51,20 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
     const timer = React.useRef<number>();
     const revision = React.useRef(0);
     const inFlight = React.useRef(0);
+    const saveQueue = React.useRef(new ProjectNotesSaveQueue());
     const applying = React.useRef(false);
     const incoming = React.useRef(JSON.stringify(props.notes));
     const ownSaves = React.useRef(new Set<string>());
     const conflictPending = React.useRef(false);
 
-    const flush = React.useCallback(() => {
-        clearTimeout(timer.current);
-        if (!dirty.current || conflictPending.current) return;
-        dirty.current = false;
-        const savedRevision = revision.current;
-        const snapshot = draft.current;
+    const persist = React.useCallback((snapshot: pxt.workspace.ProjectNotes, savedRevision: number) => {
         ++inFlight.current;
         ownSaves.current.add(JSON.stringify(snapshot));
         if (ownSaves.current.size > 10) ownSaves.current.delete(ownSaves.current.values().next().value);
         if (alive.current) setStatus("saving");
         // Capture the project ID, not the current global main package. Switching
         // projects must never save an old canvas into the newly opened project.
-        Promise.resolve().then(() => workspace.saveProjectNotesAsync(props.headerId, snapshot)).then(() => {
+        saveQueue.current.enqueue(() => workspace.saveProjectNotesAsync(props.headerId, snapshot)).then(() => {
             if (alive.current && revision.current === savedRevision) setStatus("saved");
         }).catch(error => {
             if (revision.current === savedRevision) dirty.current = true;
@@ -78,6 +74,13 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
             --inFlight.current;
         });
     }, [props.headerId]);
+
+    const flush = React.useCallback(() => {
+        clearTimeout(timer.current);
+        if (!dirty.current || conflictPending.current) return;
+        dirty.current = false;
+        persist(draft.current, revision.current);
+    }, [persist]);
 
     const update = React.useCallback((notes: pxt.workspace.ProjectNotes) => {
         draft.current = notes;
@@ -94,12 +97,13 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         update({ ...notes, whiteboards: notes.whiteboards.map(board => board.id === id ? { ...board, ...content } : board) });
     }, [update]);
 
-    const loadNotes = React.useCallback((notes?: pxt.workspace.ProjectNotes) => {
+    const loadNotes = React.useCallback((notes?: pxt.workspace.ProjectNotes, persistAfterPending = false) => {
         const validated = notes === undefined ? createProjectNotes() : validateProjectNotes(notes);
         clearTimeout(timer.current);
         dirty.current = false;
         draft.current = validated;
         ++revision.current;
+        const loadedRevision = revision.current;
         applying.current = true;
         for (const [id, store] of stores.current) {
             const board = validated.whiteboards.find(board => board.id === id);
@@ -108,10 +112,11 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         }
         applying.current = false;
         setNotes(validated);
-        setStatus("saved");
         conflictPending.current = false;
         setConflict(undefined);
-    }, []);
+        if (persistAfterPending) persist(validated, loadedRevision);
+        else setStatus("saved");
+    }, [persist]);
 
     React.useEffect(() => {
         const serialized = JSON.stringify(props.notes);
@@ -198,7 +203,7 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
                 {conflict && <div role="alert" className="project-whiteboard__conflict">
                     <p>{lf("Saved notes changed while you were editing. Choose which version to keep.")}</p>
                     <button type="button" onClick={() => { conflictPending.current = false; setConflict(undefined); dirty.current = true; flush(); }}>{lf("Keep my notes")}</button>
-                    <button type="button" onClick={() => loadNotes(conflict.notes)}>{lf("Load saved notes")}</button>
+                    <button type="button" onClick={() => loadNotes(conflict.notes, true)}>{lf("Load saved notes")}</button>
                 </div>}
                 <div id="project-whiteboard-canvas" className="project-whiteboard__canvas" aria-label={lf("Project sketch editor")}>
                     {props.active && <ImageEditor key={activeBoard.id} ref={editor} store={store} singleFrame hideDoneButton hideAssetName scopedShortcuts />}
