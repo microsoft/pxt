@@ -230,6 +230,31 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(startSimulatorExtension().url.searchParams.has("target")).equals(false);
     });
 
+    it("passes the open project's id to the frame in its URL, beside the other parameters", () => {
+        const { url } = startSimulatorExtension({ targetId: "microbit", getProjectId: () => "3b1f7c2e-project" });
+
+        chai.expect(url.searchParams.get("project")).equals("3b1f7c2e-project");
+        chai.expect(url.searchParams.get("channel")).equals("someorg/pxt-ext");
+        chai.expect(url.searchParams.get("parentOrigin")).equals(EDITOR_ORIGIN);
+        chai.expect(url.searchParams.get("target")).equals("microbit");
+    });
+
+    it("reads the project's id when it creates the frame", () => {
+        let projectId = "first-project";
+        const getProjectId = () => projectId;
+        chai.expect(startSimulatorExtension({ getProjectId }).url.searchParams.get("project")).equals("first-project");
+        projectId = "second-project";
+        chai.expect(startSimulatorExtension({ getProjectId }).url.searchParams.get("project")).equals("second-project");
+    });
+
+    it("omits the project's id when no project is open or the driver cannot tell", () => {
+        const noProject = startSimulatorExtension({ targetId: "microbit", getProjectId: () => undefined }).url;
+        chai.expect(noProject.searchParams.has("project")).equals(false);
+        chai.expect(noProject.searchParams.get("channel")).equals("someorg/pxt-ext");
+        chai.expect(noProject.searchParams.get("target")).equals("microbit");
+        chai.expect(startSimulatorExtension().url.searchParams.has("project")).equals(false);
+    });
+
     function sandboxOf(frame: FakeElement): string[] {
         return frame.getAttribute("sandbox").split(/\s+/);
     }

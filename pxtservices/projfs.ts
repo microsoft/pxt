@@ -54,6 +54,21 @@ export function getTargetId(search?: string): string | undefined {
 }
 
 /**
+ * Returns the editor's id for the project this simulator extension's frame
+ * serves, an opaque string the editor passes in the frame URL's `project`
+ * parameter. Use it to keep state that belongs to one project, such as a
+ * session, apart from other projects' state. The value is informational: it
+ * grants nothing and selects nothing, since projfs requests always reach the
+ * project open in the editor, and projfs requests and replies never include it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the project id, or undefined if the URL provides none
+ */
+export function getProjectId(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("project") || undefined;
+}
+
+/**
  * Why a request failed. Clients branch on the code; the message that
  * accompanies it is for people.
  */

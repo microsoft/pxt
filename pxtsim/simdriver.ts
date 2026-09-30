@@ -44,6 +44,9 @@ namespace pxsim {
         userLanguage?: string;
         // id of the running target (e.g. "microbit", "arcade"), passed to simulator extension frames
         targetId?: string;
+        // returns the id of the open project, or undefined if none is open, passed to simulator
+        // extension frames; called as each frame is created, since the driver outlives projects
+        getProjectId?: () => string | undefined;
         /**
          * Receives the project-file ("projfs") requests of simulator extensions.
          * @param key the `simulatorExtensions` key the requesting frame was created for
@@ -456,6 +459,11 @@ namespace pxsim {
                                 // targets knows which one it runs in. Informational only.
                                 if (this.options.targetId)
                                     url.searchParams.set("target", this.options.targetId);
+                                // The project the frame serves, so an extension can keep per-project
+                                // state apart. Informational only.
+                                const projectId = this.options.getProjectId?.();
+                                if (projectId)
+                                    url.searchParams.set("project", projectId);
                                 startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio, simulatorExtension);
                             }
                             // not running the current run, restart

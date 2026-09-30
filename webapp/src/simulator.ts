@@ -287,7 +287,8 @@ export async function initAsync(cfg: SimulatorConfig) {
         messageSimulators: pxt.appTarget?.simulator?.messageSimulators,
         simulatorExtensions,
         userLanguage: pxt.Util.userLanguage(),
-        targetId: pxt.appTarget.id
+        targetId: pxt.appTarget.id,
+        getProjectId: () => pkg.mainEditorPkg().header?.id
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
