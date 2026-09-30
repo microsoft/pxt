@@ -324,8 +324,7 @@ export class FieldTileset extends FieldImages implements FieldCustom {
         if (asset?.isProjectTile) {
             return getAssetSaveState(asset)
         }
-        // Full captures need the gallery's qualified API name, not a display-name
-        // assets.tile reference, so dependency collection can find its package.
+        // Save the gallery tile's full ID so Backpack can find its extension.
         if (_doFullSerialization && asset) return asset.id;
         return super.saveState(_doFullSerialization);
     }

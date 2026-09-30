@@ -1408,8 +1408,7 @@ declare namespace pxt.editor {
     type AssetEditorRequest = OpenAssetEditorRequest | CreateAssetEditorRequest | SaveAssetEditorRequest | DuplicateAssetEditorRequest;
 
     interface BaseAssetEditorResponse {
-        id?: string | number;
-        success?: boolean;
+        id?: number;
     }
 
     interface OpenAssetEditorResponse extends BaseAssetEditorResponse {
