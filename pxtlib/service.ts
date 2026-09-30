@@ -58,6 +58,7 @@ namespace ts.pxtc {
         blockId: string;
         promptHint: string;
         initialMembers: string[];
+        initialMemberDisplayNames?: pxt.Map<string>;
     }
 
     export interface CompletionEntry {
@@ -575,10 +576,12 @@ namespace ts.pxtc {
                 }
 
                 const initialMembers: string[] = [];
+                const initialMemberDisplayNames: pxt.Map<string> = {};
                 if (info.byQName[kindNamespace]) {
                     for (const api of pxtc.Util.values(info.byQName)) {
                         if (api.namespace === kindNamespace && api.attributes.isKind) {
                             initialMembers.push(api.name);
+                            initialMemberDisplayNames[api.name] = api.attributes.block || api.name;
                         }
                     }
                 }
@@ -589,6 +592,7 @@ namespace ts.pxtc {
                     name: kindNamespace,
                     memberName: s.attributes.kindMemberName || kindNamespace,
                     initialMembers: initialMembers,
+                    initialMemberDisplayNames,
                     promptHint: s.attributes.enumPromptHint || Util.lf("Create a new kind..."),
                     createFunctionName: s.attributes.kindCreateFunction || "create"
                 };
@@ -712,6 +716,16 @@ namespace ts.pxtc {
         if (apiLocalizationStrings)
             Util.jsonMergeFrom(loc, apiLocalizationStrings);
 
+        const variableNames: pxt.Map<boolean> = {};
+        Util.values(apis.byQName).forEach(fn => {
+            pxt.blocks.defaultVariableNames(fn).forEach(name => variableNames[name] = true);
+        });
+        Object.keys(variableNames).forEach(name => {
+            const key = pxt.blocks.variableNameLocalizationKey(name);
+            if (loc[key]) setBlockTranslationCacheKey(key, loc[key]);
+            else clearBlockTranslationCacheKey(key);
+        });
+
         const toLocalize = Util.values(apis.byQName).filter(fn => fn.attributes._translatedLanguageCode !== lang);
         await Util.promiseMapAll(toLocalize, async fn => {
             const altLocSrc = fn.attributes.useLoc || fn.attributes.blockAliasFor;
@@ -776,18 +790,20 @@ namespace ts.pxtc {
                         }
                     }
 
-                    const defaultString = pxt.blocks.parameterDefaultToLocalizationString(param.defaultValue, param.type);
-                    const defaultLocalizationKey = pxt.blocks.parameterDefaultLocalizationKey(fn.qName, param.actualName);
-                    if (defaultLocalizationKey && defaultString !== undefined) {
-                        const locSuff = defaultLocalizationKey.slice(fn.qName.length);
-                        const paramDefault = lookupLoc(locSuff, langLower + locSuff);
-                        if (paramDefault !== undefined) {
-                            if (!fn.attributes._untranslatedParamDefl) {
-                                fn.attributes._untranslatedParamDefl = U.clone(fn.attributes.paramDefl || {});
+                    if (!pxt.blocks.variableDefaultName(param.defaultValue, param.shadowBlockId)) {
+                        const defaultString = pxt.blocks.parameterDefaultToLocalizationString(param.defaultValue, param.type);
+                        const defaultLocalizationKey = pxt.blocks.parameterDefaultLocalizationKey(fn.qName, param.actualName);
+                        if (defaultLocalizationKey && defaultString !== undefined) {
+                            const locSuff = defaultLocalizationKey.slice(fn.qName.length);
+                            const paramDefault = lookupLoc(locSuff, langLower + locSuff);
+                            if (paramDefault !== undefined) {
+                                if (!fn.attributes._untranslatedParamDefl) {
+                                    fn.attributes._untranslatedParamDefl = U.clone(fn.attributes.paramDefl || {});
+                                }
+                                if (!fn.attributes.paramDefl) fn.attributes.paramDefl = {};
+                                fn.attributes.paramDefl[param.actualName] = pxt.blocks.localizationStringToParameterDefault(paramDefault);
+                                syncParameterDefaults(fn);
                             }
-                            if (!fn.attributes.paramDefl) fn.attributes.paramDefl = {};
-                            fn.attributes.paramDefl[param.actualName] = pxt.blocks.localizationStringToParameterDefault(paramDefault);
-                            syncParameterDefaults(fn);
                         }
                     }
                 }
