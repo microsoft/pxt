@@ -150,6 +150,33 @@ describe("simulator themes", () => {
         ]);
     });
 
+    it("loads shared, target, and Tutorial Tool translations", async () => {
+        const requestedUrls: string[] = [];
+        const originalHttpGetJsonAsync = pxt.Util.httpGetJsonAsync;
+        pxt.Util.httpGetJsonAsync = <T>(url: string) => {
+            requestedUrls.push(url);
+            return Promise.resolve({} as T);
+        };
+
+        try {
+            await pxt.Util.downloadTranslationsAsync(
+                "arcade",
+                "https://example.com/",
+                "de",
+                false,
+                ts.pxtc.Util.TranslationsKind.TutorialTool
+            );
+        } finally {
+            pxt.Util.httpGetJsonAsync = originalHttpGetJsonAsync;
+        }
+
+        chai.expect(requestedUrls).to.include.members([
+            "https://example.com/locales/de/strings.json",
+            "https://example.com/locales/de/target-strings.json",
+            "https://example.com/locales/de/tutorialtool-strings.json",
+        ]);
+    });
+
     it("initializes an empty cloud-synced simulator theme map", () => {
         chai.expect(pxt.auth.DEFAULT_USER_PREFERENCES().simulatorThemes).deep.equals({});
     });
