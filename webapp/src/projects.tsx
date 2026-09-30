@@ -105,16 +105,6 @@ function getProjectDescriptionFromConfig(configText: string): string {
     return description || undefined;
 }
 
-function localizedSearchTerms(terms?: string[]): string {
-    const result: string[] = [];
-    (terms || []).forEach(term => {
-        if (result.indexOf(term) === -1) result.push(term);
-        const localized = pxt.Util.rlf(term);
-        if (localized && result.indexOf(localized) === -1) result.push(localized);
-    });
-    return result.join(" ");
-}
-
 export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     protected searchRequestId = 0;
     protected searchButton: HTMLElement;
@@ -232,6 +222,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const entries: SearchEntry[] = [];
         const cardMap: pxt.Map<SearchCard> = {};
         const seen = new Set<string>();
+        const localizedTerms = (terms?: string[]) => Array.isArray(terms) ? terms.map(term => {
+            const translated = pxt.Util.rlf(term);
+            return translated === term ? term : `${term} ${translated}`;
+        }).join(" ") : "";
 
         sources.forEach(source => {
             const res = source.result;
@@ -249,8 +243,8 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                     id: key,
                     name: card.name || "",
                     description: card.description || "",
-                    tags: localizedSearchTerms(card.tags),
-                    searchTerms: localizedSearchTerms(card.searchTerms)
+                    tags: localizedTerms(card.tags),
+                    searchTerms: localizedTerms(card.searchTerms)
                 });
             }));
         });

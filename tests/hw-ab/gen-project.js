@@ -61,7 +61,9 @@ const CASES = {
     "conditiontruthiness": "54conditiontruthiness.ts",
     "conditionlowering": "55conditionlowering.ts",
     "ifacedispatch": "56ifacedispatch.ts",
-    "loopcapture": "58loopcapture.ts"
+    "defaultparamdispatch": "57defaultparamdispatch.ts",
+    "loopcapture": "58loopcapture.ts",
+    "defaultinitializers": "59defaultinitializers.ts",
 };
 
 // Exact text of the host prelude's assert. Matching it exactly rather than by
