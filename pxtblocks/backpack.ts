@@ -22,7 +22,7 @@ export interface BackpackWorkspaceOptions {
     isEnabled: () => boolean;
     canSave?: (block: Blockly.Block) => boolean;
     save: (block: Blockly.BlockSvg) => void;
-    /** Open without moving focus (including when invoked by a dwell timer). */
+    /** Open Backpack without taking keyboard focus away from the block being dragged. */
     open: () => void;
     dragTargets: BackpackDragTargetOptions[];
     hoverClass: string;
@@ -65,7 +65,7 @@ function isName(value: unknown): value is string {
     return typeof value === "string" && !!value.length && !forbiddenKeys.has(value);
 }
 
-/** Only real, user-editable containers are eligible; following siblings are not part of the item. */
+/** Whether this editable block has a statement input that can be copied to Backpack. */
 export function isBackpackContainer(block: Blockly.Block): boolean {
     return !!block && !block.isDisposed() && !block.isShadow() && !block.isInsertionMarker()
         && !block.isInFlyout && !block.workspace.isFlyout && !block.workspace.isMutator
@@ -73,7 +73,7 @@ export function isBackpackContainer(block: Blockly.Block): boolean {
         && block.inputList.some(input => input.type === Blockly.inputs.inputTypes.STATEMENT);
 }
 
-/** Use the registered field, not a list of block IDs, including extension-defined literals. */
+/** Find the asset field on an output block, including blocks defined by extensions. */
 export function getBackpackAssetField(block: Blockly.Block): Blockly.Field | undefined {
     if (!block || block.isDisposed() || !block.outputConnection || block.previousConnection || block.nextConnection
         || block.inputList.some(input => !!input.connection)) return undefined;

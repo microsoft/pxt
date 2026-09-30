@@ -40,8 +40,8 @@ referenced Blockly functions and assets—not following siblings or the original
 Standalone image, animation, tilemap and music blocks go to **Assets** instead of
 **Code**, based on their registered field editor, including extension-defined blocks.
 Required extensions are installed with consent on Add, just as for code snippets.
-Field implementations can opt in with `isBackpackAsset`; asset gallery grid pickers
-use `fieldOptions.asset=true`. New asset editors require no backend type registration.
+Asset field implementations can opt in with `isBackpackAsset`. Ordinary dropdowns
+such as Minecraft's block picker are not Backpack assets.
 Limits are 50 code captures and 200 assets per target, with a shared
 50 MiB account cap. Asset previews are generated locally using the gallery renderer,
 not stored as PNGs. Tilemaps include their required tile pixels.
