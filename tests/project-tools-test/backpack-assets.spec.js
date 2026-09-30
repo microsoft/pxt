@@ -3,9 +3,77 @@
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
+const vm = require("vm");
+const ts = require("typescript");
 const { launchTestBrowser } = require("./browser");
 
 const root = path.resolve(__dirname, "../..");
+
+describe("Backpack gallery preparation", () => {
+    it("detaches metadata and pixels and repairs native prototypes without loading either project", () => {
+        const context = vm.createContext({
+            console, structuredClone,
+            atob: value => Buffer.from(value, "base64").toString("binary"),
+            btoa: value => Buffer.from(value, "binary").toString("base64")
+        });
+        vm.runInContext(fs.readFileSync(path.join(root, "built/pxtlib.js"), "utf8"), context);
+        const pxt = context.pxt;
+        pxt.AssetType = { Tilemap: "tilemap" };
+        const compiled = ts.transpileModule(fs.readFileSync(path.join(root, "webapp/src/backpackAssetGallery.ts"), "utf8"), {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
+            reportDiagnostics: true
+        });
+        assert.deepStrictEqual(compiled.diagnostics, []);
+        const exports = {};
+        vm.runInContext(`(function(exports) { ${compiled.outputText}\n})`, context)(exports);
+
+        const source = new pxt.TilemapProject();
+        const pixels = new pxt.sprite.Bitmap(16, 16);
+        pixels.set(1, 1, 5);
+        const tile = source.createNewTile(pixels.data(), "myTiles.galleryTile", "Gallery tile");
+        const data = source.blankTilemap(16, 2, 2);
+        data.tileset.tiles.push(tile);
+        data.tilemap.set(1, 1, 1);
+        const walls = pxt.sprite.Bitmap.fromData(data.layers);
+        walls.set(1, 1, 2);
+        data.layers = walls.data();
+        const [id] = source.createNewTilemapFromData(data, "Gallery map");
+        const tilemap = source.getTilemap(id);
+        tilemap.meta.tags = ["terrain"];
+        tilemap.meta.blockIDs = ["source-block"];
+        const gallery = source.saveGallerySnapshot();
+        gallery.revision = 7;
+        gallery.assets.tile.add(tile);
+        gallery.assets.tilemap.add(tilemap);
+        const scratch = new pxt.TilemapProject();
+        const projectGallery = scratch.saveGallerySnapshot();
+        projectGallery.revision = 3;
+        const sourceBefore = JSON.stringify(source);
+        const scratchBefore = JSON.stringify(scratch);
+
+        const prepared = exports.prepareBackpackAssetGallery(gallery, scratch);
+        assert.strictEqual(prepared.projectGallery, projectGallery);
+        assert.strictEqual(prepared.snapshot.revision, 7);
+        assert.strictEqual(prepared.projectGallery.revision, 3);
+        for (const type of Object.keys(prepared.snapshot.assets)) {
+            assert.strictEqual(Object.getPrototypeOf(prepared.snapshot.assets[type]), Object.getPrototypeOf(projectGallery.assets[type]));
+        }
+        const repaired = prepared.snapshot.assets.tilemap.assets[0];
+        assert(repaired.data instanceof pxt.sprite.TilemapData);
+        assert(repaired.data.tilemap instanceof pxt.sprite.Tilemap);
+        assert.strictEqual(repaired.data.tilemap.get(1, 1), 1);
+        assert.strictEqual(pxt.sprite.Bitmap.fromData(repaired.data.layers).get(1, 1), 2);
+        assert.strictEqual(pxt.sprite.Bitmap.fromData(repaired.data.tileset.tiles[1].bitmap).get(1, 1), 5);
+        repaired.meta.tags.push("scratch-only");
+        repaired.meta.blockIDs.push("scratch-block");
+        repaired.data.tilemap.set(1, 1, 0);
+        repaired.data.layers.data[0] ^= 0xff;
+        repaired.data.tileset.tiles[1].bitmap.data[0] ^= 0xff;
+        prepared.snapshot.assets.tile.assets[0].bitmap.data[0] ^= 0xff;
+        assert.strictEqual(JSON.stringify(source), sourceBefore);
+        assert.strictEqual(JSON.stringify(scratch), scratchBefore);
+    });
+});
 
 // Load the already-built real field implementations and their relative dependencies.
 // Recompile pxtblocks before running this suite after source changes. No asset

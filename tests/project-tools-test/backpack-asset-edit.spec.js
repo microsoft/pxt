@@ -25,9 +25,15 @@ function sources() {
     modules.backpack = ts.transpileModule(fs.readFileSync(path.join(root, "pxtblocks/backpack.ts"), "utf8"), {
         compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
     }).outputText;
-    return { modules, helper: ts.transpileModule(fs.readFileSync(path.join(root, "webapp/src/backpackAssetEditor.ts"), "utf8"), {
-        compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
-    }).outputText };
+    return {
+        modules,
+        gallery: ts.transpileModule(fs.readFileSync(path.join(root, "webapp/src/backpackAssetGallery.ts"), "utf8"), {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
+        }).outputText,
+        helper: ts.transpileModule(fs.readFileSync(path.join(root, "webapp/src/backpackAssetEditor.ts"), "utf8"), {
+            compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
+        }).outputText
+    };
 }
 
 describe("Backpack scratch native asset editing", function () {
@@ -42,7 +48,7 @@ describe("Backpack scratch native asset editing", function () {
             await page.addScriptTag({ path: path.join(blocklyDirectory, file) });
         }
         for (const file of ["pxtlib.js", "pxtsim.js"]) await page.addScriptTag({ path: path.join(root, "built", file) });
-        await page.evaluate(({ modules, helper }) => {
+        await page.evaluate(({ modules, gallery, helper }) => {
             window.lf = pxt.Util.lf;
             pxt.AssetType = { Image: "image", Tile: "tile", Tilemap: "tilemap", Animation: "animation", Song: "song" };
             pxt.appTarget = { id: "arcade", appTheme: {}, runtime: { palette: [
@@ -73,9 +79,12 @@ describe("Backpack scratch native asset editing", function () {
                     this.setOutput(true);
                 } };
             }
+            const galleryModule = { exports: {} };
+            new Function("exports", gallery)(galleryModule.exports);
             const module = { exports: {} };
             new Function("require", "module", "exports", helper)(id => id === "blockly" ? Blockly
                 : id === "../../pxtblocks" ? { ...fields, ...backpack }
+                : id === "./backpackAssetGallery" ? galleryModule.exports
                 : (() => { throw new Error(`Unexpected helper dependency: ${id}`); })(), module, module.exports);
             window.project = new pxt.TilemapProject();
             pxt.react = { getTilemapProject: () => project };

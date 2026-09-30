@@ -72,3 +72,16 @@ have synced; delete the cloud card separately. Inserted project code is unaffect
 Do not clear all browser storage: that also removes unsynced captures and projects.
 
 See [testing](../tests/project-tools-test/README.md) for developer checks.
+
+## Developer notes
+
+Feature-specific panels and hooks live in the webapp and compose `react-common`
+controls. Project tools opt into the shared button's `nativeBehavior` and use
+`hardDisabled` where a native disabled button was previously used. Keep the
+feature's sizing, colors and focus treatment when reusing controls; retain native
+form inputs and submit buttons where their validation attributes are needed.
+Actions have localized descriptive titles alongside their visible or ARIA labels.
+
+Blockly registration receives its drag targets from the webapp host. Shared
+project-tools IDs keep the launcher, panel accessibility links and drag adapter
+in sync; serialization does not depend on those DOM elements.

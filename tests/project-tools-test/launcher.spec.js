@@ -6,6 +6,7 @@ const { launchTestBrowser } = require("./browser");
 const less = require("less");
 const rtlcss = require("rtlcss");
 const ts = require("typescript");
+const { bundleSource } = require("./source");
 
 // Compile current source in memory with real React, DOM focus and media queries.
 // Whiteboard persistence and shortcut isolation use the real editor in whiteboard.spec.
@@ -14,6 +15,7 @@ describe("responsive project-tools launcher", function () {
     let browser;
     let page;
     let css;
+    let components;
     const more = "#project-tools-launcher";
     const docs = "#project-tools-tab-docs";
     const whiteboard = "#project-tools-tab-whiteboard";
@@ -36,6 +38,13 @@ describe("responsive project-tools launcher", function () {
     };
 
     before(async () => {
+        components = bundleSource([
+            "react-common/components/controls/Button.tsx",
+            "react-common/components/util.tsx",
+            "webapp/src/components/ProjectToolsHeader.tsx",
+            "webapp/src/components/ProjectToolsResizeHandle.tsx",
+            "webapp/src/components/useProjectToolsResize.ts"
+        ], "projectToolsComponents");
         const styles = await less.render(fs.readFileSync("theme/project-tools.less", "utf8"), {
             modifyVars: themeVariables
         });
@@ -68,6 +77,10 @@ describe("responsive project-tools launcher", function () {
             window.require = id => {
                 if (id === "react") return window.React;
                 if (id === "../projectToolsState") return window.projectToolsState;
+                if ([
+                    "./ProjectToolsHeader", "./ProjectToolsResizeHandle", "./useProjectToolsResize",
+                    "../../../react-common/components/controls/Button", "../../../react-common/components/util"
+                ].includes(id)) return window.projectToolsComponents;
                 if (id === "../backpack") return {
                     isBackpackEnabled: () => pxt.appTarget.appTheme.backpack,
                     subscribeBackpackOpen: listener => {
@@ -97,6 +110,7 @@ describe("responsive project-tools launcher", function () {
         });
         const stateCode = source("webapp/src/projectToolsState.ts");
         await page.addScriptTag({ content: `(function(exports) { ${stateCode}\n})(window.projectToolsState = {});` });
+        await page.addScriptTag({ content: components });
         const code = source("webapp/src/components/ProjectTools.tsx");
         await page.addScriptTag({ content: `(function(require, exports) { ${code}\n})(window.require, window.exports);` });
         await page.evaluate(() => {

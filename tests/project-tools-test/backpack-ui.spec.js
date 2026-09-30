@@ -4,9 +4,9 @@
 const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
-const ts = require("typescript");
 const less = require("less");
 const { launchTestBrowser } = require("./browser");
+const { source, bundleSource } = require("./source");
 
 // No build output or ProjectTools integration: exercise today's source with
 // real React 17, Fuse and shared controls. Native asset editing and project/storage
@@ -19,48 +19,6 @@ describe("project backpack UI", function () {
     let controls;
     let pageErrors;
     const root = path.resolve(__dirname, "../..");
-    const source = file => ts.transpileModule(fs.readFileSync(path.join(root, file), "utf8"), {
-        fileName: file,
-        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2018, jsx: ts.JsxEmit.React }
-    }).outputText;
-    // Resolve the real control dependency graph, including directory barrels, in
-    // memory. No compiled output, synthetic modal, or substitute focus behavior.
-    const controlBundle = () => {
-        const modules = new Map();
-        const visit = file => {
-            if (modules.has(file)) return;
-            const code = source(file);
-            const imports = {};
-            modules.set(file, { code, imports });
-            for (const [, id] of code.matchAll(/require\("([^"]+)"\)/g)) {
-                if (!id.startsWith(".")) {
-                    assert.ok(["react", "react-dom"].includes(id), `Unexpected control import ${id}`);
-                    continue;
-                }
-                const base = path.posix.join(path.posix.dirname(file), id);
-                const dependency = [".ts", ".tsx", "/index.ts", "/index.tsx"]
-                    .map(extension => base + extension).find(candidate => fs.existsSync(path.join(root, candidate)));
-                assert.ok(dependency, `Cannot resolve ${id} from ${file}`);
-                imports[id] = dependency;
-                visit(dependency);
-            }
-        };
-        const entries = ["react-common/components/controls/Modal.tsx", "react-common/components/controls/Input.tsx"];
-        entries.forEach(visit);
-        return `(function() {
-            const modules = {${Array.from(modules, ([file, { code, imports }]) =>
-                `${JSON.stringify(file)}: [function(require, exports, module) {\n${code}\n}, ${JSON.stringify(imports)}]`).join(",\n")}};
-            const cache = { react: { exports: window.React }, "react-dom": { exports: window.ReactDOM } };
-            function load(id) {
-                if (cache[id]) return cache[id].exports;
-                const [factory, imports] = modules[id];
-                const module = cache[id] = { exports: {} };
-                factory(name => load(imports[name] || name), module.exports, module);
-                return module.exports;
-            }
-            window.backpackControls = Object.assign({}, ...${JSON.stringify(entries)}.map(load));
-        })();`;
-    };
     const item = (name = "Jump", id = "00000000-0000-0000-0000-000000000001") => ({
         id, name, kind: "code", versions: { target: "1.2.3", pxt: "4.5.6" },
         code: JSON.stringify({ blocks: [{ type: "pxt-on-start" }] }), blockText: "", createdAt: 1, dependencies: {}
@@ -107,7 +65,14 @@ describe("project backpack UI", function () {
     };
 
     before(async () => {
-        controls = controlBundle();
+        controls = bundleSource([
+            "react-common/components/controls/Modal.tsx",
+            "react-common/components/controls/Input.tsx",
+            "react-common/components/controls/Button.tsx",
+            "react-common/components/controls/TabList.tsx",
+            "react-common/components/controls/FocusTrap/FocusTrap.tsx",
+            "react-common/components/util.tsx"
+        ], "backpackControls");
         css = (await less.render(`
             @modalDimmerZIndex: 1000; @modalFullscreenZIndex: 1001;
             @blocklyWidgetDivZIndex: 1002;
@@ -150,13 +115,16 @@ describe("project backpack UI", function () {
                 BLOCKS_PROJECT_NAME: "blocksprj",
                 shell: { isReadOnly: () => false },
                 appTarget: { appTheme: { backpack: true, assetEditor: true }, bundledpkgs: { core: {} } },
-                Util: { jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } } }
+                Util: {
+                    isUserLanguageRtl: () => false,
+                    jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } }
+                }
             };
             const subscribers = new Set();
             const listeners = new Set();
             const test = window.backpackTest = {
                 user: undefined, remote: {}, snapshots: {},
-                refreshes: 0, adds: [], assetSaves: [], failAdd: false,
+                refreshes: 0, adds: [], assetSaves: [], renames: [], deletes: [], failAdd: false,
                 modalOpen: false, collapses: 0,
                 assetPreviewURI, assetPreviewLoads: 0,
                 assetContext: { blocksInfo: {}, gallery: {}, palette: ["#000000"] },
@@ -188,6 +156,7 @@ describe("project backpack UI", function () {
                 mainPkg: { deps: {}, getPreferredEditor: () => "blocksprj" }
             };
             const backpack = {
+                MAX_BACKPACK_NAME_LENGTH: 100,
                 isBackpackEnabled: () => window.backpackValidation.isBackpackEnabled(),
                 isBackpackAssetsEnabled: () => window.backpackValidation.isBackpackAssetsEnabled(),
                 backpackEntryKey: entry => JSON.stringify([entry.source, entry.id]),
@@ -223,6 +192,20 @@ describe("project backpack UI", function () {
                     if (fail) throw new Error("Import failed. Try again.");
                     return true;
                 },
+                async renameBackpackItemAsync(id, name) {
+                    test.renames.push({ id, name });
+                    await test.gate;
+                    test.remote[test.storeKey()] = test.snapshots[test.storeKey()] =
+                        test.remote[test.storeKey()].map(item => item.id === id ? { ...item, name } : item);
+                    test.notify();
+                },
+                async deleteBackpackEntryAsync(entry) {
+                    test.deletes.push(entry.id);
+                    await test.gate;
+                    test.remote[test.storeKey()] = test.snapshots[test.storeKey()] =
+                        test.remote[test.storeKey()].filter(item => item.id !== entry.id);
+                    test.notify();
+                },
                 async loadBackpackAssetAsync(entry) {
                     await test.assetLoadGate;
                     return JSON.parse(JSON.stringify((test.snapshots[test.storeKey()] || []).find(item => item.id === entry.id)));
@@ -241,10 +224,14 @@ describe("project backpack UI", function () {
             };
             window.require = id => {
                 const modules = { react: React, "fuse.js": window.Fuse, "../auth": auth, "../data": data,
-                    "../backpack": backpack, "../backpackSearch": window.backpackSearch, "../package": test.pkg };
+                    "../backpack": backpack, "../backpackSearch": window.backpackSearch, "../package": test.pkg,
+                    "../blockSnippet": window.blockSnippets,
+                    "blockly": {}, "../../pxtblocks": {}, "./core": {}, "./package": test.pkg, "./backpack": backpack };
                 modules["./BackpackPreview"] = window.backpackPreviewUI;
+                modules["./BackpackEntryCard"] = window.backpackEntryCard;
+                modules["./BackpackItemDialog"] = window.backpackItemDialog;
                 // Native rendering is exercised with real fields in backpack-asset-edit.
-                modules["../backpackAssetPreview"] = { backpackAssetPreview: item => ({
+                modules["../backpackAssetPreview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
                     previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code),
                     framePreviewURIs: test.previewFrames
                 }) };
@@ -259,6 +246,9 @@ describe("project backpack UI", function () {
                 } };
                 modules["../../../react-common/components/controls/Modal"] = window.backpackControls;
                 modules["../../../react-common/components/controls/Input"] = window.backpackControls;
+                modules["../../../react-common/components/controls/Button"] = window.backpackControls;
+                modules["../../../react-common/components/controls/TabList"] = window.backpackControls;
+                modules["../../../react-common/components/util"] = window.backpackControls;
                 if (!(id in modules)) throw new Error(`Unexpected import ${id}`);
                 return modules[id];
             };
@@ -266,8 +256,11 @@ describe("project backpack UI", function () {
         await page.addScriptTag({ content: controls });
         // Reuse the actual storage validator without exercising network/auth storage.
         await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpack.ts")}\n})(window.backpackValidation = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
         await page.evaluate(() => {
             function Harness() {
@@ -309,6 +302,115 @@ describe("project backpack UI", function () {
             assert.deepStrictEqual(await page.evaluate(() => [backpackTest.subscriberCount(), backpackTest.listenerCount()]), [0, 0]);
             assert.deepStrictEqual(pageErrors, [], "Unexpected browser error or unhandled rejection");
         } finally { await page.close(); }
+    });
+
+    it("retains native action-button geometry, keyboard activation, and disabled styling", async () => {
+        await signIn([item()]);
+        const appearance = async selector => page.$eval(selector, button => {
+            const bounds = button.getBoundingClientRect();
+            const style = getComputedStyle(button);
+            return {
+                width: bounds.width, height: bounds.height, margin: style.margin,
+                filter: style.filter, opacity: style.opacity, cursor: style.cursor,
+                radius: style.borderRadius, type: button.type, disabled: button.disabled
+            };
+        });
+        await page.hover(add);
+        assert.deepStrictEqual(await appearance(add), {
+            width: 44, height: 44, margin: "0px", filter: "none", opacity: "1",
+            cursor: "pointer", radius: "8px", type: "button", disabled: false
+        });
+        await page.focus(add);
+        assert.equal(await page.$eval(add, button => getComputedStyle(button, "::after").outlineStyle), "none");
+        await page.keyboard.down("Space");
+        assert.equal(await page.evaluate(() => backpackTest.adds.length), 0);
+        await page.keyboard.up("Space");
+        await idle();
+        assert.equal(await page.evaluate(() => backpackTest.adds.length), 1);
+        await page.evaluate(() => backpackTest.hold());
+        await page.click(add);
+        const disabled = await appearance(add);
+        assert.equal(disabled.disabled, true);
+        assert.equal(disabled.cursor, "not-allowed");
+        assert.equal(disabled.opacity, "0.5");
+        assert.equal(disabled.width, 44);
+        assert.equal(disabled.height, 44);
+        await page.evaluate(() => backpackTest.release());
+        await idle();
+    });
+
+    it("keeps shared button defaults unchanged while opting into native form and click behavior", async () => {
+        await page.evaluate(() => {
+            const { Button, FocusTrap } = backpackControls;
+            window.buttonTest = { clicks: [], bubbled: 0, submitted: 0 };
+            ReactDOM.render(React.createElement(FocusTrap, {
+                role: "dialog", ariaModal: true, ariaLabel: "Button fixture", onEscape: () => {}
+            }, React.createElement("form", {
+                onClick: () => ++buttonTest.bubbled,
+                onSubmit: event => { event.preventDefault(); ++buttonTest.submitted; }
+            }, ...[
+                { id: "legacy", label: "Legacy" },
+                { id: "native", label: "Native", type: "button", nativeBehavior: true },
+                { id: "submit", label: "Submit", type: "submit", nativeBehavior: true }
+            ].map(props => React.createElement(Button, {
+                ...props, key: props.id, title: props.label,
+                onClick: () => buttonTest.clicks.push(props.id)
+            })))), document.getElementById("root"));
+        });
+        assert.equal(await page.$eval('[role="dialog"]', dialog => dialog.getAttribute("aria-modal")), "true");
+        await page.focus("#legacy");
+        await page.keyboard.down("Space");
+        assert.deepStrictEqual(await page.evaluate(() => buttonTest), { clicks: ["legacy"], bubbled: 0, submitted: 0 });
+        await page.keyboard.up("Space");
+        await page.focus("#native");
+        await page.keyboard.down("Space");
+        assert.deepStrictEqual(await page.evaluate(() => buttonTest.clicks), ["legacy"]);
+        await page.keyboard.up("Space");
+        assert.deepStrictEqual(await page.evaluate(() => buttonTest), { clicks: ["legacy", "native"], bubbled: 1, submitted: 0 });
+        await page.click("#submit");
+        assert.deepStrictEqual(await page.evaluate(() => buttonTest), { clicks: ["legacy", "native", "submit"], bubbled: 2, submitted: 1 });
+    });
+
+    it("preserves tab naming, roving focus, and rename/delete dialog submission", async () => {
+        const saved = item();
+        await signIn([saved]);
+        assert.equal(await page.$eval(".project-backpack__tabs", tabs => tabs.getAttribute("aria-label")), "Backpack contents");
+        assert.deepStrictEqual(await page.$$eval(".project-backpack__tabs button", buttons => buttons.map(button => button.title)), ["Code", "Assets"]);
+        await page.focus("#project-backpack-tab-code");
+        await page.keyboard.press("End");
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-tab-asset");
+        await page.keyboard.press("Home");
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-tab-code");
+        assert.equal(await page.$$eval('.project-backpack__tabs [tabindex="0"]', tabs => tabs.length), 1);
+        await page.click(rename);
+        await page.waitForSelector("#project-backpack-name", { visible: true });
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-name");
+        assert.equal(await page.$eval("#project-backpack-name", input => input.maxLength), 100);
+        await page.keyboard.type("Landing");
+        await page.keyboard.press("Enter");
+        await page.waitForFunction(() => !document.querySelector(".project-backpack__rename-modal"));
+        await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Landing"]);
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.renames), [{ id: saved.id, name: "Landing" }]);
+        await page.click(".project-backpack__delete");
+        await page.waitForSelector(".project-backpack__delete-modal", { visible: true });
+        await page.click(".project-backpack__delete-modal .common-modal-footer button:last-child");
+        await page.waitForFunction(() => !document.querySelector(".project-backpack__delete-modal"));
+        await idle();
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.deletes), [saved.id]);
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-items");
+    });
+
+    it("chooses asset icons independently of translated display labels", async () => {
+        await page.evaluate(() => {
+            backpackTest.noAssetPreview = true;
+            const translate = window.lf;
+            window.lf = (text, ...args) => text === "Image" || text === "Music" ? "Asset" : translate(text, ...args);
+        });
+        await signIn([asset("image_picker", 2), asset("music_song_editor", 3)]);
+        await page.click("#project-backpack-tab-asset");
+        await page.waitForSelector(".project-backpack__asset");
+        assert.deepStrictEqual(await page.$$eval(".project-backpack__asset i", icons => icons.map(icon => icon.className)), ["icon image", "icon music"]);
     });
 
     it("defaults tutorials to usable assets and shows only an unavailable message on Code", async () => {

@@ -18,6 +18,7 @@ import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
 import { ProjectTools } from "./components/ProjectTools";
+import { PROJECT_TOOLS_LAUNCHER_ID } from "./projectToolsState";
 
 // common menu items -- do not remove
 // lf("About")
@@ -934,7 +935,7 @@ export class SideDocs extends data.Component<SideDocsProps, SideDocsState> {
     }
 
     private sideDocsToggleId(): string {
-        return this.props.bubble ? "project-tools-launcher" : "sidedocstoggle";
+        return this.props.bubble ? PROJECT_TOOLS_LAUNCHER_ID : "sidedocstoggle";
     }
 
     componentDidUpdate() {

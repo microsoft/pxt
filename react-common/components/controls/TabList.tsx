@@ -1,19 +1,28 @@
 import { classList } from "../util";
-import {  Button, ButtonViewProps } from "./Button";
+import { Button, ButtonProps, ButtonViewProps } from "./Button";
+
+export interface TabListItem extends ButtonViewProps {
+    id: string;
+    ariaControls: string;
+    buttonRef?: ButtonProps["buttonRef"];
+}
 
 export interface TabListProps {
     className?: string;
+    ariaLabel?: string;
     manualActivation?: boolean;
+    nativeBehavior?: boolean;
     orientation: "horizontal" | "vertical";
     selectedId: string;
     onTabSelected: (id: string) => void;
-    tabs: (ButtonViewProps & {id: string, ariaControls: string})[];
+    tabs: TabListItem[];
 }
 
 export const TabList = (props: TabListProps) => {
-    const { className, manualActivation, orientation, selectedId, onTabSelected, tabs } = props;
+    const { className, ariaLabel, manualActivation, nativeBehavior, orientation, selectedId, onTabSelected, tabs } = props;
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
+        if (nativeBehavior && e.defaultPrevented) return;
         const currentIndex = tabs.findIndex(t => t.id === document.activeElement?.id);
 
         if (currentIndex === -1) return;
@@ -42,6 +51,9 @@ export const TabList = (props: TabListProps) => {
                 if (manualActivation) {
                     onTabSelected(tabs[currentIndex].id);
                 }
+                else if (nativeBehavior) {
+                    handled = false;
+                }
                 break;
             default:
                 handled = false;
@@ -49,7 +61,7 @@ export const TabList = (props: TabListProps) => {
 
         if (handled) {
             e.preventDefault();
-            e.stopPropagation();
+            if (!nativeBehavior) e.stopPropagation();
         }
 
         if (newIndex !== null) {
@@ -68,6 +80,7 @@ export const TabList = (props: TabListProps) => {
     return (
         <div
             role="tablist"
+            aria-label={ariaLabel}
             aria-orientation={orientation}
             className={classList("common-tab-list", className)}
             onKeyDown={onKeyDown}
@@ -75,6 +88,7 @@ export const TabList = (props: TabListProps) => {
             {tabs.map(tab =>
                 <Button
                     {...tab}
+                    nativeBehavior={nativeBehavior}
                     role="tab"
                     ariaSelected={selectedId === tab.id}
                     key={tab.id}

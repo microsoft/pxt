@@ -48,6 +48,8 @@ import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements
 import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
 import { backpackPreviewAsync } from "./backpackPreview";
 import { clearBackpackDragState } from "../../pxtblocks/backpack";
+import { BACKPACK_DRAG_OVER_CLASS, getBackpackDragTargets } from "./projectToolsDragTargets";
+import { projectToolTabId } from "./projectToolsState";
 
 interface CopyDataEntry {
     version: 1;
@@ -880,7 +882,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             isEnabled: () => this.backpackAvailable("code") || this.backpackAvailable("asset"),
             canSave: block => this.backpackAvailable(pxtblockly.getBackpackAssetField(block) ? "asset" : "code"),
             save: block => { void this.saveBlockToBackpackAsync(block); },
-            open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false)
+            open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false),
+            dragTargets: getBackpackDragTargets(),
+            hoverClass: BACKPACK_DRAG_OVER_CLASS
         });
         this.disposeBackpackEditor = backpack.setBackpackEditor({
             headerId: () => this.parent.state.header?.id,
@@ -2606,7 +2610,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             && (kind === "asset" || !header.tutorial && !this.parent.isTutorial())
             && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor
             && this.isVisible && this.parent.isBlocksActive() && !!this.blockInfo
-            && !this.loadingXml && !this.delayLoadXml && !!document.getElementById("project-tools-tab-backpack");
+            && !this.loadingXml && !this.delayLoadXml && !!document.getElementById(projectToolTabId("backpack"));
     }
 
     private async saveBlockToBackpackAsync(block: Blockly.BlockSvg): Promise<void> {

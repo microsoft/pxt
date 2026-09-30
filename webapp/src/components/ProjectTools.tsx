@@ -1,12 +1,18 @@
 import * as React from "react";
+import { Button } from "../../../react-common/components/controls/Button";
+import { classList } from "../../../react-common/components/util";
 import { ProjectWhiteboard } from "./ProjectWhiteboard";
 import { ProjectBackpack } from "./ProjectBackpack";
+import { ProjectToolsHeader } from "./ProjectToolsHeader";
+import { ProjectToolsResizeHandle } from "./ProjectToolsResizeHandle";
+import { useProjectToolsResize } from "./useProjectToolsResize";
 import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../backpack";
-import { isWhiteboardEnabled, PROJECT_TOOLS_COMPACT_QUERY } from "../projectToolsState";
+import {
+    isWhiteboardEnabled, PROJECT_TOOLS_COMPACT_QUERY, PROJECT_TOOLS_LAUNCHER_ID, PROJECT_TOOLS_PANEL_ID,
+    ProjectToolTab, projectToolPanelId, projectToolTabId
+} from "../projectToolsState";
 
-type ProjectToolTab = "docs" | "whiteboard" | "backpack";
-
-interface ProjectToolsProps {
+export interface ProjectToolsProps {
     header: pxt.workspace.Header;
     notes?: pxt.workspace.ProjectNotes;
     expanded: boolean;
@@ -22,7 +28,7 @@ interface ProjectToolsProps {
     children?: React.ReactNode;
 }
 
-export function ProjectTools(props: ProjectToolsProps) {
+export function ProjectTools(props: ProjectToolsProps): JSX.Element {
     const whiteboardEnabled = isWhiteboardEnabled();
     const backpackEnabled = isBackpackEnabled();
     const tabNames: ProjectToolTab[] = ["docs"];
@@ -33,13 +39,6 @@ export function ProjectTools(props: ProjectToolsProps) {
     const [visitedWhiteboard, setVisitedWhiteboard] = React.useState(false);
     const [visitedBackpack, setVisitedBackpack] = React.useState(false);
     const [backpackRequest, setBackpackRequest] = React.useState<BackpackOpenRequest>();
-    // Leave initial sizing to the target's responsive sidedocs CSS. An explicit
-    // resize is remembered independently of those defaults for this project view.
-    const [width, setWidth] = React.useState<number>();
-    const [widthRange, setWidthRange] = React.useState({ width: 0, min: 0, max: 0 });
-    const [height, setHeight] = React.useState<number>();
-    const [heightRange, setHeightRange] = React.useState({ height: 0, max: 0 });
-    const [resizing, setResizing] = React.useState(false);
     const [compact, setCompact] = React.useState(() => window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY).matches);
     const [optionsOpen, setOptionsOpen] = React.useState(() => !pxt.BrowserUtils.isTabletSize());
     const [focusedTab, setFocusedTab] = React.useState(0);
@@ -52,8 +51,8 @@ export function ProjectTools(props: ProjectToolsProps) {
     const onModalOpenChange = React.useCallback((open: boolean) => { modalOpen.current = open; }, []);
     const panel = React.useRef<HTMLDivElement>();
     const tabButtons = React.useRef<HTMLButtonElement[]>([]);
-    const drag = React.useRef<{ axis: "width" | "height"; position: number; size: number }>();
     const rtl = pxt.Util.isUserLanguageRtl();
+    const { width, height, resizing, widthHandle, heightHandle } = useProjectToolsResize(panel, props.expanded, compact, rtl);
     const tabIndex = tabNames.indexOf(tab);
     React.useEffect(() => {
         if (!tabNames.includes(selectedTab)) {
@@ -64,25 +63,6 @@ export function ProjectTools(props: ProjectToolsProps) {
         if (!whiteboardEnabled) setVisitedWhiteboard(false);
         if (!backpackEnabled) setVisitedBackpack(false);
     }, [whiteboardEnabled, backpackEnabled, selectedTab]);
-    const measureWidth = React.useCallback(() => {
-        const bounds = panel.current.getBoundingClientRect();
-        const style = window.getComputedStyle(panel.current);
-        const maxWidth = parseFloat(style.maxWidth);
-        const minWidth = parseFloat(style.minWidth);
-        const max = Math.min(900, Number.isFinite(maxWidth) ? maxWidth : window.innerWidth);
-        return { width: bounds.width, min: Math.min(max, Number.isFinite(minWidth) ? minWidth : 256), max };
-    }, []);
-    const measureHeight = React.useCallback(() => {
-        const bounds = panel.current.getBoundingClientRect();
-        const maxHeight = parseFloat(window.getComputedStyle(panel.current).maxHeight);
-        return { height: bounds.height, max: Number.isFinite(maxHeight) ? maxHeight : Math.max(0, window.innerHeight - bounds.top) };
-    }, []);
-    const updateSizeRanges = React.useCallback(() => {
-        const height = measureHeight();
-        const width = measureWidth();
-        setHeightRange(previous => previous.height === height.height && previous.max === height.max ? previous : height);
-        setWidthRange(previous => previous.width === width.width && previous.min === width.min && previous.max === width.max ? previous : width);
-    }, [measureHeight, measureWidth]);
     // Deferred iframe/focus events must honor the latest pin state, not the
     // state captured before the user clicked Pin or opened an example.
     const pinState = React.useRef({ pinned: props.pinned, expanded: props.expanded });
@@ -125,23 +105,6 @@ export function ProjectTools(props: ProjectToolsProps) {
             tabletQuery.removeEventListener("change", onTabletChange);
         };
     }, []);
-    React.useLayoutEffect(() => {
-        if (!props.expanded) return undefined;
-        updateSizeRanges();
-        const observer = new ResizeObserver(updateSizeRanges);
-        observer.observe(panel.current);
-        window.addEventListener("resize", updateSizeRanges);
-        // Banner visibility moves the top edge without necessarily resizing a
-        // manually sized panel. Keep the keyboard/ARIA limits in sync as well.
-        const layoutRoot = panel.current.closest("#root");
-        const mutations = new MutationObserver(updateSizeRanges);
-        if (layoutRoot) mutations.observe(layoutRoot, { attributes: true, attributeFilter: ["class"] });
-        return () => {
-            observer.disconnect();
-            mutations.disconnect();
-            window.removeEventListener("resize", updateSizeRanges);
-        };
-    }, [props.expanded, compact, updateSizeRanges]);
     React.useLayoutEffect(() => {
         // Only user-initiated expansion moves focus, not desktop startup or resize.
         if (!focusTabOnOpen.current || !optionsOpen) return;
@@ -255,50 +218,15 @@ export function ProjectTools(props: ProjectToolsProps) {
         if (!compact) setTab(tabNames[next]);
         tabButtons.current[next]?.focus();
     };
-    const resizeWidth = (value: number) => {
-        const { min, max } = measureWidth();
-        setWidth(Math.max(min, Math.min(max, value)));
-    };
-    const resizeHeight = (value: number) => {
-        const { max } = measureHeight();
-        setHeight(Math.min(max, Math.max(Math.min(240, max), value)));
-    };
-    const startResize = (event: React.PointerEvent<HTMLDivElement>, axis: "width" | "height") => {
-        if (event.button !== 0 || drag.current) return;
-        event.preventDefault();
-        const bounds = panel.current.getBoundingClientRect();
-        drag.current = { axis, position: axis === "width" ? event.clientX : event.clientY, size: bounds[axis] };
-        event.currentTarget.setPointerCapture(event.pointerId);
-        setResizing(true);
-    };
-    const moveResize = (event: React.PointerEvent<HTMLDivElement>) => {
-        const current = drag.current;
-        if (!current) return;
-        if (current.axis === "width") resizeWidth(current.size + (event.clientX - current.position) * (rtl ? 1 : -1));
-        else resizeHeight(current.size + event.clientY - current.position);
-    };
-    const stopResize = (event: React.PointerEvent<HTMLDivElement>) => {
-        drag.current = undefined;
-        if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId);
-        setResizing(false);
-    };
-    const lostResizeCapture = () => { drag.current = undefined; setResizing(false); };
-    const renderHeader = (title: string, actions?: React.ReactNode) => <div className="project-tools__header">
-        <h2 className="project-tools__title" title={title}>{title}</h2>
-        {actions}
-        <button type="button" className="project-tools__pin" aria-pressed={props.pinned}
-            aria-label={lf("Keep project tools open")} title={props.pinned ? lf("Unpin project tools") : lf("Pin project tools open")}
-            onClick={() => props.onPinnedChange(!props.pinned)}>
-            <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                <path className="project-tools__pin-head" d="M8 3h8v3l-1 1v5l3 3v2H6v-2l3-3V7L8 6Z" />
-                <path d="M12 17v5" />
-            </svg>
-        </button>
-        <button type="button" className="project-tools__close" title={lf("Collapse project tools")}
-            aria-label={lf("Collapse project tools")} onClick={collapse}><i className="icon minus" aria-hidden="true" /></button>
-    </div>;
+    const renderHeader = (title: string, actions?: React.ReactNode): React.ReactNode => <ProjectToolsHeader
+        title={title}
+        actions={actions}
+        pinned={props.pinned}
+        onPinnedChange={props.onPinnedChange}
+        onCollapse={collapse}
+    />;
 
-    return <div className={`project-tools${compact ? " project-tools--compact" : ""}`}
+    return <div className={classList("project-tools", compact && "project-tools--compact")}
         ref={root} dir={rtl ? "rtl" : "ltr"} data-options-open={optionsOpen}
         style={{ "--tools-tab-count": tabNames.length } as React.CSSProperties} onBlur={event => {
             if (event.relatedTarget) {
@@ -312,7 +240,7 @@ export function ProjectTools(props: ProjectToolsProps) {
             }
         }}>
         <div className="project-tools__launcher" ref={launcher}>
-            <button id="project-tools-launcher" type="button" ref={moreButton}
+            <button id={PROJECT_TOOLS_LAUNCHER_ID} type="button" ref={moreButton}
                 className="project-tools__bubble project-tools__more" aria-label={lf("Project tools")}
                 aria-expanded={optionsOpen} aria-controls="project-tools-options"
                 onClick={() => {
@@ -341,11 +269,11 @@ export function ProjectTools(props: ProjectToolsProps) {
                 {tabNames.map((name, index) => {
                     const label = name === "docs" ? lf("Documentation") : name === "whiteboard" ? lf("Whiteboard") : lf("Backpack");
                     const selected = tab === name;
-                    return <button key={name} id={`project-tools-tab-${name}`} type="button" role="tab"
+                    return <button key={name} id={projectToolTabId(name)} type="button" role="tab"
                         className="project-tools__bubble" ref={element => tabButtons.current[index] = element}
                         style={{ "--tools-bubble-index": index } as React.CSSProperties}
                         aria-label={label} aria-selected={selected && props.expanded}
-                        aria-expanded={selected && props.expanded} aria-controls={`project-tools-${name}`}
+                        aria-expanded={selected && props.expanded} aria-controls={projectToolPanelId(name)}
                         tabIndex={optionsOpen && (compact ? focusedTab === index : selected) ? 0 : -1}
                         onFocus={() => setFocusedTab(index)} onClick={() => selectTab(name)}
                         onKeyDown={event => {
@@ -366,7 +294,7 @@ export function ProjectTools(props: ProjectToolsProps) {
                 })}
             </div>
         </div>
-        <div id="project-tools-panel" ref={panel} className={`project-tools__panel${resizing ? " project-tools__panel--resizing" : ""}`}
+        <div id={PROJECT_TOOLS_PANEL_ID} ref={panel} className={classList("project-tools__panel", resizing && "project-tools__panel--resizing")}
             hidden={!props.expanded} style={{ width, height, bottom: height === undefined ? undefined : "auto",
                 "--tools-tab-index": tabIndex } as React.CSSProperties} data-active-tab={tab}
             role="dialog" aria-modal="false" aria-label={lf("Project tools")} tabIndex={-1}
@@ -377,68 +305,31 @@ export function ProjectTools(props: ProjectToolsProps) {
                 }
             }}>
             <div className="project-tools__pointer" aria-hidden="true" />
-            <div className="project-tools__resize project-tools__resize--width" role="separator" aria-orientation="vertical" tabIndex={0}
-                aria-label={lf("Resize project tools width")} title={lf("Resize project tools width")}
-                aria-controls="project-tools-panel"
-                aria-valuemin={widthRange.min} aria-valuemax={widthRange.max} aria-valuenow={widthRange.width}
-                onFocus={updateSizeRanges}
-                onPointerDown={event => startResize(event, "width")} onPointerMove={moveResize}
-                onPointerUp={stopResize} onPointerCancel={stopResize} onLostPointerCapture={lostResizeCapture}
-                onKeyDown={event => {
-                    if (["ArrowLeft", "ArrowRight", "Home", "End"].indexOf(event.key) < 0) return;
-                    event.preventDefault();
-                    if (event.key === "Home") resizeWidth(measureWidth().min);
-                    else if (event.key === "End") resizeWidth(900);
-                    else resizeWidth(measureWidth().width + (event.key === "ArrowLeft" ? 1 : -1) * (rtl ? -1 : 1) * (event.shiftKey ? 80 : 20));
-                }}>
-                <svg className="project-tools__resize-grip" viewBox="0 0 8 20" aria-hidden="true" focusable="false">
-                    <circle cx="2" cy="4" r="1" />
-                    <circle cx="6" cy="4" r="1" />
-                    <circle cx="2" cy="10" r="1" />
-                    <circle cx="6" cy="10" r="1" />
-                    <circle cx="2" cy="16" r="1" />
-                    <circle cx="6" cy="16" r="1" />
-                </svg>
-            </div>
-            <div className="project-tools__resize project-tools__resize--height" role="separator" aria-orientation="horizontal" tabIndex={0}
-                aria-label={lf("Resize project tools height")} title={lf("Resize project tools height")}
-                aria-controls="project-tools-panel" aria-valuemin={Math.min(240, heightRange.max)}
-                aria-valuemax={heightRange.max} aria-valuenow={heightRange.height}
-                onFocus={updateSizeRanges}
-                onPointerDown={event => startResize(event, "height")} onPointerMove={moveResize}
-                onPointerUp={stopResize} onPointerCancel={stopResize} onLostPointerCapture={lostResizeCapture}
-                onKeyDown={event => {
-                    if (["ArrowUp", "ArrowDown", "Home", "End"].indexOf(event.key) < 0) return;
-                    event.preventDefault();
-                    if (event.key === "Home") resizeHeight(240);
-                    else if (event.key === "End") setHeight(undefined); // Fill the available space again.
-                    else resizeHeight(measureHeight().height + (event.key === "ArrowDown" ? 1 : -1) * (event.shiftKey ? 80 : 20));
-                }}>
-                <svg className="project-tools__resize-grip" viewBox="0 0 20 8" aria-hidden="true" focusable="false">
-                    <circle cx="4" cy="2" r="1" />
-                    <circle cx="4" cy="6" r="1" />
-                    <circle cx="10" cy="2" r="1" />
-                    <circle cx="10" cy="6" r="1" />
-                    <circle cx="16" cy="2" r="1" />
-                    <circle cx="16" cy="6" r="1" />
-                </svg>
-            </div>
+            <ProjectToolsResizeHandle {...widthHandle} />
+            <ProjectToolsResizeHandle {...heightHandle} />
             {tab === "docs" && renderHeader(lf("Documentation"), props.docsUrl && props.docsAction)}
-            <section id="project-tools-docs" role="tabpanel" aria-labelledby="project-tools-tab-docs" hidden={tab !== "docs"}
+            <section id={projectToolPanelId("docs")} role="tabpanel" aria-labelledby={projectToolTabId("docs")} hidden={tab !== "docs"}
                 className="project-tools__docs">
                 {props.docsUrl ? props.children : <div className="project-tools__empty">
                     <i className="icon book" aria-hidden="true" />
                     <h3>{lf("Keep a reference nearby")}</h3>
                     <p>{lf("Open help from a block or the Help menu. Your documentation will appear here.")}</p>
-                    <button type="button" onClick={props.onOpenReference}>{lf("Browse reference")}</button>
+                    <Button
+                        type="button"
+                        nativeBehavior
+                        className="project-tools__button"
+                        label={lf("Browse reference")}
+                        title={lf("Browse reference")}
+                        onClick={props.onOpenReference}
+                    />
                 </div>}
             </section>
-            {whiteboardEnabled && <section id="project-tools-whiteboard" role="tabpanel" aria-labelledby="project-tools-tab-whiteboard" hidden={tab !== "whiteboard"}
+            {whiteboardEnabled && <section id={projectToolPanelId("whiteboard")} role="tabpanel" aria-labelledby={projectToolTabId("whiteboard")} hidden={tab !== "whiteboard"}
                 className="project-tools__whiteboard">
                 {visitedWhiteboard && <ProjectWhiteboard headerId={props.header.id} notes={props.notes}
                     active={props.expanded && tab === "whiteboard"} renderHeader={renderHeader} />}
             </section>}
-            {backpackEnabled && <section id="project-tools-backpack" role="tabpanel" aria-labelledby="project-tools-tab-backpack" hidden={tab !== "backpack"}
+            {backpackEnabled && <section id={projectToolPanelId("backpack")} role="tabpanel" aria-labelledby={projectToolTabId("backpack")} hidden={tab !== "backpack"}
                 className="project-backpack">
                 {visitedBackpack && <ProjectBackpack headerId={props.header.id} active={props.expanded && tab === "backpack"}
                     tutorial={props.tutorial || !!props.header.tutorial}

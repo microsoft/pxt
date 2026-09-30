@@ -102,6 +102,17 @@ export function getBlockSnippetTypes(states: Blockly.serialization.blocks.State[
     return Array.from(new Set(snippetStates(states).map(state => state.type)));
 }
 
+/** List dependencies missing from the project using Backpack's display policy, not its import validation. */
+export function getMissingBlockSnippetDependencies(dependencies: pxt.Map<string>, project: pxt.MainPackage): [string, string][] {
+    return Object.entries(dependencies || {}).filter(([name, version]) => {
+        const dependency = Object.prototype.hasOwnProperty.call(project.deps, name) ? project.deps[name] : undefined;
+        const installed = dependency && (version === "*" || dependency.verProtocol() === "github"
+            && version.startsWith("github:") && dependency.version().split("#")[0].toLowerCase() === version.split("#")[0].toLowerCase()
+            || dependency.version() === version);
+        return !installed;
+    });
+}
+
 // Local references are identity tokens only. They must NEVER be sent to getConfigAsync.
 function localReference(version: string): boolean {
     return /^(?:workspace|pkg):[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(version)
