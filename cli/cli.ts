@@ -3375,13 +3375,13 @@ class Host
 
         try {
             // pxt.debug(`reading ${resolved}`)
-            return fs.readFileSync(resolved, "utf8")
+            return fs.readFileSync(resolved, U.endsWith(filename, ".a") ? "base64" : "utf8")
         } catch (e) {
             if (!skipAdditionalFiles && module.config) {
                 for (let addPath of module.config.additionalFilePaths || []) {
                     try {
                         // pxt.debug(`try read: '${dir}' '${addPath}' '${filename}' ${path.join(dir, addPath, filename)}`)
-                        return fs.readFileSync(path.join(dir, addPath, filename), "utf8")
+                        return fs.readFileSync(path.join(dir, addPath, filename), U.endsWith(filename, ".a") ? "base64" : "utf8")
                     } catch (e) {
                     }
                 }
@@ -3842,7 +3842,7 @@ export function exportCppAsync(parsed: commandParser.ParsedCommand) {
                 if (s2 == "main.cpp") continue
                 const trg = path.join(parsed.args[0], s2)
                 nodeutil.mkdirP(path.dirname(trg))
-                fs.writeFileSync(trg, opts.extinfo.extensionFiles[s])
+                fs.writeFileSync(trg, opts.extinfo.extensionFiles[s], U.endsWith(trg, ".a") ? { encoding: "base64" } : undefined)
             }
         })
 }
