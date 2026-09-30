@@ -384,6 +384,7 @@ describe("project backpack UI", function () {
         assert.equal(await page.$$eval('.project-backpack__tabs [tabindex="0"]', tabs => tabs.length), 1);
         await page.click(rename);
         await page.waitForSelector("#project-backpack-name", { visible: true });
+        await page.waitForFunction(() => document.activeElement.id === "project-backpack-name");
         assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-name");
         assert.equal(await page.$eval("#project-backpack-name", input => input.maxLength), 100);
         await page.keyboard.type("Landing");
@@ -398,6 +399,7 @@ describe("project backpack UI", function () {
         await page.waitForFunction(() => !document.querySelector(".project-backpack__delete-modal"));
         await idle();
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.deletes), [saved.id]);
+        await page.waitForFunction(() => document.activeElement.id === "project-backpack-items");
         assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-items");
     });
 
