@@ -155,6 +155,11 @@ describe("responsive project-tools launcher", function () {
     });
 
     const focusIs = async id => page.waitForFunction(value => document.activeElement.id === value, {}, id);
+    const shiftTab = async () => {
+        await page.keyboard.down("Shift");
+        try { await page.keyboard.press("Tab"); }
+        finally { await page.keyboard.up("Shift"); }
+    };
     const optionsAre = async hidden => page.waitForFunction(value => {
         const options = document.getElementById("project-tools-options");
         return options.getAttribute("aria-hidden") === String(value) && (value
@@ -216,14 +221,55 @@ describe("responsive project-tools launcher", function () {
         assert(await page.$(backpack));
     });
 
-    it("supports manual arrow selection, a single tab stop, and Escape focus", async () => {
+    it("tabs between Documentation and Backpack when whiteboard is unavailable", async () => {
+        await page.setViewport({ width: 1366, height: 900 });
+        await page.evaluate(() => window.setToolsFlags({ whiteboard: false }));
+        await optionsAre(false);
+        await page.focus(more);
+        await page.keyboard.press("Tab");
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-tools-tab-docs");
+        await page.keyboard.press("Tab");
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-tools-tab-backpack");
+        await shiftTab();
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-tools-tab-docs");
+        await shiftTab();
+        assert.equal(await page.evaluate(() => document.activeElement.id), "project-tools-launcher");
+        assert.equal(await page.$eval("#project-tools-options", element => element.getAttribute("role")), "group");
+        assert.equal(await page.$$eval("#project-tools-options button", buttons => buttons.some(button =>
+            button.hasAttribute("aria-selected") || button.hasAttribute("role"))), false);
+        await page.focus(backpack);
+        await page.keyboard.press("Space");
+        await page.waitForSelector("#test-backpack-signin", { visible: true });
+        assert.equal(await page.$eval(backpack, element => element.getAttribute("aria-expanded")), "true");
+        assert.equal(await page.$eval("#project-tools-backpack", element => element.getAttribute("role")), "region");
+        await page.waitForFunction(() => getComputedStyle(document.getElementById("project-tools-launcher")).backgroundColor
+            !== getComputedStyle(document.getElementById("project-tools-tab-backpack")).backgroundColor);
+        assert.notEqual(await page.$eval(more, element => getComputedStyle(element).backgroundColor),
+            await page.$eval(backpack, element => getComputedStyle(element).backgroundColor));
+        await page.click(more);
+        await optionsAre(true);
+        assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', elements => elements.length), 0);
+        await page.focus(more);
+        await page.keyboard.press("Tab");
+        assert.equal(await page.evaluate(() => document.activeElement.id), "outside");
+    });
+
+    it("supports sequential Tab, manual arrow selection, and Escape focus", async () => {
         await page.focus(more);
         await page.keyboard.press("ArrowDown");
+        await focusIs("project-tools-tab-docs");
+        await page.keyboard.press("Tab");
+        await focusIs("project-tools-tab-whiteboard");
+        await page.keyboard.press("Tab");
+        await focusIs("project-tools-tab-backpack");
+        await shiftTab();
+        await focusIs("project-tools-tab-whiteboard");
+        await shiftTab();
         await focusIs("project-tools-tab-docs");
         await page.keyboard.press("ArrowRight");
         await focusIs("project-tools-tab-whiteboard");
         assert.equal(await page.$eval(panel, el => el.hidden), true);
-        assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.length), 1);
+        assert.equal(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.length), 3);
         await page.keyboard.press("Enter");
         await focusIs("project-tools-tab-whiteboard");
         await page.waitForSelector("#test-notes", { visible: true });
@@ -240,7 +286,7 @@ describe("responsive project-tools launcher", function () {
 
     // Horizontal RTL reverses arrows; vertical navigation automatically selects.
     for (const { width, rtl } of [{ width: 1024, rtl: true }, { width: 1366, rtl: false }]) {
-        it(`cycles all three roving tabs and Home/End at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
+        it(`cycles bubble shortcuts and Home/End at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
             await openTool(docs, width);
             if (rtl) {
                 await page.$eval("style", (el, text) => el.textContent = text, rtlcss.process(css));
@@ -251,11 +297,12 @@ describe("responsive project-tools launcher", function () {
             const backward = compact ? (rtl ? "ArrowRight" : "ArrowLeft") : "ArrowUp";
             const checkTab = async name => {
                 await focusIs(`project-tools-tab-${name}`);
-                assert.deepEqual(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.map(el => el.id)), [`project-tools-tab-${name}`]);
+                assert.deepEqual(await page.$$eval('#project-tools-options [tabindex="0"]', els => els.map(el => el.id)),
+                    ["project-tools-tab-docs", "project-tools-tab-whiteboard", "project-tools-tab-backpack"]);
                 const selected = compact ? "docs" : name;
                 assert.equal(await page.$eval(panel, el => el.dataset.activeTab), selected);
                 assert.equal(await page.$eval(panel, el => el.hidden), false);
-                assert.deepEqual(await page.$$eval('#project-tools-options [aria-selected="true"]', els => els.map(el => el.id)), [`project-tools-tab-${selected}`]);
+                assert.deepEqual(await page.$$eval('#project-tools-options [aria-expanded="true"]', els => els.map(el => el.id)), [`project-tools-tab-${selected}`]);
             };
             await page.focus(docs);
             for (const name of ["whiteboard", "backpack", "docs"]) {
@@ -290,7 +337,7 @@ describe("responsive project-tools launcher", function () {
         await optionsAre(false);
         await focusIs("outside");
         assert.equal(await page.$eval(panel, el => el.dataset.activeTab), "backpack");
-        assert.equal(await page.$eval(backpack, el => el.getAttribute("aria-selected")), "true");
+        assert.equal(await page.$eval(backpack, el => el.getAttribute("aria-expanded")), "true");
     });
 
     it("dismisses on outside pointer and Tab without blocking the target or stealing focus", async () => {

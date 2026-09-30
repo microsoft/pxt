@@ -41,7 +41,6 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
     const [backpackRequest, setBackpackRequest] = React.useState<BackpackOpenRequest>();
     const [compact, setCompact] = React.useState(() => window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY).matches);
     const [optionsOpen, setOptionsOpen] = React.useState(() => !pxt.BrowserUtils.isTabletSize());
-    const [focusedTab, setFocusedTab] = React.useState(0);
     const root = React.useRef<HTMLDivElement>();
     const launcher = React.useRef<HTMLDivElement>();
     const moreButton = React.useRef<HTMLButtonElement>();
@@ -50,16 +49,15 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
     const modalOpen = React.useRef(false);
     const onModalOpenChange = React.useCallback((open: boolean) => { modalOpen.current = open; }, []);
     const panel = React.useRef<HTMLDivElement>();
-    const tabButtons = React.useRef<HTMLButtonElement[]>([]);
+    const bubbleButtons = React.useRef<HTMLButtonElement[]>([]);
     const rtl = pxt.Util.isUserLanguageRtl();
     const { width, height, resizing, widthHandle, heightHandle } = useProjectToolsResize(panel, props.expanded, compact, rtl);
     const tabIndex = tabNames.indexOf(tab);
     React.useEffect(() => {
         if (!tabNames.includes(selectedTab)) {
             setTab("docs");
-            if (props.expanded) tabButtons.current[0]?.focus();
+            if (props.expanded) bubbleButtons.current[0]?.focus();
         }
-        setFocusedTab(index => Math.min(index, tabNames.length - 1));
         if (!whiteboardEnabled) setVisitedWhiteboard(false);
         if (!backpackEnabled) setVisitedBackpack(false);
     }, [whiteboardEnabled, backpackEnabled, selectedTab]);
@@ -69,7 +67,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
     pinState.current = { pinned: props.pinned, expanded: props.expanded };
     const dismissTools = React.useCallback((explicit = false) => {
         if (!explicit && (modalOpen.current || pinState.current.pinned && pinState.current.expanded)) return;
-        // Desktop tabs remain available after click-away; only an explicit
+        // Desktop bubbles remain available after click-away; only an explicit
         // disclosure action hides them. Read the current size for deferred blur.
         if (explicit || pxt.BrowserUtils.isTabletSize()) setOptionsOpen(false);
         if (pinState.current.expanded) props.onExpandedChange(false);
@@ -93,7 +91,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         const onChange = () => setCompact(query.matches);
         const onTabletChange = () => {
             if (tabletQuery.matches) {
-                // Move focus before hiding tabs, without dismissing an open panel.
+                // Move focus before hiding bubbles, without dismissing an open panel.
                 if (launcher.current?.contains(document.activeElement)) moreButton.current?.focus();
             }
             setOptionsOpen(!tabletQuery.matches);
@@ -109,7 +107,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         // Only user-initiated expansion moves focus, not desktop startup or resize.
         if (!focusTabOnOpen.current || !optionsOpen) return;
         focusTabOnOpen.current = false;
-        tabButtons.current[tabIndex]?.focus();
+        bubbleButtons.current[tabIndex]?.focus();
     }, [optionsOpen, tabIndex]);
     React.useEffect(() => {
         if (!props.expanded && !optionsOpen) return undefined;
@@ -171,7 +169,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         if (props.expanded) {
             if (openingFromDrag.current) return;
             if (!optionsOpen) panel.current?.focus();
-            else tabButtons.current[tabIndex]?.focus();
+            else bubbleButtons.current[tabIndex]?.focus();
         }
     }, [props.expanded]);
     React.useEffect(() => {
@@ -181,7 +179,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
 
     const openOptions = () => {
         openingFromDrag.current = false;
-        if (optionsOpen) tabButtons.current[tabIndex]?.focus();
+        if (optionsOpen) bubbleButtons.current[tabIndex]?.focus();
         else {
             focusTabOnOpen.current = true;
             setOptionsOpen(true);
@@ -191,7 +189,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         openingFromDrag.current = false;
         props.onExpandedChange(false);
         if (!optionsOpen) moreButton.current?.focus();
-        else tabButtons.current[tabIndex]?.focus();
+        else bubbleButtons.current[tabIndex]?.focus();
     };
     const selectTab = (name: ProjectToolTab) => {
         openingFromDrag.current = false;
@@ -201,7 +199,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
             props.onExpandedChange(true);
         }
     };
-    const tabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
+    const bubbleKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, index: number) => {
         let next: number;
         switch (event.key) {
             case "ArrowUp": if (!compact) next = index - 1; break;
@@ -216,7 +214,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         event.preventDefault();
         next = (next + tabNames.length) % tabNames.length;
         if (!compact) setTab(tabNames[next]);
-        tabButtons.current[next]?.focus();
+        bubbleButtons.current[next]?.focus();
     };
     const renderHeader = (title: string, actions?: React.ReactNode): React.ReactNode => <ProjectToolsHeader
         title={title}
@@ -264,18 +262,18 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
                 </svg>
                 <span className="project-tools__bubble-label" aria-hidden="true">{lf("Project tools")}</span>
             </button>
-            <div id="project-tools-options" className="project-tools__bubbles" role="tablist"
-                aria-hidden={!optionsOpen} aria-orientation={compact ? "horizontal" : "vertical"} aria-label={lf("Project tools")}>
+            <div id="project-tools-options" className="project-tools__bubbles" role="group"
+                aria-hidden={!optionsOpen} aria-label={lf("Project tools")}>
                 {tabNames.map((name, index) => {
                     const label = name === "docs" ? lf("Documentation") : name === "whiteboard" ? lf("Whiteboard") : lf("Backpack");
                     const selected = tab === name;
-                    return <button key={name} id={projectToolTabId(name)} type="button" role="tab"
-                        className="project-tools__bubble" ref={element => tabButtons.current[index] = element}
+                    return <button key={name} id={projectToolTabId(name)} type="button"
+                        className="project-tools__bubble" ref={element => bubbleButtons.current[index] = element}
                         style={{ "--tools-bubble-index": index } as React.CSSProperties}
-                        aria-label={label} aria-selected={selected && props.expanded}
+                        aria-label={label}
                         aria-expanded={selected && props.expanded} aria-controls={projectToolPanelId(name)}
-                        tabIndex={optionsOpen && (compact ? focusedTab === index : selected) ? 0 : -1}
-                        onFocus={() => setFocusedTab(index)} onClick={() => selectTab(name)}
+                        tabIndex={optionsOpen ? 0 : -1}
+                        onClick={() => selectTab(name)}
                         onKeyDown={event => {
                             if (event.key === "Escape" && props.expanded) {
                                 event.stopPropagation();
@@ -284,7 +282,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
                                 event.stopPropagation();
                                 setOptionsOpen(false);
                                 moreButton.current?.focus();
-                            } else tabKeyDown(event, index);
+                            } else bubbleKeyDown(event, index);
                         }}>
                         {name === "backpack" ? <svg className="project-backpack__icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                             <path d="M9 5V3h6v2M6 7a4 4 0 0 1 4-3h4a4 4 0 0 1 4 3l2 12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2L6 7ZM8 13h8v5H8ZM7 9h10" />
@@ -308,7 +306,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
             <ProjectToolsResizeHandle {...widthHandle} />
             <ProjectToolsResizeHandle {...heightHandle} />
             {tab === "docs" && renderHeader(lf("Documentation"), props.docsUrl && props.docsAction)}
-            <section id={projectToolPanelId("docs")} role="tabpanel" aria-labelledby={projectToolTabId("docs")} hidden={tab !== "docs"}
+            <section id={projectToolPanelId("docs")} role="region" aria-labelledby={projectToolTabId("docs")} hidden={tab !== "docs"}
                 className="project-tools__docs">
                 {props.docsUrl ? props.children : <div className="project-tools__empty">
                     <i className="icon book" aria-hidden="true" />
@@ -324,12 +322,12 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
                     />
                 </div>}
             </section>
-            {whiteboardEnabled && <section id={projectToolPanelId("whiteboard")} role="tabpanel" aria-labelledby={projectToolTabId("whiteboard")} hidden={tab !== "whiteboard"}
+            {whiteboardEnabled && <section id={projectToolPanelId("whiteboard")} role="region" aria-labelledby={projectToolTabId("whiteboard")} hidden={tab !== "whiteboard"}
                 className="project-tools__whiteboard">
                 {visitedWhiteboard && <ProjectWhiteboard headerId={props.header.id} notes={props.notes}
                     active={props.expanded && tab === "whiteboard"} renderHeader={renderHeader} />}
             </section>}
-            {backpackEnabled && <section id={projectToolPanelId("backpack")} role="tabpanel" aria-labelledby={projectToolTabId("backpack")} hidden={tab !== "backpack"}
+            {backpackEnabled && <section id={projectToolPanelId("backpack")} role="region" aria-labelledby={projectToolTabId("backpack")} hidden={tab !== "backpack"}
                 className="project-backpack">
                 {visitedBackpack && <ProjectBackpack headerId={props.header.id} active={props.expanded && tab === "backpack"}
                     tutorial={props.tutorial || !!props.header.tutorial}

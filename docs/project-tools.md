@@ -11,7 +11,8 @@ requires a runtime image palette.
 - Select a bubble to open or close its panel; **…** hides or reveals the bubbles.
 - Pin the panel to keep it open when working elsewhere. Escape closes it and
   returns focus without clearing the pin or draft.
-- Arrow keys and Home/End navigate tabs; horizontal tabs use Enter/Space to open.
+- Tab/Shift+Tab visits each visible tool bubble. Arrow keys and Home/End also
+  navigate the bubbles; Enter/Space opens or closes a panel.
 - Drag the resize grips, or focus a grip and use arrow keys (Shift for larger
   steps). Both width and height resizing work on desktop and mobile.
 
@@ -85,3 +86,6 @@ Actions have localized descriptive titles alongside their visible or ARIA labels
 Blockly registration receives its drag targets from the webapp host. Shared
 project-tools IDs keep the launcher, panel accessibility links and drag adapter
 in sync; serialization does not depend on those DOM elements.
+Launcher bubbles are disclosure buttons in a labelled group, with named regions
+for their panels. Each visible bubble is a Tab stop; hidden bubbles are excluded
+from the tab order.

@@ -154,7 +154,7 @@ describe("named private whiteboards", function () {
 
     it("preserves real notes, drawing store, undo and pin across tabs and hiding tools", async () => {
         await page.setViewport({ width: 1366, height: 900 });
-        await page.waitForFunction(() => document.getElementById("project-tools-options").getAttribute("aria-orientation") === "vertical");
+        await page.waitForFunction(() => getComputedStyle(document.getElementById("project-tools-options")).flexDirection === "column");
         await page.focus(input);
         await page.keyboard.press("End");
         await page.type(input, " retained across backpack");

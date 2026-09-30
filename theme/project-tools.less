@@ -95,7 +95,7 @@
     box-shadow: 0 3px 12px color-mix(in srgb, var(--tools-foreground) 20%, transparent);
 
     .icon { margin: 0; font-size: 1.35rem; }
-    &[aria-selected="true"] {
+    &[aria-expanded="true"]:not(.project-tools__more) {
         background: var(--tools-accent);
         color: var(--tools-on-accent);
         border-radius: 1rem;
@@ -105,8 +105,8 @@
 
 .project-tools__more:hover .project-tools__bubble-label,
 .project-tools__more:focus-visible .project-tools__bubble-label,
-.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-selected="true"]):hover .project-tools__bubble-label,
-.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-selected="true"]):focus-visible .project-tools__bubble-label {
+.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-expanded="true"]):hover .project-tools__bubble-label,
+.project-tools__bubbles[aria-hidden="false"] .project-tools__bubble:not([aria-expanded="true"]):focus-visible .project-tools__bubble-label {
     visibility: visible;
 }
 
