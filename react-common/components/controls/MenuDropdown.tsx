@@ -40,6 +40,7 @@ export interface MenuDropdownProps extends ControlProps {
     showChevron?: boolean;
     tabIndex?: number;
     disabled?: boolean;
+    keepOpenOnCheckboxChange?: boolean;
 }
 
 export const MenuDropdown = (props: MenuDropdownProps) => {
@@ -55,7 +56,8 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
         icon,
         showChevron,
         tabIndex,
-        disabled
+        disabled,
+        keepOpenOnCheckboxChange,
     } = props;
 
     const [expanded, setExpanded] = React.useState(false);
@@ -197,7 +199,7 @@ export const MenuDropdown = (props: MenuDropdownProps) => {
                                             {...item}
                                             key={key}
                                             onChange={newValue => {
-                                                closeOnItemClick();
+                                                if (!keepOpenOnCheckboxChange) closeOnItemClick();
                                                 item.onChange?.(newValue);
                                             }}
                                         />

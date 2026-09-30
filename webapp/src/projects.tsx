@@ -458,6 +458,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             ariaLabel={ariaLabel}
             showChevron={true}
             items={items}
+            keepOpenOnCheckboxChange={true}
         />;
     }
 
