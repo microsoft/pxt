@@ -1,4 +1,5 @@
 import * as React from "react";
+import { classList } from "../../../react-common/components/util";
 import { BackpackEntry, getBackpackAssetPreviewContext, getBackpackPreviewAsync, loadBackpackAssetPreviewAsync } from "../backpack";
 import { backpackAssetPreview, BackpackAssetPreview } from "../backpackAssetPreview";
 
@@ -20,16 +21,18 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
     const [failed, setFailed] = React.useState(false);
     const localUri = entry.item?.previewUri;
     const asset = (entry.item?.kind || entry.summary?.kind) === "asset";
-    const assetLabel = React.useMemo(() => {
+    const assetKind = React.useMemo(() => {
         if (!asset) return undefined;
         let type = entry.summary?.blockTypes[0];
         if (!type) {
             try { type = JSON.parse(entry.item.code).blocks[0].type; }
-            catch { return lf("Asset"); }
+            catch { return "asset"; }
         }
-        return type.includes("animation") ? lf("Animation") : /music|melody/.test(type) ? lf("Music")
-            : type === "tiles_tilemap_editor" ? lf("Tilemap") : lf("Image");
+        return type.includes("animation") ? "animation" : /music|melody/.test(type) ? "music"
+            : type === "tiles_tilemap_editor" ? "tilemap" : "image";
     }, [asset, entry.item?.code, entry.summary?.blockTypes]);
+    const assetLabel = assetKind === "animation" ? lf("Animation") : assetKind === "music" ? lf("Music")
+        : assetKind === "tilemap" ? lf("Tilemap") : assetKind === "image" ? lf("Image") : lf("Asset");
     const density = entry.item?.previewPixelDensity || entry.summary?.previewPixelDensity;
     const functionCount = React.useMemo(() => {
         if (entry.error) return 0;
@@ -124,10 +127,10 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
     return <div ref={host} style={{ minHeight: asset || entry.summary?.hasPreview ? 44 : undefined }}>
         {asset && !uri && <div className="project-backpack__asset" draggable={!!onDragStart}
             onDragStart={onDragStart} onDragEnd={onDragEnd} title={onDragStart ? lf("Drag to add to project") : undefined}>
-            <i className={`icon ${assetLabel === lf("Music") ? "music" : "image"}`} aria-hidden="true" />
+            <i className={classList("icon", assetKind === "music" ? "music" : "image")} aria-hidden="true" />
             <span>{assetLabel}</span>
         </div>}
-        {uri && <img ref={imageRef} className={`project-backpack__preview${asset ? " project-backpack__preview--asset" : ""}`} src={density ? undefined : uri}
+        {uri && <img ref={imageRef} className={classList("project-backpack__preview", asset && "project-backpack__preview--asset")} src={density ? undefined : uri}
             srcSet={density ? `${uri} ${density}x` : undefined} alt={asset ? lf("Preview of {0}", entry.name) : lf("Blocks in {0}", entry.name)}
             draggable={!!onDragStart} onDragStart={onDragStart} onDragEnd={onDragEnd}
             title={onDragStart ? lf("Drag to add to project") : undefined} />}

@@ -1,6 +1,18 @@
 // Match @largeMonitorBreakpoint (1200px): keep the bubble strip horizontal on
 // smaller desktops. Visibility defaults use the separate tablet breakpoint.
 export const PROJECT_TOOLS_COMPACT_QUERY = "(max-width: 1199px)";
+export const PROJECT_TOOLS_LAUNCHER_ID = "project-tools-launcher";
+export const PROJECT_TOOLS_PANEL_ID = "project-tools-panel";
+
+export type ProjectToolTab = "docs" | "whiteboard" | "backpack";
+
+export function projectToolTabId(tab: ProjectToolTab): string {
+    return `project-tools-tab-${tab}`;
+}
+
+export function projectToolPanelId(tab: ProjectToolTab): string {
+    return `project-tools-${tab}`;
+}
 
 export function isWhiteboardEnabled(): boolean {
     return !!pxt.appTarget?.appTheme?.whiteboard && !!pxt.appTarget.runtime?.palette?.length;

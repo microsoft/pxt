@@ -75,7 +75,7 @@ export function createProjectNotes(): pxt.workspace.ProjectNotes {
     return { whiteboards: [board], activeWhiteboardId: board.id };
 }
 
-export function whiteboardNameError(name: string, notes: pxt.workspace.ProjectNotes, exceptId?: string): string {
+export function whiteboardNameError(name: string, notes: pxt.workspace.ProjectNotes, exceptId?: string): string | undefined {
     const trimmed = name.trim();
     if (!trimmed) return pxt.Util.lf("Enter a whiteboard name.");
     if (trimmed.length > MAX_WHITEBOARD_NAME_LENGTH || /[\r\n\t]/.test(trimmed))

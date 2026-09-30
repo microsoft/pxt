@@ -129,6 +129,9 @@ describe("named private whiteboards", function () {
     };
 
     it("loads saved or new notes without writing until the first edit", async () => {
+        assert.deepStrictEqual(await page.$eval("#project-whiteboard-canvas", canvas => ({
+            role: canvas.getAttribute("role"), label: canvas.getAttribute("aria-label")
+        })), { role: "group", label: "Project sketch editor" });
         assert.equal(await page.$eval(input, el => el.value), "Saved private notes");
         assert.equal(await page.evaluate(() => whiteboardTest.saves.length), 0);
         await page.click(menu);

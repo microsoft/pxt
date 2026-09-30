@@ -35,6 +35,18 @@
     --tools-banner-height: @bannerHeight;
 }
 
+.project-tools__button.common-button {
+    margin: 0;
+    padding: 2px 6px;
+    font: inherit;
+    filter: none;
+    transition: none;
+
+    &:hover { filter: none; }
+    &:focus-visible::after { outline: none; }
+    .common-button-flex { white-space: inherit; }
+}
+
 .project-tools__launcher {
     position: fixed;
     width: var(--tools-bubble-size);
@@ -188,7 +200,9 @@
     padding-inline: .5rem;
 }
 
-.project-tools__close, .project-tools__external, .project-tools__pin {
+.project-tools__header .project-tools__close,
+.project-tools__header .project-tools__external,
+.project-tools__header .project-tools__pin {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -219,7 +233,7 @@
     &:focus-visible::after { outline: none; }
 }
 
-.project-tools__pin {
+.project-tools__header .project-tools__pin {
     padding: .35rem .5rem;
     svg {
         width: 1.2rem;
@@ -312,8 +326,12 @@
     text-align: center;
     .icon { font-size: 2rem; margin: 1rem; }
 }
-.project-tools__empty button, .project-whiteboard-menu__edit button,
-.project-whiteboard__status button, .project-whiteboard__invalid button, .project-whiteboard__conflict button {
+.project-tools__empty .project-tools__button,
+.project-whiteboard-menu__edit .project-tools__button,
+.project-whiteboard-menu__edit button[type="submit"],
+.project-whiteboard__status .project-tools__button,
+.project-whiteboard__invalid .project-tools__button,
+.project-whiteboard__conflict .project-tools__button {
     min-height: 2.75rem;
     padding: .4rem .8rem;
     border: 1px solid var(--tools-border);

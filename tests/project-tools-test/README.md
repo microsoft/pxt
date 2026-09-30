@@ -13,11 +13,14 @@ those modules. Browser tests require Puppeteer's Chromium, not a development ser
 
 - Storage suites cover persistence, account isolation and sharing privacy.
 - Project/clipboard suites cover dependency consent, conflicts and editor integration.
-- Block/asset suites exercise serialization, pixels and undo.
-- UI/launcher/whiteboard suites cover representative interaction and accessibility.
+- Block/asset suites exercise serialization, pixels and undo; drag tests cover
+  host-provided targets, dwell and cleanup.
+- UI/launcher/whiteboard suites cover representative interaction, accessibility,
+  native button/tab behavior and feature-control appearance.
 
 Test shared behavior once, with representative cases rather than viewport/theme
-or failure-stage matrices. Use [browser.js](browser.js), await actual effects and
+or failure-stage matrices. Use [browser.js](browser.js) and [source.js](source.js),
+await actual effects and
 transactions, and unmount before closing pages. Network/account boundaries are
 mocked; check cross-device sync, keyboard/touch and screen readers manually
 before release. See [feature usage](../../docs/project-tools.md).

@@ -40,6 +40,82 @@ const adapterSource = compile(`${declarations.join("\n")}\nclass SourceEditor { 
 const sharedSource = compile(read("webapp/src/blockSnippet.ts"));
 const validatorSource = compile(read("webapp/src/backpack.ts"));
 
+describe("Block snippet dependency display policy", () => {
+    const shared = {};
+    new Function("exports", "require", sharedSource)(shared, () => ({}));
+    const missing = shared.getMissingBlockSnippetDependencies;
+    const installed = (version, protocol = version.split(":")[0]) => ({
+        version: () => version, verProtocol: () => protocol
+    });
+
+    it("accepts empty and absent dependency maps", () => {
+        for (const dependencies of [undefined, null, {}]) {
+            assert.deepStrictEqual(missing(dependencies, { deps: {} }), []);
+        }
+    });
+
+    it("requires an installed own-property dependency, not a missing, inherited or unresolved one", () => {
+        const deps = Object.create({
+            inherited: installed("github:owner/inherited#v1"),
+            constructor: installed("pub:constructor")
+        });
+        deps.unresolved = undefined;
+        const dependencies = { absent: "*", inherited: "*", constructor: "pub:constructor", unresolved: "*" };
+        assert.deepStrictEqual(missing(dependencies, { deps }), [
+            ["absent", "*"], ["inherited", "*"], ["constructor", "pub:constructor"], ["unresolved", "*"]
+        ]);
+        assert.deepStrictEqual(dependencies, { absent: "*", inherited: "*", constructor: "pub:constructor", unresolved: "*" });
+    });
+
+    it("accepts any installed package for '*' without inspecting its version or protocol", () => {
+        const wildcard = {
+            version: () => { throw new Error("Wildcard version must not be inspected"); },
+            verProtocol: () => { throw new Error("Wildcard protocol must not be inspected"); }
+        };
+        assert.deepStrictEqual(missing({ core: "*", local: "*" }, {
+            deps: { core: installed("embed:core"), local: wildcard }
+        }), []);
+    });
+
+    it("ignores GitHub owner/repository case and tags for the same installed GitHub source", () => {
+        assert.deepStrictEqual(missing({
+            tagged: "github:owner/repo#v2.0.0", untagged: "github:OWNER/REPO#main"
+        }, { deps: {
+            tagged: installed("github:Owner/Repo#v1.0.0"), untagged: installed("github:owner/repo")
+        } }), []);
+    });
+
+    it("accepts exact references without applying capture or import validation", () => {
+        assert.deepStrictEqual(missing({
+            published: "pub:version1", local: "workspace:extension", opaque: "custom:reference",
+            github: "github:owner/exact#v1", changed: "pub:version2"
+        }, { deps: {
+            published: installed("pub:version1"),
+            local: { ...installed("workspace:extension"), cppOnly: true, config: { name: "different" } },
+            opaque: installed("custom:reference"),
+            github: installed("github:owner/exact#v1", "pub"),
+            changed: installed("pub:version1")
+        } }), [["changed", "pub:version2"]]);
+    });
+
+    it("reports incompatible GitHub sources, protocols and case-sensitive non-GitHub versions", () => {
+        const dependencies = {
+            repository: "github:owner/other#v1",
+            owner: "github:other/repo#v1",
+            protocol: "github:owner/repo#v2",
+            prefix: "GitHub:owner/repo#v1",
+            exact: "pub:version"
+        };
+        assert.deepStrictEqual(missing(dependencies, { deps: {
+            repository: installed("github:owner/repo#v1"),
+            owner: installed("github:owner/repo#v1"),
+            protocol: installed("github:owner/repo#v1", "pub"),
+            prefix: installed("github:owner/repo#v1"),
+            exact: installed("pub:VERSION")
+        } }), Object.entries(dependencies));
+    });
+});
+
 describe("Clipboard native Blockly round trip (isolated browser, no PXT build)", function () {
     this.timeout(30000);
     let browser;

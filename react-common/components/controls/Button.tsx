@@ -3,6 +3,7 @@ import { classList, ContainerProps, fireClickOnEnter } from "../util";
 
 export interface ButtonViewProps extends ContainerProps {
     title: string;
+    type?: "button" | "submit" | "reset";
     label?: string | JSX.Element;
     labelClassName?: string;
     leftIcon?: string;
@@ -25,6 +26,8 @@ export interface ButtonViewProps extends ContainerProps {
 
 
 export interface ButtonProps extends ButtonViewProps {
+    /** Keep native click propagation, default actions, and Enter/Space activation. */
+    nativeBehavior?: boolean;
     buttonRef?: (ref: HTMLElement) => void;
     href?: string;
     target?: string;
@@ -83,7 +86,8 @@ export function inflateButtonProps(props: ButtonProps) {
         buttonRef,
         target,
         href,
-        hardDisabled
+        hardDisabled,
+        nativeBehavior
     } = props;
 
     let {
@@ -96,8 +100,10 @@ export function inflateButtonProps(props: ButtonProps) {
         if (onClickEvent) onClickEvent(ev);
         if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
-        ev.stopPropagation();
-        ev.preventDefault();
+        if (!nativeBehavior) {
+            ev.stopPropagation();
+            ev.preventDefault();
+        }
     }
 
     const rightClickHandler = (ev: React.MouseEvent) => {
@@ -113,7 +119,7 @@ export function inflateButtonProps(props: ButtonProps) {
         "ref": buttonRef,
         "onClick": !disabled ? clickHandler : undefined,
         "onContextMenu": rightClickHandler,
-        "onKeyDown": onKeydown || fireClickOnEnter,
+        "onKeyDown": onKeydown || (nativeBehavior ? undefined : fireClickOnEnter),
         "onBlur": onBlur,
         "onFocus": onFocus,
         "onMouseDown": onMouseDown,
@@ -137,6 +143,7 @@ export function inflateButtonViewProps(props: ButtonViewProps) {
         ariaPressed,
         role,
         title,
+        type,
         hardDisabled,
         tabIndex,
         autoFocus,
@@ -159,6 +166,7 @@ export function inflateButtonViewProps(props: ButtonViewProps) {
         "className": classes,
         "style": style,
         "title": title,
+        "type": type,
         "role": role || "button",
         "tabIndex": tabIndex || (disabled ? -1 : 0),
         "autoFocus": autoFocus,

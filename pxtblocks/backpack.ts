@@ -12,12 +12,20 @@ export interface BackpackCode {
     blocks: Blockly.serialization.blocks.State[];
 }
 
+export interface BackpackDragTargetOptions {
+    /** Resolve the host's current visible element, or omit this target. */
+    getElement: () => HTMLElement | undefined;
+    openOnHover?: boolean;
+}
+
 export interface BackpackWorkspaceOptions {
     isEnabled: () => boolean;
     canSave?: (block: Blockly.Block) => boolean;
     save: (block: Blockly.BlockSvg) => void;
     /** Open without moving focus (including when invoked by a dwell timer). */
     open: () => void;
+    dragTargets: BackpackDragTargetOptions[];
+    hoverClass: string;
 }
 
 type State = Blockly.serialization.blocks.State;
@@ -429,33 +437,23 @@ interface WorkspaceRegistration {
 }
 
 const registrations = new Map<Blockly.Workspace, WorkspaceRegistration>();
-const hoverClass = "project-backpack--drag-over";
-const tabId = "project-tools-tab-backpack";
-const panelId = "project-tools-backpack";
-const launcherId = "project-tools-launcher";
-
-function visibleElement(id: string): HTMLElement | undefined {
-    const element = document.getElementById(id);
-    if (!element || !element.isConnected || !element.getClientRects().length) return undefined;
-    const style = element.ownerDocument.defaultView.getComputedStyle(element);
-    if (style.visibility === "hidden" || style.visibility === "collapse" || style.display === "none") return undefined;
-    const rect = element.getBoundingClientRect();
-    return rect.width > 0 && rect.height > 0 ? element : undefined;
-}
 
 class BackpackDragTarget extends Blockly.DragTarget {
     private hovered: HTMLElement;
     private timer: ReturnType<typeof setTimeout>;
     private frame: number;
 
-    constructor(private workspace: Blockly.WorkspaceSvg, private options: BackpackWorkspaceOptions, private elementId: string) {
+    constructor(
+        private workspace: Blockly.WorkspaceSvg,
+        private options: BackpackWorkspaceOptions,
+        private target: BackpackDragTargetOptions
+    ) {
         super();
         this.id = Blockly.utils.idGenerator.genUid();
     }
 
     private element(): HTMLElement | undefined {
-        if (!this.options.isEnabled() || (this.elementId === launcherId && visibleElement(tabId))) return undefined;
-        return visibleElement(this.elementId);
+        return this.options.isEnabled() ? this.target.getElement() : undefined;
     }
 
     private accepts(draggable: Blockly.IDraggable): draggable is Blockly.BlockSvg {
@@ -474,8 +472,8 @@ class BackpackDragTarget extends Blockly.DragTarget {
         const element = this.element();
         if (!element) return;
         this.hovered = element;
-        element.classList.add(hoverClass);
-        if (this.elementId !== panelId) {
+        element.classList.add(this.options.hoverClass);
+        if (this.target.openOnHover) {
             this.timer = setTimeout(() => {
                 this.timer = undefined;
                 if (this.hovered !== element || this.element() !== element || !this.accepts(draggable)) {
@@ -525,7 +523,7 @@ class BackpackDragTarget extends Blockly.DragTarget {
         if (this.frame !== undefined) cancelAnimationFrame(this.frame);
         this.timer = undefined;
         this.frame = undefined;
-        this.hovered?.classList.remove(hoverClass);
+        this.hovered?.classList.remove(this.options.hoverClass);
         this.hovered = undefined;
     }
 }
@@ -568,7 +566,7 @@ export function registerBackpackWorkspace(workspace: Blockly.WorkspaceSvg, optio
         });
     }
     const manager = workspace.getComponentManager();
-    const targets = [tabId, panelId, launcherId].map(id => new BackpackDragTarget(workspace, options, id));
+    const targets = options.dragTargets.map(target => new BackpackDragTarget(workspace, options, target));
     for (const target of targets) {
         manager.addComponent({ component: target, capabilities: [Blockly.ComponentManager.Capability.DRAG_TARGET], weight: -1 });
     }

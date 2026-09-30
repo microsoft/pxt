@@ -105,6 +105,15 @@ function createEnvironment() {
 }
 
 describe("private project-note storage boundaries", () => {
+    it("returns undefined for valid whiteboard names and messages for invalid names", () => {
+        const env = createEnvironment();
+        const notes = notesWithBoard("");
+        assert.strictEqual(env.notes.whiteboardNameError(" Second board ", notes), undefined);
+        assert.strictEqual(env.notes.whiteboardNameError(" whiteboard 1 ", notes, "whiteboard-1"), undefined);
+        assert.strictEqual(env.notes.whiteboardNameError("whiteboard 1", notes), "A whiteboard with this name already exists.");
+        assert.strictEqual(env.notes.whiteboardNameError(" ", notes), "Enter a whiteboard name.");
+    });
+
     it("saves to project metadata and preserves published-code status", async () => {
         const env = createEnvironment();
         const { header, text } = await env.install();

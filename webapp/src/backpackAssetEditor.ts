@@ -1,5 +1,6 @@
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
+import { prepareBackpackAssetGallery } from "./backpackAssetGallery";
 
 export interface BackpackAssetEditorOptions {
     code: string;
@@ -46,19 +47,9 @@ export class BackpackAssetEditor {
         this.original = root;
         this.name = request.name;
 
-        // Detach gallery metadata and pixels before native fields can mutate them.
-        const snapshot = structuredClone(request.gallery);
-        const gallery = this.project.saveGallerySnapshot();
+        const { snapshot, projectGallery: gallery } = prepareBackpackAssetGallery(request.gallery, this.project);
         for (const type of Object.keys(snapshot.assets)) {
-            const collection = snapshot.assets[type];
-            Object.setPrototypeOf(collection, Object.getPrototypeOf(gallery.assets[type]));
-            if (type === pxt.AssetType.Tilemap) {
-                for (const asset of (collection as unknown as { assets: pxt.ProjectTilemap[] }).assets) {
-                    Object.setPrototypeOf(asset.data, pxt.sprite.TilemapData.prototype);
-                    Object.setPrototypeOf(asset.data.tilemap, pxt.sprite.Tilemap.prototype);
-                }
-            }
-            gallery.assets[type] = collection;
+            gallery.assets[type] = snapshot.assets[type];
         }
         this.project.loadGallerySnapshot(gallery);
         this.workspace = new Blockly.Workspace();

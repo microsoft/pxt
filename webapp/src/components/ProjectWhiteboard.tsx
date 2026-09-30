@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Button } from "../../../react-common/components/controls/Button";
 import { Action, createStore, Store } from "redux";
 import { ImageEditor } from "./ImageEditor/ImageEditor";
 import imageReducer, { AnimationState, ImageEditorStore } from "./ImageEditor/store/imageReducer";
@@ -8,7 +9,7 @@ import { addProjectWhiteboard, createProjectNotes, decodeWhiteboard, deleteProje
 import { ProjectWhiteboardMenu } from "./ProjectWhiteboardMenu";
 import * as workspace from "../workspace";
 
-interface ProjectWhiteboardProps {
+export interface ProjectWhiteboardProps {
     headerId: string;
     notes?: pxt.workspace.ProjectNotes;
     active: boolean;
@@ -30,7 +31,7 @@ function noteReducer(state: ImageEditorStore, action: Action & { notes?: pxt.wor
     return action.type === "project-notes-load" ? createNoteState(action.notes) : imageReducer(state, action);
 }
 
-export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
+export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
     const initial = React.useMemo(() => {
         try { return { notes: props.notes === undefined ? createProjectNotes() : validateProjectNotes(props.notes), invalid: false }; }
         catch { return { notes: createProjectNotes(), invalid: true }; }
@@ -189,12 +190,19 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
         <div className="project-whiteboard__body">
             {invalid ? <div className="project-whiteboard__invalid" role="alert">
                 <p>{lf("These notes could not be opened. The saved data has not been changed.")}</p>
-                <button type="button" onClick={() => {
-                    const notes = createProjectNotes();
-                    loadNotes(notes);
-                    setInvalid(false);
-                    update(notes);
-                }}>{lf("Start a new whiteboard")}</button>
+                <Button
+                    type="button"
+                    nativeBehavior
+                    className="project-tools__button"
+                    label={lf("Start a new whiteboard")}
+                    title={lf("Start a new whiteboard")}
+                    onClick={() => {
+                        const notes = createProjectNotes();
+                        loadNotes(notes);
+                        setInvalid(false);
+                        update(notes);
+                    }}
+                />
             </div> : <div className="project-whiteboard" onBlur={flush}>
                 <p id="project-notes-privacy" className="project-whiteboard__privacy">
                     <i className="icon lock" aria-hidden="true" />
@@ -202,10 +210,29 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
                 </p>
                 {conflict && <div role="alert" className="project-whiteboard__conflict">
                     <p>{lf("Saved notes changed while you were editing. Choose which version to keep.")}</p>
-                    <button type="button" onClick={() => { conflictPending.current = false; setConflict(undefined); dirty.current = true; flush(); }}>{lf("Keep my notes")}</button>
-                    <button type="button" onClick={() => loadNotes(conflict.notes, true)}>{lf("Load saved notes")}</button>
+                    <Button
+                        type="button"
+                        nativeBehavior
+                        className="project-tools__button"
+                        label={lf("Keep my notes")}
+                        title={lf("Keep my notes")}
+                        onClick={() => {
+                            conflictPending.current = false;
+                            setConflict(undefined);
+                            dirty.current = true;
+                            flush();
+                        }}
+                    />
+                    <Button
+                        type="button"
+                        nativeBehavior
+                        className="project-tools__button"
+                        label={lf("Load saved notes")}
+                        title={lf("Load saved notes")}
+                        onClick={() => loadNotes(conflict.notes, true)}
+                    />
                 </div>}
-                <div id="project-whiteboard-canvas" className="project-whiteboard__canvas" aria-label={lf("Project sketch editor")}>
+                <div id="project-whiteboard-canvas" className="project-whiteboard__canvas" role="group" aria-label={lf("Project sketch editor")}>
                     {props.active && <ImageEditor key={activeBoard.id} ref={editor} store={store} singleFrame hideDoneButton hideAssetName scopedShortcuts />}
                 </div>
                 <label htmlFor="project-notes-text">{lf("Notes")}</label>
@@ -214,7 +241,14 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps) {
                     onChange={event => updateBoard(activeBoard.id, { text: event.target.value })} />
                 {status === "error" && <div className="project-whiteboard__status" role="alert">
                     {lf("Notes could not be saved.")}
-                    <button type="button" onClick={flush}>{lf("Retry")}</button>
+                    <Button
+                        type="button"
+                        nativeBehavior
+                        className="project-tools__button"
+                        label={lf("Retry")}
+                        title={lf("Retry")}
+                        onClick={flush}
+                    />
                 </div>}
             </div>}
         </div>

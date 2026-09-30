@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 import { assetToGalleryItem } from "./assets";
+import { prepareBackpackAssetGallery } from "./backpackAssetGallery";
 
 export interface BackpackAssetPreview {
     previewURI: string;
@@ -21,20 +22,7 @@ export function backpackAssetPreview(item: pxt.auth.BackpackItem, context: {
         if (blocks.length !== 1 || root.next || Object.keys(root.inputs || {}).length) return undefined;
 
         const project = new pxt.TilemapProject();
-        // Snapshots contain native collections and tilemap classes. Detach all data,
-        // including metadata arrays, then restore prototypes on only the scratch copy.
-        const gallery = structuredClone(context.gallery);
-        const emptyGallery = project.saveGallerySnapshot();
-        for (const type of Object.keys(gallery.assets)) {
-            const collection = gallery.assets[type];
-            Object.setPrototypeOf(collection, Object.getPrototypeOf(emptyGallery.assets[type]));
-            if (type === pxt.AssetType.Tilemap) {
-                for (const asset of (collection as unknown as { assets: pxt.ProjectTilemap[] }).assets) {
-                    Object.setPrototypeOf(asset.data, pxt.sprite.TilemapData.prototype);
-                    Object.setPrototypeOf(asset.data.tilemap, pxt.sprite.Tilemap.prototype);
-                }
-            }
-        }
+        const { snapshot: gallery } = prepareBackpackAssetGallery(context.gallery, project);
         project.loadGallerySnapshot(gallery);
 
         const getTilemapProject = pxt.react.getTilemapProject;

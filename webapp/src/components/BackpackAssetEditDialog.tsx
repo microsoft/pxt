@@ -113,7 +113,7 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
     }, [asset]);
     return ReactDOM.createPortal(<div ref={overlay} className="project-backpack__asset-modal-overlay"
         onMouseDown={event => { if (event.target === event.currentTarget) dismiss(); }}>
-        <FocusTrap className="project-backpack__asset-modal" role="dialog" ariaLabel={lf("Backpack asset editor")}
+        <FocusTrap className="project-backpack__asset-modal" role="dialog" ariaModal ariaLabel={lf("Backpack asset editor")}
             onEscape={dismiss}>
             <div className="project-backpack__native-editor" aria-busy={pending}>
                 <div ref={scalarHost} hidden={!!asset} className="project-backpack__scalar-editor" />

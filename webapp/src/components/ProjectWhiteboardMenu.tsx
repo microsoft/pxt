@@ -1,9 +1,10 @@
 import * as React from "react";
+import { Button } from "../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
 import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
 import { MAX_PROJECT_WHITEBOARDS, MAX_WHITEBOARD_NAME_LENGTH, nextWhiteboardName, whiteboardNameError } from "../projectNotes";
 
-interface ProjectWhiteboardMenuProps {
+export interface ProjectWhiteboardMenuProps {
     notes: pxt.workspace.ProjectNotes;
     onSelect: (id: string) => void;
     onRename: (id: string, name: string) => void;
@@ -58,15 +59,29 @@ export function ProjectWhiteboardMenu(props: ProjectWhiteboardMenuProps): JSX.El
                 <p>{lf("Delete “{0}” and its drawing and notes? This cannot be undone.", edit.name)}</p>
                 {error && <p role="alert">{error}</p>}
                 <div className="project-whiteboard-menu__actions">
-                    <button type="button" onClick={close}>{lf("Cancel")}</button>
-                    <button type="button" onClick={() => {
-                        try {
-                            props.onDelete(edit.id);
-                            close();
-                        } catch (error) {
-                            setError(error instanceof Error ? error.message : lf("The whiteboard could not be deleted."));
-                        }
-                    }}>{lf("Delete")}</button>
+                    <Button
+                        type="button"
+                        nativeBehavior
+                        className="project-tools__button"
+                        label={lf("Cancel")}
+                        title={lf("Cancel")}
+                        onClick={close}
+                    />
+                    <Button
+                        type="button"
+                        nativeBehavior
+                        className="project-tools__button"
+                        label={lf("Delete")}
+                        title={lf("Delete")}
+                        onClick={() => {
+                            try {
+                                props.onDelete(edit.id);
+                                close();
+                            } catch (error) {
+                                setError(error instanceof Error ? error.message : lf("The whiteboard could not be deleted."));
+                            }
+                        }}
+                    />
                 </div>
             </> : <form onSubmit={event => {
                 event.preventDefault();
@@ -87,8 +102,17 @@ export function ProjectWhiteboardMenu(props: ProjectWhiteboardMenuProps): JSX.El
                     onChange={event => { setEdit({ ...edit, name: event.target.value }); setError(undefined); }} />
                 {error && <p id="project-whiteboard-name-error" role="alert">{error}</p>}
                 <div className="project-whiteboard-menu__actions">
-                    <button type="button" onClick={close}>{lf("Cancel")}</button>
-                    <button type="submit">{edit.kind === "rename" ? lf("Save") : lf("Add")}</button>
+                    <Button
+                        type="button"
+                        nativeBehavior
+                        className="project-tools__button"
+                        label={lf("Cancel")}
+                        title={lf("Cancel")}
+                        onClick={close}
+                    />
+                    <button type="submit" title={edit.kind === "rename" ? lf("Save") : lf("Add")}>
+                        {edit.kind === "rename" ? lf("Save") : lf("Add")}
+                    </button>
                 </div>
             </form>}
         </FocusTrap>}
