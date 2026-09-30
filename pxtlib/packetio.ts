@@ -55,7 +55,7 @@ namespace pxt.packetio {
     export let mkPacketIOWrapper: (io: PacketIO) => PacketIOWrapper;
 
     let wrapper: PacketIOWrapper;
-    let initPromise: Promise<PacketIOWrapper>;
+    const lifecycleQueue = new U.PromiseQueue();
     let onConnectionChangedHandler: () => void = () => { };
     let onSerialHandler: (buf: Uint8Array, isStderr: boolean) => void;
     let onCustomEventHandler: (type: string, buf: Uint8Array) => void;
@@ -90,30 +90,27 @@ namespace pxt.packetio {
         return wrapper?.devVariant;
     }
 
-    let disconnectPromise: Promise<void>
     export function disconnectAsync(): Promise<void> {
-        if (disconnectPromise)
-            return disconnectPromise;
-        let p = Promise.resolve();
-        if (wrapper) {
-            debug('packetio: disconnect')
-            const w = wrapper;
-            p = p.then(() => w.disconnectAsync())
-                .then(() => w.io.disposeAsync())
-                .catch(e => {
-                    // swallow execeptions
-                    pxt.reportException(e);
-                })
-                .finally(() => {
-                    initPromise = undefined; // dubious
-                    wrapper = undefined;
-                    disconnectPromise = undefined;
-                });
-            if (onConnectionChangedHandler)
-                p = p.then(() => onConnectionChangedHandler());
-            disconnectPromise = p;
+        return lifecycleQueue.enqueue("connection", disconnectCoreAsync);
+    }
+
+    async function disconnectCoreAsync(): Promise<void> {
+        if (!wrapper) return;
+        debug('packetio: disconnect');
+        const w = wrapper;
+        wrapper = undefined;
+        try {
+            try {
+                await w.disconnectAsync();
+            } finally {
+                // Dispose listeners/native resources even when disconnect fails.
+                await w.io.disposeAsync();
+            }
+        } catch (e) {
+            pxt.reportException(e);
+        } finally {
+            onConnectionChangedHandler?.();
         }
-        return p;
     }
 
     export function configureEvents(
@@ -165,13 +162,11 @@ namespace pxt.packetio {
 
     export function initAsync(force = false): Promise<PacketIOWrapper> {
         pxt.debug(`packetio: init ${force ? "(force)" : ""}`)
-        if (!initPromise) {
-            let p = Promise.resolve();
-            if (force)
-                p = p.then(() => disconnectAsync());
-            initPromise = p.then(() => wrapperAsync())
-                .finally(() => { initPromise = undefined })
-        }
-        return initPromise;
+        // Serialize creation and disposal together. Otherwise a disconnect during
+        // async creation can miss the new wrapper, or a late finally can erase it.
+        return lifecycleQueue.enqueue("connection", async () => {
+            if (force) await disconnectCoreAsync();
+            return wrapperAsync();
+        });
     }
 }
