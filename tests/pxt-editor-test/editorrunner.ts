@@ -32,8 +32,11 @@ import {
     PROJFS_SCOPE_QUOTA_BYTES,
     ProjfsEditor,
     ProjfsHost,
+    ProjfsPackage,
+    ProjfsPackageFile,
     ProjfsProject,
     utf8Length,
+    writeProjectFileAsync,
 } from "../../webapp/src/projfsHost";
 import {
     getProjectId,
@@ -1135,6 +1138,80 @@ describe("projfs user edits", () => {
         chai.expect(typechecks).equals(0);
         await new Promise(resolve => setTimeout(resolve, 120));
         chai.expect(typechecks).equals(1);
+    });
+});
+
+describe("projfs project writes", () => {
+    class FakeFile implements ProjfsPackageFile {
+        writes: { content: string, force: boolean }[] = [];
+
+        constructor(public content: string) {
+        }
+
+        async setContentAsync(content: string, force?: boolean) {
+            this.content = content;
+            this.writes.push({ content, force: !!force });
+        }
+    }
+
+    class FakePackage implements ProjfsPackage {
+        files: pxt.Map<FakeFile> = {
+            "owner/repo/brain.ts": new FakeFile("let b = 1"),
+            "owner/repo/other.ts": new FakeFile("let o = 1"),
+        };
+        saved: string[] = [];
+
+        setFile(name: string, content: string) {
+            this.files[name] = new FakeFile(content);
+        }
+
+        async saveFileAsync(name: string) {
+            this.saved.push(name);
+        }
+    }
+
+    function editorShowing(openFile: string, active: "text" | "blocks" = "text"): ProjfsEditor {
+        return {
+            isOpenFile: name => name === openFile,
+            isTextEditor: () => active === "text",
+            isBlocksEditor: () => active === "blocks",
+            overrideTypescriptFile: () => { },
+            overrideBlocksFile: () => { },
+            setSimulatorDirty: () => { },
+            typecheckNow: () => { },
+        };
+    }
+
+    let epkg: FakePackage;
+
+    beforeEach(() => {
+        epkg = new FakePackage();
+    });
+
+    it("forces the write of the file the text editor shows, so the editor reloads it", async () => {
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/brain.ts"), "owner/repo/brain.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: true }]);
+    });
+
+    it("leaves the write of a file the text editor does not show unforced", async () => {
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/other.ts"), "owner/repo/brain.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
+    });
+
+    it("leaves the write unforced when the blocks editor shows the file", async () => {
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/brain.ts", "blocks"), "owner/repo/brain.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
+    });
+
+    it("leaves the write unforced when no editor shows the project", async () => {
+        await writeProjectFileAsync(epkg, undefined, "owner/repo/brain.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
+    });
+
+    it("adds and saves a file the package does not store", async () => {
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/brain.ts"), "owner/repo/new.ts", "let n = 1");
+        chai.expect(epkg.files["owner/repo/new.ts"].content).equals("let n = 1");
+        chai.expect(epkg.saved).deep.equals(["owner/repo/new.ts"]);
     });
 });
 

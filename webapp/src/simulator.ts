@@ -10,7 +10,7 @@ import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
-import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject } from "./projfsHost";
+import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, writeProjectFileAsync } from "./projfsHost";
 
 
 
@@ -306,12 +306,7 @@ function getProjfsProject(): ProjfsProject | undefined {
     if (!epkg.header) return undefined;
     return {
         getFiles: () => epkg.getAllFiles(),
-        writeFileAsync: (name, content) => {
-            const file = epkg.files[name];
-            if (file) return file.setContentAsync(content);
-            epkg.setFile(name, content);
-            return epkg.saveFileAsync(name);
-        },
+        writeFileAsync: (name, content) => writeProjectFileAsync(epkg, config?.projfsEditor, name, content),
         deleteFileAsync: name => {
             delete epkg.files[name];
             data.invalidate("open-meta:");

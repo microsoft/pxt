@@ -21,7 +21,7 @@ export const PROJFS_RATE_WINDOW_MS = 10000;
 export interface ProjfsProject {
     /** Every file stored in the project, keyed by name, whether or not pxt.json lists it. */
     getFiles(): pxt.Map<string>;
-    /** Creates or replaces a stored file. Leaves pxt.json unchanged. */
+    /** Creates or replaces a stored file; a text editor showing the file shows the new content. Leaves pxt.json unchanged. */
     writeFileAsync(name: string, content: string): Promise<void>;
     /** Deletes a stored file. Leaves pxt.json unchanged. */
     deleteFileAsync(name: string): Promise<void>;
@@ -72,6 +72,40 @@ export function applyUserEdit(editor: ProjfsEditor, name: string, content: strin
     }
     editor.setSimulatorDirty();
     editor.typecheckNow();
+}
+
+/** A stored file of the editor package, as {@link writeProjectFileAsync} changes it. */
+export interface ProjfsPackageFile {
+    /**
+     * Replaces the file's content and saves it.
+     * @param force if true, the text editor reloads the file it shows
+     */
+    setContentAsync(content: string, force?: boolean): Promise<void>;
+}
+
+/** The editor package, as {@link writeProjectFileAsync} changes it. */
+export interface ProjfsPackage {
+    /** The package's stored files, keyed by name. */
+    files: pxt.Map<ProjfsPackageFile>;
+    /** Adds a stored file holding `content`, without saving it. */
+    setFile(name: string, content: string): void;
+    /** Saves the stored file `name`. */
+    saveFileAsync(name: string): Promise<void>;
+}
+
+/**
+ * Creates or replaces the stored file `name` of `epkg` and saves it. If the
+ * text editor shows the file, it reloads to show `content`, which replaces any
+ * change not yet saved from it and resets its undo history and cursor.
+ * @param editor the editor showing the project, or undefined if there is none
+ */
+export function writeProjectFileAsync(epkg: ProjfsPackage, editor: ProjfsEditor | undefined, name: string, content: string): Promise<void> {
+    const file = epkg.files[name];
+    if (!file) {
+        epkg.setFile(name, content);
+        return epkg.saveFileAsync(name);
+    }
+    return file.setContentAsync(content, !!editor && editor.isOpenFile(name) && editor.isTextEditor());
 }
 
 /** Returns the size of `content` in UTF-8 bytes. */

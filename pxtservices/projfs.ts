@@ -11,10 +11,11 @@
  * `id`.
  *
  * Writes and deletes come in two classes. By default a change is an artifact:
- * saved with the project, but the editor and a running simulator are left
- * alone. A change flagged `dirty` is treated as a user edit: the editor showing
- * the file shows the new content, the project is typechecked, and the
- * simulator reruns if it runs automatically, just as after the user types.
+ * saved with the project, and the text editor showing a written file shows the
+ * new content, but a running simulator is left alone. A change flagged `dirty`
+ * is treated as a user edit: the editor showing the file shows the new
+ * content, the project is typechecked, and the simulator reruns if it runs
+ * automatically, just as after the user types.
  *
  * This module has no dependencies; a simulator extension can import or copy it
  * as-is.
@@ -211,12 +212,14 @@ export interface ProjfsMutationOptions {
      * the simulator reruns if it runs automatically. Several dirty changes in
      * quick succession lead to one rerun. Blocks the change defines reach the
      * toolbox the next time the toolbox loads, as after the user types them.
-     * Replacing the file the text editor shows resets its undo history and
-     * cursor.
      *
      * If false or absent, the change is an artifact: it is saved with the
-     * project, and neither the editor nor a running simulator notices it until
-     * the project is next loaded or run.
+     * project, and the text editor showing a written file shows the new
+     * content, but a running simulator keeps its code until the project next
+     * runs.
+     *
+     * Either way, writing the file the text editor shows replaces any change
+     * not yet saved from it and resets its undo history and cursor.
      */
     dirty?: boolean;
 }
