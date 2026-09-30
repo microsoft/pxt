@@ -280,7 +280,7 @@ namespace ts.pxtc.assembler {
         // experimental: it hasn't been verified against every processor's
         // calling convention (e.g. which registers must survive a call), so
         // it defaults to off and must be opted into explicitly.
-        public disableProcedurize = true;
+        public disableProcedurize = false;
         public procedurizeMinLen = 5;
         public procedurizeMaxLen = 10;
         public procedurizeMinCount = 3;
@@ -1388,9 +1388,6 @@ namespace ts.pxtc.assembler {
             // re-validating stack balance against them here would be both
             // redundant and wrong (each call site may have a different local
             // stack depth when it invokes the shared body).
-            this.buildLine("@nostackcheck", newLines);
-            this.buildLine(".section code", newLines);
-            this.buildLine(".balign 4", newLines);
             const emitted: pxt.Map<boolean> = {};
             retained.forEach(r => {
                 if (emitted[r.groupKey])
@@ -1399,6 +1396,9 @@ namespace ts.pxtc.assembler {
                 const wrapped = this.ei.wrapProcedureBody(keys.slice(r.start, r.start + r.n));
                 if (!wrapped)
                     return;
+                this.buildLine("@nostackcheck", newLines);
+                this.buildLine(".section code", newLines);
+                this.buildLine(".balign 4", newLines);
                 this.buildLine(`${procNames[r.groupKey]}:`, newLines);
                 wrapped.forEach(line => this.buildLine(`    ${line}`, newLines));
             });
