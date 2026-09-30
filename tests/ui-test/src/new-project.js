@@ -18,6 +18,8 @@ class NewProjectPage extends DomObject {
 
         //Assert the title is correct
         assert.equal(await this.getAttribute('.openproject', 'title'), 'Home');
+
+        await this.testZoomControls();
         
         //Open the project name input popup again
         await this.click('.openproject');
@@ -34,6 +36,26 @@ class NewProjectPage extends DomObject {
         assert.equal(text, "Project1");
 
         return true;
+    }
+
+    async testZoomControls() {
+        const zoomIn = '#editorToolbarArea .zoomin-editortools-btn';
+        const zoomOut = '#editorToolbarArea .zoomout-editortools-btn';
+        const initialTitle = await this.getAttribute(zoomIn, 'title');
+        const initialMatch = /^Zoom In \((\d+)%\)$/.exec(initialTitle);
+        assert.ok(initialMatch, 'Zoom tooltip should show the current percentage');
+        assert.equal(await this.getAttribute(zoomOut, 'title'), `Zoom Out (${initialMatch[1]}%)`);
+
+        await this.click(zoomIn);
+        const zoomedTitle = await this.getAttribute(zoomIn, 'title');
+        const zoomedMatch = /^Zoom In \((\d+)%\)$/.exec(zoomedTitle);
+        assert.ok(zoomedMatch, 'Zoom tooltip should retain the percentage after zooming');
+        assert.ok(Number(zoomedMatch[1]) > Number(initialMatch[1]));
+        assert.equal(await this.getAttribute(zoomOut, 'title'), `Zoom Out (${zoomedMatch[1]}%)`);
+
+        await this.click(zoomOut);
+        assert.equal(await this.getAttribute(zoomIn, 'title'), initialTitle);
+        assert.equal(await this.getAttribute(zoomOut, 'title'), `Zoom Out (${initialMatch[1]}%)`);
     }
 
     test() {
