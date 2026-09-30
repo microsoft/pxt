@@ -117,6 +117,7 @@ describe("home search filters", () => {
             {
                 name: "Blocks tutorial",
                 cardType: "tutorial",
+                editor: "blocks",
                 difficulty: ["beginner"],
                 otherActions: [{ url: "/tutorial", cardType: "tutorial", editor: "py" }],
             },
@@ -136,9 +137,36 @@ describe("home search filters", () => {
         chai.expect(byId.activityType.options.some(option => option.id === "extension")).equals(false);
     });
 
+    it("does not infer a language from the card type", () => {
+        const unspecifiedTutorial: pxt.CodeCard = {
+            name: "Unspecified tutorial",
+            cardType: "tutorial",
+        };
+        const pythonTutorial: pxt.CodeCard = {
+            name: "Python tutorial",
+            cardType: "tutorial",
+            editor: "py",
+        };
+        const javascriptExample: pxt.CodeCard = {
+            name: "JavaScript example",
+            cardType: "example",
+            editor: "js",
+        };
+        const filters = getAvailableHomeSearchFilters([
+            unspecifiedTutorial,
+            pythonTutorial,
+            javascriptExample,
+        ]);
+        const byId = pxt.Util.toDictionary(filters, filter => filter.id);
+
+        chai.expect(byId.language.options.map(option => option.id)).deep.equals(["js", "py"]);
+        chai.expect(filterHomeSearchCards([unspecifiedTutorial], { language: ["blocks"] })).deep.equals([]);
+        chai.expect(filterHomeSearchCards([pythonTutorial], { language: ["py"] })).deep.equals([pythonTutorial]);
+    });
+
     it("matches any selected value within a filter and every selected filter", () => {
         const cards: pxt.CodeCard[] = [
-            { name: "Beginner blocks", cardType: "tutorial", difficulty: "beginner", targetAge: ["9-12"] },
+            { name: "Beginner blocks", cardType: "tutorial", editor: "blocks", difficulty: "beginner", targetAge: ["9-12"] },
             { name: "Beginner Python", cardType: "tutorial", editor: "py", difficulty: "beginner", targetAge: ["13-18"] },
             { name: "Expert Python", cardType: "tutorial", editor: "py", difficulty: "expert", targetAge: ["9-12"] },
         ];
@@ -153,7 +181,7 @@ describe("home search filters", () => {
 
     it("counts each option against the query candidates and other active filters", () => {
         const queryMatches: pxt.CodeCard[] = [
-            { name: "Beginner blocks", cardType: "tutorial", difficulty: "beginner", targetAge: ["9-12"] },
+            { name: "Beginner blocks", cardType: "tutorial", editor: "blocks", difficulty: "beginner", targetAge: ["9-12"] },
             { name: "Beginner Python", cardType: "tutorial", editor: "py", difficulty: "beginner", targetAge: ["13-18"] },
             { name: "Expert Python", cardType: "tutorial", editor: "py", difficulty: "expert", targetAge: ["9-12"] },
         ];
