@@ -5,6 +5,7 @@ import { TabList } from "../../../react-common/components/controls/TabList";
 import * as auth from "../auth";
 import * as backpack from "../backpack";
 import { createBackpackSearch } from "../backpackSearch";
+import { BackpackUserError, backpackUserErrorMessage } from "../backpackErrors";
 import { getMissingBlockSnippetDependencies } from "../blockSnippet";
 import * as data from "../data";
 import * as pkg from "../package";
@@ -105,7 +106,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string; asset
 
     const readItems = (): backpack.BackpackState => backpack.getBackpackState();
     const reportError = (reason: unknown) => {
-        setError(reason instanceof Error ? reason.message : lf("Could not update your backpack. Please try again."));
+        setError(backpackUserErrorMessage(reason, lf("Could not update your backpack. Please try again.")));
     };
 
     React.useEffect(() => {
@@ -516,7 +517,7 @@ function BackpackContents(props: ProjectBackpackProps & { userId?: string; asset
             onOpenError={message => { setErrorEntryKey(entryKey(assetEdit.entry)); setError(message); closeAssetEdit(); }}
             onClose={closeAssetEdit} onSave={async item => {
                 if (!isCurrent() || !backpack.canEditBackpackAsset(props.headerId)) {
-                    throw new Error(lf("Your project or account changed. Close the asset editor and try again."));
+                    throw new BackpackUserError(lf("Your project or account changed. Close the asset editor and try again."));
                 }
                 await backpack.saveBackpackAssetAsync(assetEdit.entry, item);
                 if (!isCurrent()) return;

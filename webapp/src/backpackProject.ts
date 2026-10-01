@@ -2,6 +2,7 @@ import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 import * as pkg from "./package";
 import * as core from "./core";
+import { BackpackUserError } from "./backpackErrors";
 import { BackpackImportPosition, validateBackpackItem, validateBackpackRequirements } from "./backpack";
 import { BlockSnippetProjectHost, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
 
@@ -18,7 +19,7 @@ export function getBackpackRequirements(code: string, info: pxtc.BlocksInfo, mai
         try {
             validateBackpackRequirements({ dependencies: { [name]: requirements.dependencies[name] } });
         } catch {
-            throw new Error(lf("The extension '{0}' cannot be copied to another project. Publish it and install the published extension before saving this snippet to your Backpack.", name));
+            throw new BackpackUserError(lf("The extension '{0}' cannot be copied to another project. Publish it and install the published extension before saving this snippet to your Backpack.", name));
         }
     }
     return { dependencies: requirements.dependencies, projectBlocks: requirements.projectBlocks || {} };
@@ -31,7 +32,7 @@ export async function addBackpackToProjectAsync(item: pxt.auth.BackpackItem, hos
     const types = getBlockSnippetTypes(pxtblockly.parseBackpackCode(saved.code).blocks);
     const assertCurrent = (): void => {
         if (!host.isCurrent() || !host.headerId || pkg.mainEditorPkg().header?.id !== host.headerId) {
-            throw new Error(lf("Your project or account changed. Please retry the operation."));
+            throw new BackpackUserError(lf("Your project or account changed. Please retry the operation."));
         }
     };
     const wait = async <T>(action: () => Promise<T>): Promise<T> => {

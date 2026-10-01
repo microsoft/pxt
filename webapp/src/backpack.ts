@@ -1,3 +1,5 @@
+import { BackpackUserError, backpackUserErrorMessage } from "./backpackErrors";
+
 export const MAX_BACKPACK_ITEMS = 50;
 export const MAX_BACKPACK_ASSETS = 200;
 export const MAX_BACKPACK_NAME_LENGTH = 100;
@@ -37,7 +39,7 @@ export function backpackLocalNamespace(target: string, userId?: string): string 
 }
 
 function storageError(): Error {
-    return new Error(lf("Could not save or read your local backpack. Allow browser storage and check available space, then try again."));
+    return new BackpackUserError(lf("Could not save or read your local backpack. Allow browser storage and check available space, then try again."));
 }
 
 /** Injectable IndexedDB factory; never falls back to memory or native localStorage. */
@@ -229,13 +231,14 @@ function isRecord(value: unknown): value is pxt.Map<unknown> {
 
 function validateId(id: unknown): asserts id is string {
     if (typeof id !== "string" || !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(id)) {
-        throw new Error(lf("Invalid backpack item ID."));
+        throw new Error("Invalid backpack item ID.");
     }
 }
 
 function validateName(name: unknown): asserts name is string {
-    if (typeof name !== "string" || !name.trim() || name.length > MAX_BACKPACK_NAME_LENGTH || hasControlCharacters(name)) {
-        throw new Error(lf("Backpack names must contain 1 to 100 characters without control characters."));
+    if (typeof name !== "string") throw new Error("Invalid backpack name type.");
+    if (!name.trim() || name.length > MAX_BACKPACK_NAME_LENGTH || hasControlCharacters(name)) {
+        throw new BackpackUserError(lf("Backpack names must contain 1 to 100 characters without control characters."));
     }
 }
 
@@ -243,7 +246,7 @@ function validateVersions(value: unknown): pxt.auth.BackpackVersions {
     if (!isRecord(value) || Object.keys(value).length !== 2 || !own(value, "target") || !own(value, "pxt")
         || Object.values(value).some(version => typeof version !== "string" || version.length > 100
             || !/^v?\d+\.\d+\.\d+(?:-[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.test(version))) {
-        throw new Error(lf("This backpack item has invalid editor version information."));
+        throw new Error("This backpack item has invalid editor version information.");
     }
     return { target: value.target as string, pxt: value.pxt as string };
 }
@@ -259,14 +262,15 @@ function portableDependency(name: string, version: string): boolean {
 
 /** Validates untrusted local/cloud/import data and returns a detached, bounded item. */
 export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
-    if (!isRecord(value)) throw new Error(lf("Invalid backpack item."));
+    if (!isRecord(value)) throw new Error("Invalid backpack item.");
     validateId(value.id);
     validateName(value.name);
-    if (value.kind !== "code" && value.kind !== "asset") throw new Error(lf("Invalid backpack item kind."));
+    if (value.kind !== "code" && value.kind !== "asset") throw new Error("Invalid backpack item kind.");
     const versions = validateVersions(value.versions);
     const maxCodeBytes = value.kind === "asset" ? DEFAULT_LIMITS.maxAssetCodeBytes : MAX_BACKPACK_CODE_LENGTH;
-    if (typeof value.code !== "string" || utf8Length(value.code) > maxCodeBytes) {
-        throw new Error(lf("Backpack code must be text of at most {0} UTF-8 bytes.", maxCodeBytes));
+    if (typeof value.code !== "string") throw new Error("Invalid backpack code type.");
+    if (utf8Length(value.code) > maxCodeBytes) {
+        throw new BackpackRequestError("backpack_entry_too_large");
     }
     const payload: unknown = pxt.Util.jsonTryParse(value.code);
     const blocks = isRecord(payload) && Array.isArray(payload.blocks) ? payload.blocks : [];
@@ -276,24 +280,24 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
         || !root.type || !isRecord(root.fields) || !Object.keys(root.fields).length || own(root, "next")
         || root.inputs !== undefined && (!isRecord(root.inputs) || !!Object.keys(root.inputs).length)
         || own(value, "previewUri") || own(value, "previewPixelDensity"))) {
-        throw new Error(lf("Invalid standalone backpack asset."));
+        throw new Error("Invalid standalone backpack asset.");
     }
     if (typeof value.blockText !== "string" || value.blockText.length > 100000) {
-        throw new Error(lf("Backpack block text must be text of at most {0} characters.", 100000));
+        throw new Error("Invalid backpack block text.");
     }
     if (typeof value.createdAt !== "number" || !Number.isFinite(value.createdAt) || value.createdAt < 0) {
-        throw new Error(lf("Invalid backpack creation time."));
+        throw new Error("Invalid backpack creation time.");
     }
     const metadata = validateBackpackRequirements(value);
     if (value.previewUri !== undefined && (typeof value.previewUri !== "string"
         || value.previewUri.length > 22 + 4 * Math.ceil(DEFAULT_LIMITS.maxPreviewBytes / 3)
         || !/^data:image\/png;base64,iVBORw0KGgo[A-Za-z0-9+/]*={0,2}$/.test(value.previewUri)
         || (value.previewUri.length - "data:image/png;base64,".length) % 4 !== 0)) {
-        throw new Error(lf("Backpack previews must be PNG data URIs of at most {0} bytes.", DEFAULT_LIMITS.maxPreviewBytes));
+        throw new Error("Invalid backpack PNG preview.");
     }
     if (value.previewPixelDensity !== undefined && (!value.previewUri
         || typeof value.previewPixelDensity !== "number" || ![1, 1.5, 2].includes(value.previewPixelDensity))) {
-        throw new Error(lf("Invalid backpack preview pixel density."));
+        throw new Error("Invalid backpack preview pixel density.");
     }
     const result: pxt.auth.BackpackItem = {
         id: value.id, name: value.name, kind: value.kind, versions,
@@ -313,28 +317,28 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
 /** Shared dependency/source policy, independent of a capture's code and editor version. */
 export function validateBackpackRequirements(value: pxt.Map<unknown>): { dependencies: pxt.Map<string>; projectBlocks?: pxt.Map<string> } {
     if (!isRecord(value.dependencies) || Object.keys(value.dependencies).length > 100) {
-        throw new Error(lf("Invalid backpack dependencies (maximum 100 packages)."));
+        throw new Error("Invalid backpack dependencies (maximum 100 packages).");
     }
     const dependencies: pxt.Map<string> = {};
     for (const name of Object.keys(value.dependencies)) {
         const version = value.dependencies[name];
         if (!safeKey(name) || !/^[A-Za-z0-9][A-Za-z0-9_-]{0,99}$/.test(name)
             || typeof version !== "string" || version.length > 256 || !portableDependency(name, version)) {
-            throw new Error(lf("Backpack dependencies must use bundled packages, GitHub repositories, or published IDs."));
+            throw new Error("Backpack dependencies must use bundled packages, GitHub repositories, or published IDs.");
         }
         dependencies[name] = version;
     }
     const result: { dependencies: pxt.Map<string>; projectBlocks?: pxt.Map<string> } = { dependencies };
     if (value.projectBlocks !== undefined) {
         if (!isRecord(value.projectBlocks) || Object.keys(value.projectBlocks).length > 500) {
-            throw new Error(lf("Invalid project-defined blocks in this backpack item."));
+            throw new Error("Invalid project-defined blocks in this backpack item.");
         }
         result.projectBlocks = {};
         for (const type of Object.keys(value.projectBlocks)) {
             const file = value.projectBlocks[type];
             if (!safeKey(type) || !type || type.length > 256 || hasControlCharacters(type)
                 || typeof file !== "string" || !file || file.length > 256 || hasControlCharacters(file)) {
-                throw new Error(lf("Invalid project-defined blocks in this backpack item."));
+                throw new Error("Invalid project-defined blocks in this backpack item.");
             }
             result.projectBlocks[type] = file;
         }
@@ -376,19 +380,19 @@ function isActive(identity: Identity): boolean {
 }
 
 function assertActive(identity: Identity): void {
-    if (!isActive(identity)) throw new Error(lf("Your account or editor changed. Please reopen the backpack."));
+    if (!isActive(identity)) throw new BackpackUserError(lf("Your account or editor changed. Please reopen the backpack."));
 }
 
 // Capture at invocation, not when the queued operation eventually starts.
 async function captureAsync(): Promise<OperationContext> {
     const identity = activeIdentity();
-    if (!identity) throw new Error(lf("Your backpack session is not ready. Please reopen the backpack."));
+    if (!identity) throw new BackpackUserError(lf("Your backpack session is not ready. Please reopen the backpack."));
     if (identity.kind === "local") return identity;
     let token: string;
     try { token = await pxt.auth.getAuthTokenAsync(); }
-    catch { throw new Error(lf("Your backpack session is unavailable. Please sign in again.")); }
+    catch { throw new BackpackUserError(lf("Your backpack session is unavailable. Please sign in again.")); }
     assertActive(identity);
-    if (!token) throw new Error(lf("Sign in to use your backpack."));
+    if (!token) throw new BackpackUserError(lf("Sign in to use your backpack."));
     const context = { ...identity, token };
     await verifyAsync(context);
     return context;
@@ -400,13 +404,13 @@ async function verifyAsync(context: OperationContext): Promise<void> {
     let state: Readonly<pxt.auth.UserState>;
     let token: string;
     try { state = await pxt.auth.getUserStateAsync(); }
-    catch { throw new Error(lf("Your backpack session is unavailable. Please sign in again.")); }
+    catch { throw new BackpackUserError(lf("Your backpack session is unavailable. Please sign in again.")); }
     assertActive(context);
-    if (state?.profile?.id !== context.userId) throw new Error(lf("Your backpack account changed."));
+    if (state?.profile?.id !== context.userId) throw new BackpackUserError(lf("Your backpack account changed."));
     try { token = await pxt.auth.getAuthTokenAsync(); }
-    catch { throw new Error(lf("Your backpack session is unavailable. Please sign in again.")); }
+    catch { throw new BackpackUserError(lf("Your backpack session is unavailable. Please sign in again.")); }
     assertActive(context);
-    if (!token || token !== context.token) throw new Error(lf("Your backpack session changed. Please try again."));
+    if (!token || token !== context.token) throw new BackpackUserError(lf("Your backpack session changed. Please try again."));
 }
 
 function enqueue(action: (context: OperationContext) => Promise<void>): Promise<void> {
@@ -441,7 +445,7 @@ export function backpackErrorMessage(code?: string): string {
     }
 }
 
-class BackpackRequestError extends Error {
+class BackpackRequestError extends BackpackUserError {
     constructor(public readonly code: string) { super(backpackErrorMessage(code)); }
 }
 
@@ -474,7 +478,7 @@ async function requestAsync(context: CloudContext, path: string, method = "GET",
     if (response.statusCode === 401 || response.statusCode === 403) clearBackpackCache();
     if (response.statusCode === 401) {
         try { await pxt.auth.AuthClient.staticLogoutAsync(); } catch { /* Do not expose auth transport details. */ }
-        throw new Error(lf("Your session expired. Sign in again to use your backpack."));
+        throw new BackpackUserError(lf("Your session expired. Sign in again to use your backpack."));
     }
     if (response.statusCode < 200 || response.statusCode >= 300) {
         const body: unknown = response.json;
@@ -493,7 +497,7 @@ async function requestAsync(context: CloudContext, path: string, method = "GET",
 
 function localStorage(): BackpackLocalStorage {
     try { return createBackpackLocalStorage(window.indexedDB); }
-    catch { throw new Error(lf("Could not access your local backpack. Allow browser storage and try again.")); }
+    catch { throw new BackpackUserError(lf("Could not access your local backpack. Allow browser storage and try again.")); }
 }
 
 function namespace(context: Identity): string {
@@ -528,7 +532,7 @@ export function readBackpackEntry(id: string, value: unknown, source: "local" | 
     try {
         validateId(id);
         const item = validateBackpackItem(value);
-        if (item.id !== id) throw new Error(lf("A saved backpack item has a mismatched ID."));
+        if (item.id !== id) throw new Error("A saved backpack item has a mismatched ID.");
         return { id, source, name: item.name, createdAt: item.createdAt, item };
     } catch {
         // Never render the invalid preview/code or coerce arbitrary objects to strings.
@@ -640,7 +644,7 @@ function observed(entry: BackpackEntry): BackpackEntry {
     if (!saved || saved.summary?.version !== entry.summary?.version
         || saved.local?.payload !== entry.local?.payload || saved.local?.owner !== entry.local?.owner
         || saved.local?.firstAttemptAt !== entry.local?.firstAttemptAt) {
-        throw new Error(lf("This snippet is no longer current. Reopen the backpack and try again."));
+        throw new BackpackUserError(lf("This snippet is no longer current. Reopen the backpack and try again."));
     }
     return JSON.parse(JSON.stringify(saved));
 }
@@ -649,7 +653,7 @@ async function uploadAsync(context: CloudContext, entry: BackpackEntry): Promise
     if (!entry.item || !entry.local) return;
     let record = entry.local;
     if (record.firstAttemptAt && Date.now() - record.firstAttemptAt > 24 * 60 * 60 * 1000) {
-        throw new Error(lf("This pending save is more than a day old. Add it to a project and capture it again to save a new copy."));
+        throw new BackpackUserError(lf("This pending save is more than a day old. Add it to a project and capture it again to save a new copy."));
     }
     const claimed = { ...record, owner: context.userId, firstAttemptAt: record.firstAttemptAt || Date.now() };
     if (!await changeLocalAsync(context, record, claimed)) throw new BackpackRequestError("backpack_version_conflict");
@@ -729,7 +733,7 @@ export function refreshBackpackAsync(): Promise<void> {
             await verifyAsync(context);
             const denied = error instanceof BackpackRequestError && error.code === "backpack_access_denied";
             publish(context, denied ? [] : previous.entries.length ? previous.entries : [...cloud.values(), ...locals], {
-                complete: false, warning: error instanceof Error ? error.message : backpackErrorMessage()
+                complete: false, warning: backpackUserErrorMessage(error, backpackErrorMessage())
             });
             throw error;
         }
@@ -740,7 +744,7 @@ export function refreshBackpackAsync(): Promise<void> {
             catch (error) {
                 await verifyAsync(context);
                 const saved = currentEntries(context).find(candidate => backpackEntryKey(candidate) === backpackEntryKey(entry));
-                if (saved) upsert(context, { ...saved, pendingError: error instanceof Error ? error.message : backpackErrorMessage() });
+                if (saved) upsert(context, { ...saved, pendingError: backpackUserErrorMessage(error, backpackErrorMessage()) });
             }
         }
     });
@@ -780,7 +784,7 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
             catch (error) {
                 await verifyAsync(context);
                 const saved = currentEntries(context).find(candidate => backpackEntryKey(candidate) === backpackEntryKey(entry));
-                if (saved) upsert(context, { ...saved, pendingError: error instanceof Error ? error.message : backpackErrorMessage() });
+                if (saved) upsert(context, { ...saved, pendingError: backpackUserErrorMessage(error, backpackErrorMessage()) });
                 throw error;
             }
         }
@@ -790,12 +794,12 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
 export async function retryBackpackEntryAsync(entry: BackpackEntry): Promise<void> {
     const saved = observed(entry);
     return enqueue(async context => {
-        if (context.kind !== "cloud") throw new Error(lf("Sign in to sync this snippet."));
+        if (context.kind !== "cloud") throw new BackpackUserError(lf("Sign in to sync this snippet."));
         try { await uploadAsync(context, saved); }
         catch (error) {
             await verifyAsync(context);
             const current = currentEntries(context).find(candidate => backpackEntryKey(candidate) === backpackEntryKey(saved));
-            if (current) upsert(context, { ...current, pendingError: error instanceof Error ? error.message : backpackErrorMessage() });
+            if (current) upsert(context, { ...current, pendingError: backpackUserErrorMessage(error, backpackErrorMessage()) });
             throw error;
         }
     });
@@ -812,7 +816,7 @@ export async function renameBackpackItemAsync(id: string, name: string, entry?: 
         if (saved.error) throw new BackpackRequestError("backpack_invalid_entry");
         if (saved.source === "local") {
             // Once sent, the original create payload must remain immutable for retries.
-            if (saved.local.firstAttemptAt) throw new Error(lf("Retry syncing this snippet before renaming it."));
+            if (saved.local.firstAttemptAt) throw new BackpackUserError(lf("Retry syncing this snippet before renaming it."));
             const renamed = { ...saved.local, payload: JSON.stringify(validateBackpackItem({ ...saved.item, name })) };
             if (!await changeLocalAsync(context, saved.local, renamed)) throw new BackpackRequestError("backpack_version_conflict");
             upsert(context, localEntry(renamed));
@@ -932,7 +936,7 @@ export async function getBackpackAssetEditorContextAsync(headerId: string): Prom
     const host = assetEditorHost;
     const check = (): void => {
         if (assetEditorHost !== host || !canEditBackpackAsset(headerId)) {
-            throw new Error(lf("Open an editable project to edit this asset."));
+            throw new BackpackUserError(lf("Open an editable project to edit this asset."));
         }
     };
     check();
@@ -944,7 +948,7 @@ export async function getBackpackAssetEditorContextAsync(headerId: string): Prom
 
 export function getBackpackAssetPreviewContext(headerId: string): BackpackAssetEditorContext {
     if (!isBackpackEnabled() || registeredEditor?.editor.headerId() !== headerId) {
-        throw new Error(lf("The asset preview is unavailable."));
+        throw new BackpackUserError(lf("The asset preview is unavailable."));
     }
     return registeredEditor.editor.assetEditorContext();
 }
@@ -955,7 +959,7 @@ export async function importBackpackItemAsync(item: pxt.auth.BackpackItem, heade
     const context = await captureAsync();
     await verifyAsync(context);
     if (!registration || registeredEditor !== registration || !canImportBackpack(headerId, validated.kind)) {
-        throw new Error(lf("Open a compatible project editor to import this backpack item."));
+        throw new BackpackUserError(lf("Open a compatible project editor to import this backpack item."));
     }
     const added = await registration.editor.importAsync(validated);
     await verifyAsync(context);
@@ -969,11 +973,11 @@ export async function importBackpackEntryAsync(entry: BackpackEntry, headerId: s
     const context = await captureAsync();
     const registration = registeredEditor;
     if (!registration || !canImportBackpack(headerId, saved.item?.kind || saved.summary?.kind)) {
-        throw new Error(lf("Open a compatible project editor to import this backpack item."));
+        throw new BackpackUserError(lf("Open a compatible project editor to import this backpack item."));
     }
     const item = await readItemAsync(saved, context);
     if (registeredEditor !== registration || !canImportBackpack(headerId, item.kind)) {
-        throw new Error(lf("Open a compatible project editor to import this backpack item."));
+        throw new BackpackUserError(lf("Open a compatible project editor to import this backpack item."));
     }
     // Do not recapture a potentially different identity between fetching and import.
     const added = await registration.editor.importAsync(item, position);
@@ -1010,7 +1014,7 @@ async function readItemAsync(saved: BackpackEntry, context: OperationContext): P
                     && entry.summary.version === saved.summary.version)) {
                 upsert(context, { ...saved, error: backpackErrorMessage(code) });
             }
-            throw new Error(backpackErrorMessage(code));
+            throw new BackpackUserError(backpackErrorMessage(code));
         }
     }
     await verifyAsync(context);
@@ -1020,7 +1024,7 @@ async function readItemAsync(saved: BackpackEntry, context: OperationContext): P
 export async function loadBackpackAssetAsync(entry: BackpackEntry): Promise<pxt.auth.BackpackItem> {
     const saved = observed(entry);
     if (saved.error || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
-    if (saved.local?.firstAttemptAt) throw new Error(lf("Retry syncing this asset before editing it."));
+    if (saved.local?.firstAttemptAt) throw new BackpackUserError(lf("Retry syncing this asset before editing it."));
     return readItemAsync(saved, await captureAsync());
 }
 
@@ -1082,7 +1086,7 @@ export function saveBackpackAssetAsync(entry: BackpackEntry, item: pxt.auth.Back
         || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
     return enqueue(async context => {
         if (saved.source === "local") {
-            if (saved.local.firstAttemptAt) throw new Error(lf("Retry syncing this asset before editing it."));
+            if (saved.local.firstAttemptAt) throw new BackpackUserError(lf("Retry syncing this asset before editing it."));
             const next = { ...saved.local, payload: JSON.stringify({ ...edited, createdAt: saved.item.createdAt }) };
             const records = await localStorage().listAsync(saved.local.namespace);
             await verifyAsync(context);
@@ -1128,7 +1132,7 @@ export async function getBackpackPreviewAsync(entry: BackpackEntry, signal: Abor
         if (signal.aborted) throw new BackpackRequestError(undefined);
         return blob as Blob;
     } catch {
-        throw new Error(lf("This snippet's preview is unavailable."));
+        throw new BackpackUserError(lf("This snippet's preview is unavailable."));
     }
 }
 

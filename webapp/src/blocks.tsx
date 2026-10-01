@@ -44,6 +44,7 @@ import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 import * as backpack from "./backpack";
+import { backpackUserErrorMessage } from "./backpackErrors";
 import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./backpackProject";
 import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
 import { backpackPreviewAsync } from "./backpackPreview";
@@ -2638,7 +2639,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         } catch (error) {
             if (!isCurrentCapture()) return;
             await core.confirmAsync({ header: lf("Cannot save this snippet"),
-                body: error instanceof Error ? error.message : lf("This block could not be saved to your backpack."),
+                body: backpackUserErrorMessage(error, lf("This block could not be saved to your backpack.")),
                 hideCancel: true, agreeLbl: lf("OK") });
             return;
         }
@@ -2653,7 +2654,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             } catch (error) {
                 if (!isCurrentCapture()) return;
                 const retry = await core.confirmAsync({ header: lf("Backpack was not saved"),
-                    body: error instanceof Error ? error.message : lf("Could not save your backpack. Please try again."),
+                    body: backpackUserErrorMessage(error, lf("Could not save your backpack. Please try again.")),
                     agreeLbl: lf("Retry") });
                 if (!retry) return;
             }
@@ -2788,7 +2789,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             if (!isCurrent()) return;
             await core.confirmAsync({
                 header: lf("Paste Error"),
-                body: error instanceof Error ? error.message : lf("The blocks could not be pasted. Please try again."),
+                body: backpackUserErrorMessage(error, lf("The blocks could not be pasted. Please try again.")),
                 hideCancel: true, agreeLbl: lf("OK")
             }).catch(pxt.reportException);
         } finally {
@@ -3063,7 +3064,7 @@ function saveCopyData(
         // A failed metadata capture or storage write must never delete cut blocks.
         void core.confirmAsync({
             header: lf("Copy Error"),
-            body: error instanceof Error ? error.message : lf("The blocks could not be copied. Please try again."),
+            body: backpackUserErrorMessage(error, lf("The blocks could not be copied. Please try again.")),
             hideCancel: true, agreeLbl: lf("OK")
         }).catch(pxt.reportException);
         return false;

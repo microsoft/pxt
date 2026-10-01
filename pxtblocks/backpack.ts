@@ -40,21 +40,21 @@ const stateKeys = new Set([
 ]);
 
 function invalidCode(): never {
-    throw new Error(lf("This Backpack item contains invalid or unsupported blocks."));
+    throw new Error("This Backpack item contains invalid or unsupported blocks.");
 }
 
 function checkCodeSize(length: number): void {
     if (length > MAX_CODE_LENGTH) {
-        throw new Error(lf("This snippet is too large for Backpack ({0} characters; limit {1}). This includes its supporting functions and assets. Try saving a smaller block container.", length, MAX_CODE_LENGTH));
+        pxt.U.userError(lf("This snippet is too large for Backpack ({0} characters; limit {1}). This includes its supporting functions and assets. Try saving a smaller block container.", length, MAX_CODE_LENGTH));
     }
 }
 
 function tooManyBlocks(): never {
-    throw new Error(lf("This snippet contains too many blocks for Backpack. The limit is {0} blocks, including supporting functions. Try saving a smaller block container.", MAX_BLOCKS));
+    return pxt.U.userError(lf("This snippet contains too many blocks for Backpack. The limit is {0} blocks, including supporting functions. Try saving a smaller block container.", MAX_BLOCKS));
 }
 
 function tooDeep(): never {
-    throw new Error(lf("This snippet is nested too deeply for Backpack. Try saving a smaller block container."));
+    return pxt.U.userError(lf("This snippet is nested too deeply for Backpack. Try saving a smaller block container."));
 }
 
 function isObject(value: unknown): value is JsonObject {
@@ -183,7 +183,7 @@ export function parseBackpackCode(code: string): BackpackCode {
             || Object.keys(value).some(key => !stateKeys.has(key))) invalidCode();
         // These stock Blockly blocks are not supported by the PXT compiler.
         if (value.type === "procedures_defreturn" || value.type === "procedures_callreturn") {
-            throw new Error(lf("The block '{0}' is not supported by Backpack.", value.type));
+            pxt.U.userError(lf("The block '{0}' is not supported by Backpack.", value.type));
         }
         for (const key of ["id", "data"]) {
             if (key in value && typeof value[key] !== "string") invalidCode();
@@ -246,7 +246,7 @@ export function parseBackpackCode(code: string): BackpackCode {
             || isLegacyCall(state.type)) {
             const definition = definitions.get(functionKey(state));
             if (!definition) {
-                throw new Error(lf("The function '{0}' is missing from this snippet. Include its definition before saving to Backpack.", functionName(state)));
+                throw new Error(`The function '${functionName(state)}' is missing from this snippet.`);
             }
             if (isFunction(state.type)) {
                 if (JSON.stringify(state.extraState.arguments) !== JSON.stringify(definition.extraState.arguments)
@@ -263,7 +263,7 @@ export function parseBackpackCode(code: string): BackpackCode {
 /** Capture a container or asset literal, its dependencies, and displayed text. */
 export function captureBackpackBlock(block: Blockly.Block): { code: string; blockText: string } {
     if (!isBackpackBlock(block)) {
-        throw new Error(lf("Choose an editable block container or an image, animation, tilemap or music asset to save to Backpack."));
+        pxt.U.userError(lf("Choose an editable block container or an image, animation, tilemap or music asset to save to Backpack."));
     }
     const save = (source: Blockly.Block): State => {
         const state = Blockly.serialization.blocks.save(source, {
@@ -292,7 +292,7 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
                     && candidate.getFieldValue("NAME") === functionName(state);
             });
             if (!definition) {
-                throw new Error(lf("The function '{0}' is missing from this project. Add its definition before saving to Backpack.", functionName(state)));
+                throw new Error(`The function '${functionName(state)}' is missing from this project.`);
             }
             if (!included.has(definition)) {
                 included.add(definition);
@@ -392,7 +392,7 @@ export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg
     const { blocks } = parseBackpackCode(code); // A fresh object; never mutate the stored item.
     visitStates(blocks, state => {
         if (!Object.prototype.hasOwnProperty.call(Blockly.Blocks, state.type)) {
-            throw new Error(lf("The block '{0}' is not available in this project. Add its extension before using this Backpack item.", state.type));
+            pxt.U.userError(lf("The block '{0}' is not available in this project. Add its extension before using this Backpack item.", state.type));
         }
     });
     if (workspace.options.readOnly || workspace.isFlyout || workspace.isMutator) invalidCode();

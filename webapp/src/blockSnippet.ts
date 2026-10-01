@@ -3,6 +3,7 @@ import * as pxtblockly from "../../pxtblocks";
 import * as core from "./core";
 import * as pkg from "./package";
 import { validateBackpackRequirements } from "./backpack";
+import { BackpackUserError } from "./backpackErrors";
 
 export interface BlockSnippetRequirements {
     dependencies: pxt.Map<string>;
@@ -26,7 +27,7 @@ const maxBlocks = 500;
 const maxDepth = 100;
 
 function invalidSnippet(): never {
-    throw new Error(lf("The copied blocks contain invalid or unsupported snippet data."));
+    throw new Error("The copied blocks contain invalid or unsupported snippet data.");
 }
 
 function isRecord(value: unknown): value is pxt.Map<unknown> {
@@ -140,7 +141,7 @@ function validateRequirements(value: unknown): BlockSnippetRequirements {
         for (const name of Object.keys(local)) saved.dependencies[name] = local[name];
         return { dependencies: saved.dependencies, projectBlocks: saved.projectBlocks };
     } catch {
-        throw new Error(lf("The copied blocks have invalid extension or project-source requirements."));
+        throw new Error("The copied blocks have invalid extension or project-source requirements.");
     }
 }
 
@@ -178,7 +179,7 @@ export function getBlockSnippetRequirements(states: Blockly.serialization.blocks
             if (!version || dependency.cppOnly) throw new Error();
             validateRequirements({ dependencies: { [symbol.pkg]: version } });
         } catch {
-            throw new Error(lf("The extension '{0}' cannot be copied. Publish it and install the published extension before copying these blocks.", symbol.pkg));
+            throw new BackpackUserError(lf("The extension '{0}' cannot be copied. Publish it and install the published extension before copying these blocks.", symbol.pkg));
         }
         dependencies[symbol.pkg] = version;
     };
@@ -232,7 +233,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
     types = types.slice();
     const assertCurrent = (): void => {
         if (!host.isCurrent() || !host.headerId || pkg.mainEditorPkg().header?.id !== host.headerId) {
-            throw new Error(lf("Your project or account changed. Please retry the operation."));
+            throw new BackpackUserError(lf("Your project or account changed. Please retry the operation."));
         }
     };
     const wait = async <T>(action: () => Promise<T>): Promise<T> => {
@@ -259,10 +260,10 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
     const main = pkg.mainPkg;
     const editor = pkg.mainEditorPkg();
     const configFile = editor.files[pxt.CONFIG_NAME];
-    if (!configFile) throw new Error(lf("The project configuration is missing."));
+    if (!configFile) throw new Error("The project configuration is missing.");
     const readConfig = (): pxt.PackageConfig => {
         const config = pxt.Package.parseAndValidConfig(configFile.content);
-        if (!config) throw new Error(lf("The project configuration is invalid."));
+        if (!config) throw new Error("The project configuration is invalid.");
         return config;
     };
     const originalDependencies = readConfig().dependencies;
@@ -272,7 +273,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
         if (pkg.mainPkg !== main || pkg.mainEditorPkg() !== editor || editor.files[pxt.CONFIG_NAME] !== configFile
             || Object.keys(currentDependencies).length !== Object.keys(originalDependencies).length
             || Object.keys(originalDependencies).some(name => currentDependencies[name] !== originalDependencies[name])) {
-            throw new Error(lf("The project extensions changed. Please retry the operation."));
+            throw new BackpackUserError(lf("The project extensions changed. Please retry the operation."));
         }
     };
     const missing: string[] = [];
@@ -320,7 +321,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
                 continue;
             }
             if (localReference(version)) return explainLocal(name);
-            if (planned.size >= 100) throw new Error(lf("This snippet requires too many extensions."));
+            if (planned.size >= 100) throw new BackpackUserError(lf("This snippet requires too many extensions."));
             if ((version.startsWith("github:") && (pxt.appTarget.cloud?.packages === false || pxt.appTarget.cloud?.githubPackages === false))
                 || (version.startsWith("pub:") && pxt.appTarget.cloud?.packages === false)) {
                 await explain(lf("Extensions are unavailable"), lf("This editor does not allow the extension '{0}'.", name));
@@ -333,7 +334,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
                 return false;
             }
             if (!pxt.Package.parseAndValidConfig(JSON.stringify(config)) || config.name !== name) {
-                throw new Error(lf("The extension '{0}' returned an invalid or mismatched configuration.", name));
+                throw new Error(`The extension '${name}' returned an invalid or mismatched configuration.`);
             }
             // Validate the complete dependency map before scheduling any further downloads.
             validateRequirements({ dependencies: config.dependencies });
