@@ -66,7 +66,7 @@ namespace ts.pxtc {
         "svg",
         "visuals",
         "codal",
-    ]
+    ];
 
     function shortCallsPrefix(m: pxt.Map<string>) {
         let r = ""
