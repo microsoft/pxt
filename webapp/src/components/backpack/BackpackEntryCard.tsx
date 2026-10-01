@@ -111,14 +111,6 @@ export function BackpackEntryCard(props: BackpackEntryCardProps): JSX.Element {
                         onDragStart={onDragStart}
                         onDragEnd={onDragEnd}
                     />
-                    {!!Object.keys(item.projectBlocks || {}).length && (
-                        <p className="project-backpack-requirements">
-                            {lf(
-                                "Uses project-defined blocks from {0}. Their source code is not included.",
-                                Array.from(new Set(Object.values(item.projectBlocks))).join(", ")
-                            )}
-                        </p>
-                    )}
                     {!!missingDependencies.length && (
                         <div className="project-backpack-requirements">
                             <p>{lf("Required extensions")}</p>

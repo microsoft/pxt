@@ -238,7 +238,7 @@ describe("Shared block snippet preparation (fresh source, ordinary Blockly state
         const states = [{ type: "core_block" }];
         const expected = { dependencies: { core: "*" }, projectBlocks: {} };
         assert.deepStrictEqual(e.captureStates(states), expected);
-        assert.deepStrictEqual(e.capture(codeFor(...states)), expected);
+        assert.deepStrictEqual(e.capture(codeFor(...states)), { dependencies: expected.dependencies });
         assert.equal(await e.ensure(expected, ["core_block"]), true);
         assert.deepStrictEqual(e.events, []);
     });
@@ -300,13 +300,11 @@ describe("Backpack capture portability", () => {
     it("allows published-extension blocks and standalone assets with no custom-file dependency", () => {
         const e = environment({ pictures: version("pictures"), core: "embed:core" });
         assert.deepStrictEqual(e.capture(codeFor({ type: "pictures_block" })), {
-            dependencies: { pictures: version("pictures") },
-            projectBlocks: {}
+            dependencies: { pictures: version("pictures") }
         });
         e.info.blocksById.custom_pair = { ...symbol("main"), fileName: "custom.ts" };
         assert.deepStrictEqual(e.capture(codeFor({ type: "core_block", fields: { IMAGE: "img`2`" } })), {
-            dependencies: { core: "*" },
-            projectBlocks: {}
+            dependencies: { core: "*" }
         });
     });
 });
@@ -355,20 +353,28 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert(e.events.indexOf("reload") < e.events.indexOf("paste:one-undo-group"));
     });
 
-    it("missing local source takes precedence over extensions and stale global Blockly registration", async () => {
+    it("clipboard checks missing local source before extensions and stale global Blockly registration", async () => {
         const e = environment(); e.requirePackages("a");
-        e.item.projectBlocks = { a_block: "custom.ts", other_block: "helpers.ts" };
-        e.item.blockText = "PRIVATE_LABELS";
-        e.item.code = codeFor({ type: "container", fields: { PRIVATE_CODE: "SECRET_SOURCE" } });
         e.registry.a_block = {}; e.registry.other_block = {};
-        assert.equal(await e.run(), false);
+        assert.equal(await e.ensure({
+            dependencies: e.item.dependencies,
+            projectBlocks: { a_block: "custom.ts", other_block: "helpers.ts" }
+        }, ["a_block", "other_block"]), false);
         assert.deepStrictEqual(e.events, ["popup"]);
         assert.equal(e.dialogs[0].header, "Project code is required");
         assert.equal(e.dialogs[0].agreeLbl, "OK");
         assert.equal(e.dialogs[0].hideCancel, true);
         assert.match(e.dialogs[0].body, /custom.ts, helpers.ts/);
         assert.match(e.dialogs[0].body, /Copy the required code.*publish it as an extension/);
-        assert(!/PRIVATE_LABELS|PRIVATE_CODE|SECRET_SOURCE/.test(JSON.stringify(e.dialogs)));
+    });
+
+    it("clipboard rejects malformed project-source requirements", async () => {
+        const e = environment();
+        for (const projectBlocks of [[], { custom: 42 }, { custom: "custom\u0000.ts" }]) {
+            await assert.rejects(e.ensure({ dependencies: {}, projectBlocks }, ["container"]),
+                /invalid extension or project-source requirements/);
+        }
+        assert.deepStrictEqual(e.events, []);
     });
 
     it("preflights core replacement with the real conflict engine, never removing in-use code", async () => {

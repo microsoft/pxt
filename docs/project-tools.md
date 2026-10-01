@@ -64,8 +64,6 @@ Guests save in this browser; signing in syncs captures across browsers. Search
 matches names, contained blocks, parameters and extensions. Rename is optional.
 The **+** button or dragging a preview into the workspace asks permission before
 installing missing extensions and inserts the capture as one undo group.
-Older captures that reference project files remain deletable; adding them still
-requires the referenced block definitions.
 Ordinary clipboard paste uses the same dependency checks while retaining normal
 Blockly copy/cut/paste behavior.
 The pencil renames code captures; for assets it opens the native editor in an
