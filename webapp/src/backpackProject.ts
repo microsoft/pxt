@@ -17,15 +17,11 @@ export function getBackpackRequirements(
     main: pxt.MainPackage
 ): {
     dependencies: pxt.Map<string>;
-    projectBlocks: pxt.Map<string>;
 } {
     const requirements = getBlockSnippetRequirements(pxtblockly.parseBackpackCode(code).blocks, info, main);
     const projectFiles = Array.from(new Set(Object.values(requirements.projectBlocks || {})));
     if (projectFiles.length) {
-        throw new BackpackUserError(lf(
-            "These blocks use code from {0}, which is not included in Backpack. Move that code into an extension, publish it, and add the extension to your project before saving these blocks.",
-            projectFiles.join(", ")
-        ));
+        throw new BackpackUserError(lf("These blocks use code from {0}, which is not included in Backpack. Move that code into an extension, publish it, and add the extension to your project before saving these blocks.", projectFiles.join(", ")));
     }
 
     for (const name of Object.keys(requirements.dependencies)) {
@@ -35,7 +31,7 @@ export function getBackpackRequirements(
             throw new BackpackUserError(lf("The extension '{0}' cannot be copied to another project. Publish it and install the published extension before saving this snippet to your Backpack.", name));
         }
     }
-    return { dependencies: requirements.dependencies, projectBlocks: requirements.projectBlocks || {} };
+    return { dependencies: requirements.dependencies };
 }
 
 /** Install required extensions before inserting the blocks and saving the project. */
@@ -71,8 +67,7 @@ export async function addBackpackToProjectAsync(
         if (!confirmed) return false;
     }
     if (!await ensureBlockSnippetAsync({
-        dependencies: saved.dependencies,
-        projectBlocks: saved.projectBlocks
+        dependencies: saved.dependencies
     }, types, host)) return false;
 
     assertCurrent();

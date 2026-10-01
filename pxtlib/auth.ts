@@ -134,8 +134,6 @@ namespace pxt.auth {
         /** Displayed block labels and field values, captured without needing the original extensions to search. */
         blockText: string;
         dependencies: pxt.Map<string>;
-        /** Block type IDs whose definitions live in project files, rather than extensions. */
-        projectBlocks?: pxt.Map<string>;
         createdAt: number;
         previewUri?: string;
         /** Raster pixels per CSS pixel; an omitted value uses the PNG's natural size. */

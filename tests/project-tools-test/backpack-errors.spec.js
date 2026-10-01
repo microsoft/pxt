@@ -65,8 +65,7 @@ describe("Backpack user-facing error boundary", () => {
                 { kind: "asset" },
                 { blockText: {} },
                 { previewUri: "not-a-PNG" },
-                { dependencies: [] },
-                { projectBlocks: { custom: 42 } }
+                { dependencies: [] }
             ];
             for (const overrides of cases) {
                 assert.throws(() => validator.validateBackpackItem({ ...item(), ...overrides }), error => {
@@ -153,7 +152,7 @@ describe("Backpack asset dialog save errors", () => {
             pkg: { mainPkg: {} }, lf: text => text,
             getBackpackRequirements: () => {
                 if (stage === "requirements") throw reason;
-                return { dependencies: {}, projectBlocks: {} };
+                return { dependencies: {} };
             },
             setPending: value => pending.push(value),
             setError: value => messages.push(value),

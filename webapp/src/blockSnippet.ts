@@ -36,9 +36,13 @@ function isRecord(value: unknown): value is pxt.Map<unknown> {
     return proto === null || Object.getPrototypeOf(proto) === null;
 }
 
+function hasControlCharacters(value: string): boolean {
+    return Array.from(value).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127);
+}
+
 function isName(value: unknown): value is string {
     return typeof value === "string" && !!value.length && value.length <= 256 && safeKey(value)
-        && !Array.from(value).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127);
+        && !hasControlCharacters(value);
 }
 
 /** Reject oversized or deeply nested field, mutation, and asset data before traversing it. */
@@ -122,9 +126,22 @@ function validateRequirements(value: unknown): BlockSnippetRequirements {
     }
 
     try {
-        const saved = validateBackpackRequirements({ dependencies: portable, projectBlocks: value.projectBlocks });
+        const saved = validateBackpackRequirements({ dependencies: portable });
         for (const name of Object.keys(local)) saved.dependencies[name] = local[name];
-        return { dependencies: saved.dependencies, projectBlocks: saved.projectBlocks };
+
+        let projectBlocks: pxt.Map<string>;
+        if (value.projectBlocks !== undefined) {
+            if (!isRecord(value.projectBlocks) || Object.keys(value.projectBlocks).length > maxBlocks) invalidSnippet();
+            projectBlocks = {};
+            for (const type of Object.keys(value.projectBlocks)) {
+                const file = value.projectBlocks[type];
+                if (!isName(type) || typeof file !== "string" || !file || file.length > 256 || hasControlCharacters(file)) {
+                    invalidSnippet();
+                }
+                projectBlocks[type] = file;
+            }
+        }
+        return { dependencies: saved.dependencies, projectBlocks };
     } catch {
         throw new Error("The copied blocks have invalid extension or project-source requirements.");
     }

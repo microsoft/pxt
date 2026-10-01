@@ -67,7 +67,6 @@ export interface BackpackSummary {
     /** Number of supporting function definitions included with the selected block. */
     functionCount?: number;
     dependencies: pxt.Map<string>;
-    projectBlocks?: pxt.Map<string>;
     createdAt: number;
     updatedAt: number;
     version: string;
@@ -258,10 +257,9 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     return result;
 }
 
-/** Check that dependencies can be installed in another project and source filenames are valid. */
+/** Check that dependencies can be installed in another project. */
 export function validateBackpackRequirements(value: pxt.Map<unknown>): {
     dependencies: pxt.Map<string>;
-    projectBlocks?: pxt.Map<string>
 } {
     if (!isRecord(value.dependencies) || Object.keys(value.dependencies).length > 100) {
         throw new Error("Invalid backpack dependencies (maximum 100 packages).");
@@ -277,22 +275,7 @@ export function validateBackpackRequirements(value: pxt.Map<unknown>): {
         dependencies[name] = version;
     }
 
-    const result: { dependencies: pxt.Map<string>; projectBlocks?: pxt.Map<string> } = { dependencies };
-    if (value.projectBlocks !== undefined) {
-        if (!isRecord(value.projectBlocks) || Object.keys(value.projectBlocks).length > 500) {
-            throw new Error("Invalid project-defined blocks in this backpack item.");
-        }
-        result.projectBlocks = {};
-        for (const type of Object.keys(value.projectBlocks)) {
-            const file = value.projectBlocks[type];
-            if (!safeKey(type) || !type || type.length > 256 || hasControlCharacters(type)
-                || typeof file !== "string" || !file || file.length > 256 || hasControlCharacters(file)) {
-                throw new Error("Invalid project-defined blocks in this backpack item.");
-            }
-            result.projectBlocks[type] = file;
-        }
-    }
-    return result;
+    return { dependencies };
 }
 
 let identityGeneration = 0;
@@ -830,7 +813,6 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
         versions: validated.versions,
         blockText: validated.blockText,
         dependencies: validated.dependencies,
-        projectBlocks: validated.projectBlocks,
         createdAt: validated.createdAt
     })) > DEFAULT_LIMITS.maxMetadataBytes) throw new BackpackRequestError("backpack_entry_too_large");
 
@@ -1119,7 +1101,6 @@ async function readItemAsync(saved: BackpackEntry, context: OperationContext): P
                 versions: summary.versions,
                 blockText: summary.blockText,
                 dependencies: summary.dependencies,
-                projectBlocks: summary.projectBlocks,
                 createdAt: summary.createdAt
             });
 
