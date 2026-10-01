@@ -397,7 +397,6 @@ function BackpackContents(props: BackpackContentsProps): JSX.Element {
                             <Button
                                 className="project-backpack-button project-backpack-sign-in"
                                 type="button"
-                                nativeBehavior
                                 onClick={onSignIn}
                                 label={lf("Sign in to save your backpack across browsers.")}
                                 title={lf("Sign in to save your backpack across browsers.")}
@@ -422,7 +421,6 @@ function BackpackContents(props: BackpackContentsProps): JSX.Element {
                                     <Button
                                         className="project-backpack-button project-backpack-retry"
                                         type="button"
-                                        nativeBehavior
                                         hardDisabled={pending}
                                         label={lf("Retry")}
                                         title={lf("Retry")}

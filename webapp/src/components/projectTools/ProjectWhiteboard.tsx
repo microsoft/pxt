@@ -63,7 +63,6 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
                         <p>{lf("These notes could not be opened. The saved data has not been changed.")}</p>
                         <Button
                             type="button"
-                            nativeBehavior
                             className="project-tools-button"
                             label={lf("Start a new whiteboard")}
                             title={lf("Start a new whiteboard")}
@@ -93,7 +92,6 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
                                 <p>{lf("Saved notes changed while you were editing. Choose which version to keep.")}</p>
                                 <Button
                                     type="button"
-                                    nativeBehavior
                                     className="project-tools-button"
                                     label={lf("Keep my notes")}
                                     title={lf("Keep my notes")}
@@ -101,7 +99,6 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
                                 />
                                 <Button
                                     type="button"
-                                    nativeBehavior
                                     className="project-tools-button"
                                     label={lf("Load saved notes")}
                                     title={lf("Load saved notes")}
@@ -144,7 +141,6 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
                                 {lf("Notes could not be saved.")}
                                 <Button
                                     type="button"
-                                    nativeBehavior
                                     className="project-tools-button"
                                     label={lf("Retry")}
                                     title={lf("Retry")}

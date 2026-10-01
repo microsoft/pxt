@@ -23,7 +23,6 @@ export function ProjectToolsHeader(props: ProjectToolsHeaderProps): JSX.Element 
             {actions}
             <Button
                 type="button"
-                nativeBehavior
                 className="project-tools-button project-tools-pin"
                 ariaPressed={pinned}
                 ariaLabel={lf("Keep project tools open")}
@@ -44,7 +43,6 @@ export function ProjectToolsHeader(props: ProjectToolsHeaderProps): JSX.Element 
             </Button>
             <Button
                 type="button"
-                nativeBehavior
                 className="project-tools-button project-tools-close"
                 title={lf("Collapse project tools")}
                 ariaLabel={lf("Collapse project tools")}

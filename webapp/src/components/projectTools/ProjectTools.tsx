@@ -460,7 +460,6 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
                             <p>{lf("Open help from a block or the Help menu. Your documentation will appear here.")}</p>
                             <Button
                                 type="button"
-                                nativeBehavior
                                 className="project-tools-button"
                                 label={lf("Browse reference")}
                                 title={lf("Browse reference")}

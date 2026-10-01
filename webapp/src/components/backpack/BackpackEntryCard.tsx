@@ -53,7 +53,6 @@ export function BackpackEntryCard(props: BackpackEntryCardProps): JSX.Element {
                         <Button
                             className="project-backpack-button project-backpack-icon-button project-backpack-rename"
                             type="button"
-                            nativeBehavior
                             hardDisabled={pending || item.kind === "asset" && !canEditAsset}
                             title={editLabel}
                             ariaLabel={editLabel}
@@ -65,7 +64,6 @@ export function BackpackEntryCard(props: BackpackEntryCardProps): JSX.Element {
                     <Button
                         className="project-backpack-button project-backpack-icon-button project-backpack-delete"
                         type="button"
-                        nativeBehavior
                         hardDisabled={pending}
                         title={deleteLabel}
                         ariaLabel={deleteLabel}
@@ -95,7 +93,6 @@ export function BackpackEntryCard(props: BackpackEntryCardProps): JSX.Element {
                 <Button
                     className="project-backpack-button project-backpack-sync"
                     type="button"
-                    nativeBehavior
                     hardDisabled={pending}
                     label={lf("Retry sync")}
                     title={lf("Retry sync")}
@@ -128,7 +125,6 @@ export function BackpackEntryCard(props: BackpackEntryCardProps): JSX.Element {
                         <Button
                             className="project-backpack-button project-backpack-icon-button project-backpack-add"
                             type="button"
-                            nativeBehavior
                             hardDisabled={pending || !canImport}
                             ariaLabel={lf("Add {0} to project", item.name)}
                             ariaDescribedBy={!canImport ? "project-backpack-import-reason" : undefined}

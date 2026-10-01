@@ -114,7 +114,6 @@ export function ProjectWhiteboardMenu(props: ProjectWhiteboardMenuProps): JSX.El
                             <div className="project-whiteboard-menu-actions">
                                 <Button
                                     type="button"
-                                    nativeBehavior
                                     className="project-tools-button"
                                     label={lf("Cancel")}
                                     title={lf("Cancel")}
@@ -122,7 +121,6 @@ export function ProjectWhiteboardMenu(props: ProjectWhiteboardMenuProps): JSX.El
                                 />
                                 <Button
                                     type="button"
-                                    nativeBehavior
                                     className="project-tools-button"
                                     label={lf("Delete")}
                                     title={lf("Delete")}
@@ -185,7 +183,6 @@ export function ProjectWhiteboardMenu(props: ProjectWhiteboardMenuProps): JSX.El
                             <div className="project-whiteboard-menu-actions">
                                 <Button
                                     type="button"
-                                    nativeBehavior
                                     className="project-tools-button"
                                     label={lf("Cancel")}
                                     title={lf("Cancel")}

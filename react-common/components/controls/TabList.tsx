@@ -11,7 +11,6 @@ export interface TabListProps {
     className?: string;
     ariaLabel?: string;
     manualActivation?: boolean;
-    nativeBehavior?: boolean;
     orientation: "horizontal" | "vertical";
     selectedId: string;
     onTabSelected: (id: string) => void;
@@ -19,10 +18,9 @@ export interface TabListProps {
 }
 
 export const TabList = (props: TabListProps) => {
-    const { className, ariaLabel, manualActivation, nativeBehavior, orientation, selectedId, onTabSelected, tabs } = props;
+    const { className, ariaLabel, manualActivation, orientation, selectedId, onTabSelected, tabs } = props;
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
-        if (nativeBehavior && e.defaultPrevented) return;
         const currentIndex = tabs.findIndex(t => t.id === document.activeElement?.id);
 
         if (currentIndex === -1) return;
@@ -51,9 +49,6 @@ export const TabList = (props: TabListProps) => {
                 if (manualActivation) {
                     onTabSelected(tabs[currentIndex].id);
                 }
-                else if (nativeBehavior) {
-                    handled = false;
-                }
                 break;
             default:
                 handled = false;
@@ -61,7 +56,7 @@ export const TabList = (props: TabListProps) => {
 
         if (handled) {
             e.preventDefault();
-            if (!nativeBehavior) e.stopPropagation();
+            e.stopPropagation();
         }
 
         if (newIndex !== null) {
@@ -88,7 +83,6 @@ export const TabList = (props: TabListProps) => {
             {tabs.map(tab =>
                 <Button
                     {...tab}
-                    nativeBehavior={nativeBehavior}
                     role="tab"
                     ariaSelected={selectedId === tab.id}
                     key={tab.id}
