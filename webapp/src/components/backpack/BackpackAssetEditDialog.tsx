@@ -36,9 +36,7 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
     const [error, setError] = React.useState<string>();
 
     React.useLayoutEffect(() => {
-        // Native scalar fields use Blockly's shared popup containers. Keep them
-        // inside the dialog's focus/inert boundary. Blockly positions them
-        // relative to their parent and may reparent them to the scratch workspace.
+        // Keep Blockly popups inside the modal so keyboard focus can reach them.
         if (!Blockly.WidgetDiv.getDiv()) Blockly.WidgetDiv.createDom();
         if (!document.querySelector(".blocklyDropDownDiv")) Blockly.DropDownDiv.createDom();
 

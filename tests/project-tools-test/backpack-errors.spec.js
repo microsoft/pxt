@@ -122,7 +122,6 @@ describe("Backpack user-facing error boundary", () => {
     });
 });
 
-// Run the actual save handler with only the editor, storage and React-state boundaries supplied.
 const source = ts.createSourceFile("BackpackAssetEditDialog.tsx",
     fs.readFileSync("webapp/src/components/backpack/BackpackAssetEditDialog.tsx", "utf8"),
     ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);

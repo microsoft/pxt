@@ -14,8 +14,6 @@ const compiled = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
 });
 assert.deepStrictEqual(compiled.diagnostics, []);
 
-// Execute current source, not built/webapp. Only real Fuse is available: no
-// Blockly loaders, project packages, DOM, installation, or network services.
 const searchModule = {};
 vm.runInNewContext(compiled.outputText, {
     exports: searchModule,

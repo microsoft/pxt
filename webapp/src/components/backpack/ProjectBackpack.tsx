@@ -79,7 +79,7 @@ export function ProjectBackpack(props: ProjectBackpackProps): JSX.Element {
 
     const tutorial = props.tutorial || !!pkg.mainEditorPkg()?.header?.tutorial;
     const assetsEnabled = backpack.isBackpackAssetsEnabled();
-    // Guest/account transitions get fresh contents, including pending/error state.
+    // Reset the panel's contents and pending operations when its account or project changes.
     return (
         <BackpackContents
             key={`${pxt.appTarget?.id}:${userId ? `user:${userId}` : "guest"}:${props.headerId}:${tutorial}:${assetsEnabled}`}
@@ -119,7 +119,7 @@ function BackpackContents(props: BackpackContentsProps): JSX.Element {
     const focusAfter = React.useRef<BackpackFocusTarget>();
 
     const onPageReturn = (): void => {
-        // Removing a focused card must not dismiss the owning disclosure.
+        // Keep focus inside the panel before the refresh removes the focused card.
         const ownsFocus = body.current?.contains(document.activeElement)
             || kindButtons.current.some(button => button === document.activeElement);
         if (active.current && ownsFocus) body.current?.focus();
@@ -215,8 +215,7 @@ function BackpackContents(props: BackpackContentsProps): JSX.Element {
 
     const beginEdit = (item: backpack.BackpackEntry, kind: "rename" | "delete"): void => {
         if (isBusy() || !isCurrent() || kind === "rename" && item.error) return;
-        // The shared modal takes focus during its mount, before effects run.
-        // Keep the owning panel open while focus moves into the portal.
+        // Keep the panel open while focus moves into the dialog.
         onModalOpenChange?.(true);
         showError();
         setDialog({ type: "item", edit: { kind, key: entryKey(item), name: item.name, entry: item } });
@@ -247,8 +246,7 @@ function BackpackContents(props: BackpackContentsProps): JSX.Element {
     });
 
     const editAsset = (entry: backpack.BackpackEntry) => runAsync(async () => {
-        // Disabling the focused pencil can blur it before a cloud read finishes.
-        // Protect the panel before React commits pending, not just at portal mount.
+        // Loading disables the Edit button. Keep the panel open until the dialog appears.
         onModalOpenChange?.(true);
         setDialog({ type: "loading-asset", entry });
 

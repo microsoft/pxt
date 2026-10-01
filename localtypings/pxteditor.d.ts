@@ -4,7 +4,6 @@
 /// <reference path="./ocv.d.ts" />
 /// <reference path="./monaco.d.ts" />
 
-// TilemapProject exposes this shape, but pxtlib's named interface is private.
 declare namespace pxt {
     export type AssetSnapshot = ReturnType<TilemapProject["saveGallerySnapshot"]>;
 }

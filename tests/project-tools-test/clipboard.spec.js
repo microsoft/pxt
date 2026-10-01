@@ -17,8 +17,6 @@ const compile = text => {
     return result.outputText;
 };
 
-// Load only the current copy/paste adapter; dependency consent/conflicts are
-// covered by backpack-project.spec.js through the same shared preparation module.
 const source = ts.createSourceFile("blocks.tsx", read("webapp/src/blocks.tsx"), ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 const editorClass = source.statements.find(node => ts.isClassDeclaration(node) && node.name.text === "Editor");
 assert(editorClass, "Expected the current Blocks Editor class");

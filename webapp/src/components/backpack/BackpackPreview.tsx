@@ -59,7 +59,7 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
 
         try {
             const blocks = JSON.parse(entry.item?.code).blocks;
-            // The selected container is last; count only its supporting definitions.
+            // The captured block is last; earlier blocks are supporting functions.
             return Array.isArray(blocks)
                 ? blocks.slice(0, -1).filter(block => block?.type === "function_definition").length
                 : 0;

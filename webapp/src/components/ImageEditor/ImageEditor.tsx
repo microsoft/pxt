@@ -40,7 +40,7 @@ export interface ImageEditorProps {
     lightMode?: boolean;
     hideDoneButton?: boolean;
     hideAssetName?: boolean;
-    scopedShortcuts?: boolean; // Nonmodal hosts only handle keys from inside this editor.
+    scopedShortcuts?: boolean; // Only handle shortcuts whose target is inside this editor.
 }
 
 export interface ImageEditorState {

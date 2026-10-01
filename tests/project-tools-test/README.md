@@ -15,12 +15,10 @@ those modules. Browser tests require Puppeteer's Chromium, not a development ser
 - Project/clipboard suites cover dependency consent, conflicts and editor integration.
 - Block/asset suites exercise serialization, pixels and undo; drag tests cover
   host-provided targets, dwell and cleanup.
-- UI/launcher/whiteboard suites cover representative interaction, accessibility,
+- UI/launcher/whiteboard suites cover panel interaction, accessibility,
   native button/tab behavior and feature-control appearance.
 
-Test shared behavior once, with representative cases rather than viewport/theme
-or failure-stage matrices. Use [browser.js](browser.js) and [source.js](source.js),
-await actual effects and
-transactions, and unmount before closing pages. Network/account boundaries are
-mocked; check cross-device sync, keyboard/touch and screen readers manually
-before release. See [feature usage](../../docs/project-tools.md).
+Shared browser and source-loading helpers live in [browser.js](browser.js) and
+[source.js](source.js). Network and account calls are mocked. Before release,
+manually check cross-device sync, keyboard/touch input and screen readers.
+See [feature usage](../../docs/project-tools.md).

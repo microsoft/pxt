@@ -75,10 +75,7 @@ describe("Backpack gallery preparation", () => {
     });
 });
 
-// Load the already-built real field implementations and their relative dependencies.
-// Recompile pxtblocks before running this suite after source changes. No asset
-// serializer, field lifecycle, or TilemapProject method is mocked; only the host's
-// current-project accessor is supplied.
+// Rebuild pxtblocks after source changes; these fields are loaded from built output.
 function fieldModules() {
     const modules = {};
     function collect(id) {
@@ -137,8 +134,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 return module.exports;
             };
             window.backpack = load("backpack");
-            // Enter through the utilities module, as the app does, so the fields'
-            // CommonJS cycle does not evaluate a subclass before FieldAssetEditor.
+            // Load field_utils first so circular imports initialize FieldAssetEditor before its subclasses.
             load("fields/field_utils");
             const { FieldSpriteEditor } = load("fields/field_sprite");
             const { FieldTilemap } = load("fields/field_tilemap");
@@ -193,8 +189,8 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 const { code } = backpack.captureBackpackBlock(block);
                 if (backpack.getBackpackAssetField(block)) throw new Error("A statement containing assets is not an asset literal");
                 const expected = { image: snapshot(block.getField("IMAGE").getAsset()), tilemap: snapshot(block.getField("TILEMAP").getAsset()) };
-                // Dispose against the SOURCE asset project, then replace the whole global
-                // project, not just the workspace. Retaining the source would hide data loss.
+                // Dispose blocks before replacing their asset project. A fresh destination
+                // ensures the paste cannot use assets left over from the source.
                 workspace.clear();
                 await settle();
                 window.project = new pxt.TilemapProject();
@@ -243,7 +239,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 const tilemap = project.getTilemap(id);
                 const expected = snapshot(tilemap);
 
-                // The shared helper must keep its existing short-key convention.
+                // addAssetToJRes uses short keys, so the last tile with this name wins.
                 const helperJres = {};
                 for (const tile of tiles) pxt.addAssetToJRes(tile, helperJres);
                 const lastTile = tiles[tiles.length - 1];

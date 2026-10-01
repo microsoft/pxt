@@ -12,8 +12,6 @@ function notesWithBoard(text) {
     };
 }
 
-// Run the actual workspace/cloud modules with an in-memory provider and fake
-// authenticated API. No project content is sent to a server or shared publicly.
 function createEnvironment() {
     const localStorage = new Map();
     const stored = new Map();

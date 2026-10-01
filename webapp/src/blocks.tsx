@@ -62,7 +62,7 @@ interface CopyDataEntry {
     workspaceId: string;
     targetVersion: string;
     headerId: string;
-    /** Absent on comments and clipboard entries made before requirement capture. */
+    /** Workspace comments and older clipboard entries have no block requirements. */
     requirements?: BlockSnippetRequirements;
 }
 

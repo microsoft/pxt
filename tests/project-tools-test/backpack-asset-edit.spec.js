@@ -8,7 +8,7 @@ const ts = require("typescript");
 const { launchTestBrowser } = require("./browser");
 const root = path.resolve(__dirname, "../..");
 
-// Current scratch helper, already-built native fields and asset runtime; no field parsers mocked.
+// Asset fields use built output; Backpack helpers use TypeScript source.
 function sources() {
     const modules = {};
     function collect(id) {
@@ -71,7 +71,6 @@ describe("Backpack scratch native asset editing", function () {
             };
             const fields = Object.assign({}, ...Object.keys(modules).filter(id => id.startsWith("fields/")).map(load));
             const backpack = load("backpack");
-            // Real native fields in minimal, headless asset blocks.
             for (const [type, Field] of [["extension_portrait", fields.FieldSpriteEditor],
                 ["tiles_tilemap_editor", fields.FieldTilemap], ["tileset_tile_picker", fields.FieldTileset]]) {
                 Blockly.Blocks[type] = { init() {

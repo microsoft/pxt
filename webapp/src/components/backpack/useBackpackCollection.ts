@@ -78,7 +78,8 @@ export function useBackpackCollection(options: BackpackCollectionOptions): Backp
         alive.current = true;
         const unsubscribe = backpack.subscribeBackpack(() => {
             if (!isCurrent()) return;
-            update(); // Also observes editor eligibility and installed extensions.
+            // Editor availability can change before entries have loaded.
+            update();
             if (!loaded.current) return;
 
             try {

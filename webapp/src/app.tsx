@@ -1127,7 +1127,7 @@ export class ProjectView
             canEdit: () => !!this.state.header && !this.state.header.temporary
                 && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor,
             contextAsync: async () => {
-                // Text/Assets-first projects may not have loaded Blockly's field definitions yet.
+                // Blockly's fields may not be loaded in projects opened in the text or Assets editor.
                 await this.blocksEditor.loadBlocklyAsync();
                 const blocksInfo = await compiler.getBlocksAsync();
                 pxtblockly.initializeAndInject(blocksInfo);
@@ -1899,7 +1899,6 @@ export class ProjectView
 
             const documentation = pkg.mainPkg.config.documentation;
             const readmeContent = documentation ? undefined : this.getLocalizedReadmeContent();
-            // No auto-popup when editing packages locally or when the README opts out.
             const autoOpenReadme = !h.githubId && !!readmeContent && !/#{2,}\s+@autoOpen\s+false\s*/i.test(readmeContent);
 
             this.setState({

@@ -19,8 +19,7 @@ const sources = Object.fromEntries([
     "pxtblocks/plugins/functions/constants.ts", "pxtblocks/clipboard.ts"
 ].map(file => [file, compile(read(file))]));
 
-// Exercise the production conflict engine, not a mock that always approves. The rest of
-// Package performs downloads/builds, so only these pure methods are loaded from fresh source.
+// Load only conflict-checking methods to avoid Package's download and build dependencies.
 const packageSource = ts.createSourceFile("package.ts", read("pxtlib/package.ts"), ts.ScriptTarget.Latest, true);
 let packageClass;
 function findPackage(node) {

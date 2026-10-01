@@ -287,8 +287,8 @@ async function transferFromCloud(local: Header | null, remote: Header | null): P
         const previousNotes = JSON.stringify(local.projectNotes);
         workspace.acquireHeaderSession(local);
         const remoteFile = await getAsync(local);
-        // A note autosave can complete while the download is pending. Leave that
-        // dirty project/version intact so the next sync uses normal conflict handling.
+        // Do not overwrite notes saved locally while this download was pending.
+        // Keep the local version for the next sync's conflict check.
         if (JSON.stringify(local.projectNotes) !== previousNotes) return local;
         newHeader.projectNotes = remoteFile.header.projectNotes;
         await workspace.saveAsync(newHeader, remoteFile.text, true);
