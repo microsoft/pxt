@@ -191,7 +191,7 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                     Object.assign(globals, errors);
                     Object.assign(pxtblockly, execute(clipboardSource, { blockly: B }));
                     pxt.reportException = error => dialogs.push({ technicalError: error.message });
-                    const validator = execute(validatorSource, { "./backpackErrors": errors });
+                    const validator = execute(validatorSource, { "./backpackErrors": errors, "./backpackStorage": {} });
                     Object.assign(globals, execute(sharedSource, {
                         blockly: B, "../../pxtblocks": pxtblockly, "./package": pkg, "./core": core, "./backpack": validator,
                         "./backpackErrors": errors

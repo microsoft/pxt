@@ -190,6 +190,38 @@ describe("named private whiteboards", function () {
         assert.deepEqual(await page.evaluate(() => whiteboardTest.errors), []);
     });
 
+    it("persists selected saved notes after an older local save finishes", async () => {
+        await page.evaluate(() => {
+            const save = whiteboardTest.workspace.saveProjectNotesAsync;
+            const pending = new Promise(resolve => { whiteboardTest.releaseSave = resolve; });
+            whiteboardTest.saveAttempts = 0;
+            whiteboardTest.workspace.saveProjectNotesAsync = async (id, notes) => {
+                if (++whiteboardTest.saveAttempts === 1) await pending;
+                return save(id, notes);
+            };
+        });
+        await page.focus(input);
+        await page.keyboard.down("Control");
+        await page.keyboard.press("A");
+        await page.keyboard.up("Control");
+        await page.type(input, "Local draft");
+        await page.waitForFunction(() => whiteboardTest.saveAttempts === 1);
+        await page.evaluate(() => {
+            whiteboardTest.receive({
+                ...whiteboardTest.initialNotes,
+                whiteboards: whiteboardTest.initialNotes.whiteboards.map(board => ({ ...board, text: "Saved on another device" }))
+            });
+        });
+        await page.waitForSelector(".project-whiteboard-conflict", { visible: true });
+        await page.click(".project-whiteboard-conflict button:last-child");
+        assert.equal(await page.$eval(input, element => element.value), "Saved on another device");
+        await page.evaluate(() => whiteboardTest.releaseSave());
+        await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards[0].text === "Saved on another device");
+        assert.deepStrictEqual(await page.evaluate(() => whiteboardTest.saves.map(save => save.notes.whiteboards[0].text)),
+            ["Local draft", "Saved on another device"]);
+        assert.equal(await page.$(".project-whiteboard-conflict"), null);
+    });
+
     it("routes undo to the canvas without intercepting notes or outside controls", async () => {
         await page.click("#project-tools-whiteboard .project-tools-pin");
         await page.evaluate(() => whiteboardTest.draw(3));

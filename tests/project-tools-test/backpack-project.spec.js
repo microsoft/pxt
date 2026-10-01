@@ -180,6 +180,7 @@ function environment(installed = {}) {
     };
     const errors = execute(sources["webapp/src/backpackErrors.ts"]);
     const store = execute(sources["webapp/src/backpack.ts"], id => {
+        if (id === "./backpackStorage") return {};
         assert.equal(id, "./backpackErrors");
         return errors;
     });

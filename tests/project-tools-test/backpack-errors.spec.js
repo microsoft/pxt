@@ -44,6 +44,7 @@ describe("Backpack user-facing error boundary", () => {
             const context = environment();
             const validator = {};
             new Function("exports", "require", "pxt", "lf", validatorSource)(validator, id => {
+                if (id === "./backpackStorage") return {};
                 assert.equal(id, "./backpackErrors");
                 return context.errors;
             }, context.pxt, (text, ...args) => text.replace(/\{(\d+)\}/g, (_, i) => args[i]));

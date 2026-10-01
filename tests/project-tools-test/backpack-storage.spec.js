@@ -1,19 +1,9 @@
 "use strict";
 
 const assert = require("assert");
-const fs = require("fs");
-const path = require("path");
-const ts = require("typescript");
 const { launchTestBrowser } = require("./browser");
-const root = path.resolve(__dirname, "../..");
-const source = fs.readFileSync(path.join(root, "webapp/src/backpack.ts"), "utf8");
-const compiled = ts.transpileModule(source, {
-    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }, reportDiagnostics: true
-});
-const errorSource = ts.transpileModule(fs.readFileSync(path.join(root, "webapp/src/backpackErrors.ts"), "utf8"), {
-    compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
-}).outputText;
-assert.deepStrictEqual(compiled.diagnostics, []);
+const { bundleSource } = require("./source");
+const storageBundle = bundleSource(["webapp/src/backpack.ts"], "store", {});
 
 // Uses Chromium's IndexedDB; HTTP responses are mocked in this suite.
 describe("dedicated Backpack API and durable IndexedDB (current source)", function () {
@@ -123,11 +113,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             };
             Object.defineProperty(window, "localStorage", { configurable: true, get: forbidden });
         });
-        await page.addScriptTag({ content: `(function(exports) { ${errorSource}\n})(window.backpackErrors = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${compiled.outputText}\n})(id => {
-            if (id !== "./backpackErrors") throw new Error("Unexpected Backpack import: " + id);
-            return window.backpackErrors;
-        }, window.store = {});` });
+        await page.addScriptTag({ content: storageBundle });
         await page.evaluate(() => {
             store.setBackpackEditor({ headerId: () => "project",
                 canImport: () => true,
