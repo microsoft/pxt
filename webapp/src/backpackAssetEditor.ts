@@ -35,15 +35,21 @@ export class BackpackAssetEditor {
     }
 
     open(request: BackpackAssetEditorOptions, scalarHost?: HTMLDivElement): pxt.Asset {
-        try { return this.withProject(() => this.openCore(request, scalarHost)); }
-        catch (error) { this.dispose(); throw error; }
+        try {
+            return this.withProject(() => this.openCore(request, scalarHost));
+        } catch (error) {
+            this.dispose();
+            throw error;
+        }
     }
 
     private openCore(request: BackpackAssetEditorOptions, scalarHost?: HTMLDivElement): pxt.Asset {
         const { blocks } = pxtblockly.parseBackpackCode(request.code);
         const root = blocks[0];
         if (blocks.length !== 1 || root.next
-            || Object.keys(root.inputs || {}).length) throw new Error("Expected a single Backpack asset.");
+            || Object.keys(root.inputs || {}).length)
+            throw new Error("Expected a single Backpack asset.");
+
         this.original = root;
         this.name = request.name;
 
@@ -56,20 +62,30 @@ export class BackpackAssetEditor {
         this.block = Blockly.serialization.blocks.append(root, this.workspace);
         this.field = pxtblockly.getBackpackAssetField(this.block);
         if (!this.field) throw new Error("This asset has no supported editor.");
+
         this.scalar = !(this.field instanceof pxtblockly.FieldAssetEditor || this.field instanceof pxtblockly.FieldTileset);
         if (this.scalar && scalarHost) {
             // Scalar custom editors need rendered fields; discover them from the registration first.
             this.workspace.dispose();
-            this.workspace = Blockly.inject(scalarHost, { renderer: "pxt", sounds: false, trashcan: false, scrollbars: false });
+            this.workspace = Blockly.inject(scalarHost, {
+                renderer: "pxt",
+                sounds: false,
+                trashcan: false,
+                scrollbars: false
+            });
             this.block = Blockly.serialization.blocks.append(root, this.workspace);
             this.field = pxtblockly.getBackpackAssetField(this.block);
             if (!this.field) throw new Error("This asset has no supported editor.");
         }
+
         const fields = this.block.inputList.reduce<Blockly.Field[]>((all, input) => all.concat(input.fieldRow), []);
-        fields.forEach(field => { if (field instanceof pxtblockly.FieldBase) field.onLoadedIntoWorkspace(); });
+        fields.forEach(field => {
+            if (field instanceof pxtblockly.FieldBase) field.onLoadedIntoWorkspace();
+        });
         this.block.setEditable(true);
         this.block.setMovable(true); // Required by captureBackpackBlock.
         this.block.setCollapsed(false);
+
         if (this.field instanceof pxtblockly.FieldAssetEditor) {
             if (this.field.isGreyBlock) throw new Error("This asset cannot be edited.");
             this.asset = this.field.getAsset();
@@ -94,6 +110,7 @@ export class BackpackAssetEditor {
             return undefined;
         }
         if (!this.asset) throw new Error("The saved asset is unavailable.");
+
         if (this.asset.type === pxt.AssetType.Tilemap) {
             pxt.sprite.addMissingTilemapTilesAndReferences(this.project, this.asset);
         }
@@ -111,9 +128,11 @@ export class BackpackAssetEditor {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.WidgetDiv.hide();
         }
+
         if (this.asset) {
             if (!edited || edited.type !== this.asset.type) throw new Error("The asset editor is not ready.");
             let result = pxt.cloneAsset(edited, true);
+
             // A failed parent save leaves the native editor holding its original
             // temporary id. Reuse the promoted identity on subsequent captures.
             if (result.id === this.editorAssetId && this.asset.id !== this.editorAssetId) {
@@ -136,14 +155,20 @@ export class BackpackAssetEditor {
             }
             this.asset = result;
         }
+
         const captured = pxtblockly.captureBackpackBlock(this.block);
         const payload = pxtblockly.parseBackpackCode(captured.code);
+
         // Scratch-only interaction settings must not make the saved asset undeletable.
         for (const key of ["deletable", "editable", "movable", "collapsed"] as const) {
             if (this.original[key] === undefined) delete payload.blocks[0][key];
             else payload.blocks[0][key] = this.original[key];
         }
-        return { ...captured, code: JSON.stringify(payload), name: this.asset ? edited?.meta?.displayName : this.name };
+        return {
+            ...captured,
+            code: JSON.stringify(payload),
+            name: this.asset ? edited?.meta?.displayName : this.name
+        };
     }
 
     dispose(): void {

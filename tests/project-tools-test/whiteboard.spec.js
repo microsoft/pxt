@@ -125,7 +125,7 @@ describe("named private whiteboards", function () {
         await page.keyboard.up("Control");
         await page.keyboard.type(name);
         await page.keyboard.press("Enter");
-        await page.waitForSelector(".project-whiteboard-menu__edit", { hidden: true });
+        await page.waitForSelector(".project-whiteboard-menu-edit", { hidden: true });
     };
 
     it("loads saved or new notes without writing until the first edit", async () => {
@@ -163,7 +163,7 @@ describe("named private whiteboards", function () {
             whiteboardTest.originalStore = whiteboardTest.store();
             whiteboardTest.originalNotes = document.getElementById("project-notes-text");
         });
-        await page.click("#project-tools-whiteboard .project-tools__pin");
+        await page.click("#project-tools-whiteboard .project-tools-pin");
         await page.click("#project-tools-tab-backpack");
         await page.waitForSelector("#test-backpack", { visible: true });
         assert.equal(await page.$eval("#project-tools-whiteboard", el => el.hidden), true);
@@ -183,7 +183,7 @@ describe("named private whiteboards", function () {
         assert.equal(await page.$eval(input, el => el === whiteboardTest.originalNotes), true);
         assert.equal(await page.$eval(input, el => el.value), "Saved private notes retained across backpack");
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 6);
-        assert.equal(await page.$eval("#project-tools-whiteboard .project-tools__pin", el => el.getAttribute("aria-pressed")), "true");
+        assert.equal(await page.$eval("#project-tools-whiteboard .project-tools-pin", el => el.getAttribute("aria-pressed")), "true");
         await page.evaluate(() => whiteboardTest.undo());
         assert.equal(await page.evaluate(() => whiteboardTest.pixel()), 0);
         await page.waitForFunction(() => whiteboardTest.persisted?.whiteboards[0].text === "Saved private notes retained across backpack" &&
@@ -192,7 +192,7 @@ describe("named private whiteboards", function () {
     });
 
     it("routes undo to the canvas without intercepting notes or outside controls", async () => {
-        await page.click("#project-tools-whiteboard .project-tools__pin");
+        await page.click("#project-tools-whiteboard .project-tools-pin");
         await page.evaluate(() => whiteboardTest.draw(3));
         for (const selector of [input, "#outside"]) {
             await page.focus(selector);
@@ -242,7 +242,7 @@ describe("named private whiteboards", function () {
             assert.equal(await page.evaluate(() => matchMedia("(forced-colors: active)").matches), true);
             await page.keyboard.press("Shift");
             for (const selector of ["#project-tools-launcher", menu,
-                "#project-tools-whiteboard .project-tools__close", "#project-tools-whiteboard .project-tools__pin"]) {
+                "#project-tools-whiteboard .project-tools-close", "#project-tools-whiteboard .project-tools-pin"]) {
                 await page.focus(selector);
                 assert.equal(await page.$eval(selector, control => {
                     const style = getComputedStyle(control);
@@ -253,7 +253,7 @@ describe("named private whiteboards", function () {
                 }), true, `Missing keyboard focus indicator: ${selector}`);
             }
             await page.keyboard.press("Space");
-            assert.equal(await page.$eval("#project-tools-whiteboard .project-tools__pin", el => el.getAttribute("aria-pressed")), "true");
+            assert.equal(await page.$eval("#project-tools-whiteboard .project-tools-pin", el => el.getAttribute("aria-pressed")), "true");
         } finally {
             await session.detach();
         }

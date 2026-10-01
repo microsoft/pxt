@@ -26,21 +26,21 @@ describe("project backpack UI", function () {
     const asset = (type, index) => ({ ...item(type, `00000000-0000-0000-0000-${String(index).padStart(12, "0")}`),
         kind: "asset", code: JSON.stringify({ blocks: [{ type, fields: { ASSET: "pixels" } }] }) });
     const assetPreviewURI = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=";
-    const assetPreview = ".project-backpack__preview--asset";
-    const add = ".project-backpack__add";
-    const rename = ".project-backpack__rename";
-    const assetModal = ".project-backpack__asset-modal";
-    const body = ".project-backpack__body";
+    const assetPreview = ".project-backpack-preview-asset";
+    const add = ".project-backpack-add";
+    const rename = ".project-backpack-rename";
+    const assetModal = ".project-backpack-asset-modal";
+    const body = ".project-backpack-body";
     const searchBox = "#project-backpack-search";
-    const visibleNames = () => page.$$eval(".project-backpack__name", headings => headings.map(heading => heading.textContent));
+    const visibleNames = () => page.$$eval(".project-backpack-name", headings => headings.map(heading => heading.textContent));
     const text = () => page.$eval("#root", element => element.textContent);
     const idle = async () => {
         await page.waitForFunction(() => {
-            return document.querySelector(".project-backpack__body")?.getAttribute("aria-busy") === "false";
+            return document.querySelector(".project-backpack-body")?.getAttribute("aria-busy") === "false";
         });
     };
     const modalClosed = async () => {
-        await page.waitForFunction(() => !document.querySelector(".project-backpack__asset-modal")
+        await page.waitForFunction(() => !document.querySelector(".project-backpack-asset-modal")
             && !document.getElementById("root").hasAttribute("aria-hidden") && !backpackTest.modalOpen);
     };
     const reopen = async () => {
@@ -177,6 +177,7 @@ describe("project backpack UI", function () {
                 subscribeBackpack(listener) { listeners.add(listener); return () => listeners.delete(listener); },
                 notifyBackpackEditorChanged: () => test.notify(),
                 canImportBackpack: () => true,
+                canDropBackpack: (_headerId, target) => target.id === "outside",
                 canEditBackpackAsset: () => true,
                 async refreshBackpackAsync() {
                     const user = test.storeKey();
@@ -186,10 +187,10 @@ describe("project backpack UI", function () {
                     test.complete = true;
                     test.notify();
                 },
-                async importBackpackEntryAsync(entry, headerId) {
+                async importBackpackEntryAsync(entry, headerId, position) {
                     const item = entry.item || (test.snapshots[test.storeKey()] || []).find(item => item.id === entry.id);
                     const fail = test.failAdd;
-                    test.adds.push({ item, headerId });
+                    test.adds.push({ item, headerId, position });
                     await test.gate;
                     if (test.importError) throw test.importError;
                     if (fail) throw new Error("Import failed. Try again.");
@@ -235,6 +236,10 @@ describe("project backpack UI", function () {
                 modules["./BackpackPreview"] = window.backpackPreviewUI;
                 modules["./BackpackEntryCard"] = window.backpackEntryCard;
                 modules["./BackpackItemDialog"] = window.backpackItemDialog;
+                modules["./BackpackToolbar"] = window.backpackToolbar;
+                modules["./useBackpackDrag"] = window.backpackDrag;
+                modules["./useBackpackPageFocus"] = window.backpackPageFocus;
+                modules["./useBackpackCollection"] = window.backpackCollection;
                 // Native rendering is exercised with real fields in backpack-asset-edit.
                 modules["../backpackAssetPreview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
                     previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code),
@@ -244,7 +249,7 @@ describe("project backpack UI", function () {
                 modules["./BackpackAssetEditDialog"] = { BackpackAssetEditDialog: props => {
                     const [code, setCode] = React.useState(props.item.code);
                     return React.createElement(window.backpackControls.Modal, {
-                        title: "Edit Backpack asset", className: "project-backpack__asset-modal", fullscreen: true, onClose: props.onClose,
+                        title: "Edit Backpack asset", className: "project-backpack-asset-modal", fullscreen: true, onClose: props.onClose,
                         actions: [{ label: "Cancel", onClick: props.onClose },
                             { label: "Save", onClick: () => props.onSave({ ...props.item, code }) }]
                     }, React.createElement("input", { "aria-label": "Asset field", value: code, onChange: event => setCode(event.target.value) }));
@@ -267,6 +272,10 @@ describe("project backpack UI", function () {
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackToolbar.tsx")}\n})(window.require, window.backpackToolbar = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/useBackpackDrag.ts")}\n})(window.require, window.backpackDrag = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/useBackpackPageFocus.ts")}\n})(window.require, window.backpackPageFocus = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/useBackpackCollection.ts")}\n})(window.require, window.backpackCollection = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
         await page.evaluate(() => {
             function Harness() {
@@ -380,14 +389,14 @@ describe("project backpack UI", function () {
     it("preserves tab naming, roving focus, and rename/delete dialog submission", async () => {
         const saved = item();
         await signIn([saved]);
-        assert.equal(await page.$eval(".project-backpack__tabs", tabs => tabs.getAttribute("aria-label")), "Backpack contents");
-        assert.deepStrictEqual(await page.$$eval(".project-backpack__tabs button", buttons => buttons.map(button => button.title)), ["Code", "Assets"]);
+        assert.equal(await page.$eval(".project-backpack-tabs", tabs => tabs.getAttribute("aria-label")), "Backpack contents");
+        assert.deepStrictEqual(await page.$$eval(".project-backpack-tabs button", buttons => buttons.map(button => button.title)), ["Code", "Assets"]);
         await page.focus("#project-backpack-tab-code");
         await page.keyboard.press("End");
         assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-tab-asset");
         await page.keyboard.press("Home");
         assert.equal(await page.evaluate(() => document.activeElement.id), "project-backpack-tab-code");
-        assert.equal(await page.$$eval('.project-backpack__tabs [tabindex="0"]', tabs => tabs.length), 1);
+        assert.equal(await page.$$eval('.project-backpack-tabs [tabindex="0"]', tabs => tabs.length), 1);
         await page.click(rename);
         await page.waitForSelector("#project-backpack-name", { visible: true });
         await page.waitForFunction(() => document.activeElement.id === "project-backpack-name");
@@ -395,14 +404,14 @@ describe("project backpack UI", function () {
         assert.equal(await page.$eval("#project-backpack-name", input => input.maxLength), 100);
         await page.keyboard.type("Landing");
         await page.keyboard.press("Enter");
-        await page.waitForFunction(() => !document.querySelector(".project-backpack__rename-modal"));
+        await page.waitForFunction(() => !document.querySelector(".project-backpack-rename-modal"));
         await idle();
         assert.deepStrictEqual(await visibleNames(), ["Landing"]);
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.renames), [{ id: saved.id, name: "Landing" }]);
-        await page.click(".project-backpack__delete");
-        await page.waitForSelector(".project-backpack__delete-modal", { visible: true });
-        await page.click(".project-backpack__delete-modal .common-modal-footer button:last-child");
-        await page.waitForFunction(() => !document.querySelector(".project-backpack__delete-modal"));
+        await page.click(".project-backpack-delete");
+        await page.waitForSelector(".project-backpack-delete-modal", { visible: true });
+        await page.click(".project-backpack-delete-modal .common-modal-footer button:last-child");
+        await page.waitForFunction(() => !document.querySelector(".project-backpack-delete-modal"));
         await idle();
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.deletes), [saved.id]);
         await page.waitForFunction(() => document.activeElement.id === "project-backpack-items");
@@ -418,8 +427,8 @@ describe("project backpack UI", function () {
 
         await signIn([asset("image_picker", 2), asset("music_song_editor", 3)]);
         await page.click("#project-backpack-tab-asset");
-        await page.waitForSelector(".project-backpack__asset");
-        assert.deepStrictEqual(await page.$$eval(".project-backpack__asset i", icons => icons.map(icon => icon.className)), ["icon image", "icon music"]);
+        await page.waitForSelector(".project-backpack-asset");
+        assert.deepStrictEqual(await page.$$eval(".project-backpack-asset i", icons => icons.map(icon => icon.className)), ["icon image", "icon music"]);
     });
 
     it("shows intended user errors but reports technical failures without displaying their details", async () => {
@@ -439,6 +448,44 @@ describe("project backpack UI", function () {
         assert.match(await text(), /Could not update your backpack\. Please try again/);
         assert.doesNotMatch(await text(), /PRIVATE_INTERNAL_DETAILS/);
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.reportedErrors), ["PRIVATE_INTERNAL_DETAILS"]);
+    });
+
+    it("keeps preview drag data private and imports at the workspace drop position", async () => {
+        const saved = item();
+        await page.evaluate(saved => {
+            backpackTest.remote.__guest__ = [{ ...saved, previewUri: backpackTest.assetPreviewURI }];
+        }, saved);
+        await reopen();
+        await idle();
+        await page.waitForSelector(".project-backpack-preview", { visible: true });
+
+        const dragData = await page.evaluate(() => {
+            const transfer = new DataTransfer();
+            transfer.setData("text/uri-list", "private-preview");
+            document.querySelector(".project-backpack-preview").dispatchEvent(new DragEvent("dragstart", {
+                bubbles: true,
+                dataTransfer: transfer
+            }));
+            const types = [...transfer.types];
+            const key = transfer.getData("application/x-makecode-backpack");
+            document.getElementById("outside").dispatchEvent(new DragEvent("drop", {
+                bubbles: true,
+                dataTransfer: transfer,
+                clientX: 120,
+                clientY: 240
+            }));
+            return { types, key };
+        });
+
+        await idle();
+        assert.deepStrictEqual(dragData, {
+            types: ["application/x-makecode-backpack"],
+            key: JSON.stringify(["local", saved.id])
+        });
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.adds.map(add => ({
+            id: add.item.id,
+            position: add.position
+        }))), [{ id: saved.id, position: { x: 120, y: 240 } }]);
     });
 
     it("defaults tutorials to usable assets and shows only an unavailable message on Code", async () => {
@@ -468,7 +515,7 @@ describe("project backpack UI", function () {
         assert.deepStrictEqual(await page.evaluate(() => backpackTest.assetSaves), [{ id: saved.id, item: saved }]);
         await page.evaluate(() => { pxt.appTarget.appTheme.assetEditor = false; backpackTest.rerender(); });
         await idle();
-        assert.equal(await page.$('.project-backpack__tabs'), null);
+        assert.equal(await page.$('.project-backpack-tabs'), null);
         assert.match(await text(), /Code snippets aren't available during tutorials/);
         assert.doesNotMatch(await text(), /Use the Assets tab/);
         await page.evaluate(items => {
@@ -479,7 +526,7 @@ describe("project backpack UI", function () {
         }, [item(), saved]);
         await idle();
         assert.deepStrictEqual(await visibleNames(), ["Jump"]);
-        assert.equal(await page.$('.project-backpack__sign-in'), null);
+        assert.equal(await page.$('.project-backpack-sign-in'), null);
         assert.equal(await page.$eval(body, element => element.getAttribute("aria-labelledby")), null);
         await page.evaluate(() => { pxt.appTarget.appTheme.backpack = false; backpackTest.rerender(); });
         assert.equal(await page.$(body), null);
@@ -556,6 +603,47 @@ describe("project backpack UI", function () {
         assert.equal(await page.evaluate(() => backpackTest.refreshes), before + 1, "Focus and visibility return share one refresh");
     });
 
+    it("queues metadata revalidation until an in-flight import finishes", async () => {
+        await signIn([item()]);
+        const before = await page.evaluate(saved => {
+            backpackTest.remote.A = [saved];
+            backpackTest.hold();
+            return backpackTest.refreshes;
+        }, item("Updated elsewhere"));
+        await page.click(add);
+        await returnToTab();
+        assert.deepStrictEqual(await visibleNames(), []);
+        assert.equal(await page.evaluate(() => backpackTest.refreshes), before);
+        await page.evaluate(() => backpackTest.release());
+        await page.waitForFunction(count => backpackTest.refreshes === count + 1, {}, before);
+        await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Updated elsewhere"]);
+        assert.equal(await page.evaluate(() => backpackTest.adds.length), 1);
+    });
+
+    it("keeps a rename draft open through page-return revalidation and refreshes after cancellation", async () => {
+        await signIn([item()]);
+        await page.click(rename);
+        await page.waitForFunction(() => document.activeElement.id === "project-backpack-name");
+        await page.keyboard.type("Unsaved draft");
+        const before = await page.evaluate(saved => {
+            backpackTest.remote.A = [saved];
+            backpackTest.hold();
+            return backpackTest.refreshes;
+        }, item("Updated elsewhere"));
+        await returnToTab();
+        assert.equal(await page.$eval("#project-backpack-name", input => input.value), "Unsaved draft");
+        assert.equal(await page.evaluate(() => backpackTest.refreshes), before);
+        assert.equal(await page.evaluate(() => backpackTest.modalOpen), true);
+        await page.keyboard.press("Escape");
+        await page.waitForFunction(count => backpackTest.refreshes === count + 1, {}, before);
+        await page.evaluate(() => backpackTest.release());
+        await idle();
+        assert.deepStrictEqual(await visibleNames(), ["Updated elsewhere"]);
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.renames), []);
+        assert.equal(await page.evaluate(() => backpackTest.collapses), 0);
+    });
+
     it("requires fresh metadata for a new project before importing into that project", async () => {
         await signIn([item()]);
         await page.evaluate(() => {
@@ -583,7 +671,7 @@ describe("project backpack UI", function () {
         });
         await page.focus(rename);
         await page.click(rename);
-        await page.waitForFunction(() => document.querySelector(".project-backpack__rename").disabled);
+        await page.waitForFunction(() => document.querySelector(".project-backpack-rename").disabled);
         // Edge blurs a focused button when React disables it. Reproduce that
         // event on older Chromium so the parent's deferred blur guard is tested.
         await page.$eval(rename, button => button.blur());

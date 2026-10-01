@@ -4,9 +4,13 @@ export interface PreparedBackpackAssetGallery {
 }
 
 /** Detach gallery data and restore native prototypes without loading it into the scratch project. */
-export function prepareBackpackAssetGallery(gallery: pxt.AssetSnapshot, project: pxt.TilemapProject): PreparedBackpackAssetGallery {
+export function prepareBackpackAssetGallery(
+    gallery: pxt.AssetSnapshot,
+    project: pxt.TilemapProject
+): PreparedBackpackAssetGallery {
     const snapshot = structuredClone(gallery);
     const projectGallery = project.saveGallerySnapshot();
+
     for (const type of Object.keys(snapshot.assets)) {
         const collection = snapshot.assets[type];
         Object.setPrototypeOf(collection, Object.getPrototypeOf(projectGallery.assets[type]));
@@ -17,5 +21,6 @@ export function prepareBackpackAssetGallery(gallery: pxt.AssetSnapshot, project:
             }
         }
     }
+
     return { snapshot, projectGallery };
 }

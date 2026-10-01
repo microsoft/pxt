@@ -20,15 +20,24 @@ export interface ProjectToolsResizeHandleProps {
 
 export function ProjectToolsResizeHandle(props: ProjectToolsResizeHandleProps): JSX.Element {
     const {
-        axis, value, min, max, onFocus, onPointerDown, onPointerMove,
-        onPointerUp, onPointerCancel, onLostPointerCapture, onKeyDown
+        axis,
+        value,
+        min,
+        max,
+        onFocus,
+        onPointerDown,
+        onPointerMove,
+        onPointerUp,
+        onPointerCancel,
+        onLostPointerCapture,
+        onKeyDown
     } = props;
     const width = axis === "width";
     const label = width ? lf("Resize project tools width") : lf("Resize project tools height");
 
     return (
         <div
-            className={classList("project-tools__resize", `project-tools__resize--${axis}`)}
+            className={classList("project-tools-resize", `project-tools-resize-${axis}`)}
             role="separator"
             aria-orientation={width ? "vertical" : "horizontal"}
             tabIndex={0}
@@ -47,15 +56,25 @@ export function ProjectToolsResizeHandle(props: ProjectToolsResizeHandleProps): 
             onKeyDown={onKeyDown}
         >
             <svg
-                className="project-tools__resize-grip"
+                className="project-tools-resize-grip"
                 viewBox={width ? "0 0 8 20" : "0 0 20 8"}
                 aria-hidden="true"
                 focusable="false"
             >
-                {[4, 10, 16].map(position => <React.Fragment key={position}>
-                    <circle cx={width ? 2 : position} cy={width ? position : 2} r="1" />
-                    <circle cx={width ? 6 : position} cy={width ? position : 6} r="1" />
-                </React.Fragment>)}
+                {[4, 10, 16].map(position => (
+                    <React.Fragment key={position}>
+                        <circle
+                            cx={width ? 2 : position}
+                            cy={width ? position : 2}
+                            r="1"
+                        />
+                        <circle
+                            cx={width ? 6 : position}
+                            cy={width ? position : 6}
+                            r="1"
+                        />
+                    </React.Fragment>
+                ))}
             </svg>
         </div>
     );

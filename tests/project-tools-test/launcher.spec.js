@@ -172,12 +172,12 @@ describe("responsive project-tools launcher", function () {
     };
     const openTool = async (selector, width = 390) => {
         await page.setViewport({ width, height: 900 });
-        await page.waitForFunction(compact => document.querySelector(".project-tools").classList.contains("project-tools--compact") === compact, {}, width < 1200);
+        await page.waitForFunction(compact => document.querySelector(".project-tools").classList.contains("project-tools-compact") === compact, {}, width < 1200);
         await optionsAre(width <= 991);
         await showOptions();
         await page.click(selector);
         await page.waitForFunction(() => !document.getElementById("project-tools-panel").hidden);
-        await page.waitForSelector(`${panel} .project-tools__pin`, { visible: true });
+        await page.waitForSelector(`${panel} .project-tools-pin`, { visible: true });
     };
 
     it("keeps the unpinned backpack open during modal focus and resumes dismissal afterward", async () => {
@@ -186,7 +186,7 @@ describe("responsive project-tools launcher", function () {
         await page.focus("#outside");
         await page.click("#outside");
         assert.equal(await page.$eval(panel, element => element.hidden), false);
-        assert.equal(await page.$eval(`${panel} .project-tools__pin`, element => element.getAttribute("aria-pressed")), "false");
+        assert.equal(await page.$eval(`${panel} .project-tools-pin`, element => element.getAttribute("aria-pressed")), "false");
         await page.evaluate(() => window.setBackpackModalOpen(false));
         await page.click("#outside");
         await page.waitForFunction(() => document.getElementById("project-tools-panel").hidden);
@@ -194,7 +194,7 @@ describe("responsive project-tools launcher", function () {
 
     it("independently gates Whiteboard and Backpack and resizes horizontally on a phone", async () => {
         await openTool(whiteboard);
-        const grip = ".project-tools__resize--width";
+        const grip = ".project-tools-resize-width";
         const width = () => page.$eval(panel, el => el.getBoundingClientRect().width);
         await page.focus(grip);
         await page.keyboard.press("Home");
@@ -367,7 +367,7 @@ describe("responsive project-tools launcher", function () {
 
     it("keeps pinned documentation open across collapse/reopen until manually unpinned", async () => {
         await openTool(docs, 1024);
-        const pin = `${panel} .project-tools__pin`;
+        const pin = `${panel} .project-tools-pin`;
         assert.equal(await page.$eval(pin, el => el.getAttribute("aria-pressed")), "false");
         await page.click(pin);
         assert.equal(await page.$eval(pin, el => el.getAttribute("aria-pressed")), "true");
@@ -376,7 +376,7 @@ describe("responsive project-tools launcher", function () {
         await focusIs("outside");
         assert.equal(await page.$eval("#outside", el => el.dataset.clicked), "true");
         assert.equal(await page.$eval(panel, el => el.hidden), false);
-        await page.click(`${panel} .project-tools__close`);
+        await page.click(`${panel} .project-tools-close`);
         assert.equal(await page.$eval(panel, el => el.hidden), true);
         await page.click(docs);
         assert.equal(await page.$eval(pin, el => el.getAttribute("aria-pressed")), "true");
@@ -394,12 +394,12 @@ describe("responsive project-tools launcher", function () {
         await page.evaluate(() => window.openExample());
         await focusIs("project-tools-panel");
         await optionsAre(true);
-        assert.equal(await page.$eval(`${panel} .project-tools__pin`, el => el.getAttribute("aria-pressed")), "true");
+        assert.equal(await page.$eval(`${panel} .project-tools-pin`, el => el.getAttribute("aria-pressed")), "true");
         await page.click("#outside");
         assert.equal(await page.$eval(panel, el => el.hidden), false);
-        await page.click(`${panel} .project-tools__pin`);
+        await page.click(`${panel} .project-tools-pin`);
         await page.evaluate(() => window.openHelp());
-        assert.equal(await page.$eval(`${panel} .project-tools__pin`, el => el.getAttribute("aria-pressed")), "false");
+        assert.equal(await page.$eval(`${panel} .project-tools-pin`, el => el.getAttribute("aria-pressed")), "false");
         await page.click("#outside");
         assert.equal(await page.$eval(panel, el => el.hidden), true);
     });

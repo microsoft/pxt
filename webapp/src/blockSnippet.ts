@@ -63,9 +63,11 @@ function checkData(value: unknown): void {
             }
             seen.delete(value);
         } else if (typeof value === "number" ? !Number.isFinite(value)
-            : value !== null && value !== undefined && typeof value !== "boolean") invalidSnippet();
+            : value !== null && value !== undefined && typeof value !== "boolean")
+            invalidSnippet();
         if (length > 1000000) invalidSnippet();
     };
+
     visit(value, 0);
 }
 
@@ -81,7 +83,10 @@ export function getBlockSnippetTypes(states: Blockly.serialization.blocks.State[
 }
 
 /** List dependencies missing from the project using Backpack's display policy, not its import validation. */
-export function getMissingBlockSnippetDependencies(dependencies: pxt.Map<string>, project: pxt.MainPackage): [string, string][] {
+export function getMissingBlockSnippetDependencies(
+    dependencies: pxt.Map<string>,
+    project: pxt.MainPackage
+): [string, string][] {
     return Object.entries(dependencies || {}).filter(([name, version]) => {
         const dependency = Object.prototype.hasOwnProperty.call(project.deps, name) ? project.deps[name] : undefined;
         const installed = dependency && (version === "*" || dependency.verProtocol() === "github"
@@ -102,7 +107,9 @@ function validateRequirements(value: unknown): BlockSnippetRequirements {
     checkData(value);
     if (!isRecord(value) || !own(value, "dependencies") || !isRecord(value.dependencies)
         || Object.keys(value.dependencies).length > 100
-        || Object.keys(value).some(key => key !== "dependencies" && key !== "projectBlocks")) invalidSnippet();
+        || Object.keys(value).some(key => key !== "dependencies" && key !== "projectBlocks"))
+        invalidSnippet();
+
     const portable: pxt.Map<string> = Object.create(null);
     const local: pxt.Map<string> = Object.create(null);
     for (const name of Object.keys(value.dependencies)) {
@@ -113,6 +120,7 @@ function validateRequirements(value: unknown): BlockSnippetRequirements {
             portable[name] = "pub:local"; // Validate the name with exactly the store's rules.
         } else portable[name] = version;
     }
+
     try {
         const saved = validateBackpackRequirements({ dependencies: portable, projectBlocks: value.projectBlocks });
         for (const name of Object.keys(local)) saved.dependencies[name] = local[name];
@@ -137,11 +145,15 @@ function dependencyReference(name: string, dependency: pxt.Package): string | un
 }
 
 /** Capture only packages and project source referenced by the actual serialized blocks. */
-export function getBlockSnippetRequirements(states: Blockly.serialization.blocks.State[], info: pxtc.BlocksInfo,
-    main: pxt.MainPackage): BlockSnippetRequirements {
+export function getBlockSnippetRequirements(
+    states: Blockly.serialization.blocks.State[],
+    info: pxtc.BlocksInfo,
+    main: pxt.MainPackage
+): BlockSnippetRequirements {
     const blocks = snippetStates(states);
     const dependencies: pxt.Map<string> = Object.create(null);
     const projectBlocks: pxt.Map<string> = Object.create(null);
+
     const collect = (symbol: pxtc.SymbolInfo, blockType?: string): void => {
         if (!symbol) return; // Blockly builtins have no API symbol.
         const local = !symbol.pkg || symbol.pkg === main.id || symbol.pkg === "main"
@@ -150,6 +162,7 @@ export function getBlockSnippetRequirements(states: Blockly.serialization.blocks
             if (blockType) projectBlocks[blockType] = symbol.fileName;
             return; // Local asset data is included by full field serialization.
         }
+
         const dependency = own(main.deps, symbol.pkg) ? main.deps[symbol.pkg] : undefined;
         const version = dependencyReference(symbol.pkg, dependency);
         try {
@@ -160,15 +173,18 @@ export function getBlockSnippetRequirements(states: Blockly.serialization.blocks
         }
         dependencies[symbol.pkg] = version;
     };
-    for (const state of blocks) collect(own(info.blocksById, state.type) ? info.blocksById[state.type] : undefined, state.type);
+    for (const state of blocks)
+        collect(own(info.blocksById, state.type) ? info.blocksById[state.type] : undefined, state.type);
 
     const references = (value: unknown, allowUnqualified = false): void => {
         if (typeof value === "string") {
-            if ((allowUnqualified || /^[\w$]+(?:\.[\w$]+)+$/.test(value)) && own(info.apis.byQName, value)) collect(info.apis.byQName[value]);
+            if ((allowUnqualified || /^[\w$]+(?:\.[\w$]+)+$/.test(value)) && own(info.apis.byQName, value))
+                collect(info.apis.byQName[value]);
         } else if (value && typeof value === "object") {
             for (const key of Object.keys(value)) references((value as pxt.Map<unknown>)[key]);
         }
     };
+
     for (const state of blocks) {
         const symbol = own(info.blocksById, state.type) ? info.blocksById[state.type] : undefined;
         const parameters = symbol && pxt.blocks.compileInfo(symbol).definitionNameToParam;
@@ -191,6 +207,7 @@ export function getBlockSnippetRequirements(states: Blockly.serialization.blocks
             }
         }
     }
+
     return validateRequirements({ dependencies, projectBlocks });
 }
 
@@ -201,13 +218,18 @@ interface RequiredPackage {
 }
 
 /** Prepare a snippet without replacing extensions, losing code, or ever pasting blocks. */
-export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirements | undefined, types: string[],
-    host: BlockSnippetProjectHost): Promise<boolean> {
+export async function ensureBlockSnippetAsync(
+    requirements: BlockSnippetRequirements | undefined,
+    types: string[],
+    host: BlockSnippetProjectHost
+): Promise<boolean> {
     const saved = validateRequirements(requirements === undefined ? { dependencies: {} } : requirements);
     checkData(types);
     if (!Array.isArray(types) || types.length > maxBlocks) invalidSnippet();
-    for (const type of types) if (!isName(type)) invalidSnippet();
+    for (const type of types)
+        if (!isName(type)) invalidSnippet();
     types = types.slice();
+
     const assertCurrent = (): void => {
         if (!host.isCurrent() || !host.headerId || pkg.mainEditorPkg().header?.id !== host.headerId) {
             throw new BackpackUserError(lf("Your project or account changed. Please retry the operation."));
@@ -215,11 +237,17 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
     };
     const wait = async <T>(action: () => Promise<T>): Promise<T> => {
         assertCurrent();
-        try { return await action(); }
-        finally { assertCurrent(); }
+        try {
+            return await action();
+        } finally {
+            assertCurrent();
+        }
     };
     const explain = (header: string, body: string): Promise<number> => wait(() => core.confirmAsync({
-        header, body, hideCancel: true, agreeLbl: lf("OK")
+        header,
+        body,
+        hideCancel: true,
+        agreeLbl: lf("OK")
     }));
     const missingProjectCode = async (): Promise<boolean> => {
         assertCurrent();
@@ -232,6 +260,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
         assertCurrent();
         return true;
     };
+
     assertCurrent();
     if (await wait(missingProjectCode)) return false;
     const main = pkg.mainPkg;
@@ -244,6 +273,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
         return config;
     };
     const originalDependencies = readConfig().dependencies;
+
     const assertUnchanged = (): void => {
         assertCurrent();
         const currentDependencies = readConfig().dependencies;
@@ -253,11 +283,13 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
             throw new BackpackUserError(lf("The project extensions changed. Please retry the operation."));
         }
     };
+
     const missing: string[] = [];
     for (const name of Object.keys(saved.dependencies)) {
         const dependency = own(main.deps, name) ? main.deps[name] : undefined;
         if (!dependency) missing.push(name);
-        else if (dependency.cppOnly || dependency.config?.name !== name || !sameSource(dependencyReference(name, dependency), saved.dependencies[name])) {
+        else if (dependency.cppOnly || dependency.config?.name !== name
+            || !sameSource(dependencyReference(name, dependency), saved.dependencies[name])) {
             await explain(lf("Extension conflict"), lf("This snippet requires {0} ({1}), but this project has a different source for that extension. Resolve the conflict before adding the snippet.", name, saved.dependencies[name]));
             return false;
         }
@@ -332,7 +364,10 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
         const dependencies = main.sortedDeps().slice();
         prospective.sortedDeps = () => dependencies;
         for (const required of planned.values()) {
-            const conflicts = await wait(() => prospective.findConflictsAsync({ ...required.config, dependencies: {} }, required.version));
+            const conflicts = await wait(() => prospective.findConflictsAsync(
+                { ...required.config, dependencies: {} },
+                required.version
+            ));
             assertUnchanged();
             if (conflicts.length) {
                 await explain(lf("Extension conflict"), lf("Adding '{0}' would replace or conflict with another extension. Resolve the conflict before adding this snippet. No extensions were changed.", required.name));
@@ -353,6 +388,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
         const updated = pxt.Package.stringifyConfig(config);
         let writeFailed = false;
         let writeError: unknown;
+
         try {
             // setContentAsync updates synchronously and starts saving this captured EditorPackage.
             // Unlike addDependencyAsync/setDependencyAsync, there is no later unguarded write.
@@ -362,12 +398,16 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
             writeFailed = true;
             writeError = error;
         }
+
         // A failed save may already have changed in-memory config. Never roll it back or
         // reload a different project/account. Preserve the original failure if reload fails.
         if (configFile.content !== originalConfig && host.isCurrent()
             && pkg.mainEditorPkg().header?.id === host.headerId) {
-            try { await wait(host.reloadAsync); }
-            catch (error) { if (!writeFailed) throw error; }
+            try {
+                await wait(host.reloadAsync);
+            } catch (error) {
+                if (!writeFailed) throw error;
+            }
         }
         if (writeFailed) throw writeError;
         assertCurrent();
@@ -383,6 +423,7 @@ export async function ensureBlockSnippetAsync(requirements: BlockSnippetRequirem
             return false;
         }
     }
+
     const info = host.getBlocksInfo();
     const builtins = pxtblockly.builtinBlocks();
     if (types.some(type => !own(Blockly.Blocks, type) || (!own(builtins, type) && !own(info.blocksById, type)))) {

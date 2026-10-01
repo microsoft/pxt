@@ -25,8 +25,11 @@ function blockText(item: pxt.auth.BackpackItem): string[] {
     const text = new Set<string>();
     addText(text, item.blockText);
     let payload: unknown;
-    try { payload = JSON.parse(item.code); }
-    catch { return Array.from(text); }
+    try {
+        payload = JSON.parse(item.code);
+    } catch {
+        return Array.from(text);
+    }
     if (!record(payload) || !Array.isArray(payload.blocks)) return Array.from(text);
 
     const ignored = new Set(["id", "functionid", "data", "jres", "bitmap", "pixels", "__proto__", "constructor", "prototype"]);
@@ -47,6 +50,7 @@ function blockText(item: pxt.auth.BackpackItem): string[] {
         if (value.block) states.push(value.block);
         if (value.shadow) states.push(value.shadow);
     };
+
     while (states.length) {
         const state = states.pop();
         if (!record(state)) continue;
@@ -60,7 +64,10 @@ function blockText(item: pxt.auth.BackpackItem): string[] {
 }
 
 /** Build once per collection update; every query is a local, fuzzy filter in the original item order. */
-export function createBackpackSearch(items: BackpackEntry[], extensionName?: (name: string) => string): (query: string) => BackpackEntry[] {
+export function createBackpackSearch(
+    items: BackpackEntry[],
+    extensionName?: (name: string) => string
+): (query: string) => BackpackEntry[] {
     const entries: SearchEntry[] = items.map((entry, index) => {
         const item = entry.error ? undefined : entry.item;
         const summary = entry.error ? undefined : entry.summary;
@@ -70,6 +77,7 @@ export function createBackpackSearch(items: BackpackEntry[], extensionName?: (na
             addText(extensions, version);
             addText(extensions, extensionName?.(name));
         }
+
         // Recovery cards are searchable by their safe name, never by invalid code or metadata.
         const blocks = new Set<string>();
         if (summary) {
@@ -77,8 +85,14 @@ export function createBackpackSearch(items: BackpackEntry[], extensionName?: (na
             summary.blockTypes.forEach(type => addText(blocks, type));
             summary.searchText?.forEach(text => addText(blocks, text));
         } else if (item) blockText(item).forEach(text => blocks.add(text));
-        return { index, name: entry.name, blocks: Array.from(blocks), extensions: Array.from(extensions) };
+        return {
+            index,
+            name: entry.name,
+            blocks: Array.from(blocks),
+            extensions: Array.from(extensions)
+        };
     });
+
     const fuse = new Fuse(entries, {
         keys: ["name", "blocks", "extensions"],
         threshold: 0.3,
@@ -87,6 +101,7 @@ export function createBackpackSearch(items: BackpackEntry[], extensionName?: (na
         shouldSort: false,
         minMatchCharLength: 1,
     });
+
     return query => {
         const terms = Array.from(new Set(query.trim().toLowerCase().split(/\s+/).filter(Boolean)));
         if (!terms.length) return items;

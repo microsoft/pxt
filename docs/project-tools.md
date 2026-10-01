@@ -81,6 +81,13 @@ See [testing](../tests/project-tools-test/README.md) for developer checks.
 
 ## Developer notes
 
+`ProjectBackpack` owns item actions and dialog selection. `useBackpackCollection`
+handles subscriptions, pending operations and queued refreshes. `BackpackToolbar`
+renders the category and search controls; `useBackpackPageFocus` and `useBackpackDrag`
+handle browser-focus and drag events. Item dialogs own their input focus.
+Feature classes use hyphenated names such as
+`project-backpack-item`; update their event and test selectors together.
+
 Feature-specific panels and hooks live in the webapp and compose `react-common`
 controls. Project tools opt into the shared button's `nativeBehavior` and use
 `hardDisabled` where a native disabled button was previously used. Keep the
