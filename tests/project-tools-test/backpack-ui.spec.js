@@ -227,11 +227,11 @@ describe("project backpack UI", function () {
                 }
             };
             window.require = id => {
-                const modules = { react: React, "fuse.js": window.Fuse, "../auth": auth, "../data": data,
-                    "../backpack": backpack, "../backpackSearch": window.backpackSearch, "../package": test.pkg,
-                    "../blockSnippet": window.blockSnippets,
+                const modules = { react: React, "fuse.js": window.Fuse, "../../auth": auth, "../../data": data,
+                    "../../backpack": backpack, "../../backpackSearch": window.backpackSearch, "../../package": test.pkg,
+                    "../../blockSnippet": window.blockSnippets,
                     "blockly": {}, "../../pxtblocks": {}, "./core": {}, "./package": test.pkg, "./backpack": backpack };
-                modules["../backpackErrors"] = window.backpackErrors;
+                modules["../../backpackErrors"] = window.backpackErrors;
                 modules["./backpackErrors"] = window.backpackErrors;
                 modules["./BackpackPreview"] = window.backpackPreviewUI;
                 modules["./BackpackEntryCard"] = window.backpackEntryCard;
@@ -241,7 +241,7 @@ describe("project backpack UI", function () {
                 modules["./useBackpackPageFocus"] = window.backpackPageFocus;
                 modules["./useBackpackCollection"] = window.backpackCollection;
                 // Native rendering is exercised with real fields in backpack-asset-edit.
-                modules["../backpackAssetPreview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
+                modules["../../backpackAssetPreview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
                     previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code),
                     framePreviewURIs: test.previewFrames
                 }) };
@@ -254,11 +254,11 @@ describe("project backpack UI", function () {
                             { label: "Save", onClick: () => props.onSave({ ...props.item, code }) }]
                     }, React.createElement("input", { "aria-label": "Asset field", value: code, onChange: event => setCode(event.target.value) }));
                 } };
-                modules["../../../react-common/components/controls/Modal"] = window.backpackControls;
-                modules["../../../react-common/components/controls/Input"] = window.backpackControls;
-                modules["../../../react-common/components/controls/Button"] = window.backpackControls;
-                modules["../../../react-common/components/controls/TabList"] = window.backpackControls;
-                modules["../../../react-common/components/util"] = window.backpackControls;
+                modules["../../../../react-common/components/controls/Modal"] = window.backpackControls;
+                modules["../../../../react-common/components/controls/Input"] = window.backpackControls;
+                modules["../../../../react-common/components/controls/Button"] = window.backpackControls;
+                modules["../../../../react-common/components/controls/TabList"] = window.backpackControls;
+                modules["../../../../react-common/components/util"] = window.backpackControls;
                 if (!(id in modules)) throw new Error(`Unexpected import ${id}`);
                 return modules[id];
             };
@@ -269,14 +269,14 @@ describe("project backpack UI", function () {
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpack.ts")}\n})(window.require, window.backpackValidation = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackToolbar.tsx")}\n})(window.require, window.backpackToolbar = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/useBackpackDrag.ts")}\n})(window.require, window.backpackDrag = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/useBackpackPageFocus.ts")}\n})(window.require, window.backpackPageFocus = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/useBackpackCollection.ts")}\n})(window.require, window.backpackCollection = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackToolbar.tsx")}\n})(window.require, window.backpackToolbar = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/useBackpackDrag.ts")}\n})(window.require, window.backpackDrag = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/useBackpackPageFocus.ts")}\n})(window.require, window.backpackPageFocus = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/useBackpackCollection.ts")}\n})(window.require, window.backpackCollection = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
         await page.evaluate(() => {
             function Harness() {
                 const [active, setActive] = React.useState(true);

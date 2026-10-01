@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Button } from "../../../react-common/components/controls/Button";
-import { Modal } from "../../../react-common/components/controls/Modal";
+import { Button } from "../../../../react-common/components/controls/Button";
+import { Modal } from "../../../../react-common/components/controls/Modal";
 
 export interface BackpackAssetChoice {
     fieldName: string;

@@ -17,7 +17,7 @@ import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
-import { ProjectTools } from "./components/ProjectTools";
+import { ProjectTools } from "./components/projectTools/index";
 import { PROJECT_TOOLS_LAUNCHER_ID } from "./projectToolsState";
 
 // common menu items -- do not remove

@@ -1,13 +1,13 @@
 import * as React from "react";
-import { Button } from "../../../react-common/components/controls/Button";
-import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
-import { MenuDropdown, MenuItem } from "../../../react-common/components/controls/MenuDropdown";
+import { Button } from "../../../../react-common/components/controls/Button";
+import { FocusTrap } from "../../../../react-common/components/controls/FocusTrap";
+import { MenuDropdown, MenuItem } from "../../../../react-common/components/controls/MenuDropdown";
 import {
     MAX_PROJECT_WHITEBOARDS,
     MAX_WHITEBOARD_NAME_LENGTH,
     nextWhiteboardName,
     whiteboardNameError
-} from "../projectNotes";
+} from "../../projectNotes";
 
 export interface ProjectWhiteboardMenuProps {
     notes: pxt.workspace.ProjectNotes;

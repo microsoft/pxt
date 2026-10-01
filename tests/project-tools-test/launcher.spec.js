@@ -41,9 +41,9 @@ describe("responsive project-tools launcher", function () {
         components = bundleSource([
             "react-common/components/controls/Button.tsx",
             "react-common/components/util.tsx",
-            "webapp/src/components/ProjectToolsHeader.tsx",
-            "webapp/src/components/ProjectToolsResizeHandle.tsx",
-            "webapp/src/components/useProjectToolsResize.ts"
+            "webapp/src/components/projectTools/ProjectToolsHeader.tsx",
+            "webapp/src/components/projectTools/ProjectToolsResizeHandle.tsx",
+            "webapp/src/components/projectTools/useProjectToolsResize.ts"
         ], "projectToolsComponents");
         const styles = await less.render(fs.readFileSync("theme/project-tools.less", "utf8"), {
             modifyVars: themeVariables
@@ -76,12 +76,12 @@ describe("responsive project-tools launcher", function () {
             window.exports = {};
             window.require = id => {
                 if (id === "react") return window.React;
-                if (id === "../projectToolsState") return window.projectToolsState;
+                if (id === "../../projectToolsState") return window.projectToolsState;
                 if ([
                     "./ProjectToolsHeader", "./ProjectToolsResizeHandle", "./useProjectToolsResize",
-                    "../../../react-common/components/controls/Button", "../../../react-common/components/util"
+                    "../../../../react-common/components/controls/Button", "../../../../react-common/components/util"
                 ].includes(id)) return window.projectToolsComponents;
-                if (id === "../backpack") return {
+                if (id === "../../backpack") return {
                     isBackpackEnabled: () => pxt.appTarget.appTheme.backpack,
                     subscribeBackpackOpen: listener => {
                         window.backpackOpenListeners.add(listener);
@@ -111,7 +111,7 @@ describe("responsive project-tools launcher", function () {
         const stateCode = source("webapp/src/projectToolsState.ts");
         await page.addScriptTag({ content: `(function(exports) { ${stateCode}\n})(window.projectToolsState = {});` });
         await page.addScriptTag({ content: components });
-        const code = source("webapp/src/components/ProjectTools.tsx");
+        const code = source("webapp/src/components/projectTools/ProjectTools.tsx");
         await page.addScriptTag({ content: `(function(require, exports) { ${code}\n})(window.require, window.exports);` });
         await page.evaluate(() => {
             function Harness() {

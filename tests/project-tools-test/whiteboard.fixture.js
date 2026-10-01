@@ -4,7 +4,7 @@
 // the persistence and game-asset boundaries are supplied by the test runner.
 const React = require("react");
 const ReactDOM = require("react-dom");
-const { ProjectTools } = require("../../built/webapp/src/components/ProjectTools");
+const { ProjectTools } = require("../../built/webapp/src/components/projectTools/index");
 const { imageStateToBitmap } = require("../../built/webapp/src/components/ImageEditor/util");
 const { dispatchImageEdit, dispatchUndoImageEdit } = require("../../built/webapp/src/components/ImageEditor/actions/dispatch");
 const { validateProjectNotes } = require("../../built/webapp/src/projectNotes");

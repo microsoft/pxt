@@ -21,7 +21,7 @@ describe("named private whiteboards", function () {
         const workspacePath = path.resolve("built/webapp/src/workspace.js");
         const assetsPath = path.resolve("built/webapp/src/assets.js");
         const backpackPath = path.resolve("built/webapp/src/backpack.js");
-        const projectBackpackPath = path.resolve("built/webapp/src/components/ProjectBackpack.js");
+        const projectBackpackPath = path.resolve("built/webapp/src/components/projectTools/ProjectBackpack.js");
         build.transform(file => {
             const replacement = file === workspacePath ? "module.exports = window.whiteboardTest.workspace;"
                 : file === assetsPath ? "module.exports = { lookupAsset() { return undefined; }, isNameTaken() { return false; } };"

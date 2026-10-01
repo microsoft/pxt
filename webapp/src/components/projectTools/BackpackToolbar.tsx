@@ -1,7 +1,7 @@
 import * as React from "react";
-import { Button } from "../../../react-common/components/controls/Button";
-import { Input } from "../../../react-common/components/controls/Input";
-import { TabList } from "../../../react-common/components/controls/TabList";
+import { Button } from "../../../../react-common/components/controls/Button";
+import { Input } from "../../../../react-common/components/controls/Input";
+import { TabList } from "../../../../react-common/components/controls/TabList";
 
 export interface BackpackToolbarProps {
     assetsEnabled: boolean;
