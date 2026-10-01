@@ -7,6 +7,12 @@ import { FieldTileset } from "./field_tileset";
 
 export interface FieldCustom {
     isFieldCustom_: boolean;
+    /**
+     * Allows this field's value to be saved in Backpack's Assets tab.
+     * A standalone asset must be an output block with no block inputs and no other
+     * editable, serializable fields.
+     */
+    isBackpackAsset?: boolean;
     saveOptions?(): pxt.Map<string | number | boolean>;
     restoreOptions?(map: pxt.Map<string | number | boolean>): void;
 
@@ -441,18 +447,33 @@ export function getAssetSaveState(asset: pxt.Asset) {
         for (const key of Object.keys(jres)) {
             if (key === "*") continue;
             const entry = jres[key];
-            if (entry.mimeType === pxt.TILEMAP_MIME_TYPE) {
-                if (entry.id !== asset.id) {
-                    delete jres[key];
-                }
+            if (entry.mimeType !== pxt.TILEMAP_MIME_TYPE || entry.id !== asset.id) {
+                delete jres[key];
             }
-            else {
-                const id = addDotToNamespace(jres["*"].namespace) + key;
+        }
 
-                if (!asset.data.tileset.tiles.some(tile => tile.id === id)) {
-                    delete jres[key];
-                }
-            }
+        // Full saves must carry every tile, including gallery tiles unavailable in
+        // another project. Use the tileset itself: project JRES omits gallery tiles
+        // and can collapse imported tiles from different namespaces to one short id.
+        const defaultNamespace = addDotToNamespace(jres["*"].namespace);
+        for (const tile of asset.data.tileset.tiles) {
+            const namespace = tile.id.slice(0, tile.id.lastIndexOf(".") + 1);
+            const shortId = tile.id.slice(namespace.length);
+            const isDefaultNamespace = namespace === defaultNamespace;
+            const key = isDefaultNamespace ? shortId : tile.id;
+            const tileJres: pxt.Map<Partial<pxt.JRes> | string> = {};
+            pxt.addAssetToJRes(tile.jresData ? tile : {
+                ...tile,
+                jresData: pxt.sprite.base64EncodeBitmap(tile.bitmap)
+            }, tileJres);
+            const entry = tileJres[shortId] as Partial<pxt.JRes>;
+            jres[key] = {
+                ...entry,
+                ...(entry.tags?.length ? { tags: entry.tags.slice() } : {}),
+                // Explicit ids prevent inflateJRes from prefixing the default
+                // namespace; qualified keys avoid collisions with project tiles.
+                ...(!isDefaultNamespace ? { id: tile.id, namespace, dataEncoding: "base64" } : {})
+            };
         }
 
         serialized.jres = jres;
@@ -499,6 +520,13 @@ export function loadAssetFromSaveState(serialized: AssetSaveState) {
 
         const tempAsset = tempProject.lookupAsset(serialized.assetType, serialized.assetId);
 
+        if (tempAsset.type === pxt.AssetType.Tilemap) {
+            // Match the tile deduplication performed by loadTilemapJRes below. Tilemap
+            // equality includes tile ids/metadata, which may have changed on a prior paste.
+            tempAsset.data.tileset.tiles = tempAsset.data.tileset.tiles.map(tile =>
+                tile.isProjectTile ? globalProject.resolveTileByBitmap(tile.bitmap) || tile : tile);
+        }
+
         if (pxt.assetEquals(tempAsset, existing, true)) {
             return existing;
         }
@@ -540,7 +568,9 @@ export function loadAssetFromSaveState(serialized: AssetSaveState) {
 
 
     if (serialized.assetType === "tilemap" || serialized.assetType === "tile") {
-        globalProject.loadTilemapJRes(serialized.jres, true);
+        // Tilemaps remap duplicate tile ids internally. A standalone tile must
+        // retain its id so the lookup below can return the loaded asset.
+        globalProject.loadTilemapJRes(serialized.jres, serialized.assetType === "tilemap");
     }
     else {
         globalProject.loadAssetsJRes(serialized.jres);

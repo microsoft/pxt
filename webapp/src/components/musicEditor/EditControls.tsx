@@ -2,6 +2,7 @@ import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { Input } from "../../../../react-common/components/controls/Input";
 import { isNameTaken } from "../../assets";
+import { AssetEditorContext } from "../AssetEditorContext";
 
 export interface EditControlsProps {
     assetName: string;
@@ -12,6 +13,7 @@ export interface EditControlsProps {
 
 export const EditControls = (props: EditControlsProps) => {
     const { onAssetNameChanged, onDoneClicked, assetName, hideDoneButton } = props;
+    const project = React.useContext(AssetEditorContext);
     const [editName, setEditName] = React.useState<string>();
     const [nameError, setNameError] = React.useState<string>();
 
@@ -29,7 +31,7 @@ export const EditControls = (props: EditControlsProps) => {
         if (!pxt.validateAssetName(trimmedName)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
-        else if (isNameTaken(trimmedName) && trimmedName !== assetName) {
+        else if (isNameTaken(trimmedName, project) && trimmedName !== assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
         }
 

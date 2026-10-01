@@ -43,6 +43,17 @@ import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater"
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
+import * as backpack from "./backpack";
+import { BackpackUserError, backpackUserErrorMessage } from "./backpackErrors";
+import { chooseBackpackAssetAsync } from "./backpackAssetChooser";
+import { BackpackAssetChoice } from "./components/backpack/BackpackAssetChooser";
+import { assetToGalleryItem } from "./assets";
+import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./backpackProject";
+import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
+import { backpackPreviewAsync } from "./backpackPreview";
+import { clearBackpackDragState } from "../../pxtblocks/backpackDrag";
+import { BACKPACK_DRAG_OVER_CLASS, getBackpackDragTargets } from "./projectToolsDragTargets";
+import { projectToolTabId } from "./projectToolsState";
 
 interface CopyDataEntry {
     version: 1;
@@ -51,6 +62,8 @@ interface CopyDataEntry {
     workspaceId: string;
     targetVersion: string;
     headerId: string;
+    /** Workspace comments and older clipboard entries have no block requirements. */
+    requirements?: BlockSnippetRequirements;
 }
 
 export class Editor extends toolboxeditor.ToolboxEditor {
@@ -79,6 +92,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     // Blockly plugins
     protected workspaceSearch: WorkspaceSearch;
+    private disposeBackpackWorkspace: () => void;
+    private disposeBackpackEditor: () => void;
+    private pasteInProgress = false;
+    private choosingBackpackAsset = false;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -183,7 +200,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxt.Util.toArray(document.querySelectorAll(classes)).forEach((el: HTMLElement) => el.style.display = 'none');
             if (this.editor) Blockly.hideChaff();
             if (this.toolbox) this.toolbox.clearExpandedItem();
+            if (this.editor) clearBackpackDragState(this.editor);
         }
+        backpack.notifyBackpackEditorChanged();
     }
 
     saveToTypeScriptAsync(willOpenTypeScript = false): Promise<string> {
@@ -264,6 +283,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     } catch { }
                     this.loadingXml = false;
                     this.loadingXmlPromise = null;
+                    backpack.notifyBackpackEditorChanged();
                     pxt.perf.measureEnd(Measurements.DomUpdateLoadBlockly, { projectHeaderId: this.parent.state.header?.id });
                     // Do Not Remove: This is used by the skillmap
                     this.parent.onEditorContentLoaded();
@@ -514,7 +534,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             pxtblockly.external.setPromptTranslateBlock(dialogs.promptTranslateBlock);
         }
 
-        pxtblockly.external.setCopyPaste(copy, cut, this.pasteCallback, this.copyPrecondition, this.pastePrecondition);
+        pxtblockly.external.setCopyPaste(
+            (workspace, event, shortcut, scope) => workspace instanceof Blockly.WorkspaceSvg
+                && copy(workspace, event, shortcut, scope, this.blockInfo),
+            (workspace, event, shortcut, scope) => workspace instanceof Blockly.WorkspaceSvg
+                && cut(workspace, event, shortcut, scope, this.blockInfo),
+            this.pasteCallback, this.copyPrecondition, this.pastePrecondition
+        );
     }
 
     private initBlocklyToolbox() {
@@ -848,6 +874,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let blocklyDiv = document.getElementById('blocksEditor');
         if (!blocklyDiv)
             return;
+        this.disposeBackpackWorkspace?.();
+        this.disposeBackpackEditor?.();
         pxsim.U.clear(blocklyDiv);
 
         // Increase the Blockly connection radius
@@ -855,6 +883,23 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         Blockly.config.connectingSnapRadius = 96;
         this.editor = Blockly.inject(blocklyDiv, this.getBlocklyOptions(forceHasCategories)) as Blockly.WorkspaceSvg;
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
+        this.disposeBackpackWorkspace = pxtblockly.registerBackpackWorkspace(this.editor, {
+            isEnabled: () => this.backpackAvailable("code") || this.backpackAvailable("asset"),
+            canSave: block => this.backpackAvailable(pxtblockly.getBackpackCaptureKind(block)),
+            save: block => { void this.saveBlockToBackpackAsync(block); },
+            open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false),
+            dragTargets: getBackpackDragTargets(),
+            hoverClass: BACKPACK_DRAG_OVER_CLASS
+        });
+        this.disposeBackpackEditor = backpack.setBackpackEditor({
+            headerId: () => this.parent.state.header?.id,
+            canImport: kind => this.backpackAvailable(kind),
+            canDrop: target => target instanceof Element && !target.closest(".blocklyFlyout")
+                && target.closest(".blocklyWorkspace") === this.editor.getSvgGroup(),
+            assetEditorContext: () => ({ blocksInfo: this.blockInfo, gallery: pxt.react.getTilemapProject().saveGallerySnapshot(),
+                palette: pxt.appTarget.runtime.palette.slice() }),
+            importAsync: (item, position) => this.importFromBackpackAsync(item, position)
+        });
 
         (this.editor.getSvgGroup() as SVGElement).addEventListener("focusin", this.onWorkspaceFocus);
 
@@ -2563,6 +2608,138 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         }
     }
 
+    private backpackAvailable(kind: pxt.auth.BackpackKind = "code"): boolean {
+        const header = this.parent.state.header;
+        return backpack.isBackpackEnabled() && !!header && !header.temporary
+            && (kind !== "asset" || backpack.isBackpackAssetsEnabled())
+            && (kind === "asset" || !header.tutorial && !this.parent.isTutorial())
+            && !pxt.shell.isReadOnly() && !pxt.appTarget.appTheme.lockedEditor
+            && this.isVisible && this.parent.isBlocksActive() && !!this.blockInfo
+            && !this.loadingXml && !this.delayLoadXml && !!document.getElementById(projectToolTabId("backpack"));
+    }
+
+    private async saveBlockToBackpackAsync(block: Blockly.BlockSvg): Promise<void> {
+        const kind = pxtblockly.getBackpackCaptureKind(block);
+        if (this.choosingBackpackAsset || !this.backpackAvailable(kind)) return;
+        const headerId = this.parent.state.header.id;
+        const signedIn = auth.loggedIn();
+        const userId = auth.userProfile()?.id;
+        const targetId = pxt.appTarget.id;
+        const isCurrentCapture = (): boolean => pxt.appTarget.id === targetId && auth.loggedIn() === signedIn
+            && (!signedIn || auth.userProfile()?.id === userId);
+        let item: pxt.auth.BackpackItem;
+        try {
+            let capture: { code: string; blockText: string; name?: string };
+            if (kind === "asset" && !pxtblockly.getBackpackAssetField(block)) {
+                const fields = pxtblockly.getBackpackAssetFields(block);
+                let field = fields[0];
+                if (fields.length > 1) {
+                    const symbol = this.blockInfo.blocksById[block.type];
+                    const parameters = symbol && pxt.blocks.compileInfo(symbol).definitionNameToParam;
+                    const choices: BackpackAssetChoice[] = fields.map(field => {
+                        const parameter = parameters?.[field.name];
+                        let asset: pxt.Asset;
+                        if (field instanceof pxtblockly.FieldAssetEditor) {
+                            asset = field.getAsset();
+                        } else if (field instanceof pxtblockly.FieldTileset) {
+                            const saved = field.saveState(true);
+                            const project = pxt.react.getTilemapProject();
+                            asset = typeof saved === "string"
+                                ? project.lookupAsset(pxt.AssetType.Tile, saved) || pxt.lookupProjectAssetByTSReference(saved, project)
+                                : project.lookupAsset(pxt.AssetType.Tile, saved.assetId);
+                        }
+                        const preview = asset && assetToGalleryItem(pxt.cloneAsset(asset, true));
+                        return {
+                            fieldName: field.name,
+                            label: (parameter?.labelLocalizationKey && pxtc.getBlockTranslationsCacheKey(parameter.labelLocalizationKey))
+                                || parameter?.label || parameter?.actualName || field.name,
+                            name: asset?.meta?.displayName,
+                            previewURI: preview?.previewURI
+                        };
+                    });
+                    this.choosingBackpackAsset = true;
+                    let selected: string;
+                    try {
+                        selected = await chooseBackpackAssetAsync(choices);
+                    } finally {
+                        this.choosingBackpackAsset = false;
+                    }
+                    if (!selected) return;
+                    if (!isCurrentCapture() || this.parent.state.header?.id !== headerId
+                        || block.isDisposed() || block.workspace !== this.editor || !this.backpackAvailable(kind)) return;
+                    field = fields.find(candidate => candidate.name === selected);
+                    if (!field) throw new Error("The selected Backpack asset field is unavailable.");
+                }
+                capture = pxtblockly.captureBackpackAsset(field, this.blockInfo);
+            } else {
+                capture = pxtblockly.captureBackpackBlock(block);
+            }
+            const { code, blockText } = capture;
+            const requirements = getBackpackRequirements(code, this.blockInfo, pkg.mainPkg);
+            item = {
+                id: pxt.U.guidGen(), name: (capture.name || pxtblockly.getBlockText(block)).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
+                kind,
+                versions: { target: pxt.appTarget.versions.target, pxt: pxt.appTarget.versions.pxt },
+                code, blockText, ...requirements, createdAt: Date.now(),
+                ...(kind === "code" ? await backpackPreviewAsync(block) : {})
+            };
+            if (!isCurrentCapture()) return;
+            backpack.validateBackpackItem(item);
+        } catch (error) {
+            if (!isCurrentCapture()) return;
+            await core.confirmAsync({ header: lf("Cannot save this snippet"),
+                body: backpackUserErrorMessage(error, lf("This block could not be saved to your backpack.")),
+                hideCancel: true, agreeLbl: lf("OK") });
+            return;
+        }
+        // Retain the captured item/ID for an explicit retry after a failed local save or upload.
+        while (isCurrentCapture()) {
+            try {
+                await backpack.saveBackpackItemAsync(item);
+                if (!isCurrentCapture()) return;
+                core.infoNotification(lf("Added {0} to Backpack.", item.name));
+                if (this.parent.state.header?.id === headerId) backpack.requestBackpackOpen(headerId, false, item.kind);
+                return;
+            } catch (error) {
+                if (!isCurrentCapture()) return;
+                const retry = await core.confirmAsync({ header: lf("Backpack was not saved"),
+                    body: backpackUserErrorMessage(error, lf("Could not save your backpack. Please try again.")),
+                    agreeLbl: lf("Retry") });
+                if (!retry) return;
+            }
+        }
+    }
+
+    private async importFromBackpackAsync(item: pxt.auth.BackpackItem, position?: backpack.BackpackImportPosition): Promise<boolean> {
+        if (!this.backpackAvailable(item.kind)) throw new BackpackUserError(lf("Open an editable Blocks project to add this snippet."));
+        const host = this.createSnippetHost();
+        return addBackpackToProjectAsync(item, { ...host, isCurrent: () => host.isCurrent()
+            && backpack.isBackpackEnabled() && (item.kind !== "asset" || backpack.isBackpackAssetsEnabled())
+            && (item.kind === "asset" || !this.parent.state.header?.tutorial && !this.parent.isTutorial()) }, position);
+    }
+
+    private createSnippetHost(): BackpackProjectHost {
+        const headerId = this.parent.state.header.id;
+        const signedIn = auth.loggedIn();
+        const userId = auth.userProfile()?.id;
+        const targetId = pxt.appTarget.id;
+        return {
+            headerId,
+            // Loading the same project is expected while adding extensions; changing accounts or projects is not.
+            isCurrent: () => auth.loggedIn() === signedIn && (!signedIn || auth.userProfile()?.id === userId)
+                && pxt.appTarget.id === targetId && this.parent.state.header?.id === headerId
+                && this.parent.isBlocksActive() && !pxt.shell.isReadOnly(),
+            getWorkspace: () => this.editor,
+            getBlocksInfo: () => this.blockInfo,
+            saveAsync: () => this.parent.saveProjectAsync(),
+            reloadAsync: async () => {
+                await this.parent.reloadHeaderAsync();
+                this.domUpdate();
+                if (this.loadingXmlPromise) await this.loadingXmlPromise;
+            }
+        };
+    }
+
     protected pasteCallback = (workspace: Blockly.Workspace, ev: Event) => {
         const data = getCopyData();
         if (!data?.data || !this.editor || !this.canPasteData(data)) return false;
@@ -2571,97 +2748,68 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // or confusing error about unsupported file types.
         ev.preventDefault();
 
-        this.pasteAsync(data, ev.type === "pointerdown" ? ev as PointerEvent : undefined);
+        void this.pasteAsync(data, ev.type === "pointerdown" ? ev as PointerEvent : undefined);
         return true;
     }
 
-    protected async pasteAsync(data: CopyDataEntry, ev?: PointerEvent) {
+    protected async pasteAsync(data: CopyDataEntry, ev?: PointerEvent): Promise<void> {
+        if (this.pasteInProgress || !this.editor || this.editor.isReadOnly() || !this.canPasteData(data)
+            || this.loadingXml || this.delayLoadXml) return;
         const copyData = data.data;
-        const copyWorkspace = this.editor;
-        const copyCoords = copyWorkspace.id === data.workspaceId ? data.coord : undefined;
+        const host = this.createSnippetHost();
+        const isCurrent = (): boolean => host.isCurrent() && this.canPasteData(data)
+            && !!this.editor && !this.editor.isReadOnly();
+        const pointer = ev && { x: ev.clientX, y: ev.clientY };
 
-        clearPasteHints(copyWorkspace);
+        clearPasteHints(this.editor);
 
-        // this pasting code is adapted from Blockly/core/shortcut_items.ts
         const doPaste = () => {
-            const metricsManager = copyWorkspace.getMetricsManager();
-            const { left, top, width, height } = metricsManager
-                .getViewMetrics(true);
-            const viewportRect = new Blockly.utils.Rect(
-                top,
-                top + height,
-                left,
-                left + width
-            );
-
-            if (ev) {
-                // if we have a pointer event, then paste at that location
-                const injectionDivBBox = copyWorkspace.getInjectionDiv().getBoundingClientRect();
-                const pixelViewport = metricsManager.getViewMetrics();
-                const workspaceSvgOffset = metricsManager.getAbsoluteMetrics();
-
-                const offsetX = ((ev.clientX - injectionDivBBox.left - workspaceSvgOffset.left) / pixelViewport.width);
-                const offsetY = ((ev.clientY - injectionDivBBox.top - workspaceSvgOffset.top) / pixelViewport.height);
-
-                const contextMenuCoords = new Blockly.utils.Coordinate(left + offsetX * width, top + offsetY * height);
-
-                return !!Blockly.clipboard.paste(copyData, copyWorkspace, contextMenuCoords);
-            }
-
-            if (copyCoords && viewportRect.contains(copyCoords.x, copyCoords.y)) {
-                // If the original copyable is inside the viewport, let the paster
-                // determine position.
-                return !!Blockly.clipboard.paste(copyData, copyWorkspace);
-            }
-
-            // Otherwise, paste in the middle of the viewport.
-            const centerCoords = new Blockly.utils.Coordinate(
-                left + width / 2,
-                top + height / 2
-            );
-            return !!Blockly.clipboard.paste(copyData, copyWorkspace, centerCoords);
+            // Adding extensions can recreate the workspace. Resolve it only after reload.
+            const copyWorkspace = this.editor;
+            return !!pxtblockly.pasteClipboardData(copyData, copyWorkspace, {
+                originalPosition: copyWorkspace.id === data.workspaceId ? data.coord : undefined,
+                screenPosition: pointer
+            });
         };
 
-        if (data.version !== 1) {
-            await core.confirmAsync({
-                header: lf("Paste Error"),
-                body: lf("The code you are pasting comes from an incompatible version of the editor."),
-                hideCancel: true
-            });
-
-            return;
-        }
-
-        if (copyData.paster === Blockly.clipboard.BlockPaster.TYPE) {
-            const typeCounts: {[index: string]: number} = (copyData as any).typeCounts;
-
-            for (const blockType of Object.keys(typeCounts)) {
-                if (!Blockly.Blocks[blockType]) {
-                    await core.confirmAsync({
-                        header: lf("Paste Error"),
-                        body: lf("The code that you're trying to paste contains blocks that aren't available in the current project. If pasting from another project, make sure that you have installed all of the necessary extensions and try again."),
-                        hideCancel: true
-                    });
-
-                    return;
-                }
-            }
-        }
-
-        if (data.targetVersion !== pxt.appTarget.versions.target) {
-            const result = await core.confirmAsync({
-                header: lf("Paste Warning"),
-                body: lf("The code you're trying to paste is from a different version of Microsoft MakeCode. Pasting it may cause issues with your current project. Are you sure you want to continue?"),
-                agreeLbl: lf("Paste Anyway"),
-                agreeClass: "red"
-            });
-
-            if (result !== 1) {
+        this.pasteInProgress = true;
+        try {
+            if (!isCurrent()) return;
+            if (data.version !== 1) {
+                await core.confirmAsync({
+                    header: lf("Paste Error"),
+                    body: lf("The code you are pasting comes from an incompatible version of the editor."),
+                    hideCancel: true
+                });
                 return;
             }
-        }
 
-        doPaste();
+            if (data.targetVersion !== pxt.appTarget.versions.target) {
+                const result = await core.confirmAsync({
+                    header: lf("Paste Warning"),
+                    body: lf("The code you're trying to paste is from a different version of Microsoft MakeCode. Pasting it may cause issues with your current project. Are you sure you want to continue?"),
+                    agreeLbl: lf("Paste Anyway"),
+                    agreeClass: "red"
+                });
+                if (result !== 1 || !isCurrent()) return;
+            }
+
+            if (copyData.paster === Blockly.clipboard.BlockPaster.TYPE) {
+                const types = getBlockSnippetTypes([(copyData as Blockly.clipboard.BlockCopyData).blockState]);
+                if (!await ensureBlockSnippetAsync(data.requirements, types, { ...host, isCurrent })) return;
+            }
+            if (!isCurrent()) return;
+            doPaste();
+        } catch (error) {
+            if (!isCurrent()) return;
+            await core.confirmAsync({
+                header: lf("Paste Error"),
+                body: backpackUserErrorMessage(error, lf("The blocks could not be pasted. Please try again.")),
+                hideCancel: true, agreeLbl: lf("OK")
+            }).catch(pxt.reportException);
+        } finally {
+            this.pasteInProgress = false;
+        }
     }
 
     protected copyPrecondition = (scope: Blockly.ContextMenuRegistry.Scope) => {
@@ -2818,7 +2966,8 @@ function clearPasteHints(workspace: Blockly.WorkspaceSvg) {
 }
 
 // adapted from Blockly/core/shortcut_items.ts
-function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) {
+function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.ShortcutRegistry.KeyboardShortcut,
+    scope: Blockly.ContextMenuRegistry.Scope, blockInfo: pxtc.BlocksInfo): boolean {
     // Prevent the default copy behavior, which may beep or otherwise indicate
     // an error due to the lack of a selection.
     e.preventDefault();
@@ -2830,7 +2979,7 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Shor
         workspace.hideChaff();
     }
 
-    const copyData = focused.toCopyData();
+    const copyData = focused instanceof Blockly.BlockSvg ? pxtblockly.copyBlock(focused) : focused.toCopyData();
     const copyWorkspace =
         focused.workspace instanceof Blockly.WorkspaceSvg
             ? focused.workspace
@@ -2839,34 +2988,36 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Shor
         ? focused.getRelativeToSurfaceXY()
         : null;
 
-    if (copyData) {
-        saveCopyData(
-            copyData,
-            copyCoords,
-            copyWorkspace,
-            pkg.mainEditorPkg().header.id
-        );
-        if (e instanceof KeyboardEvent) {
-            showCopiedHint(workspace);
-        }
+    const copied = !!copyData && saveCopyData(
+        copyData,
+        copyCoords,
+        copyWorkspace,
+        pkg.mainEditorPkg().header.id,
+        blockInfo
+    );
+    if (copied && e instanceof KeyboardEvent) {
+        showCopiedHint(workspace);
     }
 
-    return !!copyData;
+    return copied;
 }
 
 // adapted from Blockly/core/shortcut_items.ts
-function cut(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.ShortcutRegistry.KeyboardShortcut, scope: Blockly.ContextMenuRegistry.Scope) {
+function cut(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.ShortcutRegistry.KeyboardShortcut,
+    scope: Blockly.ContextMenuRegistry.Scope, blockInfo: pxtc.BlocksInfo): boolean {
     const focused = scope.focusedNode;
     let copied = false;
 
     if (focused instanceof Blockly.BlockSvg) {
-        const copyData = focused.toCopyData();
-        saveCopyData(
+        e.preventDefault();
+        const copyData = pxtblockly.copyBlock(focused);
+        if (!saveCopyData(
             copyData,
             focused.getRelativeToSurfaceXY(),
             workspace,
-            pkg.mainEditorPkg().header.id
-        );
+            pkg.mainEditorPkg().header.id,
+            blockInfo
+        )) return false;
         if (!shouldDuplicateOnDrag(focused)) {
             focused.checkAndDelete();
         }
@@ -2877,16 +3028,18 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Short
         focused.isDeletable() &&
         Blockly.isCopyable(focused)
     ) {
+        e.preventDefault();
         const copyData = focused.toCopyData();
         const copyCoords = Blockly.isDraggable(focused)
             ? focused.getRelativeToSurfaceXY()
             : null;
-        saveCopyData(
+        if (!saveCopyData(
             copyData,
             copyCoords,
             workspace,
-            pkg.mainEditorPkg().header.id
-        );
+            pkg.mainEditorPkg().header.id,
+            blockInfo
+        )) return false;
         focused.dispose();
         workspace.getAudioManager().play("delete");
         e.preventDefault();
@@ -2903,21 +3056,34 @@ function saveCopyData(
     data: Blockly.ICopyData,
     coord: Blockly.utils.Coordinate,
     workspace: Blockly.Workspace,
-    headerId: string
-) {
-    const entry: CopyDataEntry = {
-        version: 1,
-        data,
-        coord,
-        workspaceId: workspace.id,
-        targetVersion: pxt.appTarget.versions.target,
-        headerId
-    };
-
-    pxt.storage.setLocal(
-        copyDataKey(),
-        JSON.stringify(entry)
-    );
+    headerId: string,
+    blockInfo: pxtc.BlocksInfo
+): boolean {
+    if (!data) return false;
+    try {
+        const entry: CopyDataEntry = {
+            version: 1,
+            data,
+            coord,
+            workspaceId: workspace.id,
+            targetVersion: pxt.appTarget.versions.target,
+            headerId
+        };
+        if (data.paster === Blockly.clipboard.BlockPaster.TYPE) {
+            if (!blockInfo) throw new BackpackUserError(lf("The blocks are still loading. Please try copying again."));
+            entry.requirements = getBlockSnippetRequirements([(data as Blockly.clipboard.BlockCopyData).blockState], blockInfo, pkg.mainPkg);
+        }
+        pxt.storage.setLocal(copyDataKey(), JSON.stringify(entry));
+        return true;
+    } catch (error) {
+        // A failed metadata capture or storage write must never delete cut blocks.
+        void core.confirmAsync({
+            header: lf("Copy Error"),
+            body: backpackUserErrorMessage(error, lf("The blocks could not be copied. Please try again.")),
+            hideCancel: true, agreeLbl: lf("OK")
+        }).catch(pxt.reportException);
+        return false;
+    }
 }
 
 function getCopyData(): CopyDataEntry | undefined {
