@@ -82,6 +82,11 @@ controls. Project tools opt into the shared button's `nativeBehavior` and use
 feature's sizing, colors and focus treatment when reusing controls; retain native
 form inputs and submit buttons where their validation attributes are needed.
 Actions have localized descriptive titles alongside their visible or ARIA labels.
+Only explicitly marked user errors are displayed. Unexpected exceptions are
+reported separately and use a localized, operation-specific failure message.
+Mark actionable failures such as invalid names, storage limits, sign-in and
+concurrent-edit conflicts, not malformed IDs, timestamps, preview metadata or
+internal editor state.
 
 Blockly registration receives its drag targets from the webapp host. Shared
 project-tools IDs keep the launcher, panel accessibility links and drag adapter

@@ -15,7 +15,7 @@ const compile = source => {
     return result.outputText;
 };
 const sources = Object.fromEntries([
-    "webapp/src/backpackProject.ts", "webapp/src/blockSnippet.ts", "webapp/src/backpack.ts", "pxtblocks/backpack.ts",
+    "webapp/src/backpackProject.ts", "webapp/src/blockSnippet.ts", "webapp/src/backpack.ts", "webapp/src/backpackErrors.ts", "pxtblocks/backpack.ts",
     "pxtblocks/plugins/functions/constants.ts"
 ].map(file => [file, compile(read(file))]));
 
@@ -78,12 +78,14 @@ function environment(installed = {}) {
         },
         semver: { strcmp: (a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }) },
         Util: {
+            userError(message) { const error = new Error(message); error.isUserError = true; throw error; },
             jsonFlatten: flatten,
             jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } }
         },
         blocks: { compileInfo: sym => ({ definitionNameToParam: sym.fieldParameters || {} }) },
         reportException: error => { throw error; }
     };
+    pxt.U = pxt.Util;
     const context = vm.createContext({
         pxt, Util: pxt.Util, U: pxt.Util,
         cpp: { PkgConflictError: class extends Error {} },
@@ -172,14 +174,19 @@ function environment(installed = {}) {
             events.push("paste:one-undo-group");
         }
     };
-    const store = execute(sources["webapp/src/backpack.ts"]);
+    const errors = execute(sources["webapp/src/backpackErrors.ts"]);
+    const store = execute(sources["webapp/src/backpack.ts"], id => {
+        assert.equal(id, "./backpackErrors");
+        return errors;
+    });
     const core = { confirmAsync: async options => {
         dialogs.push(clone(options));
         const result = await checkpoint(options.hideCancel ? "popup"
             : options.header === "Different editor version" ? "version-confirm" : "confirm");
         return result === undefined ? 1 : result;
     } };
-    const imports = { "blockly": Blockly, "../../pxtblocks": blockly, "./package": pkg, "./core": core, "./backpack": store };
+    const imports = { "blockly": Blockly, "../../pxtblocks": blockly, "./package": pkg, "./core": core, "./backpack": store,
+        "./backpackErrors": errors };
     const load = id => {
         assert(Object.prototype.hasOwnProperty.call(imports, id), `Unexpected import ${id}`);
         return imports[id];

@@ -6,6 +6,7 @@ import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
 import { Action, createStore, Store } from "redux";
 import { BackpackAssetEditorContext } from "../backpack";
 import { BackpackAssetEditor } from "../backpackAssetEditor";
+import { backpackUserErrorMessage } from "../backpackErrors";
 import { getBackpackRequirements } from "../backpackProject";
 import * as pkg from "../package";
 import { ImageFieldEditor } from "./ImageFieldEditor";
@@ -71,8 +72,8 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
         store.current = createStore((state: ImageEditorStore | undefined, action: Action) => imageReducer(state, action, current.project));
         try {
             setAsset(current.open({ code: props.item.code, gallery: props.context.gallery, name: props.item.name }, scalarHost.current));
-        } catch {
-            props.onOpenError(lf("This saved asset could not be opened. Its block definition or required asset data is unavailable. Delete it and save a new copy from its source project."));
+        } catch (reason) {
+            props.onOpenError(backpackUserErrorMessage(reason, lf("Could not open this asset. Please try again.")));
         }
         return () => {
             session.current = undefined;
@@ -92,7 +93,8 @@ export function BackpackAssetEditDialog(props: BackpackAssetEditDialogProps): JS
             await props.onSave({ ...props.item, ...result, ...requirements, name: result.name || props.item.name,
                 versions: { target: pxt.appTarget.versions.target, pxt: pxt.appTarget.versions.pxt } });
         } catch (reason) {
-            if (session.current === current) setError(reason instanceof Error ? reason.message : lf("Could not save this asset. Please try again."));
+            const message = backpackUserErrorMessage(reason, lf("Could not save this asset. Please try again."));
+            if (session.current === current) setError(message);
         } finally {
             saving.current = false;
             if (session.current === current) setPending(false);

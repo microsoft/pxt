@@ -128,6 +128,7 @@ describe("project backpack UI", function () {
                 modalOpen: false, collapses: 0,
                 assetPreviewURI, assetPreviewLoads: 0,
                 assetContext: { blocksInfo: {}, gallery: {}, palette: ["#000000"] },
+                reportedErrors: [],
                 modalChanged(open) { test.modalOpen = open; },
                 header: { id: "project" },
                 account(user) {
@@ -141,6 +142,7 @@ describe("project backpack UI", function () {
                 subscriberCount: () => subscribers.size,
                 listenerCount: () => listeners.size
             };
+            pxt.reportException = reason => test.reportedErrors.push(reason instanceof Error ? reason.message : String(reason));
             const auth = {
                 USER_PROFILE: "auth:profile", LOGGED_IN: "auth:logged-in",
                 loggedIn: () => !!test.user, userProfile: () => test.user ? { id: test.user } : undefined,
@@ -189,6 +191,7 @@ describe("project backpack UI", function () {
                     const fail = test.failAdd;
                     test.adds.push({ item, headerId });
                     await test.gate;
+                    if (test.importError) throw test.importError;
                     if (fail) throw new Error("Import failed. Try again.");
                     return true;
                 },
@@ -227,6 +230,8 @@ describe("project backpack UI", function () {
                     "../backpack": backpack, "../backpackSearch": window.backpackSearch, "../package": test.pkg,
                     "../blockSnippet": window.blockSnippets,
                     "blockly": {}, "../../pxtblocks": {}, "./core": {}, "./package": test.pkg, "./backpack": backpack };
+                modules["../backpackErrors"] = window.backpackErrors;
+                modules["./backpackErrors"] = window.backpackErrors;
                 modules["./BackpackPreview"] = window.backpackPreviewUI;
                 modules["./BackpackEntryCard"] = window.backpackEntryCard;
                 modules["./BackpackItemDialog"] = window.backpackItemDialog;
@@ -254,8 +259,9 @@ describe("project backpack UI", function () {
             };
         }, assetPreviewURI);
         await page.addScriptTag({ content: controls });
+        await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpackErrors.ts")}\n})(window.backpackErrors = {});` });
         // Reuse the actual storage validator without exercising network/auth storage.
-        await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpack.ts")}\n})(window.backpackValidation = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpack.ts")}\n})(window.require, window.backpackValidation = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
@@ -409,10 +415,30 @@ describe("project backpack UI", function () {
             const translate = window.lf;
             window.lf = (text, ...args) => text === "Image" || text === "Music" ? "Asset" : translate(text, ...args);
         });
+
         await signIn([asset("image_picker", 2), asset("music_song_editor", 3)]);
         await page.click("#project-backpack-tab-asset");
         await page.waitForSelector(".project-backpack__asset");
         assert.deepStrictEqual(await page.$$eval(".project-backpack__asset i", icons => icons.map(icon => icon.className)), ["icon image", "icon music"]);
+    });
+
+    it("shows intended user errors but reports technical failures without displaying their details", async () => {
+        await signIn([item()]);
+        await page.evaluate(() => {
+            backpackTest.importError = new backpackErrors.BackpackUserError("Delete some snippets and try again.");
+        });
+        await page.click(add);
+        await idle();
+        assert.match(await text(), /Delete some snippets and try again/);
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.reportedErrors), []);
+        await page.evaluate(() => {
+            backpackTest.importError = new TypeError("PRIVATE_INTERNAL_DETAILS");
+        });
+        await page.click(add);
+        await idle();
+        assert.match(await text(), /Could not update your backpack\. Please try again/);
+        assert.doesNotMatch(await text(), /PRIVATE_INTERNAL_DETAILS/);
+        assert.deepStrictEqual(await page.evaluate(() => backpackTest.reportedErrors), ["PRIVATE_INTERNAL_DETAILS"]);
     });
 
     it("defaults tutorials to usable assets and shows only an unavailable message on Code", async () => {

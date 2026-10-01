@@ -39,6 +39,7 @@ const adapterSource = compile(`${declarations.join("\n")}\nclass SourceEditor { 
     Object.assign(exports, { ${functionNames.join(", ")} });`);
 const sharedSource = compile(read("webapp/src/blockSnippet.ts"));
 const validatorSource = compile(read("webapp/src/backpack.ts"));
+const errorSource = compile(read("webapp/src/backpackErrors.ts"));
 
 describe("Block snippet dependency display policy", () => {
     const shared = {};
@@ -133,7 +134,7 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
         for (const file of ["blockly_compressed.js", "blocks_compressed.js", "msg/en.js"]) {
             await page.addScriptTag({ path: path.join(directory, file) });
         }
-        const result = await page.evaluate(({ adapterSource, sharedSource, validatorSource }) => {
+        const result = await page.evaluate(({ adapterSource, sharedSource, validatorSource, errorSource }) => {
             return (async () => {
                 const B = window.Blockly;
                 const fail = () => { throw new Error("Unexpected clipboard dependency"); };
@@ -187,9 +188,13 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                         });
                         return exports;
                     };
-                    const validator = execute(validatorSource);
+                    const errors = execute(errorSource);
+                    Object.assign(globals, errors);
+                    pxt.reportException = error => dialogs.push({ technicalError: error.message });
+                    const validator = execute(validatorSource, { "./backpackErrors": errors });
                     Object.assign(globals, execute(sharedSource, {
-                        blockly: B, "../../pxtblocks": pxtblockly, "./package": pkg, "./core": core, "./backpack": validator
+                        blockly: B, "../../pxtblocks": pxtblockly, "./package": pkg, "./core": core, "./backpack": validator,
+                        "./backpackErrors": errors
                     }));
                     const api = execute(adapterSource);
                     const editor = new api.SourceEditor();
@@ -213,7 +218,7 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                     sourceWorkspace.dispose(); destination.dispose();
                 }
             })();
-        }, { adapterSource, sharedSource, validatorSource });
+        }, { adapterSource, sharedSource, validatorSource, errorSource });
         assert.strictEqual(result.copied, true);
         assert.deepStrictEqual(result.types, ["clipboard_expression"]);
         assert.deepStrictEqual(result.stored, { id: "source-only", pixels: [1, 4, 8], tiles: { cells: [2, 3], walls: [0, 1] } });
