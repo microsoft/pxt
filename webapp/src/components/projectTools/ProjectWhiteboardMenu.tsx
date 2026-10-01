@@ -6,6 +6,7 @@ import {
     MAX_PROJECT_WHITEBOARDS,
     MAX_WHITEBOARD_NAME_LENGTH,
     nextWhiteboardName,
+    projectNotesErrorMessage,
     whiteboardNameError
 } from "../../projectNotes";
 
@@ -129,7 +130,7 @@ export function ProjectWhiteboardMenu(props: ProjectWhiteboardMenuProps): JSX.El
                                             props.onDelete(edit.id);
                                             close();
                                         } catch (error) {
-                                            setError(error instanceof Error ? error.message : lf("The whiteboard could not be deleted."));
+                                            setError(projectNotesErrorMessage(error, lf("The whiteboard could not be deleted.")));
                                         }
                                     }}
                                 />
@@ -154,7 +155,7 @@ export function ProjectWhiteboardMenu(props: ProjectWhiteboardMenuProps): JSX.El
                                     }
                                     close();
                                 } catch (error) {
-                                    setError(error instanceof Error ? error.message : lf("The whiteboard could not be updated."));
+                                    setError(projectNotesErrorMessage(error, lf("The whiteboard could not be updated.")));
                                 }
                             }}
                         >

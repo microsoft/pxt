@@ -112,6 +112,46 @@ describe("private project-note storage boundaries", () => {
         assert.strictEqual(env.notes.whiteboardNameError(" ", notes), "Enter a whiteboard name.");
     });
 
+    it("maps known whiteboard operation errors and reports unknown failures", () => {
+        const env = createEnvironment();
+        const notes = notesWithBoard("");
+        const message = action => {
+            try {
+                action();
+                assert.fail("Expected a whiteboard operation error");
+            } catch (error) {
+                return env.notes.projectNotesErrorMessage(error, "The whiteboard could not be updated.");
+            }
+        };
+
+        assert.equal(message(() => env.notes.addProjectWhiteboard(notes, " ")), "Enter a whiteboard name.");
+        assert.equal(message(() => env.notes.addProjectWhiteboard(notes, "bad\nname")),
+            "Use a single-line name of 64 characters or fewer.");
+        assert.equal(message(() => env.notes.addProjectWhiteboard(notes, "Whiteboard 1")),
+            "A whiteboard with this name already exists.");
+
+        const full = {
+            whiteboards: Array.from({ length: 8 }, (_, index) => ({
+                id: `whiteboard-${index + 1}`,
+                name: `Whiteboard ${index + 1}`,
+                text: ""
+            })),
+            activeWhiteboardId: "whiteboard-1"
+        };
+        assert.equal(message(() => env.notes.addProjectWhiteboard(full, "Whiteboard 9")),
+            "You can have up to 8 whiteboards per project.");
+        assert.equal(message(() => env.notes.renameProjectWhiteboard(notes, "missing", "Renamed")),
+            "This whiteboard is no longer available.");
+        assert.equal(message(() => env.notes.deleteProjectWhiteboard(notes, "whiteboard-1")),
+            "Keep at least one whiteboard.");
+        assert.deepStrictEqual(env.errors, []);
+
+        const technical = new Error("PRIVATE_DETAILS");
+        assert.equal(env.notes.projectNotesErrorMessage(technical, "The whiteboard could not be updated."),
+            "The whiteboard could not be updated.");
+        assert.strictEqual(env.errors[0], technical);
+    });
+
     it("saves to project metadata and preserves published-code status", async () => {
         const env = createEnvironment();
         const { header, text } = await env.install();
