@@ -40,6 +40,7 @@ const adapterSource = compile(`${declarations.join("\n")}\nclass SourceEditor { 
 const sharedSource = compile(read("webapp/src/blockSnippet.ts"));
 const validatorSource = compile(read("webapp/src/backpack.ts"));
 const errorSource = compile(read("webapp/src/backpackErrors.ts"));
+const clipboardSource = compile(read("pxtblocks/clipboard.ts"));
 
 describe("Block snippet dependency display policy", () => {
     const shared = {};
@@ -134,7 +135,7 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
         for (const file of ["blockly_compressed.js", "blocks_compressed.js", "msg/en.js"]) {
             await page.addScriptTag({ path: path.join(directory, file) });
         }
-        const result = await page.evaluate(({ adapterSource, sharedSource, validatorSource, errorSource }) => {
+        const result = await page.evaluate(({ adapterSource, sharedSource, validatorSource, errorSource, clipboardSource }) => {
             return (async () => {
                 const B = window.Blockly;
                 const fail = () => { throw new Error("Unexpected clipboard dependency"); };
@@ -190,6 +191,7 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                     };
                     const errors = execute(errorSource);
                     Object.assign(globals, errors);
+                    Object.assign(pxtblockly, execute(clipboardSource, { blockly: B }));
                     pxt.reportException = error => dialogs.push({ technicalError: error.message });
                     const validator = execute(validatorSource, { "./backpackErrors": errors });
                     Object.assign(globals, execute(sharedSource, {
@@ -218,7 +220,7 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                     sourceWorkspace.dispose(); destination.dispose();
                 }
             })();
-        }, { adapterSource, sharedSource, validatorSource, errorSource });
+        }, { adapterSource, sharedSource, validatorSource, errorSource, clipboardSource });
         assert.strictEqual(result.copied, true);
         assert.deepStrictEqual(result.types, ["clipboard_expression"]);
         assert.deepStrictEqual(result.stored, { id: "source-only", pixels: [1, 4, 8], tiles: { cells: [2, 3], walls: [0, 1] } });

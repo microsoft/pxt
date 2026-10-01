@@ -94,6 +94,20 @@ describe("Backpack user-facing error boundary", () => {
             }
             assert.deepStrictEqual(reported, []);
         });
+
+        it("retains old and versioned content verbatim, but rejects unsupported formats", () => {
+            const { validator, errors } = load();
+            const old = item();
+            const current = { ...old, code: JSON.stringify({ version: 1, blocks: JSON.parse(old.code).blocks }) };
+            for (const saved of [old, current]) {
+                assert.deepStrictEqual(validator.validateBackpackItem(saved), saved);
+            }
+            for (const version of [2, "1", null]) {
+                assert.throws(() => validator.validateBackpackItem({
+                    ...old, code: JSON.stringify({ version, blocks: JSON.parse(old.code).blocks })
+                }), error => errors.isBackpackUserError(error) && /unsupported Backpack format/.test(error.message));
+            }
+        });
     });
 
     it("reports unmarked technical errors and non-Error rejections without displaying their details", () => {

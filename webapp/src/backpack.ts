@@ -273,6 +273,9 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
         throw new BackpackRequestError("backpack_entry_too_large");
     }
     const payload: unknown = pxt.Util.jsonTryParse(value.code);
+    if (isRecord(payload) && payload.version !== undefined && payload.version !== 1) {
+        throw new BackpackRequestError("backpack_unsupported_entry");
+    }
     const blocks = isRecord(payload) && Array.isArray(payload.blocks) ? payload.blocks : [];
     const root = blocks[blocks.length - 1];
     // Storage may be read before an extension is installed. Verify the real field on import/edit.

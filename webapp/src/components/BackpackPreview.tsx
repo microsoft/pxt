@@ -41,7 +41,7 @@ export function BackpackPreview({ entry, headerId, active, onDragStart, onDragEn
             const blocks = JSON.parse(entry.item?.code).blocks;
             // The selected container is last; count only its supporting definitions.
             return Array.isArray(blocks) ? blocks.slice(0, -1).filter(block =>
-                block?.type === "function_definition" || block?.type === "procedures_defnoreturn").length : 0;
+                block?.type === "function_definition").length : 0;
         } catch { return 0; }
     }, [entry.item?.code, entry.summary?.functionCount, entry.error]);
     React.useEffect(() => {

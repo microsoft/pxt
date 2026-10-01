@@ -31,6 +31,10 @@ function bundleSource(entries, globalName, externals = { react: "window.React", 
                 continue;
             }
             const base = path.posix.join(path.posix.dirname(file), id);
+            if (externals[base]) {
+                imports[id] = base;
+                continue;
+            }
             const dependency = [".ts", ".tsx", "/index.ts", "/index.tsx"]
                 .map(extension => base + extension).find(candidate => fs.existsSync(path.join(root, candidate)));
             assert.ok(dependency, `Cannot resolve ${id} from ${file}`);

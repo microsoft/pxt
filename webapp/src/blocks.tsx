@@ -2714,47 +2714,13 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
         clearPasteHints(this.editor);
 
-        // this pasting code is adapted from Blockly/core/shortcut_items.ts
         const doPaste = () => {
             // Adding extensions can recreate the workspace. Resolve it only after reload.
             const copyWorkspace = this.editor;
-            const copyCoords = copyWorkspace.id === data.workspaceId ? data.coord : undefined;
-            const metricsManager = copyWorkspace.getMetricsManager();
-            const { left, top, width, height } = metricsManager
-                .getViewMetrics(true);
-            const viewportRect = new Blockly.utils.Rect(
-                top,
-                top + height,
-                left,
-                left + width
-            );
-
-            if (pointer) {
-                // if we have a pointer event, then paste at that location
-                const injectionDivBBox = copyWorkspace.getInjectionDiv().getBoundingClientRect();
-                const pixelViewport = metricsManager.getViewMetrics();
-                const workspaceSvgOffset = metricsManager.getAbsoluteMetrics();
-
-                const offsetX = ((pointer.x - injectionDivBBox.left - workspaceSvgOffset.left) / pixelViewport.width);
-                const offsetY = ((pointer.y - injectionDivBBox.top - workspaceSvgOffset.top) / pixelViewport.height);
-
-                const contextMenuCoords = new Blockly.utils.Coordinate(left + offsetX * width, top + offsetY * height);
-
-                return !!Blockly.clipboard.paste(copyData, copyWorkspace, contextMenuCoords);
-            }
-
-            if (copyCoords && viewportRect.contains(copyCoords.x, copyCoords.y)) {
-                // If the original copyable is inside the viewport, let the paster
-                // determine position.
-                return !!Blockly.clipboard.paste(copyData, copyWorkspace);
-            }
-
-            // Otherwise, paste in the middle of the viewport.
-            const centerCoords = new Blockly.utils.Coordinate(
-                left + width / 2,
-                top + height / 2
-            );
-            return !!Blockly.clipboard.paste(copyData, copyWorkspace, centerCoords);
+            return !!pxtblockly.pasteClipboardData(copyData, copyWorkspace, {
+                originalPosition: copyWorkspace.id === data.workspaceId ? data.coord : undefined,
+                screenPosition: pointer
+            });
         };
 
         this.pasteInProgress = true;
@@ -2964,7 +2930,7 @@ function copy(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Shor
         workspace.hideChaff();
     }
 
-    const copyData = focused.toCopyData();
+    const copyData = focused instanceof Blockly.BlockSvg ? pxtblockly.copyBlock(focused) : focused.toCopyData();
     const copyWorkspace =
         focused.workspace instanceof Blockly.WorkspaceSvg
             ? focused.workspace
@@ -2995,7 +2961,7 @@ function cut(workspace: Blockly.WorkspaceSvg, e: Event, _shortcut: Blockly.Short
 
     if (focused instanceof Blockly.BlockSvg) {
         e.preventDefault();
-        const copyData = focused.toCopyData();
+        const copyData = pxtblockly.copyBlock(focused);
         if (!saveCopyData(
             copyData,
             focused.getRelativeToSurfaceXY(),

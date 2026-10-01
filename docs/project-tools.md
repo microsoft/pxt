@@ -37,6 +37,7 @@ toggle; otherwise only code snippets are shown. During tutorials it opens to
 In an editable Blocks project, use **Add to Backpack** on an event, loop, if block
 or function definition, or drag it onto Backpack. This copies its contents,
 referenced Blockly functions and assets—not following siblings or the originals.
+Legacy procedure blocks are not supported; recreate them using Functions blocks.
 Standalone image, animation, tilemap and music blocks go to **Assets** instead of
 **Code**, based on their registered field editor, including extension-defined blocks.
 Required extensions are installed with consent on Add, just as for code snippets.
@@ -91,6 +92,12 @@ internal editor state.
 Blockly registration receives its drag targets from the webapp host. Shared
 project-tools IDs keep the launcher, panel accessibility links and drag adapter
 in sync; serialization does not depend on those DOM elements.
+Captures use a versioned `{ version: 1, blocks: [...] }` envelope containing
+Blockly's native clipboard block states. Earlier unversioned captures remain
+readable; unsupported future versions are rejected without loading their blocks.
+Copy/paste and Backpack share the native clipboard paster and placement helper.
+Block fields and mutation data are interpreted by Blockly, not a separate Backpack
+schema. Backpack still checks its envelope, size limits and supporting functions.
 Launcher bubbles are disclosure buttons in a labelled group, with named regions
 for their panels. Each visible bubble is a Tab stop; hidden bubbles are excluded
 from the tab order.
