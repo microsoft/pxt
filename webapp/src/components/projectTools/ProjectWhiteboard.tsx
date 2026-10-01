@@ -1,10 +1,10 @@
 import * as React from "react";
-import { Button } from "../../../react-common/components/controls/Button";
+import { Button } from "../../../../react-common/components/controls/Button";
 import { Action, createStore, Store } from "redux";
-import { ImageEditor } from "./ImageEditor/ImageEditor";
-import imageReducer, { AnimationState, ImageEditorStore } from "./ImageEditor/store/imageReducer";
-import { dispatchDisableResize, dispatchOpenAsset } from "./ImageEditor/actions/dispatch";
-import { imageStateToBitmap } from "./ImageEditor/util";
+import { ImageEditor } from "../ImageEditor/ImageEditor";
+import imageReducer, { AnimationState, ImageEditorStore } from "../ImageEditor/store/imageReducer";
+import { dispatchDisableResize, dispatchOpenAsset } from "../ImageEditor/actions/dispatch";
+import { imageStateToBitmap } from "../ImageEditor/util";
 import {
     addProjectWhiteboard,
     createProjectNotes,
@@ -16,9 +16,9 @@ import {
     validateProjectNotes,
     WHITEBOARD_HEIGHT,
     WHITEBOARD_WIDTH
-} from "../projectNotes";
+} from "../../projectNotes";
 import { ProjectWhiteboardMenu } from "./ProjectWhiteboardMenu";
-import * as workspace from "../workspace";
+import * as workspace from "../../workspace";
 
 export interface ProjectWhiteboardProps {
     headerId: string;

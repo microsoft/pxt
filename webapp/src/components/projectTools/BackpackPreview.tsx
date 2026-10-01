@@ -1,12 +1,12 @@
 import * as React from "react";
-import { classList } from "../../../react-common/components/util";
+import { classList } from "../../../../react-common/components/util";
 import {
     BackpackEntry,
     getBackpackAssetPreviewContext,
     getBackpackPreviewAsync,
     loadBackpackAssetPreviewAsync
-} from "../backpack";
-import { backpackAssetPreview, BackpackAssetPreview } from "../backpackAssetPreview";
+} from "../../backpack";
+import { backpackAssetPreview, BackpackAssetPreview } from "../../backpackAssetPreview";
 
 export interface BackpackPreviewProps {
     entry: BackpackEntry;

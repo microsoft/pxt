@@ -46,7 +46,7 @@ import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 import * as backpack from "./backpack";
 import { backpackUserErrorMessage } from "./backpackErrors";
 import { chooseBackpackAssetAsync } from "./backpackAssetChooser";
-import { BackpackAssetChoice } from "./components/BackpackAssetChooser";
+import { BackpackAssetChoice } from "./components/projectTools/BackpackAssetChooser";
 import { assetToGalleryItem } from "./assets";
 import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./backpackProject";
 import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";

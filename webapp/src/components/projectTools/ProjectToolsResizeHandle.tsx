@@ -1,6 +1,6 @@
 import * as React from "react";
-import { classList } from "../../../react-common/components/util";
-import { PROJECT_TOOLS_PANEL_ID } from "../projectToolsState";
+import { classList } from "../../../../react-common/components/util";
+import { PROJECT_TOOLS_PANEL_ID } from "../../projectToolsState";
 
 export type ProjectToolsResizeAxis = "width" | "height";
 

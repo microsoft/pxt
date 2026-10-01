@@ -3,16 +3,16 @@ import * as ReactDOM from "react-dom";
 import * as Blockly from "blockly";
 import { Action, createStore, Store } from "redux";
 
-import { Button } from "../../../react-common/components/controls/Button";
-import { FocusTrap } from "../../../react-common/components/controls/FocusTrap";
-import { BackpackAssetEditorContext } from "../backpack";
-import { BackpackAssetEditor } from "../backpackAssetEditor";
-import { backpackUserErrorMessage } from "../backpackErrors";
-import { getBackpackRequirements } from "../backpackProject";
-import * as pkg from "../package";
-import { ImageFieldEditor } from "./ImageFieldEditor";
-import { AssetEditorContext } from "./AssetEditorContext";
-import imageReducer, { ImageEditorStore } from "./ImageEditor/store/imageReducer";
+import { Button } from "../../../../react-common/components/controls/Button";
+import { FocusTrap } from "../../../../react-common/components/controls/FocusTrap";
+import { BackpackAssetEditorContext } from "../../backpack";
+import { BackpackAssetEditor } from "../../backpackAssetEditor";
+import { backpackUserErrorMessage } from "../../backpackErrors";
+import { getBackpackRequirements } from "../../backpackProject";
+import * as pkg from "../../package";
+import { ImageFieldEditor } from "../ImageFieldEditor";
+import { AssetEditorContext } from "../AssetEditorContext";
+import imageReducer, { ImageEditorStore } from "../ImageEditor/store/imageReducer";
 
 interface BackpackAssetEditDialogProps {
     item: pxt.auth.BackpackItem;

@@ -1,12 +1,12 @@
 import * as React from "react";
-import { Button } from "../../../react-common/components/controls/Button";
-import { classList } from "../../../react-common/components/util";
+import { Button } from "../../../../react-common/components/controls/Button";
+import { classList } from "../../../../react-common/components/util";
 import { ProjectWhiteboard } from "./ProjectWhiteboard";
 import { ProjectBackpack } from "./ProjectBackpack";
 import { ProjectToolsHeader } from "./ProjectToolsHeader";
 import { ProjectToolsResizeHandle } from "./ProjectToolsResizeHandle";
 import { useProjectToolsResize } from "./useProjectToolsResize";
-import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../backpack";
+import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../../backpack";
 import {
     isWhiteboardEnabled,
     PROJECT_TOOLS_COMPACT_QUERY,
@@ -15,7 +15,7 @@ import {
     ProjectToolTab,
     projectToolPanelId,
     projectToolTabId
-} from "../projectToolsState";
+} from "../../projectToolsState";
 
 export interface ProjectToolsProps {
     header: pxt.workspace.Header;
