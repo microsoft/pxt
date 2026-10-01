@@ -2,7 +2,7 @@ import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 import { MAX_BACKPACK_PREVIEW_LENGTH } from "./backpack";
 
-/** Rasterize a detached copy: previews must not deserialize assets or mutate the source workspace. */
+/** Render a copy of the block's SVG without loading assets or changing the workspace. */
 export async function backpackPreviewAsync(block: Blockly.BlockSvg): Promise<{
     previewUri: string;
     previewPixelDensity: number;
@@ -50,7 +50,7 @@ export async function backpackPreviewAsync(block: Blockly.BlockSvg): Promise<{
         }
         return undefined;
     } catch {
-        // The actual code remains usable when canvas rendering or optional thumbnail capture fails.
+        // A failed thumbnail must not prevent saving the snippet.
         return undefined;
     } finally {
         svg.remove();

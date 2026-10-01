@@ -9,7 +9,7 @@ export interface BackpackAssetPreview {
     interval?: number;
 }
 
-/** Decode with the registered native fields, without touching the editor's project or workspace. */
+/** Load saved fields in a separate project and workspace so previews cannot change the open project. */
 export function backpackAssetPreview(
     item: pxt.auth.BackpackItem,
     context: {
@@ -30,17 +30,17 @@ export function backpackAssetPreview(
 
         const getTilemapProject = pxt.react.getTilemapProject;
         let workspace: Blockly.Workspace;
-        Blockly.Events.disable(); // Balanced even when the caller already disabled events.
+        Blockly.Events.disable(); // Blockly counts nested calls; finally restores the caller's event state.
         try {
             pxt.react.getTilemapProject = () => project;
             workspace = new Blockly.Workspace();
-            // The active editor already registered these blocks; never reinject them here.
+            // Use the blocks already registered by the active editor.
             const block = Blockly.serialization.blocks.append(root, workspace);
             const field = pxtblockly.getBackpackAssetField(block);
             let asset: pxt.Asset;
 
             if (field instanceof pxtblockly.FieldAssetEditor) {
-                // Headless fields never enter FieldBase's rendered initialization queue.
+                // A headless workspace does not run FieldBase's render-time initialization.
                 field.onLoadedIntoWorkspace();
                 if (!field.isGreyBlock) asset = field.getAsset();
             }
@@ -56,7 +56,7 @@ export function backpackAssetPreview(
             }
             if (!asset) return undefined;
 
-            // Gallery conversion attaches image URIs only to this detached asset.
+            // Gallery conversion adds image URIs, so give it a copy of the asset.
             const preview = assetToGalleryItem(pxt.cloneAsset(asset, true));
             if (!preview?.previewURI) return undefined;
             return preview.type === pxt.AssetType.Animation
@@ -78,7 +78,7 @@ export function backpackAssetPreview(
         }
     }
     catch {
-        // Unsupported, missing, or malformed native fields use the caller's fallback.
+        // The caller shows a fallback when a field cannot provide a preview.
         return undefined;
     }
 }

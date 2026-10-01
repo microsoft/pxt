@@ -8,7 +8,7 @@ export interface BackpackAssetEditorOptions {
     name?: string;
 }
 
-/** Owns a scratch workspace/project; native editor interactions use explicit project context. */
+/** Edit saved assets in a separate workspace and project. */
 export class BackpackAssetEditor {
     private workspace: Blockly.Workspace;
     private block: Blockly.Block;
@@ -21,7 +21,7 @@ export class BackpackAssetEditor {
 
     constructor(public readonly project: pxt.TilemapProject) { }
 
-    /** Scope legacy field hooks synchronously; never leave the global getter replaced across a render/await. */
+    /** Field loaders use a global project getter, so restore it before returning or awaiting. */
     private withProject<T>(action: () => T): T {
         const getProject = pxt.react.getTilemapProject;
         Blockly.Events.disable();
@@ -65,7 +65,7 @@ export class BackpackAssetEditor {
 
         this.scalar = !(this.field instanceof pxtblockly.FieldAssetEditor || this.field instanceof pxtblockly.FieldTileset);
         if (this.scalar && scalarHost) {
-            // Scalar custom editors need rendered fields; discover them from the registration first.
+            // Non-asset custom fields need a rendered workspace to open their editors.
             this.workspace.dispose();
             this.workspace = Blockly.inject(scalarHost, {
                 renderer: "pxt",
@@ -123,7 +123,7 @@ export class BackpackAssetEditor {
     }
 
     private saveCore(edited?: pxt.Asset): { code: string; blockText: string; name?: string } {
-        // Commit native dropdown edits before capturing their real serialized fields.
+        // Close dropdowns so their final edits are included in the saved fields.
         if (this.scalar) {
             Blockly.DropDownDiv.hideWithoutAnimation();
             Blockly.WidgetDiv.hide();
@@ -133,8 +133,8 @@ export class BackpackAssetEditor {
             if (!edited || edited.type !== this.asset.type) throw new Error("The asset editor is not ready.");
             let result = pxt.cloneAsset(edited, true);
 
-            // A failed parent save leaves the native editor holding its original
-            // temporary id. Reuse the promoted identity on subsequent captures.
+            // After a failed save, the editor may still return the temporary ID.
+            // Reuse the asset ID already assigned by the previous attempt.
             if (result.id === this.editorAssetId && this.asset.id !== this.editorAssetId) {
                 result.id = this.asset.id;
                 result.internalID = this.asset.internalID;
@@ -159,7 +159,7 @@ export class BackpackAssetEditor {
         const captured = pxtblockly.captureBackpackBlock(this.block);
         const payload = pxtblockly.parseBackpackCode(captured.code);
 
-        // Scratch-only interaction settings must not make the saved asset undeletable.
+        // Restore the original block flags instead of saving the editor's interaction settings.
         for (const key of ["deletable", "editable", "movable", "collapsed"] as const) {
             if (this.original[key] === undefined) delete payload.blocks[0][key];
             else payload.blocks[0][key] = this.original[key];
