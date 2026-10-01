@@ -312,7 +312,7 @@ describe("project backpack UI", function () {
         } finally { await page.close(); }
     });
 
-    it("retains native action-button geometry, keyboard activation, and disabled styling", async () => {
+    it("retains action-button geometry, shared keyboard activation, and disabled styling", async () => {
         await signIn([item()]);
         const appearance = async selector => page.$eval(selector, button => {
             const bounds = button.getBoundingClientRect();
@@ -331,9 +331,9 @@ describe("project backpack UI", function () {
         await page.focus(add);
         assert.equal(await page.$eval(add, button => getComputedStyle(button, "::after").outlineStyle), "none");
         await page.keyboard.down("Space");
-        assert.equal(await page.evaluate(() => backpackTest.adds.length), 0);
-        await page.keyboard.up("Space");
         await idle();
+        assert.equal(await page.evaluate(() => backpackTest.adds.length), 1);
+        await page.keyboard.up("Space");
         assert.equal(await page.evaluate(() => backpackTest.adds.length), 1);
         await page.evaluate(() => backpackTest.hold());
         await page.click(add);
@@ -345,38 +345,6 @@ describe("project backpack UI", function () {
         assert.equal(disabled.height, 44);
         await page.evaluate(() => backpackTest.release());
         await idle();
-    });
-
-    it("keeps shared button defaults unchanged while opting into native form and click behavior", async () => {
-        await page.evaluate(() => {
-            const { Button, FocusTrap } = backpackControls;
-            window.buttonTest = { clicks: [], bubbled: 0, submitted: 0 };
-            ReactDOM.render(React.createElement(FocusTrap, {
-                role: "dialog", ariaModal: true, ariaLabel: "Button fixture", onEscape: () => {}
-            }, React.createElement("form", {
-                onClick: () => ++buttonTest.bubbled,
-                onSubmit: event => { event.preventDefault(); ++buttonTest.submitted; }
-            }, ...[
-                { id: "legacy", label: "Legacy" },
-                { id: "native", label: "Native", type: "button", nativeBehavior: true },
-                { id: "submit", label: "Submit", type: "submit", nativeBehavior: true }
-            ].map(props => React.createElement(Button, {
-                ...props, key: props.id, title: props.label,
-                onClick: () => buttonTest.clicks.push(props.id)
-            })))), document.getElementById("root"));
-        });
-        assert.equal(await page.$eval('[role="dialog"]', dialog => dialog.getAttribute("aria-modal")), "true");
-        await page.focus("#legacy");
-        await page.keyboard.down("Space");
-        assert.deepStrictEqual(await page.evaluate(() => buttonTest), { clicks: ["legacy"], bubbled: 0, submitted: 0 });
-        await page.keyboard.up("Space");
-        await page.focus("#native");
-        await page.keyboard.down("Space");
-        assert.deepStrictEqual(await page.evaluate(() => buttonTest.clicks), ["legacy"]);
-        await page.keyboard.up("Space");
-        assert.deepStrictEqual(await page.evaluate(() => buttonTest), { clicks: ["legacy", "native"], bubbled: 1, submitted: 0 });
-        await page.click("#submit");
-        assert.deepStrictEqual(await page.evaluate(() => buttonTest), { clicks: ["legacy", "native", "submit"], bubbled: 2, submitted: 1 });
     });
 
     it("preserves tab naming, roving focus, and rename/delete dialog submission", async () => {

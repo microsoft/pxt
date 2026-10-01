@@ -37,7 +37,6 @@ export function BackpackToolbar(props: BackpackToolbarProps): JSX.Element {
             className="project-backpack-tabs"
             ariaLabel={lf("Backpack contents")}
             orientation="horizontal"
-            nativeBehavior
             selectedId={`project-backpack-tab-${kind}`}
             onTabSelected={id => onKindChange(id === "project-backpack-tab-asset" ? "asset" : "code")}
             tabs={(["code", "asset"] as const).map((value, index) => ({
@@ -80,7 +79,6 @@ export function BackpackToolbar(props: BackpackToolbarProps): JSX.Element {
                         <Button
                             className="project-backpack-button project-backpack-icon-button"
                             type="button"
-                            nativeBehavior
                             onClick={onClearSearch}
                             ariaLabel={lf("Clear backpack search")}
                             title={lf("Clear backpack search")}

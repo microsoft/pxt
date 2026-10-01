@@ -26,8 +26,6 @@ export interface ButtonViewProps extends ContainerProps {
 
 
 export interface ButtonProps extends ButtonViewProps {
-    /** Keep native click propagation, default actions, and Enter/Space activation. */
-    nativeBehavior?: boolean;
     buttonRef?: (ref: HTMLElement) => void;
     href?: string;
     target?: string;
@@ -86,8 +84,7 @@ export function inflateButtonProps(props: ButtonProps) {
         buttonRef,
         target,
         href,
-        hardDisabled,
-        nativeBehavior
+        hardDisabled
     } = props;
 
     let {
@@ -100,10 +97,8 @@ export function inflateButtonProps(props: ButtonProps) {
         if (onClickEvent) onClickEvent(ev);
         if (onClick) onClick();
         if (href) window.open(href, target || "_blank", "noopener,noreferrer")
-        if (!nativeBehavior) {
-            ev.stopPropagation();
-            ev.preventDefault();
-        }
+        ev.stopPropagation();
+        ev.preventDefault();
     }
 
     const rightClickHandler = (ev: React.MouseEvent) => {
@@ -119,7 +114,7 @@ export function inflateButtonProps(props: ButtonProps) {
         "ref": buttonRef,
         "onClick": !disabled ? clickHandler : undefined,
         "onContextMenu": rightClickHandler,
-        "onKeyDown": onKeydown || (nativeBehavior ? undefined : fireClickOnEnter),
+        "onKeyDown": onKeydown || fireClickOnEnter,
         "onBlur": onBlur,
         "onFocus": onFocus,
         "onMouseDown": onMouseDown,
