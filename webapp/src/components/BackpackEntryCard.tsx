@@ -44,24 +44,26 @@ export function BackpackEntryCard(props: BackpackEntryCardProps): JSX.Element {
         <li
             data-backpack-id={entry.id}
             data-backpack-key={backpackEntryKey(entry)}
-            className={classList("project-backpack__item", entry.error && "project-backpack__item--invalid")}
+            className={classList("project-backpack-item", entry.error && "project-backpack-item-invalid")}
         >
-            <div className="project-backpack__item-header">
-                <h3 className="project-backpack__name">{entry.name}</h3>
-                <div className="project-backpack__item-actions">
-                    {item && <Button
-                        className="project-backpack__button project-backpack__icon-button project-backpack__rename"
-                        type="button"
-                        nativeBehavior
-                        hardDisabled={pending || item.kind === "asset" && !canEditAsset}
-                        title={editLabel}
-                        ariaLabel={editLabel}
-                        ariaHasPopup="dialog"
-                        leftIcon="icon pencil"
-                        onClick={onEdit}
-                    />}
+            <div className="project-backpack-item-header">
+                <h3 className="project-backpack-name">{entry.name}</h3>
+                <div className="project-backpack-item-actions">
+                    {item && (
+                        <Button
+                            className="project-backpack-button project-backpack-icon-button project-backpack-rename"
+                            type="button"
+                            nativeBehavior
+                            hardDisabled={pending || item.kind === "asset" && !canEditAsset}
+                            title={editLabel}
+                            ariaLabel={editLabel}
+                            ariaHasPopup="dialog"
+                            leftIcon="icon pencil"
+                            onClick={onEdit}
+                        />
+                    )}
                     <Button
-                        className="project-backpack__button project-backpack__icon-button project-backpack__delete"
+                        className="project-backpack-button project-backpack-icon-button project-backpack-delete"
                         type="button"
                         nativeBehavior
                         hardDisabled={pending}
@@ -74,54 +76,77 @@ export function BackpackEntryCard(props: BackpackEntryCardProps): JSX.Element {
                 </div>
             </div>
             {openingAsset && <p role="status">{lf("Opening asset editor…")}</p>}
-            {error && <p ref={errorRef} role="alert">{error}</p>}
-            {entry.error && <p className="project-backpack__invalid">{entry.error}</p>}
-            {signedIn && entry.source === "local" && <p>{entry.local?.firstAttemptAt
-                ? lf("Pending sync. A copy may already be saved to your account.")
-                : lf("Saved in this browser only.")}</p>}
+            {error && (
+                <p
+                    ref={errorRef}
+                    role="alert"
+                >
+                    {error}
+                </p>
+            )}
+            {entry.error && <p className="project-backpack-invalid">{entry.error}</p>}
+            {signedIn && entry.source === "local" && (
+                <p>{entry.local?.firstAttemptAt
+                    ? lf("Pending sync. A copy may already be saved to your account.")
+                    : lf("Saved in this browser only.")}</p>
+            )}
             {entry.pendingError && <p role="status">{entry.pendingError}</p>}
-            {signedIn && entry.source === "local" && !!entry.item && <Button
-                className="project-backpack__button project-backpack__sync"
-                type="button"
-                nativeBehavior
-                hardDisabled={pending}
-                label={lf("Retry sync")}
-                title={lf("Retry sync")}
-                onClick={onRetrySync}
-            />}
-            {item && <>
-                <BackpackPreview
-                    entry={entry}
-                    headerId={headerId}
-                    active={active}
-                    onDragStart={onDragStart}
-                    onDragEnd={onDragEnd}
+            {signedIn && entry.source === "local" && !!entry.item && (
+                <Button
+                    className="project-backpack-button project-backpack-sync"
+                    type="button"
+                    nativeBehavior
+                    hardDisabled={pending}
+                    label={lf("Retry sync")}
+                    title={lf("Retry sync")}
+                    onClick={onRetrySync}
                 />
-                {!!Object.keys(item.projectBlocks || {}).length && <p className="project-backpack__requirements">
-                    {lf("Uses project-defined blocks from {0}. Their source code is not included.",
-                        Array.from(new Set(Object.values(item.projectBlocks))).join(", "))}
-                </p>}
-                {!!missingDependencies.length && <div className="project-backpack__requirements">
-                    <p>{lf("Required extensions")}</p>
-                    <ul>{missingDependencies.map(({ name, displayName, version }) => <li key={name}>
-                        <span>{displayName}</span>{" — "}<span>{version}</span>{" — "}
-                        <span>{lf("Missing from this project")}</span>
-                    </li>)}</ul>
-                </div>}
-                <div className="project-backpack__actions">
-                    <Button
-                        className="project-backpack__button project-backpack__icon-button project-backpack__add"
-                        type="button"
-                        nativeBehavior
-                        hardDisabled={pending || !canImport}
-                        ariaLabel={lf("Add {0} to project", item.name)}
-                        ariaDescribedBy={!canImport ? "project-backpack-import-reason" : undefined}
-                        title={lf("Add to project")}
-                        leftIcon="icon plus"
-                        onClick={onAdd}
+            )}
+            {item && (
+                <>
+                    <BackpackPreview
+                        entry={entry}
+                        headerId={headerId}
+                        active={active}
+                        onDragStart={onDragStart}
+                        onDragEnd={onDragEnd}
                     />
-                </div>
-            </>}
+                    {!!Object.keys(item.projectBlocks || {}).length && (
+                        <p className="project-backpack-requirements">
+                            {lf(
+                                "Uses project-defined blocks from {0}. Their source code is not included.",
+                                Array.from(new Set(Object.values(item.projectBlocks))).join(", ")
+                            )}
+                        </p>
+                    )}
+                    {!!missingDependencies.length && (
+                        <div className="project-backpack-requirements">
+                            <p>{lf("Required extensions")}</p>
+                            <ul>
+                                {missingDependencies.map(({ name, displayName, version }) => (
+                                    <li key={name}>
+                                        <span>{displayName}</span>{" — "}<span>{version}</span>{" — "}
+                                        <span>{lf("Missing from this project")}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    <div className="project-backpack-actions">
+                        <Button
+                            className="project-backpack-button project-backpack-icon-button project-backpack-add"
+                            type="button"
+                            nativeBehavior
+                            hardDisabled={pending || !canImport}
+                            ariaLabel={lf("Add {0} to project", item.name)}
+                            ariaDescribedBy={!canImport ? "project-backpack-import-reason" : undefined}
+                            title={lf("Add to project")}
+                            leftIcon="icon plus"
+                            onClick={onAdd}
+                        />
+                    </div>
+                </>
+            )}
         </li>
     );
 }

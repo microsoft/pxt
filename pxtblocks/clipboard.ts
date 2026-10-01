@@ -5,7 +5,11 @@ const MAX_BLOCK_DEPTH = 100;
 const MAX_BLOCK_COUNT = 500;
 
 /** Visit connected blocks, including shadows hidden by another block. */
-export function visitBlockStates(states: BlockState[], visit: (state: BlockState) => void, includeObscuredShadows = true): void {
+export function visitBlockStates(
+    states: BlockState[],
+    visit: (state: BlockState) => void,
+    includeObscuredShadows = true
+): void {
     const seen = new Set<BlockState>();
     const walk = (state: BlockState, depth: number): void => {
         if (!state || typeof state !== "object" || Array.isArray(state) || typeof state.type !== "string"
@@ -16,6 +20,7 @@ export function visitBlockStates(states: BlockState[], visit: (state: BlockState
         if (depth > MAX_BLOCK_DEPTH || seen.size >= MAX_BLOCK_COUNT) {
             pxt.U.userError(lf("This snippet contains too many blocks or is nested too deeply. Try copying a smaller block container."));
         }
+
         seen.add(state);
         visit(state);
         for (const input of Object.values(state.inputs || {})) {
@@ -25,6 +30,7 @@ export function visitBlockStates(states: BlockState[], visit: (state: BlockState
         if (state.next?.shadow && (includeObscuredShadows || !state.next.block)) walk(state.next.shadow, depth + 1);
         if (state.next?.block) walk(state.next.block, depth + 1);
     };
+
     for (const state of states) walk(state, 0);
 }
 
@@ -43,6 +49,7 @@ export function copyBlock(block: Blockly.Block): Blockly.clipboard.BlockCopyData
         ? block.toCopyData()
         : blockCopyData(Blockly.serialization.blocks.save(block, { addNextBlocks: false, saveIds: false }));
     if (!data) throw new Error("The block could not be copied.");
+
     return data;
 }
 
@@ -61,6 +68,7 @@ export function pasteClipboardData(
     const metrics = workspace.getMetricsManager();
     const { left, top, width, height } = metrics.getViewMetrics(true);
     let position = options.workspacePosition;
+
     if (!position && options.screenPosition) {
         const bounds = workspace.getInjectionDiv().getBoundingClientRect();
         const viewport = metrics.getViewMetrics();
@@ -70,6 +78,7 @@ export function pasteClipboardData(
             top + (options.screenPosition.y - bounds.top - offset.top) / viewport.height * height
         );
     }
+
     if (!position) {
         const original = options.originalPosition;
         const viewport = new Blockly.utils.Rect(top, top + height, left, left + width);
@@ -77,5 +86,6 @@ export function pasteClipboardData(
             position = new Blockly.utils.Coordinate(left + width / 2, top + height / 2);
         }
     }
+
     return Blockly.clipboard.paste(data, workspace, position);
 }

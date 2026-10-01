@@ -33,7 +33,12 @@ export interface BackpackWorkspaceOptions {
 type State = Blockly.serialization.blocks.State;
 const MAX_CODE_LENGTH = 100000;
 const MAX_BLOCKS = 500;
-const legacyProcedures = new Set(["procedures_defnoreturn", "procedures_callnoreturn", "procedures_defreturn", "procedures_callreturn"]);
+const legacyProcedures = new Set([
+    "procedures_defnoreturn",
+    "procedures_callnoreturn",
+    "procedures_defreturn",
+    "procedures_callreturn"
+]);
 
 function invalidCode(): never {
     throw new Error("This Backpack item contains invalid or unsupported blocks.");
@@ -69,7 +74,9 @@ export function isBackpackContainer(block: Blockly.Block): boolean {
 /** Find the asset field on an output block, including blocks defined by extensions. */
 export function getBackpackAssetField(block: Blockly.Block): Blockly.Field | undefined {
     if (!block || block.isDisposed() || !block.outputConnection || block.previousConnection || block.nextConnection
-        || block.inputList.some(input => !!input.connection)) return undefined;
+        || block.inputList.some(input => !!input.connection))
+        return undefined;
+
     const fields = block.inputList.reduce<Blockly.Field[]>((all, input) => all.concat(input.fieldRow), [])
         .filter(field => field.EDITABLE && field.SERIALIZABLE);
     return fields.length === 1 && (fields[0] as Blockly.Field & Partial<FieldCustom>).isBackpackAsset ? fields[0] : undefined;
@@ -102,11 +109,13 @@ export interface BackpackAssetCapture {
 export function captureBackpackAsset(field: Blockly.Field, info: pxtc.BlocksInfo): BackpackAssetCapture {
     const block = field.getSourceBlock();
     if (!isBackpackBlock(block) || !getBackpackAssetFields(block).includes(field)) invalidCode();
+
     const symbol = info.blocksById[block.type];
     const parameter = symbol && pxt.blocks.compileInfo(symbol).definitionNameToParam[field.name];
     if (!parameter?.fieldEditor) {
         return pxt.U.userError(lf("This asset cannot be saved separately in this editor."));
     }
+
     const candidates = info.blocks
         .filter(candidate => candidate.attributes.shim === "TD_ID"
             && candidate.retType === parameter.type && !candidate.attributes.deprecated
@@ -120,6 +129,7 @@ export function captureBackpackAsset(field: Blockly.Field, info: pxtc.BlocksInfo
     if (!standalone) {
         return pxt.U.userError(lf("This asset cannot be saved separately in this editor."));
     }
+
     const label = (parameter.labelLocalizationKey && pxtc.getBlockTranslationsCacheKey(parameter.labelLocalizationKey))
         || parameter.label || parameter.actualName;
     const description = (field as Blockly.Field & Partial<FieldCustom>).getFieldDescription?.() || field.getText();
@@ -129,7 +139,12 @@ export function captureBackpackAsset(field: Blockly.Field, info: pxtc.BlocksInfo
     };
     const code = JSON.stringify({ version: 1, blocks: [state] });
     parseBackpackCode(code);
-    return { code, blockText: [label, description].filter(text => !!text).join(" "), name: description || label };
+
+    return {
+        code,
+        blockText: [label, description].filter(text => !!text).join(" "),
+        name: description || label
+    };
 }
 
 function isFunction(type: string): boolean {
@@ -149,6 +164,7 @@ function functionName(state: State): string | undefined {
 export function parseBackpackCode(code: string): BackpackCode {
     if (typeof code !== "string") invalidCode();
     checkCodeSize(code.length);
+
     let payload: unknown;
     try {
         payload = JSON.parse(code);
@@ -158,10 +174,12 @@ export function parseBackpackCode(code: string): BackpackCode {
 
     if (!isObject(payload)
         || !Array.isArray(payload.blocks) || !payload.blocks.length) invalidCode();
+
     // The first experimental captures had no version. Their block states are unchanged.
     if (payload.version !== undefined && payload.version !== 1) {
         return pxt.U.userError(lf("This saved item uses an unsupported Backpack format. Update the editor or save a new copy from your project."));
     }
+
     const result: BackpackCode = { version: 1, blocks: payload.blocks };
     const definitions = new Map<string, State>();
     result.blocks.forEach((state, index) => {
@@ -173,6 +191,7 @@ export function parseBackpackCode(code: string): BackpackCode {
             definitions.set(key, state);
         }
     });
+
     visitBlockStates(result.blocks, state => {
         if (legacyProcedures.has(state.type)) {
             pxt.U.userError(lf("Legacy procedure blocks are not supported by Backpack. Recreate them with Functions blocks before saving."));
@@ -193,10 +212,12 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
     if (!isBackpackBlock(block)) {
         pxt.U.userError(lf("Choose an editable block container or an image, animation, tilemap or music asset to save to Backpack."));
     }
+
     const save = (source: Blockly.Block): State => copyBlock(source).blockState;
     const root = save(block);
     const states = [root];
     const included = new Set<Blockly.Block>([block]);
+
     for (let i = 0; i < states.length; i++) {
         // A bounded parse is performed below; guard expansion before following dependencies too.
         if (states.length > MAX_BLOCKS) tooManyBlocks();
@@ -215,6 +236,7 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
             }
         });
     }
+
     const code = JSON.stringify({ version: 1, blocks: [...states.slice(1), root] });
     parseBackpackCode(code);
 
@@ -255,7 +277,12 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
         const name = isFunction(block.type) ? (block as CommonFunctionBlock).getName() : undefined;
         if (name) names.add(name.toLowerCase());
     }
-    const replacements = new Map<string, { name: string; id: string; args: Map<string, string> }>();
+
+    const replacements = new Map<string, {
+        name: string;
+        id: string;
+        args: Map<string, string>
+    }>();
     for (const state of states.filter(isDefinition)) {
         const original = functionName(state);
         let name = original;
@@ -268,6 +295,7 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
         }
         replacements.set(functionName(state), { name, id: Blockly.utils.idGenerator.genUid(), args });
     }
+
     visitBlockStates(states, state => {
         // Block IDs are never reusable, even for externally supplied valid items.
         delete state.id;
@@ -280,10 +308,12 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
             extra.name = replacement.name;
             extra.functionid = replacement.id;
             extra.arguments = extra.arguments.map(arg => ({ ...arg, id: replacement.args.get(arg.id) }));
-            if (state.fields && Object.prototype.hasOwnProperty.call(state.fields, "function_name")) state.fields.function_name = replacement.name;
+            if (state.fields && Object.prototype.hasOwnProperty.call(state.fields, "function_name"))
+                state.fields.function_name = replacement.name;
             if (state.inputs) {
                 const inputs: State["inputs"] = Object.create(null);
-                for (const key of Object.keys(state.inputs)) inputs[replacement.args.get(key) || key] = state.inputs[key];
+                for (const key of Object.keys(state.inputs))
+                    inputs[replacement.args.get(key) || key] = state.inputs[key];
                 state.inputs = inputs;
             }
         }
@@ -291,8 +321,12 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
 }
 
 /** Append dependencies and the selection in one undo group, at the drop point or viewport center. */
-export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg, coordinates?: Blockly.utils.Coordinate,
-    kind?: pxt.auth.BackpackKind): Blockly.BlockSvg {
+export function pasteBackpackBlock(
+    code: string,
+    workspace: Blockly.WorkspaceSvg,
+    coordinates?: Blockly.utils.Coordinate,
+    kind?: pxt.auth.BackpackKind
+): Blockly.BlockSvg {
     const { blocks } = parseBackpackCode(code); // A fresh object; never mutate the stored item.
     visitBlockStates(blocks, state => {
         if (!Object.prototype.hasOwnProperty.call(Blockly.Blocks, state.type)) {
@@ -301,13 +335,17 @@ export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg
     });
     if (workspace.options.readOnly || workspace.isFlyout || workspace.isMutator) invalidCode();
     remapFunctions(blocks, workspace);
+
     const group = Blockly.Events.getGroup();
     const existing = new Set(workspace.getAllBlocks(false));
     if (!group) Blockly.Events.setGroup(true);
     try {
         let root: Blockly.BlockSvg;
         const view = workspace.getMetricsManager().getViewMetrics(true);
-        const center = coordinates || new Blockly.utils.Coordinate(view.left + view.width / 2, view.top + view.height / 2);
+        const center = coordinates || new Blockly.utils.Coordinate(
+            view.left + view.width / 2,
+            view.top + view.height / 2
+        );
         for (const [index, state] of blocks.entries()) {
             const offset = index === blocks.length - 1 ? 0 : (index + 1) * 40;
             const appended = pasteClipboardData(blockCopyData(state), workspace, {
@@ -318,6 +356,7 @@ export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg
             }
             root = appended;
         }
+
         // Dependencies have been installed before import; now the actual field is available.
         if (kind && (kind === "asset") !== !!getBackpackAssetField(root)) invalidCode();
         return root;
@@ -373,6 +412,7 @@ class BackpackDragTarget extends Blockly.DragTarget {
         if (!this.accepts(draggable)) return;
         const element = this.element();
         if (!element) return;
+
         this.hovered = element;
         element.classList.add(this.options.hoverClass);
         if (this.target.openOnHover) {
@@ -387,6 +427,7 @@ class BackpackDragTarget extends Blockly.DragTarget {
                 } catch (error) {
                     pxt.reportException(error);
                 }
+
                 // Opening can change the layout even if the pointer remains stationary.
                 this.frame = requestAnimationFrame(() => {
                     this.frame = undefined;
@@ -423,6 +464,7 @@ class BackpackDragTarget extends Blockly.DragTarget {
     clear(): void {
         if (this.timer !== undefined) clearTimeout(this.timer);
         if (this.frame !== undefined) cancelAnimationFrame(this.frame);
+
         this.timer = undefined;
         this.frame = undefined;
         this.hovered?.classList.remove(this.options.hoverClass);
@@ -443,7 +485,10 @@ export function clearBackpackDragState(workspace: Blockly.WorkspaceSvg): void {
 }
 
 /** Register workspace-scoped context actions and native, non-deleting drop targets. */
-export function registerBackpackWorkspace(workspace: Blockly.WorkspaceSvg, options: BackpackWorkspaceOptions): () => void {
+export function registerBackpackWorkspace(
+    workspace: Blockly.WorkspaceSvg,
+    options: BackpackWorkspaceOptions
+): () => void {
     registrations.get(workspace)?.dispose();
     const registry = Blockly.ContextMenuRegistry.registry;
     if (!registry.getItem("pxtBackpackSave")) {
@@ -467,19 +512,31 @@ export function registerBackpackWorkspace(workspace: Blockly.WorkspaceSvg, optio
             },
         });
     }
+
     const manager = workspace.getComponentManager();
     const targets = options.dragTargets.map(target => new BackpackDragTarget(workspace, options, target));
     for (const target of targets) {
-        manager.addComponent({ component: target, capabilities: [Blockly.ComponentManager.Capability.DRAG_TARGET], weight: -1 });
+        manager.addComponent({
+            component: target,
+            capabilities: [Blockly.ComponentManager.Capability.DRAG_TARGET],
+            weight: -1
+        });
     }
+
     const clear = (): void => targets.forEach(target => target.clear());
-    const onKeyDown = (event: KeyboardEvent): void => { if (event.key === "Escape") clear(); };
+    const onKeyDown = (event: KeyboardEvent): void => {
+        if (event.key === "Escape") clear();
+    };
     // Defer pointer-up cleanup until Blockly's synchronous drop processing has completed.
-    const onPointerUp = (): void => { Promise.resolve().then(clear); };
+    const onPointerUp = (): void => {
+        Promise.resolve().then(clear);
+    };
+
     document.addEventListener("keydown", onKeyDown, true);
     document.addEventListener("pointercancel", clear, true);
     document.addEventListener("pointerup", onPointerUp, true);
     window.addEventListener("blur", clear);
+
     let disposed = false;
     const dispose = (): void => {
         if (disposed) return;
@@ -493,6 +550,7 @@ export function registerBackpackWorkspace(workspace: Blockly.WorkspaceSvg, optio
         registrations.delete(workspace);
         workspace.recordDragTargets();
     };
+
     registrations.set(workspace, { options, targets, dispose });
     workspace.recordDragTargets();
     return dispose;

@@ -11,8 +11,13 @@ export interface BackpackProjectHost extends BlockSnippetProjectHost {
 }
 
 /** Backpack saves retain the stricter portable-reference policy, unlike native clipboard copies. */
-export function getBackpackRequirements(code: string, info: pxtc.BlocksInfo, main: pxt.MainPackage): {
-    dependencies: pxt.Map<string>; projectBlocks: pxt.Map<string>;
+export function getBackpackRequirements(
+    code: string,
+    info: pxtc.BlocksInfo,
+    main: pxt.MainPackage
+): {
+    dependencies: pxt.Map<string>;
+    projectBlocks: pxt.Map<string>;
 } {
     const requirements = getBlockSnippetRequirements(pxtblockly.parseBackpackCode(code).blocks, info, main);
     for (const name of Object.keys(requirements.dependencies)) {
@@ -26,10 +31,14 @@ export function getBackpackRequirements(code: string, info: pxtc.BlocksInfo, mai
 }
 
 /** Prepare using the shared pipeline, then let Backpack own insertion, rendering, and final save. */
-export async function addBackpackToProjectAsync(item: pxt.auth.BackpackItem, host: BackpackProjectHost,
-    position?: BackpackImportPosition): Promise<boolean> {
+export async function addBackpackToProjectAsync(
+    item: pxt.auth.BackpackItem,
+    host: BackpackProjectHost,
+    position?: BackpackImportPosition
+): Promise<boolean> {
     const saved = validateBackpackItem(item);
     const types = getBlockSnippetTypes(pxtblockly.parseBackpackCode(saved.code).blocks);
+
     const assertCurrent = (): void => {
         if (!host.isCurrent() || !host.headerId || pkg.mainEditorPkg().header?.id !== host.headerId) {
             throw new BackpackUserError(lf("Your project or account changed. Please retry the operation."));
@@ -37,9 +46,13 @@ export async function addBackpackToProjectAsync(item: pxt.auth.BackpackItem, hos
     };
     const wait = async <T>(action: () => Promise<T>): Promise<T> => {
         assertCurrent();
-        try { return await action(); }
-        finally { assertCurrent(); }
+        try {
+            return await action();
+        } finally {
+            assertCurrent();
+        }
     };
+
     if (saved.versions.target !== pxt.appTarget.versions.target || saved.versions.pxt !== pxt.appTarget.versions.pxt) {
         const confirmed = await wait(() => core.confirmAsync({
             header: lf("Different editor version"),
@@ -49,13 +62,20 @@ export async function addBackpackToProjectAsync(item: pxt.auth.BackpackItem, hos
         }));
         if (!confirmed) return false;
     }
-    if (!await ensureBlockSnippetAsync({ dependencies: saved.dependencies, projectBlocks: saved.projectBlocks }, types, host)) return false;
+    if (!await ensureBlockSnippetAsync({
+        dependencies: saved.dependencies,
+        projectBlocks: saved.projectBlocks
+    }, types, host)) return false;
+
     assertCurrent();
     const workspace = host.getWorkspace();
-    const coordinates = position && Blockly.utils.svgMath.screenToWsCoordinates(workspace,
-        new Blockly.utils.Coordinate(position.x, position.y));
+    const coordinates = position && Blockly.utils.svgMath.screenToWsCoordinates(
+        workspace,
+        new Blockly.utils.Coordinate(position.x, position.y)
+    );
     pxtblockly.pasteBackpackBlock(saved.code, workspace, coordinates, saved.kind); // Owns the single undo group and asset remapping.
     await wait(() => Blockly.renderManagement.finishQueuedRenders());
+
     // Insertion already succeeded. Retain its undo group and any intervening user
     // edits; persistence retries must never paste the same blocks again.
     while (true) {
@@ -73,6 +93,7 @@ export async function addBackpackToProjectAsync(item: pxt.auth.BackpackItem, hos
             if (!retry) break;
         }
     }
+
     assertCurrent();
     return true;
 }

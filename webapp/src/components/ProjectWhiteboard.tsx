@@ -5,7 +5,18 @@ import { ImageEditor } from "./ImageEditor/ImageEditor";
 import imageReducer, { AnimationState, ImageEditorStore } from "./ImageEditor/store/imageReducer";
 import { dispatchDisableResize, dispatchOpenAsset } from "./ImageEditor/actions/dispatch";
 import { imageStateToBitmap } from "./ImageEditor/util";
-import { addProjectWhiteboard, createProjectNotes, decodeWhiteboard, deleteProjectWhiteboard, MAX_PROJECT_NOTE_LENGTH, ProjectNotesSaveQueue, renameProjectWhiteboard, validateProjectNotes, WHITEBOARD_HEIGHT, WHITEBOARD_WIDTH } from "../projectNotes";
+import {
+    addProjectWhiteboard,
+    createProjectNotes,
+    decodeWhiteboard,
+    deleteProjectWhiteboard,
+    MAX_PROJECT_NOTE_LENGTH,
+    ProjectNotesSaveQueue,
+    renameProjectWhiteboard,
+    validateProjectNotes,
+    WHITEBOARD_HEIGHT,
+    WHITEBOARD_WIDTH
+} from "../projectNotes";
 import { ProjectWhiteboardMenu } from "./ProjectWhiteboardMenu";
 import * as workspace from "../workspace";
 
@@ -17,13 +28,31 @@ export interface ProjectWhiteboardProps {
 }
 
 function createNoteState(notes?: pxt.workspace.WhiteboardContent): ImageEditorStore {
-    const bitmap = notes?.image ? decodeWhiteboard(notes.image) : new pxt.sprite.Bitmap(WHITEBOARD_WIDTH, WHITEBOARD_HEIGHT);
+    const bitmap = notes?.image
+        ? decodeWhiteboard(notes.image)
+        : new pxt.sprite.Bitmap(WHITEBOARD_WIDTH, WHITEBOARD_HEIGHT);
     const asset: pxt.ProjectImage = {
-        id: "private-project-whiteboard", internalID: -1, type: pxt.AssetType.Image,
-        bitmap: bitmap.data(), jresData: "", meta: {}
+        id: "private-project-whiteboard",
+        internalID: -1,
+        type: pxt.AssetType.Image,
+        bitmap: bitmap.data(),
+        jresData: "",
+        meta: {}
     };
     let state = imageReducer(undefined, dispatchOpenAsset(asset, false));
-    if (notes?.palette) state = { ...state, store: { ...state.store, present: { ...state.store.present, colors: notes.palette.slice() } } };
+    if (notes?.palette) {
+        state = {
+            ...state,
+            store: {
+                ...state.store,
+                present: {
+                    ...state.store.present,
+                    colors: notes.palette.slice()
+                }
+            }
+        };
+    }
+
     return imageReducer(state, dispatchDisableResize());
 }
 
@@ -33,19 +62,30 @@ function noteReducer(state: ImageEditorStore, action: Action & { notes?: pxt.wor
 
 export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
     const initial = React.useMemo(() => {
-        try { return { notes: props.notes === undefined ? createProjectNotes() : validateProjectNotes(props.notes), invalid: false }; }
-        catch { return { notes: createProjectNotes(), invalid: true }; }
+        try {
+            return {
+                notes: props.notes === undefined ? createProjectNotes() : validateProjectNotes(props.notes),
+                invalid: false
+            };
+        } catch {
+            return { notes: createProjectNotes(), invalid: true };
+        }
     }, []);
     const [notes, setNotes] = React.useState(initial.notes);
     const activeBoard = notes.whiteboards.find(board => board.id === notes.activeWhiteboardId);
+
     // Keep each board's undo history and selected tools separate while switching.
     const stores = React.useRef(new Map<string, Store<ImageEditorStore>>());
-    if (!stores.current.has(activeBoard.id)) stores.current.set(activeBoard.id, createStore(noteReducer, createNoteState(activeBoard)));
+    if (!stores.current.has(activeBoard.id)) {
+        stores.current.set(activeBoard.id, createStore(noteReducer, createNoteState(activeBoard)));
+    }
     const store = stores.current.get(activeBoard.id);
+
     const [status, setStatus] = React.useState<"saved" | "saving" | "error">("saved");
     const [invalid, setInvalid] = React.useState(initial.invalid);
     const [conflict, setConflict] = React.useState<{ notes?: pxt.workspace.ProjectNotes }>();
     const editor = React.useRef<ImageEditor>();
+
     const draft = React.useRef(initial.notes);
     const dirty = React.useRef(false);
     const alive = React.useRef(true);
@@ -61,15 +101,26 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
     const persist = React.useCallback((snapshot: pxt.workspace.ProjectNotes, savedRevision: number) => {
         ++inFlight.current;
         ownSaves.current.add(JSON.stringify(snapshot));
-        if (ownSaves.current.size > 10) ownSaves.current.delete(ownSaves.current.values().next().value);
-        if (alive.current) setStatus("saving");
+        if (ownSaves.current.size > 10) {
+            ownSaves.current.delete(ownSaves.current.values().next().value);
+        }
+        if (alive.current) {
+            setStatus("saving");
+        }
+
         // Capture the project ID, not the current global main package. Switching
         // projects must never save an old canvas into the newly opened project.
         saveQueue.current.enqueue(() => workspace.saveProjectNotesAsync(props.headerId, snapshot)).then(() => {
-            if (alive.current && revision.current === savedRevision) setStatus("saved");
+            if (alive.current && revision.current === savedRevision) {
+                setStatus("saved");
+            }
         }).catch(error => {
-            if (revision.current === savedRevision) dirty.current = true;
-            if (alive.current) setStatus("error");
+            if (revision.current === savedRevision) {
+                dirty.current = true;
+            }
+            if (alive.current) {
+                setStatus("error");
+            }
             pxt.reportException(error);
         }).finally(() => {
             --inFlight.current;
@@ -78,7 +129,10 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
 
     const flush = React.useCallback(() => {
         clearTimeout(timer.current);
-        if (!dirty.current || conflictPending.current) return;
+        if (!dirty.current || conflictPending.current) {
+            return;
+        }
+
         dirty.current = false;
         persist(draft.current, revision.current);
     }, [persist]);
@@ -86,16 +140,21 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
     const update = React.useCallback((notes: pxt.workspace.ProjectNotes) => {
         draft.current = notes;
         setNotes(notes);
+
         dirty.current = true;
         ++revision.current;
         setStatus("saving");
+
         clearTimeout(timer.current);
         timer.current = window.setTimeout(flush, 500);
     }, [flush]);
 
     const updateBoard = React.useCallback((id: string, content: Partial<pxt.workspace.WhiteboardContent>) => {
         const notes = draft.current;
-        update({ ...notes, whiteboards: notes.whiteboards.map(board => board.id === id ? { ...board, ...content } : board) });
+        update({
+            ...notes,
+            whiteboards: notes.whiteboards.map(board => board.id === id ? { ...board, ...content } : board)
+        });
     }, [update]);
 
     const loadNotes = React.useCallback((notes?: pxt.workspace.ProjectNotes, persistAfterPending = false) => {
@@ -105,57 +164,91 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
         draft.current = validated;
         ++revision.current;
         const loadedRevision = revision.current;
+
         applying.current = true;
         for (const [id, store] of stores.current) {
             const board = validated.whiteboards.find(board => board.id === id);
-            if (board) store.dispatch({ type: "project-notes-load", notes: board });
-            else stores.current.delete(id);
+            if (board) {
+                store.dispatch({ type: "project-notes-load", notes: board });
+            } else {
+                stores.current.delete(id);
+            }
         }
         applying.current = false;
+
         setNotes(validated);
         conflictPending.current = false;
         setConflict(undefined);
-        if (persistAfterPending) persist(validated, loadedRevision);
-        else setStatus("saved");
+        if (persistAfterPending) {
+            persist(validated, loadedRevision);
+        } else {
+            setStatus("saved");
+        }
     }, [persist]);
 
     React.useEffect(() => {
         const serialized = JSON.stringify(props.notes);
-        if (serialized === incoming.current) return;
+        if (serialized === incoming.current) {
+            return;
+        }
+
         incoming.current = serialized;
         const ownSave = ownSaves.current.delete(serialized);
-        if (serialized === JSON.stringify(draft.current) || ownSave) return;
+        if (serialized === JSON.stringify(draft.current) || ownSave) {
+            return;
+        }
+
         try {
             if (dirty.current || inFlight.current) {
                 clearTimeout(timer.current);
                 conflictPending.current = true;
                 setConflict({ notes: props.notes });
-            } else loadNotes(props.notes);
-        } catch { setInvalid(true); }
+            } else {
+                loadNotes(props.notes);
+            }
+        } catch {
+            setInvalid(true);
+        }
     }, [props.notes, loadNotes]);
 
     React.useEffect(() => {
         let previous = store.getState().store.present;
         const unsubscribe = store.subscribe(() => {
             const present = store.getState().store.present;
-            if (present === previous) return; // Ignore cursor movement/tool changes.
+            if (present === previous) {
+                return; // Ignore cursor movement/tool changes.
+            }
+
             previous = present;
-            if (applying.current) return;
+            if (applying.current) {
+                return;
+            }
+
             const animation = present as AnimationState;
             const bitmap = imageStateToBitmap(animation.frames[0]);
             const image = pxt.sprite.base64EncodeBitmap(bitmap.data());
             const board = draft.current.whiteboards.find(board => board.id === activeBoard.id);
-            if (!board || image === board.image) return;
+            if (!board || image === board.image) {
+                return;
+            }
+
             updateBoard(board.id, { image, palette: present.colors.slice() });
         });
+
         return unsubscribe;
     }, [store, activeBoard.id, updateBoard]);
 
     React.useEffect(() => {
         alive.current = true;
-        const onVisibilityChange = () => { if (document.hidden) flush(); };
+        const onVisibilityChange = () => {
+            if (document.hidden) {
+                flush();
+            }
+        };
+
         window.addEventListener("pagehide", flush);
         document.addEventListener("visibilitychange", onVisibilityChange);
+
         return () => {
             alive.current = false;
             window.removeEventListener("pagehide", flush);
@@ -164,93 +257,161 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
         };
     }, [flush]);
 
-    React.useEffect(() => { if (!props.active) flush(); }, [props.active, flush]);
+    React.useEffect(() => {
+        if (!props.active) {
+            flush();
+        }
+    }, [props.active, flush]);
 
     React.useEffect(() => {
-        if (!props.active || !editor.current) return undefined;
+        if (!props.active || !editor.current) {
+            return undefined;
+        }
+
         const root = document.getElementById("project-whiteboard-canvas");
         const observer = new ResizeObserver(() => editor.current?.onResize());
         observer.observe(root);
+
         return () => observer.disconnect();
     }, [props.active, invalid, store]);
 
-    const commit = (notes: pxt.workspace.ProjectNotes) => { update(notes); flush(); };
-    const actions = props.active && !invalid && <ProjectWhiteboardMenu notes={notes}
-        onSelect={id => { if (id !== draft.current.activeWhiteboardId) commit({ ...draft.current, activeWhiteboardId: id }); }}
-        onRename={(id, name) => commit(renameProjectWhiteboard(draft.current, id, name))}
-        onAdd={name => commit(addProjectWhiteboard(draft.current, name))}
-        onDelete={id => {
-            const remaining = deleteProjectWhiteboard(draft.current, id);
-            stores.current.delete(id);
-            commit(remaining);
-        }} />;
+    const commit = (notes: pxt.workspace.ProjectNotes) => {
+        update(notes);
+        flush();
+    };
 
-    return <>
-        {props.renderHeader(activeBoard.name, actions)}
-        <div className="project-whiteboard__body">
-            {invalid ? <div className="project-whiteboard__invalid" role="alert">
-                <p>{lf("These notes could not be opened. The saved data has not been changed.")}</p>
-                <Button
-                    type="button"
-                    nativeBehavior
-                    className="project-tools__button"
-                    label={lf("Start a new whiteboard")}
-                    title={lf("Start a new whiteboard")}
-                    onClick={() => {
-                        const notes = createProjectNotes();
-                        loadNotes(notes);
-                        setInvalid(false);
-                        update(notes);
-                    }}
-                />
-            </div> : <div className="project-whiteboard" onBlur={flush}>
-                <p id="project-notes-privacy" className="project-whiteboard__privacy">
-                    <i className="icon lock" aria-hidden="true" />
-                    {lf("Private project notes: not included when sharing")}
-                </p>
-                {conflict && <div role="alert" className="project-whiteboard__conflict">
-                    <p>{lf("Saved notes changed while you were editing. Choose which version to keep.")}</p>
-                    <Button
-                        type="button"
-                        nativeBehavior
-                        className="project-tools__button"
-                        label={lf("Keep my notes")}
-                        title={lf("Keep my notes")}
-                        onClick={() => {
-                            conflictPending.current = false;
-                            setConflict(undefined);
-                            dirty.current = true;
-                            flush();
-                        }}
-                    />
-                    <Button
-                        type="button"
-                        nativeBehavior
-                        className="project-tools__button"
-                        label={lf("Load saved notes")}
-                        title={lf("Load saved notes")}
-                        onClick={() => loadNotes(conflict.notes, true)}
-                    />
-                </div>}
-                <div id="project-whiteboard-canvas" className="project-whiteboard__canvas" role="group" aria-label={lf("Project sketch editor")}>
-                    {props.active && <ImageEditor key={activeBoard.id} ref={editor} store={store} singleFrame hideDoneButton hideAssetName scopedShortcuts />}
-                </div>
-                <label htmlFor="project-notes-text">{lf("Notes")}</label>
-                <textarea id="project-notes-text" value={activeBoard.text} maxLength={MAX_PROJECT_NOTE_LENGTH}
-                    aria-describedby="project-notes-privacy" placeholder={lf("Ideas, reminders, things to try…")}
-                    onChange={event => updateBoard(activeBoard.id, { text: event.target.value })} />
-                {status === "error" && <div className="project-whiteboard__status" role="alert">
-                    {lf("Notes could not be saved.")}
-                    <Button
-                        type="button"
-                        nativeBehavior
-                        className="project-tools__button"
-                        label={lf("Retry")}
-                        title={lf("Retry")}
-                        onClick={flush}
-                    />
-                </div>}
-            </div>}
-        </div>
-    </>;
+    const actions = props.active && !invalid && (
+        <ProjectWhiteboardMenu
+            notes={notes}
+            onSelect={id => {
+                if (id !== draft.current.activeWhiteboardId) {
+                    commit({ ...draft.current, activeWhiteboardId: id });
+                }
+            }}
+            onRename={(id, name) => commit(renameProjectWhiteboard(draft.current, id, name))}
+            onAdd={name => commit(addProjectWhiteboard(draft.current, name))}
+            onDelete={id => {
+                const remaining = deleteProjectWhiteboard(draft.current, id);
+                stores.current.delete(id);
+                commit(remaining);
+            }}
+        />
+    );
+
+    return (
+        <>
+            {props.renderHeader(activeBoard.name, actions)}
+            <div className="project-whiteboard-body">
+                {invalid ? (
+                    <div
+                        className="project-whiteboard-invalid"
+                        role="alert"
+                    >
+                        <p>{lf("These notes could not be opened. The saved data has not been changed.")}</p>
+                        <Button
+                            type="button"
+                            nativeBehavior
+                            className="project-tools-button"
+                            label={lf("Start a new whiteboard")}
+                            title={lf("Start a new whiteboard")}
+                            onClick={() => {
+                                const notes = createProjectNotes();
+                                loadNotes(notes);
+                                setInvalid(false);
+                                update(notes);
+                            }}
+                        />
+                    </div>
+                ) : (
+                    <div
+                        className="project-whiteboard"
+                        onBlur={flush}
+                    >
+                        <p
+                            id="project-notes-privacy"
+                            className="project-whiteboard-privacy"
+                        >
+                            <i
+                                className="icon lock"
+                                aria-hidden="true"
+                            />
+                            {lf("Private project notes: not included when sharing")}
+                        </p>
+                        {conflict && (
+                            <div
+                                role="alert"
+                                className="project-whiteboard-conflict"
+                            >
+                                <p>{lf("Saved notes changed while you were editing. Choose which version to keep.")}</p>
+                                <Button
+                                    type="button"
+                                    nativeBehavior
+                                    className="project-tools-button"
+                                    label={lf("Keep my notes")}
+                                    title={lf("Keep my notes")}
+                                    onClick={() => {
+                                        conflictPending.current = false;
+                                        setConflict(undefined);
+                                        dirty.current = true;
+                                        flush();
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    nativeBehavior
+                                    className="project-tools-button"
+                                    label={lf("Load saved notes")}
+                                    title={lf("Load saved notes")}
+                                    onClick={() => loadNotes(conflict.notes, true)}
+                                />
+                            </div>
+                        )}
+                        <div
+                            id="project-whiteboard-canvas"
+                            className="project-whiteboard-canvas"
+                            role="group"
+                            aria-label={lf("Project sketch editor")}
+                        >
+                            {props.active && (
+                                <ImageEditor
+                                    key={activeBoard.id}
+                                    ref={editor}
+                                    store={store}
+                                    singleFrame
+                                    hideDoneButton
+                                    hideAssetName
+                                    scopedShortcuts
+                                />
+                            )}
+                        </div>
+                        <label htmlFor="project-notes-text">{lf("Notes")}</label>
+                        <textarea
+                            id="project-notes-text"
+                            value={activeBoard.text}
+                            maxLength={MAX_PROJECT_NOTE_LENGTH}
+                            aria-describedby="project-notes-privacy"
+                            placeholder={lf("Ideas, reminders, things to try…")}
+                            onChange={event => updateBoard(activeBoard.id, { text: event.target.value })}
+                        />
+                        {status === "error" && (
+                            <div
+                                className="project-whiteboard-status"
+                                role="alert"
+                            >
+                                {lf("Notes could not be saved.")}
+                                <Button
+                                    type="button"
+                                    nativeBehavior
+                                    className="project-tools-button"
+                                    label={lf("Retry")}
+                                    title={lf("Retry")}
+                                    onClick={flush}
+                                />
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+        </>
+    );
 }

@@ -10,10 +10,13 @@ export interface BackpackAssetPreview {
 }
 
 /** Decode with the registered native fields, without touching the editor's project or workspace. */
-export function backpackAssetPreview(item: pxt.auth.BackpackItem, context: {
-    gallery: pxt.AssetSnapshot;
-    blocksInfo: pxtc.BlocksInfo;
-}): BackpackAssetPreview | undefined {
+export function backpackAssetPreview(
+    item: pxt.auth.BackpackItem,
+    context: {
+        gallery: pxt.AssetSnapshot;
+        blocksInfo: pxtc.BlocksInfo;
+    }
+): BackpackAssetPreview | undefined {
     if (item.kind !== "asset") return undefined;
 
     try {
@@ -35,6 +38,7 @@ export function backpackAssetPreview(item: pxt.auth.BackpackItem, context: {
             const block = Blockly.serialization.blocks.append(root, workspace);
             const field = pxtblockly.getBackpackAssetField(block);
             let asset: pxt.Asset;
+
             if (field instanceof pxtblockly.FieldAssetEditor) {
                 // Headless fields never enter FieldBase's rendered initialization queue.
                 field.onLoadedIntoWorkspace();
@@ -51,15 +55,22 @@ export function backpackAssetPreview(item: pxt.auth.BackpackItem, context: {
                 if (tile?.type === pxt.AssetType.Tile) asset = tile;
             }
             if (!asset) return undefined;
+
             // Gallery conversion attaches image URIs only to this detached asset.
             const preview = assetToGalleryItem(pxt.cloneAsset(asset, true));
             if (!preview?.previewURI) return undefined;
             return preview.type === pxt.AssetType.Animation
-                ? { previewURI: preview.previewURI, framePreviewURIs: preview.framePreviewURIs, interval: preview.interval }
+                ? {
+                    previewURI: preview.previewURI,
+                    framePreviewURIs: preview.framePreviewURIs,
+                    interval: preview.interval
+                }
                 : { previewURI: preview.previewURI };
         }
         finally {
-            try { workspace?.dispose(); }
+            try {
+                workspace?.dispose();
+            }
             finally {
                 pxt.react.getTilemapProject = getTilemapProject;
                 Blockly.Events.enable();
