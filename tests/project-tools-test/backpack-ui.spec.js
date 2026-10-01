@@ -259,7 +259,7 @@ describe("project backpack UI", function () {
         }, assetPreviewURI);
         await page.addScriptTag({ content: controls });
         await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpackErrors.ts")}\n})(window.backpackErrors = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpack.ts")}\n})(window.require, window.backpackValidation = {});` });
+        await page.addScriptTag({ content: bundleSource(["webapp/src/backpack.ts"], "backpackValidation", {}) });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });

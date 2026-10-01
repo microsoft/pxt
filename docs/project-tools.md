@@ -96,6 +96,8 @@ Storage, serialization and other non-UI services remain in `webapp/src` and
 handles subscriptions, pending operations and queued refreshes. `BackpackToolbar`
 renders the category and search controls; `useBackpackPageFocus` and `useBackpackDrag`
 handle browser-focus and drag events. Item dialogs own their input focus.
+`useProjectWhiteboard` manages notes, autosaves, conflicts and per-board undo
+stores; `ProjectWhiteboard` renders the editor and its controls.
 Feature classes use hyphenated names such as
 `project-backpack-item`; update their event and test selectors together.
 
@@ -111,6 +113,8 @@ Mark actionable failures such as invalid names, storage limits, sign-in and
 concurrent-edit conflicts, not malformed IDs, timestamps, preview metadata or
 internal editor state.
 
+Blockly's Backpack drag registration is in `pxtblocks/backpackDrag.ts`, separate
+from capture and serialization.
 Blockly registration receives its drag targets from the webapp host. Shared
 project-tools IDs keep the launcher, panel accessibility links and drag adapter
 in sync; serialization does not depend on those DOM elements.
