@@ -11,13 +11,26 @@ import {
 /** The most UTF-8 bytes the files under one simulator extension's folder may hold. */
 export const PROJFS_SCOPE_QUOTA_BYTES = 512 * 1024;
 
-/** The most writes and deletes one simulator extension may make within {@link PROJFS_RATE_WINDOW_MS}. */
+/**
+ * The most writes and deletes of one simulator extension that apply within
+ * {@link PROJFS_RATE_WINDOW_MS}; later ones wait for the window to allow them.
+ */
 export const PROJFS_RATE_LIMIT = 30;
 
 /** The sliding window, in milliseconds, over which {@link PROJFS_RATE_LIMIT} applies. */
 export const PROJFS_RATE_WINDOW_MS = 10000;
 
-/** The open project, as the projfs host reads and changes it. */
+/**
+ * The most writes and deletes of one simulator extension that may wait for
+ * replies at once; more are refused with `RATE_LIMITED`.
+ */
+export const PROJFS_MAX_PENDING_MUTATIONS = 1000;
+
+/**
+ * The open project, as the projfs host reads and changes it. The host tells
+ * projects apart by identity: one object stands for the project from the time
+ * it opens until it closes, and reopening a project yields a new object.
+ */
 export interface ProjfsProject {
     /** Every file stored in the project, keyed by name, whether or not pxt.json lists it. */
     getFiles(): pxt.Map<string>;
@@ -25,7 +38,10 @@ export interface ProjfsProject {
     writeFileAsync(name: string, content: string): Promise<void>;
     /** Deletes a stored file. Leaves pxt.json unchanged. */
     deleteFileAsync(name: string): Promise<void>;
-    /** Adds `name` to the "files" list of pxt.json, or removes it from the "files" and "testFiles" lists. */
+    /**
+     * Adds `name` to the "files" list of pxt.json, or removes it from the
+     * "files" and "testFiles" lists. Rejects if pxt.json cannot be changed.
+     */
     setListedAsync(name: string, listed: boolean): Promise<void>;
     /**
      * Passes a change just made to the stored file `name` through the editor's
@@ -78,7 +94,8 @@ export function applyUserEdit(editor: ProjfsEditor, name: string, content: strin
 export interface ProjfsPackageFile {
     /**
      * Replaces the file's content and saves it.
-     * @param force if true, the text editor reloads the file it shows
+     * @param force if true, the text editor reloads the file it shows, and
+     * the promise settles once it has
      */
     setContentAsync(content: string, force?: boolean): Promise<void>;
 }
@@ -93,10 +110,21 @@ export interface ProjfsPackage {
     saveFileAsync(name: string): Promise<void>;
 }
 
+// PR NOTE [Issue 1] -- lift into the PR description, then remove.
+// This is the fix for Issue 1 (generated-docs/pxt-issue-drafts: programmatic
+// writes behind the open text editor reverted by save-back). The write forces
+// EXACTLY when the written file is the one the text editor shows: forcing
+// reloads the editor so the stale buffer cannot be saved back over the write,
+// and NOT forcing for any other file keeps an unrelated write from destroying
+// unsaved typing in the shown file (the editor's reload callback reloads the
+// shown file, not the written one). The promise settling only after the
+// editor shows the content is the companion fix for Issue 2 (the
+// save-debounce race; see the PR notes in package.ts, app.tsx, monaco.tsx).
 /**
  * Creates or replaces the stored file `name` of `epkg` and saves it. If the
  * text editor shows the file, it reloads to show `content`, which replaces any
- * change not yet saved from it and resets its undo history and cursor.
+ * change not yet saved from it and resets its undo history and cursor; the
+ * promise then settles once the editor shows `content`.
  * @param editor the editor showing the project, or undefined if there is none
  */
 export function writeProjectFileAsync(epkg: ProjfsPackage, editor: ProjfsEditor | undefined, name: string, content: string): Promise<void> {
@@ -106,6 +134,42 @@ export function writeProjectFileAsync(epkg: ProjfsPackage, editor: ProjfsEditor 
         return epkg.saveFileAsync(name);
     }
     return file.setContentAsync(content, !!editor && editor.isOpenFile(name) && editor.isTextEditor());
+}
+
+/** The editor package, as {@link setFileListedAsync} changes its pxt.json. */
+export interface ProjfsConfigPackage {
+    /**
+     * Passes the parsed pxt.json to `update`, then saves it as `update` left
+     * it. Returns null, saving nothing, if pxt.json is missing or malformed or
+     * `update` throws.
+     */
+    updateConfigAsync(update: (config: pxt.PackageConfig) => void): Promise<void> | null;
+}
+
+// PR NOTE [Issue 3] -- lift into the PR description, then remove.
+// This is the consumer-side fix for Issue 3 (generated-docs/pxt-issue-drafts:
+// updateConfigAsync returns null on failure, so a failed pxt.json update
+// reads as success). Before, the null return was coerced into a resolved
+// promise: the file stayed stored but unlisted while the requester was acked,
+// later reads reported it absent, and its bytes still counted against the
+// scope quota. Rejecting here makes the request answer FAILED; the file
+// remains stored, so a retry of the listing completes the operation. The
+// issue's fix direction (updateConfigAsync itself rejecting on failure)
+// would land upstream; this call site stays correct either way.
+/**
+ * Adds `name` to the "files" list of the pxt.json of `epkg`, or removes it
+ * from the "files" and "testFiles" lists, and saves pxt.json. Rejects if
+ * pxt.json cannot be changed.
+ */
+export function setFileListedAsync(epkg: ProjfsConfigPackage, name: string, listed: boolean): Promise<void> {
+    return epkg.updateConfigAsync(config => {
+        if (listed) {
+            if (config.files.indexOf(name) < 0) config.files.push(name);
+        } else {
+            config.files = config.files.filter(f => f !== name);
+            if (config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
+        }
+    }) || Promise.reject(new Error(`pxt.json could not be updated to ${listed ? "list" : "unlist"} ${name}.`));
 }
 
 /** Returns the size of `content` in UTF-8 bytes. */
@@ -175,27 +239,46 @@ class ProjfsRequestError extends Error {
  * Serves the project-file requests of simulator extensions. Each extension
  * lists, reads, writes and deletes files in the folder named by its key, by
  * names relative to that folder; within the folder it lists and reads only the
- * files pxt.json lists. Requests apply one at a time, in the order they arrive.
+ * files pxt.json lists.
+ *
+ * Every request gets one reply, sent once it has applied or been refused. One
+ * request applies at a time, and each extension's requests apply in the order
+ * they arrive. An extension's writes and deletes beyond
+ * {@link PROJFS_RATE_LIMIT} within {@link PROJFS_RATE_WINDOW_MS} wait, with
+ * the requests behind them, until the window allows them. A request applies
+ * only to the project open when it arrived; if that project has closed by the
+ * time the request's turn comes, it is refused with `PROJECT_CLOSED`, and a
+ * request that has begun applying completes in the project it began in.
+ *
  * Writes and deletes are artifacts unless flagged `dirty`, in which case they
  * also pass through {@link ProjfsProject.markDirty} once applied.
  */
 export class ProjfsHost {
-    protected queue: Promise<void> = Promise.resolve();
+    // per extension key: settles once every request received from the extension has been answered
+    protected tails: pxt.Map<Promise<void>> = {};
+    // settles once the request applying now, whichever extension sent it, has finished
+    protected applying: Promise<void> = Promise.resolve();
+    // per extension key: when each write and delete within the rate window began to apply
     protected recentMutations: pxt.Map<number[]> = {};
+    // per extension key: how many writes and deletes have been received and not yet answered
+    protected pendingMutations: pxt.Map<number> = {};
 
     /**
      * @param getProject returns the open project, or undefined if none is open
      * @param now returns the current time in milliseconds
+     * @param delay returns a promise that resolves after the given number of milliseconds
      */
     constructor(
         protected readonly getProject: () => ProjfsProject | undefined,
-        protected readonly now: () => number = () => Date.now()
+        protected readonly now: () => number = () => Date.now(),
+        protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
     }
 
     /**
-     * Applies a request from the simulator extension with the given key, after
-     * those already received, and sends it one reply.
+     * Queues a request from the simulator extension with the given key behind
+     * those already received from it, binds it to the project open now, and
+     * sends it one reply once it has applied or been refused.
      * @param key the extension key the requesting frame was created for
      * @param msg the request, as received
      * @param reply delivers a reply to the requesting frame
@@ -204,38 +287,81 @@ export class ProjfsHost {
     handleMessageAsync(key: string, msg: unknown, reply: (msg: ProjfsReply) => void): Promise<void> {
         const request = msg as ProjfsRequest;
         const id = typeof request?.id === "string" ? request.id : undefined;
-        const sendError = (code: ProjfsErrorCode, message: string) =>
-            reply({ type: PROJFS_MESSAGE_TYPE, id, subtype: "error", code, message });
+        const errorReply = (code: ProjfsErrorCode, message: string): ProjfsReply =>
+            ({ type: PROJFS_MESSAGE_TYPE, id, subtype: "error", code, message });
 
         const mutates = request?.subtype === "write" || request?.subtype === "delete";
-        if (mutates && !this.admitMutation(key)) {
-            sendError("RATE_LIMITED", `More than ${PROJFS_RATE_LIMIT} writes and deletes in ${PROJFS_RATE_WINDOW_MS / 1000} seconds.`);
-            return this.queue;
+        if (mutates) {
+            const pending = this.pendingMutations[key] || 0;
+            if (pending >= PROJFS_MAX_PENDING_MUTATIONS) {
+                reply(errorReply("RATE_LIMITED", `${pending} writes and deletes are already waiting for replies.`));
+                return Promise.resolve();
+            }
+            this.pendingMutations[key] = pending + 1;
         }
 
-        this.queue = this.queue
-            .then(() => this.applyAsync(key, request))
-            .then(
-                result => reply({ ...result, type: PROJFS_MESSAGE_TYPE, id }),
-                e => e instanceof ProjfsRequestError
-                    ? sendError(e.code, e.message)
-                    : sendError("FAILED", e?.message || String(e)))
-            .catch(e => pxt.reportException(e));
-        return this.queue;
-    }
-
-    protected admitMutation(key: string): boolean {
-        const now = this.now();
-        const recent = (this.recentMutations[key] || []).filter(t => now - t < PROJFS_RATE_WINDOW_MS);
-        const admitted = recent.length < PROJFS_RATE_LIMIT;
-        if (admitted) recent.push(now);
-        this.recentMutations[key] = recent;
-        return admitted;
-    }
-
-    protected async applyAsync(scope: string, request: ProjfsRequest): Promise<ProjfsReplyBody> {
         const project = this.getProject();
-        if (!project) throw new ProjfsRequestError("FAILED", "No project is open.");
+        const answered = (this.tails[key] || Promise.resolve())
+            .then(() => mutates ? this.admitMutationAsync(key, project) : undefined)
+            .then(() => this.exclusiveAsync(() => this.applyAsync(key, request, project)))
+            .then(
+                (result): ProjfsReply => ({ ...result, type: PROJFS_MESSAGE_TYPE, id }),
+                e => e instanceof ProjfsRequestError
+                    ? errorReply(e.code, e.message)
+                    : errorReply("FAILED", e?.message || String(e)))
+            .then(answer => {
+                if (mutates) this.pendingMutations[key]--;
+                reply(answer);
+            })
+            .catch(e => pxt.reportException(e));
+        this.tails[key] = answered;
+        return answered;
+    }
+
+    /**
+     * Resolves once a write or delete of the extension `key` may apply under
+     * the rate limit, counting it as applying from then on.
+     * @param project the project the request arrived in
+     */
+    protected async admitMutationAsync(key: string, project: ProjfsProject | undefined): Promise<void> {
+        for (;;) {
+            this.openProjectOrThrow(project);
+            const now = this.now();
+            const recent = (this.recentMutations[key] || []).filter(t => now - t < PROJFS_RATE_WINDOW_MS);
+            this.recentMutations[key] = recent;
+            if (recent.length < PROJFS_RATE_LIMIT) {
+                recent.push(now);
+                return;
+            }
+            await this.delay(recent[0] + PROJFS_RATE_WINDOW_MS - now);
+        }
+    }
+
+    /** Runs `apply` once no other request is applying. */
+    protected exclusiveAsync<T>(apply: () => Promise<T>): Promise<T> {
+        const result = this.applying.then(apply);
+        this.applying = result.then(() => { }, () => { });
+        return result;
+    }
+
+    /**
+     * Returns `project` if it is still the open project.
+     * @throws a `PROJECT_CLOSED` refusal if `project` is undefined or has closed
+     */
+    protected openProjectOrThrow(project: ProjfsProject | undefined): ProjfsProject {
+        if (!project)
+            throw new ProjfsRequestError("PROJECT_CLOSED", "No project was open when the request arrived.");
+        if (this.getProject() !== project)
+            throw new ProjfsRequestError("PROJECT_CLOSED", "The project open when the request arrived has closed.");
+        return project;
+    }
+
+    /**
+     * Applies `request` to the project it arrived in.
+     * @param arrivedIn the project open when the request arrived
+     */
+    protected async applyAsync(scope: string, request: ProjfsRequest, arrivedIn: ProjfsProject | undefined): Promise<ProjfsReplyBody> {
+        const project = this.openProjectOrThrow(arrivedIn);
         const files = project.getFiles();
 
         switch (request?.subtype) {

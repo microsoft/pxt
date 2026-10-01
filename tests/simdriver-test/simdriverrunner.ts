@@ -143,18 +143,33 @@ describe("simulator driver projfs messages", () => {
         chai.expect(relayed()).equals(false);
     });
 
-    it("drops requests from the main simulator frame", () => {
+    // the refusals a frame received, without their messages
+    function refusals(frame: FakeFrame) {
+        return frame.contentWindow.messages.map(m => {
+            const { type, id, subtype, code } = m as pxsim.SimulatorMessage & { id: string, subtype: string, code: string };
+            return { type, id, subtype, code };
+        });
+    }
+
+    it("answers requests from the main simulator frame with UNREGISTERED, delivering nothing", () => {
         receive(request, mainFrame.contentWindow);
         chai.expect(deliveries).deep.equals([]);
-        chai.expect(relayed()).equals(false);
-        chai.expect(simxFrame.contentWindow.messages).deep.equals([]);
+        chai.expect(refusals(mainFrame)).deep.equals([{ type: "projfs", id: "1", subtype: "error", code: "UNREGISTERED" }]);
+        chai.expect([simxFrame, otherSimxFrame, unofferedFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
     });
 
-    it("drops requests from a frame whose extension is not offered", () => {
+    it("answers requests from a frame whose extension is not offered with UNREGISTERED, delivering nothing", () => {
         receive(request, unofferedFrame.contentWindow);
         chai.expect(deliveries).deep.equals([]);
+        chai.expect(refusals(unofferedFrame)).deep.equals([{ type: "projfs", id: "1", subtype: "error", code: "UNREGISTERED" }]);
+        chai.expect([mainFrame, simxFrame, otherSimxFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
+    });
+
+    it("answers requests with UNREGISTERED when no handler serves them", () => {
+        (driver as any).options.onProjfsMessage = undefined;
+        receive({ type: "projfs", id: 7, subtype: "list" } as pxsim.SimulatorMessage, simxFrame.contentWindow);
+        chai.expect(refusals(simxFrame)).deep.equals([{ type: "projfs", id: undefined, subtype: "error", code: "UNREGISTERED" }]);
         chai.expect(relayed()).equals(false);
-        chai.expect(simxFrame.contentWindow.messages).deep.equals([]);
     });
 
     it("drops requests from windows outside the simulator", () => {

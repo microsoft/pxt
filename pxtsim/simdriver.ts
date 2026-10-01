@@ -978,20 +978,43 @@ namespace pxsim {
             }
         }
 
+        // PR NOTE [Issue 4] -- lift into the PR description, then remove.
+        // This is the fix for Issue 4 (generated-docs/pxt-issue-drafts:
+        // messages from unregistered frames were dropped with no reply, so
+        // the sender could not tell "not allowed" from "lost" and could only
+        // hang or time out). Every request from a simulator frame now gets an
+        // answer: either it reaches the handler, or it is refused with the
+        // stable UNREGISTERED code echoing the request id so the sender fails
+        // fast with a diagnosable reason. Windows that are not simulator
+        // frames stay dropped -- there is no frame to reply to.
         /**
          * Passes a projfs request to `options.onProjfsMessage` with the key of the
-         * simulator extension frame it came from. Requests from any other window,
-         * or from a frame whose key is not in `options.simulatorExtensions`, are dropped.
+         * simulator extension frame it came from. A request from any other simulator
+         * frame, from a frame whose key is not in `options.simulatorExtensions`, or
+         * arriving when no handler is set, is answered with an `UNREGISTERED` error.
+         * Requests from windows that are not simulator frames are dropped.
          */
         private handleProjfsMessage(msg: SimulatorMessage, source: Window) {
-            const handler = this.options.onProjfsMessage;
-            if (!handler || !source) return;
+            if (!source) return;
             const frame = this.simFrames().find(f => f.contentWindow === source);
-            const key = frame?.dataset[FRAME_DATA_MESSAGE_CHANNEL];
-            if (!key || !this.options.simulatorExtensions?.[key]) return;
-            handler(key, msg, reply => {
+            if (!frame) return;
+            const reply = (reply: SimulatorMessage) => {
                 if (frame.contentWindow) this.postMessageCore(frame, reply);
-            });
+            };
+            const handler = this.options.onProjfsMessage;
+            const key = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
+            if (handler && key && this.options.simulatorExtensions?.[key]) {
+                handler(key, msg, reply);
+                return;
+            }
+            const id = (msg as SimulatorMessage & { id?: unknown }).id;
+            reply({
+                type: "projfs",
+                id: typeof id === "string" ? id : undefined,
+                subtype: "error",
+                code: "UNREGISTERED",
+                message: "The editor serves project files only to the simulator extensions of the open project.",
+            } as SimulatorMessage);
         }
 
         private addEventListeners() {

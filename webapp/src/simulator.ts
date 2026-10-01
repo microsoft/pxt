@@ -10,7 +10,7 @@ import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
-import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, writeProjectFileAsync } from "./projfsHost";
+import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, setFileListedAsync, writeProjectFileAsync } from "./projfsHost";
 
 
 
@@ -294,16 +294,29 @@ export async function initAsync(cfg: SimulatorConfig) {
     config = cfg
 }
 
+// the project getProjfsProject last returned, with the editor package it stands for
+let projfsProject: { epkg: pkg.EditorPackage, project: ProjfsProject } | undefined;
+
 /**
  * Returns the open project as simulator extensions read and write it, or undefined
- * if no project is open. Changes are saved like other programmatic file writes
- * and never reload the project. By default they leave a running simulator alone;
- * a change flagged dirty then passes through the editor's user-edit pipeline,
- * which reruns the simulator as a user edit does.
+ * if no project is open; the same object while the project stays open.
  */
 function getProjfsProject(): ProjfsProject | undefined {
     const epkg = pkg.mainEditorPkg();
     if (!epkg.header) return undefined;
+    if (projfsProject?.epkg !== epkg)
+        projfsProject = { epkg, project: createProjfsProject(epkg) };
+    return projfsProject.project;
+}
+
+/**
+ * Returns the project of `epkg` as simulator extensions read and write it.
+ * Changes are saved like other programmatic file writes and never reload the
+ * project. By default they leave a running simulator alone; a change flagged
+ * dirty then passes through the editor's user-edit pipeline, which reruns the
+ * simulator as a user edit does.
+ */
+function createProjfsProject(epkg: pkg.EditorPackage): ProjfsProject {
     return {
         getFiles: () => epkg.getAllFiles(),
         writeFileAsync: (name, content) => writeProjectFileAsync(epkg, config?.projfsEditor, name, content),
@@ -312,14 +325,7 @@ function getProjfsProject(): ProjfsProject | undefined {
             data.invalidate("open-meta:");
             return epkg.saveFilesAsync();
         },
-        setListedAsync: (name, listed) => epkg.updateConfigAsync(config => {
-            if (listed) {
-                if (config.files.indexOf(name) < 0) config.files.push(name);
-            } else {
-                config.files = config.files.filter(f => f !== name);
-                if (config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
-            }
-        }) || Promise.resolve(),
+        setListedAsync: (name, listed) => setFileListedAsync(epkg, name, listed),
         markDirty: (name, content) => {
             if (config?.projfsEditor) applyUserEdit(config.projfsEditor, name, content);
         },

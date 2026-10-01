@@ -7,8 +7,8 @@
  * identifies from the requesting frame. Requests and replies name files
  * relative to that folder. Within the folder, only the files pxt.json lists
  * are visible; writes list their file. Requests are posted to the editor
- * window; the editor replies to the requesting frame only, with the request's
- * `id`.
+ * window; the editor replies to each request once, to the requesting frame
+ * only, with the request's `id`.
  *
  * Writes and deletes come in two classes. By default a change is an artifact:
  * saved with the project, and the text editor showing a written file shows the
@@ -84,14 +84,36 @@ export type ProjfsErrorCode =
     | "QUOTA_EXCEEDED"
     /** The name is not a relative path, or has an empty, `.` or `..` segment. */
     | "INVALID_NAME"
-    /** The extension sent too many writes and deletes in a short time; the request was not applied. */
+    /**
+     * The extension already had as many writes and deletes waiting for
+     * replies as the editor holds for one extension; the request was not
+     * applied.
+     */
     | "RATE_LIMITED"
     /** The request is malformed. */
     | "INVALID_REQUEST"
-    /** The editor could not complete the request, for instance because no project is open. */
+    /**
+     * The project open in the editor when the request arrived has since
+     * closed, or no project was open; the request was not applied.
+     */
+    | "PROJECT_CLOSED"
+    /**
+     * The requesting frame is not a simulator extension the editor serves,
+     * for instance because the open project does not use the extension; the
+     * request was not applied.
+     */
+    | "UNREGISTERED"
+    /**
+     * The editor met an error applying the request. A write or delete may be
+     * partly applied; repeating it completes it.
+     */
     | "FAILED"
-    /** The editor did not reply in time (raised by the client). */
-    | "TIMEOUT";
+    /**
+     * The client was disposed, as when its frame is torn down, before the
+     * editor replied; the request may or may not have been applied (raised by
+     * the client).
+     */
+    | "DISPOSED";
 
 interface ProjfsMessage {
     type: "projfs";
@@ -200,8 +222,14 @@ export interface ProjfsClientOptions {
     listener?: ProjfsListenerWindow;
     /** The origin requests may be delivered to; defaults to `"*"`. */
     targetOrigin?: string;
-    /** How long to wait for each reply before failing with `TIMEOUT`; defaults to 10 seconds. */
-    timeoutMs?: number;
+    /** How long a request waits for its reply before {@link onSlowReply} hears of it; defaults to 10 seconds. */
+    slowReplyMs?: number;
+    /**
+     * Called once for each request still waiting for its reply after
+     * {@link slowReplyMs}. The request keeps waiting, and a reply that comes
+     * later settles it as usual.
+     */
+    onSlowReply?: (request: ProjfsRequest) => void;
 }
 
 /** How a {@link ProjfsClient} write or delete changes the project. */
@@ -227,12 +255,13 @@ export interface ProjfsMutationOptions {
 interface PendingRequest {
     resolve: (reply: ProjfsReply) => void;
     reject: (error: ProjfsError) => void;
-    timer: ReturnType<typeof setTimeout>;
+    // fires the slow-reply notice; undefined when no one listens for it
+    timer: ReturnType<typeof setTimeout> | undefined;
 }
 
 type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
 
-const DEFAULT_TIMEOUT_MS = 10000;
+const DEFAULT_SLOW_REPLY_MS = 10000;
 
 /** Returns the `dirty` field a request carries for `options`: present only for a dirty change. */
 function dirtyField(options: ProjfsMutationOptions | undefined): { dirty?: true } {
@@ -243,12 +272,18 @@ function dirtyField(options: ProjfsMutationOptions | undefined): { dirty?: true 
  * Reads and writes project files from a simulator extension. Each method
  * resolves with the editor's reply, or rejects with a {@link ProjfsError}
  * carrying the editor's error code.
+ *
+ * A request waits for its reply however long that takes; a reply slower than
+ * {@link ProjfsClientOptions.slowReplyMs} is reported to
+ * {@link ProjfsClientOptions.onSlowReply} and never fails the request. Only
+ * {@link dispose} ends the wait, failing the request with `DISPOSED`.
  */
 export class ProjfsClient {
     protected readonly target: ProjfsTargetWindow;
     protected readonly listener: ProjfsListenerWindow;
     protected readonly targetOrigin: string;
-    protected readonly timeoutMs: number;
+    protected readonly slowReplyMs: number;
+    protected readonly onSlowReply: ((request: ProjfsRequest) => void) | undefined;
     protected readonly idPrefix = Math.random().toString(36).slice(2);
     protected nextId = 0;
     protected pending: { [id: string]: PendingRequest } = {};
@@ -257,7 +292,8 @@ export class ProjfsClient {
         this.target = options.target || window.parent;
         this.listener = options.listener || window;
         this.targetOrigin = options.targetOrigin || "*";
-        this.timeoutMs = options.timeoutMs || DEFAULT_TIMEOUT_MS;
+        this.slowReplyMs = options.slowReplyMs || DEFAULT_SLOW_REPLY_MS;
+        this.onSlowReply = options.onSlowReply;
         this.listener.addEventListener("message", this.onMessage);
     }
 
@@ -299,11 +335,14 @@ export class ProjfsClient {
         return reply.name;
     }
 
-    /** Stops listening for replies and fails every pending request with `FAILED`. */
+    /**
+     * Stops listening for replies and fails every pending request with
+     * `DISPOSED`; the editor may or may not have applied it.
+     */
     dispose() {
         this.listener.removeEventListener("message", this.onMessage);
         for (const id of Object.keys(this.pending)) {
-            this.settle(id)?.reject(new ProjfsError("FAILED", "The client was disposed."));
+            this.settle(id)?.reject(new ProjfsError("DISPOSED", "The client was disposed before the editor replied; the request may or may not have been applied."));
         }
     }
 
@@ -311,9 +350,8 @@ export class ProjfsClient {
         const id = `${this.idPrefix}-${this.nextId++}`;
         const request = { ...body, type: PROJFS_MESSAGE_TYPE, id } as ProjfsRequest;
         return new Promise<ProjfsReply>((resolve, reject) => {
-            const timer = setTimeout(() => {
-                this.settle(id)?.reject(new ProjfsError("TIMEOUT", `No reply to the ${body.subtype} request.`));
-            }, this.timeoutMs);
+            const onSlowReply = this.onSlowReply;
+            const timer = onSlowReply && setTimeout(() => onSlowReply(request), this.slowReplyMs);
             this.pending[id] = { resolve, reject, timer };
             this.target.postMessage(request, this.targetOrigin);
         }).then(reply => {
