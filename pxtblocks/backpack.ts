@@ -1,6 +1,7 @@
 import * as Blockly from "blockly";
 import type { FieldCustom } from "./fields/field_utils";
 import type { CommonFunctionBlock, FunctionDefinitionExtraState } from "./plugins/functions/commonFunctionMixin";
+import { blockCopyData, copyBlock, pasteClipboardData, visitBlockStates } from "./clipboard";
 import {
     FUNCTION_CALL_BLOCK_TYPE,
     FUNCTION_CALL_OUTPUT_BLOCK_TYPE,
@@ -8,6 +9,7 @@ import {
 } from "./plugins/functions/constants";
 
 export interface BackpackCode {
+    version: 1;
     /** Dependency definitions first; the selected block is always last. */
     blocks: Blockly.serialization.blocks.State[];
 }
@@ -29,15 +31,9 @@ export interface BackpackWorkspaceOptions {
 }
 
 type State = Blockly.serialization.blocks.State;
-type JsonObject = { [key: string]: unknown };
 const MAX_CODE_LENGTH = 100000;
 const MAX_BLOCKS = 500;
-const MAX_DEPTH = 100;
-const forbiddenKeys = new Set(["__proto__", "constructor", "prototype"]);
-const stateKeys = new Set([
-    "type", "id", "x", "y", "collapsed", "deletable", "movable", "editable", "enabled",
-    "disabledReasons", "inline", "data", "extraState", "icons", "fields", "inputs", "next",
-]);
+const legacyProcedures = new Set(["procedures_defnoreturn", "procedures_callnoreturn", "procedures_defreturn", "procedures_callreturn"]);
 
 function invalidCode(): never {
     throw new Error("This Backpack item contains invalid or unsupported blocks.");
@@ -53,23 +49,20 @@ function tooManyBlocks(): never {
     return pxt.U.userError(lf("This snippet contains too many blocks for Backpack. The limit is {0} blocks, including supporting functions. Try saving a smaller block container.", MAX_BLOCKS));
 }
 
-function tooDeep(): never {
-    return pxt.U.userError(lf("This snippet is nested too deeply for Backpack. Try saving a smaller block container."));
-}
-
-function isObject(value: unknown): value is JsonObject {
+function isObject(value: unknown): value is Record<string, unknown> {
     return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function isName(value: unknown): value is string {
-    return typeof value === "string" && !!value.length && !forbiddenKeys.has(value);
+function isEditableBackpackBlock(block: Blockly.Block): boolean {
+    return !!block && !block.isDisposed() && !block.isInsertionMarker()
+        && !block.isInFlyout && !block.workspace.isFlyout && !block.workspace.isMutator
+        && !block.workspace.options.readOnly && block.isEditable()
+        && !legacyProcedures.has(block.type);
 }
 
 /** Whether this editable block has a statement input that can be copied to Backpack. */
 export function isBackpackContainer(block: Blockly.Block): boolean {
-    return !!block && !block.isDisposed() && !block.isShadow() && !block.isInsertionMarker()
-        && !block.isInFlyout && !block.workspace.isFlyout && !block.workspace.isMutator
-        && !block.workspace.options.readOnly && block.isEditable() && block.isMovable()
+    return isEditableBackpackBlock(block) && !block.isShadow() && block.isMovable()
         && block.inputList.some(input => input.type === Blockly.inputs.inputTypes.STATEMENT);
 }
 
@@ -84,9 +77,8 @@ export function getBackpackAssetField(block: Blockly.Block): Blockly.Field | und
 
 /** Asset shadows can be copied without detaching them from their owning statement. */
 export function isBackpackBlock(block: Blockly.Block): boolean {
-    return isBackpackContainer(block) || !!getBackpackAssetField(block)
-        && !block.isInsertionMarker() && !block.isInFlyout && !block.workspace.isFlyout && !block.workspace.isMutator
-        && !block.workspace.options.readOnly && block.isEditable() && (block.isShadow() || block.isMovable());
+    return isEditableBackpackBlock(block) && (isBackpackContainer(block)
+        || !!getBackpackAssetField(block) && (block.isShadow() || block.isMovable()));
 }
 
 function isFunction(type: string): boolean {
@@ -94,56 +86,15 @@ function isFunction(type: string): boolean {
         || type === FUNCTION_CALL_OUTPUT_BLOCK_TYPE;
 }
 
-function isLegacyDefinition(type: string): boolean {
-    return type === "procedures_defnoreturn";
-}
-
-function isLegacyCall(type: string): boolean {
-    return type === "procedures_callnoreturn";
-}
-
-function legacyCallMutation(extra: unknown): Element {
-    if (typeof extra !== "string") invalidCode();
-    let mutation: Element;
-    try {
-        mutation = Blockly.utils.xml.textToDom(extra);
-    } catch {
-        invalidCode();
-    }
-    // PXT's registered call uses Blockly's XML fallback, not stock procedure JSON.
-    if (mutation.tagName !== "mutation" || mutation.children.length || mutation.textContent.trim()
-        || Array.from(mutation.attributes).some(attr => attr.name !== "name" && attr.name !== "xmlns")
-        || !isName(mutation.getAttribute("name"))) invalidCode();
-    return mutation;
-}
-
 function isDefinition(state: State): boolean {
-    return state.type === FUNCTION_DEFINITION_BLOCK_TYPE || isLegacyDefinition(state.type);
+    return state.type === FUNCTION_DEFINITION_BLOCK_TYPE;
 }
 
 function functionName(state: State): string | undefined {
     if (isFunction(state.type)) return state.extraState?.name;
-    if (isLegacyDefinition(state.type) || isLegacyCall(state.type)) return state.fields?.NAME;
     return undefined;
 }
 
-function functionKey(state: State): string {
-    return `${isFunction(state.type) ? "function" : "procedure"}:${functionName(state)}`;
-}
-
-function visitStates(states: State[], visit: (state: State) => void): void {
-    for (const state of states) {
-        visit(state);
-        for (const input of Object.values(state.inputs || {})) {
-            if (input.shadow) visitStates([input.shadow], visit);
-            if (input.block) visitStates([input.block], visit);
-        }
-        if (state.next?.shadow) visitStates([state.next.shadow], visit);
-        if (state.next?.block) visitStates([state.next.block], visit);
-    }
-}
-
-/** Parse untrusted storage before calling any Blockly loaders or field/mutation hooks. */
 export function parseBackpackCode(code: string): BackpackCode {
     if (typeof code !== "string") invalidCode();
     checkCodeSize(code.length);
@@ -154,106 +105,32 @@ export function parseBackpackCode(code: string): BackpackCode {
         invalidCode();
     }
 
-    // Bound arbitrary field/asset/mutation JSON too, without imposing a schema on custom fields.
-    const pending: { value: unknown; depth: number }[] = [{ value: payload, depth: 0 }];
-    while (pending.length) {
-        const { value, depth } = pending.pop();
-        if (depth > MAX_DEPTH) tooDeep();
-        if (value && typeof value === "object") {
-            for (const key of Object.keys(value)) {
-                if (forbiddenKeys.has(key)) invalidCode();
-                pending.push({ value: (value as JsonObject)[key], depth: depth + 1 });
-            }
-        } else if (typeof value === "number" && !Number.isFinite(value)) invalidCode();
-    }
-    if (!isObject(payload) || Object.keys(payload).length !== 1
+    if (!isObject(payload)
         || !Array.isArray(payload.blocks) || !payload.blocks.length) invalidCode();
-
-    let count = 0;
-    const checkConnection = (value: unknown, depth: number): void => {
-        if (!isObject(value) || !Object.keys(value).length
-            || Object.keys(value).some(key => key !== "block" && key !== "shadow")) invalidCode();
-        if ("block" in value) checkState(value.block, depth);
-        if ("shadow" in value) checkState(value.shadow, depth);
-    };
-    const checkState = (value: unknown, depth: number): void => {
-        if (++count > MAX_BLOCKS) tooManyBlocks();
-        if (depth > MAX_DEPTH) tooDeep();
-        if (!isObject(value) || !isName(value.type)
-            || Object.keys(value).some(key => !stateKeys.has(key))) invalidCode();
-        // These stock Blockly blocks are not supported by the PXT compiler.
-        if (value.type === "procedures_defreturn" || value.type === "procedures_callreturn") {
-            pxt.U.userError(lf("The block '{0}' is not supported by Backpack.", value.type));
-        }
-        for (const key of ["id", "data"]) {
-            if (key in value && typeof value[key] !== "string") invalidCode();
-        }
-        for (const key of ["x", "y"]) {
-            if (key in value && (typeof value[key] !== "number" || !Number.isFinite(value[key]))) invalidCode();
-        }
-        for (const key of ["collapsed", "deletable", "movable", "editable", "enabled", "inline"]) {
-            if (key in value && typeof value[key] !== "boolean") invalidCode();
-        }
-        if ("disabledReasons" in value && (!Array.isArray(value.disabledReasons)
-            || value.disabledReasons.some(reason => typeof reason !== "string"))) invalidCode();
-        for (const key of ["fields", "icons", "inputs"]) {
-            if (key in value && !isObject(value[key])) invalidCode();
-        }
-        if ("inputs" in value) {
-            for (const input of Object.values(value.inputs as JsonObject)) checkConnection(input, depth + 1);
-        }
-        if ("next" in value) checkConnection(value.next, depth + 1);
-        if ("extraState" in value && value.extraState !== null
-            && typeof value.extraState !== "string" && !isObject(value.extraState)) invalidCode();
-
-        if (isFunction(value.type)) {
-            const extra = value.extraState;
-            if (!isObject(extra) || !isName(extra.name) || !isName(extra.functionid)
-                || !Array.isArray(extra.arguments)) invalidCode();
-            const ids = new Set<string>();
-            for (const arg of extra.arguments) {
-                if (!isObject(arg) || !isName(arg.id) || !isName(arg.name) || !isName(arg.type)
-                    || ids.has(arg.id)) invalidCode();
-                ids.add(arg.id);
-            }
-        } else if (isLegacyCall(value.type)) {
-            const mutation = legacyCallMutation(value.extraState);
-            if (!isObject(value.fields) || !isName(value.fields.NAME)
-                || value.fields.NAME !== mutation.getAttribute("name")) invalidCode();
-        } else if (isLegacyDefinition(value.type)) {
-            if (!isObject(value.fields) || !isName(value.fields.NAME)) invalidCode();
-            const extra = value.extraState;
-            if (extra != null && (!isObject(extra)
-                || ("hasStatements" in extra && typeof extra.hasStatements !== "boolean")
-                || ("params" in extra && (!Array.isArray(extra.params) || extra.params.some(param =>
-                    !isObject(param) || !isName(param.name) || !isName(param.id)))))) invalidCode();
-        }
-    };
-    for (const state of payload.blocks) checkState(state, 0);
-    const result = payload as unknown as BackpackCode;
+    // The first experimental captures had no version. Their block states are unchanged.
+    if (payload.version !== undefined && payload.version !== 1) {
+        return pxt.U.userError(lf("This saved item uses an unsupported Backpack format. Update the editor or save a new copy from your project."));
+    }
+    const result: BackpackCode = { version: 1, blocks: payload.blocks };
     const definitions = new Map<string, State>();
     result.blocks.forEach((state, index) => {
+        if (!state) invalidCode();
         if (state.next || (index < result.blocks.length - 1 && !isDefinition(state))) invalidCode();
         if (isDefinition(state)) {
-            const key = functionKey(state);
+            const key = functionName(state);
             if (definitions.has(key)) invalidCode();
             definitions.set(key, state);
         }
     });
-    visitStates(result.blocks, state => {
+    visitBlockStates(result.blocks, state => {
+        if (legacyProcedures.has(state.type)) {
+            pxt.U.userError(lf("Legacy procedure blocks are not supported by Backpack. Recreate them with Functions blocks before saving."));
+        }
         if (isDefinition(state) && !result.blocks.includes(state)) invalidCode();
-        if (state.type === FUNCTION_CALL_BLOCK_TYPE || state.type === FUNCTION_CALL_OUTPUT_BLOCK_TYPE
-            || isLegacyCall(state.type)) {
-            const definition = definitions.get(functionKey(state));
+        if (state.type === FUNCTION_CALL_BLOCK_TYPE || state.type === FUNCTION_CALL_OUTPUT_BLOCK_TYPE) {
+            const definition = definitions.get(functionName(state));
             if (!definition) {
                 throw new Error(`The function '${functionName(state)}' is missing from this snippet.`);
-            }
-            if (isFunction(state.type)) {
-                if (JSON.stringify(state.extraState.arguments) !== JSON.stringify(definition.extraState.arguments)
-                    || state.extraState.functionid !== definition.extraState.functionid) invalidCode();
-            } else if (definition.extraState?.params?.length) {
-                // PXT's legacy calls have no parameters; parameterized functions use the plugin.
-                invalidCode();
             }
         }
     });
@@ -265,32 +142,19 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
     if (!isBackpackBlock(block)) {
         pxt.U.userError(lf("Choose an editable block container or an image, animation, tilemap or music asset to save to Backpack."));
     }
-    const save = (source: Blockly.Block): State => {
-        const state = Blockly.serialization.blocks.save(source, {
-            addCoordinates: false, addNextBlocks: false, doFullSerialization: true, saveIds: false,
-        });
-        if (!state) invalidCode();
-        return state;
-    };
+    const save = (source: Blockly.Block): State => copyBlock(source).blockState;
     const root = save(block);
     const states = [root];
     const included = new Set<Blockly.Block>([block]);
     for (let i = 0; i < states.length; i++) {
         // A bounded parse is performed below; guard expansion before following dependencies too.
         if (states.length > MAX_BLOCKS) tooManyBlocks();
-        checkCodeSize(JSON.stringify({ blocks: states }).length);
-        visitStates([states[i]], state => {
-            if (state.type !== FUNCTION_CALL_BLOCK_TYPE && state.type !== FUNCTION_CALL_OUTPUT_BLOCK_TYPE
-                && !isLegacyCall(state.type)) return;
-            const definition = block.workspace.getTopBlocks(false).find(candidate => {
-                if (isFunction(state.type)) {
-                    return candidate.type === FUNCTION_DEFINITION_BLOCK_TYPE
-                        && (candidate as CommonFunctionBlock).getName() === functionName(state);
-                }
-                // Only support the legacy project blocks actually installed in this target.
-                return !!Blockly.Blocks[candidate.type] && isLegacyDefinition(candidate.type)
-                    && candidate.getFieldValue("NAME") === functionName(state);
-            });
+        checkCodeSize(JSON.stringify({ version: 1, blocks: states }).length);
+        visitBlockStates([states[i]], state => {
+            if (state.type !== FUNCTION_CALL_BLOCK_TYPE && state.type !== FUNCTION_CALL_OUTPUT_BLOCK_TYPE) return;
+            const definition = block.workspace.getTopBlocks(false).find(candidate =>
+                candidate.type === FUNCTION_DEFINITION_BLOCK_TYPE
+                && (candidate as CommonFunctionBlock).getName() === functionName(state));
             if (!definition) {
                 throw new Error(`The function '${functionName(state)}' is missing from this project.`);
             }
@@ -300,7 +164,7 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
             }
         });
     }
-    const code = JSON.stringify({ blocks: [...states.slice(1), root] });
+    const code = JSON.stringify({ version: 1, blocks: [...states.slice(1), root] });
     parseBackpackCode(code);
 
     // Read the existing live fields, never load saved snippets or their mutation hooks for search.
@@ -330,16 +194,14 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
 /** All required types, including obscured shadows and nested next chains. */
 export function getBackpackBlockTypes(code: string): string[] {
     const types = new Set<string>();
-    visitStates(parseBackpackCode(code).blocks, state => types.add(state.type));
+    visitBlockStates(parseBackpackCode(code).blocks, state => types.add(state.type));
     return Array.from(types);
 }
 
 function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
     const names = new Set(workspace.getVariableMap().getAllVariables().map(variable => variable.getName().toLowerCase()));
     for (const block of workspace.getAllBlocks(false)) {
-        const name = isFunction(block.type) ? (block as CommonFunctionBlock).getName()
-            : isLegacyDefinition(block.type) ? block.getFieldValue("NAME")
-            : isLegacyCall(block.type) ? (block as Blockly.Block & { getProcedureCall(): string }).getProcedureCall() : undefined;
+        const name = isFunction(block.type) ? (block as CommonFunctionBlock).getName() : undefined;
         if (name) names.add(name.toLowerCase());
     }
     const replacements = new Map<string, { name: string; id: string; args: Map<string, string> }>();
@@ -350,38 +212,29 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
         while (names.has(name.toLowerCase())) name = original + suffix++;
         names.add(name.toLowerCase());
         const args = new Map<string, string>();
-        if (isFunction(state.type)) {
-            for (const arg of (state.extraState as FunctionDefinitionExtraState).arguments) {
-                args.set(arg.id, Blockly.utils.idGenerator.genUid());
-            }
+        for (const arg of (state.extraState as FunctionDefinitionExtraState).arguments) {
+            args.set(arg.id, Blockly.utils.idGenerator.genUid());
         }
-        replacements.set(functionKey(state), { name, id: Blockly.utils.idGenerator.genUid(), args });
+        replacements.set(functionName(state), { name, id: Blockly.utils.idGenerator.genUid(), args });
     }
-    visitStates(states, state => {
+    visitBlockStates(states, state => {
         // Block IDs are never reusable, even for externally supplied valid items.
         delete state.id;
         delete state.x;
         delete state.y;
-        const replacement = replacements.get(functionKey(state));
+        const replacement = replacements.get(functionName(state));
         if (!replacement) return;
         if (isFunction(state.type)) {
             const extra = state.extraState as FunctionDefinitionExtraState;
             extra.name = replacement.name;
             extra.functionid = replacement.id;
             extra.arguments = extra.arguments.map(arg => ({ ...arg, id: replacement.args.get(arg.id) }));
-            if (state.fields && "function_name" in state.fields) state.fields.function_name = replacement.name;
+            if (state.fields && Object.prototype.hasOwnProperty.call(state.fields, "function_name")) state.fields.function_name = replacement.name;
             if (state.inputs) {
-                const inputs: State["inputs"] = {};
+                const inputs: State["inputs"] = Object.create(null);
                 for (const key of Object.keys(state.inputs)) inputs[replacement.args.get(key) || key] = state.inputs[key];
                 state.inputs = inputs;
             }
-        } else if (isLegacyDefinition(state.type)) state.fields.NAME = replacement.name;
-        else if (isLegacyCall(state.type)) {
-            const mutation = legacyCallMutation(state.extraState);
-            mutation.setAttribute("name", replacement.name);
-            state.extraState = Blockly.utils.xml.domToText(mutation);
-            // Blockly loads fields after extraState; both names must agree.
-            state.fields.NAME = replacement.name;
         }
     });
 }
@@ -390,7 +243,7 @@ function remapFunctions(states: State[], workspace: Blockly.Workspace): void {
 export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg, coordinates?: Blockly.utils.Coordinate,
     kind?: pxt.auth.BackpackKind): Blockly.BlockSvg {
     const { blocks } = parseBackpackCode(code); // A fresh object; never mutate the stored item.
-    visitStates(blocks, state => {
+    visitBlockStates(blocks, state => {
         if (!Object.prototype.hasOwnProperty.call(Blockly.Blocks, state.type)) {
             pxt.U.userError(lf("The block '{0}' is not available in this project. Add its extension before using this Backpack item.", state.type));
         }
@@ -402,20 +255,18 @@ export function pasteBackpackBlock(code: string, workspace: Blockly.WorkspaceSvg
     if (!group) Blockly.Events.setGroup(true);
     try {
         let root: Blockly.BlockSvg;
-        const view = workspace.rendered ? workspace.getMetricsManager().getViewMetrics(true) : undefined;
-        const center = coordinates || (view && new Blockly.utils.Coordinate(view.left + view.width / 2, view.top + view.height / 2));
-        blocks.forEach((state, index) => {
-            const appended = Blockly.serialization.blocks.append(state, workspace, { recordUndo: true });
-            if (workspace.rendered) {
-                const svg = appended as Blockly.BlockSvg;
-                const size = svg.getHeightWidth();
-                const position = svg.getRelativeToSurfaceXY();
-                const offset = index === blocks.length - 1 ? 0 : (index + 1) * 40;
-                svg.moveBy(center.x + (workspace.RTL ? size.width / 2 : -size.width / 2)
-                    + offset - position.x, center.y - size.height / 2 + offset - position.y);
+        const view = workspace.getMetricsManager().getViewMetrics(true);
+        const center = coordinates || new Blockly.utils.Coordinate(view.left + view.width / 2, view.top + view.height / 2);
+        for (const [index, state] of blocks.entries()) {
+            const offset = index === blocks.length - 1 ? 0 : (index + 1) * 40;
+            const appended = pasteClipboardData(blockCopyData(state), workspace, {
+                workspacePosition: new Blockly.utils.Coordinate(center.x + offset, center.y + offset)
+            });
+            if (!(appended instanceof Blockly.BlockSvg)) {
+                return pxt.U.userError(lf("There is not enough room in this workspace for these blocks."));
             }
-            root = appended as Blockly.BlockSvg;
-        });
+            root = appended;
+        }
         // Dependencies have been installed before import; now the actual field is available.
         if (kind && (kind === "asset") !== !!getBackpackAssetField(root)) invalidCode();
         return root;

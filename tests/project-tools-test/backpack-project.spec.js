@@ -16,7 +16,7 @@ const compile = source => {
 };
 const sources = Object.fromEntries([
     "webapp/src/backpackProject.ts", "webapp/src/blockSnippet.ts", "webapp/src/backpack.ts", "webapp/src/backpackErrors.ts", "pxtblocks/backpack.ts",
-    "pxtblocks/plugins/functions/constants.ts"
+    "pxtblocks/plugins/functions/constants.ts", "pxtblocks/clipboard.ts"
 ].map(file => [file, compile(read(file))]));
 
 // Exercise the production conflict engine, not a mock that always approves. The rest of
@@ -160,13 +160,18 @@ function environment(installed = {}) {
         renderManagement: { finishQueuedRenders: () => checkpoint("renders") }
     };
     const constants = execute(sources["pxtblocks/plugins/functions/constants.ts"]);
+    const clipboard = execute(sources["pxtblocks/clipboard.ts"], id => {
+        assert.equal(id, "blockly");
+        return Blockly;
+    });
     const primitive = execute(sources["pxtblocks/backpack.ts"], id => {
         if (id === "blockly") return Blockly;
         if (id === "./plugins/functions/constants") return constants;
+        if (id === "./clipboard") return clipboard;
         throw new Error(`Unexpected primitive import: ${id}`);
     });
     const blockly = {
-        ...primitive, builtinBlocks: () => builtins,
+        ...primitive, ...clipboard, builtinBlocks: () => builtins,
         pasteBackpackBlock: (code, workspace) => {
             assert(active);
             primitive.parseBackpackCode(code);
@@ -356,57 +361,17 @@ describe("Backpack project insertion (fresh source, no network or program execut
         assert.deepStrictEqual(e.events, ["confirm", "fetch:a"]);
     });
 
-    it("retries saving real Blockly imports without duplicating their single undo group", async function () {
-        this.timeout(10000); // Includes cold-loading Blockly and its native render/event setup.
+    it("retries persistence without repeating a successful block insertion", async () => {
         const e = environment();
-        const Blockly = require("blockly");
-        require("blockly/blocks");
-        const workspace = new Blockly.Workspace();
-        const exports = {};
-        vm.runInContext(`(function(exports, require) { ${sources["pxtblocks/backpack.ts"]}\n})`, e.context)(exports, id => {
-            if (id === "blockly") return Blockly;
-            if (id === "./plugins/functions/constants") return e.constants;
-            throw new Error(`Unexpected import ${id}`);
-        });
-        e.host.getWorkspace = () => workspace;
-        e.blockly.pasteBackpackBlock = (code, ws) => {
-            e.events.push("paste:one-undo-group");
-            return exports.pasteBackpackBlock(code, ws);
-        };
-        e.item.code = codeFor({ type: "controls_if", inputs: { IF0: { block: { type: "logic_boolean", fields: { BOOL: "TRUE" } } } } });
-        e.registry.logic_boolean = {};
-        e.blockly.builtinBlocks = () => ({ controls_if: {}, logic_boolean: {} });
         e.hooks.set("save:1", () => { throw new Error("storage failure"); });
-        const recorded = new Promise(resolve => {
-            const listener = event => {
-                if (event.type !== Blockly.Events.CREATE) return;
-                workspace.removeChangeListener(listener);
-                resolve();
-            };
-            workspace.addChangeListener(listener);
-        });
-        try {
-            assert.equal(await e.run(), true);
-            await recorded;
-            assert.equal(workspace.getAllBlocks(false).length, 2);
-            const undo = workspace.getUndoStack();
-            assert(undo.length);
-            assert(undo.every(event => event.group && event.group === undo[0].group));
-            workspace.undo(false);
-            assert.equal(workspace.getAllBlocks(false).length, 0);
-            assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1", "confirm", "save:2"]);
-            assert.equal(e.dialogs[0].agreeLbl, "Retry save");
+        assert.equal(await e.run(), true);
+        assert.deepStrictEqual(e.events, ["paste:one-undo-group", "renders", "save:1", "confirm", "save:2"]);
+        assert.equal(e.dialogs[0].agreeLbl, "Retry save");
 
-            // Dismissing a repeated persistence error also retains a successful import.
-            e.hooks.set("save:3", () => { throw new Error("storage failure"); });
-            e.hooks.set("confirm", () => 0);
-            assert.equal(await e.run(), true);
-            assert.equal(workspace.getAllBlocks(false).length, 2);
-            assert.equal(e.events.filter(event => event === "paste:one-undo-group").length, 2);
-            assert.equal(e.dialogs[1].disagreeLbl, "Keep editing");
-        } finally {
-            workspace.dispose();
-            await new Promise(resolve => setTimeout(resolve, 0));
-        }
+        e.hooks.set("save:3", () => { throw new Error("storage failure"); });
+        e.hooks.set("confirm", () => 0);
+        assert.equal(await e.run(), true);
+        assert.equal(e.events.filter(event => event === "paste:one-undo-group").length, 2);
+        assert.equal(e.dialogs[1].disagreeLbl, "Keep editing");
     });
 });

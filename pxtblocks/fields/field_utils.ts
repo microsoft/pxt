@@ -457,14 +457,18 @@ export function getAssetSaveState(asset: pxt.Asset) {
         const defaultNamespace = addDotToNamespace(jres["*"].namespace);
         for (const tile of asset.data.tileset.tiles) {
             const namespace = tile.id.slice(0, tile.id.lastIndexOf(".") + 1);
+            const shortId = tile.id.slice(namespace.length);
             const isDefaultNamespace = namespace === defaultNamespace;
-            const key = isDefaultNamespace ? tile.id.slice(namespace.length) : tile.id;
+            const key = isDefaultNamespace ? shortId : tile.id;
+            const tileJres: pxt.Map<Partial<pxt.JRes> | string> = {};
+            pxt.addAssetToJRes(tile.jresData ? tile : {
+                ...tile,
+                jresData: pxt.sprite.base64EncodeBitmap(tile.bitmap)
+            }, tileJres);
+            const entry = tileJres[shortId] as Partial<pxt.JRes>;
             jres[key] = {
-                data: tile.jresData || pxt.sprite.base64EncodeBitmap(tile.bitmap),
-                mimeType: pxt.IMAGE_MIME_TYPE,
-                tilemapTile: true,
-                displayName: tile.meta.displayName,
-                ...(tile.meta.tags?.length ? { tags: tile.meta.tags.slice() } : {}),
+                ...entry,
+                ...(entry.tags?.length ? { tags: entry.tags.slice() } : {}),
                 // Explicit ids prevent inflateJRes from prefixing the default
                 // namespace; qualified keys avoid collisions with project tiles.
                 ...(!isDefaultNamespace ? { id: tile.id, namespace, dataEncoding: "base64" } : {})

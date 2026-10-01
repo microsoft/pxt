@@ -221,6 +221,125 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
         page = undefined;
     });
 
+    for (const defaultFirst of [true, false]) {
+        it(`preserves gallery and external tiles sharing a short id with a ${defaultFirst ? "preceding" : "following"} default-namespace tile`, async () => {
+            const result = await page.evaluate(defaultFirst => {
+                const { getAssetSaveState, loadAssetFromSaveState } = load("fields/field_utils");
+                const projectTile = project.createNewTile(bitmap(16, 16, 2), "myTiles.shared", "Project tile");
+                const externalTile = project.createNewTile(bitmap(16, 16, 4), "extension.tiles.shared", "External tile");
+                const galleryTile = {
+                    ...projectTile, id: "gallery.shared", isProjectTile: false,
+                    bitmap: bitmap(16, 16, 6), meta: { displayName: "Gallery tile", tags: ["gallery", "terrain"] }
+                };
+                galleryTile.jresData = pxt.sprite.base64EncodeBitmap(galleryTile.bitmap);
+                project.saveGallerySnapshot().assets.tile.add(galleryTile);
+                projectTile.meta.tags = ["project", "terrain"];
+                externalTile.meta.tags = ["external", "terrain"];
+                const tiles = defaultFirst ? [projectTile, galleryTile, externalTile] : [externalTile, galleryTile, projectTile];
+                const data = project.blankTilemap(16, 3, 1);
+                data.tileset.tiles.push(...tiles);
+                tiles.forEach((tile, index) => data.tilemap.set(index, 0, index + 1));
+                const [id] = project.createNewTilemapFromData(data, "portableLevel");
+                const tilemap = project.getTilemap(id);
+                const expected = snapshot(tilemap);
+
+                // The shared helper must keep its existing short-key convention.
+                const helperJres = {};
+                for (const tile of tiles) pxt.addAssetToJRes(tile, helperJres);
+                const lastTile = tiles[tiles.length - 1];
+                const helperExpected = {
+                    shared: {
+                        data: lastTile.jresData, mimeType: pxt.IMAGE_MIME_TYPE,
+                        tilemapTile: true, displayName: lastTile.meta.displayName, tags: lastTile.meta.tags
+                    }
+                };
+                const expectedEntries = tiles.map(tile => ({
+                    key: tile.id === projectTile.id ? "shared" : tile.id,
+                    id: tile.id, data: tile.jresData, displayName: tile.meta.displayName, tags: tile.meta.tags.slice()
+                }));
+                const sourceBefore = JSON.stringify(tilemap);
+                const saved = getAssetSaveState(tilemap);
+                const sourceUnchanged = sourceBefore === JSON.stringify(tilemap);
+                const entries = expectedEntries.map(tile => ({ key: tile.key, ...saved.jres[tile.key] }));
+                const inflatedIds = Object.values(pxt.inflateJRes(JSON.parse(JSON.stringify(saved.jres))))
+                    .filter(entry => entry.tilemapTile).map(entry => entry.id).sort();
+                const tagsDetached = expectedEntries.every(tile => {
+                    const tags = saved.jres[tile.key].tags;
+                    tags.push("saved-only");
+                    const detached = !tilemap.data.tileset.tiles.find(t => t.id === tile.id).meta.tags.includes("saved-only");
+                    tags.pop();
+                    return detached;
+                });
+
+                // Gallery tiles can carry pixels without a cached JRES encoding.
+                const bitmapOnly = project.getTilemap(id);
+                bitmapOnly.data.tileset.tiles.find(tile => tile.id === galleryTile.id).jresData = "";
+                const fallback = getAssetSaveState(bitmapOnly).jres[galleryTile.id];
+                const fallbackUnchanged = bitmapOnly.data.tileset.tiles.find(tile => tile.id === galleryTile.id).jresData === "";
+
+                const roundTrips = [false, true].map(collidingDestination => {
+                    window.project = new pxt.TilemapProject();
+                    if (collidingDestination) {
+                        project.createNewTile(bitmap(16, 16, 9), projectTile.id, "Destination tile");
+                        project.createNewTile(projectTile.bitmap, "myTiles.existing", "Matching pixels");
+                        project.createNewTilemap("portableLevel", 16, 1, 1);
+                    }
+                    const loadSaved = () => loadAssetFromSaveState(JSON.parse(JSON.stringify(saved)));
+                    const first = loadSaved();
+                    const afterFirst = JSON.stringify(project.getProjectTilesetJRes());
+                    const second = loadSaved();
+                    return {
+                        pixels: snapshot(first),
+                        ids: first.data.tileset.tiles.map(tile => tile.id),
+                        tilemapId: first.id,
+                        repeatedId: second.id,
+                        unchanged: afterFirst === JSON.stringify(project.getProjectTilesetJRes())
+                    };
+                });
+                return {
+                    helperJres, helperExpected, expectedEntries, entries, inflatedIds, sourceUnchanged, tagsDetached,
+                    fallback, fallbackUnchanged, expected, sourceId: id, roundTrips, errors
+                };
+            }, defaultFirst);
+            assert.deepStrictEqual(result.helperJres, result.helperExpected);
+            assert(result.sourceUnchanged);
+            assert(result.tagsDetached);
+            assert(result.fallbackUnchanged);
+            for (const expected of result.expectedEntries) {
+                const entry = result.entries.find(entry => entry.key === expected.key);
+                assert.strictEqual(entry.data, expected.data);
+                assert.strictEqual(entry.mimeType, "image/x-mkcd-f4");
+                assert.strictEqual(entry.tilemapTile, true);
+                assert.strictEqual(entry.displayName, expected.displayName);
+                assert.deepStrictEqual(entry.tags, expected.tags);
+                if (expected.key === "shared") {
+                    assert.strictEqual(entry.id, undefined);
+                    assert.strictEqual(entry.namespace, undefined);
+                }
+                else {
+                    assert.strictEqual(entry.id, expected.id);
+                    assert.strictEqual(entry.namespace, expected.id.slice(0, expected.id.lastIndexOf(".") + 1));
+                    assert.strictEqual(entry.dataEncoding, "base64");
+                }
+            }
+            const expectedIds = ["myTiles.transparency16", ...result.expectedEntries.map(tile => tile.id)].sort();
+            assert.deepStrictEqual(result.inflatedIds, expectedIds);
+            assert.deepStrictEqual(result.roundTrips[0].ids.slice().sort(), expectedIds);
+            assert.strictEqual(result.roundTrips[0].tilemapId, result.sourceId);
+            assert.notStrictEqual(result.roundTrips[1].tilemapId, result.sourceId);
+            assert(result.roundTrips[1].ids.includes("myTiles.existing"));
+            const galleryEntry = result.entries.find(entry => entry.key === "gallery.shared");
+            const { key, ...expectedFallback } = galleryEntry;
+            assert.deepStrictEqual(result.fallback, expectedFallback);
+            for (const restored of result.roundTrips) {
+                assert.deepStrictEqual(restored.pixels, result.expected);
+                assert.strictEqual(restored.repeatedId, restored.tilemapId);
+                assert(restored.unchanged);
+            }
+            assert.deepStrictEqual(result.errors, []);
+        });
+    }
+
     it("restores named image pixels, tilemap cells/walls, and custom tile pixels with no source assets", async () => {
         const result = await page.evaluate(async () => {
             const source = await makeSource();

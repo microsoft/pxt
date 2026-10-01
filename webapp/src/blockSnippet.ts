@@ -69,32 +69,9 @@ function checkData(value: unknown): void {
     visit(value, 0);
 }
 
-/** Ordinary Blockly states: no container restriction, function closure, or typeCounts inference. */
 function snippetStates(states: Blockly.serialization.blocks.State[]): Blockly.serialization.blocks.State[] {
-    if (!Array.isArray(states) || states.length > maxBlocks) invalidSnippet();
-    checkData(states);
     const result: Blockly.serialization.blocks.State[] = [];
-    const seen = new Set<object>();
-    const connection = (value: unknown, depth: number): void => {
-        if (!isRecord(value) || !Object.keys(value).length
-            || Object.keys(value).some(key => key !== "block" && key !== "shadow")) invalidSnippet();
-        if (own(value, "shadow") && value.shadow !== undefined) visit(value.shadow, depth);
-        if (own(value, "block") && value.block !== undefined) visit(value.block, depth);
-        if (!value.shadow && !value.block) invalidSnippet();
-    };
-    const visit = (value: unknown, depth: number): void => {
-        if (!isRecord(value) || !own(value, "type") || !isName(value.type)
-            || seen.has(value) || depth > maxDepth || result.length >= maxBlocks) invalidSnippet();
-        seen.add(value);
-        result.push(value as unknown as Blockly.serialization.blocks.State);
-        if (value.fields !== undefined && !isRecord(value.fields)) invalidSnippet();
-        if (value.inputs !== undefined) {
-            if (!isRecord(value.inputs)) invalidSnippet();
-            for (const input of Object.values(value.inputs)) connection(input, depth + 1);
-        }
-        if (value.next !== undefined) connection(value.next, depth + 1);
-    };
-    for (const state of states) visit(state, 0);
+    pxtblockly.visitBlockStates(states, state => result.push(state));
     return result;
 }
 
