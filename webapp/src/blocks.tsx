@@ -45,6 +45,9 @@ import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_format
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 import * as backpack from "./backpack";
 import { backpackUserErrorMessage } from "./backpackErrors";
+import { chooseBackpackAssetAsync } from "./backpackAssetChooser";
+import { BackpackAssetChoice } from "./components/BackpackAssetChooser";
+import { assetToGalleryItem } from "./assets";
 import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./backpackProject";
 import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
 import { backpackPreviewAsync } from "./backpackPreview";
@@ -92,6 +95,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private disposeBackpackWorkspace: () => void;
     private disposeBackpackEditor: () => void;
     private pasteInProgress = false;
+    private choosingBackpackAsset = false;
 
     public nsMap: pxt.Map<toolbox.BlockDefinition[]>;
 
@@ -881,7 +885,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         pxtblockly.contextMenu.setupWorkspaceContextMenu(this.editor);
         this.disposeBackpackWorkspace = pxtblockly.registerBackpackWorkspace(this.editor, {
             isEnabled: () => this.backpackAvailable("code") || this.backpackAvailable("asset"),
-            canSave: block => this.backpackAvailable(pxtblockly.getBackpackAssetField(block) ? "asset" : "code"),
+            canSave: block => this.backpackAvailable(pxtblockly.getBackpackCaptureKind(block)),
             save: block => { void this.saveBlockToBackpackAsync(block); },
             open: () => backpack.requestBackpackOpen(this.parent.state.header.id, false),
             dragTargets: getBackpackDragTargets(),
@@ -2615,8 +2619,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private async saveBlockToBackpackAsync(block: Blockly.BlockSvg): Promise<void> {
-        const kind: pxt.auth.BackpackKind = pxtblockly.getBackpackAssetField(block) ? "asset" : "code";
-        if (!this.backpackAvailable(kind)) return;
+        const kind = pxtblockly.getBackpackCaptureKind(block);
+        if (this.choosingBackpackAsset || !this.backpackAvailable(kind)) return;
         const headerId = this.parent.state.header.id;
         const signedIn = auth.loggedIn();
         const userId = auth.userProfile()?.id;
@@ -2625,10 +2629,55 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             && (!signedIn || auth.userProfile()?.id === userId);
         let item: pxt.auth.BackpackItem;
         try {
-            const { code, blockText } = pxtblockly.captureBackpackBlock(block);
+            let capture: { code: string; blockText: string; name?: string };
+            if (kind === "asset" && !pxtblockly.getBackpackAssetField(block)) {
+                const fields = pxtblockly.getBackpackAssetFields(block);
+                let field = fields[0];
+                if (fields.length > 1) {
+                    const symbol = this.blockInfo.blocksById[block.type];
+                    const parameters = symbol && pxt.blocks.compileInfo(symbol).definitionNameToParam;
+                    const choices: BackpackAssetChoice[] = fields.map(field => {
+                        const parameter = parameters?.[field.name];
+                        let asset: pxt.Asset;
+                        if (field instanceof pxtblockly.FieldAssetEditor) {
+                            asset = field.getAsset();
+                        } else if (field instanceof pxtblockly.FieldTileset) {
+                            const saved = field.saveState(true);
+                            const project = pxt.react.getTilemapProject();
+                            asset = typeof saved === "string"
+                                ? project.lookupAsset(pxt.AssetType.Tile, saved) || pxt.lookupProjectAssetByTSReference(saved, project)
+                                : project.lookupAsset(pxt.AssetType.Tile, saved.assetId);
+                        }
+                        const preview = asset && assetToGalleryItem(pxt.cloneAsset(asset, true));
+                        return {
+                            fieldName: field.name,
+                            label: (parameter?.labelLocalizationKey && pxtc.getBlockTranslationsCacheKey(parameter.labelLocalizationKey))
+                                || parameter?.label || parameter?.actualName || field.name,
+                            name: asset?.meta?.displayName,
+                            previewURI: preview?.previewURI
+                        };
+                    });
+                    this.choosingBackpackAsset = true;
+                    let selected: string;
+                    try {
+                        selected = await chooseBackpackAssetAsync(choices);
+                    } finally {
+                        this.choosingBackpackAsset = false;
+                    }
+                    if (!selected) return;
+                    if (!isCurrentCapture() || this.parent.state.header?.id !== headerId
+                        || block.isDisposed() || block.workspace !== this.editor || !this.backpackAvailable(kind)) return;
+                    field = fields.find(candidate => candidate.name === selected);
+                    if (!field) throw new Error("The selected Backpack asset field is unavailable.");
+                }
+                capture = pxtblockly.captureBackpackAsset(field, this.blockInfo);
+            } else {
+                capture = pxtblockly.captureBackpackBlock(block);
+            }
+            const { code, blockText } = capture;
             const requirements = getBackpackRequirements(code, this.blockInfo, pkg.mainPkg);
             item = {
-                id: pxt.U.guidGen(), name: pxtblockly.getBlockText(block).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
+                id: pxt.U.guidGen(), name: (capture.name || pxtblockly.getBlockText(block)).replace(/\s+/g, " ").trim().slice(0, 100) || lf("Snippet"),
                 kind,
                 versions: { target: pxt.appTarget.versions.target, pxt: pxt.appTarget.versions.pxt },
                 code, blockText, ...requirements, createdAt: Date.now(),
@@ -2647,7 +2696,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         while (isCurrentCapture()) {
             try {
                 await backpack.saveBackpackItemAsync(item);
-            if (!isCurrentCapture()) return;
+                if (!isCurrentCapture()) return;
                 core.infoNotification(lf("Added {0} to Backpack.", item.name));
                 if (this.parent.state.header?.id === headerId) backpack.requestBackpackOpen(headerId, false, item.kind);
                 return;

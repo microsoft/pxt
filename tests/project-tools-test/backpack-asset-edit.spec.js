@@ -89,6 +89,8 @@ describe("Backpack scratch native asset editing", function () {
             window.project = new pxt.TilemapProject();
             pxt.react = { getTilemapProject: () => project };
             window.Editor = module.exports.BackpackAssetEditor;
+            window.backpack = backpack;
+            window.backpackFields = fields;
             window.editors = [];
             window.open = (code, gallery = project.saveGallerySnapshot()) => {
                 const editor = new Editor(new pxt.TilemapProject());
@@ -221,5 +223,71 @@ describe("Backpack scratch native asset editing", function () {
         assert.equal(result.cell, 1);
         assert.equal(result.wall, 2);
         assert.deepStrictEqual(result.pixels, result.expected);
+    });
+
+    it("captures either asset from a custom statement without retaining its block or other fields", async () => {
+        const result = await page.evaluate(() => {
+            Blockly.Blocks.two_assets = { init() {
+                this.appendDummyInput()
+                    .appendField("First").appendField(new backpackFields.FieldSpriteEditor("", {}), "FIRST")
+                    .appendField("Second").appendField(new backpackFields.FieldSpriteEditor("", {}), "SECOND");
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+            } };
+            const red = new pxt.sprite.Bitmap(16, 16);
+            red.set(0, 0, 2);
+            const blue = new pxt.sprite.Bitmap(16, 16);
+            blue.set(0, 0, 8);
+            const first = project.createNewProjectImage(red.data(), "First image");
+            const second = project.createNewProjectImage(blue.data(), "Second image");
+            const sourceProject = project;
+            const workspace = new Blockly.Workspace();
+            try {
+                const block = Blockly.serialization.blocks.append({
+                    type: "two_assets",
+                    fields: { FIRST: fieldState(first), SECOND: fieldState(second) }
+                }, workspace);
+                backpack.getBackpackAssetFields(block).forEach(field => field.onLoadedIntoWorkspace());
+                const before = JSON.stringify(Blockly.serialization.blocks.save(block));
+                const previousCompileInfo = pxt.blocks.compileInfo;
+                const firstParam = { actualName: "first", definitionName: "FIRST", fieldEditor: "sprite", type: "Image", label: "First image" };
+                const secondParam = { actualName: "second", definitionName: "SECOND", fieldEditor: "sprite", type: "Image", label: "Second image" };
+                const sourceSymbol = { attributes: { blockId: "two_assets" } };
+                const assetSymbol = { retType: "Image", attributes: { blockId: "extension_portrait", shim: "TD_ID" } };
+                pxt.blocks.compileInfo = symbol => symbol === sourceSymbol
+                    ? { definitionNameToParam: { FIRST: firstParam, SECOND: secondParam } }
+                    : { parameters: [{ actualName: "asset", definitionName: "ASSET", fieldEditor: "sprite", type: "Image" }] };
+                const info = { blocksById: { two_assets: sourceSymbol }, blocks: [assetSymbol] };
+                let captures;
+                try {
+                    captures = backpack.getBackpackAssetFields(block).map(field => backpack.captureBackpackAsset(field, info));
+                } finally { pxt.blocks.compileInfo = previousCompileInfo; }
+                const unchanged = before === JSON.stringify(Blockly.serialization.blocks.save(block));
+                const kind = backpack.getBackpackCaptureKind(block);
+                block.appendStatementInput("BODY");
+                const containerKind = backpack.getBackpackCaptureKind(block);
+                window.project = new pxt.TilemapProject();
+                const restored = captures.map(capture => {
+                    const { asset } = open(capture.code);
+                    const state = JSON.parse(capture.code).blocks[0];
+                    return { pixel: pxt.sprite.Bitmap.fromData(asset.bitmap).get(0, 0),
+                        type: state.type, fields: Object.keys(state.fields), name: capture.name };
+                });
+                return { unchanged, kind, containerKind, restored };
+            } finally {
+                const currentProject = project;
+                try {
+                    window.project = sourceProject;
+                    workspace.dispose();
+                } finally { window.project = currentProject; }
+            }
+        });
+        assert.equal(result.unchanged, true);
+        assert.equal(result.kind, "asset");
+        assert.equal(result.containerKind, "code");
+        assert.deepStrictEqual(result.restored, [
+            { pixel: 2, type: "extension_portrait", fields: ["ASSET"], name: "First image" },
+            { pixel: 8, type: "extension_portrait", fields: ["ASSET"], name: "Second image" }
+        ]);
     });
 });

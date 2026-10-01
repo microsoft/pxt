@@ -75,10 +75,61 @@ export function getBackpackAssetField(block: Blockly.Block): Blockly.Field | und
     return fields.length === 1 && (fields[0] as Blockly.Field & Partial<FieldCustom>).isBackpackAsset ? fields[0] : undefined;
 }
 
+export function getBackpackAssetFields(block: Blockly.Block): Blockly.Field[] {
+    if (!block || block.isDisposed()) return [];
+    return block.inputList.reduce<Blockly.Field[]>((fields, input) => fields.concat(input.fieldRow), [])
+        .filter(field => field.EDITABLE && field.SERIALIZABLE
+            && !!(field as Blockly.Field & Partial<FieldCustom>).isBackpackAsset);
+}
+
+export function getBackpackCaptureKind(block: Blockly.Block): pxt.auth.BackpackKind {
+    return isBackpackContainer(block) ? "code" : getBackpackAssetFields(block).length ? "asset" : "code";
+}
+
 /** Asset shadows can be copied without detaching them from their owning statement. */
 export function isBackpackBlock(block: Blockly.Block): boolean {
     return isEditableBackpackBlock(block) && (isBackpackContainer(block)
-        || !!getBackpackAssetField(block) && (block.isShadow() || block.isMovable()));
+        || !!getBackpackAssetFields(block).length && (block.isShadow() || block.isMovable()));
+}
+
+export interface BackpackAssetCapture {
+    code: string;
+    blockText: string;
+    name: string;
+}
+
+/** Save a field in its matching standalone asset block, without copying its parent. */
+export function captureBackpackAsset(field: Blockly.Field, info: pxtc.BlocksInfo): BackpackAssetCapture {
+    const block = field.getSourceBlock();
+    if (!isBackpackBlock(block) || !getBackpackAssetFields(block).includes(field)) invalidCode();
+    const symbol = info.blocksById[block.type];
+    const parameter = symbol && pxt.blocks.compileInfo(symbol).definitionNameToParam[field.name];
+    if (!parameter?.fieldEditor) {
+        return pxt.U.userError(lf("This asset cannot be saved separately in this editor."));
+    }
+    const candidates = info.blocks
+        .filter(candidate => candidate.attributes.shim === "TD_ID"
+            && candidate.retType === parameter.type && !candidate.attributes.deprecated
+            && !!Blockly.Blocks[candidate.attributes.blockId])
+        .map(candidate => ({ symbol: candidate, parameters: pxt.blocks.compileInfo(candidate).parameters }))
+        .filter(candidate => candidate.parameters.length === 1
+            && candidate.parameters[0].fieldEditor === parameter.fieldEditor)
+        .sort((left, right) => Number(!!left.symbol.attributes.blockHidden) - Number(!!right.symbol.attributes.blockHidden)
+            || (right.symbol.attributes.weight || 50) - (left.symbol.attributes.weight || 50));
+    const standalone = candidates[0];
+    if (!standalone) {
+        return pxt.U.userError(lf("This asset cannot be saved separately in this editor."));
+    }
+    const label = (parameter.labelLocalizationKey && pxtc.getBlockTranslationsCacheKey(parameter.labelLocalizationKey))
+        || parameter.label || parameter.actualName;
+    const description = (field as Blockly.Field & Partial<FieldCustom>).getFieldDescription?.() || field.getText();
+    const state: State = {
+        type: standalone.symbol.attributes.blockId,
+        fields: { [standalone.parameters[0].definitionName]: field.saveState(true) }
+    };
+    const code = JSON.stringify({ version: 1, blocks: [state] });
+    parseBackpackCode(code);
+    return { code, blockText: [label, description].filter(text => !!text).join(" "), name: description || label };
 }
 
 function isFunction(type: string): boolean {
