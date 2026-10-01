@@ -88,7 +88,7 @@ describe("responsive project-tools launcher", function () {
                         return () => window.backpackOpenListeners.delete(listener);
                     }
                 };
-                if (id === "./ProjectBackpack") return {
+                if (id === "../backpack/index") return {
                     ProjectBackpack: props => {
                         window.setBackpackModalOpen = props.onModalOpenChange;
                         return React.createElement(React.Fragment, null, props.renderHeader("Backpack"),

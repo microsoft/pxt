@@ -81,8 +81,10 @@ See [testing](../tests/project-tools-test/README.md) for developer checks.
 
 ## Developer notes
 
-The feature's React components and hooks are grouped in
+The launcher, panel shell and Whiteboard components are grouped in
 [`webapp/src/components/projectTools`](../webapp/src/components/projectTools).
+Backpack's components and hooks live in the sibling
+[`webapp/src/components/backpack`](../webapp/src/components/backpack) folder.
 Storage, serialization and other non-UI services remain in `webapp/src` and
 `pxtblocks`; shared image-editor components stay outside the feature folder.
 

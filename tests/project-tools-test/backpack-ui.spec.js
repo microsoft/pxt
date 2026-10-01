@@ -269,14 +269,14 @@ describe("project backpack UI", function () {
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpack.ts")}\n})(window.require, window.backpackValidation = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/BackpackToolbar.tsx")}\n})(window.require, window.backpackToolbar = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/useBackpackDrag.ts")}\n})(window.require, window.backpackDrag = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/useBackpackPageFocus.ts")}\n})(window.require, window.backpackPageFocus = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/useBackpackCollection.ts")}\n})(window.require, window.backpackCollection = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/projectTools/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackToolbar.tsx")}\n})(window.require, window.backpackToolbar = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackDrag.ts")}\n})(window.require, window.backpackDrag = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackPageFocus.ts")}\n})(window.require, window.backpackPageFocus = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackCollection.ts")}\n})(window.require, window.backpackCollection = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
         await page.evaluate(() => {
             function Harness() {
                 const [active, setActive] = React.useState(true);

@@ -1,6 +1,6 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { BackpackAssetChoice, BackpackAssetChooser } from "./components/projectTools/BackpackAssetChooser";
+import { BackpackAssetChoice, BackpackAssetChooser } from "./components/backpack/BackpackAssetChooser";
 
 export async function chooseBackpackAssetAsync(choices: BackpackAssetChoice[]): Promise<string | undefined> {
     // A Blockly drop must finish restoring the dragged block before a modal takes focus.
