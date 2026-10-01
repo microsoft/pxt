@@ -29,7 +29,6 @@ export function shouldShowProjectTools(
     return sideDocs && inEditor && !lockedEditor && !temporary && !readOnly && enabled;
 }
 
-/** Keep project-load defaults separate from explicit pin/unpin and collapse actions. */
 export function projectToolsPinnedOnLoad(
     state: pxt.editor.IAppState,
     headerId: string,

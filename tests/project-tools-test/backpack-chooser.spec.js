@@ -102,7 +102,9 @@ describe("Backpack asset capture routing", () => {
     function environment(kind = "asset") {
         const saved = [];
         const captures = [];
-        const state = { kind, standalone: false, eligible: true, user: "alice", selected: "RIGHT", choices: [], chooser: undefined };
+        const dialogs = [];
+        const state = { kind, standalone: false, eligible: true, user: "alice", selected: "RIGHT", choices: [],
+            chooser: undefined, captureError: undefined, previews: 0 };
         class AssetField {
             constructor(name) { this.name = name; }
             getAsset() { return { meta: { displayName: this.name + " image" } }; }
@@ -134,10 +136,17 @@ describe("Backpack asset capture routing", () => {
                 saveBackpackItemAsync: async item => saved.push(item),
                 requestBackpackOpen: () => {}
             },
-            getBackpackRequirements: () => ({ dependencies: {} }),
-            backpackPreviewAsync: async () => ({}),
+            getBackpackRequirements: () => {
+                if (state.captureError) throw state.captureError;
+                return { dependencies: {} };
+            },
+            backpackPreviewAsync: async () => { ++state.previews; return {}; },
             backpackUserErrorMessage: error => error.message,
-            core: { infoNotification: () => {}, confirmAsync: async options => { throw new Error(options.body); } },
+            core: { infoNotification: () => {}, confirmAsync: async options => {
+                if (!state.captureError) throw new Error(options.body);
+                dialogs.push(options);
+                return 0;
+            } },
             chooseBackpackAssetAsync: async choices => {
                 state.choices = choices;
                 if (state.chooser) return state.chooser();
@@ -152,7 +161,7 @@ describe("Backpack asset capture routing", () => {
         editor.editor = {};
         editor.backpackAvailable = () => state.eligible;
         const block = { type: "pair", workspace: editor.editor, isDisposed: () => false };
-        return { state, editor, block, saved, captures, run: () => editor.saveBlockToBackpackAsync(block) };
+        return { state, editor, block, saved, captures, dialogs, run: () => editor.saveBlockToBackpackAsync(block) };
     }
 
     it("keeps a container's complete Code capture even when it has two assets", async () => {
@@ -161,6 +170,20 @@ describe("Backpack asset capture routing", () => {
         assert.deepStrictEqual(e.state.choices, []);
         assert.deepStrictEqual(e.captures, ["block"]);
         assert.equal(e.saved[0].kind, "code");
+    });
+
+    it("shows capture guidance without creating a preview or saving a nonportable code capture", async () => {
+        const e = environment("code");
+        e.state.captureError = Object.assign(new Error("Publish the blocks from custom.ts as an extension first."), {
+            isUserError: true
+        });
+        await e.run();
+        assert.deepStrictEqual(e.saved, []);
+        assert.equal(e.state.previews, 0);
+        assert.equal(e.dialogs.length, 1);
+        assert.equal(e.dialogs[0].header, "Cannot save this snippet");
+        assert.equal(e.dialogs[0].body, e.state.captureError.message);
+        assert.equal(e.dialogs[0].hideCancel, true);
     });
 
     it("saves only the selected field and supplies both labels and previews", async () => {

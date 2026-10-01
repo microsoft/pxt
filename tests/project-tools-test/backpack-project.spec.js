@@ -254,6 +254,62 @@ describe("Shared block snippet preparation (fresh source, ordinary Blockly state
     });
 });
 
+describe("Backpack capture portability", () => {
+    const withProjectBlocks = () => {
+        const e = environment();
+        e.info.blocksById.custom_pair = {
+            ...symbol("main"),
+            qName: "assetPair.showPair",
+            fileName: "custom.ts"
+        };
+        return e;
+    };
+
+    it("rejects custom-file blocks at the root, inside a container, or inside a supporting function", () => {
+        const e = withProjectBlocks();
+        const custom = { type: "custom_pair" };
+        const extraState = { name: "helper", functionid: "helper-id", arguments: [] };
+        const captures = [
+            [custom],
+            [{ type: "container", inputs: { BODY: { block: custom } } }],
+            [
+                { type: "function_definition", extraState, inputs: { STACK: { block: custom } } },
+                { type: "container", inputs: { BODY: { block: { type: "function_call", extraState } } } }
+            ]
+        ];
+        for (const states of captures) {
+            assert.throws(() => e.capture(codeFor(...states)), error => {
+                assert.equal(error.isUserError, true);
+                assert.match(error.message, /custom\.ts/);
+                assert.match(error.message, /Move that code into an extension, publish it, and add the extension/);
+                return true;
+            });
+        }
+        assert.deepStrictEqual(e.events, []);
+    });
+
+    it("retains ordinary clipboard requirements for project-defined blocks", () => {
+        const e = withProjectBlocks();
+        assert.deepStrictEqual(e.captureStates([{ type: "custom_pair" }]), {
+            dependencies: {},
+            projectBlocks: { custom_pair: "custom.ts" }
+        });
+    });
+
+    it("allows published-extension blocks and standalone assets with no custom-file dependency", () => {
+        const e = environment({ pictures: version("pictures"), core: "embed:core" });
+        assert.deepStrictEqual(e.capture(codeFor({ type: "pictures_block" })), {
+            dependencies: { pictures: version("pictures") },
+            projectBlocks: {}
+        });
+        e.info.blocksById.custom_pair = { ...symbol("main"), fileName: "custom.ts" };
+        assert.deepStrictEqual(e.capture(codeFor({ type: "core_block", fields: { IMAGE: "img`2`" } })), {
+            dependencies: { core: "*" },
+            projectBlocks: {}
+        });
+    });
+});
+
 describe("Backpack project insertion (fresh source, no network or program execution)", () => {
     it("after version consent saves unsaved code/assets, merges config, and refreshes packages before paste", async () => {
         const e = environment({ unrelated: version("unrelated") });

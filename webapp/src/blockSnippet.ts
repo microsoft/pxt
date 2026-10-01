@@ -12,12 +12,12 @@ export interface BlockSnippetRequirements {
 
 export interface BlockSnippetProjectHost {
     headerId: string;
-    /** Captures the project, user, and editor readiness; false once that context changes. */
+    /** False if the project or user changed, or the editor is no longer ready. */
     isCurrent: () => boolean;
     getBlocksInfo: () => pxtc.BlocksInfo;
     /** Save current blocks and TypeScript, including any newly generated asset files. */
     saveAsync: () => Promise<void>;
-    /** Await reloadHeaderAsync AND the blocks editor's loadingXmlPromise. */
+    /** Wait for both reloadHeaderAsync and the blocks editor's loadingXmlPromise. */
     reloadAsync: () => Promise<void>;
 }
 
@@ -41,7 +41,7 @@ function isName(value: unknown): value is string {
         && !Array.from(value).some(character => character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127);
 }
 
-/** Bound arbitrary field/mutation/asset data too, before reading it or following references. */
+/** Reject oversized or deeply nested field, mutation, and asset data before traversing it. */
 function checkData(value: unknown): void {
     const seen = new Set<object>();
     let count = 0;
@@ -77,12 +77,12 @@ function snippetStates(states: Blockly.serialization.blocks.State[]): Blockly.se
     return result;
 }
 
-/** Return actual root, input (including obscured shadows), and following-statement types. */
+/** Include connected blocks and shadows hidden by another block. */
 export function getBlockSnippetTypes(states: Blockly.serialization.blocks.State[]): string[] {
     return Array.from(new Set(snippetStates(states).map(state => state.type)));
 }
 
-/** List dependencies missing from the project using Backpack's display policy, not its import validation. */
+/** Compare installed package references without downloading or changing extensions. */
 export function getMissingBlockSnippetDependencies(
     dependencies: pxt.Map<string>,
     project: pxt.MainPackage
@@ -96,13 +96,13 @@ export function getMissingBlockSnippetDependencies(
     });
 }
 
-// Local references are identity tokens only. They must NEVER be sent to getConfigAsync.
+// Local references can match an installed package, but getConfigAsync cannot fetch them.
 function localReference(version: string): boolean {
     return /^(?:workspace|pkg):[A-Za-z0-9_][A-Za-z0-9_.-]*$/.test(version)
         || /^file:[A-Za-z0-9_./\\: -]+$/.test(version) && version.trim() === version;
 }
 
-/** Reuse the portable-reference and source-filename policy; narrowly admit native local refs. */
+/** Accept local clipboard references as well as dependencies allowed in Backpack saves. */
 function validateRequirements(value: unknown): BlockSnippetRequirements {
     checkData(value);
     if (!isRecord(value) || !own(value, "dependencies") || !isRecord(value.dependencies)
@@ -117,7 +117,7 @@ function validateRequirements(value: unknown): BlockSnippetRequirements {
         if (typeof version !== "string" || version.length > 256) invalidSnippet();
         if (localReference(version)) {
             local[name] = version;
-            portable[name] = "pub:local"; // Validate the name with exactly the store's rules.
+            portable[name] = "pub:local"; // Check the package name without rejecting its local reference.
         } else portable[name] = version;
     }
 
@@ -140,11 +140,11 @@ function sameSource(left: string, right: string): boolean {
 function dependencyReference(name: string, dependency: pxt.Package): string | undefined {
     const version = dependency?.version();
     // Package resolution rewrites bundled '*' (including default core packages)
-    // to embed:<id>. Store and compare the portable authored reference instead.
+    // to embed:<id>. Save "*" so the reference still works in another project.
     return version === `embed:${name}` && own(pxt.appTarget.bundledpkgs, name) ? "*" : version;
 }
 
-/** Capture only packages and project source referenced by the actual serialized blocks. */
+/** Collect packages and project source used by the copied blocks. */
 export function getBlockSnippetRequirements(
     states: Blockly.serialization.blocks.State[],
     info: pxtc.BlocksInfo,
@@ -217,7 +217,7 @@ interface RequiredPackage {
     config: pxt.PackageConfig;
 }
 
-/** Prepare a snippet without replacing extensions, losing code, or ever pasting blocks. */
+/** Install missing dependencies without replacing installed extensions or inserting blocks. */
 export async function ensureBlockSnippetAsync(
     requirements: BlockSnippetRequirements | undefined,
     types: string[],
@@ -311,8 +311,8 @@ export async function ensureBlockSnippetAsync(
         if (!approved) return false;
         assertUnchanged();
 
-        // Fetch and check the entire dependency graph before any project write. In particular,
-        // findConflictsAsync alone silently accepts null transitive configs and follows cycles.
+        // Check all required packages before changing the project. findConflictsAsync
+        // does not reject missing transitive configs or stop dependency cycles.
         const planned = new Map<string, RequiredPackage>();
         const pending = missing.map(name => ({ name, version: saved.dependencies[name] }));
         while (pending.length) {
@@ -356,9 +356,8 @@ export async function ensureBlockSnippetAsync(
             pending.push(...Object.keys(config.dependencies).map(name => ({ name, version: config.dependencies[name] })));
         }
 
-        // Use the existing conflict engine against a read-only prospective graph. Refuse ALL
-        // replacements (including core and in-use packages), rather than bypassing confirmation.
-        // Empty dependency maps prevent a second, unguarded recursive fetch during preflight.
+        // Check conflicts without changing the project or replacing installed packages.
+        // Dependencies were checked above; empty maps avoid fetching them again here.
         const prospective: pxt.MainPackage = Object.create(main);
         prospective.parent = prospective;
         const dependencies = main.sortedDeps().slice();
@@ -378,7 +377,7 @@ export async function ensureBlockSnippetAsync(
             dependencies.push(dependency);
         }
 
-        await wait(host.saveAsync); // Preserve current blocks AND TypeScript before the reload.
+        await wait(host.saveAsync); // Save both blocks and TypeScript before reloading.
         assertUnchanged();
         // Saving blocks may legitimately add asset files to config. Merge into the latest
         // config, preserving those files and other user edits, but never a changed dependency set.
@@ -390,8 +389,8 @@ export async function ensureBlockSnippetAsync(
         let writeError: unknown;
 
         try {
-            // setContentAsync updates synchronously and starts saving this captured EditorPackage.
-            // Unlike addDependencyAsync/setDependencyAsync, there is no later unguarded write.
+            // setContentAsync updates this EditorPackage before yielding, so the
+            // project cannot change between assertUnchanged and the in-memory write.
             assertUnchanged();
             await wait(() => configFile.setContentAsync(updated));
         } catch (error) {

@@ -10,7 +10,7 @@ export interface BackpackProjectHost extends BlockSnippetProjectHost {
     getWorkspace: () => Blockly.WorkspaceSvg;
 }
 
-/** Backpack saves retain the stricter portable-reference policy, unlike native clipboard copies. */
+/** Backpack dependencies must be installable in another project, unlike local clipboard references. */
 export function getBackpackRequirements(
     code: string,
     info: pxtc.BlocksInfo,
@@ -20,6 +20,14 @@ export function getBackpackRequirements(
     projectBlocks: pxt.Map<string>;
 } {
     const requirements = getBlockSnippetRequirements(pxtblockly.parseBackpackCode(code).blocks, info, main);
+    const projectFiles = Array.from(new Set(Object.values(requirements.projectBlocks || {})));
+    if (projectFiles.length) {
+        throw new BackpackUserError(lf(
+            "These blocks use code from {0}, which is not included in Backpack. Move that code into an extension, publish it, and add the extension to your project before saving these blocks.",
+            projectFiles.join(", ")
+        ));
+    }
+
     for (const name of Object.keys(requirements.dependencies)) {
         try {
             validateBackpackRequirements({ dependencies: { [name]: requirements.dependencies[name] } });
@@ -30,7 +38,7 @@ export function getBackpackRequirements(
     return { dependencies: requirements.dependencies, projectBlocks: requirements.projectBlocks || {} };
 }
 
-/** Prepare using the shared pipeline, then let Backpack own insertion, rendering, and final save. */
+/** Install required extensions before inserting the blocks and saving the project. */
 export async function addBackpackToProjectAsync(
     item: pxt.auth.BackpackItem,
     host: BackpackProjectHost,
@@ -73,11 +81,11 @@ export async function addBackpackToProjectAsync(
         workspace,
         new Blockly.utils.Coordinate(position.x, position.y)
     );
-    pxtblockly.pasteBackpackBlock(saved.code, workspace, coordinates, saved.kind); // Owns the single undo group and asset remapping.
+    pxtblockly.pasteBackpackBlock(saved.code, workspace, coordinates, saved.kind);
     await wait(() => Blockly.renderManagement.finishQueuedRenders());
 
-    // Insertion already succeeded. Retain its undo group and any intervening user
-    // edits; persistence retries must never paste the same blocks again.
+    // The blocks are already inserted. Retry only the save, without adding
+    // duplicate blocks or overwriting edits made while the save was pending.
     while (true) {
         try {
             await wait(host.saveAsync);

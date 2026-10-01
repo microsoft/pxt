@@ -1,5 +1,5 @@
 import * as Blockly from "blockly";
-import { clearBackpackDragState, refreshBackpackDragTargets } from "./backpack";
+import { clearBackpackDragState, refreshBackpackDragTargets } from "./backpackDrag";
 
 export class BlockDragger extends Blockly.dragging.Dragger {
     onDrag(e: PointerEvent, totalDelta: Blockly.utils.Coordinate): void {

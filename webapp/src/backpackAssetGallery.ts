@@ -3,7 +3,7 @@ export interface PreparedBackpackAssetGallery {
     projectGallery: pxt.AssetSnapshot;
 }
 
-/** Detach gallery data and restore native prototypes without loading it into the scratch project. */
+/** Copy gallery data and restore the class prototypes that structuredClone removes. */
 export function prepareBackpackAssetGallery(
     gallery: pxt.AssetSnapshot,
     project: pxt.TilemapProject

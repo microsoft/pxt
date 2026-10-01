@@ -20,7 +20,7 @@ function addText(text: Set<string>, value: unknown): void {
     text.add(raw.replace(/([a-z\d])([A-Z])/g, "$1 $2").replace(/[_.:/#-]+/g, " "));
 }
 
-/** Read text only: never instantiate blocks, invoke mutation hooks, or index asset binary data. */
+/** Read searchable text without loading blocks or indexing asset binary data. */
 function blockText(item: pxt.auth.BackpackItem): string[] {
     const text = new Set<string>();
     addText(text, item.blockText);
@@ -63,7 +63,7 @@ function blockText(item: pxt.auth.BackpackItem): string[] {
     return Array.from(text);
 }
 
-/** Build once per collection update; every query is a local, fuzzy filter in the original item order. */
+/** Reuse one search index for the collection and keep results in the original item order. */
 export function createBackpackSearch(
     items: BackpackEntry[],
     extensionName?: (name: string) => string

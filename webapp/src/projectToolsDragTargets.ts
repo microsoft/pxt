@@ -1,4 +1,4 @@
-import type { BackpackDragTargetOptions } from "../../pxtblocks/backpack";
+import type { BackpackDragTargetOptions } from "../../pxtblocks/backpackDrag";
 import { PROJECT_TOOLS_LAUNCHER_ID, projectToolPanelId, projectToolTabId } from "./projectToolsState";
 
 export const BACKPACK_DRAG_OVER_CLASS = "project-backpack-drag-over";
@@ -14,7 +14,7 @@ function visibleElement(id: string): HTMLElement | undefined {
     return rect.width > 0 && rect.height > 0 ? element : undefined;
 }
 
-/** Keep project-tools DOM ownership out of the workspace-scoped Blockly integration. */
+/** Resolve visible drop targets each time Blockly checks their positions. */
 export function getBackpackDragTargets(): BackpackDragTargetOptions[] {
     const tab = (): HTMLElement | undefined => visibleElement(projectToolTabId("backpack"));
 

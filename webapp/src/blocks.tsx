@@ -51,7 +51,7 @@ import { assetToGalleryItem } from "./assets";
 import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./backpackProject";
 import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
 import { backpackPreviewAsync } from "./backpackPreview";
-import { clearBackpackDragState } from "../../pxtblocks/backpack";
+import { clearBackpackDragState } from "../../pxtblocks/backpackDrag";
 import { BACKPACK_DRAG_OVER_CLASS, getBackpackDragTargets } from "./projectToolsDragTargets";
 import { projectToolTabId } from "./projectToolsState";
 

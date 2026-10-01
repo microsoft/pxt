@@ -5,7 +5,7 @@ export const MAX_WHITEBOARD_DIMENSION = 256;
 export const WHITEBOARD_WIDTH = 160;
 export const WHITEBOARD_HEIGHT = 120;
 
-/** Serializes project-note writes while preserving each caller's result. */
+/** Save notes in order; one failed save must not prevent the next attempt. */
 export class ProjectNotesSaveQueue {
     private pending: Promise<void> = Promise.resolve();
 
@@ -16,7 +16,7 @@ export class ProjectNotesSaveQueue {
     }
 }
 
-/** A separate boundary from cloud sync: notes are private, not local-only. */
+/** Omit notes from shared project metadata; they can still sync with the user's account. */
 export function excludePrivateProjectMetadata(header: pxt.workspace.Header): pxt.workspace.Header {
     const shared = { ...header };
     delete shared.projectNotes;
@@ -75,7 +75,6 @@ export function validateProjectNotes(notes: pxt.workspace.ProjectNotes): pxt.wor
     return { whiteboards, activeWhiteboardId: notes.activeWhiteboardId };
 }
 
-/** Create the first whiteboard for a project without saved notes. */
 export function createProjectNotes(): pxt.workspace.ProjectNotes {
     const board: pxt.workspace.ProjectWhiteboard = {
         id: "whiteboard-1",
@@ -132,7 +131,7 @@ export function renameProjectWhiteboard(
     };
 }
 
-/** Remove a confirmed board while keeping at least one board and a valid selection. */
+/** Keep at least one whiteboard and select a remaining board if the active one is deleted. */
 export function deleteProjectWhiteboard(notes: pxt.workspace.ProjectNotes, id: string): pxt.workspace.ProjectNotes {
     const index = notes.whiteboards.findIndex(board => board.id === id);
     if (index < 0) throw new Error(pxt.Util.lf("This whiteboard is no longer available."));

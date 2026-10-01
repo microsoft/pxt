@@ -45,6 +45,10 @@ is more than one field, choose which asset to save from the dialog. Cancelling
 saves nothing, and the source block is never changed. Containers such as events
 and loops still save their entire contents as **Code**, including any asset fields.
 Required extensions are installed with consent on Add, just as for code snippets.
+Blocks defined in the project's own TypeScript files cannot be saved to Backpack.
+Move that code into an extension, publish it, and add the extension to the project
+before saving those blocks. Individual assets can still be extracted if their
+standalone asset block does not depend on the custom files.
 Asset field implementations can opt in with `isBackpackAsset`. Ordinary dropdowns
 such as Minecraft's block picker are not Backpack assets.
 Limits are 50 code captures and 200 assets per target, with a shared
@@ -59,9 +63,9 @@ Adding or editing an item reads its saved content again.
 Guests save in this browser; signing in syncs captures across browsers. Search
 matches names, contained blocks, parameters and extensions. Rename is optional.
 The **+** button or dragging a preview into the workspace asks permission before
-installing missing extensions and inserts the capture as one undo group. Custom
-TypeScript source is not included: copy the required files or publish an extension
-if the destination lacks those blocks.
+installing missing extensions and inserts the capture as one undo group.
+Older captures that reference project files remain deletable; adding them still
+requires the referenced block definitions.
 Ordinary clipboard paste uses the same dependency checks while retaining normal
 Blockly copy/cut/paste behavior.
 The pencil renames code captures; for assets it opens the native editor in an

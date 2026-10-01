@@ -1,142 +1,22 @@
 import { BackpackUserError, backpackUserErrorMessage } from "./backpackErrors";
+import { BackpackLocalRecord, BackpackLocalStorage, backpackLocalNamespace, createBackpackLocalStorage } from "./backpackStorage";
+
+export { BackpackLocalRecord, BackpackLocalStorage, backpackLocalNamespace, createBackpackLocalStorage } from "./backpackStorage";
 
 export const MAX_BACKPACK_ITEMS = 50;
 export const MAX_BACKPACK_ASSETS = 200;
 export const MAX_BACKPACK_NAME_LENGTH = 100;
 export const MAX_BACKPACK_CODE_LENGTH = 524288;
 export const MAX_BACKPACK_DATA_LENGTH = 1048576;
-// Keep capture's existing conservative PNG budget; the API accepts 128 KiB binary.
+// Captured previews use a smaller limit than the API's 128 KiB PNG limit.
 export const MAX_BACKPACK_PREVIEW_LENGTH = 64000;
 
-/** The target controls availability independently of cloud sign-in. */
 export function isBackpackEnabled(): boolean {
     return !!pxt.appTarget?.appTheme?.backpack;
 }
 
 export function isBackpackAssetsEnabled(): boolean {
     return isBackpackEnabled() && !!pxt.appTarget?.appTheme?.assetEditor;
-}
-
-/** Individual durable records. Namespace and key are literal IndexedDB key components. */
-export interface BackpackLocalRecord {
-    namespace: string;
-    key: string;
-    payload: string;
-    /** Claim guest uploads before sending so a different account cannot retry them. */
-    owner?: string;
-    firstAttemptAt?: number;
-}
-
-export interface BackpackLocalStorage {
-    listAsync(namespace: string): Promise<BackpackLocalRecord[]>;
-    /** Atomic compare-and-swap; undefined expected means the key must be absent. */
-    changeAsync(
-        namespace: string,
-        key: string,
-        expected: BackpackLocalRecord | undefined,
-        next: BackpackLocalRecord | undefined
-    ): Promise<boolean>;
-}
-
-export function backpackLocalNamespace(target: string, userId?: string): string {
-    return JSON.stringify([target, userId === undefined ? "guest" : "user", userId || ""]);
-}
-
-function storageError(): Error {
-    return new BackpackUserError(lf("Could not save or read your local backpack. Allow browser storage and check available space, then try again."));
-}
-
-/** Injectable IndexedDB factory; never falls back to memory or native localStorage. */
-export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalStorage {
-    const openAsync = (): Promise<IDBDatabase> => new Promise((resolve, reject) => {
-        let request: IDBOpenDBRequest;
-        let failed = false;
-        try {
-            request = factory.open("pxt-backpack", 1);
-        } catch {
-            reject(storageError());
-            return;
-        }
-
-        request.onupgradeneeded = () => {
-            const store = request.result.createObjectStore("items", { keyPath: ["namespace", "key"] });
-            store.createIndex("namespace", "namespace", { unique: false });
-        };
-        request.onerror = request.onblocked = () => {
-            failed = true;
-            reject(storageError());
-        };
-        request.onsuccess = () => {
-            if (failed) {
-                request.result.close();
-                return;
-            }
-            request.result.onversionchange = () => request.result.close();
-            resolve(request.result);
-        };
-    });
-
-    const transactionAsync = async <T>(
-        mode: IDBTransactionMode,
-        action: (store: IDBObjectStore, result: (value: T) => void) => void
-    ): Promise<T> => {
-        const db = await openAsync();
-        try {
-            return await new Promise<T>((resolve, reject) => {
-                let transaction: IDBTransaction;
-                let result: T;
-                try {
-                    // The optional third argument is ignored by older implementations.
-                    const begin = db.transaction as (
-                        name: string,
-                        mode: IDBTransactionMode,
-                        options?: { durability: "strict" }
-                    ) => IDBTransaction;
-                    transaction = begin.call(db, "items", mode, { durability: "strict" });
-                    transaction.oncomplete = () => resolve(result);
-                    transaction.onerror = transaction.onabort = () => reject(storageError());
-                    action(transaction.objectStore("items"), value => {
-                        result = value;
-                    });
-                } catch {
-                    try {
-                        transaction?.abort();
-                    } catch {
-                        /* Already completed. */
-                    }
-                    reject(storageError());
-                }
-            });
-        } finally {
-            db.close();
-        }
-    };
-
-    return {
-        listAsync: namespace => transactionAsync<BackpackLocalRecord[]>("readonly", (store, done) => {
-            const request = store.index("namespace").getAll(namespace);
-            request.onsuccess = () => done(request.result);
-        }),
-        changeAsync: (namespace, key, expected, next) => transactionAsync<boolean>("readwrite", (store, done) => {
-            const request = store.get([namespace, key]);
-            request.onsuccess = () => {
-                try {
-                    const current: BackpackLocalRecord = request.result;
-                    const same = !current ? !expected : !!expected && current.payload === expected.payload
-                        && current.owner === expected.owner && current.firstAttemptAt === expected.firstAttemptAt;
-                    if (!same) {
-                        done(false);
-                        return;
-                    }
-                    if (next) store.put({ ...next, namespace, key });
-                    else store.delete([namespace, key]);
-                    done(true);
-                } catch {
-                    store.transaction.abort();
-                }
-            };
-        })
-    };
 }
 
 interface LocalIdentity {
@@ -169,7 +49,7 @@ export interface BackpackEntry {
     createdAt: number;
     item?: pxt.auth.BackpackItem;
     summary?: BackpackSummary;
-    /** Opaque local record identity, never taken from the payload. */
+    /** Storage key and upload state come from the record, not its JSON payload. */
     local?: BackpackLocalRecord;
     pendingError?: string;
     error?: string;
@@ -179,12 +59,12 @@ export interface BackpackSummary {
     id: string;
     name: string;
     kind?: pxt.auth.BackpackKind;
-    /** Invalid recovery summaries may lack capture metadata. */
+    /** Invalid items may lack editor version information. */
     versions?: pxt.auth.BackpackVersions;
     blockText: string;
     blockTypes: string[];
     searchText?: string[];
-    /** Supporting definitions included in addition to the selected container. */
+    /** Number of supporting function definitions included with the selected block. */
     functionCount?: number;
     dependencies: pxt.Map<string>;
     projectBlocks?: pxt.Map<string>;
@@ -312,7 +192,7 @@ function portableDependency(name: string, version: string): boolean {
         && version.slice(7).split(/[\/#]/).every(part => part !== "." && part !== ".." && safeKey(part));
 }
 
-/** Validates untrusted local/cloud/import data and returns a detached, bounded item. */
+/** Check saved data and size limits, and copy the fields that callers can use. */
 export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     if (!isRecord(value)) throw new Error("Invalid backpack item.");
     validateId(value.id);
@@ -378,7 +258,7 @@ export function validateBackpackItem(value: unknown): pxt.auth.BackpackItem {
     return result;
 }
 
-/** Shared dependency/source policy, independent of a capture's code and editor version. */
+/** Check that dependencies can be installed in another project and source filenames are valid. */
 export function validateBackpackRequirements(value: pxt.Map<unknown>): {
     dependencies: pxt.Map<string>;
     projectBlocks?: pxt.Map<string>
@@ -456,7 +336,7 @@ function assertActive(identity: Identity): void {
     if (!isActive(identity)) throw new BackpackUserError(lf("Your account or editor changed. Please reopen the backpack."));
 }
 
-// Capture at invocation, not when the queued operation eventually starts.
+// Keep the account that requested the operation, even if it must wait for another write.
 async function captureAsync(): Promise<OperationContext> {
     const identity = activeIdentity();
     if (!identity) throw new BackpackUserError(lf("Your backpack session is not ready. Please reopen the backpack."));
@@ -500,7 +380,7 @@ async function verifyAsync(context: OperationContext): Promise<void> {
 }
 
 function enqueue(action: (context: OperationContext) => Promise<void>): Promise<void> {
-    // Attach rejection handlers to capture immediately, even while another write is pending.
+    // Handle account lookup failures immediately, even while another write is pending.
     const operation = Promise.all([queue, captureAsync()]).then(async ([, context]) => {
         await verifyAsync(context);
         await action(context);
@@ -608,7 +488,7 @@ async function requestAsync(
         const code = isRecord(body) && isRecord(body.error) && typeof body.error.code === "string" ? body.error.code : undefined;
         const fallback = response.statusCode === 403 ? "backpack_access_denied"
             : response.statusCode === 503 ? "backpack_unavailable" : undefined;
-        // Store only known codes; never retain unknown backend strings or bodies.
+        // Only known error codes can become user-facing messages.
         throw new BackpackRequestError(code?.startsWith("backpack_") && ["backpack_unavailable", "backpack_request_too_large",
             "backpack_entry_too_large", "backpack_preview_too_large", "backpack_quota_exceeded", "backpack_id_conflict",
             "backpack_version_conflict", "backpack_entry_deleted", "backpack_invalid_entry", "backpack_unsupported_entry", "backpack_not_found",
@@ -661,7 +541,7 @@ async function changeLocalAsync(
     return changed;
 }
 
-/** Expose only validated content, or bounded display metadata for a deletable recovery card. */
+/** Invalid items expose only a safe name and timestamp so users can still delete them. */
 export function readBackpackEntry(id: string, value: unknown, source: "local" | "cloud"): BackpackEntry {
     try {
         validateId(id);
@@ -686,7 +566,7 @@ export function readBackpackEntry(id: string, value: unknown, source: "local" | 
     }
 }
 
-/** Validate metadata without inventing a code payload or downloading content. */
+/** Check a list entry without downloading its code. */
 export function readBackpackSummary(value: unknown): BackpackEntry {
     if (!isRecord(value)) throw new BackpackRequestError(undefined);
     validateId(value.id);
@@ -741,7 +621,7 @@ export function readBackpackSummary(value: unknown): BackpackEntry {
             ...(summary.status === "invalid" ? { error: backpackErrorMessage("backpack_invalid_entry") } : {})
         };
     } catch {
-        // Keep the independently validated ID/version for trash recovery only.
+        // Keep the checked ID and version so users can delete an invalid item.
         return {
             ...recovery,
             summary: {
@@ -800,14 +680,14 @@ function upsert(context: OperationContext, entry: BackpackEntry): void {
     publish(context, [...currentEntries(context).filter(saved => backpackEntryKey(saved) !== backpackEntryKey(entry)), entry]);
 }
 
-/** Returns detached metadata, never cloud bodies, scoped to the active identity. */
+/** Copy the current account's list so callers cannot change cached entries. */
 export function getBackpackState(): BackpackState {
     if (!snapshot || !isActive(snapshot.identity)) return { entries: [] };
     const { identity, ...state } = snapshot;
     return JSON.parse(JSON.stringify(state));
 }
 
-/** Only locally available valid bodies; cloud callers must use importBackpackEntryAsync. */
+/** Cloud items have no code here; use importBackpackEntryAsync to fetch and import them. */
 export function getBackpackItems(): pxt.auth.BackpackItem[] {
     return getBackpackState().entries.filter(entry => !!entry.item && !entry.error).map(entry => entry.item);
 }
@@ -835,15 +715,15 @@ async function uploadAsync(context: CloudContext, entry: BackpackEntry): Promise
     upsert(context, { ...entry, local: record });
 
     const acknowledged = summaryAck(await requestAsync(context, `/api/user/backpack/${entry.id}`, "PUT", entry.item), entry.id);
-    // The create response is authoritative even after an earlier rename. Do not
-    // compare its name/timestamp with the original, immutable creation request.
+    // A retry can return an item renamed on another device. Use the server's
+    // name and timestamp rather than comparing them with the original upload.
     let removed: boolean;
     try {
         removed = await changeLocalAsync(context, record);
     } catch (error) {
         assertActive(context);
-        // Cloud ACK is real even when local cleanup fails. Show one cloud row;
-        // the durable original remains available for an idempotent retry on open.
+        // The server saved the item even though local cleanup failed. Show it once;
+        // the local copy stays available for another cleanup attempt on open.
         publish(context, [...currentEntries(context).filter(saved => backpackEntryKey(saved) !== backpackEntryKey(entry)
             && !(saved.source === "cloud" && saved.id === entry.id)), acknowledged], {
             warning: lf("Your snippet was synced, but its pending local copy could not be cleaned up. Reopen the backpack to retry cleanup.")
@@ -914,8 +794,8 @@ export function refreshBackpackAsync(): Promise<void> {
                 if (cursor) cursors.add(cursor);
             } while (cursor);
         } catch (error) {
-            // A guarded 401 intentionally cleared auth; keep the safe sign-in
-            // message rather than replacing it with an account-change error.
+            // A 401 may have signed the user out. Keep its sign-in message
+            // rather than replacing it with an account-change error.
             if (!isActive(context)) throw error;
             await verifyAsync(context);
             const denied = error instanceof BackpackRequestError && error.code === "backpack_access_denied";
@@ -942,8 +822,7 @@ export function refreshBackpackAsync(): Promise<void> {
 
 export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promise<void> {
     const validated = validateBackpackItem(item);
-    // Import validation retains the existing capture bound. New creates must also
-    // fit the dedicated service's UTF-8 metadata budget before any persistence.
+    // Check the service's UTF-8 metadata limit before saving a new item locally.
     if (utf8Length(JSON.stringify({
         id: validated.id,
         name: validated.name,
@@ -1016,7 +895,7 @@ export async function retryBackpackEntryAsync(entry: BackpackEntry): Promise<voi
     });
 }
 
-/** Optional observed entry preserves the version captured when the native modal opened. */
+/** Pass the entry shown when the dialog opened to detect concurrent changes. */
 export async function renameBackpackItemAsync(id: string, name: string, entry?: BackpackEntry): Promise<void> {
     validateId(id);
     validateName(name);
@@ -1026,7 +905,7 @@ export async function renameBackpackItemAsync(id: string, name: string, entry?: 
     return enqueue(async context => {
         if (saved.error) throw new BackpackRequestError("backpack_invalid_entry");
         if (saved.source === "local") {
-            // Once sent, the original create payload must remain immutable for retries.
+            // Retries must send the same create payload as the first upload.
             if (saved.local.firstAttemptAt) throw new BackpackUserError(lf("Retry syncing this snippet before renaming it."));
             const renamed = { ...saved.local, payload: JSON.stringify(validateBackpackItem({ ...saved.item, name })) };
             if (!await changeLocalAsync(context, saved.local, renamed)) throw new BackpackRequestError("backpack_version_conflict");
@@ -1048,7 +927,7 @@ export async function deleteBackpackItemAsync(id: string): Promise<void> {
     return deleteBackpackEntryAsync(getBackpackState().entries.find(entry => entry.id === id));
 }
 
-/** Local deletion uses the observed literal key, including damaged/non-UUID keys. */
+/** Delete local records by their storage key, even if the saved item ID is invalid. */
 export async function deleteBackpackEntryAsync(entry: BackpackEntry): Promise<void> {
     const saved = observed(entry);
     return enqueue(async context => {
@@ -1119,7 +998,6 @@ interface BackpackAssetEditorHost {
 
 let assetEditorHost: BackpackAssetEditorHost;
 
-/** Asset editing belongs to the project, not to the active Blocks workspace. */
 export function setBackpackAssetEditor(host: BackpackAssetEditorHost): void {
     assetEditorHost = host;
 }
@@ -1195,7 +1073,6 @@ export async function importBackpackItemAsync(item: pxt.auth.BackpackItem, heade
     return added;
 }
 
-/** Add and preview drop share the same guarded import path. */
 export async function importBackpackEntryAsync(
     entry: BackpackEntry,
     headerId: string,
@@ -1215,13 +1092,13 @@ export async function importBackpackEntryAsync(
         throw new BackpackUserError(lf("Open a compatible project editor to import this backpack item."));
     }
 
-    // Do not recapture a potentially different identity between fetching and import.
+    // Use the same account for the content request and the import.
     const added = await registration.editor.importAsync(item, position);
     await verifyAsync(context);
     return added;
 }
 
-/** Read code on Add/Edit or for a visible asset preview, never in list responses. */
+/** Fetch code when importing, editing, or previewing an asset; list entries contain only metadata. */
 async function readItemAsync(saved: BackpackEntry, context: OperationContext): Promise<pxt.auth.BackpackItem> {
     let item = saved.item;
     if (saved.source === "cloud") {
@@ -1273,7 +1150,7 @@ export async function loadBackpackAssetAsync(entry: BackpackEntry): Promise<pxt.
     return readItemAsync(saved, await captureAsync());
 }
 
-/** Session-only LRU; versions come from private list metadata, never public URLs. */
+/** Cache previews by item version and evict the least recently used entries first. */
 async function cachedPreviewAsync(
     saved: BackpackEntry,
     context: CloudContext,
@@ -1329,13 +1206,13 @@ async function cachedPreviewAsync(
     return value;
 }
 
-/** Asset PNGs are not stored: visible cards read their bounded content to render locally. */
+/** Asset previews are rendered from saved code rather than stored as PNGs. */
 export async function loadBackpackAssetPreviewAsync(entry: BackpackEntry): Promise<pxt.auth.BackpackItem> {
     const saved = observed(entry);
     if (saved.error || (saved.item?.kind || saved.summary?.kind) !== "asset") throw new BackpackRequestError("backpack_invalid_entry");
     const context = await captureAsync();
     if (saved.source !== "cloud" || context.kind !== "cloud") return readItemAsync(saved, context);
-    // Detach cached assets: native field decoding is allowed to mutate its input.
+    // Copy cached data because field loaders may modify their input.
     return validateBackpackItem(await cachedPreviewAsync(saved, context, "asset", () => readItemAsync(saved, context)));
 }
 
@@ -1367,7 +1244,7 @@ export function saveBackpackAssetAsync(entry: BackpackEntry, item: pxt.auth.Back
     });
 }
 
-/** Binary private preview. Cancellation abandons this caller, not another card's shared read. */
+/** Cancelling one caller must not cancel a preview request shared with another card. */
 export async function getBackpackPreviewAsync(entry: BackpackEntry, signal: AbortSignal): Promise<Blob> {
     const saved = observed(entry);
     const context = await captureAsync();
@@ -1406,14 +1283,14 @@ export async function getBackpackPreviewAsync(entry: BackpackEntry, signal: Abor
 }
 
 export function notifyBackpackEditorChanged(): void {
-    // Observe transitions even while the panel is inactive. Returning to a prior
-    // account must not make an abandoned request from that session current again.
+    // Track account changes while the panel is closed too. Signing back into an
+    // earlier account must not make its old pending requests valid again.
     activeIdentity();
     for (const listener of Array.from(listeners)) {
         try {
             listener();
         } catch {
-            /* A UI error must not turn an acknowledged write into a failure. */
+            /* A listener failure must not make a successful save appear to fail. */
         }
     }
 }
