@@ -167,8 +167,7 @@ describe("named private whiteboards", function () {
         await page.click("#project-tools-tab-backpack");
         await page.waitForSelector("#test-backpack", { visible: true });
         assert.equal(await page.$eval("#project-tools-whiteboard", el => el.hidden), true);
-        // The inactive whiteboard unmounts its image editor, but retains the
-        // Redux store and textarea. Check the store when the editor remounts.
+        // The inactive whiteboard unmounts its image editor but retains the Redux store and textarea.
         assert.equal(await page.$eval(input, el => el === whiteboardTest.originalNotes), true);
         assert.equal(await page.$eval(input, el => el.value), "Saved private notes retained across backpack");
         await page.click("#project-tools-tab-docs");

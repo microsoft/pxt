@@ -34,7 +34,7 @@ export function visitBlockStates(
     for (const state of states) walk(state, 0);
 }
 
-/** Recreate native clipboard metadata for a saved block state. */
+/** Excludes hidden shadows from Blockly's block-type counts. */
 export function blockCopyData(blockState: BlockState): Blockly.clipboard.BlockCopyData {
     const typeCounts: { [type: string]: number } = Object.create(null);
     visitBlockStates([blockState], state => {
@@ -59,7 +59,7 @@ export interface ClipboardPasteOptions {
     workspacePosition?: Blockly.utils.Coordinate;
 }
 
-/** Use the native clipboard paster and the editor's normal viewport placement. */
+/** Use the supplied position, keep an in-view original position, or center the paste. */
 export function pasteClipboardData(
     data: Blockly.ICopyData,
     workspace: Blockly.WorkspaceSvg,

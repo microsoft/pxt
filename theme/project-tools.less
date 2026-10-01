@@ -52,7 +52,7 @@
     width: var(--tools-bubble-size);
     inset-inline-end: 1rem;
     top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
-    // Labels must paint over the panel, which follows the launcher in the DOM.
+    // Keep bubble labels above the panel.
     z-index: (@sidedocZIndex + 1);
 }
 
@@ -68,7 +68,7 @@
 
     .project-tools-bubble {
         --tools-bubble-distance: calc((var(--tools-bubble-size) + var(--tools-bubble-gap)) * (var(--tools-bubble-index) + 1));
-        // Direction is already handled by the horizontal/vertical slide variables.
+        // The slide variables already handle RTL.
         /* rtl:ignore */
         transform: translate(calc(var(--tools-slide-x) * var(--tools-bubble-distance)), calc(var(--tools-slide-y) * var(--tools-bubble-distance)));
     }
@@ -149,12 +149,11 @@
     inset-inline-end: 5rem;
     top: var(--tools-panel-top);
     bottom: var(--tools-panel-bottom);
-    // Keep the panel plus its bubble strip within the legacy sidedocs footprint.
-    // Explicit resizing can grow beyond this default without changing the budget.
+    // The initial panel and bubbles together occupy the normal sidedocs width.
     width: calc(var(--tools-default-width) - var(--tools-launcher-space));
     min-width: ~"min(16rem, var(--tools-available-width))";
     max-width: var(--tools-available-width);
-    // Leave CSS max() to the browser rather than Less's numeric max() function.
+    // Escape max() so Less leaves the CSS calculation for the browser.
     max-height: ~"max(0px, calc(100vh - var(--tools-panel-top) - var(--tools-panel-bottom)))";
     max-height: ~"max(0px, calc(100dvh - var(--tools-panel-top) - var(--tools-panel-bottom)))";
     display: flex;
@@ -216,8 +215,7 @@
     .icon { margin: 0; }
 }
 
-// Header actions sit on a target surface, not the primary toolbar background.
-// Outrank shared menu/link rules even when react-common is imported afterwards.
+// Header buttons use panel colors, not the shared toolbar colors.
 .project-tools-header .project-tools-close,
 .project-tools-header .project-tools-external,
 .project-tools-header .project-tools-pin,
@@ -487,7 +485,7 @@
         --tools-pointer-offset: calc(var(--tools-bubble-size) * (var(--tools-tab-count) - var(--tools-tab-index) + .5) + var(--tools-bubble-gap) * (var(--tools-tab-count) - var(--tools-tab-index)));
         --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 4.75rem);
         --tools-available-width: calc(100vw - 1rem);
-        // Keep the half-rem outer gutter within the legacy desktop width budget.
+        // Include the outer gutter in the default width.
         --tools-launcher-space: .5rem;
 
         inset-inline-end: .5rem;

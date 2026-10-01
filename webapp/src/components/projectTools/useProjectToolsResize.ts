@@ -20,14 +20,13 @@ export interface ProjectToolsResizeState {
     heightHandle: ProjectToolsResizeHandleProps;
 }
 
-/** Keep pointer/keyboard sizing and ARIA limits synchronized with the panel's CSS bounds. */
 export function useProjectToolsResize(
     panel: React.RefObject<HTMLDivElement>,
     expanded: boolean,
     compact: boolean,
     rtl: boolean
 ): ProjectToolsResizeState {
-    // Leave initial sizing to CSS; remember explicit sizes for this project view.
+    // CSS sets the initial size; explicit resizing lasts until the project is closed.
     const [width, setWidth] = React.useState<number>();
     const [height, setHeight] = React.useState<number>();
     const [widthRange, setWidthRange] = React.useState<WidthRange>({ width: 0, min: 0, max: 0 });

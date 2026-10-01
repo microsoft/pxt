@@ -74,7 +74,7 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
     const [notes, setNotes] = React.useState(initial.notes);
     const activeBoard = notes.whiteboards.find(board => board.id === notes.activeWhiteboardId);
 
-    // Keep each board's undo history and selected tools separate while switching.
+    // Each board retains its own undo history and tool selection.
     const stores = React.useRef(new Map<string, Store<ImageEditorStore>>());
     if (!stores.current.has(activeBoard.id)) {
         stores.current.set(activeBoard.id, createStore(noteReducer, createNoteState(activeBoard)));
@@ -108,8 +108,7 @@ export function ProjectWhiteboard(props: ProjectWhiteboardProps): JSX.Element {
             setStatus("saving");
         }
 
-        // Capture the project ID, not the current global main package. Switching
-        // projects must never save an old canvas into the newly opened project.
+        // Finish saving to this project even if another project has been opened.
         saveQueue.current.enqueue(() => workspace.saveProjectNotesAsync(props.headerId, snapshot)).then(() => {
             if (alive.current && revision.current === savedRevision) {
                 setStatus("saved");

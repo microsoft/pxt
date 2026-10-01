@@ -124,18 +124,17 @@ namespace pxt.auth {
 
     export type BackpackKind = "code" | "asset";
 
-    /** A private, portable capture sent to the dedicated Backpack API. */
     export interface BackpackItem {
         id: string;
         name: string;
         kind: BackpackKind;
-        /** Actual editor builds at capture time, including prerelease/build suffixes. */
+        /** Editor versions at capture time, including prerelease/build suffixes. */
         versions: BackpackVersions;
         code: string;
         /** Displayed block labels and field values, captured without needing the original extensions to search. */
         blockText: string;
         dependencies: pxt.Map<string>;
-        /** Block IDs whose definitions live in project files, rather than extensions. */
+        /** Block type IDs whose definitions live in project files, rather than extensions. */
         projectBlocks?: pxt.Map<string>;
         createdAt: number;
         previewUri?: string;

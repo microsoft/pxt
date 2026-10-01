@@ -8,9 +8,6 @@ const less = require("less");
 const { launchTestBrowser } = require("./browser");
 const { source, bundleSource } = require("./source");
 
-// No build output or ProjectTools integration: exercise today's source with
-// real React 17, Fuse and shared controls. Native asset editing and project/storage
-// behavior belong to their own suites; this harness covers the panel lifecycle.
 describe("project backpack UI", function () {
     this.timeout(30000);
     let browser;
@@ -166,7 +163,6 @@ describe("project backpack UI", function () {
                     entries: (test.snapshots[test.storeKey()] || []).map(item => {
                         const validated = window.backpackValidation.readBackpackEntry(item.id, item, test.user ? "cloud" : "local");
                         if (!test.user || validated.error) return validated;
-                        // Supply summary fields directly; indexing matrices belong to search tests.
                         return window.backpackValidation.readBackpackSummary({ id: item.id, name: item.name, kind: item.kind, versions: item.versions,
                             createdAt: item.createdAt, updatedAt: item.createdAt, version: '"v1"', status: "ready", hasPreview: false,
                             blockTypes: JSON.parse(item.code).blocks.map(block => block.type), blockText: item.blockText,
@@ -240,12 +236,10 @@ describe("project backpack UI", function () {
                 modules["./useBackpackDrag"] = window.backpackDrag;
                 modules["./useBackpackPageFocus"] = window.backpackPageFocus;
                 modules["./useBackpackCollection"] = window.backpackCollection;
-                // Native rendering is exercised with real fields in backpack-asset-edit.
                 modules["../../backpackAssetPreview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
                     previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code),
                     framePreviewURIs: test.previewFrames
                 }) };
-                // Native editor behavior lives in backpack-asset-edit; keep the real portal/focus controls here.
                 modules["./BackpackAssetEditDialog"] = { BackpackAssetEditDialog: props => {
                     const [code, setCode] = React.useState(props.item.code);
                     return React.createElement(window.backpackControls.Modal, {
@@ -265,7 +259,6 @@ describe("project backpack UI", function () {
         }, assetPreviewURI);
         await page.addScriptTag({ content: controls });
         await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpackErrors.ts")}\n})(window.backpackErrors = {});` });
-        // Reuse the actual storage validator without exercising network/auth storage.
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpack.ts")}\n})(window.require, window.backpackValidation = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });

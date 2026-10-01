@@ -15,8 +15,7 @@ const errorSource = ts.transpileModule(fs.readFileSync(path.join(root, "webapp/s
 }).outputText;
 assert.deepStrictEqual(compiled.diagnostics, []);
 
-// The production adapter uses Chromium transactions on an intercepted test origin;
-// only the transport is mocked. Backend tests cover the actual HTTP handlers.
+// Uses Chromium's IndexedDB; HTTP responses are mocked in this suite.
 describe("dedicated Backpack API and durable IndexedDB (current source)", function () {
     this.timeout(30000);
     let browser, page, errors;

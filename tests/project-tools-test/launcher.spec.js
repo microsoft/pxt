@@ -8,8 +8,6 @@ const rtlcss = require("rtlcss");
 const ts = require("typescript");
 const { bundleSource } = require("./source");
 
-// Compile current source in memory with real React, DOM focus and media queries.
-// Whiteboard persistence and shortcut isolation use the real editor in whiteboard.spec.
 describe("responsive project-tools launcher", function () {
     this.timeout(30000);
     let browser;
@@ -43,7 +41,8 @@ describe("responsive project-tools launcher", function () {
             "react-common/components/util.tsx",
             "webapp/src/components/projectTools/ProjectToolsHeader.tsx",
             "webapp/src/components/projectTools/ProjectToolsResizeHandle.tsx",
-            "webapp/src/components/projectTools/useProjectToolsResize.ts"
+            "webapp/src/components/projectTools/useProjectToolsResize.ts",
+            "webapp/src/components/projectTools/useProjectToolsDismiss.ts"
         ], "projectToolsComponents");
         const styles = await less.render(fs.readFileSync("theme/project-tools.less", "utf8"), {
             modifyVars: themeVariables
@@ -78,7 +77,7 @@ describe("responsive project-tools launcher", function () {
                 if (id === "react") return window.React;
                 if (id === "../../projectToolsState") return window.projectToolsState;
                 if ([
-                    "./ProjectToolsHeader", "./ProjectToolsResizeHandle", "./useProjectToolsResize",
+                    "./ProjectToolsHeader", "./ProjectToolsResizeHandle", "./useProjectToolsResize", "./useProjectToolsDismiss",
                     "../../../../react-common/components/controls/Button", "../../../../react-common/components/util"
                 ].includes(id)) return window.projectToolsComponents;
                 if (id === "../../backpack") return {
@@ -145,8 +144,6 @@ describe("responsive project-tools launcher", function () {
     afterEach(async () => {
         if (!page || page.isClosed()) return;
         try {
-            // Unmount listeners and let pending polling cleanup finish before
-            // closing the target; late CDP replies can affect the next page.
             await page.evaluate(() => {
                 const root = document.getElementById("root");
                 if (window.ReactDOM && root) ReactDOM.unmountComponentAtNode(root);
@@ -284,7 +281,6 @@ describe("responsive project-tools launcher", function () {
         await focusIs("project-tools-launcher");
     });
 
-    // Horizontal RTL reverses arrows; vertical navigation automatically selects.
     for (const { width, rtl } of [{ width: 1024, rtl: true }, { width: 1366, rtl: false }]) {
         it(`cycles bubble shortcuts and Home/End at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
             await openTool(docs, width);
@@ -356,8 +352,7 @@ describe("responsive project-tools launcher", function () {
         await page.click(whiteboard);
         await page.waitForSelector("#test-notes", { visible: true });
         await focusIs("project-tools-tab-whiteboard");
-        // Reopening retains the textarea. Click it as a user would rather than
-        // racing programmatic focus against the panel's pending open effect.
+        // Click to focus after reopening; the panel's pending open effect can override programmatic focus.
         await page.click("#test-notes");
         await page.keyboard.press("Tab");
         await focusIs("outside");

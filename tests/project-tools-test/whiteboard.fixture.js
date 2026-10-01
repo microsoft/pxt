@@ -1,7 +1,5 @@
 "use strict";
 
-// This browser fixture uses the real React components and image reducer. Only
-// the persistence and game-asset boundaries are supplied by the test runner.
 const React = require("react");
 const ReactDOM = require("react-dom");
 const { ProjectTools } = require("../../built/webapp/src/components/projectTools/index");

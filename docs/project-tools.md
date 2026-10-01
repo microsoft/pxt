@@ -52,9 +52,9 @@ Limits are 50 code captures and 200 assets per target, with a shared
 not stored as PNGs. Tilemaps include their required tile pixels.
 Reopening rechecks metadata while keeping the previous cards visible. Returning
 to the browser tab or opening a different project shows Loading until metadata
-is refreshed (after closing any open edit dialog). Previews are cached by item
-version in bounded, account-scoped session memory; only new,
-changed or evicted previews are downloaded. Add/Edit still read current content.
+is refreshed (after closing any open edit dialog). Previews are cached in memory
+for the current account. Only new, changed or evicted previews are downloaded.
+Adding or editing an item reads its saved content again.
 
 Guests save in this browser; signing in syncs captures across browsers. Search
 matches names, contained blocks, parameters and extensions. Rename is optional.
@@ -71,7 +71,7 @@ Assets tab and saves to Backpack, not project assets. Captures store target/PXT
 versions and warn before cross-version imports.
 
 Failed uploads retain a local copy with **Retry sync**. After 24 hours, add that
-copy to a project and capture it again. Invalid entries remain trashable.
+copy to a project and capture it again. Invalid entries can still be deleted.
 Deleting a pending local copy does **not** delete a cloud copy that may already
 have synced; delete the cloud card separately. Inserted project code is unaffected.
 
@@ -95,9 +95,9 @@ handle browser-focus and drag events. Item dialogs own their input focus.
 Feature classes use hyphenated names such as
 `project-backpack-item`; update their event and test selectors together.
 
-Feature-specific panels and hooks live in the webapp and compose `react-common`
-controls. Project tools opt into the shared button's `nativeBehavior` and use
-`hardDisabled` where a native disabled button was previously used. Keep the
+Project tools use `react-common` controls. Buttons use `nativeBehavior` to retain
+browser keyboard activation and click propagation, and `hardDisabled` where
+pending operations must disable interaction. Keep the
 feature's sizing, colors and focus treatment when reusing controls; retain native
 form inputs and submit buttons where their validation attributes are needed.
 Actions have localized descriptive titles alongside their visible or ARIA labels.
@@ -114,8 +114,8 @@ Captures use a versioned `{ version: 1, blocks: [...] }` envelope containing
 Blockly's native clipboard block states. Earlier unversioned captures remain
 readable; unsupported future versions are rejected without loading their blocks.
 Copy/paste and Backpack share the native clipboard paster and placement helper.
-Block fields and mutation data are interpreted by Blockly, not a separate Backpack
-schema. Backpack still checks its envelope, size limits and supporting functions.
+Blockly loads block fields and mutations. Backpack checks its versioned wrapper,
+size limits and supporting functions.
 Launcher bubbles are disclosure buttons in a labelled group, with named regions
 for their panels. Each visible bubble is a Tab stop; hidden bubbles are excluded
 from the tab order.

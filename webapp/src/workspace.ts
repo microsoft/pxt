@@ -713,8 +713,8 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         try {
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
-            // Private notes are excluded from the usual download/share recovery
-            // paths. Do not silently call an in-memory fallback a successful save.
+            // Private notes are excluded from downloads and shares, so a memory-only
+            // fallback could lose unsaved notes.
             if (privateMetadataOnly) throw e;
             // Write failed; use in memory db.
             await switchToMemoryWorkspace("write failed");

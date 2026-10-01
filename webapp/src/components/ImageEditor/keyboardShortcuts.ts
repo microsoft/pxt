@@ -40,8 +40,8 @@ function ownerForEvent(event: Event): ShortcutOwner {
     if (!(event.target instanceof Node)) return undefined;
     const target = event.target instanceof Element ? event.target : event.target.parentElement;
     if (target?.closest("input, textarea, select, [contenteditable=true]")) return undefined;
-    // Prefer the innermost / most recently mounted editor. A nonmodal editor
-    // must never consume shortcuts from Monaco, Blockly or the notes textarea.
+    // Use the most recently mounted editor that contains the event target.
+    // Scoped editors must not consume shortcuts from other editors or the notes textarea.
     return owners.slice().reverse().find(owner => owner.root.contains(event.target as Node)) ||
         owners.slice().reverse().find(owner => !owner.scoped);
 }

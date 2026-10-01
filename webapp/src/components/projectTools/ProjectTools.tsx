@@ -6,6 +6,7 @@ import { ProjectBackpack } from "../backpack/index";
 import { ProjectToolsHeader } from "./ProjectToolsHeader";
 import { ProjectToolsResizeHandle } from "./ProjectToolsResizeHandle";
 import { useProjectToolsResize } from "./useProjectToolsResize";
+import { useProjectToolsDismiss } from "./useProjectToolsDismiss";
 import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../../backpack";
 import {
     isWhiteboardEnabled,
@@ -84,8 +85,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         }
     }, [whiteboardEnabled, backpackEnabled, selectedTab]);
 
-    // Deferred iframe/focus events must honor the latest pin state, not the
-    // state captured before the user clicked Pin or opened an example.
+    // Blur callbacks can run after Pin changes; read the current state.
     const pinState = React.useRef({ pinned: props.pinned, expanded: props.expanded });
     pinState.current = { pinned: props.pinned, expanded: props.expanded };
 
@@ -94,8 +94,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
             return;
         }
 
-        // Desktop bubbles remain available after click-away; only an explicit
-        // disclosure action hides them. Read the current size for deferred blur.
+        // Clicking outside hides the bubbles on small screens, but not on desktop.
         if (explicit || pxt.BrowserUtils.isTabletSize()) {
             setOptionsOpen(false);
         }
@@ -109,7 +108,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
             return;
         }
 
-        // Native Blockly dragging must retain pointer capture and workspace focus.
+        // Opening from a drag must not move keyboard focus.
         openingFromDrag.current = !request.focus;
         focusTabOnOpen.current = request.focus;
         setBackpackRequest(request);
@@ -123,11 +122,10 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         const query = window.matchMedia(PROJECT_TOOLS_COMPACT_QUERY);
         const tabletQuery = window.matchMedia(`(max-width: ${pxt.BREAKPOINT_TABLET}px)`);
 
-        // Changing strip direction must not undo an explicit desktop collapse.
+        // Changing orientation must not reveal bubbles the user has hidden.
         const onChange = () => setCompact(query.matches);
         const onTabletChange = () => {
             if (tabletQuery.matches) {
-                // Move focus before hiding bubbles, without dismissing an open panel.
                 if (launcher.current?.contains(document.activeElement)) {
                     moreButton.current?.focus();
                 }
@@ -145,7 +143,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
     }, []);
 
     React.useLayoutEffect(() => {
-        // Only user-initiated expansion moves focus, not desktop startup or resize.
+        // Do not focus the bubbles just because the screen was resized.
         if (!focusTabOnOpen.current || !optionsOpen) {
             return;
         }
@@ -154,81 +152,14 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         bubbleButtons.current[tabIndex]?.focus();
     }, [optionsOpen, tabIndex]);
 
-    React.useEffect(() => {
-        if (!props.expanded && !optionsOpen) {
-            return undefined;
-        }
-
-        const onPointerDown = (event: PointerEvent) => {
-            if (root.current && !root.current.contains(event.target as Node)) {
-                dismissTools();
-            }
-        };
-
-        let frame: number;
-        const onWindowBlur = () => {
-            if (frame !== undefined) {
-                window.cancelAnimationFrame(frame);
-            }
-
-            frame = window.requestAnimationFrame(() => {
-                frame = undefined;
-                const active = document.activeElement;
-                // Iframe pointer events do not reach this document. Treat focus
-                // entering the simulator as outside, but leave the docs frame open.
-                if (root.current && active instanceof HTMLIFrameElement && !root.current.contains(active)) {
-                    dismissTools();
-                }
-            });
-        };
-
-        // Blockly and Monaco can stop bubbling pointer events; do not prevent
-        // the clicked control from receiving its normal action or focus.
-        document.addEventListener("pointerdown", onPointerDown, true);
-        window.addEventListener("blur", onWindowBlur);
-
-        // Moving directly from docs to the simulator blurs only the docs window,
-        // not the parent. Reattach after navigation because its window may change.
-        const removeFrameListeners = Array.from(root.current?.querySelectorAll("iframe") || []).map(iframe => {
-            let frameWindow: Window;
-            const detach = () => {
-                try {
-                    frameWindow?.removeEventListener("blur", onWindowBlur);
-                } catch {
-                    // The iframe may have navigated to another origin.
-                }
-                frameWindow = undefined;
-            };
-
-            const attach = () => {
-                detach();
-                try {
-                    frameWindow = iframe.contentWindow;
-                    frameWindow?.addEventListener("blur", onWindowBlur);
-                } catch {
-                    // Cross-origin content is inaccessible; retain the parent listener.
-                    frameWindow = undefined;
-                }
-            };
-
-            iframe.addEventListener("load", attach);
-            attach();
-
-            return () => {
-                iframe.removeEventListener("load", attach);
-                detach();
-            };
-        });
-
-        return () => {
-            document.removeEventListener("pointerdown", onPointerDown, true);
-            window.removeEventListener("blur", onWindowBlur);
-            removeFrameListeners.forEach(remove => remove());
-            if (frame !== undefined) {
-                window.cancelAnimationFrame(frame);
-            }
-        };
-    }, [compact, optionsOpen, props.expanded, props.docsUrl, props.docsRequest, dismissTools]);
+    const onBlur = useProjectToolsDismiss(root, {
+        expanded: props.expanded,
+        optionsOpen,
+        compact,
+        docsUrl: props.docsUrl,
+        docsRequest: props.docsRequest,
+        onDismiss: dismissTools
+    });
 
     React.useEffect(() => {
         if (props.docsUrl) {
@@ -354,21 +285,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
             dir={rtl ? "rtl" : "ltr"}
             data-options-open={optionsOpen}
             style={{ "--tools-tab-count": tabNames.length } as React.CSSProperties}
-            onBlur={event => {
-                if (event.relatedTarget) {
-                    if (!event.currentTarget.contains(event.relatedTarget as Node)) {
-                        dismissTools();
-                    }
-                } else {
-                    // Focus entering the docs iframe has no relatedTarget. Wait until
-                    // activeElement reflects the iframe before deciding focus left us.
-                    window.requestAnimationFrame(() => {
-                        if (root.current && !root.current.contains(document.activeElement)) {
-                            dismissTools();
-                        }
-                    });
-                }
-            }}
+            onBlur={onBlur}
         >
             <div
                 className="project-tools-launcher"

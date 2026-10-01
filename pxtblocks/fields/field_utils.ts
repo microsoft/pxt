@@ -8,8 +8,9 @@ import { FieldTileset } from "./field_tileset";
 export interface FieldCustom {
     isFieldCustom_: boolean;
     /**
-     * Allows an output block with no inputs for other blocks to be saved in Backpack's Assets tab.
-     * This must be the block's only editable, serializable field.
+     * Allows this field's value to be saved in Backpack's Assets tab.
+     * A standalone asset must be an output block with no block inputs and no other
+     * editable, serializable fields.
      */
     isBackpackAsset?: boolean;
     saveOptions?(): pxt.Map<string | number | boolean>;
