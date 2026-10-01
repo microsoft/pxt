@@ -2,7 +2,7 @@ import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { classList } from "../../../../react-common/components/util";
 import { ProjectWhiteboard } from "./ProjectWhiteboard";
-import { ProjectBackpack } from "./ProjectBackpack";
+import { ProjectBackpack } from "../backpack/index";
 import { ProjectToolsHeader } from "./ProjectToolsHeader";
 import { ProjectToolsResizeHandle } from "./ProjectToolsResizeHandle";
 import { useProjectToolsResize } from "./useProjectToolsResize";
