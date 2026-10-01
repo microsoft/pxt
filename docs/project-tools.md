@@ -40,6 +40,10 @@ referenced Blockly functions and assets—not following siblings or the original
 Legacy procedure blocks are not supported; recreate them using Functions blocks.
 Standalone image, animation, tilemap and music blocks go to **Assets** instead of
 **Code**, based on their registered field editor, including extension-defined blocks.
+Statements and expressions with asset fields save the asset separately. If there
+is more than one field, choose which asset to save from the dialog. Cancelling
+saves nothing, and the source block is never changed. Containers such as events
+and loops still save their entire contents as **Code**, including any asset fields.
 Required extensions are installed with consent on Add, just as for code snippets.
 Asset field implementations can opt in with `isBackpackAsset`. Ordinary dropdowns
 such as Minecraft's block picker are not Backpack assets.

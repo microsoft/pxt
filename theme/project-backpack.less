@@ -242,6 +242,46 @@
 }
 .project-backpack__delete-modal .common-modal-body,
 .project-backpack__rename-modal .common-modal-body { overflow-wrap: anywhere; }
+
+.backpack-asset-choices {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: .75rem;
+    list-style: none;
+    padding: 0;
+    margin: 1rem 0 0;
+}
+
+.backpack-asset-choice.common-button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    width: 100%;
+    min-height: 44px;
+    height: 100%;
+    margin: 0;
+    padding: 1rem;
+    white-space: normal;
+    overflow-wrap: anywhere;
+    border: 1px solid var(--pxt-neutral-foreground3);
+
+    img {
+        width: 4rem;
+        height: 4rem;
+        object-fit: contain;
+        image-rendering: pixelated;
+    }
+    &:focus-visible {
+        outline: 3px solid var(--pxt-focus-border);
+        outline-offset: 2px;
+    }
+    &:focus-visible::after { outline: none; }
+}
+
+.backpack-asset-choice-label { font-weight: 600; }
+.backpack-asset-choice-name { font-size: .875rem; }
+
 .project-backpack__rename-form {
     display: flex;
     flex-direction: column;

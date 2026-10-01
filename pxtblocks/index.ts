@@ -23,6 +23,7 @@ export * from "./blockDragger";
 export * from "./clipboard";
 export {
     BackpackCode, BackpackDragTargetOptions, BackpackWorkspaceOptions, isBackpackContainer, isBackpackBlock, getBackpackAssetField,
+    BackpackAssetCapture, captureBackpackAsset, getBackpackAssetFields, getBackpackCaptureKind,
     captureBackpackBlock, parseBackpackCode, getBackpackBlockTypes, pasteBackpackBlock, registerBackpackWorkspace,
 } from "./backpack";
 export * from "./workspaceSearch";
