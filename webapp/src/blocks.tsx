@@ -44,7 +44,7 @@ import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
 import * as backpack from "./backpack";
-import { backpackUserErrorMessage } from "./backpackErrors";
+import { BackpackUserError, backpackUserErrorMessage } from "./backpackErrors";
 import { chooseBackpackAssetAsync } from "./backpackAssetChooser";
 import { BackpackAssetChoice } from "./components/backpack/BackpackAssetChooser";
 import { assetToGalleryItem } from "./assets";
@@ -2711,7 +2711,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private async importFromBackpackAsync(item: pxt.auth.BackpackItem, position?: backpack.BackpackImportPosition): Promise<boolean> {
-        if (!this.backpackAvailable(item.kind)) throw new Error(lf("Open an editable Blocks project to add this snippet."));
+        if (!this.backpackAvailable(item.kind)) throw new BackpackUserError(lf("Open an editable Blocks project to add this snippet."));
         const host = this.createSnippetHost();
         return addBackpackToProjectAsync(item, { ...host, isCurrent: () => host.isCurrent()
             && backpack.isBackpackEnabled() && (item.kind !== "asset" || backpack.isBackpackAssetsEnabled())
@@ -3070,7 +3070,7 @@ function saveCopyData(
             headerId
         };
         if (data.paster === Blockly.clipboard.BlockPaster.TYPE) {
-            if (!blockInfo) throw new Error(lf("The blocks are still loading. Please try copying again."));
+            if (!blockInfo) throw new BackpackUserError(lf("The blocks are still loading. Please try copying again."));
             entry.requirements = getBlockSnippetRequirements([(data as Blockly.clipboard.BlockCopyData).blockState], blockInfo, pkg.mainPkg);
         }
         pxt.storage.setLocal(copyDataKey(), JSON.stringify(entry));

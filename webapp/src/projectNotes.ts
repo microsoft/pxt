@@ -5,6 +5,37 @@ export const MAX_WHITEBOARD_DIMENSION = 256;
 export const WHITEBOARD_WIDTH = 160;
 export const WHITEBOARD_HEIGHT = 120;
 
+type ProjectNotesOperationErrorCode =
+    "empty-name"
+    | "invalid-name"
+    | "duplicate-name"
+    | "whiteboard-limit"
+    | "whiteboard-unavailable"
+    | "last-whiteboard";
+
+class ProjectNotesOperationError extends Error {
+    constructor(readonly code: ProjectNotesOperationErrorCode) {
+        super(code);
+    }
+}
+
+const projectNotesOperationErrorMessages: Record<ProjectNotesOperationErrorCode, () => string> = {
+    "empty-name": () => pxt.Util.lf("Enter a whiteboard name."),
+    "invalid-name": () => pxt.Util.lf("Use a single-line name of {0} characters or fewer.", MAX_WHITEBOARD_NAME_LENGTH),
+    "duplicate-name": () => pxt.Util.lf("A whiteboard with this name already exists."),
+    "whiteboard-limit": () => pxt.Util.lf("You can have up to {0} whiteboards per project.", MAX_PROJECT_WHITEBOARDS),
+    "whiteboard-unavailable": () => pxt.Util.lf("This whiteboard is no longer available."),
+    "last-whiteboard": () => pxt.Util.lf("Keep at least one whiteboard.")
+};
+
+export function projectNotesErrorMessage(error: unknown, fallback: string): string {
+    if (error instanceof ProjectNotesOperationError) {
+        return projectNotesOperationErrorMessages[error.code]();
+    }
+    pxt.reportException(error);
+    return fallback;
+}
+
 /** Save notes in order; one failed save must not prevent the next attempt. */
 export class ProjectNotesSaveQueue {
     private pending: Promise<void> = Promise.resolve();
@@ -84,18 +115,32 @@ export function createProjectNotes(): pxt.workspace.ProjectNotes {
     return { whiteboards: [board], activeWhiteboardId: board.id };
 }
 
+function whiteboardNameErrorCode(
+    name: string,
+    notes: pxt.workspace.ProjectNotes,
+    exceptId?: string
+): ProjectNotesOperationErrorCode | undefined {
+    const trimmed = name.trim();
+    if (!trimmed) return "empty-name";
+    if (trimmed.length > MAX_WHITEBOARD_NAME_LENGTH || /[\r\n\t]/.test(trimmed))
+        return "invalid-name";
+    if (notes.whiteboards.some(board => board.id !== exceptId && board.name.toLowerCase() === trimmed.toLowerCase()))
+        return "duplicate-name";
+    return undefined;
+}
+
 export function whiteboardNameError(
     name: string,
     notes: pxt.workspace.ProjectNotes,
     exceptId?: string
 ): string | undefined {
-    const trimmed = name.trim();
-    if (!trimmed) return pxt.Util.lf("Enter a whiteboard name.");
-    if (trimmed.length > MAX_WHITEBOARD_NAME_LENGTH || /[\r\n\t]/.test(trimmed))
-        return pxt.Util.lf("Use a single-line name of {0} characters or fewer.", MAX_WHITEBOARD_NAME_LENGTH);
-    if (notes.whiteboards.some(board => board.id !== exceptId && board.name.toLowerCase() === trimmed.toLowerCase()))
-        return pxt.Util.lf("A whiteboard with this name already exists.");
-    return undefined;
+    const code = whiteboardNameErrorCode(name, notes, exceptId);
+    return code ? projectNotesOperationErrorMessages[code]() : undefined;
+}
+
+function throwWhiteboardNameError(name: string, notes: pxt.workspace.ProjectNotes, exceptId?: string): void {
+    const code = whiteboardNameErrorCode(name, notes, exceptId);
+    if (code) throw new ProjectNotesOperationError(code);
 }
 
 export function nextWhiteboardName(notes: pxt.workspace.ProjectNotes): string {
@@ -107,10 +152,9 @@ export function nextWhiteboardName(notes: pxt.workspace.ProjectNotes): string {
 }
 
 export function addProjectWhiteboard(notes: pxt.workspace.ProjectNotes, name: string): pxt.workspace.ProjectNotes {
-    const error = whiteboardNameError(name, notes);
-    if (error) throw new Error(error);
+    throwWhiteboardNameError(name, notes);
     if (notes.whiteboards.length >= MAX_PROJECT_WHITEBOARDS)
-        throw new Error(pxt.Util.lf("You can have up to {0} whiteboards per project.", MAX_PROJECT_WHITEBOARDS));
+        throw new ProjectNotesOperationError("whiteboard-limit");
 
     const board: pxt.workspace.ProjectWhiteboard = { id: pxt.Util.guidGen(), name: name.trim(), text: "" };
     return { ...notes, whiteboards: [...notes.whiteboards, board], activeWhiteboardId: board.id };
@@ -121,9 +165,8 @@ export function renameProjectWhiteboard(
     id: string,
     name: string
 ): pxt.workspace.ProjectNotes {
-    const error = whiteboardNameError(name, notes, id);
-    if (error) throw new Error(error);
-    if (!notes.whiteboards.some(board => board.id === id)) throw new Error("Unknown whiteboard");
+    throwWhiteboardNameError(name, notes, id);
+    if (!notes.whiteboards.some(board => board.id === id)) throw new ProjectNotesOperationError("whiteboard-unavailable");
 
     return {
         ...notes,
@@ -134,8 +177,8 @@ export function renameProjectWhiteboard(
 /** Keep at least one whiteboard and select a remaining board if the active one is deleted. */
 export function deleteProjectWhiteboard(notes: pxt.workspace.ProjectNotes, id: string): pxt.workspace.ProjectNotes {
     const index = notes.whiteboards.findIndex(board => board.id === id);
-    if (index < 0) throw new Error(pxt.Util.lf("This whiteboard is no longer available."));
-    if (notes.whiteboards.length <= 1) throw new Error(pxt.Util.lf("Keep at least one whiteboard."));
+    if (index < 0) throw new ProjectNotesOperationError("whiteboard-unavailable");
+    if (notes.whiteboards.length <= 1) throw new ProjectNotesOperationError("last-whiteboard");
 
     const whiteboards = notes.whiteboards.filter(board => board.id !== id);
     return {
