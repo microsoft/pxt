@@ -28,9 +28,11 @@ export class File implements IFile {
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     filters: pxt.editor.ProjectFilters;
-    forceChangeCallback: ((from: string, to: string) => void);
+    forceChangeCallback: ((from: string, to: string) => Promise<void> | void);
     virtual: boolean;
     baseGitContent: string;
+    // settles once the editor has reloaded this file after a forced change; undefined when no reload is pending
+    private editorReload: Promise<void>;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) {
     }
@@ -102,29 +104,82 @@ export class File implements IFile {
         }
     }
 
-    setContentAsync(newContent: string, force?: boolean) {
+    // PR NOTE [Issue 2] (forced writes vs the editor's save debounce) -- lift
+    // into the PR description, then remove. Issue 2 in
+    // generated-docs/pxt-issue-drafts.
+    //
+    // Issue: setContentAsync(force) saved the new content and then fired
+    // forceChangeCallback WITHOUT awaiting it. The open text editor reloads
+    // the file from that callback, so there is a window between the save and
+    // the reload in which the editor still shows the OLD content. All of the
+    // webapp's save paths funnel through saveCurrentSourceAsync (the 500ms
+    // typing debounce, file switches, tab hide, typecheck), and each writes
+    // the editor buffer back into the file -- so a save landing inside that
+    // window silently reverted the just-saved content, AFTER the writer had
+    // already been told the write succeeded. Reachable by anything that
+    // writes file content behind the open editor: a simulator extension
+    // writing a project file through the projfs API while the user has that
+    // file open in the text editor, and pxt's own Host.writeFile(force).
+    //
+    // Resolution: the force-change callback may now return the editor's
+    // reload promise (monaco.tsx returns loadFileAsync). setContentAsync
+    // records the pending reload (editorReload, exposed via
+    // editorReloadAsync) and resolves only after the reload completes;
+    // saveCurrentSourceAsync waits out a pending reload before saving the
+    // buffer, so a save can never write content that predates the file's.
+    // A reload failure is reported, not raised: the write itself applied,
+    // and its caller must not see an applied write as failed.
+    /**
+     * Replaces the file's content and saves it.
+     * @param force if true and a force-change callback is set, the editor
+     * reloads the file once it is saved, and the promise settles after the
+     * reload; until then, {@link editorReloadAsync} reports the reload pending
+     */
+    setContentAsync(newContent: string, force?: boolean): Promise<void> {
         Util.assert(newContent !== undefined);
         this.inSyncWithEditor = true;
         if (newContent != this.content) {
             let prevContent = this.content;
             this.content = newContent;
             this.updateStatus();
-            return this.epkg.saveFileAsync(this.name)
+            const saved = this.epkg.saveFileAsync(this.name)
                 .then(() => {
                     if (this.content == newContent) {
                         this.updateStatus();
                     }
-                    if (force && this.forceChangeCallback) this.forceChangeCallback(prevContent, newContent);
                     if (this.name == pxt.github.GIT_JSON)
                         this.epkg.updateGitJsonCache()
-                })
+                });
+            const reloadEditor = force && this.forceChangeCallback;
+            if (!reloadEditor) return saved;
+            const reloaded = saved.then(async () => {
+                try {
+                    await reloadEditor(prevContent, newContent);
+                } catch (e) {
+                    pxt.reportException(e);
+                }
+            });
+            const pending: Promise<void> = reloaded.catch(() => { }).then(() => {
+                if (this.editorReload === pending) this.editorReload = undefined;
+            });
+            this.editorReload = pending;
+            return reloaded;
         } else {
             this.updateStatus();
             return Promise.resolve()
         }
     }
 
-    setForceChangeCallback(callback: (from: string, to: string) => void) {
+    /**
+     * Returns a promise that settles once the editor has reloaded this file
+     * after a forced change, or undefined if no reload is pending. While a
+     * reload is pending, the editor shows content older than the file's.
+     */
+    editorReloadAsync(): Promise<void> | undefined {
+        return this.editorReload;
+    }
+
+    setForceChangeCallback(callback: (from: string, to: string) => Promise<void> | void) {
         this.forceChangeCallback = callback;
     }
 

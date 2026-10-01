@@ -1582,11 +1582,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (this.fileType == pxt.editor.FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
 
+                // PR NOTE [Issue 2] -- lift into the PR description, then remove.
+                // The callback now returns the reload promise so
+                // File.setContentAsync can tell when the editor shows the new
+                // content: dependent saves are held until then (see the PR
+                // note on File.setContentAsync), and a forced write's promise
+                // resolves only after the reload.
                 this.currFile.setForceChangeCallback((from: string, to: string) => {
                     if (from != to) {
                         pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
-                        this.loadFileAsync(this.currFile);
+                        return this.loadFileAsync(this.currFile);
                     }
+                    return undefined;
                 });
 
                 if (!file.isReadonly()) {

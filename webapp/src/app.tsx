@@ -640,6 +640,24 @@ export class ProjectView
     }
 
     saveCurrentSourceAsync(): Promise<void> {
+        // PR NOTE [Issue 2] -- lift into the PR description, then remove.
+        // This method is the single place the editor buffer is written back
+        // into the current file, and every save path funnels through it (the
+        // typing debounce, file switches, tab hide, typecheck). While a
+        // forced change to the shown file is reloading the editor (a projfs
+        // write from a simulator extension, or Host.writeFile(force)), the
+        // buffer predates the file's content; saving it here was the
+        // save-back that silently reverted an applied, acknowledged write
+        // (see the PR note on File.setContentAsync). Wait out the reload,
+        // then re-enter and save what the editor shows -- but only if the
+        // same file is still open, since the user may have switched files
+        // while the reload was pending. Typing made after the reload is
+        // saved as usual; typing made before the forced write is replaced
+        // by it, which is the established forced-write semantic.
+        const file = this.editorFile;
+        const reload = file.editorReloadAsync();
+        if (reload)
+            return reload.then(() => file === this.editorFile ? this.saveCurrentSourceAsync() : undefined);
         let txt = this.editor.getCurrentSource()
         if (txt != this.editorFile.content)
             simulator.setDirty();
