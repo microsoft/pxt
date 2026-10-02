@@ -221,6 +221,14 @@ namespace ts.pxtc.thumb {
             return i.name == "bl" || i.name == "bb";
         }
 
+        public callInstructionName() {
+            return "bl";
+        }
+
+        public wrapProcedureBody(body: string[]) {
+            return ["push {lr}", ...body, "pop {pc}"];
+        }
+
         public postProcessAbsAddress(f: assembler.File, v: number) {
             // Thumb addresses have last bit set, but we are ourselves always
             // in Thumb state, so to go to ARM state, we signal that with that last bit
