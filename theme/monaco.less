@@ -90,6 +90,88 @@
     color: var(--pxt-colors-orange-background) !important;
 }
 
+.monaco-editor.hc-black .suggest-widget {
+    background-color: var(--pxt-neutral-background1) !important;
+    color: var(--pxt-neutral-foreground1) !important;
+    border-color: var(--pxt-neutral-stencil1) !important;
+
+    .monaco-list .monaco-list-row {
+        background-color: var(--pxt-neutral-background1) !important;
+        color: var(--pxt-neutral-foreground1) !important;
+
+        &.focused {
+            background-color: var(--pxt-neutral-foreground1) !important;
+            color: var(--pxt-neutral-background1) !important;
+        }
+
+        .label-name,
+        .monaco-highlighted-label .highlight,
+        .details-label,
+        .type-label,
+        .codicon {
+            color: inherit !important;
+        }
+
+        &.focused .monaco-highlighted-label .highlight {
+            color: var(--pxt-neutral-background1) !important;
+        }
+    }
+
+    .details > .monaco-scrollable-element > .body > .type {
+        color: var(--pxt-neutral-foreground1) !important;
+    }
+
+    .monaco-scrollable-element > .scrollbar > .slider {
+        background-color: var(--pxt-neutral-foreground1) !important;
+    }
+}
+
+body.hc .quick-input-widget {
+    background-color: var(--pxt-neutral-background1) !important;
+    color: var(--pxt-neutral-foreground1) !important;
+    border-color: var(--pxt-neutral-stencil1) !important;
+
+    .monaco-inputbox {
+        background-color: var(--pxt-neutral-background1) !important;
+        color: var(--pxt-neutral-foreground1) !important;
+        border-color: var(--pxt-neutral-stencil1) !important;
+
+        input {
+            background-color: var(--pxt-neutral-background1) !important;
+            color: var(--pxt-neutral-foreground1) !important;
+        }
+    }
+
+    .monaco-list-row {
+        background-color: var(--pxt-neutral-background1) !important;
+        color: var(--pxt-neutral-foreground1) !important;
+
+        &.focused {
+            background-color: var(--pxt-neutral-foreground1) !important;
+            color: var(--pxt-neutral-background1) !important;
+        }
+
+        a,
+        .monaco-icon-label,
+        .monaco-highlighted-label,
+        .monaco-highlighted-label .highlight,
+        .monaco-keybinding,
+        .monaco-keybinding-key,
+        .codicon {
+            color: inherit !important;
+        }
+
+        .monaco-keybinding-key {
+            background-color: var(--pxt-neutral-alpha0) !important;
+            border-color: currentColor !important;
+        }
+    }
+
+    .monaco-scrollable-element > .scrollbar > .slider {
+        background-color: var(--pxt-neutral-foreground1) !important;
+    }
+}
+
 /* Monaco Editor Suggest Widget High Contrast: underline highlights for accessibility */
 .monaco-editor.hc-black .suggest-widget:not(.frozen) .monaco-list .monaco-list-row .monaco-highlighted-label .highlight {
     text-decoration: underline !important;
