@@ -1276,7 +1276,7 @@ namespace ts.pxtc.assembler {
                 }
                 const set: pxt.Map<boolean> = {};
                 Object.keys(counts).forEach(key => {
-                    if (counts[key] >= this.procedurizeMinCount && counts[key] >= 2) {
+                    if (counts[key] >= this.procedurizeMinCount) {
                         set[key] = true;
                         anyCandidates = true;
                     }
@@ -1399,6 +1399,7 @@ namespace ts.pxtc.assembler {
                 this.buildLine("@nostackcheck", newLines);
                 this.buildLine(".section code", newLines);
                 this.buildLine(".balign 4", newLines);
+                this.buildLine(".section code", newLines);
                 this.buildLine(`${procNames[r.groupKey]}:`, newLines);
                 wrapped.forEach(line => this.buildLine(`    ${line}`, newLines));
             });
