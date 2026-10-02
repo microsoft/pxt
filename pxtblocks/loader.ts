@@ -504,12 +504,21 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     let customField = pr.fieldEditor;
                     let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                     let fieldType = pr.type;
+                    const fieldOptions = fn.attributes.paramFieldEditorOptions?.[actName];
+                    const enumNames = customField === "gridpicker" && typeof fieldOptions?.enumNames === "string"
+                        ? fieldOptions.enumNames.split(",").map(name => name.trim())
+                            .filter(name => info.apis.byQName[name]?.kind === pxtc.SymbolKind.Enum)
+                        : [];
+                    if (enumNames.length) isEnum = true;
+                    if (customField === "gridpicker" && fieldOptions?.fixedInstances && typeInfo) isFixed = true;
 
                     if (isEnum || isFixed || isConstantShim || isCombined) {
                         let syms: pxtc.SymbolInfo[];
 
                         if (isEnum) {
-                            syms = getEnumDropdownValues(info.apis, pr.type);
+                            syms = enumNames.length
+                                ? enumNames.reduce((symbols, name) => symbols.concat(getEnumDropdownValues(info.apis, name)), [] as pxtc.SymbolInfo[])
+                                : getEnumDropdownValues(info.apis, pr.type);
                         }
                         else if (isFixed) {
                             syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
@@ -522,7 +531,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                         }
 
                         if (syms.length == 0) {
-                            pxt.error(`no instances of ${typeInfo.qName} found`)
+                            pxt.error(`no instances of ${typeInfo?.qName || fieldType} found`)
                         }
                         const dd: Blockly.MenuOption[] = syms.map(v => {
                             let k = v.attributes.block || v.attributes.blockId || v.name;
@@ -538,7 +547,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                     alt: k,
                                     width: 36,
                                     height: 36,
-                                    value: v.name
+                                    value: v.name,
+                                    tags: getSymbolPickerTags(info, v)
                                 } : k,
                                 v.namespace + "." + v.name,
                                 v.attributes.ariaLabel
@@ -562,12 +572,15 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
                         if (customField) {
                             let defl = fn.attributes.paramDefl[actName] || "";
+                            const optionTags: pxt.Map<string[]> = {};
+                            syms.forEach(symbol => optionTags[symbol.qName] = getSymbolPickerTags(info, symbol));
                             const options = {
                                 data: dd,
                                 colour: color,
                                 label: fieldLabel,
                                 type: fieldType,
-                                blocksInfo: info
+                                blocksInfo: info,
+                                optionTags
                             } as FieldCustomDropdownOptions;
                             pxt.Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
                             fields.push(namedField(createFieldEditor(customField, defl, options), defName));
@@ -1028,6 +1041,15 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
     if (!label) return;
 
     input.setAriaLabelProvider(label);
+}
+
+function getSymbolPickerTags(info: pxtc.BlocksInfo, symbol: pxtc.SymbolInfo): string[] {
+    const reference = symbol.attributes.jres;
+    const resource = reference && reference !== "true" ? reference : symbol.qName;
+    return Array.from(new Set([
+        ...(symbol.attributes.tags || "").split(/\s+/),
+        ...(info.apis.jres?.[resource]?.tags || [])
+    ].filter(tag => !!tag).map(tag => tag.toLowerCase())));
 }
 
 function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {

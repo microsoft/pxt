@@ -79,6 +79,7 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
         const nextKey = pxt.Util.isUserLanguageRtl() ? "ArrowLeft" : "ArrowRight";
         const prevKey = pxt.Util.isUserLanguageRtl() ? "ArrowRight" : "ArrowLeft";
         this.keyDownBinding = Blockly.browserEvents.bind(gridItemContainer, 'keydown', this, (e: KeyboardEvent) => {
+            if (!this.gridItems.length) return;
             if (this.activeDescendantIndex === undefined) {
                 if (e.code === 'ArrowDown' || e.code === nextKey || e.code === 'Home' ) {
                     this.activeDescendantIndex = 0;

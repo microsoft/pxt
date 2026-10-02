@@ -19,6 +19,77 @@ export interface FieldGridPickerOptions extends FieldCustomDropdownOptions {
     tooltipsYOffset?: string;
     hasSearchBar?: boolean;
     hideRect?: boolean;
+    filter?: string;
+    catalog?: string;
+    enumNames?: string;
+    fixedInstances?: boolean;
+    optionTags?: pxt.Map<string[]>;
+}
+
+export function getGridPickerTags(option: Blockly.MenuOption, optionTags?: pxt.Map<string[]>): string[] {
+    const content = typeof option[0] === "object" ? option[0] as { tags?: string[] } : undefined;
+    return Array.from(new Set([...(content?.tags || []), ...(optionTags?.[option[1]] || [])]
+        .filter(tag => !!tag).map(tag => tag.toLowerCase())));
+}
+
+export function filterGridPickerOptions(options: Blockly.MenuOption[], filter: string | string[], optionTags?: pxt.Map<string[]>): Blockly.MenuOption[] {
+    const tags = typeof filter === "string" ? filter.split(/\s+/) : filter;
+    if (!tags?.some(tag => !!tag)) return options;
+
+    const entries = options.map(option => {
+        const content = typeof option[0] === "object"
+            ? option[0] as { src?: string; alt?: string; tags?: string[] }
+            : undefined;
+        return {
+            qName: option[1],
+            src: content?.src || "",
+            alt: content?.alt || String(option[0]),
+            tags: getGridPickerTags(option, optionTags)
+        };
+    });
+    const allowed = new Set(pxt.sprite.filterItems(entries, tags).map(entry => entry.qName));
+    return options.filter(option => allowed.has(option[1]));
+}
+
+export interface GridPickerGroup {
+    id: string;
+    name: string;
+    options: Blockly.MenuOption[];
+}
+
+export function getGridPickerGroups(
+    options: Blockly.MenuOption[],
+    catalog: pxt.GridPickerCatalog,
+    tab: pxt.GridPickerCategory,
+    search: string,
+    material?: string,
+    filter?: string,
+    optionTags?: pxt.Map<string[]>
+): GridPickerGroup[] {
+    let visible = filterGridPickerOptions(options, tab.tags || [], optionTags);
+    if (tab.materials && material) visible = filterGridPickerOptions(visible, material, optionTags);
+    if (filter) visible = filterGridPickerOptions(visible, filter, optionTags);
+    const words = (search || "").trim().toLowerCase().split(/\s+/).filter(word => !!word);
+    visible = visible.filter(option => {
+        const content = option[0];
+        const label = typeof content === "string" ? content : (content as { alt?: string }).alt || "";
+        const text = [label, option[1], ...getGridPickerTags(option, optionTags)].join(" ").toLowerCase().replace(/[-_]/g, " ");
+        return words.every(word => text.indexOf(word) !== -1);
+    });
+    if (tab.flat || !catalog.families?.length) return [{ id: "all", name: "", options: visible }];
+
+    const claimed = new Set<string>();
+    const groups: GridPickerGroup[] = [];
+    for (const family of catalog.families) {
+        const members = filterGridPickerOptions(visible, family.tags || [], optionTags)
+            .filter(option => !claimed.has(option[1]));
+        if (!members.length) continue;
+        members.forEach(option => claimed.add(option[1]));
+        groups.push({ id: family.id, name: family.name, options: members });
+    }
+    const remaining = visible.filter(option => !claimed.has(option[1]));
+    if (remaining.length) groups.push({ id: "other", name: "", options: remaining });
+    return groups;
 }
 
 export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
@@ -27,6 +98,24 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private gridTooltip_: HTMLElement;
 
     private hasSearchBar_: boolean;
+
+    private filter_: string;
+    private optionTags_: pxt.Map<string[]>;
+    private catalog_: pxt.GridPickerCatalog;
+    private blocksInfo_: pxtc.BlocksInfo;
+    private catalogTab_: string;
+    private catalogSearch_ = "";
+    private catalogMaterial_ = "";
+    private catalogFilter_ = "";
+    private catalogExpanded_ = new Set<string>();
+    private catalogFamilies_: pxt.Map<GridPickerGroup> = {};
+    private catalogTable_: HTMLElement;
+    private catalogContainer_: HTMLElement;
+    private catalogStatus_: HTMLElement;
+    private catalogTabs_: HTMLButtonElement[] = [];
+    private catalogMaterials_: HTMLSelectElement;
+    private catalogColumns_: number;
+    private catalogResizeObserver_: ResizeObserver;
 
     private observer: IntersectionObserver;
 
@@ -66,6 +155,20 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
         this.tooltipConfig_ = tooltipCfg;
         this.hasSearchBar_ = !!options.hasSearchBar || false;
+        this.filter_ = options.filter;
+        this.optionTags_ = options.optionTags;
+        this.catalog_ = pxt.appTarget?.runtime?.gridPickerCatalogs?.[options.catalog];
+        this.blocksInfo_ = options.blocksInfo;
+        this.catalogColumns_ = this.columns_;
+        if (this.catalog_?.tabs.length) {
+            const allowed = filterGridPickerOptions(options.data, this.filter_, this.optionTags_);
+            this.catalog_ = { ...this.catalog_, tabs: this.catalog_.tabs.filter(tab =>
+                tab.flat || filterGridPickerOptions(allowed, tab.tags || [], this.optionTags_).length > 0
+            ) };
+            this.catalogMaterial_ = this.catalog_.materials?.[0]?.tags?.join(" ") || "";
+            this.hasSearchBar_ = true;
+        }
+        else this.catalog_ = undefined;
 
         const dropdownOptions = options.data as [Object | string, string][];
         this.hasImageOptions = dropdownOptions.some(option => typeof option[0] === 'object');
@@ -74,7 +177,9 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     protected setFocusedItem_(_gridItemContainer: HTMLElement) {
         this.gridItems.forEach(button => button.classList.remove('gridpicker-option-focused', 'gridpicker-menuitem-highlight'));
         const activeItem = this.gridItems[this.activeDescendantIndex];
+        if (!activeItem) return;
         activeItem.classList.add('gridpicker-option-focused');
+        if (this.catalogStatus_) this.catalogStatus_.textContent = activeItem.title;
 
         Blockly.utils.style.scrollIntoContainerView(activeItem, this.scrollContainer);
         const rect = activeItem.getBoundingClientRect();
@@ -124,6 +229,9 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private populateTableContainer(options: (Object | String[])[], tableContainer: HTMLElement, scrollContainer: HTMLElement) {
         this.gridItems = [];
         this.activeDescendantIndex = 0;
+        this.selectedItemDom = undefined;
+        tableContainer.removeAttribute("aria-activedescendant");
+        this.setupIntersectionObserver_();
 
         pxsim.U.removeChildren(tableContainer);
 
@@ -165,10 +273,18 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             menuItemContent.title = content['alt'] || content;
             menuItemContent.setAttribute('data-value', value);
 
+            const family = this.catalogFamilies_[value];
+            if (family) {
+                menuItem.classList.add("gridpicker-family");
+                menuItem.setAttribute("aria-expanded", String(this.catalogExpanded_.has(family.id)));
+                menuItem.title = pxt.Util.lf("{0}: {1} choices", family.name, family.options.length);
+                menuItem.setAttribute("aria-label", menuItem.title);
+            }
+
 
             // Set colour
             let backgroundColour = this.backgroundColour_;
-            if (value == this.getValue()) {
+            if (value == this.getValue() || (family && !this.catalogExpanded_.has(family.id) && family.options.some(option => option[1] === this.getValue()))) {
                 // This option is selected
                 menuItem.setAttribute('aria-selected', 'true');
                 this.activeDescendantIndex = i;
@@ -179,16 +295,18 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 // Save so we can scroll to it later
                 this.selectedItemDom = menuItem;
 
-                if (this.hasImageOptions && !this.shouldShowTooltips()) {
+                if (!this.catalog_ && this.hasImageOptions && !this.shouldShowTooltips()) {
                     this.updateSelectedBar_(content, value);
                 }
             }
 
-            menuItem.style.backgroundColor = backgroundColour;
-            menuItem.style.borderColor = this.borderColour_;
+            if (!this.catalog_) {
+                menuItem.style.backgroundColor = backgroundColour;
+                menuItem.style.borderColor = this.borderColour_;
+            }
 
 
-            if (this.hasImageOptions) {
+            if (typeof content === "object") {
                 // An image, not text.
                 const buttonImg = new Image(content['width'], content['height']);
                 buttonImg.setAttribute('draggable', 'false');
@@ -208,7 +326,18 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 menuItemContent.textContent = content;
             }
 
-            if (this.shouldShowTooltips()) {
+            if (family) {
+                const disclosure = document.createElement("i");
+                disclosure.className = this.catalogExpanded_.has(family.id) ? "icon minus" : "icon plus";
+                disclosure.setAttribute("aria-hidden", "true");
+                const count = document.createElement("span");
+                count.className = "gridpicker-family-count";
+                count.textContent = String(family.options.length);
+                menuItemContent.appendChild(count);
+                menuItemContent.appendChild(disclosure);
+            }
+
+            if (this.shouldShowTooltips() || this.catalog_) {
                 Blockly.browserEvents.conditionalBind(menuItem, 'click', this, () => this.buttonClickAndClose_(value));
 
                 // Setup hover tooltips
@@ -219,6 +348,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                     if (this.pointerMoveTriggeredByUser()) {
                         this.gridItems.forEach(item => item.classList.remove('gridpicker-option-focused'))
                         this.activeDescendantIndex = i;
+                        if (this.catalogStatus_) this.catalogStatus_.textContent = menuItem.title;
                         if (this.gridTooltip_ && this.hasImageOptions) {
                             this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
                             this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
@@ -304,6 +434,20 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     };
 
     protected buttonClickAndClose_ = (value: string | null) => {
+        const family = this.catalogFamilies_[value];
+        if (family) {
+            if (this.catalogExpanded_.has(family.id)) this.catalogExpanded_.delete(family.id);
+            else this.catalogExpanded_.add(family.id);
+            this.renderCatalog_();
+            const index = this.gridItems.findIndex(item => item.getAttribute("data-value") === value);
+            if (index >= 0) {
+                this.activeDescendantIndex = index;
+                this.setFocusedItem_(this.catalogTable_);
+                this.catalogTable_.setAttribute("aria-activedescendant", this.gridItems[index].id);
+            }
+            this.catalogTable_.focus();
+            return;
+        }
         this.closeModal_ = true;
         this.buttonClick_(value);
     };
@@ -387,6 +531,12 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         const { paddingContainer, scrollContainer } = this.createWidget_(tableContainer);
         this.scrollContainer = scrollContainer;
 
+        if (this.catalog_) {
+            this.positionCatalog_();
+            this.highlightAndScrollSelected(tableContainer, scrollContainer);
+            return;
+        }
+
         const containerSize = {
             width: paddingContainer.offsetWidth,
             height: paddingContainer.offsetHeight
@@ -407,7 +557,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         if (this.selectedBar_) addedHeight += 50; // Account for the selected bar
 
         // Set height
-        if (this.maxRows_) {
+        if (this.maxRows_ && tableContainer.children.length) {
             // Calculate height
             const firstRowDom = tableContainer.children[0] as HTMLElement;
             const rowHeight = firstRowDom.offsetHeight;
@@ -450,7 +600,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private createWidget_(tableContainer: HTMLElement) {
         const widgetDiv = Blockly.WidgetDiv.getDiv();
 
-        const options = this.getOptions();
+        const options = filterGridPickerOptions(this.getOptions(), this.filter_, this.optionTags_);
 
         // Container for the menu rows
         tableContainer.setAttribute('role', 'grid');
@@ -467,11 +617,12 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         // scrollContainer is part of the scrollable area and will not be correctly shown at the top and bottom
         // when scrolling
         const paddingContainer = document.createElement("div");
-        paddingContainer.style.border = `solid 1px ${this.borderColour_}`;
-
-        tableContainer.style.backgroundColor = this.backgroundColour_;
-        scrollContainer.style.backgroundColor = this.backgroundColour_;
-        paddingContainer.style.backgroundColor = this.backgroundColour_;
+        if (!this.catalog_) {
+            paddingContainer.style.border = `solid 1px ${this.borderColour_}`;
+            tableContainer.style.backgroundColor = this.backgroundColour_;
+            scrollContainer.style.backgroundColor = this.backgroundColour_;
+            paddingContainer.style.backgroundColor = this.backgroundColour_;
+        }
 
         tableContainer.className = 'blocklyGridPickerMenu';
         scrollContainer.className = 'blocklyGridPickerScroller';
@@ -480,6 +631,12 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         paddingContainer.appendChild(scrollContainer);
         scrollContainer.appendChild(tableContainer);
         widgetDiv.appendChild(paddingContainer);
+
+        if (this.catalog_) {
+            this.scrollContainer = scrollContainer;
+            this.createCatalog_(paddingContainer, tableContainer);
+            return { paddingContainer, scrollContainer };
+        }
 
         // Search bar
         let searchBar: HTMLDivElement | undefined;
@@ -508,6 +665,263 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         }
 
         return { paddingContainer, scrollContainer };
+    }
+
+    private catalogIcon_(reference: string): string {
+        return this.blocksInfo_?.apis.jres?.[reference]?.icon
+            || this.blocksInfo_?.apis.byQName[reference]?.attributes.iconURL;
+    }
+
+    private createCatalog_(container: HTMLElement, table: HTMLElement): void {
+        this.catalogContainer_ = container;
+        this.catalogTable_ = table;
+        container.classList.add("blocklyGridPickerCatalog");
+        container.setAttribute("role", "dialog");
+        container.setAttribute("aria-label", pxt.Util.rlf(this.catalog_.name));
+        container.id = `${this.sourceBlock_.id}:catalog`;
+        table.setAttribute("aria-label", pxt.Util.lf("Available assets"));
+        const parentWidth = Blockly.WidgetDiv.getDiv().parentElement.getBoundingClientRect().width || window.innerWidth;
+        const width = Math.min(this.width_ || 544, Math.max(144, Math.min(parentWidth, window.innerWidth) - 24));
+        container.style.width = `${width}px`;
+        this.columns_ = Math.max(1, Math.min(this.catalogColumns_, Math.floor((width - 24) / 52)));
+        container.style.setProperty("--gridpicker-columns", String(this.columns_));
+
+        const tabs = document.createElement("div");
+        tabs.className = "gridpicker-catalog-tabs";
+        tabs.setAttribute("role", "tablist");
+        tabs.setAttribute("aria-label", pxt.Util.lf("Asset categories"));
+        this.catalogTabs_ = [];
+        const selected = this.getOptions().find(option => option[1] === this.getValue());
+        if (!this.catalogTab_) this.catalogTab_ = this.catalog_.tabs.find(tab =>
+            !tab.flat && !tab.materials && (!selected || filterGridPickerOptions([selected], tab.tags || [], this.optionTags_).length)
+        )?.id || this.catalog_.tabs[0].id;
+        for (const tab of this.catalog_.tabs) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.id = `${container.id}:tab:${tab.id}`;
+            button.setAttribute("role", "tab");
+            button.setAttribute("aria-controls", `${container.id}:panel`);
+            button.setAttribute("aria-label", pxt.Util.rlf(tab.name));
+            button.title = pxt.Util.rlf(tab.name);
+            const icon = this.catalogIcon_(tab.icon);
+            if (icon) {
+                const image = document.createElement("img");
+                image.src = icon;
+                image.alt = "";
+                image.draggable = false;
+                button.appendChild(image);
+            } else if (tab.flat) {
+                const search = document.createElement("i");
+                search.className = "icon search";
+                search.setAttribute("aria-hidden", "true");
+                button.appendChild(search);
+            } else {
+                const label = document.createElement("span");
+                label.textContent = pxt.Util.rlf(tab.name);
+                button.appendChild(label);
+            }
+            button.addEventListener("click", () => this.selectCatalogTab_(tab.id));
+            button.addEventListener("keydown", event => {
+                const index = this.catalogTabs_.indexOf(button);
+                let next = index;
+                if (event.key === "ArrowRight") next = (index + (this.sourceBlock_.RTL ? -1 : 1) + this.catalogTabs_.length) % this.catalogTabs_.length;
+                else if (event.key === "ArrowLeft") next = (index + (this.sourceBlock_.RTL ? 1 : -1) + this.catalogTabs_.length) % this.catalogTabs_.length;
+                else if (event.key === "Home") next = 0;
+                else if (event.key === "End") next = this.catalogTabs_.length - 1;
+                else return;
+                event.preventDefault();
+                this.selectCatalogTab_(this.catalog_.tabs[next].id);
+                this.catalogTabs_[next].focus();
+            });
+            this.catalogTabs_.push(button);
+            tabs.appendChild(button);
+        }
+        container.insertBefore(tabs, this.scrollContainer);
+
+        const toolbar = document.createElement("div");
+        toolbar.className = "gridpicker-catalog-toolbar";
+        const title = document.createElement("div");
+        title.className = "gridpicker-catalog-title";
+        title.id = `${container.id}:title`;
+        toolbar.appendChild(title);
+        const search = document.createElement("input");
+        search.type = "search";
+        search.autocomplete = "off";
+        search.spellcheck = false;
+        search.value = this.catalogSearch_;
+        search.placeholder = pxt.Util.lf("Search");
+        search.setAttribute("aria-label", pxt.Util.lf("Search assets"));
+        search.addEventListener("input", () => {
+            this.catalogSearch_ = search.value;
+            this.renderCatalog_();
+        });
+        search.addEventListener("keydown", event => {
+            if (event.key === "ArrowDown" && this.gridItems.length) {
+                this.activeDescendantIndex = 0;
+                this.setFocusedItem_(table);
+                table.setAttribute("aria-activedescendant", this.gridItems[0].id);
+                table.focus();
+                event.preventDefault();
+            } else if (event.key === "Enter" && this.gridItems.length) {
+                this.buttonClickAndClose_(this.gridItems[0].getAttribute("data-value"));
+                event.preventDefault();
+            }
+        });
+        toolbar.appendChild(search);
+        container.insertBefore(toolbar, this.scrollContainer);
+
+        const filters = document.createElement("div");
+        filters.className = "gridpicker-catalog-filters";
+        const createFilter = (label: string, entries: pxt.GridPickerCategory[], change: (value: string) => void): HTMLSelectElement => {
+            const wrapper = document.createElement("label");
+            const text = document.createElement("span");
+            text.textContent = label;
+            wrapper.appendChild(text);
+            const select = document.createElement("select");
+            select.setAttribute("aria-label", label);
+            const all = document.createElement("option");
+            all.value = "";
+            all.textContent = pxt.Util.lf("All");
+            select.appendChild(all);
+            for (const entry of entries) {
+                const option = document.createElement("option");
+                option.value = (entry.tags || []).join(" ");
+                option.textContent = pxt.Util.rlf(entry.name);
+                select.appendChild(option);
+            }
+            select.addEventListener("change", () => change(select.value));
+            wrapper.appendChild(select);
+            filters.appendChild(wrapper);
+            return select;
+        };
+        if (this.catalog_.materials?.length) {
+            this.catalogMaterials_ = createFilter(pxt.Util.lf("Material"), this.catalog_.materials, value => {
+                this.catalogMaterial_ = value;
+                this.renderCatalog_();
+            });
+            this.catalogMaterials_.value = this.catalogMaterial_;
+        }
+        if (this.catalog_.filters?.length) {
+            const select = createFilter(pxt.Util.lf("Tags"), this.catalog_.filters, value => {
+                this.catalogFilter_ = value;
+                this.renderCatalog_();
+            });
+            select.value = this.catalogFilter_;
+        }
+        container.insertBefore(filters, this.scrollContainer);
+        this.scrollContainer.id = `${container.id}:panel`;
+        this.scrollContainer.setAttribute("role", "tabpanel");
+
+        const footer = document.createElement("div");
+        footer.className = "gridpicker-catalog-footer";
+        this.catalogStatus_ = document.createElement("span");
+        this.catalogStatus_.setAttribute("role", "status");
+        this.catalogStatus_.setAttribute("aria-live", "polite");
+        footer.appendChild(this.catalogStatus_);
+        const close = document.createElement("button");
+        close.type = "button";
+        close.setAttribute("aria-label", pxt.Util.lf("Close"));
+        close.title = pxt.Util.lf("Close");
+        const closeIcon = document.createElement("i");
+        closeIcon.className = "icon cancel";
+        closeIcon.setAttribute("aria-hidden", "true");
+        close.appendChild(closeIcon);
+        close.addEventListener("click", () => this.close());
+        footer.appendChild(close);
+        container.appendChild(footer);
+        container.addEventListener("keydown", event => {
+            if (event.key === "Escape") {
+                this.close();
+                event.preventDefault();
+                event.stopPropagation();
+            }
+        });
+        this.lastFocusableElement = close;
+        this.tabKeyBind = Blockly.browserEvents.bind(container, "keydown", this, this.handleTabKey.bind(this));
+        this.renderCatalog_();
+        if (typeof ResizeObserver !== "undefined") {
+            this.catalogResizeObserver_ = new ResizeObserver(() => this.positionCatalog_());
+            this.catalogResizeObserver_.observe(Blockly.WidgetDiv.getDiv().parentElement);
+        }
+    }
+
+    private selectCatalogTab_(id: string): void {
+        this.catalogTab_ = id;
+        this.catalogExpanded_.clear();
+        this.renderCatalog_();
+    }
+
+    private renderCatalog_(): void {
+        const tab = this.catalog_.tabs.find(entry => entry.id === this.catalogTab_) || this.catalog_.tabs[0];
+        this.catalogTabs_.forEach((button, index) => {
+            const active = this.catalog_.tabs[index].id === tab.id;
+            button.setAttribute("aria-selected", String(active));
+            button.tabIndex = active ? 0 : -1;
+            if (active) this.firstFocusableElement = button;
+        });
+        this.scrollContainer.setAttribute("aria-labelledby", `${this.catalogContainer_.id}:tab:${tab.id}`);
+        this.catalogContainer_.querySelector(".gridpicker-catalog-title").textContent = pxt.Util.rlf(tab.name);
+        if (this.catalogMaterials_) this.catalogMaterials_.parentElement.hidden = !tab.materials;
+        const options = filterGridPickerOptions(this.getOptions(), this.filter_, this.optionTags_);
+        const groups = getGridPickerGroups(options, this.catalog_, tab, this.catalogSearch_, this.catalogMaterial_, this.catalogFilter_, this.optionTags_);
+        const visible: Blockly.MenuOption[] = [];
+        this.catalogFamilies_ = {};
+        let count = 0;
+        for (const group of groups) {
+            count += group.options.length;
+            if (group.id !== "other" && group.options.length > 1 && !tab.flat && !this.catalogSearch_.trim()) {
+                const representative = group.options.find(option => option[1] === this.getValue()) || group.options[0];
+                const value = `@family:${group.id}`;
+                this.catalogFamilies_[value] = group;
+                visible.push([representative[0], value]);
+                if (this.catalogExpanded_.has(group.id)) visible.push(...group.options);
+            } else visible.push(...group.options);
+        }
+        this.populateTableContainer(visible, this.catalogTable_, this.scrollContainer);
+        if (!visible.length) {
+            const empty = document.createElement("div");
+            empty.className = "gridpicker-catalog-empty";
+            empty.textContent = pxt.Util.lf("No matching assets");
+            this.catalogTable_.appendChild(empty);
+        }
+        this.catalogStatus_.textContent = pxt.Util.lf("{0} choices", count);
+        if (this.gridTooltip_) {
+            this.gridTooltip_.style.display = "none";
+            this.gridTooltip_.style.visibility = "hidden";
+        }
+        this.positionCatalog_();
+    }
+
+    private positionCatalog_(): void {
+        if (!this.catalogContainer_ || !this.scrollContainer) return;
+        const parent = Blockly.WidgetDiv.getDiv().parentElement.getBoundingClientRect();
+        const width = Math.min(this.width_ || 544, Math.max(144, Math.min(parent.width, window.innerWidth) - 24));
+        this.catalogContainer_.style.width = `${width}px`;
+        const columns = Math.max(1, Math.min(this.catalogColumns_, Math.floor((width - 24) / 52)));
+        if (columns !== this.columns_) {
+            this.columns_ = columns;
+            this.catalogContainer_.style.setProperty("--gridpicker-columns", String(columns));
+            this.renderCatalog_();
+            return;
+        }
+        const viewport = new Blockly.utils.Rect(
+            Math.max(8, parent.top + 8),
+            Math.min(window.innerHeight - 8, parent.bottom - 8),
+            Math.max(8, parent.left + 8),
+            Math.min(window.innerWidth - 8, parent.right - 8)
+        );
+        const chrome = this.catalogContainer_.offsetHeight - this.scrollContainer.offsetHeight;
+        this.scrollContainer.style.maxHeight = `${Math.min(420, Math.max(48, viewport.bottom - viewport.top - chrome - 2))}px`;
+        this.scrollContainer.style.overflowY = "auto";
+        let anchor = this.getAnchorDimensions_();
+        const height = this.catalogContainer_.offsetHeight;
+        if (anchor.bottom + height >= viewport.bottom && anchor.top - height < viewport.top) {
+            anchor = new Blockly.utils.Rect(viewport.top, viewport.top, anchor.left, anchor.right);
+        }
+        Blockly.WidgetDiv.positionWithAnchor(viewport, anchor, {
+            width: this.catalogContainer_.offsetWidth,
+            height
+        }, this.sourceBlock_.RTL);
     }
 
     private createSearchBar_(tableContainer: HTMLElement, scrollContainer: HTMLElement, options: (Object | string[])[]) {
@@ -678,6 +1092,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
     private disposeIntersectionObserver() {
         if (this.observer) {
+            this.observer.disconnect();
             this.observer = null;
         }
     }
@@ -695,7 +1110,19 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
     private onClose_() {
         this.disposeTooltip();
+        this.disposeIntersectionObserver();
+        if (this.catalogResizeObserver_) this.catalogResizeObserver_.disconnect();
+        this.catalogResizeObserver_ = undefined;
         this.disposeGrid();
+        if (this.tabKeyBind) Blockly.browserEvents.unbind(this.tabKeyBind);
+        this.tabKeyBind = null;
+        this.catalogTable_ = undefined;
+        this.catalogContainer_ = undefined;
+        this.catalogStatus_ = undefined;
+        this.catalogTabs_ = [];
+        this.catalogMaterials_ = undefined;
+        this.catalogFamilies_ = {};
+        this.scrollContainer = undefined;
         this.getFocusableElement().ariaExpanded = 'false';
     }
 
@@ -721,6 +1148,219 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 }
 
 Blockly.Css.register(`
+.blocklyWidgetDiv .blocklyGridPickerCatalog {
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    border: 1px solid var(--pxt-neutral-stencil2);
+    background: var(--pxt-neutral-background2);
+    color: var(--pxt-neutral-foreground2);
+    font-family: var(--pxt-page-font);
+    border-radius: 4px;
+    padding: 8px;
+    gap: 8px;
+}
+
+.blocklyGridPickerCatalog button,
+.blocklyGridPickerCatalog input,
+.blocklyGridPickerCatalog select {
+    box-sizing: border-box;
+    font: inherit;
+    color: var(--pxt-neutral-foreground1);
+    background: var(--pxt-neutral-background1);
+    border: 1px solid var(--pxt-neutral-stencil1);
+    border-radius: 2px;
+    min-height: 36px;
+}
+
+.blocklyGridPickerCatalog button {
+    cursor: pointer;
+}
+
+.blocklyGridPickerCatalog button:focus-visible,
+.blocklyGridPickerCatalog input:focus-visible,
+.blocklyGridPickerCatalog select:focus-visible {
+    outline: 3px solid var(--pxt-focus-border);
+    outline-offset: 1px;
+}
+
+.blocklyGridPickerCatalog .gridpicker-catalog-tabs {
+    display: flex;
+    flex: none;
+    gap: 6px;
+    overflow-x: auto;
+    padding: 3px;
+}
+
+.gridpicker-catalog-tabs button {
+    flex: 0 0 auto;
+    min-width: 44px;
+    height: 44px;
+    padding: 4px 8px;
+}
+
+.gridpicker-catalog-tabs button[aria-selected="true"] {
+    background: var(--pxt-target-background1);
+    color: var(--pxt-target-foreground1);
+    border-color: var(--pxt-focus-border);
+    box-shadow: inset 0 -3px 0 var(--pxt-focus-border);
+}
+
+.gridpicker-catalog-tabs img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    vertical-align: middle;
+}
+
+.gridpicker-catalog-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gridpicker-catalog-title {
+    font-size: 16px;
+    font-weight: bold;
+    overflow-wrap: anywhere;
+}
+
+.gridpicker-catalog-toolbar input {
+    width: 100%;
+    padding: 6px 10px;
+}
+
+.gridpicker-catalog-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.gridpicker-catalog-filters:empty,
+.gridpicker-catalog-filters label[hidden] {
+    display: none;
+}
+
+.gridpicker-catalog-filters label {
+    display: flex;
+    flex: 1 1 120px;
+    align-items: center;
+    gap: 6px;
+}
+
+.gridpicker-catalog-filters select {
+    flex: 1;
+    min-width: 0;
+    padding: 4px;
+}
+
+.blocklyGridPickerCatalog .blocklyGridPickerScroller {
+    padding: 4px;
+    border-radius: 2px;
+    background: var(--pxt-neutral-background2);
+    min-height: 52px;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog .blocklyGridPickerMenu {
+    display: block;
+    border-spacing: 0;
+    background: transparent;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog .blocklyGridPickerRow {
+    display: grid;
+    grid-template-columns: repeat(var(--gridpicker-columns), minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog .blocklyGridPickerMenu .gridpicker-option {
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    min-height: 48px;
+    padding: 4px;
+    border: 1px solid var(--pxt-neutral-stencil1);
+    border-radius: 2px;
+    background: var(--pxt-neutral-background1);
+    color: var(--pxt-neutral-foreground1);
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog .blocklyGridPickerMenu .gridpicker-menuitem-content {
+    color: inherit;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.blocklyGridPickerCatalog .gridpicker-menuitem-content img {
+    width: 36px;
+    height: 36px;
+    max-width: 100%;
+    object-fit: contain;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog .blocklyGridPickerMenu .gridpicker-option-selected,
+.blocklyWidgetDiv .blocklyGridPickerCatalog .blocklyGridPickerMenu .gridpicker-menuitem-highlight,
+.blocklyWidgetDiv .blocklyGridPickerCatalog .blocklyGridPickerMenu .gridpicker-option-focused {
+    background: var(--pxt-neutral-background1-hover);
+    color: var(--pxt-neutral-foreground1-hover);
+    outline: 3px solid var(--pxt-focus-border);
+    outline-offset: -2px;
+    box-shadow: none;
+}
+
+.gridpicker-family > .gridpicker-menuitem-content > .icon {
+    position: absolute;
+    inset-inline-end: 1px;
+    bottom: 1px;
+    margin: 0;
+    font-size: 12px;
+    color: var(--pxt-neutral-foreground1);
+    background: var(--pxt-neutral-background1);
+}
+
+.gridpicker-family-count {
+    position: absolute;
+    inset-inline-start: 2px;
+    top: 1px;
+    font-size: 10px;
+    line-height: 12px;
+    color: var(--pxt-neutral-foreground1);
+    background: var(--pxt-neutral-background1);
+}
+
+.gridpicker-catalog-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 36px;
+}
+
+.gridpicker-catalog-footer > span {
+    min-width: 0;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+
+.gridpicker-catalog-footer button {
+    flex: none;
+    width: 36px;
+    padding: 4px;
+}
+
+.gridpicker-catalog-footer .icon {
+    margin: 0;
+}
+
+.gridpicker-catalog-empty {
+    padding: 24px 8px;
+    text-align: center;
+    color: var(--pxt-neutral-foreground2);
+}
+
 .blocklyGridPickerTooltip {
     z-index: 995;
 }
