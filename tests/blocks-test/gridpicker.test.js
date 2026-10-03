@@ -28,6 +28,26 @@ context.pxt.sprite.filterItems = context.exports.filterItems;
 loadFunctions("pxtblocks/fields/field_gridpicker.ts", ["getGridPickerTags", "filterGridPickerOptions", "getGridPickerGroups", "getGridPickerSizeOptions"]);
 loadFunctions("pxtblocks/loader.ts", ["getSymbolPickerTags"]);
 
+const cliSource = ts.createSourceFile("cli.ts", fs.readFileSync(path.join(root, "cli/cli.ts"), "utf8"), ts.ScriptTarget.Latest, true);
+let catalogStringsLoop;
+function findCatalogStringsLoop(node) {
+    if (ts.isForOfStatement(node) && node.expression.getText(cliSource).includes("cfg.runtime?.gridPickerCatalogs")) catalogStringsLoop = node;
+    ts.forEachChild(node, findCatalogStringsLoop);
+}
+findCatalogStringsLoop(cliSource);
+assert(catalogStringsLoop, "Target string extraction must include grid picker catalogs");
+context.cfg = { runtime: { gridPickerCatalogs: { inventory: {
+    name: "Inventory", tabs: [{ name: "Construction" }, { name: "All" }],
+    families: [{ name: "Hoes" }], materials: [{ name: "Copper" }], filters: [{ name: "Riders" }]
+}, mounts: { name: "Player Mounts", tabs: [{ name: "Vehicles" }] } } } };
+context.targetStrings = {};
+vm.runInContext(ts.transpileModule(catalogStringsLoop.getText(cliSource), {
+    compilerOptions: { target: ts.ScriptTarget.ES2017 }
+}).outputText, context);
+for (const name of ["Inventory", "Construction", "All", "Hoes", "Copper", "Riders", "Player Mounts", "Vehicles"]) {
+    assert.strictEqual(context.targetStrings[name], name, `Missing configured localization key: ${name}`);
+}
+
 const info = { apis: { jres: { "MonsterMob.Zombie": { tags: ["RIDER"] } } } };
 assert.deepStrictEqual(Array.from(context.getSymbolPickerTags(info, {
     qName: "MonsterMob.Zombie", attributes: { jres: "true", tags: "undead" }

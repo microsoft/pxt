@@ -297,7 +297,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             if (family) {
                 menuItem.classList.add("gridpicker-family");
                 menuItem.setAttribute("aria-expanded", String(this.catalogExpanded_.has(family.id)));
-                menuItem.title = pxt.Util.lf("{0}: {1} choices", family.name, family.options.length);
+                menuItem.title = pxt.Util.lf("{0}: {1} choices", pxt.Util.rlf(family.name), family.options.length);
                 menuItem.setAttribute("aria-label", menuItem.title);
                 menuItemContent.title = menuItem.title;
             }

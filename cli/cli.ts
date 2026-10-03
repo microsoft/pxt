@@ -2003,6 +2003,13 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
             targetStrings[`{id:simulator-theme-field}${field.label}`] = field.label;
         }
     }
+    for (const id of Object.keys(cfg.runtime?.gridPickerCatalogs || {})) {
+        const catalog = cfg.runtime.gridPickerCatalogs[id];
+        if (catalog.name) targetStrings[catalog.name] = catalog.name;
+        for (const entry of catalog.tabs.concat(catalog.families || [], catalog.materials || [], catalog.filters || [])) {
+            if (entry.name) targetStrings[entry.name] = entry.name;
+        }
+    }
     if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
         const heroBannerCard = theme.homeScreenHero;
         if (heroBannerCard.title) targetStrings[heroBannerCard.title] = heroBannerCard.title;
