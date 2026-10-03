@@ -54,6 +54,19 @@ import {
     ProjfsReply,
     ProjfsRequest,
 } from "../../pxtservices/projfs";
+import { getImageAssets, ProjassetsHost } from "../../webapp/src/projassetsHost";
+import {
+    ProjassetsAssetsReply,
+    ProjassetsClient,
+    ProjassetsError,
+    ProjassetsErrorCode,
+    ProjassetsErrorReply,
+    ProjassetsImage,
+    ProjassetsKind,
+    ProjassetsNotification,
+    ProjassetsReply,
+    ProjassetsRequest,
+} from "../../pxtservices/projassets";
 
 pxt.appTarget = {
     versions: {
@@ -1524,6 +1537,15 @@ describe("projfs client", () => {
         chai.expect(error.message).equals("too big");
     });
 
+    it("rejects with PERMISSION_DENIED when the extension's registration does not set allowFileWrite", async () => {
+        const denied: ProjfsErrorCode = "PERMISSION_DENIED";
+        const listed = client.list();
+        replyTo(lastRequest(), { subtype: "error", code: denied, message: "not granted" });
+        const error = await listed.then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjfsError);
+        chai.expect(error.code).equals(denied);
+    });
+
     it("ignores replies from other windows and to unknown requests", async () => {
         const read = client.read("main.ts");
         replyTo(lastRequest(), { subtype: "content", name: "main.ts", content: "forged" }, {});
@@ -1671,6 +1693,580 @@ describe("projfs client", () => {
         const again = await client.write("notes.txt", "hi");
         await client.delete(again);
         chai.expect(await client.list()).deep.equals([]);
+    });
+});
+
+/** Returns a bitmap of the given size whose pixel at (x, y) has color (x + 2y) % 16. */
+function testBitmap(width: number, height: number): pxt.sprite.BitmapData {
+    const bitmap = new pxt.sprite.Bitmap(width, height);
+    for (let x = 0; x < width; x++)
+        for (let y = 0; y < height; y++)
+            bitmap.set(x, y, (x + 2 * y) % 16);
+    return bitmap.data();
+}
+
+/** Replaces the pixels of `image` with `bitmap`, as the image editor's result does. */
+function withBitmap(image: pxt.ProjectImage, bitmap: pxt.sprite.BitmapData): pxt.ProjectImage {
+    return { ...image, bitmap, jresData: pxt.sprite.base64EncodeBitmap(bitmap) };
+}
+
+describe("tilemap project change listeners", () => {
+    let project: pxt.TilemapProject;
+    let changes: number;
+    const listener = () => changes++;
+
+    beforeEach(() => {
+        project = new pxt.TilemapProject();
+        project.addProjectChangeListener(listener);
+        changes = 0;
+    });
+
+    it("hears an asset update", () => {
+        const image = project.createNewProjectImage(testBitmap(4, 4), "hero");
+        changes = 0;
+        project.updateAsset(withBitmap(image, testBitmap(8, 8)));
+        chai.expect(changes).greaterThan(0);
+    });
+
+    it("hears assets of every kind created, duplicated and removed", () => {
+        const steps: [string, () => void][] = [
+            ["image", () => project.createNewProjectImage(testBitmap(2, 2), "picture")],
+            ["tile", () => project.createNewTile(testBitmap(16, 16), undefined, "grass")],
+            ["animation", () => project.createNewAnimationFromData([testBitmap(2, 2)], 100, "walk")],
+            ["song", () => project.createNewSong(pxt.assets.music.getEmptySong(2), "tune")],
+            ["duplicate", () => project.duplicateAsset(project.getAssets(pxt.AssetType.Image)[0], "copy")],
+            ["remove", () => project.removeAsset(project.getAssets(pxt.AssetType.Image)[0])],
+        ];
+        for (const [name, step] of steps) {
+            changes = 0;
+            step();
+            chai.expect(changes, name).greaterThan(0);
+        }
+    });
+
+    it("hears undo and redo", () => {
+        project.createNewProjectImage(testBitmap(4, 4), "hero");
+        project.pushUndo();
+        changes = 0;
+        project.undo();
+        chai.expect(changes, "undo").greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Image)).deep.equals([]);
+        changes = 0;
+        project.redo();
+        chai.expect(changes, "redo").greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Image).map(i => i.meta.displayName)).deep.equals(["hero"]);
+    });
+
+    it("calls every listener, and no longer calls a removed one", () => {
+        let other = 0;
+        const otherListener = () => other++;
+        project.addProjectChangeListener(otherListener);
+        project.createNewProjectImage(testBitmap(2, 2), "a");
+        chai.expect(changes).greaterThan(0);
+        chai.expect(other).greaterThan(0);
+        project.removeProjectChangeListener(listener);
+        changes = 0;
+        other = 0;
+        project.createNewProjectImage(testBitmap(2, 2), "b");
+        chai.expect(changes).equals(0);
+        chai.expect(other).greaterThan(0);
+    });
+
+    it("keeps the listeners of separate projects apart", () => {
+        const second = new pxt.TilemapProject();
+        second.createNewProjectImage(testBitmap(2, 2), "elsewhere");
+        chai.expect(changes).equals(0);
+    });
+});
+
+describe("projassets image listing", () => {
+    let project: pxt.TilemapProject;
+
+    beforeEach(() => {
+        project = new pxt.TilemapProject();
+    });
+
+    it("names every asset kind by its pxt.AssetType value", () => {
+        // one entry per kind: a kind added without an entry fails to compile
+        const assetTypes: { [K in ProjassetsKind]: pxt.AssetType } = {
+            image: pxt.AssetType.Image,
+        };
+        for (const kind of Object.keys(assetTypes) as ProjassetsKind[])
+            chai.expect(assetTypes[kind] as string, kind).equals(kind);
+    });
+
+    it("describes an image by its asset file id, display name, kind, size and encoded pixels", () => {
+        const bitmap = testBitmap(5, 3);
+        project.createNewProjectImage(bitmap, "hero");
+        const listed = getImageAssets(project);
+        chai.expect(listed).deep.equals([{
+            kind: "image",
+            id: "image1",
+            displayName: "hero",
+            width: 5,
+            height: 3,
+            data: pxt.sprite.base64EncodeBitmap(bitmap),
+        }]);
+        const decoded = pxt.sprite.getBitmapFromJResURL(`data:${pxt.IMAGE_MIME_TYPE};base64,${listed[0].data}`).data();
+        chai.expect(pxt.sprite.bitmapEquals(decoded, bitmap)).equals(true);
+    });
+
+    it("lists an image with no display name, without a displayName field", () => {
+        project.createNewImage(2, 2);
+        const listed = getImageAssets(project);
+        chai.expect(listed.length).equals(1);
+        chai.expect(listed[0]).deep.include({ kind: "image", id: "image1", width: 2, height: 2 });
+        chai.expect(listed[0]).not.to.have.property("displayName");
+    });
+
+    it("reports the ids and pixels under which the project's asset file stores each image", () => {
+        project.createNewProjectImage(testBitmap(3, 3), "named");
+        project.createNewImage(4, 4);
+        const jres = project.getProjectAssetsJRes();
+        const listed = getImageAssets(project);
+        chai.expect(listed.length).equals(2);
+        for (const image of listed) {
+            const entry = jres[image.id];
+            chai.expect(entry, image.id).not.equals(undefined);
+            chai.expect(typeof entry === "string" ? entry : entry.data, image.id).equals(image.data);
+        }
+    });
+
+    it("lists images only, not assets of other kinds", () => {
+        project.createNewProjectImage(testBitmap(2, 2), "picture");
+        project.createNewTile(testBitmap(16, 16), undefined, "grass");
+        project.getTransparency(16);
+        project.createNewAnimationFromData([testBitmap(2, 2)], 100, "walk");
+        project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
+        project.createNewJsonAsset({ level: 1 }, "level.json", "levelData");
+        chai.expect(getImageAssets(project).map(i => i.displayName)).deep.equals(["picture"]);
+        chai.expect(getImageAssets(project).every(i => i.kind === "image")).equals(true);
+    });
+
+    it("lists the project's own images, not those its extensions supply", () => {
+        const data = pxt.sprite.base64EncodeBitmap(testBitmap(2, 2));
+        project.loadAssetsJRes({
+            "*": { mimeType: pxt.IMAGE_MIME_TYPE, dataEncoding: "base64", namespace: pxt.sprite.IMAGES_NAMESPACE },
+            fromExtension: { data, displayName: "fromExtension" },
+        } as any, true);
+        project.createNewProjectImage(testBitmap(2, 2), "own");
+        chai.expect(getImageAssets(project).map(i => i.displayName)).deep.equals(["own"]);
+    });
+
+    it("answers from the live project, before its asset file is rebuilt", () => {
+        const image = project.createNewProjectImage(testBitmap(2, 2), "hero");
+        project.needsRebuild = false;
+        const edited = testBitmap(6, 4);
+        project.updateAsset(withBitmap(image, edited));
+        chai.expect(project.needsRebuild).equals(true);
+        chai.expect(getImageAssets(project)).deep.equals([{
+            kind: "image",
+            id: "image1",
+            displayName: "hero",
+            width: 6,
+            height: 4,
+            data: pxt.sprite.base64EncodeBitmap(edited),
+        }]);
+    });
+
+    it("leaves out an image once it is removed", () => {
+        const image = project.createNewProjectImage(testBitmap(2, 2), "hero");
+        project.createNewProjectImage(testBitmap(2, 2), "villain");
+        project.removeAsset(image);
+        chai.expect(getImageAssets(project).map(i => i.displayName)).deep.equals(["villain"]);
+    });
+});
+
+describe("projassets host", () => {
+    const SCOPE = "owner/repo";
+
+    let project: pxt.TilemapProject | undefined;
+    let host: ProjassetsHost;
+    let nextId: number;
+
+    beforeEach(() => {
+        project = new pxt.TilemapProject();
+        project.createNewProjectImage(testBitmap(2, 2), "hero");
+        host = new ProjassetsHost(() => project);
+        nextId = 0;
+    });
+
+    // sends a request whose replies, and notifications if it subscribes, land in `received`
+    function post(msg: any, received: (ProjassetsReply | ProjassetsNotification)[], key = SCOPE) {
+        host.handleMessage(key, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r));
+    }
+
+    function send(msg: any, key = SCOPE): ProjassetsReply {
+        const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+        post(msg, received, key);
+        chai.expect(received.length).equals(1);
+        return received[0] as ProjassetsReply;
+    }
+
+    function expectError(msg: any, code: ProjassetsErrorCode, key = SCOPE) {
+        const reply = send(msg, key);
+        chai.expect(reply.subtype).equals("error");
+        chai.expect((reply as ProjassetsErrorReply).code).equals(code);
+        return reply as ProjassetsErrorReply;
+    }
+
+    /** Subscribes `key` and returns what it receives from then on, the subscription's ack first. */
+    function subscribe(key = SCOPE): (ProjassetsReply | ProjassetsNotification)[] {
+        const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+        post({ subtype: "subscribe" }, received, key);
+        chai.expect(received.map(r => r.subtype)).deep.equals(["ack"]);
+        received.length = 0;
+        return received;
+    }
+
+    const CHANGED = { type: "projassets", subtype: "changed" };
+
+    it("replies with the request's id", () => {
+        const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+        host.handleMessage(SCOPE, { type: "projassets", id: "abc", subtype: "list", kind: "image" }, r => received.push(r));
+        chai.expect(received.length).equals(1);
+        chai.expect(received[0]).deep.include({ type: "projassets", id: "abc" });
+    });
+
+    it("lists the open project's images", () => {
+        project.createNewImage(3, 3);
+        const reply = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        chai.expect(reply.subtype).equals("assets");
+        chai.expect(reply.kind).equals("image");
+        chai.expect(reply.assets).deep.equals(getImageAssets(project));
+        chai.expect(reply.assets.length).equals(2);
+    });
+
+    it("lists the same assets to every extension", () => {
+        const first = send({ subtype: "list", kind: "image" }, "owner/repo") as ProjassetsAssetsReply;
+        const second = send({ subtype: "list", kind: "image" }, "other/repo") as ProjassetsAssetsReply;
+        chai.expect(second.assets).deep.equals(first.assets);
+    });
+
+    it("refuses kinds it does not list with UNSUPPORTED_KIND", () => {
+        for (const kind of ["tile", "tilemap", "animation", "song", "json", "toString", "__proto__"])
+            expectError({ subtype: "list", kind }, "UNSUPPORTED_KIND");
+    });
+
+    it("refuses malformed requests with INVALID_REQUEST", () => {
+        expectError({ subtype: "list" }, "INVALID_REQUEST");
+        expectError({ subtype: "list", kind: 7 }, "INVALID_REQUEST");
+        expectError({ subtype: "write", kind: "image" }, "INVALID_REQUEST");
+        for (const msg of ["not a request", null]) {
+            const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+            host.handleMessage(SCOPE, msg, r => received.push(r));
+            chai.expect(received.map(r => (r as ProjassetsErrorReply).code)).deep.equals(["INVALID_REQUEST"]);
+        }
+    });
+
+    it("refuses requests that arrive when no project is open with PROJECT_CLOSED", () => {
+        project = undefined;
+        expectError({ subtype: "list", kind: "image" }, "PROJECT_CLOSED");
+        expectError({ subtype: "subscribe" }, "PROJECT_CLOSED");
+    });
+
+    it("fails a request the project cannot answer and keeps serving", () => {
+        const open = project;
+        project = { getAssets: () => { throw new Error("assets unavailable"); } } as any;
+        const reply = expectError({ subtype: "list", kind: "image" }, "FAILED");
+        chai.expect(reply.message).equals("assets unavailable");
+        project = open;
+        chai.expect(send({ subtype: "list", kind: "image" }).subtype).equals("assets");
+    });
+
+    describe("subscriptions", () => {
+        it("acknowledges a subscription", () => {
+            const reply = send({ subtype: "subscribe" });
+            chai.expect(reply.subtype).equals("ack");
+        });
+
+        it("notifies a subscribed extension once after a burst of changes", async () => {
+            const received = subscribe();
+            const image = project.getAssets(pxt.AssetType.Image)[0];
+            project.updateAsset(withBitmap(image, testBitmap(4, 4)));
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            chai.expect(received).deep.equals([]);
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it("notifies once the change has applied", async () => {
+            const seen: string[][] = [];
+            host.handleMessage(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => {
+                if (r.subtype === "changed") seen.push(getImageAssets(project).map(i => i.displayName));
+            });
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await settle();
+            chai.expect(seen).deep.equals([["hero", "villain"]]);
+        });
+
+        it("notifies of undo and redo", async () => {
+            const received = subscribe();
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            project.pushUndo();
+            await settle();
+            received.length = 0;
+            project.undo();
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+            project.redo();
+            await settle();
+            chai.expect(received).deep.equals([CHANGED, CHANGED]);
+        });
+
+        it("notifies each subscribed extension, and no other", async () => {
+            const first = subscribe("owner/repo");
+            const second = subscribe("other/repo");
+            const unsubscribed: (ProjassetsReply | ProjassetsNotification)[] = [];
+            post({ subtype: "list", kind: "image" }, unsubscribed, "third/repo");
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await settle();
+            chai.expect(first).deep.equals([CHANGED]);
+            chai.expect(second).deep.equals([CHANGED]);
+            chai.expect(unsubscribed.map(r => r.subtype)).deep.equals(["assets"]);
+        });
+
+        it("sends no notification when nothing changes", async () => {
+            const received = subscribe();
+            send({ subtype: "list", kind: "image" });
+            await settle();
+            chai.expect(received).deep.equals([]);
+        });
+
+        it("replaces an extension's subscription when it subscribes again", async () => {
+            const replaced = subscribe();
+            const current = subscribe();
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await settle();
+            chai.expect(replaced).deep.equals([]);
+            chai.expect(current).deep.equals([CHANGED]);
+        });
+
+        /** Tracks the change listeners `tracked` holds. */
+        function trackListeners(tracked: pxt.TilemapProject): Set<() => void> {
+            const listeners = new Set<() => void>();
+            const add = tracked.addProjectChangeListener.bind(tracked);
+            const remove = tracked.removeProjectChangeListener.bind(tracked);
+            tracked.addProjectChangeListener = (l: () => void) => { listeners.add(l); add(l); };
+            tracked.removeProjectChangeListener = (l: () => void) => { listeners.delete(l); remove(l); };
+            return listeners;
+        }
+
+        it("ends a subscription when its project closes", async () => {
+            const first = project;
+            const received = subscribe();
+            project = new pxt.TilemapProject();
+            first.createNewProjectImage(testBitmap(2, 2), "late");
+            project.createNewProjectImage(testBitmap(2, 2), "other");
+            await settle();
+            chai.expect(received).deep.equals([]);
+        });
+
+        it("follows the project a new subscription is made in, and stops listening to the closed one", async () => {
+            const first = project;
+            const firstListeners = trackListeners(first);
+            const old = subscribe();
+            chai.expect(firstListeners.size).equals(1);
+            project = new pxt.TilemapProject();
+            const secondListeners = trackListeners(project);
+            const current = subscribe();
+            chai.expect(firstListeners.size).equals(0);
+            chai.expect(secondListeners.size).equals(1);
+            first.createNewProjectImage(testBitmap(2, 2), "late");
+            await settle();
+            chai.expect(current).deep.equals([]);
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await settle();
+            chai.expect(old).deep.equals([]);
+            chai.expect(current).deep.equals([CHANGED]);
+        });
+
+        it("stops listening to a project once it has closed and changed", async () => {
+            const first = project;
+            const listeners = trackListeners(first);
+            subscribe();
+            project = undefined;
+            first.createNewProjectImage(testBitmap(2, 2), "late");
+            await settle();
+            chai.expect(listeners.size).equals(0);
+        });
+
+        it("listens to a project once, however many extensions subscribe", () => {
+            const listeners = trackListeners(project);
+            subscribe("owner/repo");
+            subscribe("other/repo");
+            subscribe("owner/repo");
+            chai.expect(listeners.size).equals(1);
+        });
+    });
+});
+
+describe("projassets client", () => {
+    class FakeParent {
+        requests: ProjassetsRequest[] = [];
+        origins: string[] = [];
+
+        postMessage(msg: ProjassetsRequest, targetOrigin: string) {
+            this.requests.push(msg);
+            this.origins.push(targetOrigin);
+        }
+    }
+
+    class FakeSelf {
+        listeners: ((ev: MessageEvent) => void)[] = [];
+
+        addEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners.push(listener);
+        }
+
+        removeEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners = this.listeners.filter(l => l !== listener);
+        }
+
+        deliver(source: unknown, data: unknown) {
+            this.listeners.forEach(l => l({ source, data } as MessageEvent));
+        }
+    }
+
+    const IMAGE: ProjassetsImage = { kind: "image", id: "image1", displayName: "hero", width: 2, height: 2, data: "AAAA" };
+    const CHANGED = { type: "projassets", subtype: "changed" };
+
+    let parent: FakeParent;
+    let self: FakeSelf;
+    let client: ProjassetsClient;
+
+    function lastRequest() {
+        return parent.requests[parent.requests.length - 1];
+    }
+
+    function replyTo(request: ProjassetsRequest, body: object, source: unknown = parent) {
+        self.deliver(source, { type: "projassets", id: request.id, ...body });
+    }
+
+    beforeEach(() => {
+        parent = new FakeParent();
+        self = new FakeSelf();
+        client = new ProjassetsClient({ target: parent, listener: self });
+    });
+
+    afterEach(() => client.dispose());
+
+    it("posts list requests for a kind to the editor with unique ids, and resolves with the assets", async () => {
+        const first = client.list("image");
+        const second = client.list("image");
+        chai.expect(parent.requests.map(r => ({ type: r.type, subtype: r.subtype, kind: (r as any).kind })))
+            .deep.equals([{ type: "projassets", subtype: "list", kind: "image" }, { type: "projassets", subtype: "list", kind: "image" }]);
+        chai.expect(parent.requests[0].id).not.equals(parent.requests[1].id);
+        chai.expect(parent.origins).deep.equals(["*", "*"]);
+        replyTo(parent.requests[1], { subtype: "assets", kind: "image", assets: [] });
+        replyTo(parent.requests[0], { subtype: "assets", kind: "image", assets: [IMAGE] });
+        chai.expect(await first).deep.equals([IMAGE]);
+        chai.expect(await second).deep.equals([]);
+    });
+
+    it("rejects with the editor's error code", async () => {
+        const listed = client.list("image");
+        replyTo(lastRequest(), { subtype: "error", code: "PERMISSION_DENIED", message: "not granted" });
+        const error = await listed.then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjassetsError);
+        chai.expect(error.code).equals("PERMISSION_DENIED");
+        chai.expect(error.message).equals("not granted");
+    });
+
+    it("rejects an unexpected reply with FAILED", async () => {
+        const listed = client.list("image");
+        replyTo(lastRequest(), { subtype: "ack" });
+        const error = await listed.then(() => undefined, e => e);
+        chai.expect(error.code).equals("FAILED");
+    });
+
+    it("ignores replies from other windows and to unknown requests", async () => {
+        const listed = client.list("image");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [{ ...IMAGE, id: "forged" }] }, {});
+        self.deliver(parent, { type: "projassets", id: "unknown", subtype: "assets", kind: "image", assets: [] });
+        self.deliver(parent, { type: "projfs", id: lastRequest().id, subtype: "files", files: [] });
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE] });
+        chai.expect(await listed).deep.equals([IMAGE]);
+    });
+
+    it("subscribes once the editor acknowledges, then calls the listener on each change", async () => {
+        let changes = 0;
+        const subscribed = client.subscribe(() => changes++);
+        chai.expect(lastRequest()).deep.include({ type: "projassets", subtype: "subscribe" });
+        self.deliver(parent, CHANGED);
+        chai.expect(changes).equals(0);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        self.deliver(parent, CHANGED);
+        self.deliver(parent, CHANGED);
+        chai.expect(changes).equals(2);
+    });
+
+    it("ignores change notifications from other windows", async () => {
+        let changes = 0;
+        const subscribed = client.subscribe(() => changes++);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        self.deliver({}, CHANGED);
+        self.deliver(parent, { type: "other", subtype: "changed" });
+        chai.expect(changes).equals(0);
+    });
+
+    it("rejects a refused subscription and never calls its listener", async () => {
+        let changes = 0;
+        const subscribed = client.subscribe(() => changes++);
+        replyTo(lastRequest(), { subtype: "error", code: "PROJECT_CLOSED", message: "closed" });
+        const error = await subscribed.then(() => undefined, e => e);
+        chai.expect(error.code).equals("PROJECT_CLOSED");
+        self.deliver(parent, CHANGED);
+        chai.expect(changes).equals(0);
+    });
+
+    it("reports a request still waiting after slowReplyMs once, and keeps waiting", async () => {
+        client.dispose();
+        const slow: ProjassetsRequest[] = [];
+        client = new ProjassetsClient({ target: parent, listener: self, slowReplyMs: 5, onSlowReply: r => slow.push(r) });
+        const listed = client.list("image");
+        await new Promise(resolve => setTimeout(resolve, 30));
+        chai.expect(slow).deep.equals([lastRequest()]);
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE] });
+        chai.expect(await listed).deep.equals([IMAGE]);
+    });
+
+    it("fails pending requests with DISPOSED when disposed, and stops calling listeners", async () => {
+        let changes = 0;
+        const subscribed = client.subscribe(() => changes++);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        const listed = client.list("image");
+        client.dispose();
+        const error = await listed.then(() => undefined, e => e);
+        chai.expect(error.code).equals("DISPOSED");
+        chai.expect(self.listeners).deep.equals([]);
+        self.deliver(parent, CHANGED);
+        chai.expect(changes).equals(0);
+    });
+
+    it("lists a project's images and hears their changes through the host", async () => {
+        const project = new pxt.TilemapProject();
+        const bitmap = testBitmap(3, 2);
+        const image = project.createNewProjectImage(bitmap, "hero");
+        const host = new ProjassetsHost(() => project);
+        // the editor posts each reply and notification back to the frame's window
+        parent.postMessage = (msg: ProjassetsRequest) => {
+            host.handleMessage("owner/repo", msg, reply => self.deliver(parent, reply));
+        };
+        chai.expect(await client.list("image")).deep.equals([{
+            kind: "image", id: "image1", displayName: "hero", width: 3, height: 2, data: pxt.sprite.base64EncodeBitmap(bitmap),
+        }]);
+        let changes = 0;
+        await client.subscribe(() => changes++);
+        const edited = testBitmap(5, 5);
+        project.updateAsset(withBitmap(image, edited));
+        await settle();
+        chai.expect(changes).equals(1);
+        chai.expect((await client.list("image")).map(i => [i.width, i.height, i.data]))
+            .deep.equals([[5, 5, pxt.sprite.base64EncodeBitmap(edited)]]);
     });
 });
 

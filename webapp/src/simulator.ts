@@ -11,6 +11,7 @@ import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
 import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, setFileListedAsync, writeProjectFileAsync } from "./projfsHost";
+import { ProjassetsHost } from "./projassetsHost";
 
 
 
@@ -38,6 +39,7 @@ let lastCompileResult: pxtc.CompileResult;
 let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
 const projfsHost = new ProjfsHost(getProjfsProject);
+const projassetsHost = new ProjassetsHost(getAssetProject);
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
@@ -279,6 +281,9 @@ export async function initAsync(cfg: SimulatorConfig) {
         onProjfsMessage: (key, msg, reply) => {
             projfsHost.handleMessageAsync(key, msg, reply);
         },
+        onProjassetsMessage: (key, msg, reply) => {
+            projassetsHost.handleMessage(key, msg, reply);
+        },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim,
@@ -292,6 +297,15 @@ export async function initAsync(cfg: SimulatorConfig) {
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
+}
+
+/**
+ * Returns the asset project of the open project, or undefined if none is open;
+ * the same object while the project stays open.
+ */
+function getAssetProject(): pxt.TilemapProject | undefined {
+    if (!pkg.mainEditorPkg().header) return undefined;
+    return pxt.react.getTilemapProject();
 }
 
 // the project getProjfsProject last returned, with the editor package it stands for

@@ -71,6 +71,12 @@ declare namespace pxt {
         index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
         allowPopups?: boolean; // If true, the iframe sandbox gains allow-popups and allow-popups-to-escape-sandbox. Default: false.
         allowClipboardWrite?: boolean; // If true, the iframe allow list gains clipboard-write. Default: false.
+        // PR NOTE [Issue 5] -- lift into the PR description, then remove. Each simulator extension
+        // capability family carries its own opt-in grant: allowFileWrite for the file API (its own
+        // folder of the project), allowAssetRead for the asset provider (all of the project's named
+        // assets, read-only).
+        allowFileWrite?: boolean; // If true, the frame may list, read, write and delete files in its own folder of the project ("projfs" messages). Default: false.
+        allowAssetRead?: boolean; // If true, the frame may list the open project's assets and subscribe to their changes ("projassets" messages). Default: false.
         // backend-only options
         sha?: string; // The commit to checkout (must exist in the branch/ref). Required.
         repo?: string; // Actual repo to load simulator extension from. Defaults to key of parent in `approvedRepoLib` map.

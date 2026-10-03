@@ -37,6 +37,8 @@ namespace pxsim {
             devUrl?: string;
             allowPopups?: boolean;
             allowClipboardWrite?: boolean;
+            allowAssetRead?: boolean;
+            allowFileWrite?: boolean;
             // Additional fields outside of pxt.SimulatorExtensionConfig
             url?: string; // Computed URL
         }>;
@@ -48,12 +50,22 @@ namespace pxsim {
         // extension frames; called as each frame is created, since the driver outlives projects
         getProjectId?: () => string | undefined;
         /**
-         * Receives the project-file ("projfs") requests of simulator extensions.
+         * Receives the project-file ("projfs") requests of simulator extensions
+         * registered with `allowFileWrite`.
          * @param key the `simulatorExtensions` key the requesting frame was created for
          * @param msg the request, as received
          * @param reply posts a message to the requesting frame only
          */
         onProjfsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
+        /**
+         * Receives the project-asset ("projassets") requests of simulator extensions
+         * registered with `allowAssetRead`.
+         * @param key the `simulatorExtensions` key the requesting frame was created for
+         * @param msg the request, as received
+         * @param reply posts a message to the requesting frame only; may be called again
+         * later, to deliver notifications
+         */
+        onProjassetsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
     }
 
     export enum SimulatorState {
@@ -971,7 +983,13 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
-                case 'projfs': this.handleProjfsMessage(msg, source); break;
+                // PR NOTE [Issue 5] -- lift into the PR description, then remove.
+                // The file API is gated by its own registration flag,
+                // allowFileWrite, as the asset provider is by allowAssetRead:
+                // each capability family carries its own grant, and a
+                // registered frame without it is refused with PERMISSION_DENIED.
+                case 'projfs': this.handleExtensionRequest(msg, source, this.options.onProjfsMessage, "allowFileWrite"); break;
+                case 'projassets': this.handleExtensionRequest(msg, source, this.options.onProjassetsMessage, "allowAssetRead"); break;
                 default:
                     this.postMessage(msg, source);
                     break;
@@ -987,34 +1005,58 @@ namespace pxsim {
         // stable UNREGISTERED code echoing the request id so the sender fails
         // fast with a diagnosable reason. Windows that are not simulator
         // frames stay dropped -- there is no frame to reply to.
+        //
+        // PR NOTE [Issue 5] -- lift into the PR description, then remove.
+        // Issue 5 adds per-capability grants to this gate: `permission` names
+        // the registration flag (allowFileWrite for projfs, allowAssetRead for
+        // projassets) a frame's simulatorExtensions entry must set for the
+        // request to reach its handler; a registered frame without it is
+        // refused with the stable PERMISSION_DENIED code.
         /**
-         * Passes a projfs request to `options.onProjfsMessage` with the key of the
-         * simulator extension frame it came from. A request from any other simulator
-         * frame, from a frame whose key is not in `options.simulatorExtensions`, or
-         * arriving when no handler is set, is answered with an `UNREGISTERED` error.
-         * Requests from windows that are not simulator frames are dropped.
+         * Passes a request from a simulator extension frame to `handler` with the
+         * frame's key. A request from any other simulator frame, from a frame whose
+         * key is not in `options.simulatorExtensions`, or arriving when no handler is
+         * set, is answered with an `UNREGISTERED` error; a request from a frame whose
+         * registration does not set `permission` is answered with a
+         * `PERMISSION_DENIED` error. Errors carry the request's type and id. Requests
+         * from windows that are not simulator frames are dropped.
+         * @param handler receives the request, with a function that posts messages to
+         * the requesting frame only
+         * @param permission the registration flag the frame needs
          */
-        private handleProjfsMessage(msg: SimulatorMessage, source: Window) {
+        private handleExtensionRequest(
+            msg: SimulatorMessage,
+            source: Window,
+            handler: ((key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void) | undefined,
+            permission: "allowFileWrite" | "allowAssetRead"
+        ) {
             if (!source) return;
             const frame = this.simFrames().find(f => f.contentWindow === source);
             if (!frame) return;
             const reply = (reply: SimulatorMessage) => {
                 if (frame.contentWindow) this.postMessageCore(frame, reply);
             };
-            const handler = this.options.onProjfsMessage;
+            const refuse = (code: string, message: string) => {
+                const id = (msg as SimulatorMessage & { id?: unknown }).id;
+                reply({
+                    type: msg.type,
+                    id: typeof id === "string" ? id : undefined,
+                    subtype: "error",
+                    code,
+                    message,
+                } as SimulatorMessage);
+            };
             const key = frame.dataset[FRAME_DATA_MESSAGE_CHANNEL];
-            if (handler && key && this.options.simulatorExtensions?.[key]) {
-                handler(key, msg, reply);
+            const registration = key && this.options.simulatorExtensions?.[key];
+            if (!handler || !registration) {
+                refuse("UNREGISTERED", "The editor serves this request only to the simulator extensions of the open project.");
                 return;
             }
-            const id = (msg as SimulatorMessage & { id?: unknown }).id;
-            reply({
-                type: "projfs",
-                id: typeof id === "string" ? id : undefined,
-                subtype: "error",
-                code: "UNREGISTERED",
-                message: "The editor serves project files only to the simulator extensions of the open project.",
-            } as SimulatorMessage);
+            if (!registration[permission]) {
+                refuse("PERMISSION_DENIED", `The simulator extension's registration does not set ${permission}.`);
+                return;
+            }
+            handler(key, msg, reply);
         }
 
         private addEventListeners() {

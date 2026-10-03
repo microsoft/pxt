@@ -83,6 +83,7 @@ describe("simulator driver projfs messages", () => {
     let simxFrame: FakeFrame;
     let otherSimxFrame: FakeFrame;
     let unofferedFrame: FakeFrame;
+    let ungrantedFrame: FakeFrame;
     let deliveries: Delivery[];
     let driver: pxsim.SimulatorDriver;
 
@@ -105,18 +106,32 @@ describe("simulator driver projfs messages", () => {
         simxFrame = frame("sim-frame-2", "someorg/pxt-ext");
         otherSimxFrame = frame("sim-frame-3", "otherorg/pxt-other");
         unofferedFrame = frame("sim-frame-4", "someorg/pxt-removed");
-        const frames = [mainFrame, simxFrame, otherSimxFrame, unofferedFrame];
+        ungrantedFrame = frame("sim-frame-5", "someorg/pxt-nofiles");
+        const frames = [mainFrame, simxFrame, otherSimxFrame, unofferedFrame, ungrantedFrame];
         const container = { getElementsByTagName: () => frames } as unknown as HTMLElement;
         const simx = () => ({ index: "index.html", aspectRatio: 1, permanent: true });
         deliveries = [];
         driver = new pxsim.SimulatorDriver(container, {
             simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
             simulatorExtensions: {
-                "someorg/pxt-ext": simx(),
-                "otherorg/pxt-other": simx(),
+                "someorg/pxt-ext": { ...simx(), allowFileWrite: true },
+                "otherorg/pxt-other": { ...simx(), allowFileWrite: true },
+                "someorg/pxt-nofiles": simx(),
             },
             onProjfsMessage: (key, msg, reply) => deliveries.push({ key, msg, reply }),
         });
+    });
+
+    it("answers requests from a registered frame without allowFileWrite with PERMISSION_DENIED, delivering nothing", () => {
+        for (const msg of [request, { type: "projfs", id: "2", subtype: "write", name: "a.txt", content: "x" } as pxsim.SimulatorMessage])
+            receive(msg, ungrantedFrame.contentWindow);
+        chai.expect(deliveries).deep.equals([]);
+        chai.expect(refusals(ungrantedFrame)).deep.equals([
+            { type: "projfs", id: "1", subtype: "error", code: "PERMISSION_DENIED" },
+            { type: "projfs", id: "2", subtype: "error", code: "PERMISSION_DENIED" },
+        ]);
+        chai.expect(relayed()).equals(false);
+        chai.expect(simxFrame.contentWindow.messages).deep.equals([]);
     });
 
     it("delivers a request from a simulator extension frame with the frame's key", () => {
@@ -177,6 +192,127 @@ describe("simulator driver projfs messages", () => {
         chai.expect(deliveries).deep.equals([]);
         chai.expect(relayed()).equals(false);
         chai.expect(simxFrame.contentWindow.messages).deep.equals([]);
+    });
+});
+
+describe("simulator driver projassets messages", () => {
+    interface Delivery {
+        key: string;
+        msg: pxsim.SimulatorMessage;
+    }
+
+    const request = { type: "projassets", id: "1", subtype: "list", kind: "image" } as pxsim.SimulatorMessage;
+    let mainFrame: FakeFrame;
+    let grantedFrame: FakeFrame;
+    let ungrantedFrame: FakeFrame;
+    let unofferedFrame: FakeFrame;
+    let filesOnlyFrame: FakeFrame;
+    let bothFrame: FakeFrame;
+    let assetDeliveries: Delivery[];
+    let projfsDeliveries: Delivery[];
+    let driver: pxsim.SimulatorDriver;
+
+    function frame(id: string, channel?: string): FakeFrame {
+        const dataset: pxt.Map<string> = { origin: EDITOR_ORIGIN, runid: "" };
+        if (channel) dataset["messagechannel"] = channel;
+        return { id, dataset, contentWindow: new FakeWindow() };
+    }
+
+    function receive(msg: pxsim.SimulatorMessage, source: FakeWindow) {
+        (driver as any).handleMessage(msg, source);
+    }
+
+    // the refusals a frame received, without their messages
+    function refusals(frame: FakeFrame) {
+        return frame.contentWindow.messages.map(m => {
+            const { type, id, subtype, code } = m as pxsim.SimulatorMessage & { id: string, subtype: string, code: string };
+            return { type, id, subtype, code };
+        });
+    }
+
+    beforeEach(() => {
+        mainFrame = frame("sim-frame-1");
+        grantedFrame = frame("sim-frame-2", "someorg/pxt-assets");
+        ungrantedFrame = frame("sim-frame-3", "someorg/pxt-ext");
+        unofferedFrame = frame("sim-frame-4", "someorg/pxt-removed");
+        filesOnlyFrame = frame("sim-frame-5", "someorg/pxt-files");
+        bothFrame = frame("sim-frame-6", "someorg/pxt-both");
+        const frames = [mainFrame, grantedFrame, ungrantedFrame, unofferedFrame, filesOnlyFrame, bothFrame];
+        const container = { getElementsByTagName: () => frames } as unknown as HTMLElement;
+        const simx = () => ({ index: "index.html", aspectRatio: 1, permanent: true });
+        assetDeliveries = [];
+        projfsDeliveries = [];
+        driver = new pxsim.SimulatorDriver(container, {
+            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simulatorExtensions: {
+                "someorg/pxt-assets": { ...simx(), allowAssetRead: true },
+                "someorg/pxt-ext": simx(),
+                "someorg/pxt-files": { ...simx(), allowFileWrite: true },
+                "someorg/pxt-both": { ...simx(), allowAssetRead: true, allowFileWrite: true },
+            },
+            onProjassetsMessage: (key, msg) => assetDeliveries.push({ key, msg }),
+            onProjfsMessage: (key, msg) => projfsDeliveries.push({ key, msg }),
+        });
+    });
+
+    it("delivers a request from a frame registered with allowAssetRead, with the frame's key", () => {
+        receive(request, grantedFrame.contentWindow);
+        chai.expect(assetDeliveries).deep.equals([{ key: "someorg/pxt-assets", msg: request }]);
+        chai.expect(projfsDeliveries).deep.equals([]);
+    });
+
+    it("posts replies and notifications to the requesting frame only", () => {
+        let reply: (msg: pxsim.SimulatorMessage) => void;
+        (driver as any).options.onProjassetsMessage = (key: string, msg: pxsim.SimulatorMessage, r: typeof reply) => reply = r;
+        receive({ type: "projassets", id: "1", subtype: "subscribe" } as pxsim.SimulatorMessage, grantedFrame.contentWindow);
+        const ack = { type: "projassets", id: "1", subtype: "ack" } as pxsim.SimulatorMessage;
+        const changed = { type: "projassets", subtype: "changed" } as pxsim.SimulatorMessage;
+        reply(ack);
+        reply(changed);
+        chai.expect(grantedFrame.contentWindow.messages).deep.equals([ack, changed]);
+        chai.expect([mainFrame, ungrantedFrame, unofferedFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
+    });
+
+    it("answers requests from a registered frame without allowAssetRead with PERMISSION_DENIED, delivering nothing", () => {
+        receive(request, ungrantedFrame.contentWindow);
+        chai.expect(assetDeliveries).deep.equals([]);
+        chai.expect(refusals(ungrantedFrame)).deep.equals([{ type: "projassets", id: "1", subtype: "error", code: "PERMISSION_DENIED" }]);
+        chai.expect([mainFrame, grantedFrame, unofferedFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
+    });
+
+    it("answers requests from the main simulator frame and from unoffered extensions with UNREGISTERED", () => {
+        receive(request, mainFrame.contentWindow);
+        receive(request, unofferedFrame.contentWindow);
+        chai.expect(assetDeliveries).deep.equals([]);
+        for (const refused of [mainFrame, unofferedFrame])
+            chai.expect(refusals(refused)).deep.equals([{ type: "projassets", id: "1", subtype: "error", code: "UNREGISTERED" }]);
+    });
+
+    it("answers requests with UNREGISTERED when no handler serves them", () => {
+        (driver as any).options.onProjassetsMessage = undefined;
+        receive(request, grantedFrame.contentWindow);
+        chai.expect(refusals(grantedFrame)).deep.equals([{ type: "projassets", id: "1", subtype: "error", code: "UNREGISTERED" }]);
+    });
+
+    it("drops requests from windows outside the simulator", () => {
+        receive(request, new FakeWindow());
+        chai.expect(assetDeliveries).deep.equals([]);
+        chai.expect([mainFrame, grantedFrame, ungrantedFrame, unofferedFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
+    });
+
+    it("gates projfs by allowFileWrite and projassets by allowAssetRead, each independent of the other", () => {
+        const files = { type: "projfs", id: "2", subtype: "list" } as pxsim.SimulatorMessage;
+        receive(files, filesOnlyFrame.contentWindow);
+        receive(request, filesOnlyFrame.contentWindow);
+        receive(files, grantedFrame.contentWindow);
+        receive(request, grantedFrame.contentWindow);
+        receive(files, bothFrame.contentWindow);
+        receive(request, bothFrame.contentWindow);
+        chai.expect(projfsDeliveries.map(d => d.key)).deep.equals(["someorg/pxt-files", "someorg/pxt-both"]);
+        chai.expect(assetDeliveries.map(d => d.key)).deep.equals(["someorg/pxt-assets", "someorg/pxt-both"]);
+        chai.expect(refusals(filesOnlyFrame)).deep.equals([{ type: "projassets", id: "1", subtype: "error", code: "PERMISSION_DENIED" }]);
+        chai.expect(refusals(grantedFrame)).deep.equals([{ type: "projfs", id: "2", subtype: "error", code: "PERMISSION_DENIED" }]);
+        chai.expect(bothFrame.contentWindow.messages).deep.equals([]);
     });
 });
 

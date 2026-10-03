@@ -1,6 +1,7 @@
 /**
  * The project-file ("projfs") messages a simulator extension exchanges with the
- * editor, and a client that wraps them in promises.
+ * editor, and a client that wraps them in promises. The editor serves them only
+ * to simulator extensions registered with `allowFileWrite`.
  *
  * A simulator extension sees and changes only its own folder in the project,
  * which the editor names after the extension's key (e.g. `owner/repo`) and
@@ -103,6 +104,11 @@ export type ProjfsErrorCode =
      * request was not applied.
      */
     | "UNREGISTERED"
+    /**
+     * The simulator extension's registration does not set `allowFileWrite`;
+     * the request was not applied.
+     */
+    | "PERMISSION_DENIED"
     /**
      * The editor met an error applying the request. A write or delete may be
      * partly applied; repeating it completes it.

@@ -354,6 +354,9 @@ namespace pxt {
         protected nextID = 0;
         protected nextInternalID = 0;
 
+        // called on every change to the project's assets; see addProjectChangeListener
+        protected projectChangeListeners: (() => void)[] = [];
+
         constructor() {
             this.committedState = {
                 revision: TilemapProject.nextRevision++,
@@ -735,6 +738,7 @@ namespace pxt {
 
                 this.committedState = this.cloneState();
                 this.needsRebuild = true;
+                this.notifyProjectChangeListeners();
             }
         }
 
@@ -752,6 +756,7 @@ namespace pxt {
 
                 this.committedState = this.cloneState();
                 this.needsRebuild = true;
+                this.notifyProjectChangeListeners();
             }
         }
 
@@ -1083,6 +1088,33 @@ namespace pxt {
 
         public removeChangeListener(type: AssetType, listener: () => void) {
             this.getAssetCollection(type).removeListener(listener);
+        }
+
+        // PR NOTE [Issue 5] -- lift into the PR description, then remove.
+        // The project-wide asset change event the asset provider (Issue 5,
+        // generated-docs/pxt-issue-drafts) needs: pxt had per-asset listeners
+        // only. It fires wherever the asset revision moves -- onChange, which
+        // the create/update/duplicate/remove paths call before they mutate,
+        // and undo/redo, which set the revision directly -- so it tracks the
+        // same changes that mark the project's asset files for rebuild.
+        // Mutations that move no revision (getTransparency minting a tile,
+        // cleanupTemporaryAssets, removeInactiveBlockAssets, the jres loaders)
+        // do not fire it.
+        /**
+         * Adds a listener called on each change to the project's assets,
+         * including undo and redo. The listener is called synchronously, and
+         * may be called before the change has applied; read the project from a
+         * later task to see it. Several calls may accompany one edit.
+         */
+        public addProjectChangeListener(listener: () => void) {
+            this.projectChangeListeners.push(listener);
+        }
+
+        /**
+         * Removes a listener added with addProjectChangeListener.
+         */
+        public removeProjectChangeListener(listener: () => void) {
+            this.projectChangeListeners = this.projectChangeListeners.filter(l => l !== listener);
         }
 
         loadPackage(pack: MainPackage) {
@@ -1452,6 +1484,13 @@ namespace pxt {
         protected onChange() {
             this.needsRebuild = true;
             this.state.revision = TilemapProject.nextRevision++;
+            this.notifyProjectChangeListeners();
+        }
+
+        protected notifyProjectChangeListeners() {
+            for (const listener of this.projectChangeListeners) {
+                listener();
+            }
         }
 
         protected readImages(allJRes: Map<JRes>, isProjectFile = false) {
