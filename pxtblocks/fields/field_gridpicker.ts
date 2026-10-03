@@ -913,6 +913,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private positionCatalog_(): void {
         if (!this.catalogContainer_ || !this.scrollContainer) return;
         const parent = Blockly.WidgetDiv.getDiv().parentElement.getBoundingClientRect();
+        this.catalogContainer_.classList.toggle("gridpicker-catalog-compact", parent.height < 360);
         const width = Math.min(this.width_ || 544, Math.max(144, Math.min(parent.width, window.innerWidth) - 24));
         this.catalogContainer_.style.width = `${width}px`;
         const columns = Math.max(1, Math.min(this.catalogColumns_, Math.floor((width - 24) / 52)));
@@ -1404,6 +1405,32 @@ Blockly.Css.register(`
     padding: 24px 8px;
     text-align: center;
     color: var(--pxt-neutral-foreground2);
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog.gridpicker-catalog-compact {
+    padding: 4px;
+    gap: 4px;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog.gridpicker-catalog-compact .gridpicker-catalog-tabs button {
+    min-width: 36px;
+    height: 36px;
+    padding: 2px;
+}
+
+.blocklyGridPickerCatalog.gridpicker-catalog-compact .gridpicker-catalog-tabs img {
+    width: 24px;
+    height: 24px;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog.gridpicker-catalog-compact .gridpicker-catalog-title {
+    font-size: 14px;
+}
+
+.blocklyWidgetDiv .blocklyGridPickerCatalog.gridpicker-catalog-compact .gridpicker-catalog-toolbar input,
+.blocklyGridPickerCatalog.gridpicker-catalog-compact .gridpicker-catalog-footer,
+.blocklyGridPickerCatalog.gridpicker-catalog-compact .gridpicker-catalog-footer button {
+    min-height: 28px;
 }
 
 .blocklyGridPickerTooltip {
