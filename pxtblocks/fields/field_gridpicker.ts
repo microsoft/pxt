@@ -299,6 +299,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 menuItem.setAttribute("aria-expanded", String(this.catalogExpanded_.has(family.id)));
                 menuItem.title = pxt.Util.lf("{0}: {1} choices", family.name, family.options.length);
                 menuItem.setAttribute("aria-label", menuItem.title);
+                menuItemContent.title = menuItem.title;
             }
 
 
@@ -338,7 +339,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                     buttonImg.setAttribute('data-src', content['src']);
                     this.observer.observe(buttonImg);
                 }
-                buttonImg.alt = content['alt'] || '';
+                buttonImg.alt = family ? menuItem.title : content['alt'] || '';
                 buttonImg.setAttribute('data-value', value);
                 menuItemContent.appendChild(buttonImg);
             } else {
@@ -373,8 +374,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                             this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
                             this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
                             // Set tooltip text
-                            const touchTarget = document.elementFromPoint(e.clientX, e.clientY);
-                            const title = (touchTarget as any).title || (touchTarget as any).alt;
+                            const title = menuItem.title;
                             this.gridTooltip_.textContent = title;
                             // Show the tooltip
                             this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
