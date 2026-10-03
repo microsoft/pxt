@@ -1,7 +1,7 @@
 # Tagged Grid Pickers
 
 The `gridpicker` field editor supports optional catalogs for browsing large sets of
-assets. A catalog adds category tabs, collapsible families, material selection,
+assets. A catalog adds category tabs, collapsible families and materials,
 tag filters, and search. Without a catalog, the existing flat picker is unchanged.
 
 The picker stores the original qualified symbol name. Categories, tags, expanded
@@ -46,7 +46,7 @@ export function chooseRider(mob: MonsterMob): number {
 }
 ```
 
-`filter` is a hard restriction, including on the Search tab. It uses the same
+`filter` is a hard restriction, including on the All tab. It uses the same
 semantics as Arcade image-gallery tags: space-separated positive tags must all
 match, and `!tag` excludes that tag. Untagged choices do not match a positive
 filter. A UI filter can narrow a hard filter further, but cannot widen it.
@@ -84,7 +84,7 @@ configuration. The catalog key is the field's `catalog` option.
                 "tabs": [
                     { "id": "characters", "name": "Characters", "tags": ["character"] },
                     { "id": "terrain", "name": "Terrain", "tags": ["terrain"] },
-                    { "id": "search", "name": "Search", "flat": true }
+                    { "id": "search", "name": "All", "flat": true }
                 ],
                 "families": [
                     { "id": "heroes", "name": "Heroes", "tags": ["hero"] },
@@ -107,9 +107,22 @@ available, so classification never removes assets from Search.
 
 A tab may set `icon` to a JRES ID or qualified symbol with an icon. Use
 `materials: true` to show the catalog's `materials` choices. Materials use the
-same category shape (`id`, `name`, `tags`). The first material is selected
-initially; Minecraft lists Copper first. Material selection only affects the
-Materials tab.
+same category shape (`id`, `name`, `tags`, optional `icon`). The Materials tab
+shows a tile for every material represented by the field's allowed choices.
+Expanding a tile reveals those choices directly; there is no material dropdown
+or preselected material. Minecraft lists Copper first. Untagged choices remain
+available under an expandable Other materials tile and in the flat All view.
+
+Material groups may overlap intentionally, such as Wood and a specific wood
+species. Choices remain unique in the final All tab and in the result count.
+Family variants follow configured material order; material contents follow
+configured family order. Neither sort changes stored values or the legacy path.
+
+The picker reserves the largest fully expanded tab's grid size, including group
+tiles, across tabs, searches, and family expansion. Its opening anchor stays
+fixed while groups expand. The size is bounded by the editor pane; smaller tabs
+keep the same space and larger content scrolls instead of resizing the popup.
+Pane resizes can update the reserved space, anchor, and number of columns.
 
 ## Arcade Example
 
@@ -164,7 +177,7 @@ node tools/new_enum_generator/tests/content.test.js HEAD
 
 The local Minecraft browser checks cover family expansion without committing a
 value, original enum-value selection and XML round trips, all 385 item choices
-in flat Search, Copper-first Materials, empty-result keyboard navigation, four
+in the flat All view, Copper-first material groups, empty-result keyboard navigation, four
 tag-filtered riders, twenty combined-source mounts, the legacy no-catalog path,
 pane bounds at 1280/640/390/320px widths, and High Contrast foreground/background
 colors. The shipped Arcade and micro:bit editors are not modified by these checks.

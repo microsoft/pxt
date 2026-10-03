@@ -5,7 +5,7 @@ const vm = require("vm");
 const ts = require("typescript");
 
 const root = path.resolve(__dirname, "../..");
-const context = vm.createContext({ exports: {}, pxt: { sprite: {} } });
+const context = vm.createContext({ exports: {}, pxt: { sprite: {}, Util: { lf: text => text } } });
 
 function loadFunctions(file, names) {
     const text = fs.readFileSync(path.join(root, file), "utf8");
@@ -25,7 +25,7 @@ function loadFunctions(file, names) {
 
 loadFunctions("pxtlib/spriteutils.ts", ["filterItems"]);
 context.pxt.sprite.filterItems = context.exports.filterItems;
-loadFunctions("pxtblocks/fields/field_gridpicker.ts", ["getGridPickerTags", "filterGridPickerOptions", "getGridPickerGroups"]);
+loadFunctions("pxtblocks/fields/field_gridpicker.ts", ["getGridPickerTags", "filterGridPickerOptions", "getGridPickerGroups", "getGridPickerSizeOptions"]);
 loadFunctions("pxtblocks/loader.ts", ["getSymbolPickerTags"]);
 
 const info = { apis: { jres: { "MonsterMob.Zombie": { tags: ["RIDER"] } } } };
@@ -57,8 +57,9 @@ assert.deepStrictEqual(Array.from(filter(options, "custom", { "Item.Other": ["cu
 
 const catalog = {
     name: "Inventory",
-    tabs: [{ id: "equipment", name: "Equipment", tags: ["equipment"] }, { id: "search", name: "Search", flat: true }],
-    families: [{ id: "swords", name: "Swords", tags: ["sword"] }, { id: "pickaxes", name: "Pickaxes", tags: ["pickaxe"] }]
+    tabs: [{ id: "equipment", name: "Equipment", tags: ["equipment"] }, { id: "search", name: "All", flat: true }],
+    families: [{ id: "swords", name: "Swords", tags: ["sword"] }, { id: "pickaxes", name: "Pickaxes", tags: ["pickaxe"] }],
+    materials: [{ id: "copper", name: "Copper", tags: ["copper"] }, { id: "iron", name: "Iron", tags: ["iron"] }]
 };
 const groups = context.exports.getGridPickerGroups;
 const summarize = result => JSON.parse(JSON.stringify(result.map(group => ({ id: group.id, values: group.options.map(option => option[1]) }))));
@@ -72,9 +73,32 @@ assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[0], "copp
 assert.deepStrictEqual(summarize(groups(filter(options, "rider"), catalog, catalog.tabs[1], "")), [
     { id: "all", values: ["MonsterMob.Zombie", "MonsterMob.Husk"] }
 ]);
-assert.deepStrictEqual(summarize(groups(options, catalog, { id: "materials", name: "Materials", materials: true }, "", "copper")), [
-    { id: "swords", values: ["Item.CopperSword"] },
+const materialTab = { id: "materials", name: "Materials", materials: true };
+assert.deepStrictEqual(summarize(groups(options.slice(0, 3), catalog, materialTab, "")), [
+    { id: "copper", values: ["Item.CopperSword", "Item.CopperPickaxe"] },
+    { id: "iron", values: ["Item.IronSword"] }
+]);
+assert.deepStrictEqual(summarize(groups(options, catalog, materialTab, "copper")), [
+    { id: "copper", values: ["Item.CopperSword", "Item.CopperPickaxe"] }
+]);
+assert.deepStrictEqual(summarize(groups(options, catalog, materialTab, "", "iron")), [
+    { id: "iron", values: ["Item.IronSword"] }
+]);
+assert.deepStrictEqual(summarize(groups(options, catalog, materialTab, "other")), [
+    { id: "other", values: ["Item.Other"] }
+]);
+assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), catalog, materialTab, "")), [
+    { id: "copper", values: ["Item.CopperSword", "Item.CopperPickaxe"] },
+    { id: "iron", values: ["Item.IronSword"] }
+]);
+assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), catalog, catalog.tabs[0], "")), [
+    { id: "swords", values: ["Item.CopperSword", "Item.IronSword"] },
     { id: "pickaxes", values: ["Item.CopperPickaxe"] }
+]);
+const sizedCatalog = { ...catalog, tabs: catalog.tabs.concat(materialTab) };
+assert.strictEqual(context.exports.getGridPickerSizeOptions(options, sizedCatalog).length, 10);
+assert.deepStrictEqual(options.map(option => option[1]), [
+    "Item.CopperSword", "Item.IronSword", "Item.CopperPickaxe", "MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"
 ]);
 assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[1], "missing")), [{ id: "all", values: [] }]);
 assert.deepStrictEqual(options.map(option => option[1]), [
