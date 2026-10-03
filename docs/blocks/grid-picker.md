@@ -103,14 +103,14 @@ Every tab has search. Searching a grouped tab expands the matching results rathe
 than concealing them inside collapsed families. The final tab should use
 `flat: true`; it shows all choices allowed by the field's source types and hard
 filter, without family compression. Unmatched families remain individually
-available, so classification never removes assets from Search.
+available, so classification never removes assets from All.
 
 A tab may set `icon` to a JRES ID or qualified symbol with an icon. Use
 `materials: true` to show the catalog's `materials` choices. Materials use the
 same category shape (`id`, `name`, `tags`, optional `icon`). The Materials tab
 shows a tile for every material represented by the field's allowed choices.
 Expanding a tile reveals those choices directly; there is no material dropdown
-or preselected material. Minecraft lists Copper first. Untagged choices remain
+or preselected material. Tiles follow the configured material order. Untagged choices remain
 available under an expandable Other materials tile and in the flat All view.
 
 Material groups may overlap intentionally, such as Wood and a specific wood
@@ -153,6 +153,22 @@ family, material, and capability tags. The normal enum generator also refreshes
 this metadata after rebuilding JRES files. The tool preserves custom tags,
 existing numeric values, runtime mappings, and icon data.
 
+Block and item catalog buckets follow the Bedrock Edition lists in
+[Creative inventory](https://minecraft.wiki/w/Creative_inventory#Bedrock_Edition):
+Construction, Equipment, Items, and Nature. This is not the Java Edition tab
+layout. Beds, buckets, crafting/storage blocks, and redstone utilities belong to
+Items; cooked food and potions to Equipment; raw food, crops, dyes, and spawn eggs
+to Nature. Stable MakeCode aliases have explicit category mappings.
+
+Minecraft does not expose a separate Materials tab. Material tags and ordering
+remain available for sorting variants within families. All is the same flat,
+uncompressed list, visually separated at the far edge, not a category or tag.
+All always includes every choice allowed by the field and its hard filter,
+including technical entries absent from the creative inventory reference. Air,
+Fire, EndPortal, and StructureBlock remain All-only rather than being assigned
+guessed creative categories. Categories should be confirmed against the current
+Minecraft Education version before release.
+
 Rider and mount capability tags match the Riding extension's supported lists,
 including its experimental zombified-piglin rider. They are picker capabilities,
 not a guarantee that every rider/mount combination is supported by the game.
@@ -177,7 +193,7 @@ node tools/new_enum_generator/tests/content.test.js HEAD
 
 The local Minecraft browser checks cover family expansion without committing a
 value, original enum-value selection and XML round trips, all 385 item choices
-in the flat All view, Copper-first material groups, empty-result keyboard navigation, four
+in the flat All view, material-ordered variants, empty-result keyboard navigation, four
 tag-filtered riders, twenty combined-source mounts, the legacy no-catalog path,
 pane bounds at 1280/640/390/320px widths, and High Contrast foreground/background
 colors. The shipped Arcade and micro:bit editors are not modified by these checks.

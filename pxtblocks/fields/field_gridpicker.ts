@@ -718,6 +718,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         for (const tab of this.catalog_.tabs) {
             const button = document.createElement("button");
             button.type = "button";
+            if (tab.flat) button.classList.add("gridpicker-catalog-tab-all");
             button.id = `${container.id}:tab:${tab.id}`;
             button.setAttribute("role", "tab");
             button.setAttribute("aria-controls", `${container.id}:panel`);
@@ -1228,6 +1229,14 @@ Blockly.Css.register(`
     min-width: 44px;
     height: 44px;
     padding: 4px 8px;
+}
+
+.gridpicker-catalog-tabs .gridpicker-catalog-tab-all {
+    margin-inline-start: auto;
+    border-inline-start-width: 3px;
+    position: sticky;
+    inset-inline-end: 0;
+    z-index: 1;
 }
 
 .gridpicker-catalog-tabs button[aria-selected="true"] {
