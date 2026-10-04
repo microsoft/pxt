@@ -54,7 +54,13 @@ import {
     ProjfsReply,
     ProjfsRequest,
 } from "../../pxtservices/projfs";
-import { getImageAssets, ProjassetsHost } from "../../webapp/src/projassetsHost";
+import {
+    createProjassetsConfig,
+    getImageAssets,
+    getVisualConfig,
+    ProjassetsConfig,
+    ProjassetsHost,
+} from "../../webapp/src/projassetsHost";
 import {
     ProjassetsAssetsReply,
     ProjassetsClient,
@@ -63,6 +69,7 @@ import {
     ProjassetsErrorReply,
     ProjassetsImage,
     ProjassetsKind,
+    ProjassetsListing,
     ProjassetsNotification,
     ProjassetsReply,
     ProjassetsRequest,
@@ -1779,6 +1786,105 @@ describe("tilemap project change listeners", () => {
     });
 });
 
+/** The pxt.json of a project with no dependencies or files, plus the fields of `extra`. */
+function testPxtJson(extra: object = {}): string {
+    return JSON.stringify({ name: "test", dependencies: {}, files: [], ...extra });
+}
+
+/** A main package whose package host serves `files`, its pxt.json loaded. */
+function testMainPackage(files: pxt.Map<string>): pxt.MainPackage {
+    const mainPkg = new pxt.MainPackage({ readFile: (_pkg: pxt.Package, name: string) => files[name] } as any);
+    mainPkg.loadConfig(true);
+    return mainPkg;
+}
+
+const TARGET_PALETTE = ["#000000", "#ffffff", "#ff2121", "#ff93c4"];
+const PROJECT_PALETTE = ["#000000", "#123456", "#abcdef"];
+
+/** Runs each test with `palette` as the target's palette and `presets` as its simulator theme presets. */
+function withTargetVisuals(palette: string[], presets: pxt.SimulatorThemePreset[] | undefined) {
+    let saved: { runtime: pxt.RuntimeOptions, simulator: pxt.AppSimulator };
+    beforeEach(() => {
+        saved = { runtime: pxt.appTarget.runtime, simulator: pxt.appTarget.simulator };
+        pxt.appTarget.runtime = { palette: palette.slice() } as pxt.RuntimeOptions;
+        pxt.appTarget.simulator = { themePresets: presets } as pxt.AppSimulator;
+    });
+    afterEach(() => {
+        pxt.appTarget.runtime = saved.runtime;
+        pxt.appTarget.simulator = saved.simulator;
+    });
+}
+
+const ACCOUNT_THEME: pxt.SimulatorTheme = { ...simulatorTheme, "background-color": "#0000aa" };
+const THEME_PRESETS: pxt.SimulatorThemePreset[] = [
+    { id: "default", name: "Default", theme: simulatorTheme },
+    { id: "purple", name: "Purple", theme: { ...simulatorTheme, "background-color": "#660066" } },
+];
+
+describe("main package config load listeners", () => {
+    it("calls each listener each time the main package loads its pxt.json, and no longer calls a removed one", () => {
+        const files = { [pxt.CONFIG_NAME]: testPxtJson() };
+        const mainPkg = testMainPackage(files);
+        let first = 0;
+        let second = 0;
+        const firstListener = () => first++;
+        mainPkg.addConfigLoadListener(firstListener);
+        mainPkg.addConfigLoadListener(() => second++);
+        files[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE });
+        mainPkg.loadConfig(true);
+        chai.expect([first, second]).deep.equals([1, 1]);
+        chai.expect(mainPkg.config.palette).deep.equals(PROJECT_PALETTE);
+        mainPkg.removeConfigLoadListener(firstListener);
+        mainPkg.loadConfig(true);
+        chai.expect([first, second]).deep.equals([1, 2]);
+    });
+});
+
+describe("projassets visual configuration", () => {
+    withTargetVisuals(TARGET_PALETTE, THEME_PRESETS);
+
+    function visualConfigOf(extra: object, presets = THEME_PRESETS, accountTheme: pxt.SimulatorTheme = ACCOUNT_THEME) {
+        return getVisualConfig(testMainPackage({ [pxt.CONFIG_NAME]: testPxtJson(extra) }), presets, accountTheme);
+    }
+
+    it("gives the target's palette when the project sets none", () => {
+        chai.expect(visualConfigOf({}).palette).deep.equals(TARGET_PALETTE);
+    });
+
+    it("gives the project's palette when its pxt.json sets one", () => {
+        chai.expect(visualConfigOf({ palette: PROJECT_PALETTE }).palette).deep.equals(PROJECT_PALETTE);
+    });
+
+    it("draws the palette from the package's effective palette, the one the palette editor opens on", () => {
+        const mainPkg = testMainPackage({ [pxt.CONFIG_NAME]: testPxtJson({ palette: PROJECT_PALETTE }) });
+        chai.expect(mainPkg.effectivePalette()).deep.equals(PROJECT_PALETTE);
+        chai.expect(testMainPackage({ [pxt.CONFIG_NAME]: testPxtJson() }).effectivePalette()).deep.equals(TARGET_PALETTE);
+    });
+
+    it("gives the account's simulator theme when the project declares none", () => {
+        chai.expect(visualConfigOf({}).theme).deep.equals(ACCOUNT_THEME);
+    });
+
+    it("resolves a project theme naming a preset to the preset's tokens", () => {
+        chai.expect(visualConfigOf({ theme: "Purple" }).theme).deep.equals(THEME_PRESETS[1].theme);
+    });
+
+    it("resolves a project theme naming no preset to the account's tokens in that layout", () => {
+        chai.expect(visualConfigOf({ theme: "retro" }).theme).deep.equals({ ...ACCOUNT_THEME, layout: "retro" });
+    });
+
+    it("resolves a project theme of tokens to the account's tokens overridden by the project's", () => {
+        chai.expect(visualConfigOf({ theme: { "background-color": "#00ff00" } }).theme)
+            .deep.equals({ ...ACCOUNT_THEME, "background-color": "#00ff00" });
+    });
+
+    it("gives no theme when the target offers no simulator themes", () => {
+        const mainPkg = testMainPackage({ [pxt.CONFIG_NAME]: testPxtJson({ theme: "Purple" }) });
+        chai.expect(getVisualConfig(mainPkg, [], ACCOUNT_THEME)).not.to.have.property("theme");
+        chai.expect(getVisualConfig(mainPkg, undefined, undefined)).not.to.have.property("theme");
+    });
+});
+
 describe("projassets image listing", () => {
     let project: pxt.TilemapProject;
 
@@ -1880,16 +1986,30 @@ describe("projassets image listing", () => {
 describe("projassets host", () => {
     const SCOPE = "owner/repo";
 
+    withTargetVisuals(TARGET_PALETTE, THEME_PRESETS);
+
     let project: pxt.TilemapProject | undefined;
+    let configFiles: pxt.Map<string>;
+    let mainPkg: pxt.MainPackage;
+    let config: ProjassetsConfig | undefined;
     let host: ProjassetsHost;
     let nextId: number;
 
     beforeEach(() => {
         project = new pxt.TilemapProject();
         project.createNewProjectImage(testBitmap(2, 2), "hero");
-        host = new ProjassetsHost(() => project);
+        configFiles = { [pxt.CONFIG_NAME]: testPxtJson() };
+        mainPkg = testMainPackage(configFiles);
+        config = createProjassetsConfig(mainPkg, () => ACCOUNT_THEME);
+        host = new ProjassetsHost(() => project, () => config);
         nextId = 0;
     });
+
+    /** Replaces the project's pxt.json with one holding `extra`, and loads it as the editor does after a config edit. */
+    function editConfig(extra: object) {
+        configFiles[pxt.CONFIG_NAME] = testPxtJson(extra);
+        mainPkg.loadConfig(true);
+    }
 
     // sends a request whose replies, and notifications if it subscribes, land in `received`
     function post(msg: any, received: (ProjassetsReply | ProjassetsNotification)[], key = SCOPE) {
@@ -1935,6 +2055,26 @@ describe("projassets host", () => {
         chai.expect(reply.kind).equals("image");
         chai.expect(reply.assets).deep.equals(getImageAssets(project));
         chai.expect(reply.assets.length).equals(2);
+    });
+
+    it("carries the project's palette and simulator theme in each list reply", () => {
+        const reply = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        chai.expect(reply.palette).deep.equals(TARGET_PALETTE);
+        chai.expect(reply.theme).deep.equals(ACCOUNT_THEME);
+        editConfig({ palette: PROJECT_PALETTE, theme: "purple" });
+        const edited = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        chai.expect(edited.palette).deep.equals(PROJECT_PALETTE);
+        chai.expect(edited.theme).deep.equals(THEME_PRESETS[1].theme);
+        editConfig({ theme: { "button-fill": "#010203" } });
+        chai.expect((send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply).theme)
+            .deep.equals({ ...ACCOUNT_THEME, "button-fill": "#010203" });
+    });
+
+    it("carries no theme in a list reply when the target offers no simulator themes", () => {
+        pxt.appTarget.simulator = {} as pxt.AppSimulator;
+        const reply = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        chai.expect(reply.palette).deep.equals(TARGET_PALETTE);
+        chai.expect(reply).not.to.have.property("theme");
     });
 
     it("lists the same assets to every extension", () => {
@@ -2026,6 +2166,63 @@ describe("projassets host", () => {
             chai.expect(unsubscribed.map(r => r.subtype)).deep.equals(["assets"]);
         });
 
+        it("notifies once after the project's palette changes", async () => {
+            const received = subscribe();
+            editConfig({ palette: PROJECT_PALETTE });
+            chai.expect(received).deep.equals([]);
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it("notifies once after the project's simulator theme changes, in either declaration form", async () => {
+            const received = subscribe();
+            editConfig({ theme: "purple" });
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+            editConfig({ theme: { "dpad-fill": "#0a0b0c" } });
+            await settle();
+            chai.expect(received).deep.equals([CHANGED, CHANGED]);
+        });
+
+        it("sends no notification for a config change that leaves the palette and theme as they were", async () => {
+            const received = subscribe();
+            editConfig({ description: "a new description" });
+            editConfig({ description: "a new description", palette: TARGET_PALETTE.slice() });
+            await settle();
+            chai.expect(received).deep.equals([]);
+            editConfig({ palette: PROJECT_PALETTE });
+            await settle();
+            received.length = 0;
+            editConfig({ palette: PROJECT_PALETTE, name: "renamed" });
+            await settle();
+            chai.expect(received).deep.equals([]);
+        });
+
+        it("notifies once for asset and palette changes made together", async () => {
+            const received = subscribe();
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            editConfig({ palette: PROJECT_PALETTE });
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it("notifies of a palette change only in the project its subscriptions were made in", async () => {
+            const received = subscribe();
+            const firstPkg = mainPkg;
+            const firstFiles = configFiles;
+            project = new pxt.TilemapProject();
+            configFiles = { [pxt.CONFIG_NAME]: testPxtJson() };
+            mainPkg = testMainPackage(configFiles);
+            config = createProjassetsConfig(mainPkg, () => ACCOUNT_THEME);
+            firstFiles[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE });
+            firstPkg.loadConfig(true);
+            await settle();
+            chai.expect(received).deep.equals([]);
+            editConfig({ palette: PROJECT_PALETTE });
+            await settle();
+            chai.expect(received).deep.equals([]);
+        });
+
         it("sends no notification when nothing changes", async () => {
             const received = subscribe();
             send({ subtype: "list", kind: "image" });
@@ -2098,6 +2295,27 @@ describe("projassets host", () => {
             subscribe("owner/repo");
             chai.expect(listeners.size).equals(1);
         });
+
+        /** Tracks the config load listeners `tracked` holds. */
+        function trackConfigListeners(tracked: ProjassetsConfig): Set<() => void> {
+            const listeners = new Set<() => void>();
+            const add = tracked.addConfigLoadListener;
+            const remove = tracked.removeConfigLoadListener;
+            tracked.addConfigLoadListener = l => { listeners.add(l); add(l); };
+            tracked.removeConfigLoadListener = l => { listeners.delete(l); remove(l); };
+            return listeners;
+        }
+
+        it("listens to a project's config once while subscribed, and stops once the project has closed", async () => {
+            const listeners = trackConfigListeners(config);
+            subscribe("owner/repo");
+            subscribe("other/repo");
+            chai.expect(listeners.size).equals(1);
+            project = undefined;
+            editConfig({ palette: PROJECT_PALETTE });
+            await settle();
+            chai.expect(listeners.size).equals(0);
+        });
     });
 });
 
@@ -2129,6 +2347,8 @@ describe("projassets client", () => {
     }
 
     const IMAGE: ProjassetsImage = { kind: "image", id: "image1", displayName: "hero", width: 2, height: 2, data: "AAAA" };
+    const PALETTE = ["#000000", "#ffffff"];
+    const THEME = { "background-color": "#123456", layout: "default" };
     const CHANGED = { type: "projassets", subtype: "changed" };
 
     let parent: FakeParent;
@@ -2151,17 +2371,17 @@ describe("projassets client", () => {
 
     afterEach(() => client.dispose());
 
-    it("posts list requests for a kind to the editor with unique ids, and resolves with the assets", async () => {
+    it("posts list requests for a kind to the editor with unique ids, and resolves with the assets and the visual configuration", async () => {
         const first = client.list("image");
         const second = client.list("image");
         chai.expect(parent.requests.map(r => ({ type: r.type, subtype: r.subtype, kind: (r as any).kind })))
             .deep.equals([{ type: "projassets", subtype: "list", kind: "image" }, { type: "projassets", subtype: "list", kind: "image" }]);
         chai.expect(parent.requests[0].id).not.equals(parent.requests[1].id);
         chai.expect(parent.origins).deep.equals(["*", "*"]);
-        replyTo(parent.requests[1], { subtype: "assets", kind: "image", assets: [] });
-        replyTo(parent.requests[0], { subtype: "assets", kind: "image", assets: [IMAGE] });
-        chai.expect(await first).deep.equals([IMAGE]);
-        chai.expect(await second).deep.equals([]);
+        replyTo(parent.requests[1], { subtype: "assets", kind: "image", assets: [], palette: PALETTE });
+        replyTo(parent.requests[0], { subtype: "assets", kind: "image", assets: [IMAGE], palette: PALETTE, theme: THEME });
+        chai.expect(await first).deep.equals({ assets: [IMAGE], palette: PALETTE, theme: THEME });
+        chai.expect(await second).deep.equals({ assets: [], palette: PALETTE });
     });
 
     it("rejects with the editor's error code", async () => {
@@ -2182,11 +2402,11 @@ describe("projassets client", () => {
 
     it("ignores replies from other windows and to unknown requests", async () => {
         const listed = client.list("image");
-        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [{ ...IMAGE, id: "forged" }] }, {});
-        self.deliver(parent, { type: "projassets", id: "unknown", subtype: "assets", kind: "image", assets: [] });
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [{ ...IMAGE, id: "forged" }], palette: PALETTE }, {});
+        self.deliver(parent, { type: "projassets", id: "unknown", subtype: "assets", kind: "image", assets: [], palette: PALETTE });
         self.deliver(parent, { type: "projfs", id: lastRequest().id, subtype: "files", files: [] });
-        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE] });
-        chai.expect(await listed).deep.equals([IMAGE]);
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], palette: PALETTE });
+        chai.expect(await listed).deep.equals({ assets: [IMAGE], palette: PALETTE });
     });
 
     it("subscribes once the editor acknowledges, then calls the listener on each change", async () => {
@@ -2229,8 +2449,8 @@ describe("projassets client", () => {
         const listed = client.list("image");
         await new Promise(resolve => setTimeout(resolve, 30));
         chai.expect(slow).deep.equals([lastRequest()]);
-        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE] });
-        chai.expect(await listed).deep.equals([IMAGE]);
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], palette: PALETTE });
+        chai.expect(await listed).deep.equals({ assets: [IMAGE], palette: PALETTE });
     });
 
     it("fails pending requests with DISPOSED when disposed, and stops calling listeners", async () => {
@@ -2247,26 +2467,42 @@ describe("projassets client", () => {
         chai.expect(changes).equals(0);
     });
 
-    it("lists a project's images and hears their changes through the host", async () => {
-        const project = new pxt.TilemapProject();
-        const bitmap = testBitmap(3, 2);
-        const image = project.createNewProjectImage(bitmap, "hero");
-        const host = new ProjassetsHost(() => project);
-        // the editor posts each reply and notification back to the frame's window
-        parent.postMessage = (msg: ProjassetsRequest) => {
-            host.handleMessage("owner/repo", msg, reply => self.deliver(parent, reply));
-        };
-        chai.expect(await client.list("image")).deep.equals([{
-            kind: "image", id: "image1", displayName: "hero", width: 3, height: 2, data: pxt.sprite.base64EncodeBitmap(bitmap),
-        }]);
-        let changes = 0;
-        await client.subscribe(() => changes++);
-        const edited = testBitmap(5, 5);
-        project.updateAsset(withBitmap(image, edited));
-        await settle();
-        chai.expect(changes).equals(1);
-        chai.expect((await client.list("image")).map(i => [i.width, i.height, i.data]))
-            .deep.equals([[5, 5, pxt.sprite.base64EncodeBitmap(edited)]]);
+    describe("through the host", () => {
+        withTargetVisuals(TARGET_PALETTE, THEME_PRESETS);
+
+        it("lists a project's images and visual configuration, and hears their changes", async () => {
+            const project = new pxt.TilemapProject();
+            const bitmap = testBitmap(3, 2);
+            const image = project.createNewProjectImage(bitmap, "hero");
+            const files = { [pxt.CONFIG_NAME]: testPxtJson() };
+            const mainPkg = testMainPackage(files);
+            const host = new ProjassetsHost(() => project, () => createProjassetsConfig(mainPkg, () => ACCOUNT_THEME));
+            // the editor posts each reply and notification back to the frame's window
+            parent.postMessage = (msg: ProjassetsRequest) => {
+                host.handleMessage("owner/repo", msg, reply => self.deliver(parent, reply));
+            };
+            const listing: ProjassetsListing = await client.list("image");
+            chai.expect(listing).deep.equals({
+                assets: [{
+                    kind: "image", id: "image1", displayName: "hero", width: 3, height: 2, data: pxt.sprite.base64EncodeBitmap(bitmap),
+                }],
+                palette: TARGET_PALETTE,
+                theme: ACCOUNT_THEME,
+            });
+            let changes = 0;
+            await client.subscribe(() => changes++);
+            const edited = testBitmap(5, 5);
+            project.updateAsset(withBitmap(image, edited));
+            await settle();
+            chai.expect(changes).equals(1);
+            chai.expect((await client.list("image")).assets.map(i => [i.width, i.height, i.data]))
+                .deep.equals([[5, 5, pxt.sprite.base64EncodeBitmap(edited)]]);
+            files[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE });
+            mainPkg.loadConfig(true);
+            await settle();
+            chai.expect(changes).equals(2);
+            chai.expect((await client.list("image")).palette).deep.equals(PROJECT_PALETTE);
+        });
     });
 });
 

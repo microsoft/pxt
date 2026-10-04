@@ -7,7 +7,9 @@ import {
     ProjassetsNotification,
     ProjassetsReply,
     ProjassetsRequest,
+    ProjassetsVisualConfig,
 } from "../../pxtservices/projassets";
+import { getProjectSimulatorThemePreference } from "./simulatorTheme";
 
 /**
  * Returns the image assets of `project` as simulator extensions see them: every
@@ -29,6 +31,54 @@ export function getImageAssets(project: pxt.TilemapProject): ProjassetsImage[] {
     });
 }
 
+/**
+ * Returns the visual configuration of the project whose main package is
+ * `project`, as the editor resolves it: the package's effective palette, and
+ * the simulator theme the project settings page shows for it -- the
+ * project's own theme resolved over `accountTheme`, else `accountTheme`.
+ * @param presets the target's simulator theme presets; without any, the configuration has no theme
+ * @param accountTheme the user's effective simulator theme
+ */
+export function getVisualConfig(
+    project: pxt.Package,
+    presets: pxt.SimulatorThemePreset[] | undefined,
+    accountTheme: pxt.SimulatorTheme | undefined
+): ProjassetsVisualConfig {
+    const config: ProjassetsVisualConfig = { palette: (project.effectivePalette() || []).slice() };
+    if (presets?.length && accountTheme) {
+        const projectPreference = getProjectSimulatorThemePreference(project.config.theme, presets, accountTheme);
+        config.theme = { ...(projectPreference?.theme || accountTheme) };
+    }
+    return config;
+}
+
+/** The open project's configuration, as the asset host reads and watches it. */
+export interface ProjassetsConfig {
+    /** Returns the project's visual configuration as it is now. */
+    getVisualConfig(): ProjassetsVisualConfig;
+    /** Adds a listener called each time the project's pxt.json is reloaded, whether or not it changed. */
+    addConfigLoadListener(listener: () => void): void;
+    /** Removes a listener added with addConfigLoadListener. */
+    removeConfigLoadListener(listener: () => void): void;
+}
+
+/**
+ * Returns the configuration of the project whose main package is `mainPkg`,
+ * as the asset host reads and watches it; its theme is resolved against the
+ * target's simulator theme presets as they are when it is read.
+ * @param getAccountTheme returns the user's effective simulator theme
+ */
+export function createProjassetsConfig(
+    mainPkg: pxt.MainPackage,
+    getAccountTheme: () => pxt.SimulatorTheme | undefined
+): ProjassetsConfig {
+    return {
+        getVisualConfig: () => getVisualConfig(mainPkg, pxt.appTarget.simulator?.themePresets, getAccountTheme()),
+        addConfigLoadListener: listener => mainPkg.addConfigLoadListener(listener),
+        removeConfigLoadListener: listener => mainPkg.removeConfigLoadListener(listener),
+    };
+}
+
 // per asset kind the host lists: returns the project's assets of that kind
 const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => ProjassetsAsset[] } = {
     image: getImageAssets,
@@ -42,19 +92,23 @@ class ProjassetsRequestError extends Error {
 
 // PR NOTE [Issue 5] -- lift into the PR description, then remove.
 // The asset provider of Issue 5 (generated-docs/pxt-issue-drafts): a
-// read-only, typed view of the open project's named assets for simulator
-// extensions, answered from the live TilemapProject, not from the asset
-// files (images.g.jres), which are rebuilt only at build time. It rides the
-// projfs plumbing: the driver attests the requesting frame's key and refuses
-// frames whose registration lacks allowAssetRead before a request reaches
-// this host. Change notifications ride the TilemapProject's project-wide
-// change listener, deferred and merged: a burst of edits yields one
-// notification, sent after the edits have applied.
+// read-only, typed view of the open project's named assets and visual
+// configuration (palette, simulator theme) for simulator extensions,
+// answered from the live TilemapProject and package config, not from the
+// asset files (images.g.jres), which are rebuilt only at build time. It
+// rides the projfs plumbing: the driver attests the requesting frame's key
+// and refuses frames whose registration lacks allowAssetRead before a
+// request reaches this host. Change notifications ride the TilemapProject's
+// project-wide change listener and the main package's config load listener,
+// deferred and merged: a burst of edits yields one notification, sent after
+// the edits have applied; a config reload notifies only when it changed the
+// palette or the theme.
 /**
  * Serves the project-asset requests of simulator extensions: lists the named
- * assets of the open project by kind, and notifies subscribed extensions when
- * those assets change. Every request gets one reply. A request applies to the
- * project open when it arrives; a subscription ends when that project closes.
+ * assets of the open project by kind, with its visual configuration, and
+ * notifies subscribed extensions when those assets or that configuration
+ * change. Every request gets one reply. A request applies to the project open
+ * when it arrives; a subscription ends when that project closes.
  *
  * The host listens to one project at a time, the one its subscriptions were
  * made in. Changes are merged: subscribers get one notification, sent from a
@@ -63,15 +117,22 @@ class ProjassetsRequestError extends Error {
 export class ProjassetsHost {
     // per extension key: delivers change notifications to the extension's subscribed frame
     protected subscriptions: pxt.Map<(msg: ProjassetsNotification) => void> = {};
-    // the project every subscription was made in, which the host listens to; undefined while there is none
-    protected watched: pxt.TilemapProject | undefined;
+    // the project every subscription was made in, which the host listens to,
+    // with its visual configuration as last seen, serialized; undefined while there is none
+    protected watched: { assets: pxt.TilemapProject, config: ProjassetsConfig, visual: string } | undefined;
     // true while a notification is scheduled
     protected notifyScheduled = false;
+    // true once an asset change is waiting for the scheduled notification
+    protected assetsChanged = false;
 
     /**
      * @param getProject returns the asset project of the open project, or undefined if none is open
+     * @param getConfig returns the configuration of the open project, or undefined if none is open
      */
-    constructor(protected readonly getProject: () => pxt.TilemapProject | undefined) {
+    constructor(
+        protected readonly getProject: () => pxt.TilemapProject | undefined,
+        protected readonly getConfig: () => ProjassetsConfig | undefined
+    ) {
     }
 
     /**
@@ -101,10 +162,15 @@ export class ProjassetsHost {
                 const kind: unknown = request.kind;
                 if (typeof kind !== "string")
                     throw new ProjassetsRequestError("INVALID_REQUEST", "The kind must be a string.");
-                const project = this.openProjectOrThrow();
+                const { assets: project, config } = this.openProjectOrThrow();
                 if (!Object.prototype.hasOwnProperty.call(listers, kind))
                     throw new ProjassetsRequestError("UNSUPPORTED_KIND", `The editor does not list ${kind} assets.`);
-                return { subtype: "assets", kind: kind as ProjassetsKind, assets: listers[kind as ProjassetsKind](project) };
+                return {
+                    subtype: "assets",
+                    kind: kind as ProjassetsKind,
+                    assets: listers[kind as ProjassetsKind](project),
+                    ...config.getVisualConfig(),
+                };
             }
 
             case "subscribe": {
@@ -119,45 +185,66 @@ export class ProjassetsHost {
     }
 
     /**
-     * Returns the open project.
+     * Returns the open project's assets and configuration.
      * @throws a `PROJECT_CLOSED` refusal if no project is open
      */
-    protected openProjectOrThrow(): pxt.TilemapProject {
-        const project = this.getProject();
-        if (!project)
+    protected openProjectOrThrow(): { assets: pxt.TilemapProject, config: ProjassetsConfig } {
+        const assets = this.getProject();
+        const config = this.getConfig();
+        if (!assets || !config)
             throw new ProjassetsRequestError("PROJECT_CLOSED", "No project was open when the request arrived.");
-        return project;
+        return { assets, config };
     }
 
     /** Listens to `project` for changes, ending the subscriptions made in any other project. */
-    protected watch(project: pxt.TilemapProject) {
-        if (this.watched === project) return;
+    protected watch(project: { assets: pxt.TilemapProject, config: ProjassetsConfig }) {
+        if (this.watched?.assets === project.assets) return;
         this.unwatch();
-        project.addProjectChangeListener(this.onProjectChange);
-        this.watched = project;
+        project.assets.addProjectChangeListener(this.onProjectChange);
+        project.config.addConfigLoadListener(this.onConfigLoad);
+        this.watched = { ...project, visual: JSON.stringify(project.config.getVisualConfig()) };
     }
 
     /** Stops listening for changes and ends every subscription. */
     protected unwatch() {
-        this.watched?.removeProjectChangeListener(this.onProjectChange);
+        this.watched?.assets.removeProjectChangeListener(this.onProjectChange);
+        this.watched?.config.removeConfigLoadListener(this.onConfigLoad);
         this.watched = undefined;
         this.subscriptions = {};
     }
 
     protected onProjectChange = () => {
+        this.assetsChanged = true;
+        this.scheduleNotification();
+    }
+
+    protected onConfigLoad = () => {
+        this.scheduleNotification();
+    }
+
+    protected scheduleNotification() {
         if (this.notifyScheduled) return;
         this.notifyScheduled = true;
         setTimeout(() => this.notifySubscribers(), 0);
     }
 
-    /** Notifies every subscriber, or ends the subscriptions if their project has closed. */
+    /**
+     * Notifies every subscriber if the assets or the visual configuration
+     * changed, or ends the subscriptions if their project has closed.
+     */
     protected notifySubscribers() {
         this.notifyScheduled = false;
+        const assetsChanged = this.assetsChanged;
+        this.assetsChanged = false;
         if (!this.watched) return;
-        if (this.getProject() !== this.watched) {
+        if (this.getProject() !== this.watched.assets) {
             this.unwatch();
             return;
         }
+        const visual = JSON.stringify(this.watched.config.getVisualConfig());
+        const visualChanged = visual !== this.watched.visual;
+        this.watched.visual = visual;
+        if (!assetsChanged && !visualChanged) return;
         const notification: ProjassetsNotification = { type: PROJASSETS_MESSAGE_TYPE, subtype: "changed" };
         for (const key of Object.keys(this.subscriptions)) {
             this.subscriptions[key](notification);

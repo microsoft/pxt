@@ -1023,11 +1023,26 @@ namespace pxt {
                 if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
             }
         }
+
+        // PR NOTE [Issue 5] -- lift into the PR description, then remove.
+        // The palette the asset provider (Issue 5, generated-docs/pxt-issue-drafts)
+        // reports: the expression the palette editor opened on, lifted here so
+        // the editor and the provider resolve the palette the same way.
+        /**
+         * Returns the palette the package's images are drawn with: the palette
+         * its pxt.json sets, else the target's palette as the loaded packages
+         * patched it; undefined if neither has one.
+         */
+        effectivePalette(): string[] | undefined {
+            return this.config.palette || appTarget.runtime?.palette;
+        }
     }
 
     export class MainPackage extends Package {
         public deps: Map<Package> = {};
         private _jres: Map<JRes>;
+        // called each time loadConfig reloads the project's pxt.json
+        protected configLoadListeners: (() => void)[] = [];
 
         constructor(public _host: Host) {
             super("this", "file:.", null, null, null)
@@ -1035,6 +1050,35 @@ namespace pxt {
             this.addedBy = [this]
             this.level = 0
             this.deps[this.id] = this;
+        }
+
+        // PR NOTE [Issue 5] -- lift into the PR description, then remove.
+        // The project config event the asset provider (Issue 5,
+        // generated-docs/pxt-issue-drafts) watches to report palette and
+        // simulator theme changes. loadConfig is where every edit of the
+        // project's pxt.json reaches the loaded config: updateConfigAsync
+        // (the palette editor, extension changes), the project settings page
+        // (the simulator theme picker), and each compile, which reloads the
+        // config before reading it (a direct text edit of pxt.json).
+        /**
+         * Adds a listener called each time the project's pxt.json is reloaded
+         * into the package's config, after the reload. The listener is called
+         * synchronously, whether or not the config changed.
+         */
+        addConfigLoadListener(listener: () => void) {
+            this.configLoadListeners.push(listener);
+        }
+
+        /**
+         * Removes a listener added with addConfigLoadListener.
+         */
+        removeConfigLoadListener(listener: () => void) {
+            this.configLoadListeners = this.configLoadListeners.filter(l => l !== listener);
+        }
+
+        loadConfig(skipSave = false) {
+            super.loadConfig(skipSave);
+            this.configLoadListeners.forEach(listener => listener());
         }
 
         installAllAsync(targetVersion?: string) {

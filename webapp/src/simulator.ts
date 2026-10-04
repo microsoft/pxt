@@ -11,7 +11,7 @@ import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
 import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, setFileListedAsync, writeProjectFileAsync } from "./projfsHost";
-import { ProjassetsHost } from "./projassetsHost";
+import { createProjassetsConfig, ProjassetsConfig, ProjassetsHost } from "./projassetsHost";
 
 
 
@@ -39,7 +39,7 @@ let lastCompileResult: pxtc.CompileResult;
 let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
 const projfsHost = new ProjfsHost(getProjfsProject);
-const projassetsHost = new ProjassetsHost(getAssetProject);
+const projassetsHost = new ProjassetsHost(getAssetProject, getAssetConfig);
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
@@ -306,6 +306,15 @@ export async function initAsync(cfg: SimulatorConfig) {
 function getAssetProject(): pxt.TilemapProject | undefined {
     if (!pkg.mainEditorPkg().header) return undefined;
     return pxt.react.getTilemapProject();
+}
+
+/**
+ * Returns the configuration of the open project as the asset host reads and
+ * watches it, or undefined if no project is open.
+ */
+function getAssetConfig(): ProjassetsConfig | undefined {
+    if (!pkg.mainEditorPkg().header) return undefined;
+    return createProjassetsConfig(pkg.mainPkg, () => simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme);
 }
 
 // the project getProjfsProject last returned, with the editor package it stands for
