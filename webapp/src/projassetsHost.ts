@@ -79,6 +79,31 @@ export function createProjassetsConfig(
     };
 }
 
+// PR NOTE [Issue 5] -- lift into the PR description, then remove.
+// The provider reads a project only once it has loaded. A reload (the
+// palette editor's Apply, an extension change, opening another project)
+// replaces the main package and editor package, and the new editor package
+// has its header before its files and pxt.json arrive. The webapp's asset
+// project getter (pxt.react.getTilemapProject) builds the TilemapProject on
+// first use and keeps it; built from a package that has not loaded, it is
+// empty and marked for rebuild, and the next asset build writes that empty
+// project over images.g.jres and tilemap.g.jres. Stock pxt never asks for
+// the asset project before the load completes, but simulator extension
+// requests can arrive at any moment. So each request waits on the open
+// editor package's loadedAsync, then checks the package is still the open
+// one before reading it; a change notification compares the open package
+// with the one its subscriptions were made in, and reads nothing from any
+// other.
+/** The open project as the asset host waits on it. */
+export interface ProjassetsOpenProject {
+    /**
+     * Returns a promise that resolves once the project has loaded, and
+     * rejects if its load fails. It settles even if the project is replaced
+     * while loading.
+     */
+    loadedAsync(): Promise<void>;
+}
+
 // per asset kind the host lists: returns the project's assets of that kind
 const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => ProjassetsAsset[] } = {
     image: getImageAssets,
@@ -108,7 +133,8 @@ class ProjassetsRequestError extends Error {
  * assets of the open project by kind, with its visual configuration, and
  * notifies subscribed extensions when those assets or that configuration
  * change. Every request gets one reply. A request applies to the project open
- * when it arrives; a subscription ends when that project closes.
+ * when it arrives, and is answered once that project has loaded; a
+ * subscription ends when that project closes.
  *
  * The host listens to one project at a time, the one its subscriptions were
  * made in. Changes are merged: subscribers get one notification, sent from a
@@ -117,38 +143,43 @@ class ProjassetsRequestError extends Error {
 export class ProjassetsHost {
     // per extension key: delivers change notifications to the extension's subscribed frame
     protected subscriptions: pxt.Map<(msg: ProjassetsNotification) => void> = {};
-    // the project every subscription was made in, which the host listens to,
-    // with its visual configuration as last seen, serialized; undefined while there is none
-    protected watched: { assets: pxt.TilemapProject, config: ProjassetsConfig, visual: string } | undefined;
+    // the project every subscription was made in, which the host listens to, with
+    // its asset project, configuration and visual configuration as last seen,
+    // serialized; undefined while there is none
+    protected watched: { open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig, visual: string } | undefined;
     // true while a notification is scheduled
     protected notifyScheduled = false;
     // true once an asset change is waiting for the scheduled notification
     protected assetsChanged = false;
 
     /**
-     * @param getProject returns the asset project of the open project, or undefined if none is open
-     * @param getConfig returns the configuration of the open project, or undefined if none is open
+     * @param getOpenProject returns the open project, or undefined if none is open
+     * @param getProject returns the asset project of the open project; called only once it has loaded
+     * @param getConfig returns the configuration of the open project; called only once it has loaded
      */
     constructor(
-        protected readonly getProject: () => pxt.TilemapProject | undefined,
-        protected readonly getConfig: () => ProjassetsConfig | undefined
+        protected readonly getOpenProject: () => ProjassetsOpenProject | undefined,
+        protected readonly getProject: () => pxt.TilemapProject,
+        protected readonly getConfig: () => ProjassetsConfig
     ) {
     }
 
     /**
-     * Answers a request from the simulator extension with the given key. A
-     * subscribe request also makes `reply` the extension's channel for change
-     * notifications, replacing any channel it had.
+     * Answers a request from the simulator extension with the given key,
+     * once the project open when it arrives has loaded. A subscribe request
+     * also makes `reply` the extension's channel for change notifications,
+     * replacing any channel it had.
      * @param key the extension key the requesting frame was created for
      * @param msg the request, as received
      * @param reply delivers a reply or notification to the requesting frame
+     * @returns a promise that resolves once the reply is sent
      */
-    handleMessage(key: string, msg: unknown, reply: (msg: ProjassetsReply | ProjassetsNotification) => void): void {
+    async handleMessageAsync(key: string, msg: unknown, reply: (msg: ProjassetsReply | ProjassetsNotification) => void): Promise<void> {
         const request = msg as ProjassetsRequest;
         const id = typeof request?.id === "string" ? request.id : undefined;
         let answer: ProjassetsReply;
         try {
-            answer = { ...this.apply(key, request, reply), type: PROJASSETS_MESSAGE_TYPE, id } as ProjassetsReply;
+            answer = { ...await this.applyAsync(key, request, reply), type: PROJASSETS_MESSAGE_TYPE, id } as ProjassetsReply;
         } catch (e) {
             const code: ProjassetsErrorCode = e instanceof ProjassetsRequestError ? e.code : "FAILED";
             answer = { type: PROJASSETS_MESSAGE_TYPE, id, subtype: "error", code, message: e?.message || String(e) };
@@ -156,13 +187,13 @@ export class ProjassetsHost {
         reply(answer);
     }
 
-    protected apply(key: string, request: ProjassetsRequest, reply: (msg: ProjassetsNotification) => void): ProjassetsReplyBody {
+    protected async applyAsync(key: string, request: ProjassetsRequest, reply: (msg: ProjassetsNotification) => void): Promise<ProjassetsReplyBody> {
         switch (request?.subtype) {
             case "list": {
                 const kind: unknown = request.kind;
                 if (typeof kind !== "string")
                     throw new ProjassetsRequestError("INVALID_REQUEST", "The kind must be a string.");
-                const { assets: project, config } = this.openProjectOrThrow();
+                const { assets: project, config } = await this.openProjectAsync();
                 if (!Object.prototype.hasOwnProperty.call(listers, kind))
                     throw new ProjassetsRequestError("UNSUPPORTED_KIND", `The editor does not list ${kind} assets.`);
                 return {
@@ -174,7 +205,7 @@ export class ProjassetsHost {
             }
 
             case "subscribe": {
-                this.watch(this.openProjectOrThrow());
+                this.watch(await this.openProjectAsync());
                 this.subscriptions[key] = reply;
                 return { subtype: "ack" };
             }
@@ -185,20 +216,28 @@ export class ProjassetsHost {
     }
 
     /**
-     * Returns the open project's assets and configuration.
-     * @throws a `PROJECT_CLOSED` refusal if no project is open
+     * Waits for the project open now to load, then returns it with its assets
+     * and configuration.
+     * @throws a `PROJECT_CLOSED` refusal if no project is open, or if the
+     * project fails to load or is replaced before it has loaded
      */
-    protected openProjectOrThrow(): { assets: pxt.TilemapProject, config: ProjassetsConfig } {
-        const assets = this.getProject();
-        const config = this.getConfig();
-        if (!assets || !config)
+    protected async openProjectAsync(): Promise<{ open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig }> {
+        const open = this.getOpenProject();
+        if (!open)
             throw new ProjassetsRequestError("PROJECT_CLOSED", "No project was open when the request arrived.");
-        return { assets, config };
+        try {
+            await open.loadedAsync();
+        } catch (e) {
+            throw new ProjassetsRequestError("PROJECT_CLOSED", "The project open when the request arrived failed to load.");
+        }
+        if (this.getOpenProject() !== open)
+            throw new ProjassetsRequestError("PROJECT_CLOSED", "The project open when the request arrived was replaced while it loaded.");
+        return { open, assets: this.getProject(), config: this.getConfig() };
     }
 
     /** Listens to `project` for changes, ending the subscriptions made in any other project. */
-    protected watch(project: { assets: pxt.TilemapProject, config: ProjassetsConfig }) {
-        if (this.watched?.assets === project.assets) return;
+    protected watch(project: { open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig }) {
+        if (this.watched?.open === project.open) return;
         this.unwatch();
         project.assets.addProjectChangeListener(this.onProjectChange);
         project.config.addConfigLoadListener(this.onConfigLoad);
@@ -230,18 +269,27 @@ export class ProjassetsHost {
 
     /**
      * Notifies every subscriber if the assets or the visual configuration
-     * changed, or ends the subscriptions if their project has closed.
+     * changed, or ends the subscriptions if the open project is no longer the
+     * one they were made in, or its configuration can no longer be read; a
+     * read failure is reported, not raised.
      */
     protected notifySubscribers() {
         this.notifyScheduled = false;
         const assetsChanged = this.assetsChanged;
         this.assetsChanged = false;
         if (!this.watched) return;
-        if (this.getProject() !== this.watched.assets) {
+        let visual: string;
+        try {
+            if (this.getOpenProject() !== this.watched.open) {
+                this.unwatch();
+                return;
+            }
+            visual = JSON.stringify(this.watched.config.getVisualConfig());
+        } catch (e) {
+            pxt.reportException(e);
             this.unwatch();
             return;
         }
-        const visual = JSON.stringify(this.watched.config.getVisualConfig());
         const visualChanged = visual !== this.watched.visual;
         this.watched.visual = visual;
         if (!assetsChanged && !visualChanged) return;

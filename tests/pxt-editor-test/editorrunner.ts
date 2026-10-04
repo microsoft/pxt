@@ -60,6 +60,7 @@ import {
     getVisualConfig,
     ProjassetsConfig,
     ProjassetsHost,
+    ProjassetsOpenProject,
 } from "../../webapp/src/projassetsHost";
 import {
     ProjassetsAssetsReply,
@@ -682,6 +683,10 @@ describe("projfs host", () => {
         constructor(public files: pxt.Map<string>) {
         }
 
+        loadedAsync() {
+            return Promise.resolve();
+        }
+
         getFiles() {
             return { ...this.files };
         }
@@ -1232,6 +1237,7 @@ describe("projfs host", () => {
         it("applies flagged changes as artifacts where no editor takes user edits", async () => {
             const files: pxt.Map<string> = { [pxt.CONFIG_NAME]: JSON.stringify({ files: [] }) };
             const withoutEditor: ProjfsProject = {
+                loadedAsync: () => Promise.resolve(),
                 getFiles: () => ({ ...files }),
                 writeFileAsync: async (name, content) => { files[name] = content; },
                 deleteFileAsync: async name => { delete files[name]; },
@@ -1240,6 +1246,140 @@ describe("projfs host", () => {
             host = new ProjfsHost(() => withoutEditor, clock.now, clock.delay);
             chai.expect((await send({ subtype: "write", name: "a.ts", content: "x", dirty: true })).subtype).equals("ack");
             chai.expect(files["owner/repo/a.ts"]).equals("x");
+        });
+    });
+
+    // The editor reloads a project by replacing its editor package, whose
+    // files arrive from the workspace, as the workspace stored them when the
+    // load began, only once the load reads them; until then the package holds
+    // no files and no pxt.json. These tests drive the host through that load.
+    describe("reload window", () => {
+        // per project header: the files the workspace stores
+        let stored: pxt.Map<pxt.Map<string>>;
+        let current: ProjfsProject;
+
+        /**
+         * Opens the project stored under `header` as the editor's load does,
+         * its project reaching the editor package's files as the webapp's
+         * does: a new file is saved on its own, while a pxt.json change saves
+         * every file the package holds, and fails without a pxt.json.
+         */
+        function beginLoad(header: string): { finish: () => void, fail: () => void } {
+            const read = { ...stored[header] };
+            const files: pxt.Map<string> = {};
+            const loaded = pxt.Util.defer<void>();
+            current = {
+                getFiles: () => ({ ...files }),
+                writeFileAsync: async (name, content) => {
+                    files[name] = content;
+                    stored[header][name] = content;
+                },
+                deleteFileAsync: async name => {
+                    delete files[name];
+                    stored[header] = { ...files };
+                },
+                setListedAsync: async (name, listed) => {
+                    if (!files[pxt.CONFIG_NAME]) throw new Error("pxt.json could not be updated");
+                    const config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                    config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
+                    files[pxt.CONFIG_NAME] = JSON.stringify(config);
+                    stored[header] = { ...files };
+                },
+                loadedAsync: () => loaded.promise,
+            };
+            return {
+                finish: () => {
+                    Object.keys(files).forEach(name => delete files[name]);
+                    Object.assign(files, read);
+                    loaded.resolve(undefined);
+                },
+                fail: () => loaded.reject(new Error("load failed")),
+            };
+        }
+
+        /** The files of a project holding the listed scope files `scoped`, by relative name. */
+        function projectFiles(scoped: pxt.Map<string>): pxt.Map<string> {
+            const names = Object.keys(scoped).map(name => `${SCOPE}/${name}`);
+            const files: pxt.Map<string> = { [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", files: [pxt.MAIN_TS, ...names] }), [pxt.MAIN_TS]: "" };
+            Object.keys(scoped).forEach(name => files[`${SCOPE}/${name}`] = scoped[name]);
+            return files;
+        }
+
+        beforeEach(() => {
+            stored = { first: projectFiles({ "brains.ts": "registers a, b" }), second: projectFiles({ "brains.ts": "registers c" }) };
+            beginLoad("first").finish();
+            host = new ProjfsHost(() => current, clock.now, clock.delay);
+        });
+
+        it("answers a list and a read that arrive while the project loads once it has loaded", async () => {
+            const load = beginLoad("first");
+            const replies: ProjfsReply[] = [];
+            const answered = Promise.all([post({ subtype: "list" }, replies), post({ subtype: "read", name: "brains.ts" }, replies)]);
+            await settle();
+            load.finish();
+            await answered;
+            chai.expect((replies[0] as ProjfsFilesReply).files).deep.equals([{ name: "brains.ts", size: 14 }]);
+            chai.expect((replies[1] as ProjfsContentReply).content).equals("registers a, b");
+        });
+
+        it("applies a write that arrives while the project loads once it has loaded, and keeps it", async () => {
+            const load = beginLoad("first");
+            const replies: ProjfsReply[] = [];
+            const answered = post({ subtype: "write", name: "pushed.ts", content: "brain" }, replies);
+            await settle();
+            load.finish();
+            await answered;
+            chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
+            chai.expect(current.getFiles()[`${SCOPE}/pushed.ts`]).equals("brain");
+            chai.expect(stored.first[`${SCOPE}/pushed.ts`]).equals("brain");
+            chai.expect(((await send({ subtype: "read", name: "pushed.ts" })) as ProjfsContentReply).content).equals("brain");
+            chai.expect(((await send({ subtype: "read", name: "brains.ts" })) as ProjfsContentReply).content).equals("registers a, b");
+        });
+
+        it("applies a delete that arrives while the project loads once it has loaded", async () => {
+            const load = beginLoad("first");
+            const replies: ProjfsReply[] = [];
+            const answered = post({ subtype: "delete", name: "brains.ts" }, replies);
+            await settle();
+            load.finish();
+            await answered;
+            chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
+            chai.expect(stored.first[`${SCOPE}/brains.ts`]).equals(undefined);
+        });
+
+        it("keeps an extension's requests in order across the load", async () => {
+            const load = beginLoad("first");
+            const replies: ProjfsReply[] = [];
+            const written = post({ subtype: "write", name: "brains.ts", content: "registers a, b, d" }, replies);
+            await settle();
+            load.finish();
+            await Promise.all([written, post({ subtype: "read", name: "brains.ts" }, replies)]);
+            chai.expect(replies.map(r => r.subtype)).deep.equals(["ack", "content"]);
+            chai.expect((replies[1] as ProjfsContentReply).content).equals("registers a, b, d");
+        });
+
+        it("refuses with PROJECT_CLOSED a request whose project is replaced while it waits", async () => {
+            const replaced = beginLoad("first");
+            const replies: ProjfsReply[] = [];
+            const answered = post({ subtype: "write", name: "pushed.ts", content: "brain" }, replies);
+            await settle();
+            const load = beginLoad("second");
+            replaced.finish();
+            await answered;
+            chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(stored.first[`${SCOPE}/pushed.ts`]).equals(undefined);
+            load.finish();
+            chai.expect(((await send({ subtype: "read", name: "brains.ts" })) as ProjfsContentReply).content).equals("registers c");
+        });
+
+        it("refuses with PROJECT_CLOSED a request whose project fails to load", async () => {
+            const load = beginLoad("first");
+            const replies: ProjfsReply[] = [];
+            const answered = post({ subtype: "list" }, replies);
+            await settle();
+            load.fail();
+            await answered;
+            chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
         });
     });
 });
@@ -1320,6 +1460,7 @@ describe("projfs user edits", () => {
         editor.typecheckNow = () => debouncer.trigger();
         const files: pxt.Map<string> = { [pxt.CONFIG_NAME]: JSON.stringify({ files: [] }) };
         const project: ProjfsProject = {
+            loadedAsync: () => Promise.resolve(),
             getFiles: () => ({ ...files }),
             writeFileAsync: async (name, content) => { files[name] = content; },
             deleteFileAsync: async name => { delete files[name]; },
@@ -1640,6 +1781,7 @@ describe("projfs client", () => {
             [pxt.MAIN_TS]: "",
         };
         const project: ProjfsProject = {
+            loadedAsync: () => Promise.resolve(),
             getFiles: () => ({ ...files }),
             writeFileAsync: async (name, content) => { files[name] = content; },
             deleteFileAsync: async name => { delete files[name]; },
@@ -1861,6 +2003,11 @@ describe("projassets visual configuration", () => {
         chai.expect(testMainPackage({ [pxt.CONFIG_NAME]: testPxtJson() }).effectivePalette()).deep.equals(TARGET_PALETTE);
     });
 
+    it("gives the target's palette for a main package whose pxt.json has not loaded", () => {
+        const unloaded = new pxt.MainPackage({ readFile: (): string => undefined } as any);
+        chai.expect(unloaded.effectivePalette()).deep.equals(TARGET_PALETTE);
+    });
+
     it("gives the account's simulator theme when the project declares none", () => {
         chai.expect(visualConfigOf({}).theme).deep.equals(ACCOUNT_THEME);
     });
@@ -1991,9 +2138,15 @@ describe("projassets host", () => {
     let project: pxt.TilemapProject | undefined;
     let configFiles: pxt.Map<string>;
     let mainPkg: pxt.MainPackage;
-    let config: ProjassetsConfig | undefined;
+    let config: ProjassetsConfig;
+    let open: ProjassetsOpenProject | undefined;
     let host: ProjassetsHost;
     let nextId: number;
+
+    /** An open project that has loaded. */
+    function loadedProject(): ProjassetsOpenProject {
+        return { loadedAsync: () => Promise.resolve() };
+    }
 
     beforeEach(() => {
         project = new pxt.TilemapProject();
@@ -2001,7 +2154,8 @@ describe("projassets host", () => {
         configFiles = { [pxt.CONFIG_NAME]: testPxtJson() };
         mainPkg = testMainPackage(configFiles);
         config = createProjassetsConfig(mainPkg, () => ACCOUNT_THEME);
-        host = new ProjassetsHost(() => project, () => config);
+        open = loadedProject();
+        host = new ProjassetsHost(() => open, () => project, () => config);
         nextId = 0;
     });
 
@@ -2012,28 +2166,28 @@ describe("projassets host", () => {
     }
 
     // sends a request whose replies, and notifications if it subscribes, land in `received`
-    function post(msg: any, received: (ProjassetsReply | ProjassetsNotification)[], key = SCOPE) {
-        host.handleMessage(key, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r));
+    function post(msg: any, received: (ProjassetsReply | ProjassetsNotification)[], key = SCOPE): Promise<void> {
+        return host.handleMessageAsync(key, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r));
     }
 
-    function send(msg: any, key = SCOPE): ProjassetsReply {
+    async function send(msg: any, key = SCOPE): Promise<ProjassetsReply> {
         const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-        post(msg, received, key);
+        await post(msg, received, key);
         chai.expect(received.length).equals(1);
         return received[0] as ProjassetsReply;
     }
 
-    function expectError(msg: any, code: ProjassetsErrorCode, key = SCOPE) {
-        const reply = send(msg, key);
+    async function expectError(msg: any, code: ProjassetsErrorCode, key = SCOPE): Promise<ProjassetsErrorReply> {
+        const reply = await send(msg, key);
         chai.expect(reply.subtype).equals("error");
         chai.expect((reply as ProjassetsErrorReply).code).equals(code);
         return reply as ProjassetsErrorReply;
     }
 
     /** Subscribes `key` and returns what it receives from then on, the subscription's ack first. */
-    function subscribe(key = SCOPE): (ProjassetsReply | ProjassetsNotification)[] {
+    async function subscribe(key = SCOPE): Promise<(ProjassetsReply | ProjassetsNotification)[]> {
         const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-        post({ subtype: "subscribe" }, received, key);
+        await post({ subtype: "subscribe" }, received, key);
         chai.expect(received.map(r => r.subtype)).deep.equals(["ack"]);
         received.length = 0;
         return received;
@@ -2041,87 +2195,87 @@ describe("projassets host", () => {
 
     const CHANGED = { type: "projassets", subtype: "changed" };
 
-    it("replies with the request's id", () => {
+    it("replies with the request's id", async () => {
         const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-        host.handleMessage(SCOPE, { type: "projassets", id: "abc", subtype: "list", kind: "image" }, r => received.push(r));
+        await host.handleMessageAsync(SCOPE, { type: "projassets", id: "abc", subtype: "list", kind: "image" }, r => received.push(r));
         chai.expect(received.length).equals(1);
         chai.expect(received[0]).deep.include({ type: "projassets", id: "abc" });
     });
 
-    it("lists the open project's images", () => {
+    it("lists the open project's images", async () => {
         project.createNewImage(3, 3);
-        const reply = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        const reply = await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
         chai.expect(reply.subtype).equals("assets");
         chai.expect(reply.kind).equals("image");
         chai.expect(reply.assets).deep.equals(getImageAssets(project));
         chai.expect(reply.assets.length).equals(2);
     });
 
-    it("carries the project's palette and simulator theme in each list reply", () => {
-        const reply = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+    it("carries the project's palette and simulator theme in each list reply", async () => {
+        const reply = await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
         chai.expect(reply.palette).deep.equals(TARGET_PALETTE);
         chai.expect(reply.theme).deep.equals(ACCOUNT_THEME);
         editConfig({ palette: PROJECT_PALETTE, theme: "purple" });
-        const edited = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        const edited = await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
         chai.expect(edited.palette).deep.equals(PROJECT_PALETTE);
         chai.expect(edited.theme).deep.equals(THEME_PRESETS[1].theme);
         editConfig({ theme: { "button-fill": "#010203" } });
-        chai.expect((send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply).theme)
+        chai.expect((await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply).theme)
             .deep.equals({ ...ACCOUNT_THEME, "button-fill": "#010203" });
     });
 
-    it("carries no theme in a list reply when the target offers no simulator themes", () => {
+    it("carries no theme in a list reply when the target offers no simulator themes", async () => {
         pxt.appTarget.simulator = {} as pxt.AppSimulator;
-        const reply = send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        const reply = await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
         chai.expect(reply.palette).deep.equals(TARGET_PALETTE);
         chai.expect(reply).not.to.have.property("theme");
     });
 
-    it("lists the same assets to every extension", () => {
-        const first = send({ subtype: "list", kind: "image" }, "owner/repo") as ProjassetsAssetsReply;
-        const second = send({ subtype: "list", kind: "image" }, "other/repo") as ProjassetsAssetsReply;
+    it("lists the same assets to every extension", async () => {
+        const first = await send({ subtype: "list", kind: "image" }, "owner/repo") as ProjassetsAssetsReply;
+        const second = await send({ subtype: "list", kind: "image" }, "other/repo") as ProjassetsAssetsReply;
         chai.expect(second.assets).deep.equals(first.assets);
     });
 
-    it("refuses kinds it does not list with UNSUPPORTED_KIND", () => {
+    it("refuses kinds it does not list with UNSUPPORTED_KIND", async () => {
         for (const kind of ["tile", "tilemap", "animation", "song", "json", "toString", "__proto__"])
-            expectError({ subtype: "list", kind }, "UNSUPPORTED_KIND");
+            await expectError({ subtype: "list", kind }, "UNSUPPORTED_KIND");
     });
 
-    it("refuses malformed requests with INVALID_REQUEST", () => {
-        expectError({ subtype: "list" }, "INVALID_REQUEST");
-        expectError({ subtype: "list", kind: 7 }, "INVALID_REQUEST");
-        expectError({ subtype: "write", kind: "image" }, "INVALID_REQUEST");
+    it("refuses malformed requests with INVALID_REQUEST", async () => {
+        await expectError({ subtype: "list" }, "INVALID_REQUEST");
+        await expectError({ subtype: "list", kind: 7 }, "INVALID_REQUEST");
+        await expectError({ subtype: "write", kind: "image" }, "INVALID_REQUEST");
         for (const msg of ["not a request", null]) {
             const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-            host.handleMessage(SCOPE, msg, r => received.push(r));
+            await host.handleMessageAsync(SCOPE, msg, r => received.push(r));
             chai.expect(received.map(r => (r as ProjassetsErrorReply).code)).deep.equals(["INVALID_REQUEST"]);
         }
     });
 
-    it("refuses requests that arrive when no project is open with PROJECT_CLOSED", () => {
-        project = undefined;
-        expectError({ subtype: "list", kind: "image" }, "PROJECT_CLOSED");
-        expectError({ subtype: "subscribe" }, "PROJECT_CLOSED");
+    it("refuses requests that arrive when no project is open with PROJECT_CLOSED", async () => {
+        open = undefined;
+        await expectError({ subtype: "list", kind: "image" }, "PROJECT_CLOSED");
+        await expectError({ subtype: "subscribe" }, "PROJECT_CLOSED");
     });
 
-    it("fails a request the project cannot answer and keeps serving", () => {
-        const open = project;
+    it("fails a request the project cannot answer and keeps serving", async () => {
+        const saved = project;
         project = { getAssets: () => { throw new Error("assets unavailable"); } } as any;
-        const reply = expectError({ subtype: "list", kind: "image" }, "FAILED");
+        const reply = await expectError({ subtype: "list", kind: "image" }, "FAILED");
         chai.expect(reply.message).equals("assets unavailable");
-        project = open;
-        chai.expect(send({ subtype: "list", kind: "image" }).subtype).equals("assets");
+        project = saved;
+        chai.expect((await send({ subtype: "list", kind: "image" })).subtype).equals("assets");
     });
 
     describe("subscriptions", () => {
-        it("acknowledges a subscription", () => {
-            const reply = send({ subtype: "subscribe" });
+        it("acknowledges a subscription", async () => {
+            const reply = await send({ subtype: "subscribe" });
             chai.expect(reply.subtype).equals("ack");
         });
 
         it("notifies a subscribed extension once after a burst of changes", async () => {
-            const received = subscribe();
+            const received = await subscribe();
             const image = project.getAssets(pxt.AssetType.Image)[0];
             project.updateAsset(withBitmap(image, testBitmap(4, 4)));
             project.createNewProjectImage(testBitmap(2, 2), "villain");
@@ -2132,7 +2286,7 @@ describe("projassets host", () => {
 
         it("notifies once the change has applied", async () => {
             const seen: string[][] = [];
-            host.handleMessage(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => {
+            await host.handleMessageAsync(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => {
                 if (r.subtype === "changed") seen.push(getImageAssets(project).map(i => i.displayName));
             });
             project.createNewProjectImage(testBitmap(2, 2), "villain");
@@ -2141,7 +2295,7 @@ describe("projassets host", () => {
         });
 
         it("notifies of undo and redo", async () => {
-            const received = subscribe();
+            const received = await subscribe();
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             project.pushUndo();
             await settle();
@@ -2155,10 +2309,10 @@ describe("projassets host", () => {
         });
 
         it("notifies each subscribed extension, and no other", async () => {
-            const first = subscribe("owner/repo");
-            const second = subscribe("other/repo");
+            const first = await subscribe("owner/repo");
+            const second = await subscribe("other/repo");
             const unsubscribed: (ProjassetsReply | ProjassetsNotification)[] = [];
-            post({ subtype: "list", kind: "image" }, unsubscribed, "third/repo");
+            await post({ subtype: "list", kind: "image" }, unsubscribed, "third/repo");
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             await settle();
             chai.expect(first).deep.equals([CHANGED]);
@@ -2167,7 +2321,7 @@ describe("projassets host", () => {
         });
 
         it("notifies once after the project's palette changes", async () => {
-            const received = subscribe();
+            const received = await subscribe();
             editConfig({ palette: PROJECT_PALETTE });
             chai.expect(received).deep.equals([]);
             await settle();
@@ -2175,7 +2329,7 @@ describe("projassets host", () => {
         });
 
         it("notifies once after the project's simulator theme changes, in either declaration form", async () => {
-            const received = subscribe();
+            const received = await subscribe();
             editConfig({ theme: "purple" });
             await settle();
             chai.expect(received).deep.equals([CHANGED]);
@@ -2185,7 +2339,7 @@ describe("projassets host", () => {
         });
 
         it("sends no notification for a config change that leaves the palette and theme as they were", async () => {
-            const received = subscribe();
+            const received = await subscribe();
             editConfig({ description: "a new description" });
             editConfig({ description: "a new description", palette: TARGET_PALETTE.slice() });
             await settle();
@@ -2199,7 +2353,7 @@ describe("projassets host", () => {
         });
 
         it("notifies once for asset and palette changes made together", async () => {
-            const received = subscribe();
+            const received = await subscribe();
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             editConfig({ palette: PROJECT_PALETTE });
             await settle();
@@ -2207,10 +2361,11 @@ describe("projassets host", () => {
         });
 
         it("notifies of a palette change only in the project its subscriptions were made in", async () => {
-            const received = subscribe();
+            const received = await subscribe();
             const firstPkg = mainPkg;
             const firstFiles = configFiles;
             project = new pxt.TilemapProject();
+            open = loadedProject();
             configFiles = { [pxt.CONFIG_NAME]: testPxtJson() };
             mainPkg = testMainPackage(configFiles);
             config = createProjassetsConfig(mainPkg, () => ACCOUNT_THEME);
@@ -2224,15 +2379,15 @@ describe("projassets host", () => {
         });
 
         it("sends no notification when nothing changes", async () => {
-            const received = subscribe();
-            send({ subtype: "list", kind: "image" });
+            const received = await subscribe();
+            await send({ subtype: "list", kind: "image" });
             await settle();
             chai.expect(received).deep.equals([]);
         });
 
         it("replaces an extension's subscription when it subscribes again", async () => {
-            const replaced = subscribe();
-            const current = subscribe();
+            const replaced = await subscribe();
+            const current = await subscribe();
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             await settle();
             chai.expect(replaced).deep.equals([]);
@@ -2251,8 +2406,9 @@ describe("projassets host", () => {
 
         it("ends a subscription when its project closes", async () => {
             const first = project;
-            const received = subscribe();
+            const received = await subscribe();
             project = new pxt.TilemapProject();
+            open = loadedProject();
             first.createNewProjectImage(testBitmap(2, 2), "late");
             project.createNewProjectImage(testBitmap(2, 2), "other");
             await settle();
@@ -2262,11 +2418,12 @@ describe("projassets host", () => {
         it("follows the project a new subscription is made in, and stops listening to the closed one", async () => {
             const first = project;
             const firstListeners = trackListeners(first);
-            const old = subscribe();
+            const old = await subscribe();
             chai.expect(firstListeners.size).equals(1);
             project = new pxt.TilemapProject();
+            open = loadedProject();
             const secondListeners = trackListeners(project);
-            const current = subscribe();
+            const current = await subscribe();
             chai.expect(firstListeners.size).equals(0);
             chai.expect(secondListeners.size).equals(1);
             first.createNewProjectImage(testBitmap(2, 2), "late");
@@ -2281,18 +2438,18 @@ describe("projassets host", () => {
         it("stops listening to a project once it has closed and changed", async () => {
             const first = project;
             const listeners = trackListeners(first);
-            subscribe();
-            project = undefined;
+            await subscribe();
+            open = undefined;
             first.createNewProjectImage(testBitmap(2, 2), "late");
             await settle();
             chai.expect(listeners.size).equals(0);
         });
 
-        it("listens to a project once, however many extensions subscribe", () => {
+        it("listens to a project once, however many extensions subscribe", async () => {
             const listeners = trackListeners(project);
-            subscribe("owner/repo");
-            subscribe("other/repo");
-            subscribe("owner/repo");
+            await subscribe("owner/repo");
+            await subscribe("other/repo");
+            await subscribe("owner/repo");
             chai.expect(listeners.size).equals(1);
         });
 
@@ -2308,13 +2465,187 @@ describe("projassets host", () => {
 
         it("listens to a project's config once while subscribed, and stops once the project has closed", async () => {
             const listeners = trackConfigListeners(config);
-            subscribe("owner/repo");
-            subscribe("other/repo");
+            await subscribe("owner/repo");
+            await subscribe("other/repo");
             chai.expect(listeners.size).equals(1);
-            project = undefined;
+            open = undefined;
             editConfig({ palette: PROJECT_PALETTE });
             await settle();
             chai.expect(listeners.size).equals(0);
+        });
+
+        it("ends its subscriptions, and lets nothing escape, when the configuration cannot be read for a notification", async () => {
+            const listeners = trackListeners(project);
+            const configListeners = trackConfigListeners(config);
+            const received = await subscribe();
+            config.getVisualConfig = () => { throw new Error("configuration unavailable"); };
+            const reported: unknown[] = [];
+            const report = pxt.reportException;
+            pxt.reportException = e => { reported.push(e); };
+            try {
+                project.createNewProjectImage(testBitmap(2, 2), "villain");
+                await settle();
+            } finally {
+                pxt.reportException = report;
+            }
+            chai.expect(reported.length).equals(1);
+            chai.expect(listeners.size).equals(0);
+            chai.expect(configListeners.size).equals(0);
+            chai.expect(received).deep.equals([]);
+        });
+    });
+
+    // The editor reloads a project by replacing its main package and editor
+    // package, then loading the new package's files and dependencies; the
+    // editor package's asset project is built from the main package on its
+    // first use and kept. These tests drive the host through that load.
+    describe("reload window", () => {
+        /** The editor's hold on an open project: its editor package, as the asset host waits on it. */
+        interface OpenProject extends ProjassetsOpenProject {
+            mainPkg: pxt.MainPackage;
+            files: pxt.Map<string>;
+            tilemapProject?: pxt.TilemapProject;
+        }
+
+        // per project header: the files the workspace stores
+        let stored: pxt.Map<pxt.Map<string>>;
+        let current: OpenProject;
+        let reloadHost: ProjassetsHost;
+
+        // the editor's asset project getter: built from the main package on first use, then kept
+        function getTilemapProject(): pxt.TilemapProject {
+            if (!current.tilemapProject) {
+                current.tilemapProject = new pxt.TilemapProject();
+                current.tilemapProject.loadPackage(current.mainPkg);
+            }
+            return current.tilemapProject;
+        }
+
+        /** The files of a project whose asset file holds an image named by each of `names`. */
+        function projectFiles(names: string[]): pxt.Map<string> {
+            const seed = new pxt.TilemapProject();
+            names.forEach((name, i) => seed.createNewProjectImage(testBitmap(i + 2, i + 2), name));
+            return {
+                [pxt.CONFIG_NAME]: testPxtJson({ files: [pxt.IMAGES_JRES] }),
+                [pxt.IMAGES_JRES]: JSON.stringify(seed.getProjectAssetsJRes()),
+            };
+        }
+
+        /**
+         * Opens the project stored under `header` as the editor's load does:
+         * the new editor package is open at once, and its files and pxt.json
+         * arrive when the returned load is finished, which settles its
+         * loadedAsync.
+         */
+        function beginLoad(header: string): { finish: () => void, fail: () => void } {
+            const files: pxt.Map<string> = {};
+            const mainPkg = new pxt.MainPackage({ readFile: (_pkg: pxt.Package, name: string) => files[name] } as any);
+            const loaded = pxt.Util.defer<void>();
+            current = { loadedAsync: () => loaded.promise, mainPkg, files };
+            return {
+                finish: () => {
+                    Object.assign(files, stored[header]);
+                    mainPkg.loadConfig(true);
+                    loaded.resolve(undefined);
+                },
+                fail: () => loaded.reject(new Error("load failed")),
+            };
+        }
+
+        /** The names of the images the editor's asset project holds, which its next asset build writes. */
+        function builtImageNames(): string[] {
+            return getImageAssets(getTilemapProject()).map(i => i.displayName);
+        }
+
+        // sends a request to the reload host; resolves with its one reply
+        async function sendReload(msg: any): Promise<ProjassetsReply> {
+            const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+            await reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r));
+            chai.expect(received.length).equals(1);
+            return received[0] as ProjassetsReply;
+        }
+
+        beforeEach(async () => {
+            stored = { first: projectFiles(["hero", "villain"]), second: projectFiles(["ghost"]) };
+            beginLoad("first").finish();
+            reloadHost = new ProjassetsHost(
+                () => current,
+                getTilemapProject,
+                () => createProjassetsConfig(current.mainPkg, () => ACCOUNT_THEME));
+            chai.expect((await sendReload({ subtype: "subscribe" })).subtype).equals("ack");
+        });
+
+        /** Applies a palette to a project as the palette editor does: stores the edited pxt.json, then reloads it into the package. */
+        function applyPalette(edited: OpenProject, header: string) {
+            const edit = testPxtJson({ files: [pxt.IMAGES_JRES], palette: PROJECT_PALETTE });
+            stored[header][pxt.CONFIG_NAME] = edit;
+            edited.files[pxt.CONFIG_NAME] = edit;
+            edited.mainPkg.loadConfig(true);
+        }
+
+        it("keeps every image when a palette change lands while the project reloads", async () => {
+            const edited = current;
+            const load = beginLoad("first");
+            applyPalette(edited, "first");
+            await settle();
+            chai.expect(current.tilemapProject).equals(undefined);
+            load.finish();
+            chai.expect(builtImageNames()).deep.equals(["hero", "villain"]);
+            chai.expect(Object.keys(getTilemapProject().getProjectAssetsJRes()).filter(k => k !== "*").length).equals(2);
+
+            const listed = await sendReload({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+            chai.expect(listed.assets.map(a => a.displayName)).deep.equals(["hero", "villain"]);
+            chai.expect(listed.palette).deep.equals(PROJECT_PALETTE);
+        });
+
+        it("answers requests that arrive while the project loads once it has loaded", async () => {
+            const load = beginLoad("first");
+            const listing = sendReload({ subtype: "list", kind: "image" });
+            const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+            const subscribed = reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => received.push(r));
+            await settle();
+            chai.expect(received).deep.equals([]);
+            chai.expect(current.tilemapProject).equals(undefined);
+            load.finish();
+            const listed = await listing as ProjassetsAssetsReply;
+            chai.expect(listed.subtype).equals("assets");
+            chai.expect(listed.assets.map(a => a.displayName)).deep.equals(["hero", "villain"]);
+            await subscribed;
+            chai.expect(received.map(r => r.subtype)).deep.equals(["ack"]);
+            chai.expect(builtImageNames()).deep.equals(["hero", "villain"]);
+
+            applyPalette(current, "first");
+            await settle();
+            chai.expect(received.map(r => r.subtype)).deep.equals(["ack", "changed"]);
+        });
+
+        it("refuses with PROJECT_CLOSED a request whose project is replaced while it waits", async () => {
+            const replaced = beginLoad("first");
+            const listing = sendReload({ subtype: "list", kind: "image" });
+            const load = beginLoad("second");
+            replaced.finish();
+            chai.expect((await listing as ProjassetsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(current.tilemapProject).equals(undefined);
+            load.finish();
+            chai.expect(builtImageNames()).deep.equals(["ghost"]);
+        });
+
+        it("refuses with PROJECT_CLOSED a request whose project fails to load", async () => {
+            const load = beginLoad("first");
+            const listing = sendReload({ subtype: "list", kind: "image" });
+            load.fail();
+            chai.expect((await listing as ProjassetsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(current.tilemapProject).equals(undefined);
+        });
+
+        it("keeps the images of another project opened while a notification is pending", async () => {
+            const edited = current;
+            const load = beginLoad("second");
+            applyPalette(edited, "first");
+            await settle();
+            chai.expect(current.tilemapProject).equals(undefined);
+            load.finish();
+            chai.expect(builtImageNames()).deep.equals(["ghost"]);
         });
     });
 });
@@ -2476,10 +2807,11 @@ describe("projassets client", () => {
             const image = project.createNewProjectImage(bitmap, "hero");
             const files = { [pxt.CONFIG_NAME]: testPxtJson() };
             const mainPkg = testMainPackage(files);
-            const host = new ProjassetsHost(() => project, () => createProjassetsConfig(mainPkg, () => ACCOUNT_THEME));
+            const open: ProjassetsOpenProject = { loadedAsync: () => Promise.resolve() };
+            const host = new ProjassetsHost(() => open, () => project, () => createProjassetsConfig(mainPkg, () => ACCOUNT_THEME));
             // the editor posts each reply and notification back to the frame's window
             parent.postMessage = (msg: ProjassetsRequest) => {
-                host.handleMessage("owner/repo", msg, reply => self.deliver(parent, reply));
+                host.handleMessageAsync("owner/repo", msg, reply => self.deliver(parent, reply));
             };
             const listing: ProjassetsListing = await client.list("image");
             chai.expect(listing).deep.equals({

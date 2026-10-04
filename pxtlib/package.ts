@@ -1030,11 +1030,12 @@ namespace pxt {
         // the editor and the provider resolve the palette the same way.
         /**
          * Returns the palette the package's images are drawn with: the palette
-         * its pxt.json sets, else the target's palette as the loaded packages
-         * patched it; undefined if neither has one.
+         * its pxt.json sets, else (also while its pxt.json has not loaded) the
+         * target's palette as the loaded packages patched it; undefined if
+         * neither has one.
          */
         effectivePalette(): string[] | undefined {
-            return this.config.palette || appTarget.runtime?.palette;
+            return this.config?.palette || appTarget.runtime?.palette;
         }
     }
 

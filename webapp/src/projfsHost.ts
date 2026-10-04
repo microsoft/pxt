@@ -32,6 +32,12 @@ export const PROJFS_MAX_PENDING_MUTATIONS = 1000;
  * it opens until it closes, and reopening a project yields a new object.
  */
 export interface ProjfsProject {
+    /**
+     * Returns a promise that resolves once the project has loaded, and
+     * rejects if its load fails. It settles even if the project is replaced
+     * while loading. Until then the project holds none of its files.
+     */
+    loadedAsync(): Promise<void>;
     /** Every file stored in the project, keyed by name, whether or not pxt.json lists it. */
     getFiles(): pxt.Map<string>;
     /** Creates or replaces a stored file; a text editor showing the file shows the new content. Leaves pxt.json unchanged. */
@@ -246,9 +252,10 @@ class ProjfsRequestError extends Error {
  * they arrive. An extension's writes and deletes beyond
  * {@link PROJFS_RATE_LIMIT} within {@link PROJFS_RATE_WINDOW_MS} wait, with
  * the requests behind them, until the window allows them. A request applies
- * only to the project open when it arrived; if that project has closed by the
- * time the request's turn comes, it is refused with `PROJECT_CLOSED`, and a
- * request that has begun applying completes in the project it began in.
+ * only to the project open when it arrived, once that project has loaded; if
+ * that project fails to load, or has closed by the time the request's turn
+ * comes, it is refused with `PROJECT_CLOSED`, and a request that has begun
+ * applying completes in the project it began in.
  *
  * Writes and deletes are artifacts unless flagged `dirty`, in which case they
  * also pass through {@link ProjfsProject.markDirty} once applied.
@@ -277,8 +284,9 @@ export class ProjfsHost {
 
     /**
      * Queues a request from the simulator extension with the given key behind
-     * those already received from it, binds it to the project open now, and
-     * sends it one reply once it has applied or been refused.
+     * those already received from it, binds it to the project open now, waits
+     * for that project to load, and sends it one reply once it has applied or
+     * been refused.
      * @param key the extension key the requesting frame was created for
      * @param msg the request, as received
      * @param reply delivers a reply to the requesting frame
@@ -302,6 +310,7 @@ export class ProjfsHost {
 
         const project = this.getProject();
         const answered = (this.tails[key] || Promise.resolve())
+            .then(() => this.projectLoadedAsync(project))
             .then(() => mutates ? this.admitMutationAsync(key, project) : undefined)
             .then(() => this.exclusiveAsync(() => this.applyAsync(key, request, project)))
             .then(
@@ -316,6 +325,20 @@ export class ProjfsHost {
             .catch(e => pxt.reportException(e));
         this.tails[key] = answered;
         return answered;
+    }
+
+    /**
+     * Resolves once `project` has loaded, or at once if there is none.
+     * @param project the project the request arrived in
+     * @throws a `PROJECT_CLOSED` refusal if `project` fails to load
+     */
+    protected async projectLoadedAsync(project: ProjfsProject | undefined): Promise<void> {
+        if (!project) return;
+        try {
+            await project.loadedAsync();
+        } catch (e) {
+            throw new ProjfsRequestError("PROJECT_CLOSED", "The project open when the request arrived failed to load.");
+        }
     }
 
     /**

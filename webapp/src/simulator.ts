@@ -39,7 +39,7 @@ let lastCompileResult: pxtc.CompileResult;
 let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
 const projfsHost = new ProjfsHost(getProjfsProject);
-const projassetsHost = new ProjassetsHost(getAssetProject, getAssetConfig);
+const projassetsHost = new ProjassetsHost(getOpenAssetProject, () => pxt.react.getTilemapProject(), getAssetConfig);
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
@@ -282,7 +282,7 @@ export async function initAsync(cfg: SimulatorConfig) {
             projfsHost.handleMessageAsync(key, msg, reply);
         },
         onProjassetsMessage: (key, msg, reply) => {
-            projassetsHost.handleMessage(key, msg, reply);
+            projassetsHost.handleMessageAsync(key, msg, reply);
         },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
@@ -300,20 +300,16 @@ export async function initAsync(cfg: SimulatorConfig) {
 }
 
 /**
- * Returns the asset project of the open project, or undefined if none is open;
- * the same object while the project stays open.
+ * Returns the open project as the asset host waits on it, or undefined if none
+ * is open: its editor package.
  */
-function getAssetProject(): pxt.TilemapProject | undefined {
-    if (!pkg.mainEditorPkg().header) return undefined;
-    return pxt.react.getTilemapProject();
+function getOpenAssetProject(): pkg.EditorPackage | undefined {
+    const epkg = pkg.mainEditorPkg();
+    return epkg.header ? epkg : undefined;
 }
 
-/**
- * Returns the configuration of the open project as the asset host reads and
- * watches it, or undefined if no project is open.
- */
-function getAssetConfig(): ProjassetsConfig | undefined {
-    if (!pkg.mainEditorPkg().header) return undefined;
+/** Returns the configuration of the open project as the asset host reads and watches it. */
+function getAssetConfig(): ProjassetsConfig {
     return createProjassetsConfig(pkg.mainPkg, () => simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme);
 }
 
@@ -341,6 +337,7 @@ function getProjfsProject(): ProjfsProject | undefined {
  */
 function createProjfsProject(epkg: pkg.EditorPackage): ProjfsProject {
     return {
+        loadedAsync: () => epkg.loadedAsync(),
         getFiles: () => epkg.getAllFiles(),
         writeFileAsync: (name, content) => writeProjectFileAsync(epkg, config?.projfsEditor, name, content),
         deleteFileAsync: name => {

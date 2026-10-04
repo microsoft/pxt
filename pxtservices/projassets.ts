@@ -31,7 +31,11 @@ export type ProjassetsErrorCode =
     | "UNSUPPORTED_KIND"
     /** The request is malformed. */
     | "INVALID_REQUEST"
-    /** No project was open when the request arrived. */
+    /**
+     * No project was open when the request arrived, or the project open then
+     * failed to load or was replaced before it loaded; a later request may
+     * succeed.
+     */
     | "PROJECT_CLOSED"
     /**
      * The requesting frame is not a simulator extension the editor serves,

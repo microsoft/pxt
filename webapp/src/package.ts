@@ -226,6 +226,8 @@ export class EditorPackage {
     protected transpileCache: CachedTranspile[] = [];
 
     tilemapProject: pxt.TilemapProject;
+    // settles once loadPkgAsync has loaded this main package; see loadedAsync
+    private loadComplete = pxt.Util.defer<void>();
 
     id: string;
     outputPkg: EditorPackage;
@@ -235,6 +237,32 @@ export class EditorPackage {
         if (ksPkg && ksPkg.verProtocol() == "workspace") {
             this.header = workspace.getHeader(ksPkg.verArgument())
         }
+    }
+
+    /**
+     * Returns a promise that resolves once loadPkgAsync has loaded this main
+     * package's files, pxt.json and dependencies, and rejects if that load
+     * fails. A load runs on when another package replaces this one as the
+     * main package, so the promise settles for a replaced package too; check
+     * that the package is still the main package before reading it.
+     */
+    loadedAsync(): Promise<void> {
+        return this.loadComplete.promise;
+    }
+
+    /**
+     * Settles the promise loadedAsync returns with the outcome of `load`, the
+     * load of this main package, and returns `load`.
+     */
+    trackLoadAsync(load: Promise<void>): Promise<void> {
+        load.then(
+            () => this.loadComplete.resolve(undefined),
+            e => {
+                // the load's caller reports the failure; a waiter sees the rejection
+                this.loadComplete.promise.catch(() => { });
+                this.loadComplete.reject(e);
+            });
+        return load;
     }
 
     getSimState() {
@@ -883,8 +911,14 @@ export function notifySyncDone(updated: pxt.Map<number>) {
 export function loadPkgAsync(id: string, targetVersion?: string) {
     mainPkg = new pxt.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id;
+    // PR NOTE [Issue 5] -- lift into the PR description, then remove.
+    // Settles the editor package's loadedAsync with this load, for the asset
+    // provider and the project-file API, which touch nothing of a project
+    // before it has loaded (see the PR note on ProjassetsOpenProject in
+    // projassetsHost.ts).
+    const loading = getEditorPkg(mainPkg);
 
-    return theHost.downloadPackageAsync(mainPkg)
+    return loading.trackLoadAsync(theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
         .then(() => ts.pxtc.Util.jsonTryParse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
@@ -895,7 +929,7 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
 
             return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync());
-        })
+        }))
 }
 
 

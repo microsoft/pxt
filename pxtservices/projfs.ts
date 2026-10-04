@@ -94,8 +94,9 @@ export type ProjfsErrorCode =
     /** The request is malformed. */
     | "INVALID_REQUEST"
     /**
-     * The project open in the editor when the request arrived has since
-     * closed, or no project was open; the request was not applied.
+     * No project was open when the request arrived, or the project open then
+     * failed to load or has since closed (as when it is replaced while
+     * loading); the request was not applied, and a later request may succeed.
      */
     | "PROJECT_CLOSED"
     /**
