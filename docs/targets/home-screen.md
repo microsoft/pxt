@@ -161,7 +161,7 @@ Use **label** and **labelClass** to control the content and appearance of the la
 
 ### searchTerms
 
-In order to associate card items by a term or terms, you use a ``searchTerms`` list. The search terms provide a way to tag a card to a type of activity, category, learning concept, etc.
+In order to associate card items by a term, or a set of terms, you use a ``searchTerms`` list. The search terms provide a way to tag a card to a type of activity, category, learning concept, etc.
 
 ```
 {
@@ -178,9 +178,9 @@ The ``difficulty`` entry lets you assign a relative difficulty level to the acti
 
 The levels defined for cards are:
 
-* "beginner"
-* "intermediate"
-* "advanced"
+* `"beginner"`
+* `"intermediate"`
+* `"advanced"`
 
 ```
 {
@@ -207,7 +207,7 @@ Use ``duration`` to provide an estimated completion time for the activity descri
 
 ### targetAge
 
-The age of the user or student that the activity is targeted to is set by ``targetAge``. You can use a single age (`"12"`) , an age range (`"9-12"`), or a grouped range (`"9-12", "13-15"`). The age targets are set in a list: `["12"]`, `["9-12"]` ,or `["9-12", "13-18"]`.
+The age of the user or student that the activity is targeted to is set by ``targetAge``. You can use a single age (`"12"`) , an age range (`"9-12"`), or a grouped range (`"9-12", "13-15"`). The age targets are set in a list: ` ["12"]`, ` ["9-12"]`, or ` ["9-12", "13-18"]`.
 
 ```
 {
@@ -222,7 +222,7 @@ The age of the user or student that the activity is targeted to is set by ``targ
 
 ### language
 
-A card item is selected by coding language using the ``language`` entry. Languages available for the coding activity are set in a list using these identifiers:
+A card item is associated to a coding language using the ``language`` entry. Languages available for the coding activity are set in a list using these identifiers:
 
 * Blocks: `"blocks"`
 * JavaScript: `"js"`
