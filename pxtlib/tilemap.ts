@@ -1934,7 +1934,12 @@ namespace pxt {
         }
     }
 
-    function addAssetToJRes(asset: Asset, allJRes: pxt.Map<Partial<JRes> | string>): void {
+    /**
+     * Adds an asset using its short name as the JRES key, except for tilemaps,
+     * which retain their full id. Callers supply the default namespace and
+     * handle short-name collisions when combining assets from different namespaces.
+     */
+    export function addAssetToJRes(asset: Asset, allJRes: pxt.Map<Partial<JRes> | string>): void {
         // Get the last part of the fully qualified name
         const id = asset.id.substr(asset.id.lastIndexOf(".") + 1);
         const tags = asset.meta.tags;
