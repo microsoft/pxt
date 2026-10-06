@@ -38,6 +38,16 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
      */
     protected abstract setFocusedItem_(gridItemContainer: HTMLElement): void;
 
+    protected getGridRowBounds(index: number): { start: number; end: number } {
+        const start = Math.floor(index / this.columns_) * this.columns_;
+        return { start, end: Math.min(start + this.columns_ - 1, this.gridItems.length - 1) };
+    }
+
+    protected getVerticalGridItemIndex(index: number, direction: number): number {
+        const next = index + direction * this.columns_;
+        return next >= 0 && next < this.gridItems.length ? next : index;
+    }
+
     private setFocusedItem(gridItemContainer: HTMLElement, e: KeyboardEvent) {
         this.lastUserInputAction = 'keymove';
         this.setFocusedItem_(gridItemContainer);
@@ -93,14 +103,10 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
             const ctrlCmd = pxt.BrowserUtils.isMac() ? e.metaKey : e.ctrlKey;
             switch(e.code) {
                 case 'ArrowUp':
-                    if (this.activeDescendantIndex - this.columns_ >= 0) {
-                        this.activeDescendantIndex -= this.columns_;
-                    }
+                    this.activeDescendantIndex = this.getVerticalGridItemIndex(this.activeDescendantIndex, -1);
                     break;
                 case 'ArrowDown':
-                    if (this.activeDescendantIndex + this.columns_ < this.gridItems.length) {
-                        this.activeDescendantIndex += this.columns_;
-                    }
+                    this.activeDescendantIndex = this.getVerticalGridItemIndex(this.activeDescendantIndex, 1);
                     break;
                 case nextKey:
                     if (this.activeDescendantIndex < this.gridItems.length - 1) {
@@ -116,9 +122,7 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
                     if (ctrlCmd) {
                         this.activeDescendantIndex = 0;
                     } else {
-                        while (this.activeDescendantIndex % this.columns_ !== 0) {
-                            this.activeDescendantIndex--;
-                        }
+                        this.activeDescendantIndex = this.getGridRowBounds(this.activeDescendantIndex).start;
                     }
                     break;
                 }
@@ -126,12 +130,7 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
                     if (ctrlCmd) {
                         this.activeDescendantIndex = this.gridItems.length - 1;
                     } else {
-                        while (
-                          this.activeDescendantIndex % this.columns_ !== this.columns_ - 1 &&
-                          this.activeDescendantIndex < this.gridItems.length - 1
-                        ) {
-                          this.activeDescendantIndex++;
-                        }
+                        this.activeDescendantIndex = this.getGridRowBounds(this.activeDescendantIndex).end;
                     }
                     break;
                 }

@@ -109,8 +109,11 @@ A tab may set `icon` to a JRES ID or qualified symbol with an icon. Use
 `materials: true` to show the catalog's `materials` choices. Materials use the
 same category shape (`id`, `name`, `tags`, optional `icon`). The Materials tab
 shows a tile for every material represented by the field's allowed choices.
-Expanding a tile reveals those choices directly; there is no material dropdown
-or preselected material. Tiles follow the configured material order. Untagged choices remain
+Expanding a tile reveals its choices in tinted rows below the tile's row, without
+moving other tiles sideways. Only one group can be open at a time; its choices
+scroll with the rest of the picker, and keyboard focus moves to its first choice
+without changing the saved value. There is no material dropdown or preselected
+material. Tiles follow the configured material order. Untagged choices remain
 available under an expandable Other materials tile and in the flat All view.
 
 Material groups may overlap intentionally, such as Wood and a specific wood
@@ -118,8 +121,11 @@ species. Choices remain unique in the final All tab and in the result count.
 Family variants follow configured material order; material contents follow
 configured family order. Neither sort changes stored values or the legacy path.
 
-The picker reserves the largest fully expanded tab's grid size, including group
-tiles, across tabs, searches, and family expansion. Its opening anchor stays
+The catalog picker uses a treegrid: family and material tiles are expandable
+cells, and their child choices occupy the rows immediately below their tile's
+row. Arrow keys navigate the visible rows; Enter or Space toggles a tile or
+chooses an asset. The picker reserves the largest single expanded group's height,
+including child rows, across tabs and searches. Its opening anchor stays
 fixed while groups expand. The size is bounded by the editor pane; smaller tabs
 keep the same space and larger content scrolls instead of resizing the popup.
 Pane resizes can update the reserved space, anchor, and number of columns.
