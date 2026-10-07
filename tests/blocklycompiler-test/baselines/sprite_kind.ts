@@ -2,4 +2,4 @@ namespace SpriteKind {
     export const Rocket = SpriteKind.create()
     export const Whatever = SpriteKind.create()
 }
-let x = SpriteKind.Rocket + SpriteKind.Player + SpriteKind.Whatever
+let x = SpriteKind.Rocket + SpriteKind.Player + (SpriteKind.Projectile + SpriteKind.Food + (SpriteKind.Enemy + SpriteKind.Whatever))
