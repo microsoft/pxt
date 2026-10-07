@@ -4707,14 +4707,26 @@ export class ProjectView
         }
     }
 
+    // PR NOTE [Issue 5] -- lift into the PR description, then remove.
+    // The asset provider (Issue 5, generated-docs/pxt-issue-drafts) lists the
+    // project's name and notifies simulator extensions when it changes, by
+    // watching the main package's config load listener. The other writers of
+    // the project's pxt.json reload the config after the write
+    // (EditorPackage.updateConfigAsync, the project settings page) or before
+    // the next read (each compile, for a direct text edit), but this rename
+    // path -- the toolbar's name box, the share dialog and the exit-and-save
+    // dialog -- set the new name on the loaded config in place, so no reload,
+    // and no notification, followed a rename. It now reloads the config after
+    // the write, as the project settings page does.
     updateHeaderNameAsync(name: string, description?: string): Promise<void> {
         // nothing to do?
         if (pkg.mainPkg.config.name == name && (description === undefined || pkg.mainPkg.config.description == description))
             return Promise.resolve();
 
         //Save the name in the target MainPackage as well
-        pkg.mainPkg.config.name = name;
-        pkg.mainPkg.config.description = description !== undefined ? description : pkg.mainPkg.config.description;
+        const mainPkg = pkg.mainPkg;
+        mainPkg.config.name = name;
+        mainPkg.config.description = description !== undefined ? description : mainPkg.config.description;
 
         pxt.debug('saving project name to ' + name);
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
@@ -4722,6 +4734,7 @@ export class ProjectView
         config.name = name;
         config.description = description !== undefined ? description : config.description;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
+            .then(() => mainPkg.loadConfig())
             .then(() => {
                 if (this.state.header)
                     this.setState({

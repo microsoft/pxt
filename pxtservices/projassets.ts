@@ -3,11 +3,12 @@
  * with the editor, and a client that wraps them in promises.
  *
  * A simulator extension registered with `allowAssetRead` can list the named
- * assets of the project open in the editor, with the project's visual
- * configuration (its palette and simulator theme), and subscribe to hear when
- * either changes. The editor answers from the project as it is when the
- * request arrives, including edits not yet built into the project's files.
- * Assets and configuration are read-only through this API.
+ * assets of the project open in the editor, with the project's name and its
+ * visual configuration (its palette and simulator theme), and subscribe to
+ * hear when any of them changes. The editor answers from the project as it
+ * is when the request arrives, including edits not yet built into the
+ * project's files. Assets, name and configuration are read-only through
+ * this API.
  *
  * Requests are posted to the editor window; the editor replies to each request
  * once, to the requesting frame only, with the request's `id`. Change
@@ -123,7 +124,16 @@ export interface ProjassetsVisualConfig {
     theme?: { [token: string]: string };
 }
 
-export interface ProjassetsAssetsReply extends ProjassetsMessage, ProjassetsVisualConfig {
+/**
+ * The project's configuration the editor lists beside its assets: its name
+ * and its visual configuration.
+ */
+export interface ProjassetsProjectConfig extends ProjassetsVisualConfig {
+    /** The project's name, as the user gave it and as its pxt.json holds it. */
+    name: string;
+}
+
+export interface ProjassetsAssetsReply extends ProjassetsMessage, ProjassetsProjectConfig {
     subtype: "assets";
     /** The kind the request asked for. */
     kind: ProjassetsKind;
@@ -134,8 +144,8 @@ export interface ProjassetsAssetsReply extends ProjassetsMessage, ProjassetsVisu
     assets: ProjassetsAsset[];
 }
 
-/** What {@link ProjassetsClient.list} resolves with: the listed assets, and the project's visual configuration. */
-export interface ProjassetsListing extends ProjassetsVisualConfig {
+/** What {@link ProjassetsClient.list} resolves with: the listed assets, the project's name, and its visual configuration. */
+export interface ProjassetsListing extends ProjassetsProjectConfig {
     /** Every named asset of the listed kind in the project, in no guaranteed order. */
     assets: ProjassetsAsset[];
 }
@@ -153,9 +163,9 @@ export interface ProjassetsErrorReply extends ProjassetsMessage {
 export type ProjassetsReply = ProjassetsAssetsReply | ProjassetsAckReply | ProjassetsErrorReply;
 
 /**
- * Tells a subscribed extension that the project's assets or its visual
- * configuration may have changed. Several changes in quick succession lead to
- * one notification; list the assets again to see them.
+ * Tells a subscribed extension that the project's assets, its name, or its
+ * visual configuration may have changed. Several changes in quick succession
+ * lead to one notification; list the assets again to see them.
  */
 export interface ProjassetsNotification {
     type: "projassets";
@@ -212,9 +222,10 @@ type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : nev
 const DEFAULT_SLOW_REPLY_MS = 10000;
 
 /**
- * Lists the open project's assets and visual configuration from a simulator
- * extension and hears when they change. Each method resolves with the editor's reply, or rejects with
- * a {@link ProjassetsError} carrying the editor's error code.
+ * Lists the open project's assets, name and visual configuration from a
+ * simulator extension and hears when they change. Each method resolves with
+ * the editor's reply, or rejects with a {@link ProjassetsError} carrying the
+ * editor's error code.
  *
  * A request waits for its reply however long that takes; a reply slower than
  * {@link ProjassetsClientOptions.slowReplyMs} is reported to
@@ -243,13 +254,13 @@ export class ProjassetsClient {
     }
 
     /**
-     * Lists the project's named assets of one kind, with the project's visual
-     * configuration.
+     * Lists the project's named assets of one kind, with the project's name
+     * and visual configuration.
      * @param kind the kind of asset to list
      */
     async list(kind: ProjassetsKind): Promise<ProjassetsListing> {
         const reply = await this.requestAsync({ subtype: "list", kind }, "assets") as ProjassetsAssetsReply;
-        const listing: ProjassetsListing = { assets: reply.assets, palette: reply.palette };
+        const listing: ProjassetsListing = { assets: reply.assets, name: reply.name, palette: reply.palette };
         if (reply.theme) listing.theme = reply.theme;
         return listing;
     }
@@ -258,7 +269,7 @@ export class ProjassetsClient {
      * Subscribes this extension to change notifications, and calls `onChange`
      * on each one once the editor has acknowledged the subscription. List the
      * assets again from `onChange` to see the change.
-     * @param onChange called when the project's assets or visual configuration may have changed
+     * @param onChange called when the project's assets, name, or visual configuration may have changed
      */
     async subscribe(onChange: () => void): Promise<void> {
         await this.requestAsync({ subtype: "subscribe" }, "ack");

@@ -54,6 +54,8 @@ export function getVisualConfig(
 
 /** The open project's configuration, as the asset host reads and watches it. */
 export interface ProjassetsConfig {
+    /** Returns the project's name as it is now. */
+    getName(): string;
     /** Returns the project's visual configuration as it is now. */
     getVisualConfig(): ProjassetsVisualConfig;
     /** Adds a listener called each time the project's pxt.json is reloaded, whether or not it changed. */
@@ -73,6 +75,7 @@ export function createProjassetsConfig(
     getAccountTheme: () => pxt.SimulatorTheme | undefined
 ): ProjassetsConfig {
     return {
+        getName: () => mainPkg.config.name,
         getVisualConfig: () => getVisualConfig(mainPkg, pxt.appTarget.simulator?.themePresets, getAccountTheme()),
         addConfigLoadListener: listener => mainPkg.addConfigLoadListener(listener),
         removeConfigLoadListener: listener => mainPkg.removeConfigLoadListener(listener),
@@ -117,24 +120,24 @@ class ProjassetsRequestError extends Error {
 
 // PR NOTE [Issue 5] -- lift into the PR description, then remove.
 // The asset provider of Issue 5 (generated-docs/pxt-issue-drafts): a
-// read-only, typed view of the open project's named assets and visual
-// configuration (palette, simulator theme) for simulator extensions,
-// answered from the live TilemapProject and package config, not from the
-// asset files (images.g.jres), which are rebuilt only at build time. It
-// rides the projfs plumbing: the driver attests the requesting frame's key
-// and refuses frames whose registration lacks allowAssetRead before a
-// request reaches this host. Change notifications ride the TilemapProject's
-// project-wide change listener and the main package's config load listener,
-// deferred and merged: a burst of edits yields one notification, sent after
-// the edits have applied; a config reload notifies only when it changed the
-// palette or the theme.
+// read-only, typed view of the open project's named assets, its name and
+// its visual configuration (palette, simulator theme) for simulator
+// extensions, answered from the live TilemapProject and package config, not
+// from the asset files (images.g.jres), which are rebuilt only at build
+// time. It rides the projfs plumbing: the driver attests the requesting
+// frame's key and refuses frames whose registration lacks allowAssetRead
+// before a request reaches this host. Change notifications ride the
+// TilemapProject's project-wide change listener and the main package's
+// config load listener, deferred and merged: a burst of edits yields one
+// notification, sent after the edits have applied; a config reload notifies
+// only when it changed the project's name, palette or theme.
 /**
  * Serves the project-asset requests of simulator extensions: lists the named
- * assets of the open project by kind, with its visual configuration, and
- * notifies subscribed extensions when those assets or that configuration
- * change. Every request gets one reply. A request applies to the project open
- * when it arrives, and is answered once that project has loaded; a
- * subscription ends when that project closes.
+ * assets of the open project by kind, with its name and visual configuration,
+ * and notifies subscribed extensions when those assets, that name or that
+ * configuration change. Every request gets one reply. A request applies to
+ * the project open when it arrives, and is answered once that project has
+ * loaded; a subscription ends when that project closes.
  *
  * The host listens to one project at a time, the one its subscriptions were
  * made in. Changes are merged: subscribers get one notification, sent from a
@@ -144,9 +147,9 @@ export class ProjassetsHost {
     // per extension key: delivers change notifications to the extension's subscribed frame
     protected subscriptions: pxt.Map<(msg: ProjassetsNotification) => void> = {};
     // the project every subscription was made in, which the host listens to, with
-    // its asset project, configuration and visual configuration as last seen,
-    // serialized; undefined while there is none
-    protected watched: { open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig, visual: string } | undefined;
+    // its asset project, configuration, and name and visual configuration as
+    // last seen, serialized; undefined while there is none
+    protected watched: { open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig, seen: string } | undefined;
     // true while a notification is scheduled
     protected notifyScheduled = false;
     // true once an asset change is waiting for the scheduled notification
@@ -200,6 +203,7 @@ export class ProjassetsHost {
                     subtype: "assets",
                     kind: kind as ProjassetsKind,
                     assets: listers[kind as ProjassetsKind](project),
+                    name: config.getName(),
                     ...config.getVisualConfig(),
                 };
             }
@@ -241,7 +245,7 @@ export class ProjassetsHost {
         this.unwatch();
         project.assets.addProjectChangeListener(this.onProjectChange);
         project.config.addConfigLoadListener(this.onConfigLoad);
-        this.watched = { ...project, visual: JSON.stringify(project.config.getVisualConfig()) };
+        this.watched = { ...project, seen: serializeConfig(project.config) };
     }
 
     /** Stops listening for changes and ends every subscription. */
@@ -268,36 +272,41 @@ export class ProjassetsHost {
     }
 
     /**
-     * Notifies every subscriber if the assets or the visual configuration
-     * changed, or ends the subscriptions if the open project is no longer the
-     * one they were made in, or its configuration can no longer be read; a
-     * read failure is reported, not raised.
+     * Notifies every subscriber if the assets, the name or the visual
+     * configuration changed, or ends the subscriptions if the open project
+     * is no longer the one they were made in, or its configuration can no
+     * longer be read; a read failure is reported, not raised.
      */
     protected notifySubscribers() {
         this.notifyScheduled = false;
         const assetsChanged = this.assetsChanged;
         this.assetsChanged = false;
         if (!this.watched) return;
-        let visual: string;
+        let seen: string;
         try {
             if (this.getOpenProject() !== this.watched.open) {
                 this.unwatch();
                 return;
             }
-            visual = JSON.stringify(this.watched.config.getVisualConfig());
+            seen = serializeConfig(this.watched.config);
         } catch (e) {
             pxt.reportException(e);
             this.unwatch();
             return;
         }
-        const visualChanged = visual !== this.watched.visual;
-        this.watched.visual = visual;
-        if (!assetsChanged && !visualChanged) return;
+        const configChanged = seen !== this.watched.seen;
+        this.watched.seen = seen;
+        if (!assetsChanged && !configChanged) return;
         const notification: ProjassetsNotification = { type: PROJASSETS_MESSAGE_TYPE, subtype: "changed" };
         for (const key of Object.keys(this.subscriptions)) {
             this.subscriptions[key](notification);
         }
     }
+}
+
+/** Returns the name and visual configuration of `config` as they are now, serialized for comparison. */
+function serializeConfig(config: ProjassetsConfig): string {
+    return JSON.stringify({ name: config.getName(), visual: config.getVisualConfig() });
 }
 
 /** A reply without the `type` and `id` fields every reply carries. */

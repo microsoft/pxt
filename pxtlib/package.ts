@@ -1055,12 +1055,14 @@ namespace pxt {
 
         // PR NOTE [Issue 5] -- lift into the PR description, then remove.
         // The project config event the asset provider (Issue 5,
-        // generated-docs/pxt-issue-drafts) watches to report palette and
+        // generated-docs/pxt-issue-drafts) watches to report name, palette and
         // simulator theme changes. loadConfig is where every edit of the
         // project's pxt.json reaches the loaded config: updateConfigAsync
         // (the palette editor, extension changes), the project settings page
-        // (the simulator theme picker), and each compile, which reloads the
-        // config before reading it (a direct text edit of pxt.json).
+        // (the simulator theme picker), ProjectView.updateHeaderNameAsync (a
+        // rename from the toolbar, the share dialog or the exit-and-save
+        // dialog), and each compile, which reloads the config before reading
+        // it (a direct text edit of pxt.json).
         /**
          * Adds a listener called each time the project's pxt.json is reloaded
          * into the package's config, after the reload. The listener is called

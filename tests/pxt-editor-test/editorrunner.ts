@@ -2231,6 +2231,13 @@ describe("projassets host", () => {
         chai.expect(reply).not.to.have.property("theme");
     });
 
+    it("carries the project's name in each list reply", async () => {
+        const reply = await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+        chai.expect(reply.name).equals("test");
+        editConfig({ name: "renamed" });
+        chai.expect((await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply).name).equals("renamed");
+    });
+
     it("lists the same assets to every extension", async () => {
         const first = await send({ subtype: "list", kind: "image" }, "owner/repo") as ProjassetsAssetsReply;
         const second = await send({ subtype: "list", kind: "image" }, "other/repo") as ProjassetsAssetsReply;
@@ -2338,7 +2345,15 @@ describe("projassets host", () => {
             chai.expect(received).deep.equals([CHANGED, CHANGED]);
         });
 
-        it("sends no notification for a config change that leaves the palette and theme as they were", async () => {
+        it("notifies once after the project is renamed", async () => {
+            const received = await subscribe();
+            editConfig({ name: "renamed" });
+            chai.expect(received).deep.equals([]);
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it("sends no notification for a config change that leaves the name, palette and theme as they were", async () => {
             const received = await subscribe();
             editConfig({ description: "a new description" });
             editConfig({ description: "a new description", palette: TARGET_PALETTE.slice() });
@@ -2347,7 +2362,7 @@ describe("projassets host", () => {
             editConfig({ palette: PROJECT_PALETTE });
             await settle();
             received.length = 0;
-            editConfig({ palette: PROJECT_PALETTE, name: "renamed" });
+            editConfig({ palette: PROJECT_PALETTE, description: "another description" });
             await settle();
             chai.expect(received).deep.equals([]);
         });
@@ -2678,6 +2693,7 @@ describe("projassets client", () => {
     }
 
     const IMAGE: ProjassetsImage = { kind: "image", id: "image1", displayName: "hero", width: 2, height: 2, data: "AAAA" };
+    const NAME = "My Platformer";
     const PALETTE = ["#000000", "#ffffff"];
     const THEME = { "background-color": "#123456", layout: "default" };
     const CHANGED = { type: "projassets", subtype: "changed" };
@@ -2702,17 +2718,17 @@ describe("projassets client", () => {
 
     afterEach(() => client.dispose());
 
-    it("posts list requests for a kind to the editor with unique ids, and resolves with the assets and the visual configuration", async () => {
+    it("posts list requests for a kind to the editor with unique ids, and resolves with the assets, the project's name and its visual configuration", async () => {
         const first = client.list("image");
         const second = client.list("image");
         chai.expect(parent.requests.map(r => ({ type: r.type, subtype: r.subtype, kind: (r as any).kind })))
             .deep.equals([{ type: "projassets", subtype: "list", kind: "image" }, { type: "projassets", subtype: "list", kind: "image" }]);
         chai.expect(parent.requests[0].id).not.equals(parent.requests[1].id);
         chai.expect(parent.origins).deep.equals(["*", "*"]);
-        replyTo(parent.requests[1], { subtype: "assets", kind: "image", assets: [], palette: PALETTE });
-        replyTo(parent.requests[0], { subtype: "assets", kind: "image", assets: [IMAGE], palette: PALETTE, theme: THEME });
-        chai.expect(await first).deep.equals({ assets: [IMAGE], palette: PALETTE, theme: THEME });
-        chai.expect(await second).deep.equals({ assets: [], palette: PALETTE });
+        replyTo(parent.requests[1], { subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE });
+        replyTo(parent.requests[0], { subtype: "assets", kind: "image", assets: [IMAGE], name: NAME, palette: PALETTE, theme: THEME });
+        chai.expect(await first).deep.equals({ assets: [IMAGE], name: NAME, palette: PALETTE, theme: THEME });
+        chai.expect(await second).deep.equals({ assets: [], name: NAME, palette: PALETTE });
     });
 
     it("rejects with the editor's error code", async () => {
@@ -2733,11 +2749,11 @@ describe("projassets client", () => {
 
     it("ignores replies from other windows and to unknown requests", async () => {
         const listed = client.list("image");
-        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [{ ...IMAGE, id: "forged" }], palette: PALETTE }, {});
-        self.deliver(parent, { type: "projassets", id: "unknown", subtype: "assets", kind: "image", assets: [], palette: PALETTE });
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [{ ...IMAGE, id: "forged" }], name: NAME, palette: PALETTE }, {});
+        self.deliver(parent, { type: "projassets", id: "unknown", subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE });
         self.deliver(parent, { type: "projfs", id: lastRequest().id, subtype: "files", files: [] });
-        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], palette: PALETTE });
-        chai.expect(await listed).deep.equals({ assets: [IMAGE], palette: PALETTE });
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], name: NAME, palette: PALETTE });
+        chai.expect(await listed).deep.equals({ assets: [IMAGE], name: NAME, palette: PALETTE });
     });
 
     it("subscribes once the editor acknowledges, then calls the listener on each change", async () => {
@@ -2780,8 +2796,8 @@ describe("projassets client", () => {
         const listed = client.list("image");
         await new Promise(resolve => setTimeout(resolve, 30));
         chai.expect(slow).deep.equals([lastRequest()]);
-        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], palette: PALETTE });
-        chai.expect(await listed).deep.equals({ assets: [IMAGE], palette: PALETTE });
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], name: NAME, palette: PALETTE });
+        chai.expect(await listed).deep.equals({ assets: [IMAGE], name: NAME, palette: PALETTE });
     });
 
     it("fails pending requests with DISPOSED when disposed, and stops calling listeners", async () => {
@@ -2801,7 +2817,7 @@ describe("projassets client", () => {
     describe("through the host", () => {
         withTargetVisuals(TARGET_PALETTE, THEME_PRESETS);
 
-        it("lists a project's images and visual configuration, and hears their changes", async () => {
+        it("lists a project's images, name and visual configuration, and hears their changes", async () => {
             const project = new pxt.TilemapProject();
             const bitmap = testBitmap(3, 2);
             const image = project.createNewProjectImage(bitmap, "hero");
@@ -2818,6 +2834,7 @@ describe("projassets client", () => {
                 assets: [{
                     kind: "image", id: "image1", displayName: "hero", width: 3, height: 2, data: pxt.sprite.base64EncodeBitmap(bitmap),
                 }],
+                name: "test",
                 palette: TARGET_PALETTE,
                 theme: ACCOUNT_THEME,
             });
@@ -2834,6 +2851,11 @@ describe("projassets client", () => {
             await settle();
             chai.expect(changes).equals(2);
             chai.expect((await client.list("image")).palette).deep.equals(PROJECT_PALETTE);
+            files[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE, name: "renamed" });
+            mainPkg.loadConfig(true);
+            await settle();
+            chai.expect(changes).equals(3);
+            chai.expect((await client.list("image")).name).equals("renamed");
         });
     });
 });
