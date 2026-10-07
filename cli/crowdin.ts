@@ -153,6 +153,7 @@ export async function buildAllTranslationsAsync(fetchFileTranslationAsync: (file
     await buildTranslationFilesAsync(["target-strings.json"], "target-strings.json");
     await buildTranslationFilesAsync(["strings.json"], "strings.json", true);
     await buildTranslationFilesAsync(["skillmap-strings.json"], "skillmap-strings.json", true);
+    await buildTranslationFilesAsync(["tutorialtool-strings.json"], "tutorialtool-strings.json", true);
     await buildTranslationFilesAsync(["webstrings.json"], "webstrings.json", true);
 
     const files: string[] = [];
