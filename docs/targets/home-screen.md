@@ -159,6 +159,85 @@ Use **label** and **labelClass** to control the content and appearance of the la
 }
 ```
 
+### searchTerms
+
+In order to associate card items by a term, or a set of terms, you use a ``searchTerms`` list. The search terms provide a way to tag a card to a type of activity, category, learning concept, etc.
+
+```
+{
+    "name": "Falling Duck",
+    "description": "Avoid the trees and go for a high score!",
+    "searchTerms": ["Example","Blocks","Events","Variables","Conditionals","If Then","Boolean","Logic","User Input","Sprites","Movement","Controller","Overlaps",         "Projectiles","Assets","Animation","Extension","Side scroller"],
+    ...
+}
+```
+
+### difficulty
+
+The ``difficulty`` entry lets you assign a relative difficulty level to the activity card item.
+
+The levels defined for cards are:
+
+* `"beginner"`
+* `"intermediate"`
+* `"advanced"`
+
+```
+{
+    "name": "Spleef",
+    "description": "Dig under your friends' feet to make them fall into lava.",
+    "difficulty": "intermediate",
+    ...
+}
+```
+
+### duration
+
+Use ``duration`` to provide an estimated completion time for the activity described in the card. The time is given in minutes, such as ``"45-minutes"``.
+
+```
+{
+    "name": "Compass Rose",
+    "description": "Let's visualize the world directions.",
+    "difficulty": "intermediate",
+    "duration": "30-minutes",
+    ...
+}
+```
+
+### targetAge
+
+The age of the user or student that the activity is targeted to is set by ``targetAge``. You can use a single age (`"12"`) , an age range (`"9-12"`), or a grouped range (`"9-12", "13-15"`). The age targets are set in a list: ` ["12"]`, ` ["9-12"]`, or ` ["9-12", "13-18"]`.
+
+```
+{
+    "name": "Bouncing Pigs",
+    "language": "blocks",
+    "url": "/tutorials/bouncing-pigs",
+    "targetAge": ["9-12", "13-18"],
+    "description": "Bounce and a pig will come by",
+    ...
+ }
+```
+
+### language
+
+A card item is associated to a coding language using the ``language`` entry. Languages available for the coding activity are set in a list using these identifiers:
+
+* Blocks: `"blocks"`
+* JavaScript: `"js"`
+* Python: `"py"`
+
+```
+{
+    "name": "Leaping Salmon",
+    "language": ["blocks", "js", "py"],
+    "description": "Guide your salmon friends home. Aim for the pond!",
+    "searchTerms": ["Tutorial", "Blocks", "Python", "JavaScript", "Events", "Loops", "Random", "Coordinates", "Mobs", "Building", "Animals", "Water"],
+    ...
+}
+```
+
 ### otherActions
 
 If you author tutorials using ``JavaScript`` or ``spy``, MakeCode is able to automatically
