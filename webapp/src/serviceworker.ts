@@ -300,13 +300,27 @@ function initWebUSB() {
     let state: "waiting" | "granting" | "idle" = "idle";
     let pendingDisconnectResolver: (resp: DisconnectResponse) => void;
     let statusResolver: (lock: string) => void;
+    let statusPromise: Promise<string>;
 
     self.addEventListener("message", async (ev: MessageEvent) => {
         const message: pxt.ServiceWorkerClientMessage = ev.data;
         if (message?.type === "serviceworkerclient") {
             if (message.action === "request-packet-io-lock") {
 
-                if (!lockGranted) lockGranted = await checkForExistingLockAsync();
+                if (!lockGranted) {
+                    const existingLock = await checkForExistingLockAsync();
+                    if (!lockGranted) lockGranted = existingLock;
+                }
+
+                if (lockGranted === message.lock) {
+                    await sendToAllClientsAsync({
+                        type: "serviceworker",
+                        action: "packet-io-lock-granted",
+                        granted: true,
+                        lock: message.lock
+                    });
+                    return;
+                }
 
                 // Deny the lock if we are in the process of granting it to someone else
                 if (state === "granting") {
@@ -351,6 +365,10 @@ function initWebUSB() {
                     do {
                         console.log("Sending disconnect request " + message.lock);
                         resp = await waitForLockDisconnectAsync();
+                        if (waitingLock !== message.lock) {
+                            state = "idle";
+                            return;
+                        }
                         if (resp === DisconnectResponse.Waiting) {
                             console.log("Waiting on disconnect request " + message.lock);
                             await delay(1000);
@@ -368,16 +386,22 @@ function initWebUSB() {
                     lock: message.lock
                 });
 
+                waitingLock = undefined;
                 lastLockTime = Date.now();
                 state = "idle";
             }
             else if (message.action === "release-packet-io-lock") {
+                // A timed-out waiter can withdraw without releasing the device that
+                // another tab is actively flashing. Ignore stale owners' releases.
+                if (waitingLock === message.lock) waitingLock = undefined;
+                if (lockGranted !== message.lock) return;
                 // The client released the webusb lock for some reason (e.g. went to home screen)
                 console.log("Received disconnect for " + lockGranted);
                 lockGranted = undefined;
                 if (pendingDisconnectResolver) pendingDisconnectResolver(DisconnectResponse.Disconnected);
             }
             else if (message.action === "packet-io-lock-disconnect") {
+                if (lockGranted !== message.lock) return;
                 // Response to a disconnect request we sent
                 console.log("Received disconnect response for " + lockGranted);
 
@@ -433,6 +457,7 @@ function initWebUSB() {
 
     function checkForExistingLockAsync() {
         if (lockGranted) return Promise.resolve(lockGranted);
+        if (statusPromise) return statusPromise;
         let ref: any;
 
         const promise = new Promise<string>(resolve => {
@@ -451,12 +476,13 @@ function initWebUSB() {
             }, 1000)
         });
 
-        return Promise.race([ promise, timeoutPromise ])
+        statusPromise = Promise.race([ promise, timeoutPromise ])
             .then(resp => {
                 clearTimeout(ref);
                 statusResolver = undefined
                 return resp;
-            });
+            }).finally(() => statusPromise = undefined);
+        return statusPromise;
     }
 
 
