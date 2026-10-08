@@ -24,6 +24,15 @@ import ISettingsProps = pxt.editor.ISettingsProps;
 import UserInfo = pxt.editor.UserInfo;
 import { Dropdown, DropdownItem } from "../../react-common/components/controls/Dropdown";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
+import {
+    filterHomeSearchCards,
+    getAvailableHomeSearchFilters,
+    getHomeSearchFilterOptionCounts,
+    hasActiveHomeSearchFilters,
+    HomeSearchFilterDefinition,
+    HomeSearchFilterOptionCounts,
+    HomeSearchFilterSelection,
+} from "./homeSearchFilters";
 
 
 // This Component overrides shouldComponentUpdate, be sure to update that if the state is updated
@@ -33,11 +42,48 @@ interface ProjectsState {
     selectedIndex?: number;
     searchMode?: boolean;
     searchQuery?: string;
+    searchCandidates?: SearchCard[];
     searchResults?: SearchCard[];
+    searchFilters?: HomeSearchFilterSelection;
 }
 
 const SEARCH_CATEGORY = "__search__";
 type SearchCard = pxt.CodeCard & { projectHeader?: pxt.workspace.Header };
+interface SearchEntry {
+    id: string;
+    name: string;
+    description?: string;
+    tags?: string;
+    searchTerms?: string;
+}
+interface SearchGallerySource {
+    path: string;
+    result?: pxt.gallery.Gallery[] | Error;
+}
+interface SearchEntrySources {
+    language: string;
+    galleries: SearchGallerySource[];
+    headers: pxt.workspace.Header[];
+}
+interface SearchEntries {
+    cards: SearchCard[];
+    entries: SearchEntry[];
+    cardMap: pxt.Map<SearchCard>;
+}
+
+const EMPTY_SEARCH_CARDS: SearchCard[] = [];
+const EMPTY_SEARCH_FILTERS: HomeSearchFilterSelection = {};
+const EMPTY_SEARCH_FILTER_COUNTS: HomeSearchFilterOptionCounts = {};
+const EMPTY_PROJECT_HEADERS: pxt.workspace.Header[] = [];
+
+function haveSameSearchEntrySources(left: SearchEntrySources, right: SearchEntrySources): boolean {
+    return left.language === right.language
+        && left.headers === right.headers
+        && left.galleries.length === right.galleries.length
+        && left.galleries.every((source, index) =>
+            source.path === right.galleries[index].path
+            && source.result === right.galleries[index].result);
+}
 
 function focusCard(card?: HTMLElement) {
     if (card) card.focus();
@@ -63,6 +109,17 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     protected searchRequestId = 0;
     protected searchButton: HTMLElement;
     protected restoreSearchButtonFocusAfterClose = false;
+    private searchEntriesCache: { sources: SearchEntrySources; result: SearchEntries; };
+    private availableSearchFiltersCache: {
+        cards: SearchCard[];
+        language: string;
+        result: HomeSearchFilterDefinition[];
+    };
+    private searchFilterOptionCountsCache: {
+        cards: SearchCard[];
+        filters: HomeSearchFilterSelection;
+        result: HomeSearchFilterOptionCounts;
+    };
 
     constructor(props: ISettingsProps) {
         super(props)
@@ -92,7 +149,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             || this.state.selectedIndex != nextState.selectedIndex
             || this.state.searchMode != nextState.searchMode
             || this.state.searchQuery != nextState.searchQuery
-            || this.state.searchResults != nextState.searchResults;
+            || this.state.searchCandidates != nextState.searchCandidates
+            || this.state.searchResults != nextState.searchResults
+            || this.state.searchFilters != nextState.searchFilters;
     }
 
     setSelected(category: string, index?: number) {
@@ -136,22 +195,40 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return galleries;
     }
 
-    private collectGallerySearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
-        const cards: SearchCard[] = [];
-        const entries = [] as { id: string; name: string; description?: string; tags?: string; searchTerms?: string; }[];
-        const cardMap: pxt.Map<SearchCard> = {};
-        const seen = new Set<string>();
-        const localizedTerms = (terms: string[]) => Array.isArray(terms) ? terms.map(term => {
-            const translated = pxt.Util.rlf(term);
-            return translated === term ? term : `${term} ${translated}`;
-        }).join(" ") : "";
+    private getSearchEntrySources(): SearchEntrySources {
+        const galleries = this.getSearchGalleries();
+        const gallerySources: SearchGallerySource[] = [];
 
         Object.keys(galleries).forEach(galleryName => {
             const galProps = galleries[galleryName] as pxt.GalleryProps | string;
             const path = typeof galProps === "string" ? galProps : galProps.url;
             if (!path) return;
 
-            const res = this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[];
+            gallerySources.push({
+                path,
+                result: this.getData(`gallery:${encodeURIComponent(path)}`) as pxt.gallery.Gallery[] | Error
+            });
+        });
+
+        return {
+            language: pxt.Util.userLanguage(),
+            galleries: gallerySources,
+            headers: (this.getData("headers:") as pxt.workspace.Header[]) || EMPTY_PROJECT_HEADERS,
+        };
+    }
+
+    private collectGallerySearchEntries(sources: SearchGallerySource[]): SearchEntries {
+        const cards: SearchCard[] = [];
+        const entries: SearchEntry[] = [];
+        const cardMap: pxt.Map<SearchCard> = {};
+        const seen = new Set<string>();
+        const localizedTerms = (terms?: string[]) => Array.isArray(terms) ? terms.map(term => {
+            const translated = pxt.Util.rlf(term);
+            return translated === term ? term : `${term} ${translated}`;
+        }).join(" ") : "";
+
+        sources.forEach(source => {
+            const res = source.result;
             if (!res || res instanceof Error) return;
 
             res.forEach(gal => gal.cards?.forEach(card => {
@@ -175,8 +252,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return { cards, entries, cardMap };
     }
 
-    private getLocalProjectHeaders(): pxt.workspace.Header[] {
-        const headers = (this.getData("headers:") || []) as pxt.workspace.Header[];
+    private getLocalProjectHeaders(headers: pxt.workspace.Header[]): pxt.workspace.Header[] {
         return headers.filter(h => !pxt.tutorial.shouldFilterProject(h.tutorial?.metadata));
     }
 
@@ -194,6 +270,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return {
             projectHeader: header,
             cardType: "file",
+            editor: header.editor === pxt.BLOCKS_PROJECT_NAME ? "blocks"
+                : header.editor === pxt.PYTHON_PROJECT_NAME ? "py"
+                    : header.editor === pxt.JAVASCRIPT_PROJECT_NAME ? "js"
+                        : undefined,
             name: (ghid && pxt.github.join(ghid.project, ghid.fileName)) || header.name,
             time: header.modificationTime,
             tutorialStep,
@@ -202,11 +282,11 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         };
     }
 
-    private collectSearchEntries(galleries: pxt.Map<string | pxt.GalleryProps>) {
-        const { cards, entries, cardMap } = this.collectGallerySearchEntries(galleries);
+    private collectSearchEntries(sources: SearchEntrySources): SearchEntries {
+        const { cards, entries, cardMap } = this.collectGallerySearchEntries(sources.galleries);
         const seen = new Set(Object.keys(cardMap));
 
-        this.getLocalProjectHeaders().forEach(header => {
+        this.getLocalProjectHeaders(sources.headers).forEach(header => {
             const key = `project:${header.id}`;
             if (seen.has(key)) return;
             seen.add(key);
@@ -235,22 +315,66 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         return { cards, entries, cardMap };
     }
 
-    private runSearch(query: string) {
-        const normalized = (query || "").trim();
-        const galleries = this.getSearchGalleries();
-        const requestId = ++this.searchRequestId;
+    private getSearchEntries(): SearchEntries {
+        const sources = this.getSearchEntrySources();
+        if (this.searchEntriesCache && haveSameSearchEntrySources(this.searchEntriesCache.sources, sources))
+            return this.searchEntriesCache.result;
 
-        if (!normalized) {
+        const result = this.collectSearchEntries(sources);
+        this.searchEntriesCache = { sources, result };
+        return result;
+    }
+
+    private getAvailableSearchFilters(cards: SearchCard[]): HomeSearchFilterDefinition[] {
+        const language = pxt.Util.userLanguage();
+        if (this.availableSearchFiltersCache?.cards === cards
+            && this.availableSearchFiltersCache.language === language)
+            return this.availableSearchFiltersCache.result;
+
+        const result = getAvailableHomeSearchFilters(cards);
+        this.availableSearchFiltersCache = { cards, language, result };
+        return result;
+    }
+
+    private getSearchFilterOptionCounts(
+        cards: SearchCard[],
+        filters: HomeSearchFilterSelection
+    ): HomeSearchFilterOptionCounts {
+        if (this.searchFilterOptionCountsCache?.cards === cards
+            && this.searchFilterOptionCountsCache.filters === filters)
+            return this.searchFilterOptionCountsCache.result;
+
+        const result = getHomeSearchFilterOptionCounts(cards, filters);
+        this.searchFilterOptionCountsCache = { cards, filters, result };
+        return result;
+    }
+
+    private runSearch(query: string, filters = this.state.searchFilters || {}) {
+        const normalized = (query || "").trim();
+        const requestId = ++this.searchRequestId;
+        const hasFilters = hasActiveHomeSearchFilters(filters);
+
+        if (!normalized && !hasFilters) {
             const resetCategory = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory;
             const resetIndex = this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex;
             compiler.homeSearchClear();
-            this.setState({ searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
+            this.setState({ searchCandidates: undefined, searchResults: undefined, selectedCategory: resetCategory, selectedIndex: resetIndex });
             return;
         }
 
-        const { entries, cardMap } = this.collectSearchEntries(galleries);
+        const { cards, entries, cardMap } = this.getSearchEntries();
         if (!entries.length) {
-            this.setState({ searchResults: [] });
+            this.setState({ searchCandidates: [], searchResults: [] });
+            return;
+        }
+
+        if (!normalized) {
+            this.setState({
+                searchCandidates: undefined,
+                searchResults: filterHomeSearchCards(cards, filters),
+                selectedCategory: SEARCH_CATEGORY,
+                selectedIndex: undefined
+            });
             return;
         }
 
@@ -258,11 +382,13 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             .then(results => {
                 if (requestId !== this.searchRequestId) return;
 
-                const matches = results
+                const candidates = results
                     .map(result => cardMap[result.id])
                     .filter(card => !!card);
+                const matches = filterHomeSearchCards(candidates, filters);
 
                 this.setState({
+                    searchCandidates: candidates,
                     searchResults: matches,
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -272,6 +398,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                 if (requestId !== this.searchRequestId) return;
                 pxt.reportException(e);
                 this.setState({
+                    searchCandidates: [],
                     searchResults: [],
                     selectedCategory: SEARCH_CATEGORY,
                     selectedIndex: undefined
@@ -280,8 +407,53 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     public setSearchQuery(query: string) {
-        this.setState({ searchQuery: query });
+        this.setState({ searchQuery: query, searchCandidates: undefined });
         this.runSearch(query);
+    }
+
+    private setSearchFilter(filterId: string, optionId: string, selected: boolean) {
+        const searchFilters = { ...(this.state.searchFilters || {}) };
+        const values = (searchFilters[filterId] || []).filter(value => value !== optionId);
+        if (selected) values.push(optionId);
+
+        if (values.length) searchFilters[filterId] = values;
+        else delete searchFilters[filterId];
+
+        this.setState({ searchFilters });
+        this.runSearch(this.state.searchQuery || "", searchFilters);
+    }
+
+    private clearSearchFilters = () => {
+        const searchFilters = {};
+        this.setState({ searchFilters });
+        this.runSearch(this.state.searchQuery || "", searchFilters);
+    }
+
+    private renderSearchFilter(definition: HomeSearchFilterDefinition, optionCounts: pxt.Map<number>) {
+        const selectedValues = this.state.searchFilters?.[definition.id] || [];
+        const selectedCount = selectedValues.length;
+        const label = selectedCount ? lf("{0} ({1})", definition.label, selectedCount) : definition.label;
+        const ariaLabel = selectedCount
+            ? lf("{0} filter, {1} selected", definition.label, selectedCount)
+            : lf("{0} filter", definition.label);
+        const items: MenuItem[] = definition.options.map(option => ({
+            role: "menuitemcheckbox",
+            label: lf("{0} ({1})", option.label, optionCounts[option.id] || 0),
+            isChecked: selectedValues.indexOf(option.id) !== -1,
+            onChange: selected => this.setSearchFilter(definition.id, option.id, selected),
+        }));
+
+        return <MenuDropdown
+            key={definition.id}
+            id={`home-search-filter-${definition.id}`}
+            className="home-search-filter"
+            label={label}
+            title={ariaLabel}
+            ariaLabel={ariaLabel}
+            showChevron={true}
+            items={items}
+            keepOpenOnCheckboxChange={true}
+        />;
     }
 
     public getSearchQuery() {
@@ -289,7 +461,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
     }
 
     private warmSearchIndex() {
-        const { entries } = this.collectSearchEntries(this.getSearchGalleries());
+        const { entries } = this.getSearchEntries();
         if (!entries.length) return;
 
         // warm search index so that users get instant results when they start typing
@@ -302,6 +474,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.warmSearchIndex();
         this.setState({
             searchMode: true,
+            searchFilters: {},
             selectedCategory: this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedCategory,
             selectedIndex: this.state.selectedCategory === SEARCH_CATEGORY ? undefined : this.state.selectedIndex,
         });
@@ -317,7 +490,9 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         this.setState({
             searchMode: false,
             searchQuery: "",
+            searchCandidates: undefined,
             searchResults: undefined,
+            searchFilters: undefined,
             selectedCategory: undefined,
             selectedIndex: undefined,
         }, () => {
@@ -427,8 +602,22 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
         const galleries = this.getHomeGalleries();
         const searchMode = !!this.state.searchMode;
         const searchQuery = this.state.searchQuery || "";
-        const hasSearchQuery = !!searchQuery.trim();
+        const searchFilters = this.state.searchFilters || EMPTY_SEARCH_FILTERS;
+        const hasSearchFilters = hasActiveHomeSearchFilters(searchFilters);
+        const hasSearchCriteria = !!searchQuery.trim() || hasSearchFilters;
         const searchResults = this.state.searchResults || [];
+        const allSearchCards = searchMode
+            ? this.getSearchEntries().cards
+            : EMPTY_SEARCH_CARDS;
+        const availableSearchFilters = searchMode
+            ? this.getAvailableSearchFilters(allSearchCards)
+            : [];
+        const searchFilterCandidates = searchQuery.trim()
+            ? this.state.searchCandidates || EMPTY_SEARCH_CARDS
+            : allSearchCards;
+        const searchFilterOptionCounts = searchMode
+            ? this.getSearchFilterOptionCounts(searchFilterCandidates, searchFilters)
+            : EMPTY_SEARCH_FILTER_COUNTS;
         const searchSelectedIndex = this.state.selectedCategory === SEARCH_CATEGORY ? this.state.selectedIndex : undefined;
         const selectedSearchCard = searchSelectedIndex !== undefined ? searchResults[searchSelectedIndex] : undefined;
         const selectedSearchProjectHeader = selectedSearchCard?.projectHeader;
@@ -436,7 +625,7 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
             ? this.getLocalProjectDescription(selectedSearchProjectHeader) || selectedSearchCard?.description
             : selectedSearchCard?.description;
         const canImport = !!(pxt.appTarget.compile || (pxt.appTarget.cloud && pxt.appTarget.cloud.sharing && pxt.appTarget.cloud.importing)) && !searchMode;
-        const searchResultsContent = hasSearchQuery
+        const searchResultsContent = hasSearchCriteria
             ? searchResults.length
                 ? searchResults.map((scr, index) =>
                     <React.Fragment key={`search-${scr.youTubeId || scr.name || scr.url}-${index}`}>
@@ -539,6 +728,19 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
                         icon="search icon"
                         ariaLabel={lf("Search tutorials, examples, and projects")}
                     />
+                    {!!availableSearchFilters.length && <div className="home-search-filters" role="group" aria-label={lf("Filter search results")}>
+                        <span className="home-search-filters-label">{lf("Filter by")}</span>
+                        <div className="home-search-filter-menus">
+                            {availableSearchFilters.map(definition =>
+                                this.renderSearchFilter(definition, searchFilterOptionCounts[definition.id]))}
+                        </div>
+                        {hasSearchFilters && <Button
+                            className="home-search-clear-filters neutral button"
+                            label={lf("Clear filters")}
+                            title={lf("Clear all search filters")}
+                            onClick={this.clearSearchFilters}
+                        />}
+                    </div>}
                 </div>}
                 {!searchMode && <div className="content">
                     <ProjectsCarousel key={`mystuff_carousel`} parent={this.props.parent} name={'recent'} onClick={this.chgHeader} />
