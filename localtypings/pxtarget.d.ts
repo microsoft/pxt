@@ -77,10 +77,29 @@ declare namespace pxt {
         // assets and its visual configuration -- palette, simulator theme -- read-only).
         allowFileWrite?: boolean; // If true, the frame may list, read, write and delete files in its own folder of the project ("projfs" messages). Default: false.
         allowAssetRead?: boolean; // If true, the frame may list the open project's assets and visual configuration (palette, simulator theme) and subscribe to their changes ("projassets" messages). Default: false.
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove. A simulator extension may
+        // contribute an editor tab: `editor` describes it and `allowEditorTab` enables it, the way the
+        // other grants enable their capability families. With either missing the editor shows no tab,
+        // brokers no port, and the extension's simulator frame URL carries no `editor=1`. The grants
+        // above apply to the registration, so to its tab frame as well as its simulator frame.
+        editor?: SimulatorExtensionEditorConfig; // The extension's editor tab. Ignored unless allowEditorTab is set; refused on a registration with permanent set to false. Default: undefined.
+        allowEditorTab?: boolean; // If true, the editor offers the tab `editor` describes, brokers a port between it and the simulator frame, and serves the simulator frame's request to open it ("simxeditor" messages). Default: false.
         // backend-only options
         sha?: string; // The commit to checkout (must exist in the branch/ref). Required.
         repo?: string; // Actual repo to load simulator extension from. Defaults to key of parent in `approvedRepoLib` map.
         ref?: string; // The branch of the repo to sync. Default: "gh-pages".
+    }
+
+    /**
+     * The editor tab of a simulator extension: a page of the extension's artifact that
+     * the editor hosts in the editor area, beside Blocks and the text editors, while the
+     * open project includes the extension.
+     */
+    interface SimulatorExtensionEditorConfig {
+        index: string; // The path to the tab's page within the artifact, resolved as the simulator extension's `index` is. Required.
+        label: string; // The tab's name in the editor toggle, and its accessible name. Not localized. Required.
+        icon?: string; // The name of an icon shown before the label in the editor toggle. Default: none.
+        wordmark?: string; // The path to an SVG image within the artifact, resolved as `index` is, shown in the editor toggle in place of the label. Default: none.
     }
 
     interface ShareConfig {
