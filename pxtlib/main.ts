@@ -522,6 +522,26 @@ namespace pxt {
     export const CONFIG_NAME = "pxt.json"
     export const SIMSTATE_JSON = ".simstate.json"
     export const SERIAL_EDITOR_FILE = "serial.txt"
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // A simulator extension's editor tab is selected by a marker file, which
+    // follows the serial editor's file: created virtual for the session and
+    // excluded everywhere pxt saves, lists, syncs, diffs or exports a
+    // project's files. Each of those places tested for SERIAL_EDITOR_FILE by
+    // name; they now ask isSessionOnlyFile, so the serial file and the
+    // markers share one rule.
+    /** The suffix of the name of a simulator extension editor tab's marker file. */
+    export const SIMX_EDITOR_MARKER_SUFFIX = ".simxeditor"
+    /**
+     * Returns true if `name` names a file the editor creates for the current
+     * session only: the serial editor's file, or the marker file of a
+     * simulator extension editor tab (any name ending in
+     * {@link SIMX_EDITOR_MARKER_SUFFIX}). Such a file is never saved, shown in
+     * the file explorer (outside debug mode), synced, committed to GitHub,
+     * diffed, shared or exported.
+     */
+    export function isSessionOnlyFile(name: string): boolean {
+        return name === SERIAL_EDITOR_FILE || U.endsWith(name, SIMX_EDITOR_MARKER_SUFFIX);
+    }
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"
     export const ASSETS_FILE = "assets.json"

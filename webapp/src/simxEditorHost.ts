@@ -83,12 +83,13 @@ export function getProjectSimxEditors(registrations: SimxEditorRegistration[], d
 }
 
 /**
- * Returns the name of the project file that selects the editor tab of the
- * extension registered under `key`: a virtual file at the project's top level,
- * named after the key, with every `/` replaced by `~`.
+ * Returns the name of the marker file that selects the editor tab of the
+ * extension registered under `key`: a virtual, session-only file (see
+ * `pxt.isSessionOnlyFile`) at the project's top level, named after the key,
+ * with every `/` replaced by `~`, and ending in `pxt.SIMX_EDITOR_MARKER_SUFFIX`.
  */
 export function getSimxEditorMarkerName(key: string): string {
-    return key.replace(/\//g, "~") + ".simxeditor";
+    return key.replace(/\//g, "~") + pxt.SIMX_EDITOR_MARKER_SUFFIX;
 }
 
 /** Returns the key of the registration among `registrations` whose marker file is named `name`, or undefined if none is. */

@@ -510,9 +510,15 @@ export class EditorPackage {
         this.updateGitJsonCache()
     }
 
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // Every save of a project goes through getAllFiles, which leaves out the
+    // serial editor's file and every simulator extension editor tab marker
+    // (pxt.isSessionOnlyFile), so neither is ever saved.
     getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
-        delete r[pxt.SERIAL_EDITOR_FILE]
+        for (const name of Object.keys(r)) {
+            if (pxt.isSessionOnlyFile(name)) delete r[name]
+        }
         return r
     }
 
@@ -540,10 +546,13 @@ export class EditorPackage {
         return workspace.saveAsync(this.header, this.getAllFiles())
     }
 
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // The file explorer lists sortedFiles, which hides session-only files
+    // (pxt.isSessionOnlyFile) outside debug mode, as it hid the serial file.
     sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
-            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE && f.name != pxt.PALETTES_FILE && f.name !== pxt.HISTORY_FILE)
+            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && !pxt.isSessionOnlyFile(f.name) && f.name != pxt.PALETTES_FILE && f.name !== pxt.HISTORY_FILE)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }

@@ -49,7 +49,7 @@ The tab is declared in the extension's `simx` entry in the target's `targetconfi
 * `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor` and `allowEditorTab`.
 * A registration with an editor tab must be `permanent` (the default); the editor ignores, and logs, an `editor` on a registration with `permanent: false`.
 
-The first time a tab is opened in a project, the editor adds a small file named after the extension's key (`owner~repo.simxeditor`) to the project; opening that file shows the tab.
+The editor selects the tab through a session-only marker file named after the extension's key (`owner~repo.simxeditor`), which it creates the first time the tab is opened in a session. The marker is never saved, listed with the project's files, shared or exported, so the project itself does not change. File names ending in `.simxeditor` are reserved for these markers.
 
 ### Two frames
 

@@ -865,11 +865,13 @@ export class ProjectView
     }
 
     // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // Opening a simulator extension's editor tab follows openAssets: the tab
-    // is selected by a marker file, created (virtual, so switching to it
-    // leaves the simulator alone) the first time the tab is opened. Unlike
-    // openAssets it does not save before switching; the switch itself saves
-    // the editor being left, as every editor switch does.
+    // Opening a simulator extension's editor tab follows openSerial: the tab
+    // is selected by a marker file, created with a throwaway buffer the first
+    // time the tab is opened in the session. The file is virtual, so
+    // switching to it leaves the simulator alone, and session-only
+    // (pxt.isSessionOnlyFile), so it is never saved, listed, synced, shared
+    // or exported. Like openSerial it does not save before switching; the
+    // switch itself saves the editor being left, as every editor switch does.
     openSimulatorExtensionEditor(key: string): boolean {
         const mainEditorPkg = pkg.mainEditorPkg();
         if (!mainEditorPkg?.header || pxt.shell.isSandboxMode()) return false;

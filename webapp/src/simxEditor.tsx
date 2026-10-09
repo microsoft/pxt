@@ -5,13 +5,14 @@ import { Editor } from "./srceditor";
 import { getSimxEditorKeyOfMarker } from "./simxEditorHost";
 
 // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-// The editor of simulator extension editor tabs. Like the Assets editor it is
-// selected by a marker file: each tab has a virtual file at the project's top
-// level, created the first time the tab is opened, and opening that file
-// shows the tab. A virtual file does not stop or restart the simulator when
-// the editor switches to it, and this editor neither saves nor builds
-// anything when it loads or unloads. Its frames live in the simulator
-// module's editor-tab host, which keeps them loaded across editor switches.
+// The editor of simulator extension editor tabs. Like the serial editor it is
+// selected by a session-only marker file: each tab has a virtual file at the
+// project's top level, created the first time the tab is opened in the
+// session and never saved or listed, and opening that file shows the tab. A
+// virtual file does not stop or restart the simulator when the editor
+// switches to it, and this editor neither saves nor builds anything when it
+// loads or unloads. Its frames live in the simulator module's editor-tab
+// host, which keeps them loaded across editor switches.
 /**
  * Shows the editor tab of a simulator extension: the page its registration
  * names, in a frame that stays loaded, hidden, while another editor is shown,

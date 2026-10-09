@@ -3668,9 +3668,36 @@ describe("simulator extension editor tab registrations", () => {
         chai.expect(getSimxEditorKeyOfMarker(getSimxEditorMarkerName("thirdorg/pxt-third"), registrations)).equals(undefined);
     });
 
+    it("names marker files that are session-only", () => {
+        const names = [EXT, OTHER, "thirdorg/pxt-third"].map(getSimxEditorMarkerName);
+        chai.expect(names.map(pxt.isSessionOnlyFile)).deep.equals([true, true, true]);
+    });
+
     it("tells a simulator frame whether the editor offers its tab", () => {
         chai.expect(hasEditorTab("?channel=someorg%2Fpxt-ext&editor=1")).equals(true);
         chai.expect(hasEditorTab("?channel=someorg%2Fpxt-ext")).equals(false);
+    });
+});
+
+describe("session-only files", () => {
+    it("are the serial editor's file and the simulator extension editor tab markers", () => {
+        chai.expect(pxt.isSessionOnlyFile(pxt.SERIAL_EDITOR_FILE)).equals(true);
+        chai.expect(pxt.isSessionOnlyFile("someorg~pxt-ext" + pxt.SIMX_EDITOR_MARKER_SUFFIX)).equals(true);
+    });
+
+    it("are no other project file, even one whose name merely contains the marker suffix", () => {
+        const names = [
+            pxt.CONFIG_NAME,
+            pxt.MAIN_TS,
+            pxt.MAIN_BLOCKS,
+            pxt.ASSETS_FILE,
+            pxt.SIMSTATE_JSON,
+            pxt.README_FILE,
+            "serial.txt.bak",
+            "notes" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md",
+            pxt.SIMX_EDITOR_MARKER_SUFFIX.slice(1),
+        ];
+        chai.expect(names.filter(pxt.isSessionOnlyFile)).deep.equals([]);
     });
 });
 
