@@ -59,6 +59,8 @@ import * as blocks from "./blocks"
 import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
 import * as assetEditor from "./components/assetEditor/editor";
+import * as simxEditor from "./simxEditor";
+import { getSimxEditorMarkerName } from "./simxEditorHost";
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
@@ -149,6 +151,7 @@ export class ProjectView
     blocksEditor: blocks.Editor;
     gitjsonEditor: gitjson.Editor;
     assetEditor: assetEditor.AssetEditor;
+    simxEditor: simxEditor.SimxEditor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -689,6 +692,16 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
     }
 
+    isSimulatorExtensionEditorActive(key: string): boolean {
+        return !this.state.embedSimView && this.editor == this.simxEditor
+            && !!this.editorFile && this.editorFile.name == getSimxEditorMarkerName(key);
+    }
+
+    getSimulatorExtensionEditors(): pxt.editor.SimulatorExtensionEditorInfo[] {
+        return simulator.getProjectSimxEditorRegistrations()
+            .map(({ key, label, icon, wordmarkUrl }) => ({ key, label, icon, wordmarkUrl }));
+    }
+
     isTextSourceCodeEditorActive() {
         return !this.state.embedSimView && this.editor == this.textEditor
             && this.editorFile && /(\.ts|\.py)$/.test(this.editorFile.name);
@@ -849,6 +862,24 @@ export class ProjectView
             mainEditorPkg.setFile(pxt.ASSETS_FILE, "\n", true);
         }
         this.saveFileAsync().then(() => this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`)));
+    }
+
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // Opening a simulator extension's editor tab follows openAssets: the tab
+    // is selected by a marker file, created (virtual, so switching to it
+    // leaves the simulator alone) the first time the tab is opened. Unlike
+    // openAssets it does not save before switching; the switch itself saves
+    // the editor being left, as every editor switch does.
+    openSimulatorExtensionEditor(key: string): boolean {
+        const mainEditorPkg = pkg.mainEditorPkg();
+        if (!mainEditorPkg?.header || pxt.shell.isSandboxMode()) return false;
+        if (!simulator.getProjectSimxEditorRegistrations().some(r => r.key === key)) return false;
+        const name = getSimxEditorMarkerName(key);
+        if (!mainEditorPkg.lookupFile("this/" + name)) {
+            mainEditorPkg.setFile(name, "\n", true);
+        }
+        this.setFile(mainEditorPkg.lookupFile("this/" + name));
+        return true;
     }
 
     openSettings() {
@@ -1138,6 +1169,7 @@ export class ProjectView
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
         this.assetEditor = new assetEditor.AssetEditor(this);
+        this.simxEditor = new simxEditor.SimxEditor(this);
 
         let changeHandler = () => {
             if (this.editorFile) {
@@ -1156,7 +1188,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.simxEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -1250,7 +1282,8 @@ export class ProjectView
                 overrideBlocksFile: text => this.overrideBlocksFile(text),
                 setSimulatorDirty: () => simulator.setDirty(),
                 typecheckNow: () => this.typecheckNow(),
-            }
+            },
+            openSimulatorExtensionEditor: key => this.openSimulatorExtensionEditor(key),
         });
 
         // we now have editors prepared
@@ -1379,7 +1412,9 @@ export class ProjectView
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
-                else
+                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+                // Selecting a simulator extension's editor tab never reruns the simulator.
+                else if (this.editor !== this.simxEditor)
                     this.typecheck(); // trigger at least 1 auto-run in non-code editors
             });
     }
@@ -1797,6 +1832,10 @@ export class ProjectView
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         await this.editorMountComplete.promise;
         this.stopSimulator(true);
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // Simulator extension editor tabs close with their project; reloading
+        // the same project keeps them.
+        simulator.closeSimxEditors(h.id);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         }
@@ -2986,6 +3025,9 @@ export class ProjectView
 
     unloadProjectAsync(home?: boolean) {
         this.stopSimulator(true); // don't keep simulator around
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // Simulator extension editor tabs close with their project.
+        simulator.closeSimxEditors();
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync(home);
@@ -4014,6 +4056,10 @@ export class ProjectView
     }
 
     restartSimulator() {
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // Simulator extension editor tabs hear each command the editor gives
+        // the simulator: restart here, start in runSimulator, stop where it is issued.
+        simulator.postSimxEditorSimulatorCommand("restart");
         const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == SimState.Stopped
             || this.debugOptionsChanged()) {
@@ -4058,6 +4104,7 @@ export class ProjectView
         }
 
         if (simulator.driver && (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded)) {
+            simulator.postSimxEditorSimulatorCommand("stop");
             simulator.stop(unload);
         }
 
@@ -4137,6 +4184,9 @@ export class ProjectView
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // Every run, whether the user's or an automatic rerun, starts here.
+        simulator.postSimxEditorSimulatorCommand("start");
         const emptyRun = this.firstRun
             && opts.background
             && pxt.appTarget.simulator
@@ -5930,7 +5980,9 @@ export class ProjectView
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         // don't show in sandbox or is blocks editor or previous editor is blocks or assets editor
-        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive()
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // A simulator extension editor tab hides the file list, as Assets does.
+        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive() && this.editor !== this.simxEditor
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasIdentity = pxt.auth.hasIdentity();

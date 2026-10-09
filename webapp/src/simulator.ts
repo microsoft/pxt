@@ -12,6 +12,14 @@ import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
 import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, setFileListedAsync, writeProjectFileAsync } from "./projfsHost";
 import { createProjassetsConfig, ProjassetsConfig, ProjassetsHost } from "./projassetsHost";
+import {
+    answerSimxEditorRequest,
+    getProjectSimxEditors,
+    getSimxEditorRegistrations,
+    SimxEditorHost,
+    SimxEditorRegistration,
+} from "./simxEditorHost";
+import { SimxEditorSimulatorCommand, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 
 
 
@@ -28,12 +36,17 @@ interface SimulatorConfig {
     editor: string;
     // the editor entry points that simulator extension changes flagged dirty pass through
     projfsEditor: ProjfsEditor;
+    // shows the editor tab of the simulator extension registered under the key; returns false,
+    // showing nothing, if the editor offers no such tab here
+    openSimulatorExtensionEditor(key: string): boolean;
 }
 
 export const FAST_TRACE_INTERVAL = 100;
 export const SLOW_TRACE_INTERVAL = 500;
 
 export let driver: pxsim.SimulatorDriver;
+// the editor tab frames of simulator extensions; undefined until the simulator is initialized
+export let simxEditorHost: SimxEditorHost;
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
@@ -216,6 +229,7 @@ export async function initAsync(cfg: SimulatorConfig) {
             if (config) config.highlightStatement(null)
         },
         onStateChanged: function (state) {
+            simxEditorHost?.simulatorStateChanged(pxsim.SimulatorState[state] as SimxEditorSimulatorState);
             if (state === pxsim.SimulatorState.Stopped) {
                 postSimEditorEvent("stopped");
             } else if (state === pxsim.SimulatorState.Running) {
@@ -284,6 +298,12 @@ export async function initAsync(cfg: SimulatorConfig) {
         onProjassetsMessage: (key, msg, reply) => {
             projassetsHost.handleMessageAsync(key, msg, reply);
         },
+        onSimulatorExtensionEditorMessage: (key, msg, reply) => {
+            reply(answerSimxEditorRequest(key, msg, k => cfg.openSimulatorExtensionEditor(k)) as pxsim.SimulatorMessage);
+        },
+        onSimulatorExtensionFrameLoad: (key, frame) => {
+            simxEditorHost?.simulatorFrameLoaded(key, frame);
+        },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim,
@@ -297,6 +317,48 @@ export async function initAsync(cfg: SimulatorConfig) {
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
+    simxEditorHost = new SimxEditorHost({
+        createFrame: () => document.createElement("iframe"),
+        createLoader: () => {
+            const loader = document.createElement("div");
+            loader.className = "ui active loader";
+            return loader;
+        },
+        framePermissions: grants => pxsim.simulatorFramePermissions(grants),
+        startSimulatorExtension: key => driver.startSimulatorExtension(key),
+        getSimulatorState: () => pxsim.SimulatorState[driver.state] as SimxEditorSimulatorState,
+        createChannel: () => new MessageChannel(),
+    });
+    window.addEventListener("message", ev => simxEditorHost.handleMessage(ev), false);
+}
+
+// PR NOTE [Issue 6] -- lift into the PR description, then remove.
+/**
+ * Returns the editor tabs of simulator extensions the editor offers for the open
+ * project, in registration order: those of registrations that declare and enable
+ * a tab, whose extension the project includes.
+ */
+export function getProjectSimxEditorRegistrations(): SimxEditorRegistration[] {
+    if (!driver || !pkg.mainPkg) return [];
+    const registrations = getSimxEditorRegistrations(driver.options.simulatorExtensions);
+    if (!registrations.length) return [];
+    // every package the project has loaded, read without resolving anything, since this runs while rendering
+    const deps = pkg.mainPkg.deps;
+    const dependencies = Object.keys(deps).map(id => deps[id]?._verspec);
+    return getProjectSimxEditors(registrations, dependencies);
+}
+
+/** Tells every ready simulator extension editor tab that the editor is giving the simulator `command`. */
+export function postSimxEditorSimulatorCommand(command: SimxEditorSimulatorCommand) {
+    simxEditorHost?.simulatorCommand(command);
+}
+
+/**
+ * Removes the simulator extension editor tab frames not created for the project
+ * `projectId`, or every one if `projectId` is undefined.
+ */
+export function closeSimxEditors(projectId?: string) {
+    simxEditorHost?.close(projectId);
 }
 
 /**

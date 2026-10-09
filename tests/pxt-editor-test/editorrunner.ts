@@ -7,6 +7,17 @@ import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
 import {
+    answerSimxEditorRequest,
+    getProjectSimxEditors,
+    getSimxEditorKeyOfMarker,
+    getSimxEditorMarkerName,
+    getSimxEditorRegistrations,
+    SimxEditorHost,
+    SimxEditorRegistration,
+} from "../../webapp/src/simxEditorHost";
+import { getEditorToggleLayout, EditorToggleLayoutInput, getSimxEditorMenuItemContent } from "../../webapp/src/editorToggleLayout";
+import { hasEditorTab, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
+import {
     addSimulatorThemeToFiles,
     getProjectSimulatorThemePreference,
     getSimulatorThemePresetId,
@@ -2400,13 +2411,24 @@ describe("projassets host", () => {
             chai.expect(received).deep.equals([]);
         });
 
-        it("replaces an extension's subscription when it subscribes again", async () => {
-            const replaced = await subscribe();
-            const current = await subscribe();
+        it("notifies a frame once however often it subscribes", async () => {
+            const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+            const reply = (r: ProjassetsReply | ProjassetsNotification) => received.push(r);
+            await host.handleMessageAsync(SCOPE, { type: "projassets", id: "s1", subtype: "subscribe" }, reply);
+            await host.handleMessageAsync(SCOPE, { type: "projassets", id: "s2", subtype: "subscribe" }, reply);
+            received.length = 0;
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             await settle();
-            chai.expect(replaced).deep.equals([]);
-            chai.expect(current).deep.equals([CHANGED]);
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it("notifies each subscribed frame of one extension", async () => {
+            const simulatorFrame = await subscribe();
+            const tabFrame = await subscribe();
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await settle();
+            chai.expect(simulatorFrame).deep.equals([CHANGED]);
+            chai.expect(tabFrame).deep.equals([CHANGED]);
         });
 
         /** Tracks the change listeners `tracked` holds. */
@@ -3603,3 +3625,453 @@ function createProjectText(): pxt.workspace.ScriptText {
 
     return currentText;
 }
+describe("simulator extension editor tab registrations", () => {
+    const EXT = "someorg/pxt-ext";
+    const OTHER = "otherorg/pxt-other";
+
+    function resolved(key: string, extra: object = {}) {
+        return {
+            editor: { index: "index.html", label: key + " label" },
+            editorUrl: `https://sim.example/simx/${key}/-/index.html`,
+            ...extra,
+        };
+    }
+
+    it("offers the registrations the driver resolved a tab for, in registration order", () => {
+        const registrations = getSimxEditorRegistrations({
+            [OTHER]: resolved(OTHER, { allowPopups: true }),
+            "plainorg/pxt-plain": {},
+            "declaredorg/pxt-declared": { editor: { label: "unresolved" } },
+            [EXT]: resolved(EXT, { wordmarkUrl: "https://sim.example/mark.svg", allowClipboardWrite: true }),
+        });
+        chai.expect(registrations.map(r => r.key)).deep.equals([OTHER, EXT]);
+        chai.expect(registrations[0]).deep.include({ url: `https://sim.example/simx/${OTHER}/-/index.html`, allowPopups: true, wordmarkUrl: undefined });
+        chai.expect(registrations[1]).deep.include({ wordmarkUrl: "https://sim.example/mark.svg", allowClipboardWrite: true });
+        chai.expect(getSimxEditorRegistrations(undefined)).deep.equals([]);
+    });
+
+    it("offers a project the tabs of the extensions it includes, matching the repository in any case and at any depth", () => {
+        const registrations = getSimxEditorRegistrations({ [EXT]: resolved(EXT), [OTHER]: resolved(OTHER) });
+        const keys = (deps: string[]) => getProjectSimxEditors(registrations, deps).map(r => r.key);
+        chai.expect(keys(["*", "github:SomeOrg/PXT-Ext/makecode/extensions/arcade#v1.0.0"])).deep.equals([EXT]);
+        chai.expect(keys(["github:otherorg/pxt-other#abc", "github:someorg/pxt-ext"])).deep.equals([EXT, OTHER]);
+        chai.expect(keys(["*", "file:../pxt-ext", "github:someorg/pxt-extended"])).deep.equals([]);
+    });
+
+    it("names one marker file per tab and finds the tab from it", () => {
+        const registrations = getSimxEditorRegistrations({ [EXT]: resolved(EXT), [OTHER]: resolved(OTHER) });
+        const names = [EXT, OTHER].map(getSimxEditorMarkerName);
+        chai.expect(names[0]).not.equals(names[1]);
+        chai.expect(names.every(n => n.indexOf("/") < 0)).equals(true);
+        chai.expect(names.map(n => getSimxEditorKeyOfMarker(n, registrations))).deep.equals([EXT, OTHER]);
+        chai.expect(getSimxEditorKeyOfMarker(pxt.ASSETS_FILE, registrations)).equals(undefined);
+        chai.expect(getSimxEditorKeyOfMarker(getSimxEditorMarkerName("thirdorg/pxt-third"), registrations)).equals(undefined);
+    });
+
+    it("tells a simulator frame whether the editor offers its tab", () => {
+        chai.expect(hasEditorTab("?channel=someorg%2Fpxt-ext&editor=1")).equals(true);
+        chai.expect(hasEditorTab("?channel=someorg%2Fpxt-ext")).equals(false);
+    });
+});
+
+describe("simulator extension editor tab open requests", () => {
+    it("shows the tab and acknowledges the request", () => {
+        const opened: string[] = [];
+        chai.expect(answerSimxEditorRequest("someorg/pxt-ext", { type: "simxeditor", subtype: "open", id: "4" }, key => { opened.push(key); return true; }))
+            .deep.equals({ type: "simxeditor", id: "4", subtype: "ack" });
+        chai.expect(opened).deep.equals(["someorg/pxt-ext"]);
+    });
+
+    it("refuses with UNAVAILABLE when the editor offers no such tab here", () => {
+        const reply = answerSimxEditorRequest("someorg/pxt-ext", { type: "simxeditor", subtype: "open", id: "4" }, () => false);
+        chai.expect(reply).deep.include({ type: "simxeditor", id: "4", subtype: "error", code: "UNAVAILABLE" });
+    });
+
+    it("refuses an unknown request with INVALID_REQUEST, showing nothing", () => {
+        const reply = answerSimxEditorRequest("someorg/pxt-ext", { type: "simxeditor", subtype: "close", id: 5 }, () => { throw new Error("opened"); });
+        chai.expect(reply).deep.include({ type: "simxeditor", id: undefined, subtype: "error", code: "INVALID_REQUEST" });
+    });
+});
+
+describe("editor toggle layout", () => {
+    const EXT = "someorg/pxt-ext";
+    const OTHER = "otherorg/pxt-other";
+
+    // the fields of `value` that `expected` names, for comparing a part of a layout
+    function pick<T>(value: T, expected: Partial<T>): Partial<T> {
+        const picked: Partial<T> = {};
+        for (const k of Object.keys(expected) as (keyof T)[]) picked[k] = value[k];
+        return picked;
+    }
+
+    function expectLayout(actual: ReturnType<typeof getEditorToggleLayout>, expected: Partial<ReturnType<typeof getEditorToggleLayout>>) {
+        chai.expect(pick(actual, expected)).deep.equals(expected);
+    }
+
+    function layout(extra: Partial<EditorToggleLayoutInput> = {}) {
+        return getEditorToggleLayout({
+            python: true,
+            showJavaScript: true,
+            showPython: true,
+            showBlocks: true,
+            pythonIsActive: false,
+            isJavaScriptActive: false,
+            isPythonActive: false,
+            extensionEditors: [],
+            activeExtensionEditor: undefined,
+            ...extra,
+        });
+    }
+
+    it("keeps the toggle's own layout when no extension tab is offered", () => {
+        chai.expect(layout()).deep.equals({
+            trigger: { language: "javascript" }, second: undefined, showDropdown: true, dropdownActive: false,
+            dropdownLanguages: ["javascript", "python"], dropdownSeparator: false, dropdownExtensions: [],
+        });
+        expectLayout(layout({ pythonIsActive: true, isPythonActive: true }), { trigger: { language: "python" }, dropdownActive: true });
+        expectLayout(layout({ showBlocks: false }), { trigger: { language: "javascript" }, second: { language: "python" }, showDropdown: false, dropdownLanguages: [] });
+        expectLayout(layout({ showPython: false, python: false }), { trigger: { language: "javascript" }, second: undefined, showDropdown: false });
+    });
+
+    it("lists the offered tabs in the language dropdown after the text languages, under a separator", () => {
+        chai.expect(layout({ extensionEditors: [EXT, OTHER] })).deep.equals({
+            trigger: { language: "javascript" }, second: undefined, showDropdown: true, dropdownActive: false,
+            dropdownLanguages: ["javascript", "python"], dropdownSeparator: true, dropdownExtensions: [EXT, OTHER],
+        });
+    });
+
+    it("shows the dropdown while a tab is offered on a toggle that shows none, without adding a bar item", () => {
+        const peers = layout({ showBlocks: false });
+        const withTab = layout({ showBlocks: false, extensionEditors: [EXT] });
+        expectLayout(withTab, { showDropdown: true, second: undefined, dropdownLanguages: ["javascript", "python"], dropdownExtensions: [EXT] });
+        chai.expect([withTab.trigger, withTab.second].filter(i => !!i).length).lessThan([peers.trigger, peers.second].filter(i => !!i).length);
+
+        const jsOnly = layout({ python: false, showPython: false, extensionEditors: [EXT] });
+        expectLayout(jsOnly, { trigger: { language: "javascript" }, showDropdown: true, dropdownLanguages: ["javascript"], dropdownSeparator: true });
+
+        const noText = layout({ showJavaScript: false, showPython: false, extensionEditors: [EXT, OTHER] });
+        expectLayout(noText, { trigger: { extension: EXT }, dropdownLanguages: [], dropdownSeparator: false, dropdownExtensions: [EXT, OTHER] });
+    });
+
+    it("shows the active tab as the dropdown's trigger, attached to the dropdown", () => {
+        expectLayout(layout({ extensionEditors: [EXT, OTHER], activeExtensionEditor: OTHER }), { trigger: { extension: OTHER }, dropdownActive: true });
+        expectLayout(layout({ extensionEditors: [EXT], isJavaScriptActive: true }), { trigger: { language: "javascript" }, dropdownActive: true });
+    });
+
+    it("shows a tab's wordmark in place of its label and icon, keeping the label as its accessible name", () => {
+        const wordmark = getSimxEditorMenuItemContent({ key: EXT, label: "Ext", icon: "puzzle", wordmarkUrl: "https://sim.example/mark.svg" });
+        chai.expect(wordmark).deep.equals({ text: "Ext", ariaLabel: "Ext", icon: undefined, image: "https://sim.example/mark.svg" });
+        const label = getSimxEditorMenuItemContent({ key: EXT, label: "Ext", icon: "puzzle" });
+        chai.expect(label).deep.equals({ text: "Ext", ariaLabel: "Ext", icon: "puzzle", image: undefined });
+    });
+});
+
+describe("simulator extension editor tab host", () => {
+    const ORIGIN = "https://sim.example";
+    const EXT = "someorg/pxt-ext";
+    const OTHER = "otherorg/pxt-other";
+
+    interface Posted {
+        msg: any;
+        origin: string;
+        transfer: unknown[] | undefined;
+    }
+
+    class FakeWindow {
+        posted: Posted[] = [];
+        postMessage(msg: any, origin: string, transfer?: unknown[]) {
+            this.posted.push({ msg, origin, transfer });
+        }
+    }
+
+    // the parts of an element the host touches
+    class FakeElement {
+        style: pxt.Map<string> = {};
+        dataset: pxt.Map<string> = {};
+        attributes: pxt.Map<string> = {};
+        children: FakeElement[] = [];
+        parentElement: FakeElement | undefined;
+        contentWindow = new FakeWindow();
+        className = "";
+        title = "";
+        src = "";
+        allowFullscreen = false;
+        get isConnected() { return !!this.parentElement; }
+        setAttribute(name: string, value: string) { this.attributes[name] = value; }
+        appendChild(child: FakeElement) {
+            this.children.push(child);
+            child.parentElement = this;
+            return child;
+        }
+        removeChild(child: FakeElement) {
+            this.children = this.children.filter(c => c !== child);
+            child.parentElement = undefined;
+            return child;
+        }
+    }
+
+    interface FakeChannel {
+        port1: { id: string };
+        port2: { id: string };
+    }
+
+    let container: FakeElement;
+    let simulatorColumn: FakeElement;
+    let simulatorFrames: pxt.Map<FakeElement>;
+    let started: string[];
+    let channels: FakeChannel[];
+    let state: SimxEditorSimulatorState;
+    let host: SimxEditorHost;
+
+    function registration(key: string, extra: Partial<SimxEditorRegistration> = {}): SimxEditorRegistration {
+        return { key, label: key + " label", url: `${ORIGIN}/simx/${key}/-/index.html`, ...extra };
+    }
+
+    const params = { parentOrigin: "https://editor.example", target: "arcade", project: "p1", language: "en" };
+
+    // the simulator frame of `key`, created and loaded as the driver does it
+    function loadSimulatorFrame(key: string): FakeElement {
+        const frame = new FakeElement();
+        frame.src = `${ORIGIN}/simx/${key}/-/simx/index.html?channel=${encodeURIComponent(key)}`;
+        simulatorColumn.appendChild(frame);
+        simulatorFrames[key] = frame;
+        host.simulatorFrameLoaded(key, frame as unknown as HTMLIFrameElement);
+        return frame;
+    }
+
+    function tab(key: string): FakeElement {
+        return host.getFrame(key) as unknown as FakeElement;
+    }
+
+    function ready(key: string, extra: { source?: unknown, origin?: string } = {}) {
+        host.handleMessage({ data: { type: "simxeditor", event: "ready" }, source: tab(key).contentWindow, origin: ORIGIN, ...extra });
+    }
+
+    function events(frame: FakeElement) {
+        return frame.contentWindow.posted.filter(p => p.msg.type === "simxeditor").map(p => p.msg);
+    }
+
+    function ports(frame: FakeElement) {
+        return frame.contentWindow.posted.filter(p => p.msg.type === "simxeditorport");
+    }
+
+    beforeEach(() => {
+        container = new FakeElement();
+        simulatorColumn = new FakeElement();
+        simulatorFrames = {};
+        started = [];
+        channels = [];
+        state = "Running";
+        let nextPort = 0;
+        host = new SimxEditorHost({
+            createFrame: () => new FakeElement() as unknown as HTMLIFrameElement,
+            createLoader: () => new FakeElement() as unknown as HTMLElement,
+            framePermissions: grants => ({
+                sandbox: "allow-same-origin allow-scripts" + (grants.allowPopups ? " allow-popups allow-popups-to-escape-sandbox" : ""),
+                allow: "autoplay;microphone" + (grants.allowClipboardWrite ? ";clipboard-write" : ""),
+            }),
+            startSimulatorExtension: key => {
+                started.push(key);
+                return simulatorFrames[key] as unknown as HTMLIFrameElement;
+            },
+            getSimulatorState: () => state,
+            createChannel: () => {
+                const channel = { port1: { id: "p" + nextPort++ }, port2: { id: "p" + nextPort++ } };
+                channels.push(channel);
+                return channel as unknown as MessageChannel;
+            },
+        });
+    });
+
+    function show(key: string, extra: Partial<SimxEditorRegistration> = {}) {
+        host.show(registration(key, extra), container as unknown as HTMLElement, params);
+    }
+
+    describe("the tab frame", () => {
+        it("loads the tab's page with the simulator frame's parameters and the editor role, under the registration's grants", () => {
+            show(EXT, { allowPopups: true, allowClipboardWrite: true });
+            const frame = tab(EXT);
+            const url = new URL(frame.src);
+            chai.expect(url.origin + url.pathname).equals(`${ORIGIN}/simx/${EXT}/-/index.html`);
+            const query: pxt.Map<string> = {};
+            url.searchParams.forEach((value, name) => query[name] = value);
+            chai.expect(query).deep.equals({
+                parentOrigin: "https://editor.example", channel: EXT, role: "editor", target: "arcade", project: "p1", language: "en",
+            });
+            chai.expect(frame.attributes).deep.equals({
+                sandbox: "allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox",
+                allow: "autoplay;microphone;clipboard-write",
+            });
+            chai.expect(frame.allowFullscreen).equals(true);
+            chai.expect(frame.dataset).deep.equals({ simxkey: EXT, simxrole: "editor", origin: ORIGIN });
+            chai.expect(frame.parentElement).equals(container);
+        });
+
+        it("starts the simulator frame of its key when it creates the tab frame, and only then", () => {
+            show(EXT);
+            host.hide();
+            show(EXT);
+            chai.expect(started).deep.equals([EXT]);
+        });
+
+        it("keeps one frame per tab, loaded and merely hidden while another editor or tab is shown", () => {
+            show(EXT);
+            const frame = tab(EXT);
+            host.hide();
+            chai.expect(frame.parentElement).equals(container);
+            chai.expect(frame.style.display).equals("none");
+            show(OTHER);
+            show(EXT);
+            chai.expect(tab(EXT)).equals(frame);
+            chai.expect(frame.style.display).equals("");
+            chai.expect(tab(OTHER).style.display).equals("none");
+            chai.expect(container.children.filter(c => c.dataset["simxkey"]).length).equals(2);
+        });
+
+        it("shows the loading state over the shown tab until it is ready", () => {
+            show(EXT);
+            const loader = container.children.find(c => !c.dataset["simxkey"]);
+            chai.expect(loader.style.display).equals("");
+            ready(EXT);
+            chai.expect(loader.style.display).equals("none");
+            show(OTHER);
+            chai.expect(loader.style.display).equals("");
+            host.hide();
+            chai.expect(loader.style.display).equals("none");
+        });
+
+        it("accepts the ready event only from the tab frame's window and origin", () => {
+            show(EXT);
+            ready(EXT, { origin: "https://elsewhere.example" });
+            ready(EXT, { source: new FakeWindow() });
+            host.handleMessage({ data: { type: "simxeditor", event: "ready" }, source: undefined, origin: ORIGIN });
+            chai.expect(host.isReady(EXT)).equals(false);
+            ready(EXT);
+            chai.expect(host.isReady(EXT)).equals(true);
+        });
+
+        it("removes the tab frames of other projects, and every one when the project closes, after posting closing", () => {
+            show(EXT);
+            ready(EXT);
+            const frame = tab(EXT);
+            host.close("p1");
+            chai.expect(tab(EXT)).equals(frame);
+            host.close("p2");
+            chai.expect(tab(EXT)).equals(undefined);
+            chai.expect(frame.parentElement).equals(undefined);
+            chai.expect(events(frame).slice(-1)).deep.equals([{ type: "simxeditor", event: "closing" }]);
+
+            show(OTHER);
+            const other = tab(OTHER);
+            host.close();
+            chai.expect(other.parentElement).equals(undefined);
+            chai.expect(events(other)).deep.equals([]);
+        });
+    });
+
+    describe("lifecycle events", () => {
+        it("posts the tab its visibility and the simulator's state once it is ready, then shown and hidden on every switch", () => {
+            show(EXT);
+            const frame = tab(EXT);
+            chai.expect(events(frame)).deep.equals([]);
+            ready(EXT);
+            host.hide();
+            show(OTHER);
+            show(EXT);
+            show(EXT);
+            chai.expect(events(frame)).deep.equals([
+                { type: "simxeditor", event: "shown" },
+                { type: "simxeditor", event: "simulatorstate", state: "Running" },
+                { type: "simxeditor", event: "hidden" },
+                { type: "simxeditor", event: "shown" },
+            ]);
+            chai.expect(frame.contentWindow.posted.every(p => p.origin === ORIGIN)).equals(true);
+        });
+
+        it("tells a tab that becomes ready while hidden that it is hidden", () => {
+            show(EXT);
+            host.hide();
+            ready(EXT);
+            chai.expect(events(tab(EXT))[0]).deep.equals({ type: "simxeditor", event: "hidden" });
+        });
+
+        it("posts every simulator command and state change to every ready tab", () => {
+            show(EXT);
+            show(OTHER);
+            ready(EXT);
+            const before = events(tab(EXT)).length;
+            host.simulatorCommand("stop");
+            host.simulatorStateChanged("Stopped");
+            host.simulatorCommand("restart");
+            chai.expect(events(tab(EXT)).slice(before)).deep.equals([
+                { type: "simxeditor", event: "simulator", command: "stop" },
+                { type: "simxeditor", event: "simulatorstate", state: "Stopped" },
+                { type: "simxeditor", event: "simulator", command: "restart" },
+            ]);
+            chai.expect(events(tab(OTHER))).deep.equals([]);
+        });
+    });
+
+    describe("port brokering", () => {
+        function brokered(key: string, simulatorFrame: FakeElement) {
+            return { tab: ports(tab(key)), simulator: ports(simulatorFrame) };
+        }
+
+        it("brokers a port pair when the tab becomes ready after its simulator frame loaded", () => {
+            const simulatorFrame = loadSimulatorFrame(EXT);
+            show(EXT);
+            chai.expect(brokered(EXT, simulatorFrame).tab).deep.equals([]);
+            ready(EXT);
+            const { tab: tabPorts, simulator } = brokered(EXT, simulatorFrame);
+            chai.expect(channels.length).equals(1);
+            chai.expect(simulator).deep.equals([{ msg: { type: "simxeditorport", key: EXT }, origin: ORIGIN, transfer: [channels[0].port1] }]);
+            chai.expect(tabPorts).deep.equals([{ msg: { type: "simxeditorport", key: EXT }, origin: ORIGIN, transfer: [channels[0].port2] }]);
+        });
+
+        it("brokers a port pair when the simulator frame loads after the tab became ready", () => {
+            show(EXT);
+            ready(EXT);
+            chai.expect(channels.length).equals(0);
+            const simulatorFrame = loadSimulatorFrame(EXT);
+            chai.expect(channels.length).equals(1);
+            chai.expect(brokered(EXT, simulatorFrame).simulator.map(p => p.transfer)).deep.equals([[channels[0].port1]]);
+            chai.expect(brokered(EXT, simulatorFrame).tab.map(p => p.transfer)).deep.equals([[channels[0].port2]]);
+        });
+
+        it("brokers a new pair whenever the simulator frame is respawned or reloads", () => {
+            show(EXT);
+            ready(EXT);
+            const first = loadSimulatorFrame(EXT);
+            simulatorColumn.removeChild(first);
+            const second = loadSimulatorFrame(EXT);
+            host.simulatorFrameLoaded(EXT, second as unknown as HTMLIFrameElement);
+            chai.expect(channels.length).equals(3);
+            chai.expect(ports(first).map(p => p.transfer)).deep.equals([[channels[0].port1]]);
+            chai.expect(ports(second).map(p => p.transfer)).deep.equals([[channels[1].port1], [channels[2].port1]]);
+            chai.expect(ports(tab(EXT)).map(p => p.transfer)).deep.equals(channels.map(c => [c.port2]));
+        });
+
+        it("brokers nothing to a simulator frame no longer in the page, nor before the tab is ready", () => {
+            const simulatorFrame = loadSimulatorFrame(EXT);
+            loadSimulatorFrame(OTHER);
+            show(EXT);
+            simulatorColumn.removeChild(simulatorFrame);
+            ready(EXT);
+            show(OTHER);
+            chai.expect(channels.length).equals(0);
+        });
+
+        it("pairs each tab with the simulator frame of its own key", () => {
+            const extFrame = loadSimulatorFrame(EXT);
+            const otherFrame = loadSimulatorFrame(OTHER);
+            show(EXT);
+            show(OTHER);
+            ready(OTHER);
+            ready(EXT);
+            chai.expect(ports(otherFrame).map(p => p.msg.key)).deep.equals([OTHER]);
+            chai.expect(ports(extFrame).map(p => p.msg.key)).deep.equals([EXT]);
+            chai.expect(ports(tab(OTHER))[0].transfer).deep.equals([channels[0].port2]);
+            chai.expect(ports(extFrame)[0].transfer).deep.equals([channels[1].port1]);
+        });
+    });
+});

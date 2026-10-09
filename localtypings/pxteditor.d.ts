@@ -920,6 +920,18 @@ declare namespace pxt.editor {
 
     export type BuiltInHelp = "keyboardControls";
 
+    /** A simulator extension's editor tab, as the editor toggle offers it. */
+    export interface SimulatorExtensionEditorInfo {
+        /** The extension's key in the target's simulator extension registrations, e.g. `owner/repo`. */
+        key: string;
+        /** The tab's name and accessible name. */
+        label: string;
+        /** The name of an icon shown before the label. */
+        icon?: string;
+        /** The URL of an image shown in place of the label. */
+        wordmarkUrl?: string;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -930,6 +942,12 @@ declare namespace pxt.editor {
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
         openAssets(): void;
+        /**
+         * Shows the editor tab of the simulator extension registered under `key`,
+         * creating its frame if needed.
+         * @returns false, showing nothing, if the editor offers no such tab for the open project here
+         */
+        openSimulatorExtensionEditor(key: string): boolean;
         openSettings(): void;
         openSimView(): void;
         openSimSerial(): void;
@@ -1073,6 +1091,10 @@ declare namespace pxt.editor {
         isTextSourceCodeEditorActive(): boolean;
         isPythonActive(): boolean;
         isAssetsActive(): boolean;
+        /** Returns true if the editor tab of the simulator extension registered under `key` is the active editor. */
+        isSimulatorExtensionEditorActive(key: string): boolean;
+        /** Returns the simulator extension editor tabs the editor offers for the open project, in registration order. */
+        getSimulatorExtensionEditors(): SimulatorExtensionEditorInfo[];
 
         editor: IEditor;
 

@@ -144,8 +144,12 @@ class ProjassetsRequestError extends Error {
  * later task, for all the changes made before it is sent.
  */
 export class ProjassetsHost {
-    // per extension key: delivers change notifications to the extension's subscribed frame
-    protected subscriptions: pxt.Map<(msg: ProjassetsNotification) => void> = {};
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // An extension with an editor tab has two frames under one key, and each
+    // may subscribe; the driver gives each frame one reply function, so
+    // subscriptions are kept per frame rather than one per key.
+    // per extension key: deliver change notifications to each of the extension's subscribed frames
+    protected subscriptions: pxt.Map<((msg: ProjassetsNotification) => void)[]> = {};
     // the project every subscription was made in, which the host listens to, with
     // its asset project, configuration, and name and visual configuration as
     // last seen, serialized; undefined while there is none
@@ -170,8 +174,9 @@ export class ProjassetsHost {
     /**
      * Answers a request from the simulator extension with the given key,
      * once the project open when it arrives has loaded. A subscribe request
-     * also makes `reply` the extension's channel for change notifications,
-     * replacing any channel it had.
+     * also makes `reply` a channel for the extension's change notifications;
+     * an extension may subscribe through several channels, one per frame, and
+     * subscribing again through the same channel changes nothing.
      * @param key the extension key the requesting frame was created for
      * @param msg the request, as received
      * @param reply delivers a reply or notification to the requesting frame
@@ -210,7 +215,8 @@ export class ProjassetsHost {
 
             case "subscribe": {
                 this.watch(await this.openProjectAsync());
-                this.subscriptions[key] = reply;
+                const subscribers = this.subscriptions[key] || (this.subscriptions[key] = []);
+                if (subscribers.indexOf(reply) < 0) subscribers.push(reply);
                 return { subtype: "ack" };
             }
 
@@ -299,7 +305,7 @@ export class ProjassetsHost {
         if (!assetsChanged && !configChanged) return;
         const notification: ProjassetsNotification = { type: PROJASSETS_MESSAGE_TYPE, subtype: "changed" };
         for (const key of Object.keys(this.subscriptions)) {
-            this.subscriptions[key](notification);
+            for (const subscriber of this.subscriptions[key]) subscriber(notification);
         }
     }
 }

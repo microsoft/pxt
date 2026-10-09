@@ -17,6 +17,7 @@ import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
+import { EditorToggleItem, getEditorToggleLayout, getSimxEditorMenuItemContent } from "./editorToggleLayout";
 
 // common menu items -- do not remove
 // lf("About")
@@ -610,6 +611,8 @@ interface IBaseMenuItemProps extends ISettingsProps {
 
     icon?: string;
     text?: string;
+    // the URL of an image shown in place of the icon and text, with the text as its alternative text
+    image?: string;
     title?: string;
     className?: string;
     ariaLabel?: string;
@@ -623,7 +626,18 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
 
     renderCore() {
         const active = this.props.isActive();
-        return <sui.Item className={`base-menuitem ${this.props.className} ${active ? "selected" : ""}`} role={this.props.role || "button"} textClass="landscape only"
+        const className = `base-menuitem ${this.props.className} ${active ? "selected" : ""}`;
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // An item may show an image (a simulator extension editor tab's
+        // wordmark) in place of its icon and text; its text stays its
+        // accessible name. An item with text and no icon keeps its text in
+        // every layout, since it has no icon to fall back to.
+        if (this.props.image)
+            return <sui.Item className={className} role={this.props.role || "button"} active={active} onClick={this.props.onClick}
+                title={this.props.title} ariaLabel={this.props.ariaLabel}>
+                <img className="base-menuitem-image" src={this.props.image} alt={this.props.text} />
+            </sui.Item>
+        return <sui.Item className={className} role={this.props.role || "button"} textClass={this.props.icon ? "landscape only" : undefined}
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
     }
 }
@@ -726,6 +740,34 @@ class AssetMenuItem extends data.Component<ISettingsProps, {}> {
         return <BaseMenuItemProps className="assets-menuitem" icon="picture" text={lf("Assets")} title={lf("View project assets")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
+interface ISimxEditorMenuItemProps extends ISettingsProps {
+    editor: pxt.editor.SimulatorExtensionEditorInfo;
+    role?: string;
+}
+
+/** The editor toggle item of a simulator extension's editor tab. */
+class SimxEditorMenuItem extends data.Component<ISimxEditorMenuItemProps, {}> {
+    constructor(props: ISimxEditorMenuItemProps) {
+        super(props);
+    }
+
+    protected onClick = (): void => {
+        pxt.tickEvent("menu.simxeditor", { key: this.props.editor.key }, { interactiveConsent: true });
+        this.props.parent.openSimulatorExtensionEditor(this.props.editor.key);
+    }
+
+    protected isActive = (): boolean => {
+        return this.props.parent.isSimulatorExtensionEditorActive(this.props.editor.key);
+    }
+
+    renderCore() {
+        const { editor, parent, role } = this.props;
+        const content = getSimxEditorMenuItemContent(editor);
+        return <BaseMenuItemProps className="simx-editor-menuitem" icon={content.icon} text={content.text} image={content.image}
+            title={content.ariaLabel} onClick={this.onClick} isActive={this.isActive} parent={parent} ariaLabel={content.ariaLabel} role={role} />
+    }
+}
+
 interface IEditorSelectorProps extends ISettingsProps {
     python?: boolean;
     sandbox?: boolean;
@@ -740,7 +782,6 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
 
     renderCore() {
         const { python, sandbox, headless, languageRestriction, parent } = this.props;
-        const dropdownActive = python && (parent.isJavaScriptActive() || parent.isPythonActive());
         const tsOnly = languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly;
         const pyOnly = languageRestriction === pxt.editor.LanguageRestriction.PythonOnly;
         const blocksOnly = languageRestriction === pxt.editor.LanguageRestriction.BlocksOnly;
@@ -754,36 +795,45 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const showBlocks = !pyOnly && !tsOnly && !noBlocks && !!pkg.mainEditorPkg().files[pxt.MAIN_BLOCKS];
         const showJavaScript = !noJavaScript && !pyOnly && !blocksOnly;
         const showSandbox = sandbox && !headless;
-        const showDropdown = showPython && showJavaScript && showBlocks;
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // Simulator extension editor tabs hide where the Assets item hides.
+        const extensionEditors = sandbox ? [] : parent.getSimulatorExtensionEditors();
+        const activeExtensionEditor = extensionEditors.find(e => parent.isSimulatorExtensionEditorActive(e.key));
+        const layout = getEditorToggleLayout({
+            python: !!python,
+            showJavaScript,
+            showPython,
+            showBlocks,
+            pythonIsActive,
+            isJavaScriptActive: parent.isJavaScriptActive(),
+            isPythonActive: parent.isPythonActive(),
+            extensionEditors: extensionEditors.map(e => e.key),
+            activeExtensionEditor: activeExtensionEditor?.key,
+        });
+        const { showDropdown, dropdownActive } = layout;
 
-        let textLanguage: JSX.Element = undefined;
-        let secondTextLanguage: JSX.Element = undefined;
-
-        if (showDropdown) {
-            if (pythonIsActive) textLanguage = <PythonMenuItem parent={parent}/>
-            else textLanguage = <JavascriptMenuItem parent={parent}/>
-        }
-        else if (showPython && showJavaScript) {
-            textLanguage = <JavascriptMenuItem parent={parent}/>;
-            secondTextLanguage  = <PythonMenuItem parent={parent}/>;
-        }
-        else if (showPython) {
-            textLanguage = <PythonMenuItem parent={parent}/>;
-        }
-        else if (showJavaScript) {
-            textLanguage = <JavascriptMenuItem parent={parent}/>
+        const renderItem = (item: EditorToggleItem | undefined, role?: string): JSX.Element => {
+            if (!item) return undefined;
+            if ("extension" in item) {
+                const editor = extensionEditors.find(e => e.key === item.extension);
+                return <SimxEditorMenuItem key={"simx:" + editor.key} parent={parent} editor={editor} role={role} />;
+            }
+            return item.language === "python"
+                ? <PythonMenuItem key="python" parent={parent} role={role} />
+                : <JavascriptMenuItem key="javascript" parent={parent} role={role} />;
         }
 
         return (
             <div id="editortoggle" className={`ui grid padded ${(pyOnly || tsOnly) ? "one-language" : ""}`} role="group" aria-label={lf("Editor toggle")}>
                 {showSandbox && <SandboxMenuItem parent={parent} />}
                 {showBlocks && <BlocksMenuItem parent={parent} />}
-                {textLanguage}
-                {secondTextLanguage}
+                {renderItem(layout.trigger)}
+                {renderItem(layout.second)}
                 {showDropdown && <sui.DropdownMenu id="editordropdown" role="button" icon="chevron down" rightIcon title={lf("Select code editor language")} className={`item button attached right ${dropdownActive ? "active" : ""}`}>
-                    <JavascriptMenuItem parent={parent} role="menuitem" />
-                    <PythonMenuItem parent={parent} role="menuitem" />
+                    {layout.dropdownLanguages.map(language => renderItem({ language }, "menuitem"))}
+                    {layout.dropdownSeparator && <div className="divider" role="separator" />}
+                    {layout.dropdownExtensions.map(extension => renderItem({ extension }, "menuitem"))}
                 </sui.DropdownMenu>}
                 {showAssets && <AssetMenuItem parent={parent} />}
                 <div className={`ui item toggle ${dropdownActive ? 'dropdown-attached' : ''}`}></div>
