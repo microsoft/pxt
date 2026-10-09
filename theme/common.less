@@ -399,6 +399,13 @@ div.simframe > iframe {
     width: 0 !important;
 }
 
+// PR NOTE [Issue 7] -- lift into the PR description, then remove.
+// A permanent simulator extension frame hidden while the simulator is
+// collapsed: it stays mounted, so its document survives until expand.
+div.simframe.simHidden {
+    display: none !important;
+}
+
 /* Menu */
 // The classname .menubar is also used by monaco. This rule just negates the clashing
 // values
