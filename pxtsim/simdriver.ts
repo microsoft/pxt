@@ -54,6 +54,8 @@ namespace pxsim {
                 icon?: string;
             };
             allowEditorTab?: boolean;
+            // PR NOTE [Issue 8] -- lift into the PR description, then remove.
+            hideInFullscreen?: boolean;
             // Additional fields outside of pxt.SimulatorExtensionConfig
             url?: string; // Computed URL
             // Computed URL of the editor tab's page; set only for a registration that declares
@@ -192,6 +194,12 @@ namespace pxsim {
     const PERMANENT = "permanent"
     const FRAME_DATA_SIMX_KEY = "simxkey"
     const FRAME_DATA_SIMX_ROLE = "simxrole"
+    // PR NOTE [Issue 8] -- lift into the PR description, then remove.
+    // The wrapper class of a simulator extension frame hidden in
+    // fullscreen-simulator mode, and the container class present while one
+    // is spawned; theme/common.less styles both under .fullscreensim.
+    const HIDE_IN_FULLSCREEN = "simx-hide-fullscreen"
+    const HAS_HIDE_IN_FULLSCREEN = "has-simx-hide-fullscreen"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -638,7 +646,7 @@ namespace pxsim {
             // Tells the frame at boot that the editor offers its editor tab.
             if (simulatorExtension.editorUrl)
                 url.searchParams.set("editor", "1");
-            const frame = this.createExtensionFrame(key, url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio, simulatorExtension);
+            const frame = this.createExtensionFrame(key, url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio, simulatorExtension, simulatorExtension.hideInFullscreen);
             frame.addEventListener("load", () => this.options.onSimulatorExtensionFrameLoad?.(key, frame));
             return frame;
         }
@@ -648,8 +656,9 @@ namespace pxsim {
          * simulator container, starts it with the current run, if there is one, and
          * returns it.
          * @param grants permissions for the frame beyond the main simulator frame's; none if omitted
+         * @param hideInFullscreen hides the frame in fullscreen-simulator mode, keeping it mounted
          */
-        private createExtensionFrame(channel: string, url: string, permanent: boolean, aspectRatio: number, grants?: SimulatorFrameGrants): HTMLIFrameElement {
+        private createExtensionFrame(channel: string, url: string, permanent: boolean, aspectRatio: number, grants?: SimulatorFrameGrants, hideInFullscreen?: boolean): HTMLIFrameElement {
             aspectRatio = aspectRatio || this._runOptions?.aspectRatio || 1.22;
             let wrapper = this.createFrame(url, grants);
             this.container.appendChild(wrapper);
@@ -660,6 +669,15 @@ namespace pxsim {
             pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(channel))
             if (permanent)
                 messageFrame.dataset[PERMANENT] = "true";
+            // PR NOTE [Issue 8] -- lift into the PR description, then remove.
+            // A registration may ask for its frame to be hidden in
+            // fullscreen-simulator mode; the frame stays mounted, so its
+            // messaging continues, and the container class lets the main
+            // frame take the full width beside the hidden sibling.
+            if (hideInFullscreen) {
+                pxsim.U.addClass(wrapper, HIDE_IN_FULLSCREEN);
+                pxsim.U.addClass(this.container, HAS_HIDE_IN_FULLSCREEN);
+            }
             this.startFrame(messageFrame);
             return messageFrame;
         }
@@ -792,6 +810,8 @@ namespace pxsim {
         private unload() {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
+            // PR NOTE [Issue 8] -- lift into the PR description, then remove.
+            pxsim.U.removeClass(this.container, HAS_HIDE_IN_FULLSCREEN);
             this.setState(SimulatorState.Unloaded);
             this._runOptions = undefined; // forget about program
             this._currentRuntime = undefined;

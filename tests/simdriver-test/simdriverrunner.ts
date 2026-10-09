@@ -21,22 +21,39 @@ interface FakeFrame {
 }
 
 /**
- * The part of a DOM element the driver touches when it creates a frame.
+ * The part of a DOM element the driver touches when it creates, starts and
+ * removes simulator frames.
  */
 class FakeElement implements FakeFrame {
     id = "";
     className = "";
     src = "";
+    title = "";
+    frameBorder = "";
+    allowFullscreen = false;
+    onclick: (ev: unknown) => boolean;
     dataset: pxt.Map<string> = {};
     style: pxt.Map<string> = {};
     contentWindow = new FakeWindow();
     parentElement: FakeElement;
-    classList = { add: (cls: string) => { this.className += " " + cls; } };
+    children: FakeElement[] = [];
+    classList = {
+        add: (cls: string) => {
+            if (!this.classList.contains(cls)) this.className = this.classNames().concat(cls).join(" ");
+        },
+        remove: (cls: string) => {
+            this.className = this.classNames().filter(c => c !== cls).join(" ");
+        },
+        contains: (cls: string) => this.classNames().indexOf(cls) >= 0,
+    };
     private attributes: pxt.Map<string> = {};
-    private children: FakeElement[] = [];
     private listeners: pxt.Map<(() => void)[]> = {};
 
     constructor(public tagName: string) { }
+
+    get firstChild(): FakeElement {
+        return this.children[0];
+    }
 
     get firstElementChild(): FakeElement {
         return this.children[0];
@@ -56,6 +73,19 @@ class FakeElement implements FakeFrame {
         return child;
     }
 
+    removeChild(child: FakeElement): FakeElement {
+        this.children.splice(this.children.indexOf(child), 1);
+        child.parentElement = undefined;
+        return child;
+    }
+
+    /** Returns the descendants with tag `tagName`, in document order. */
+    getElementsByTagName(tagName: string): FakeElement[] {
+        return this.children.reduce((found, child) => found.concat(
+            child.tagName === tagName ? [child] : [],
+            child.getElementsByTagName(tagName)), [] as FakeElement[]);
+    }
+
     focus() { }
 
     addEventListener(type: string, listener: () => void) {
@@ -65,6 +95,10 @@ class FakeElement implements FakeFrame {
     /** Calls the listeners of `type`, as the browser does when the event fires. */
     fire(type: string) {
         (this.listeners[type] || []).forEach(listener => listener());
+    }
+
+    private classNames(): string[] {
+        return this.className.split(/\s+/).filter(c => !!c);
     }
 }
 
@@ -776,5 +810,65 @@ describe("simulator driver simulator extension editor tabs", () => {
             receive(h, open, unregistered.contentWindow);
             chai.expect(refusals(unregistered)).deep.equals([{ type: "simxeditor", id: "7", subtype: "error", code: "UNREGISTERED" }]);
         });
+    });
+});
+
+describe("simulator driver hide-in-fullscreen classes", () => {
+    const FRAME_CLASS = "simx-hide-fullscreen";
+    const CONTAINER_CLASS = "has-simx-hide-fullscreen";
+    const HIDDEN_CHANNEL = "someorg/pxt-strip";
+    const SHOWN_CHANNEL = "someorg/pxt-ext";
+
+    let container: FakeElement;
+    let mainFrame: FakeElement;
+    let driver: pxsim.SimulatorDriver;
+
+    function hasClass(el: FakeElement, cls: string): boolean {
+        return pxsim.U.containsClass(el as unknown as HTMLElement, cls);
+    }
+
+    /** Sends a channel packet from the main frame, which spawns the channel's extension frame. */
+    function spawn(channel: string): FakeElement {
+        const packet = { type: "messagepacket", channel, broadcast: true } as pxsim.SimulatorMessage;
+        (driver as any).handleMessage(packet, mainFrame.contentWindow);
+        return container.getElementsByTagName("iframe")
+            .find(frame => frame.dataset["messagechannel"] === channel)
+            .parentElement;
+    }
+
+    beforeEach(() => {
+        container = new FakeElement("div");
+        const wrapper = container.appendChild(new FakeElement("div"));
+        mainFrame = wrapper.appendChild(new FakeElement("iframe"));
+        mainFrame.id = "sim-frame-1";
+        mainFrame.dataset = { origin: EDITOR_ORIGIN, runid: "" };
+        const simx = (hideInFullscreen?: boolean) => ({ index: "index.html", aspectRatio: 1, permanent: true, hideInFullscreen });
+        driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
+            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simulatorExtensions: {
+                [HIDDEN_CHANNEL]: simx(true),
+                [SHOWN_CHANNEL]: simx(),
+            },
+        });
+    });
+
+    it("marks a hide-in-fullscreen extension frame and the container on spawn", () => {
+        const wrapper = spawn(HIDDEN_CHANNEL);
+        chai.expect(hasClass(wrapper, FRAME_CLASS)).equals(true);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(true);
+    });
+
+    it("leaves an extension frame without the hint and the container unmarked", () => {
+        const wrapper = spawn(SHOWN_CHANNEL);
+        chai.expect(hasClass(wrapper, FRAME_CLASS)).equals(false);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
+    });
+
+    it("clears the container class on unload", () => {
+        spawn(HIDDEN_CHANNEL);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(true);
+        driver.stop(true);
+        chai.expect(container.children.length).equals(0);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
     });
 });

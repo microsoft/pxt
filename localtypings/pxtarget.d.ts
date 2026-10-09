@@ -84,6 +84,8 @@ declare namespace pxt {
         // above apply to the registration, so to its tab frame as well as its simulator frame.
         editor?: SimulatorExtensionEditorConfig; // The extension's editor tab. Ignored unless allowEditorTab is set; refused on a registration with permanent set to false. Default: undefined.
         allowEditorTab?: boolean; // If true, the editor offers the tab `editor` describes, brokers a port between it and the simulator frame, and serves the simulator frame's request to open it ("simxeditor" messages). Default: false.
+        // PR NOTE [Issue 8] -- lift into the PR description, then remove.
+        hideInFullscreen?: boolean; // If true, hide the iframe in fullscreen-simulator mode; it stays loaded and keeps messaging. Default: false.
         // backend-only options
         sha?: string; // The commit to checkout (must exist in the branch/ref). Required.
         repo?: string; // Actual repo to load simulator extension from. Defaults to key of parent in `approvedRepoLib` map.

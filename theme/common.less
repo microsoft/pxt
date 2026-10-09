@@ -1767,6 +1767,20 @@ p.ui.font.small {
     div.simframe:not(:first-child) {
         display: unset;
     }
+    // PR NOTE [Issue 8] -- lift into the PR description, then remove.
+    // A simulator extension registered hideInFullscreen is hidden here but
+    // stays mounted, and the main frame takes the full width as an only
+    // child does. These follow the :not(:first-child) rule, which has the
+    // same specificity.
+    div.simframe.simx-hide-fullscreen {
+        display: none !important;
+    }
+    #simulators.has-simx-hide-fullscreen div.simframe:first-child {
+        width: 100%;
+    }
+    #simulators.has-simx-hide-fullscreen div.simframe:first-child > iframe {
+        max-width: 100%;
+    }
 }
 
 .sandbox .simPanel .simtoolbar {
