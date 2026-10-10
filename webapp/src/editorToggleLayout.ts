@@ -94,24 +94,37 @@ export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorTog
     };
 }
 
+// PR NOTE [Issue 6] -- lift into the PR description, then remove.
+// A tab shows as MakeCode's own editors do: its label as text, with its
+// icon, if any, on the text's left. The icon is a font icon's class names,
+// rendered as JavaScript's and Python's are, or an SVG's URL, rendered as a
+// CSS mask over the item's text color, so it follows every color theme,
+// high contrast included, as the font icons do.
 /** What the editor toggle shows for a simulator extension's editor tab. */
 export interface SimxEditorMenuItemContent {
-    /** The tab's label: the item's text, or the image's alternative text. */
+    /** The item's text: always the tab's label. */
     text: string;
     /** The item's accessible name and tooltip: always the tab's label. */
     ariaLabel: string;
-    /** The icon shown before the text; undefined if none is, or an image is shown. */
+    /** The class names of the font icon shown before the text; undefined if none is. */
     icon: string | undefined;
-    /** The URL of the image shown in place of the text and icon; undefined if none is. */
-    image: string | undefined;
+    /** The URL of the SVG shown before the text, as a mask over the text's color; undefined if none is. */
+    iconUrl: string | undefined;
 }
 
-/** Returns what the editor toggle shows for `editor`: its wordmark if it has one, else its icon, if any, and label. */
+/** Returns what the editor toggle shows for `editor`: its label, after its font icon or SVG icon, if any. */
 export function getSimxEditorMenuItemContent(editor: pxt.editor.SimulatorExtensionEditorInfo): SimxEditorMenuItemContent {
     return {
         text: editor.label,
         ariaLabel: editor.label,
-        icon: editor.wordmarkUrl ? undefined : editor.icon,
-        image: editor.wordmarkUrl,
+        icon: editor.iconUrl ? undefined : editor.icon,
+        iconUrl: editor.iconUrl,
     };
+}
+
+/** The inline style that masks an SVG icon's element with the SVG at `iconUrl`; the stylesheet gives the rest of the mask and the element's box. */
+export function getSimxEditorIconMaskStyle(iconUrl: string): { maskImage: string, WebkitMaskImage: string } {
+    // a CSS string: quotes and backslashes in the URL are escaped
+    const image = `url("${iconUrl.replace(/["\\]/g, "\\$&")}")`;
+    return { maskImage: image, WebkitMaskImage: image };
 }

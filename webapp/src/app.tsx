@@ -699,7 +699,7 @@ export class ProjectView
 
     getSimulatorExtensionEditors(): pxt.editor.SimulatorExtensionEditorInfo[] {
         return simulator.getProjectSimxEditorRegistrations()
-            .map(({ key, label, icon, wordmarkUrl }) => ({ key, label, icon, wordmarkUrl }));
+            .map(({ key, label, icon, iconUrl }) => ({ key, label, icon, iconUrl }));
     }
 
     isTextSourceCodeEditorActive() {

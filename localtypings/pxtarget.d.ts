@@ -98,8 +98,7 @@ declare namespace pxt {
     interface SimulatorExtensionEditorConfig {
         index: string; // The path to the tab's page within the artifact, resolved as the simulator extension's `index` is. Required.
         label: string; // The tab's name in the editor toggle, and its accessible name. Not localized. Required.
-        icon?: string; // The name of an icon shown before the label in the editor toggle. Default: none.
-        wordmark?: string; // The path to an SVG image within the artifact, resolved as `index` is, shown in the editor toggle in place of the label. Default: none.
+        icon?: string; // The icon shown before the label in the editor toggle: a font icon's class names (e.g. "xicon js"), or, if it contains a "/" or ends in ".svg", the path to an SVG within the artifact, resolved as `index` is and drawn in the toggle's text color. Default: none.
     }
 
     interface ShareConfig {

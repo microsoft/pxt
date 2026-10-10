@@ -926,10 +926,10 @@ declare namespace pxt.editor {
         key: string;
         /** The tab's name and accessible name. */
         label: string;
-        /** The name of an icon shown before the label. */
+        /** The class names of a font icon shown before the label; undefined if the icon is an SVG, or there is none. */
         icon?: string;
-        /** The URL of an image shown in place of the label. */
-        wordmarkUrl?: string;
+        /** The URL of an SVG shown before the label, drawn in the label's color; undefined if the icon is a font icon, or there is none. */
+        iconUrl?: string;
     }
 
     export interface IProjectView {

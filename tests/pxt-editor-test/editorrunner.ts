@@ -15,7 +15,7 @@ import {
     SimxEditorHost,
     SimxEditorRegistration,
 } from "../../webapp/src/simxEditorHost";
-import { getEditorToggleLayout, EditorToggleLayoutInput, getSimxEditorMenuItemContent } from "../../webapp/src/editorToggleLayout";
+import { getEditorToggleLayout, EditorToggleLayoutInput, getSimxEditorIconMaskStyle, getSimxEditorMenuItemContent } from "../../webapp/src/editorToggleLayout";
 import { hasEditorTab, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 import {
     addSimulatorThemeToFiles,
@@ -3642,12 +3642,23 @@ describe("simulator extension editor tab registrations", () => {
             [OTHER]: resolved(OTHER, { allowPopups: true }),
             "plainorg/pxt-plain": {},
             "declaredorg/pxt-declared": { editor: { label: "unresolved" } },
-            [EXT]: resolved(EXT, { wordmarkUrl: "https://sim.example/mark.svg", allowClipboardWrite: true }),
+            [EXT]: resolved(EXT, { allowClipboardWrite: true }),
         });
         chai.expect(registrations.map(r => r.key)).deep.equals([OTHER, EXT]);
-        chai.expect(registrations[0]).deep.include({ url: `https://sim.example/simx/${OTHER}/-/index.html`, allowPopups: true, wordmarkUrl: undefined });
-        chai.expect(registrations[1]).deep.include({ wordmarkUrl: "https://sim.example/mark.svg", allowClipboardWrite: true });
+        chai.expect(registrations[0]).deep.include({ url: `https://sim.example/simx/${OTHER}/-/index.html`, allowPopups: true });
+        chai.expect(registrations[1]).deep.include({ allowClipboardWrite: true });
         chai.expect(getSimxEditorRegistrations(undefined)).deep.equals([]);
+    });
+
+    it("carries a tab's icon as class names, or as the URL the driver resolved for an SVG path, never both", () => {
+        const [classIcon, svgIcon, noIcon] = getSimxEditorRegistrations({
+            [EXT]: resolved(EXT, { editor: { index: "index.html", label: "Ext", icon: "xicon js" } }),
+            [OTHER]: resolved(OTHER, { editor: { index: "index.html", label: "Other", icon: "brand/icon.svg" }, iconUrl: `https://sim.example/simx/${OTHER}/-/brand/icon.svg` }),
+            "plainorg/pxt-plain": resolved("plainorg/pxt-plain"),
+        });
+        chai.expect(classIcon).deep.include({ icon: "xicon js", iconUrl: undefined });
+        chai.expect(svgIcon).deep.include({ icon: undefined, iconUrl: `https://sim.example/simx/${OTHER}/-/brand/icon.svg` });
+        chai.expect(noIcon).deep.include({ icon: undefined, iconUrl: undefined });
     });
 
     it("offers a project the tabs of the extensions it includes, matching the repository in any case and at any depth", () => {
@@ -3785,11 +3796,21 @@ describe("editor toggle layout", () => {
         expectLayout(layout({ extensionEditors: [EXT], isJavaScriptActive: true }), { trigger: { language: "javascript" }, dropdownActive: true });
     });
 
-    it("shows a tab's wordmark in place of its label and icon, keeping the label as its accessible name", () => {
-        const wordmark = getSimxEditorMenuItemContent({ key: EXT, label: "Ext", icon: "puzzle", wordmarkUrl: "https://sim.example/mark.svg" });
-        chai.expect(wordmark).deep.equals({ text: "Ext", ariaLabel: "Ext", icon: undefined, image: "https://sim.example/mark.svg" });
-        const label = getSimxEditorMenuItemContent({ key: EXT, label: "Ext", icon: "puzzle" });
-        chai.expect(label).deep.equals({ text: "Ext", ariaLabel: "Ext", icon: "puzzle", image: undefined });
+    it("shows a tab's label as text, after its font icon or its SVG icon, with the label as its accessible name", () => {
+        const fontIcon = getSimxEditorMenuItemContent({ key: EXT, label: "Ext", icon: "xicon js" });
+        chai.expect(fontIcon).deep.equals({ text: "Ext", ariaLabel: "Ext", icon: "xicon js", iconUrl: undefined });
+        const svgIcon = getSimxEditorMenuItemContent({ key: EXT, label: "Ext", iconUrl: "https://sim.example/icon.svg" });
+        chai.expect(svgIcon).deep.equals({ text: "Ext", ariaLabel: "Ext", icon: undefined, iconUrl: "https://sim.example/icon.svg" });
+        const noIcon = getSimxEditorMenuItemContent({ key: EXT, label: "Ext" });
+        chai.expect(noIcon).deep.equals({ text: "Ext", ariaLabel: "Ext", icon: undefined, iconUrl: undefined });
+    });
+
+    it("masks an SVG icon's element with the SVG, with and without the -webkit- prefix", () => {
+        chai.expect(getSimxEditorIconMaskStyle("https://sim.example/simx/a/-/icon.svg")).deep.equals({
+            maskImage: 'url("https://sim.example/simx/a/-/icon.svg")',
+            WebkitMaskImage: 'url("https://sim.example/simx/a/-/icon.svg")',
+        });
+        chai.expect(getSimxEditorIconMaskStyle('https://sim.example/a"b\\c.svg').maskImage).equals('url("https://sim.example/a\\"b\\\\c.svg")');
     });
 });
 

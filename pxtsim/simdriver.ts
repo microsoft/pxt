@@ -1,4 +1,13 @@
 namespace pxsim {
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // An editor tab's icon is a font icon's class names, as MakeCode's own
+    // editor toggle items use (e.g. "xicon js"), unless it reads as a path;
+    // no MakeCode icon class name contains a "/" or ends in ".svg".
+    /** Returns true if a simulator extension editor tab's `icon` is the path to an SVG within the artifact, rather than a font icon's class names. */
+    function isSimulatorExtensionIconPath(icon: string | undefined): boolean {
+        return !!icon && (icon.indexOf("/") >= 0 || /\.svg$/i.test(icon));
+    }
+
     export interface SimulatorDriverOptions {
         restart?: () => void; // restart simulator
         revealElement?: (el: HTMLElement) => void;
@@ -43,7 +52,6 @@ namespace pxsim {
                 index: string;
                 label: string;
                 icon?: string;
-                wordmark?: string;
             };
             allowEditorTab?: boolean;
             // Additional fields outside of pxt.SimulatorExtensionConfig
@@ -51,8 +59,9 @@ namespace pxsim {
             // Computed URL of the editor tab's page; set only for a registration that declares
             // `editor` (with an index and a label), sets `allowEditorTab` and is permanent
             editorUrl?: string;
-            // Computed URL of the editor tab's wordmark; set only beside `editorUrl`, when `editor.wordmark` is given
-            wordmarkUrl?: string;
+            // Computed URL of the editor tab's SVG icon; set only beside `editorUrl`, when `editor.icon` is a path
+            // (see `isSimulatorExtensionIconPath`)
+            iconUrl?: string;
         }>;
         // needed when simulatorExtensions are used to provide to their frame
         userLanguage?: string;
@@ -255,17 +264,18 @@ namespace pxsim {
                 this._allowedOrigins.push(new URL(simx.url).origin);
 
                 // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-                // The editor tab's page and wordmark resolve as the extension's
-                // index does, so they are pinned with the rest of its artifact.
-                // A tab needs a frame that outlives runs, so a registration that
-                // is not permanent cannot declare one.
+                // The editor tab's page, and its icon when the icon is an SVG
+                // path rather than a font icon's class names, resolve as the
+                // extension's index does, so they are pinned with the rest of
+                // its artifact. A tab needs a frame that outlives runs, so a
+                // registration that is not permanent cannot declare one.
                 if (simx.editor && simx.allowEditorTab) {
                     if (!simx.permanent) {
                         pxsim.error(`simulator extension ${key}: an editor tab needs a permanent registration; ignoring its editor`);
                     } else if (simx.editor.index && simx.editor.label) {
                         simx.editorUrl = resolve(simx.editor.index);
-                        if (simx.editor.wordmark)
-                            simx.wordmarkUrl = resolve(simx.editor.wordmark);
+                        if (isSimulatorExtensionIconPath(simx.editor.icon))
+                            simx.iconUrl = resolve(simx.editor.icon);
                         this._allowedOrigins.push(new URL(simx.editorUrl).origin);
                     }
                 }

@@ -23,7 +23,7 @@ import {
 export interface SimxEditorRegistrationConfig {
     editor?: { label: string; icon?: string };
     editorUrl?: string;
-    wordmarkUrl?: string;
+    iconUrl?: string;
     allowPopups?: boolean;
     allowClipboardWrite?: boolean;
 }
@@ -34,10 +34,10 @@ export interface SimxEditorRegistration {
     key: string;
     /** The tab's name and accessible name. */
     label: string;
-    /** The name of an icon shown before the label. */
+    /** The class names of a font icon shown before the label; undefined if the icon is an SVG, or there is none. */
     icon?: string;
-    /** The URL of an image shown in place of the label. */
-    wordmarkUrl?: string;
+    /** The URL of an SVG shown before the label, drawn in the label's color; undefined if the icon is a font icon, or there is none. */
+    iconUrl?: string;
     /** The URL of the tab's page, without the parameters the editor adds. */
     url: string;
     /** The tab frame's sandbox gains allow-popups and allow-popups-to-escape-sandbox. */
@@ -59,8 +59,12 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
             return {
                 key,
                 label: simx.editor.label,
-                icon: simx.editor.icon,
-                wordmarkUrl: simx.wordmarkUrl,
+                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+                // The driver resolves an iconUrl exactly when the icon is an
+                // SVG path, so a tab carries either a font icon's class names
+                // or an SVG's URL, never both.
+                icon: simx.iconUrl ? undefined : simx.editor.icon,
+                iconUrl: simx.iconUrl,
                 url: simx.editorUrl,
                 allowPopups: simx.allowPopups,
                 allowClipboardWrite: simx.allowClipboardWrite,

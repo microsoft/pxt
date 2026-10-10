@@ -579,11 +579,40 @@ div.simframe > iframe {
 }
 
 /* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
-/* A simulator extension editor tab's wordmark, shown in place of its label */
-#editortoggle .base-menuitem-image {
-    height: 1.25em;
-    width: auto;
-    vertical-align: middle;
+/* A simulator extension editor tab's SVG icon: a mask over the item's text
+   color, so it takes that color in every theme, high contrast included, as a
+   font icon does. Its box is the one Semantic UI gives a font icon (i.icon,
+   which this span is not) in the same slots: an inline block 1.18em
+   (@iconWidth) by 1em, with the menu item's icon margin and opacity. Its
+   "icon" class gives it the rules Semantic UI and the themes apply to .icon
+   by class, such as the dropdown entries' icon margin. An empty inline block
+   sits on the text's baseline, 0.125em above where a font icon's glyph box
+   sits in a dropdown entry's line; the bar's items are flex rows, where
+   vertical-align does not apply. */
+.simx-editor-icon {
+    display: inline-block;
+    width: 1.18em;
+    height: 1em;
+    vertical-align: -0.125em;
+    background-color: currentColor;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+.ui.menu .item > .simx-editor-icon {
+    opacity: 0.9;
+    margin: 0 0.35714286em 0 0;
+}
+.ui.menu .active.item > .simx-editor-icon {
+    opacity: 1;
+}
+@media only screen and (max-width: @largestTabletScreen) {
+    .ui.menu .item > .simx-editor-icon {
+        margin: 0;
+    }
 }
 
 /* A simulator extension editor tab fills the editor area */

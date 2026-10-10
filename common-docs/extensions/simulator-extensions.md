@@ -35,17 +35,16 @@ The tab is declared in the extension's `simx` entry in the target's `targetconfi
     "editor": {
         "index": "index.html",
         "label": "My Extension",
-        "icon": "puzzle",
-        "wordmark": "brand/wordmark.svg"
+        "icon": "brand/icon.svg"
     },
     "allowEditorTab": true
 }
 ```
 
-* `editor.index` is the tab's page, and `editor.wordmark` an optional SVG; both are paths within the extension's published files, resolved the same way as `index`.
-* `editor.label` names the tab in the toggle and is its accessible name. It is not localized.
-* `editor.icon` is an optional icon shown before the label.
-* `editor.wordmark`, when given, is shown in place of the label and icon, as an image as tall as the toggle's text. It keeps its own colors: an SVG shown as an image does not take the toggle's text color, so `currentColor` in it does not follow the editor's color theme.
+* `editor.index` is the tab's page, a path within the extension's published files, resolved the same way as `index`.
+* `editor.label` names the tab in the toggle and is its accessible name. It is shown as text, as the names of Blocks, JavaScript and Python are. It is not localized.
+* `editor.icon` is an optional icon shown on the label's left. It is either the class names of one of MakeCode's font icons, as its own editors use (for example `xicon js`), or the path to an SVG within the extension's published files, resolved the same way as `index`. A value that contains a `/` or ends in `.svg` is a path; any other value is class names.
+* An SVG icon is drawn as a mask in the toggle's text color: only its shape is used, so it follows the editor's color themes, high contrast included. A square SVG drawn in a single color, such as `currentColor`, is recommended.
 * `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor` and `allowEditorTab`.
 * A registration with an editor tab must be `permanent` (the default); the editor ignores, and logs, an `editor` on a registration with `permanent: false`.
 

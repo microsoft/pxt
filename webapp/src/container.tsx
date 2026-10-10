@@ -17,7 +17,7 @@ import { sendUpdateFeedbackTheme } from "../../react-common/components/controls/
 import KeyboardControlsHelp from "./components/KeyboardControlsHelp";
 import { MenuDropdown, MenuItem } from "../../react-common/components/controls/MenuDropdown";
 import { ThemeManager } from "../../react-common/components/theming/themeManager";
-import { EditorToggleItem, getEditorToggleLayout, getSimxEditorMenuItemContent } from "./editorToggleLayout";
+import { EditorToggleItem, getEditorToggleLayout, getSimxEditorIconMaskStyle, getSimxEditorMenuItemContent } from "./editorToggleLayout";
 
 // common menu items -- do not remove
 // lf("About")
@@ -610,9 +610,9 @@ interface IBaseMenuItemProps extends ISettingsProps {
     isActive: () => boolean;
 
     icon?: string;
+    // the URL of an SVG shown before the text in place of `icon`, as a mask over the text's color
+    iconUrl?: string;
     text?: string;
-    // the URL of an image shown in place of the icon and text, with the text as its alternative text
-    image?: string;
     title?: string;
     className?: string;
     ariaLabel?: string;
@@ -628,14 +628,18 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
         const active = this.props.isActive();
         const className = `base-menuitem ${this.props.className} ${active ? "selected" : ""}`;
         // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // An item may show an image (a simulator extension editor tab's
-        // wordmark) in place of its icon and text; its text stays its
-        // accessible name. An item with text and no icon keeps its text in
+        // An item may show an SVG icon (a simulator extension editor tab's)
+        // in place of a font icon. sui.Item draws its icon before its text
+        // and its children after both, so this item draws the two itself, in
+        // the order and with the classes sui.Item gives a font icon and its
+        // text; the SVG is a mask over the text's color (see
+        // .simx-editor-icon). An item with text and no icon keeps its text in
         // every layout, since it has no icon to fall back to.
-        if (this.props.image)
+        if (this.props.iconUrl)
             return <sui.Item className={className} role={this.props.role || "button"} active={active} onClick={this.props.onClick}
-                title={this.props.title} ariaLabel={this.props.ariaLabel}>
-                <img className="base-menuitem-image" src={this.props.image} alt={this.props.text} />
+                title={this.props.title || this.props.text} ariaLabel={this.props.ariaLabel}>
+                <span className="icon icon-and-text simx-editor-icon" aria-hidden={true} role="presentation" style={getSimxEditorIconMaskStyle(this.props.iconUrl)} />
+                {this.props.text && <span className="ui text landscape only">{this.props.text}</span>}
             </sui.Item>
         return <sui.Item className={className} role={this.props.role || "button"} textClass={this.props.icon ? "landscape only" : undefined}
             text={this.props.text} icon={this.props.icon} active={active} onClick={this.props.onClick} title={this.props.title} ariaLabel={this.props.ariaLabel} />
@@ -763,7 +767,7 @@ class SimxEditorMenuItem extends data.Component<ISimxEditorMenuItemProps, {}> {
     renderCore() {
         const { editor, parent, role } = this.props;
         const content = getSimxEditorMenuItemContent(editor);
-        return <BaseMenuItemProps className="simx-editor-menuitem" icon={content.icon} text={content.text} image={content.image}
+        return <BaseMenuItemProps className="simx-editor-menuitem" icon={content.icon} iconUrl={content.iconUrl} text={content.text}
             title={content.ariaLabel} onClick={this.onClick} isActive={this.isActive} parent={parent} ariaLabel={content.ariaLabel} role={role} />
     }
 }

@@ -553,12 +553,35 @@ describe("simulator driver simulator extension editor tabs", () => {
     }
 
     describe("registration", () => {
-        it("resolves the tab's page and wordmark as it resolves the extension's index", () => {
-            const h = harness({ [KEY]: registration({ index: "simx/index.html", editor: { index: "index.html", label: "Ext", wordmark: "brand/mark.svg" }, allowEditorTab: true }) });
+        it("resolves the tab's page, and an icon that is a path, as it resolves the extension's index", () => {
+            const h = harness({
+                [KEY]: registration({ index: "simx/index.html", editor: { index: "index.html", label: "Ext", icon: "brand/icon.svg" }, allowEditorTab: true }),
+                "otherorg/pxt-other": registration({ editor: { index: "index.html", label: "Other", icon: "icon.svg" }, allowEditorTab: true }),
+            });
             const simx = h.registrations[KEY];
             chai.expect(simx.url).equals(`${EDITOR_ORIGIN}/simx/${KEY}/-/simx/index.html`);
             chai.expect(simx.editorUrl).equals(`${EDITOR_ORIGIN}/simx/${KEY}/-/index.html`);
-            chai.expect(simx.wordmarkUrl).equals(`${EDITOR_ORIGIN}/simx/${KEY}/-/brand/mark.svg`);
+            chai.expect(simx.iconUrl).equals(`${EDITOR_ORIGIN}/simx/${KEY}/-/brand/icon.svg`);
+            chai.expect(h.registrations["otherorg/pxt-other"].iconUrl).equals(`${EDITOR_ORIGIN}/simx/otherorg/pxt-other/-/icon.svg`);
+        });
+
+        it("resolves an icon that is a path against the dev URL under simxdev, as it resolves the tab's page", () => {
+            const location = (global as any).window.location;
+            const href = location.href;
+            location.href = "http://localhost:3232/index.html?simxdev";
+            try {
+                const h = harness({ [KEY]: registration({ devUrl: "http://localhost:8080/ext/", editor: { index: "index.html", label: "Ext", icon: "brand/icon.svg" }, allowEditorTab: true }) });
+                chai.expect(h.registrations[KEY].editorUrl).equals("http://localhost:8080/ext/index.html");
+                chai.expect(h.registrations[KEY].iconUrl).equals("http://localhost:8080/ext/brand/icon.svg");
+            } finally {
+                location.href = href;
+            }
+        });
+
+        it("leaves an icon of class names unresolved", () => {
+            const h = harness({ [KEY]: registration({ editor: { index: "index.html", label: "Ext", icon: "xicon js" }, allowEditorTab: true }) });
+            chai.expect(h.registrations[KEY].editor.icon).equals("xicon js");
+            chai.expect(h.registrations[KEY].iconUrl).equals(undefined);
         });
 
         it("adds editor=1 to the simulator frame's URL when the registration declares and enables a tab", () => {
