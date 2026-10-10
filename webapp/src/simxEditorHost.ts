@@ -170,6 +170,8 @@ export class SimxEditorHost {
     protected simulatorFrames: pxt.Map<HTMLIFrameElement> = {};
     // the key of the shown tab, or undefined while none is shown
     protected shownKey: string | undefined;
+    // the key of the tab shown last, until forgotten or its frame is removed
+    protected lastShownKey: string | undefined;
     protected container: HTMLElement | undefined;
     protected loader: HTMLElement | undefined;
 
@@ -203,6 +205,28 @@ export class SimxEditorHost {
     }
 
     // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // The editor toggle keeps showing the tab shown last while Blocks is
+    // active, as it keeps showing Python, the text language chosen last. The
+    // language choice is a user-level preference, saved across projects; a
+    // tab belongs to its project and lives only for the project's session,
+    // so the host remembers it beside the tab frames: from when the tab is
+    // shown until a text language is shown (see forgetLastShown) or the
+    // tab's frame is removed with its project (see close).
+    /**
+     * Returns the key of the tab shown last, kept while the tab is hidden;
+     * undefined if no tab was shown since `forgetLastShown`, or that tab's
+     * frame was removed.
+     */
+    getLastShownKey(): string | undefined {
+        return this.lastShownKey;
+    }
+
+    /** Forgets the tab shown last, as the editor does when it shows a text language. */
+    forgetLastShown() {
+        this.lastShownKey = undefined;
+    }
+
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
     // Opening a tab moves focus into it, as opening JavaScript or Python
     // focuses the text editor; that focus leaving the language dropdown is
     // what closes the dropdown after an entry is chosen.
@@ -214,6 +238,7 @@ export class SimxEditorHost {
     protected setShown(key: string | undefined) {
         const previous = this.shownKey;
         this.shownKey = key;
+        if (key) this.lastShownKey = key;
         for (const k of Object.keys(this.tabs)) {
             this.tabs[k].frame.style.display = k === key ? "" : "none";
         }
@@ -301,7 +326,8 @@ export class SimxEditorHost {
 
     /**
      * Removes every tab frame not created for `project`, or every tab frame if
-     * `project` is undefined, posting each ready one `closing` first.
+     * `project` is undefined, posting each ready one `closing` first, and
+     * forgets the tab shown last if its frame is removed.
      */
     close(project?: string) {
         for (const key of Object.keys(this.tabs)) {
@@ -311,6 +337,7 @@ export class SimxEditorHost {
             tab.frame.parentElement?.removeChild(tab.frame);
             delete this.tabs[key];
             if (this.shownKey === key) this.shownKey = undefined;
+            if (this.lastShownKey === key) this.lastShownKey = undefined;
         }
         this.updateLoader();
     }

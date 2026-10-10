@@ -702,6 +702,10 @@ export class ProjectView
             .map(({ key, label, icon, iconUrl }) => ({ key, label, icon, iconUrl }));
     }
 
+    getLastSimulatorExtensionEditor(): string | undefined {
+        return simulator.simxEditorHost?.getLastShownKey();
+    }
+
     isTextSourceCodeEditorActive() {
         return !this.state.embedSimView && this.editor == this.textEditor
             && this.editorFile && /(\.ts|\.py)$/.test(this.editorFile.name);
@@ -1388,6 +1392,17 @@ export class ProjectView
                 this.saveFileAsync(); // make sure state is up to date
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
                     this.typecheck();
+                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+                // Showing a text language ends the editor toggle's memory of
+                // the simulator extension editor tab shown last (see
+                // SimxEditorHost.getLastShownKey), as choosing it sets the
+                // language preference. This runs once the language is shown,
+                // not when it is chosen, so a conversion that fails and stays
+                // in Blocks leaves the memory, and every path into JavaScript
+                // or Python ends it. Blocks leaves both the memory and the
+                // language preference as they are.
+                if (this.isJavaScriptActive() || this.isPythonActive())
+                    simulator.simxEditorHost?.forgetLastShown();
 
                 if (this.state.editorPosition) {
                     this.editor.setViewState(this.state.editorPosition);

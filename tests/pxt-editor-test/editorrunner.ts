@@ -3757,6 +3757,7 @@ describe("editor toggle layout", () => {
             isPythonActive: false,
             extensionEditors: [],
             activeExtensionEditor: undefined,
+            lastExtensionEditor: undefined,
             ...extra,
         });
     }
@@ -3794,6 +3795,27 @@ describe("editor toggle layout", () => {
     it("shows the active tab as the dropdown's trigger, attached to the dropdown", () => {
         expectLayout(layout({ extensionEditors: [EXT, OTHER], activeExtensionEditor: OTHER }), { trigger: { extension: OTHER }, dropdownActive: true });
         expectLayout(layout({ extensionEditors: [EXT], isJavaScriptActive: true }), { trigger: { language: "javascript" }, dropdownActive: true });
+    });
+
+    it("keeps showing the tab shown last while Blocks is active, as it keeps showing Python, the language chosen last", () => {
+        // Blocks active, the tab shown last: the tab, unattached, with every entry still in the dropdown
+        expectLayout(layout({ extensionEditors: [EXT, OTHER], lastExtensionEditor: OTHER }), {
+            trigger: { extension: OTHER }, dropdownActive: false,
+            dropdownLanguages: ["javascript", "python"], dropdownSeparator: true, dropdownExtensions: [EXT, OTHER],
+        });
+        // over the Python preference, which the tab shown after it replaces
+        expectLayout(layout({ extensionEditors: [EXT], lastExtensionEditor: EXT, pythonIsActive: true }), { trigger: { extension: EXT } });
+        // the active tab wins over the tab shown last
+        expectLayout(layout({ extensionEditors: [EXT, OTHER], lastExtensionEditor: EXT, activeExtensionEditor: OTHER }), { trigger: { extension: OTHER }, dropdownActive: true });
+    });
+
+    it("shows the active text language, or the language preference, over a tab it no longer remembers or offers", () => {
+        expectLayout(layout({ extensionEditors: [EXT], lastExtensionEditor: EXT, isJavaScriptActive: true }), { trigger: { language: "javascript" }, dropdownActive: true });
+        expectLayout(layout({ extensionEditors: [EXT], lastExtensionEditor: EXT, pythonIsActive: true, isPythonActive: true }), { trigger: { language: "python" }, dropdownActive: true });
+        expectLayout(layout({ extensionEditors: [EXT], lastExtensionEditor: undefined, pythonIsActive: true }), { trigger: { language: "python" } });
+        expectLayout(layout({ extensionEditors: [EXT], lastExtensionEditor: OTHER }), { trigger: { language: "javascript" } });
+        // with no tab offered the toggle is its own, whatever the memory
+        chai.expect(layout({ lastExtensionEditor: EXT })).deep.equals(layout());
     });
 
     it("shows a tab's label as text, after its font icon or its SVG icon, with the label as its accessible name", () => {
@@ -4030,6 +4052,42 @@ describe("simulator extension editor tab host", () => {
             host.close();
             chai.expect(other.parentElement).equals(undefined);
             chai.expect(events(other)).deep.equals([]);
+        });
+    });
+
+    describe("the tab shown last", () => {
+        it("is remembered from when the tab is shown, while it is hidden, until another tab is shown", () => {
+            chai.expect(host.getLastShownKey()).equals(undefined);
+            show(EXT);
+            chai.expect(host.getLastShownKey()).equals(EXT);
+            host.hide();
+            chai.expect(host.getLastShownKey()).equals(EXT);
+            show(OTHER);
+            host.hide();
+            chai.expect(host.getLastShownKey()).equals(OTHER);
+        });
+
+        it("is forgotten when the editor shows a text language, until a tab is shown again", () => {
+            show(EXT);
+            host.hide();
+            host.forgetLastShown();
+            chai.expect(host.getLastShownKey()).equals(undefined);
+            show(EXT);
+            chai.expect(host.getLastShownKey()).equals(EXT);
+        });
+
+        it("is forgotten when its frame is removed with its project, and kept when the same project reloads", () => {
+            show(EXT);
+            host.hide();
+            host.close("p1");
+            chai.expect(host.getLastShownKey()).equals(EXT);
+            host.close("p2");
+            chai.expect(host.getLastShownKey()).equals(undefined);
+
+            show(OTHER);
+            host.hide();
+            host.close();
+            chai.expect(host.getLastShownKey()).equals(undefined);
         });
     });
 

@@ -814,6 +814,10 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
             isPythonActive: parent.isPythonActive(),
             extensionEditors: extensionEditors.map(e => e.key),
             activeExtensionEditor: activeExtensionEditor?.key,
+            // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+            // The tab shown last stays in the trigger while Blocks is active,
+            // as Python, the language chosen last, does (see getEditorToggleLayout).
+            lastExtensionEditor: sandbox ? undefined : parent.getLastSimulatorExtensionEditor(),
         });
         const { showDropdown, dropdownActive } = layout;
 

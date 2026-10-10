@@ -1095,6 +1095,11 @@ declare namespace pxt.editor {
         isSimulatorExtensionEditorActive(key: string): boolean;
         /** Returns the simulator extension editor tabs the editor offers for the open project, in registration order. */
         getSimulatorExtensionEditors(): SimulatorExtensionEditorInfo[];
+        /**
+         * Returns the key of the simulator extension editor tab shown last in the open
+         * project's session, unless a text language was shown since; undefined if none was.
+         */
+        getLastSimulatorExtensionEditor(): string | undefined;
 
         editor: IEditor;
 

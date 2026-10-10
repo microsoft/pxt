@@ -19,11 +19,13 @@ export interface EditorToggleLayoutInput {
     extensionEditors: string[];
     /** The key of the active extension editor tab, or undefined if none is active. */
     activeExtensionEditor: string | undefined;
+    /** The key of the extension editor tab shown after the last text language in this project's session, or undefined if none was. */
+    lastExtensionEditor: string | undefined;
 }
 
 /** The text-language items and language dropdown of the editor toggle. */
 export interface EditorToggleLayout {
-    /** The item after Blocks, showing the active choice among the dropdown's; undefined if none. */
+    /** The item after Blocks, showing the active choice among the dropdown's, or else the choice made last; undefined if none. */
     trigger: EditorToggleItem | undefined;
     /** A second item beside the trigger; undefined if none. */
     second: EditorToggleItem | undefined;
@@ -48,7 +50,7 @@ export interface EditorToggleLayout {
 // tab offered the layout is the toggle's own.
 /** Returns the text-language items and language dropdown of the editor toggle for `input`. */
 export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorToggleLayout {
-    const { showJavaScript, showPython, showBlocks, pythonIsActive, extensionEditors, activeExtensionEditor } = input;
+    const { showJavaScript, showPython, showBlocks, pythonIsActive, extensionEditors, activeExtensionEditor, lastExtensionEditor } = input;
     const javascript: EditorToggleItem = { language: "javascript" };
     const python: EditorToggleItem = { language: "python" };
 
@@ -77,8 +79,15 @@ export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorTog
     const dropdownLanguages: EditorToggleLanguage[] = [];
     if (showJavaScript) dropdownLanguages.push("javascript");
     if (showPython) dropdownLanguages.push("python");
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // While no text language and no tab is active (Blocks, say), the trigger
+    // shows the tab shown last, if it is still offered, as it shows Python
+    // when Python was the text language chosen last; with no such tab it
+    // shows the text language chosen last, as the toggle does.
     let trigger: EditorToggleItem;
+    const textLanguageActive = input.isJavaScriptActive || input.isPythonActive;
     if (activeExtensionEditor && extensionEditors.indexOf(activeExtensionEditor) >= 0) trigger = { extension: activeExtensionEditor };
+    else if (!textLanguageActive && lastExtensionEditor && extensionEditors.indexOf(lastExtensionEditor) >= 0) trigger = { extension: lastExtensionEditor };
     else if (showPython && showJavaScript) trigger = pythonIsActive ? python : javascript;
     else if (showPython) trigger = python;
     else if (showJavaScript) trigger = javascript;
@@ -87,7 +96,7 @@ export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorTog
         trigger,
         second: undefined,
         showDropdown: true,
-        dropdownActive: input.isJavaScriptActive || input.isPythonActive || !!activeExtensionEditor,
+        dropdownActive: textLanguageActive || !!activeExtensionEditor,
         dropdownLanguages,
         dropdownSeparator: dropdownLanguages.length > 0,
         dropdownExtensions: extensionEditors.slice(),
