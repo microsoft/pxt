@@ -3819,12 +3819,15 @@ describe("simulator extension editor tab host", () => {
         children: FakeElement[] = [];
         parentElement: FakeElement | undefined;
         contentWindow = new FakeWindow();
+        // the number of times focus was moved to the element
+        focused = 0;
         className = "";
         title = "";
         src = "";
         allowFullscreen = false;
         get isConnected() { return !!this.parentElement; }
         setAttribute(name: string, value: string) { this.attributes[name] = value; }
+        focus() { this.focused++; }
         appendChild(child: FakeElement) {
             this.children.push(child);
             child.parentElement = this;
@@ -3953,6 +3956,19 @@ describe("simulator extension editor tab host", () => {
             chai.expect(frame.style.display).equals("");
             chai.expect(tab(OTHER).style.display).equals("none");
             chai.expect(container.children.filter(c => c.dataset["simxkey"]).length).equals(2);
+        });
+
+        it("moves focus into the shown tab's frame, and nowhere while no tab is shown", () => {
+            show(EXT);
+            host.focus();
+            chai.expect(tab(EXT).focused).equals(1);
+            show(OTHER);
+            host.focus();
+            chai.expect(tab(OTHER).focused).equals(1);
+            chai.expect(tab(EXT).focused).equals(1);
+            host.hide();
+            host.focus();
+            chai.expect(tab(EXT).focused + tab(OTHER).focused).equals(2);
         });
 
         it("shows the loading state over the shown tab until it is ready", () => {

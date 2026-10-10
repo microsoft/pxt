@@ -198,6 +198,15 @@ export class SimxEditorHost {
         this.setShown(undefined);
     }
 
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // Opening a tab moves focus into it, as opening JavaScript or Python
+    // focuses the text editor; that focus leaving the language dropdown is
+    // what closes the dropdown after an entry is chosen.
+    /** Moves focus into the shown tab's frame; does nothing while no tab is shown. */
+    focus() {
+        if (this.shownKey) this.tabs[this.shownKey]?.frame.focus();
+    }
+
     protected setShown(key: string | undefined) {
         const previous = this.shownKey;
         this.shownKey = key;

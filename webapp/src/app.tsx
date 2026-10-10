@@ -876,6 +876,13 @@ export class ProjectView
         const mainEditorPkg = pkg.mainEditorPkg();
         if (!mainEditorPkg?.header || pxt.shell.isSandboxMode()) return false;
         if (!simulator.getProjectSimxEditorRegistrations().some(r => r.key === key)) return false;
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // Choosing the tab already shown focuses it, as choosing the active
+        // text language focuses the text editor.
+        if (this.isSimulatorExtensionEditorActive(key)) {
+            simulator.simxEditorHost?.focus();
+            return true;
+        }
         const name = getSimxEditorMarkerName(key);
         if (!mainEditorPkg.lookupFile("this/" + name)) {
             mainEditorPkg.setFile(name, "\n", true);

@@ -21,6 +21,8 @@ import { getSimxEditorKeyOfMarker } from "./simxEditorHost";
 export class SimxEditor extends Editor {
     // the element the tab frames live in, once rendered
     protected container: HTMLDivElement | undefined;
+    // true from when a tab is shown until the editor, displayed, focuses it
+    protected focusPending = false;
 
     getId() {
         return "simxEditor";
@@ -33,7 +35,10 @@ export class SimxEditor extends Editor {
 
     setVisible(v: boolean) {
         super.setVisible(v);
-        if (!v) simulator.simxEditorHost?.hide();
+        if (!v) {
+            this.focusPending = false;
+            simulator.simxEditorHost?.hide();
+        }
     }
 
     loadFileAsync(file: pkg.File, hc?: boolean): Promise<void> {
@@ -48,7 +53,18 @@ export class SimxEditor extends Editor {
                 project: pkg.mainEditorPkg().header?.id,
                 language: pxt.Util.userLanguage(),
             });
+            this.focusPending = true;
         });
+    }
+
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // The tab takes focus when it opens, as the text editor does (see
+    // SimxEditorHost.focus). The editor's element is displayed only by the
+    // render that follows the switch, so the focus waits for that render.
+    domUpdate() {
+        if (!this.focusPending || !this.isVisible) return;
+        this.focusPending = false;
+        simulator.simxEditorHost.focus();
     }
 
     unloadFileAsync(): Promise<void> {
