@@ -16,6 +16,7 @@ import {
     SimxEditorRegistration,
 } from "../../webapp/src/simxEditorHost";
 import { getEditorToggleLayout, EditorToggleLayoutInput, getSimxEditorIconMaskStyle, getSimxEditorMenuItemContent } from "../../webapp/src/editorToggleLayout";
+import { getEditorToolbarControls, EditorToolbarControlsInput } from "../../webapp/src/editorToolbarControls";
 import { hasEditorTab, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 import {
     addSimulatorThemeToFiles,
@@ -3833,6 +3834,36 @@ describe("editor toggle layout", () => {
             WebkitMaskImage: 'url("https://sim.example/simx/a/-/icon.svg")',
         });
         chai.expect(getSimxEditorIconMaskStyle('https://sim.example/a"b\\c.svg').maskImage).equals('url("https://sim.example/a\\"b\\\\c.svg")');
+    });
+});
+
+describe("editor toolbar editing controls", () => {
+    function controls(extra: Partial<EditorToolbarControlsInput> = {}) {
+        return getEditorToolbarControls({
+            readOnly: false,
+            debugging: false,
+            hideZoomAndUndo: false,
+            hideToolbox: false,
+            editorHasEditingControls: true,
+            ...extra,
+        });
+    }
+
+    it("shows undo, redo and zoom for an editor that has them", () => {
+        chai.expect(controls()).deep.equals({ showUndoRedo: true, showZoomControls: true });
+    });
+
+    it("leaves out undo, redo and zoom for an editor that has none, whatever else holds", () => {
+        const none = { showUndoRedo: false, showZoomControls: false };
+        chai.expect(controls({ editorHasEditingControls: false })).deep.equals(none);
+        chai.expect(controls({ editorHasEditingControls: false, readOnly: true, debugging: true })).deep.equals(none);
+    });
+
+    it("keeps the toolbar's own rules for an editor that has them", () => {
+        chai.expect(controls({ readOnly: true })).deep.equals({ showUndoRedo: false, showZoomControls: true });
+        chai.expect(controls({ debugging: true })).deep.equals({ showUndoRedo: false, showZoomControls: true });
+        chai.expect(controls({ hideZoomAndUndo: true })).deep.equals({ showUndoRedo: false, showZoomControls: false });
+        chai.expect(controls({ hideToolbox: true })).deep.equals({ showUndoRedo: false, showZoomControls: false });
     });
 });
 

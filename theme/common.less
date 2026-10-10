@@ -160,7 +160,10 @@ pre {
     border: unset;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simulator .editor-sidebar {
+/* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
+/* A simulator extension editor tab (#simxEditor) shows the editor toolbar,
+   so its area ends above the toolbar wherever its peers' areas do. */
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor, #simulator .editor-sidebar {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -170,6 +173,7 @@ pre {
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
 .hideEditorToolbar #assetEditor,
+.hideEditorToolbar #simxEditor,
 .hideEditorToolbar #simulator .editor-sidebar {
     bottom: 0rem !important;
 }
@@ -2280,7 +2284,9 @@ p.ui.font.small {
         margin: 0;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor {
+    /* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
+    /* #simxEditor: see the editor areas' bottom rule above. */
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor {
         bottom: @editorToolsCollapsedMobileHeight;
     }
 
@@ -2612,7 +2618,9 @@ div.simframe.ui.embed {
         display: inherit;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editortools, #msg {
+    /* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
+    /* #simxEditor: see the editor areas' bottom rule above. */
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor, #editortools, #msg {
         bottom: 1.5rem !important;
     }
 }

@@ -726,6 +726,8 @@ declare namespace pxt.editor {
         hasRedo(): boolean;
         zoomIn(): void;
         zoomOut(): void;
+        /** Whether the editor toolbar shows undo, redo and zoom for this editor. */
+        hasEditorToolbarEditingControls(): boolean;
         resize(): void;
         setScale(scale: number): void;
         focusWorkspace(): void;

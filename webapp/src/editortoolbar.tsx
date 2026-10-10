@@ -9,6 +9,7 @@ import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { userPrefersDownloadFlagSet } from "./webusb";
 import { dialogAsync, hideDialog } from "./core";
+import { getEditorToolbarControls } from "./editorToolbarControls";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import SimState = pxt.editor.SimState;
@@ -398,8 +399,16 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
-        const showUndoRedo = !readOnly && !debugging && !hideZoomAndUndo && !hideToolbox;
-        const showZoomControls = !hideZoomAndUndo && !hideToolbox;
+        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+        // An editor without undo, redo or zoom shows the toolbar without
+        // them; their button groups below are then simply absent.
+        const { showUndoRedo, showZoomControls } = getEditorToolbarControls({
+            readOnly,
+            debugging: !!debugging,
+            hideZoomAndUndo: !!hideZoomAndUndo,
+            hideToolbox: !!hideToolbox,
+            editorHasEditingControls: this.props.parent.editor.hasEditorToolbarEditingControls(),
+        });
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor

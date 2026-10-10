@@ -71,7 +71,12 @@ export class SimxEditor extends Editor {
         return Promise.resolve();
     }
 
-    hasEditorToolbar() {
+    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
+    // The tab shows the editor toolbar, as Blocks, JavaScript, Python and
+    // Assets do, so the simulator can be collapsed and expanded and the
+    // project downloaded from it. It has no undo, redo or zoom of its own,
+    // so the toolbar leaves those controls out.
+    hasEditorToolbarEditingControls() {
         return false;
     }
 

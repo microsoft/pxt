@@ -25,6 +25,8 @@ A simulator extension frame is as wide as the simulator column, and its height f
 
 A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. The tab is offered only while the open project includes the extension, and never in embedded (sandbox) views, where the Assets editor is not offered either.
 
+The editor toolbar stays below the tab, as it does below Blocks and the text editors, without its undo, redo and zoom controls, which the tab does not have: the simulator can be collapsed and expanded, and the project downloaded, while the tab is shown.
+
 ### Registration
 
 The tab is declared in the extension's `simx` entry in the target's `targetconfig.json` (`packages.approvedRepoLib`), beside its other settings:
