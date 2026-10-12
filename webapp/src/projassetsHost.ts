@@ -7,6 +7,7 @@ import {
     ProjassetsNotification,
     ProjassetsReply,
     ProjassetsRequest,
+    ProjassetsSong,
     ProjassetsVisualConfig,
 } from "../../pxtservices/projassets";
 import { getProjectSimulatorThemePreference } from "./simulatorTheme";
@@ -27,6 +28,23 @@ export function getImageAssets(project: pxt.TilemapProject): ProjassetsImage[] {
             data: image.jresData,
         };
         if (image.meta.displayName) listed.displayName = image.meta.displayName;
+        return listed;
+    });
+}
+
+/**
+ * Returns the song assets of `project` as simulator extensions see them: every
+ * song in the project's own assets, named by the key of its entry in the
+ * project's asset file. Songs supplied by extensions are not included.
+ */
+export function getSongAssets(project: pxt.TilemapProject): ProjassetsSong[] {
+    return project.getAssets(pxt.AssetType.Song).map(song => {
+        const listed: ProjassetsSong = {
+            kind: "song",
+            // the key under which the project's asset file stores the song
+            id: song.id.substr(song.id.lastIndexOf(".") + 1),
+        };
+        if (song.meta.displayName) listed.displayName = song.meta.displayName;
         return listed;
     });
 }
@@ -110,6 +128,7 @@ export interface ProjassetsOpenProject {
 // per asset kind the host lists: returns the project's assets of that kind
 const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => ProjassetsAsset[] } = {
     image: getImageAssets,
+    song: getSongAssets,
 };
 
 class ProjassetsRequestError extends Error {

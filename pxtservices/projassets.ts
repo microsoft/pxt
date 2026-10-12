@@ -21,7 +21,7 @@
 export const PROJASSETS_MESSAGE_TYPE = "projassets";
 
 /** A kind of asset the editor lists. */
-export type ProjassetsKind = "image";
+export type ProjassetsKind = "image" | "song";
 
 /**
  * Why a request failed. Clients branch on the code; the message that
@@ -99,8 +99,24 @@ export interface ProjassetsImage {
     data: string;
 }
 
+/** A song asset of the project. */
+export interface ProjassetsSong {
+    kind: "song";
+    /**
+     * The key of the song's entry in the project's asset file
+     * (`images.g.jres`), e.g. `song1`. It identifies the song among the
+     * project's songs and stays the same when the song is renamed.
+     */
+    id: string;
+    /** The name the user gave the song; absent if it has none. */
+    displayName?: string;
+}
+
 /** An asset of the project; `kind` tells which. */
-export type ProjassetsAsset = ProjassetsImage;
+export type ProjassetsAsset = ProjassetsImage | ProjassetsSong;
+
+/** The asset each kind is listed as, by kind: `ProjassetsAssetOfKind["image"]` is {@link ProjassetsImage}. */
+export type ProjassetsAssetOfKind = { [Kind in ProjassetsKind]: Extract<ProjassetsAsset, { kind: Kind }> };
 
 /**
  * The project's visual configuration: how the editor draws the project's
@@ -133,21 +149,29 @@ export interface ProjassetsProjectConfig extends ProjassetsVisualConfig {
     name: string;
 }
 
-export interface ProjassetsAssetsReply extends ProjassetsMessage, ProjassetsProjectConfig {
+/**
+ * The reply to a {@link ProjassetsListRequest}. `K` narrows the reply to the
+ * kind asked for; it defaults to every kind.
+ */
+export interface ProjassetsAssetsReply<K extends ProjassetsKind = ProjassetsKind> extends ProjassetsMessage, ProjassetsProjectConfig {
     subtype: "assets";
     /** The kind the request asked for. */
-    kind: ProjassetsKind;
+    kind: K;
     /**
      * Every named asset of that kind in the project, including any the editor
      * created itself, in no guaranteed order.
      */
-    assets: ProjassetsAsset[];
+    assets: ProjassetsAssetOfKind[K][];
 }
 
-/** What {@link ProjassetsClient.list} resolves with: the listed assets, the project's name, and its visual configuration. */
-export interface ProjassetsListing extends ProjassetsProjectConfig {
+/**
+ * What {@link ProjassetsClient.list} resolves with: the listed assets, the
+ * project's name, and its visual configuration. `K` is the listed kind, and
+ * types the assets as assets of that kind; it defaults to every kind.
+ */
+export interface ProjassetsListing<K extends ProjassetsKind = ProjassetsKind> extends ProjassetsProjectConfig {
     /** Every named asset of the listed kind in the project, in no guaranteed order. */
-    assets: ProjassetsAsset[];
+    assets: ProjassetsAssetOfKind[K][];
 }
 
 export interface ProjassetsAckReply extends ProjassetsMessage {
@@ -255,12 +279,13 @@ export class ProjassetsClient {
 
     /**
      * Lists the project's named assets of one kind, with the project's name
-     * and visual configuration.
+     * and visual configuration. The listing's assets are typed as assets of
+     * that kind, so `list("image")` resolves with images.
      * @param kind the kind of asset to list
      */
-    async list(kind: ProjassetsKind): Promise<ProjassetsListing> {
-        const reply = await this.requestAsync({ subtype: "list", kind }, "assets") as ProjassetsAssetsReply;
-        const listing: ProjassetsListing = { assets: reply.assets, name: reply.name, palette: reply.palette };
+    async list<K extends ProjassetsKind>(kind: K): Promise<ProjassetsListing<K>> {
+        const reply = await this.requestAsync({ subtype: "list", kind }, "assets") as ProjassetsAssetsReply<K>;
+        const listing: ProjassetsListing<K> = { assets: reply.assets, name: reply.name, palette: reply.palette };
         if (reply.theme) listing.theme = reply.theme;
         return listing;
     }

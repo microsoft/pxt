@@ -69,6 +69,7 @@ import {
 import {
     createProjassetsConfig,
     getImageAssets,
+    getSongAssets,
     getVisualConfig,
     ProjassetsConfig,
     ProjassetsHost,
@@ -2055,6 +2056,7 @@ describe("projassets image listing", () => {
         // one entry per kind: a kind added without an entry fails to compile
         const assetTypes: { [K in ProjassetsKind]: pxt.AssetType } = {
             image: pxt.AssetType.Image,
+            song: pxt.AssetType.Song,
         };
         for (const kind of Object.keys(assetTypes) as ProjassetsKind[])
             chai.expect(assetTypes[kind] as string, kind).equals(kind);
@@ -2142,6 +2144,64 @@ describe("projassets image listing", () => {
     });
 });
 
+describe("projassets song listing", () => {
+    let project: pxt.TilemapProject;
+
+    beforeEach(() => {
+        project = new pxt.TilemapProject();
+    });
+
+    it("describes each song by its asset file id, kind and display name, without a displayName field when it has none", () => {
+        project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
+        project.createNewSong(pxt.assets.music.getEmptySong(2));
+        const listed = getSongAssets(project);
+        chai.expect(listed).to.have.deep.members([
+            { kind: "song", id: "song1", displayName: "tune" },
+            { kind: "song", id: "song2" },
+        ]);
+        chai.expect(listed.find(s => s.id === "song2")).not.to.have.property("displayName");
+    });
+
+    it("reports the ids under which the project's asset file stores each song", () => {
+        project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
+        project.createNewSong(pxt.assets.music.getEmptySong(2));
+        const jres = project.getProjectAssetsJRes();
+        const listed = getSongAssets(project);
+        chai.expect(listed.length).equals(2);
+        for (const song of listed) {
+            const entry = jres[song.id];
+            chai.expect(entry, song.id).not.equals(undefined);
+            chai.expect(typeof entry === "string" ? undefined : entry.mimeType, song.id).equals(pxt.SONG_MIME_TYPE);
+        }
+    });
+
+    it("lists songs only, not assets of other kinds", () => {
+        project.createNewProjectImage(testBitmap(2, 2), "picture");
+        project.createNewTile(testBitmap(16, 16), undefined, "grass");
+        project.getTransparency(16);
+        project.createNewAnimationFromData([testBitmap(2, 2)], 100, "walk");
+        project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
+        project.createNewJsonAsset({ level: 1 }, "level.json", "levelData");
+        chai.expect(getSongAssets(project).map(s => s.displayName)).deep.equals(["tune"]);
+        chai.expect(getSongAssets(project).every(s => s.kind === "song")).equals(true);
+    });
+
+    it("lists the project's own songs, not those its extensions supply", () => {
+        project.loadAssetsJRes({
+            "*": { mimeType: pxt.SONG_MIME_TYPE, dataEncoding: "base64", namespace: pxt.sprite.SONG_NAMESPACE },
+            fromExtension: { data: pxt.assets.music.encodeSongToHex(pxt.assets.music.getEmptySong(2)), displayName: "fromExtension" },
+        } as any, true);
+        project.createNewSong(pxt.assets.music.getEmptySong(2), "own");
+        chai.expect(getSongAssets(project).map(s => s.displayName)).deep.equals(["own"]);
+    });
+
+    it("keeps a song's id when the song is renamed", () => {
+        const song = project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
+        project.updateAsset({ ...song, meta: { ...song.meta, displayName: "melody" } });
+        chai.expect(getSongAssets(project)).deep.equals([{ kind: "song", id: "song1", displayName: "melody" }]);
+    });
+});
+
 describe("projassets host", () => {
     const SCOPE = "owner/repo";
 
@@ -2223,6 +2283,16 @@ describe("projassets host", () => {
         chai.expect(reply.assets.length).equals(2);
     });
 
+    it("lists the open project's songs", async () => {
+        project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
+        project.createNewSong(pxt.assets.music.getEmptySong(2));
+        const reply = await send({ subtype: "list", kind: "song" }) as ProjassetsAssetsReply;
+        chai.expect(reply.subtype).equals("assets");
+        chai.expect(reply.kind).equals("song");
+        chai.expect(reply.assets).deep.equals(getSongAssets(project));
+        chai.expect(reply.assets.length).equals(2);
+    });
+
     it("carries the project's palette and simulator theme in each list reply", async () => {
         const reply = await send({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
         chai.expect(reply.palette).deep.equals(TARGET_PALETTE);
@@ -2257,7 +2327,7 @@ describe("projassets host", () => {
     });
 
     it("refuses kinds it does not list with UNSUPPORTED_KIND", async () => {
-        for (const kind of ["tile", "tilemap", "animation", "song", "json", "toString", "__proto__"])
+        for (const kind of ["tile", "tilemap", "animation", "json", "toString", "__proto__"])
             await expectError({ subtype: "list", kind }, "UNSUPPORTED_KIND");
     });
 
@@ -2867,7 +2937,9 @@ describe("projassets client", () => {
             project.updateAsset(withBitmap(image, edited));
             await settle();
             chai.expect(changes).equals(1);
-            chai.expect((await client.list("image")).assets.map(i => [i.width, i.height, i.data]))
+            // list types its assets by the kind it lists: this fails to compile otherwise
+            const images: ProjassetsImage[] = (await client.list("image")).assets;
+            chai.expect(images.map(i => [i.width, i.height, i.data]))
                 .deep.equals([[5, 5, pxt.sprite.base64EncodeBitmap(edited)]]);
             files[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE });
             mainPkg.loadConfig(true);
