@@ -41,13 +41,6 @@ export interface EditorToggleLayout {
     dropdownExtensions: string[];
 }
 
-// PR NOTE [Issue 6] -- lift into the PR description, then remove.
-// Simulator extension editor tabs are entries of the existing language
-// dropdown, after JavaScript and Python under a separator, never items of
-// their own on the bar. While one is offered the dropdown is shown even
-// where the target shows none, and the item before it shows the active
-// choice, so the bar reads Blocks | <tab> while a tab is active. With no
-// tab offered the layout is the toggle's own.
 /** Returns the text-language items and language dropdown of the editor toggle for `input`. */
 export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorToggleLayout {
     const { showJavaScript, showPython, showBlocks, pythonIsActive, extensionEditors, activeExtensionEditor, lastExtensionEditor } = input;
@@ -79,11 +72,6 @@ export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorTog
     const dropdownLanguages: EditorToggleLanguage[] = [];
     if (showJavaScript) dropdownLanguages.push("javascript");
     if (showPython) dropdownLanguages.push("python");
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // While no text language and no tab is active (Blocks, say), the trigger
-    // shows the tab shown last, if it is still offered, as it shows Python
-    // when Python was the text language chosen last; with no such tab it
-    // shows the text language chosen last, as the toggle does.
     let trigger: EditorToggleItem;
     const textLanguageActive = input.isJavaScriptActive || input.isPythonActive;
     if (activeExtensionEditor && extensionEditors.indexOf(activeExtensionEditor) >= 0) trigger = { extension: activeExtensionEditor };
@@ -103,12 +91,6 @@ export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorTog
     };
 }
 
-// PR NOTE [Issue 6] -- lift into the PR description, then remove.
-// A tab shows as MakeCode's own editors do: its label as text, with its
-// icon, if any, on the text's left. The icon is a font icon's class names,
-// rendered as JavaScript's and Python's are, or an SVG's URL, rendered as a
-// CSS mask over the item's text color, so it follows every color theme,
-// high contrast included, as the font icons do.
 /** What the editor toggle shows for a simulator extension's editor tab. */
 export interface SimxEditorMenuItemContent {
     /** The item's text: always the tab's label. */

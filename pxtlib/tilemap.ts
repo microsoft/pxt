@@ -1090,16 +1090,6 @@ namespace pxt {
             this.getAssetCollection(type).removeListener(listener);
         }
 
-        // PR NOTE [Issue 5] -- lift into the PR description, then remove.
-        // The project-wide asset change event the asset provider (Issue 5,
-        // generated-docs/pxt-issue-drafts) needs: pxt had per-asset listeners
-        // only. It fires wherever the asset revision moves -- onChange, which
-        // the create/update/duplicate/remove paths call before they mutate,
-        // and undo/redo, which set the revision directly -- so it tracks the
-        // same changes that mark the project's asset files for rebuild.
-        // Mutations that move no revision (getTransparency minting a tile,
-        // cleanupTemporaryAssets, removeInactiveBlockAssets, the jres loaders)
-        // do not fire it.
         /**
          * Adds a listener called on each change to the project's assets,
          * including undo and redo. The listener is called synchronously, and

@@ -104,31 +104,6 @@ export class File implements IFile {
         }
     }
 
-    // PR NOTE [Issue 2] (forced writes vs the editor's save debounce) -- lift
-    // into the PR description, then remove. Issue 2 in
-    // generated-docs/pxt-issue-drafts.
-    //
-    // Issue: setContentAsync(force) saved the new content and then fired
-    // forceChangeCallback WITHOUT awaiting it. The open text editor reloads
-    // the file from that callback, so there is a window between the save and
-    // the reload in which the editor still shows the OLD content. All of the
-    // webapp's save paths funnel through saveCurrentSourceAsync (the 500ms
-    // typing debounce, file switches, tab hide, typecheck), and each writes
-    // the editor buffer back into the file -- so a save landing inside that
-    // window silently reverted the just-saved content, AFTER the writer had
-    // already been told the write succeeded. Reachable by anything that
-    // writes file content behind the open editor: a simulator extension
-    // writing a project file through the projfs API while the user has that
-    // file open in the text editor, and pxt's own Host.writeFile(force).
-    //
-    // Resolution: the force-change callback may now return the editor's
-    // reload promise (monaco.tsx returns loadFileAsync). setContentAsync
-    // records the pending reload (editorReload, exposed via
-    // editorReloadAsync) and resolves only after the reload completes;
-    // saveCurrentSourceAsync waits out a pending reload before saving the
-    // buffer, so a save can never write content that predates the file's.
-    // A reload failure is reported, not raised: the write itself applied,
-    // and its caller must not see an applied write as failed.
     /**
      * Replaces the file's content and saves it.
      * @param force if true and a force-change callback is set, the editor
@@ -510,10 +485,6 @@ export class EditorPackage {
         this.updateGitJsonCache()
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // Every save of a project goes through getAllFiles, which leaves out the
-    // serial editor's file and every simulator extension editor tab marker
-    // (pxt.isSessionOnlyFile), so neither is ever saved.
     getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
         for (const name of Object.keys(r)) {
@@ -546,9 +517,6 @@ export class EditorPackage {
         return workspace.saveAsync(this.header, this.getAllFiles())
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // The file explorer lists sortedFiles, which hides session-only files
-    // (pxt.isSessionOnlyFile) outside debug mode, as it hid the serial file.
     sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
@@ -920,11 +888,6 @@ export function notifySyncDone(updated: pxt.Map<number>) {
 export function loadPkgAsync(id: string, targetVersion?: string) {
     mainPkg = new pxt.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id;
-    // PR NOTE [Issue 5] -- lift into the PR description, then remove.
-    // Settles the editor package's loadedAsync with this load, for the asset
-    // provider and the project-file API, which touch nothing of a project
-    // before it has loaded (see the PR note on ProjassetsOpenProject in
-    // projassetsHost.ts).
     const loading = getEditorPkg(mainPkg);
 
     return loading.trackLoadAsync(theHost.downloadPackageAsync(mainPkg)

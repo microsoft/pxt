@@ -20,11 +20,6 @@ export interface EditorToolbarControls {
     showZoomControls: boolean;
 }
 
-// PR NOTE [Issue 6] -- lift into the PR description, then remove.
-// The toolbar's undo, redo and zoom decision, moved here unchanged from
-// EditorToolbar.renderCore so it can be tested without a DOM, with one new
-// input: an editor that has none of these controls, such as a simulator
-// extension editor tab, shows the toolbar without them.
 /** Returns the editing controls the editor toolbar shows for `input`. */
 export function getEditorToolbarControls(input: EditorToolbarControlsInput): EditorToolbarControls {
     const { readOnly, debugging, hideZoomAndUndo, hideToolbox, editorHasEditingControls } = input;

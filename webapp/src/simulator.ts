@@ -332,7 +332,6 @@ export async function initAsync(cfg: SimulatorConfig) {
     window.addEventListener("message", ev => simxEditorHost.handleMessage(ev), false);
 }
 
-// PR NOTE [Issue 6] -- lift into the PR description, then remove.
 /**
  * Returns the editor tabs of simulator extensions the editor offers for the open
  * project, in registration order: those of registrations that declare and enable

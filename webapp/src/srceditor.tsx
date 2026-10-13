@@ -139,12 +139,6 @@ export class Editor implements IEditor {
         return true
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // An editor with no undo, redo or zoom of its own, such as a simulator
-    // extension editor tab, can still show the editor toolbar, which carries
-    // Download, the project name and the simulator collapse button: it
-    // returns false here and the toolbar leaves those controls out, rather
-    // than showing them disabled.
     /** Whether the editor toolbar shows undo, redo and zoom for this editor. */
     hasEditorToolbarEditingControls() {
         return true

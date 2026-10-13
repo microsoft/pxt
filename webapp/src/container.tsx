@@ -627,14 +627,8 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
     renderCore() {
         const active = this.props.isActive();
         const className = `base-menuitem ${this.props.className} ${active ? "selected" : ""}`;
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // An item may show an SVG icon (a simulator extension editor tab's)
-        // in place of a font icon. sui.Item draws its icon before its text
-        // and its children after both, so this item draws the two itself, in
-        // the order and with the classes sui.Item gives a font icon and its
-        // text; the SVG is a mask over the text's color (see
-        // .simx-editor-icon). An item with text and no icon keeps its text in
-        // every layout, since it has no icon to fall back to.
+        // An item with an SVG icon draws the icon and its text itself, with the
+        // classes sui.Item gives a font icon and its text.
         if (this.props.iconUrl)
             return <sui.Item className={className} role={this.props.role || "button"} active={active} onClick={this.props.onClick}
                 title={this.props.title || this.props.text} ariaLabel={this.props.ariaLabel}>
@@ -800,8 +794,6 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const showJavaScript = !noJavaScript && !pyOnly && !blocksOnly;
         const showSandbox = sandbox && !headless;
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // Simulator extension editor tabs hide where the Assets item hides.
         const extensionEditors = sandbox ? [] : parent.getSimulatorExtensionEditors();
         const activeExtensionEditor = extensionEditors.find(e => parent.isSimulatorExtensionEditorActive(e.key));
         const layout = getEditorToggleLayout({
@@ -814,9 +806,6 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
             isPythonActive: parent.isPythonActive(),
             extensionEditors: extensionEditors.map(e => e.key),
             activeExtensionEditor: activeExtensionEditor?.key,
-            // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-            // The tab shown last stays in the trigger while Blocks is active,
-            // as Python, the language chosen last, does (see getEditorToggleLayout).
             lastExtensionEditor: sandbox ? undefined : parent.getLastSimulatorExtensionEditor(),
         });
         const { showDropdown, dropdownActive } = layout;

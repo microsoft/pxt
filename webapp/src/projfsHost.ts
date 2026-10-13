@@ -116,21 +116,13 @@ export interface ProjfsPackage {
     saveFileAsync(name: string): Promise<void>;
 }
 
-// PR NOTE [Issue 1] -- lift into the PR description, then remove.
-// This is the fix for Issue 1 (generated-docs/pxt-issue-drafts: programmatic
-// writes behind the open text editor reverted by save-back). The write forces
-// EXACTLY when the written file is the one the text editor shows: forcing
-// reloads the editor so the stale buffer cannot be saved back over the write,
-// and NOT forcing for any other file keeps an unrelated write from destroying
-// unsaved typing in the shown file (the editor's reload callback reloads the
-// shown file, not the written one). The promise settling only after the
-// editor shows the content is the companion fix for Issue 2 (the
-// save-debounce race; see the PR notes in package.ts, app.tsx, monaco.tsx).
 /**
  * Creates or replaces the stored file `name` of `epkg` and saves it. If the
  * text editor shows the file, it reloads to show `content`, which replaces any
  * change not yet saved from it and resets its undo history and cursor; the
- * promise then settles once the editor shows `content`.
+ * promise then settles once the editor shows `content`. Only a write to the
+ * shown file forces that reload: forcing any other write would discard the
+ * shown file's unsaved changes.
  * @param editor the editor showing the project, or undefined if there is none
  */
 export function writeProjectFileAsync(epkg: ProjfsPackage, editor: ProjfsEditor | undefined, name: string, content: string): Promise<void> {
@@ -152,16 +144,6 @@ export interface ProjfsConfigPackage {
     updateConfigAsync(update: (config: pxt.PackageConfig) => void): Promise<void> | null;
 }
 
-// PR NOTE [Issue 3] -- lift into the PR description, then remove.
-// This is the consumer-side fix for Issue 3 (generated-docs/pxt-issue-drafts:
-// updateConfigAsync returns null on failure, so a failed pxt.json update
-// reads as success). Before, the null return was coerced into a resolved
-// promise: the file stayed stored but unlisted while the requester was acked,
-// later reads reported it absent, and its bytes still counted against the
-// scope quota. Rejecting here makes the request answer FAILED; the file
-// remains stored, so a retry of the listing completes the operation. The
-// issue's fix direction (updateConfigAsync itself rejecting on failure)
-// would land upstream; this call site stays correct either way.
 /**
  * Adds `name` to the "files" list of the pxt.json of `epkg`, or removes it
  * from the "files" and "testFiles" lists, and saves pxt.json. Rejects if

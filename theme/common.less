@@ -160,9 +160,6 @@ pre {
     border: unset;
 }
 
-/* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
-/* A simulator extension editor tab (#simxEditor) shows the editor toolbar,
-   so its area ends above the toolbar wherever its peers' areas do. */
 #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor, #simulator .editor-sidebar {
     bottom: @editorToolsCollapsedHeight;
 }
@@ -582,17 +579,11 @@ div.simframe > iframe {
     float: right;
 }
 
-/* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
 /* A simulator extension editor tab's SVG icon: a mask over the item's text
-   color, so it takes that color in every theme, high contrast included, as a
-   font icon does. Its box is the one Semantic UI gives a font icon (i.icon,
-   which this span is not) in the same slots: an inline block 1.18em
-   (@iconWidth) by 1em, with the menu item's icon margin and opacity. Its
-   "icon" class gives it the rules Semantic UI and the themes apply to .icon
-   by class, such as the dropdown entries' icon margin. An empty inline block
-   sits on the text's baseline, 0.125em above where a font icon's glyph box
-   sits in a dropdown entry's line; the bar's items are flex rows, where
-   vertical-align does not apply. */
+   color, in the box Semantic UI gives a font icon (i.icon) in the same slots:
+   1.18em (@iconWidth) by 1em, with the menu item's icon margin and opacity.
+   The vertical-align lowers it from the text's baseline to where a font
+   icon's glyph box sits; flex rows ignore it. */
 .simx-editor-icon {
     display: inline-block;
     width: 1.18em;
@@ -1767,11 +1758,9 @@ p.ui.font.small {
     div.simframe:not(:first-child) {
         display: unset;
     }
-    // PR NOTE [Issue 8] -- lift into the PR description, then remove.
-    // A simulator extension registered hideInFullscreen is hidden here but
-    // stays mounted, and the main frame takes the full width as an only
-    // child does. These follow the :not(:first-child) rule, which has the
-    // same specificity.
+    // A frame registered hideInFullscreen is hidden but stays mounted, and the
+    // main frame takes the full width as an only child does. These rules must
+    // follow the :not(:first-child) rule, which has the same specificity.
     div.simframe.simx-hide-fullscreen {
         display: none !important;
     }
@@ -2298,8 +2287,6 @@ p.ui.font.small {
         margin: 0;
     }
 
-    /* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
-    /* #simxEditor: see the editor areas' bottom rule above. */
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor {
         bottom: @editorToolsCollapsedMobileHeight;
     }
@@ -2632,8 +2619,6 @@ div.simframe.ui.embed {
         display: inherit;
     }
 
-    /* PR NOTE [Issue 6] -- lift into the PR description, then remove. */
-    /* #simxEditor: see the editor areas' bottom rule above. */
     #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor, #editortools, #msg {
         bottom: 1.5rem !important;
     }

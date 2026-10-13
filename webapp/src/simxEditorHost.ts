@@ -9,15 +9,11 @@ import {
     SimxEditorSimulatorState,
 } from "../../pxtservices/simxeditor";
 
-// PR NOTE [Issue 6] -- lift into the PR description, then remove.
-// The editor side of simulator extension editor tabs: which registrations
-// offer a tab to the open project, the tab frames themselves (one per
-// registration, created on first selection, kept loaded and merely hidden
-// across editor switches, removed only when the project closes), their
-// lifecycle events, and the MessageChannel the editor brokers between a tab
-// frame and the simulator frame of the same key. The simulator driver knows
-// nothing of tab frames beyond finding one by its data-simxkey when it
-// gates a request; it only reports its own simulator frames' loads.
+// The editor side of simx editor tabs: the registrations that
+// offer a tab to the open project, the tab frames (one per registration,
+// created on first selection, hidden across editor switches, removed when the
+// project closes), their lifecycle events, and the MessageChannel the editor
+// brokers between a tab frame and the simulator frame of the same key.
 
 /** The fields of a simulator extension registration, as the simulator driver resolved them, that its editor tab uses. */
 export interface SimxEditorRegistrationConfig {
@@ -62,10 +58,6 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
             return {
                 key,
                 label: simx.editor.label,
-                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-                // The driver resolves an iconUrl exactly when the icon is an
-                // SVG path, so a tab carries either a font icon's class names
-                // or an SVG's URL, never both.
                 icon: simx.iconUrl ? undefined : simx.editor.icon,
                 iconUrl: simx.iconUrl,
                 url: simx.editorUrl,
@@ -208,14 +200,6 @@ export class SimxEditorHost {
         this.setShown(undefined);
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // The editor toggle keeps showing the tab shown last while Blocks is
-    // active, as it keeps showing Python, the text language chosen last. The
-    // language choice is a user-level preference, saved across projects; a
-    // tab belongs to its project and lives only for the project's session,
-    // so the host remembers it beside the tab frames: from when the tab is
-    // shown until a text language is shown (see forgetLastShown) or the
-    // tab's frame is removed with its project (see close).
     /**
      * Returns the key of the tab shown last, kept while the tab is hidden;
      * undefined if no tab was shown since `forgetLastShown`, or that tab's
@@ -230,11 +214,7 @@ export class SimxEditorHost {
         this.lastShownKey = undefined;
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // Opening a tab moves focus into it, as opening JavaScript or Python
-    // focuses the text editor; that focus leaving the language dropdown is
-    // what closes the dropdown after an entry is chosen.
-    /** Moves focus into the shown tab's frame; does nothing while no tab is shown. */
+    /** Moves focus into the shown tab's frame, which closes the language dropdown after a tab is chosen; does nothing while no tab is shown. */
     focus() {
         if (this.shownKey) this.tabs[this.shownKey]?.frame.focus();
     }

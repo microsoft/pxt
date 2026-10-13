@@ -399,9 +399,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // An editor without undo, redo or zoom shows the toolbar without
-        // them; their button groups below are then simply absent.
         const { showUndoRedo, showZoomControls } = getEditorToolbarControls({
             readOnly,
             debugging: !!debugging,

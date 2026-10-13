@@ -72,20 +72,10 @@ declare namespace pxt {
         allowPopups?: boolean; // If true, the iframe sandbox gains allow-popups and allow-popups-to-escape-sandbox. Default: false.
         allowClipboardWrite?: boolean; // If true, the iframe allow list gains clipboard-write. Default: false.
         allowDownloads?: boolean; // If true, the iframe sandbox gains allow-downloads. Default: false.
-        // PR NOTE [Issue 5] -- lift into the PR description, then remove. Each simulator extension
-        // capability family carries its own opt-in grant: allowFileWrite for the file API (its own
-        // folder of the project), allowAssetRead for the asset provider (all of the project's named
-        // assets and its visual configuration -- palette, simulator theme -- read-only).
         allowFileWrite?: boolean; // If true, the frame may list, read, write and delete files in its own folder of the project ("projfs" messages). Default: false.
         allowAssetRead?: boolean; // If true, the frame may list the open project's assets and visual configuration (palette, simulator theme) and subscribe to their changes ("projassets" messages). Default: false.
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove. A simulator extension may
-        // contribute an editor tab: `editor` describes it and `allowEditorTab` enables it, the way the
-        // other grants enable their capability families. With either missing the editor shows no tab,
-        // brokers no port, and the extension's simulator frame URL carries no `editor=1`. The grants
-        // above apply to the registration, so to its tab frame as well as its simulator frame.
         editor?: SimulatorExtensionEditorConfig; // The extension's editor tab. Ignored unless allowEditorTab is set; refused on a registration with permanent set to false. Default: undefined.
-        allowEditorTab?: boolean; // If true, the editor offers the tab `editor` describes, brokers a port between it and the simulator frame, and serves the simulator frame's request to open it ("simxeditor" messages). Default: false.
-        // PR NOTE [Issue 8] -- lift into the PR description, then remove.
+        allowEditorTab?: boolean; // If true, the editor offers the tab `editor` describes, brokers a port between it and the simulator frame, and serves the simulator frame's request to open it ("simxeditor" messages); the registration's grants above apply to the tab frame as well as the simulator frame. Default: false.
         hideInFullscreen?: boolean; // If true, hide the iframe in fullscreen-simulator mode; it stays loaded and keeps messaging. Default: false.
         // backend-only options
         sha?: string; // The commit to checkout (must exist in the branch/ref). Required.

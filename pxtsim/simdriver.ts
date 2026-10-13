@@ -1,8 +1,4 @@
 namespace pxsim {
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // An editor tab's icon is a font icon's class names, as MakeCode's own
-    // editor toggle items use (e.g. "xicon js"), unless it reads as a path;
-    // no MakeCode icon class name contains a "/" or ends in ".svg".
     /** Returns true if a simulator extension editor tab's `icon` is the path to an SVG within the artifact, rather than a font icon's class names. */
     function isSimulatorExtensionIconPath(icon: string | undefined): boolean {
         return !!icon && (icon.indexOf("/") >= 0 || /\.svg$/i.test(icon));
@@ -55,7 +51,6 @@ namespace pxsim {
                 icon?: string;
             };
             allowEditorTab?: boolean;
-            // PR NOTE [Issue 8] -- lift into the PR description, then remove.
             hideInFullscreen?: boolean;
             // Additional fields outside of pxt.SimulatorExtensionConfig
             url?: string; // Computed URL
@@ -199,7 +194,6 @@ namespace pxsim {
     const PERMANENT = "permanent"
     const FRAME_DATA_SIMX_KEY = "simxkey"
     const FRAME_DATA_SIMX_ROLE = "simxrole"
-    // PR NOTE [Issue 8] -- lift into the PR description, then remove.
     // The wrapper class of a simulator extension frame hidden in
     // fullscreen-simulator mode, and the container class present while one
     // is spawned; theme/common.less styles both under .fullscreensim.
@@ -276,12 +270,6 @@ namespace pxsim {
                 // Add the origin to the allowed origins
                 this._allowedOrigins.push(new URL(simx.url).origin);
 
-                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-                // The editor tab's page, and its icon when the icon is an SVG
-                // path rather than a font icon's class names, resolve as the
-                // extension's index does, so they are pinned with the rest of
-                // its artifact. A tab needs a frame that outlives runs, so a
-                // registration that is not permanent cannot declare one.
                 if (simx.editor && simx.allowEditorTab) {
                     if (!simx.permanent) {
                         pxsim.error(`simulator extension ${key}: an editor tab needs a permanent registration; ignoring its editor`);
@@ -602,13 +590,6 @@ namespace pxsim {
             }
         }
 
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // The spawn path of a simulator extension frame, factored out of the
-        // message handler so the editor can also start the frame when it opens
-        // the extension's editor tab: a tab frame never exists without its
-        // simulator frame. The first message on the extension's channel uses
-        // it exactly as before; an existing frame is found by its channel and
-        // never duplicated, and a later run posts the run message to it.
         /**
          * Returns the frame of the simulator extension registered under `key`, creating
          * it if none exists: appended to the simulator container and started with the
@@ -647,7 +628,6 @@ namespace pxsim {
             const projectId = this.options.getProjectId?.();
             if (projectId)
                 url.searchParams.set("project", projectId);
-            // PR NOTE [Issue 6] -- lift into the PR description, then remove.
             // Tells the frame at boot that the editor offers its editor tab.
             if (simulatorExtension.editorUrl)
                 url.searchParams.set("editor", "1");
@@ -674,11 +654,8 @@ namespace pxsim {
             pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(channel))
             if (permanent)
                 messageFrame.dataset[PERMANENT] = "true";
-            // PR NOTE [Issue 8] -- lift into the PR description, then remove.
-            // A registration may ask for its frame to be hidden in
-            // fullscreen-simulator mode; the frame stays mounted, so its
-            // messaging continues, and the container class lets the main
-            // frame take the full width beside the hidden sibling.
+            // The hidden frame stays mounted, so its messaging continues; the container
+            // class lets the main frame take the full width beside it.
             if (hideInFullscreen) {
                 pxsim.U.addClass(wrapper, HIDE_IN_FULLSCREEN);
                 pxsim.U.addClass(this.container, HAS_HIDE_IN_FULLSCREEN);
@@ -815,7 +792,6 @@ namespace pxsim {
         private unload() {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
-            // PR NOTE [Issue 8] -- lift into the PR description, then remove.
             pxsim.U.removeClass(this.container, HAS_HIDE_IN_FULLSCREEN);
             this.setState(SimulatorState.Unloaded);
             this._runOptions = undefined; // forget about program
@@ -1065,11 +1041,8 @@ namespace pxsim {
         }
 
         private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
-            // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-            // A simulator extension's editor tab frame is not a simulator frame:
-            // only its project-file and project-asset requests are served, under
-            // its registration's grants, and nothing it posts reaches the
-            // simulators.
+            // An editor tab frame is not a simulator frame: only its project-file and
+            // project-asset requests are served, and nothing it posts reaches the simulators.
             if (this.editorFrameOf(source)) {
                 switch (msg.type) {
                     case 'projfs': this.handleExtensionRequest(msg, source, this.options.onProjfsMessage, "allowFileWrite"); break;
@@ -1134,16 +1107,8 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
-                // PR NOTE [Issue 5] -- lift into the PR description, then remove.
-                // The file API is gated by its own registration flag,
-                // allowFileWrite, as the asset provider is by allowAssetRead:
-                // each capability family carries its own grant, and a
-                // registered frame without it is refused with PERMISSION_DENIED.
                 case 'projfs': this.handleExtensionRequest(msg, source, this.options.onProjfsMessage, "allowFileWrite"); break;
                 case 'projassets': this.handleExtensionRequest(msg, source, this.options.onProjassetsMessage, "allowAssetRead"); break;
-                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-                // The simulator frame's request to open its editor tab passes the
-                // same gate, under the allowEditorTab grant.
                 case 'simxeditor': this.handleExtensionRequest(msg, source, this.options.onSimulatorExtensionEditorMessage, "allowEditorTab"); break;
                 default:
                     this.postMessage(msg, source);
@@ -1177,32 +1142,6 @@ namespace pxsim {
             return reply;
         }
 
-        // PR NOTE [Issue 4] -- lift into the PR description, then remove.
-        // This is the fix for Issue 4 (generated-docs/pxt-issue-drafts:
-        // messages from unregistered frames were dropped with no reply, so
-        // the sender could not tell "not allowed" from "lost" and could only
-        // hang or time out). Every request from a simulator frame now gets an
-        // answer: either it reaches the handler, or it is refused with the
-        // stable UNREGISTERED code echoing the request id so the sender fails
-        // fast with a diagnosable reason. Windows that are not simulator
-        // frames stay dropped -- there is no frame to reply to.
-        //
-        // PR NOTE [Issue 5] -- lift into the PR description, then remove.
-        // Issue 5 adds per-capability grants to this gate: `permission` names
-        // the registration flag (allowFileWrite for projfs, allowAssetRead for
-        // projassets) a frame's simulatorExtensions entry must set for the
-        // request to reach its handler; a registered frame without it is
-        // refused with the stable PERMISSION_DENIED code.
-        //
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // Grants apply to the registration, so to both of its frames: a
-        // request from an extension's editor tab frame (found by its
-        // data-simxkey) passes this gate under the same flags as one from its
-        // simulator frame, and reaches the handler with the same key. The
-        // open request (allowEditorTab) is served to simulator frames only,
-        // and needs a registration that declares and enables a tab. Each
-        // frame's replies go through one function per frame, so a handler
-        // can tell the frames of one key apart.
         /**
          * Passes a request from a simulator extension frame to `handler` with the
          * frame's key. A request from any other simulator frame, from a frame whose

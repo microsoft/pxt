@@ -643,20 +643,9 @@ export class ProjectView
     }
 
     saveCurrentSourceAsync(): Promise<void> {
-        // PR NOTE [Issue 2] -- lift into the PR description, then remove.
-        // This method is the single place the editor buffer is written back
-        // into the current file, and every save path funnels through it (the
-        // typing debounce, file switches, tab hide, typecheck). While a
-        // forced change to the shown file is reloading the editor (a projfs
-        // write from a simulator extension, or Host.writeFile(force)), the
-        // buffer predates the file's content; saving it here was the
-        // save-back that silently reverted an applied, acknowledged write
-        // (see the PR note on File.setContentAsync). Wait out the reload,
-        // then re-enter and save what the editor shows -- but only if the
-        // same file is still open, since the user may have switched files
-        // while the reload was pending. Typing made after the reload is
-        // saved as usual; typing made before the forced write is replaced
-        // by it, which is the established forced-write semantic.
+        // While a forced write to the shown file is reloading the editor, the
+        // buffer predates the file's content: wait out the reload, then save what
+        // the editor shows if the same file is still open.
         const file = this.editorFile;
         const reload = file.editorReloadAsync();
         if (reload)
@@ -868,21 +857,12 @@ export class ProjectView
         this.saveFileAsync().then(() => this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`)));
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // Opening a simulator extension's editor tab follows openSerial: the tab
-    // is selected by a marker file, created with a throwaway buffer the first
-    // time the tab is opened in the session. The file is virtual, so
-    // switching to it leaves the simulator alone, and session-only
-    // (pxt.isSessionOnlyFile), so it is never saved, listed, synced, shared
-    // or exported. Like openSerial it does not save before switching; the
-    // switch itself saves the editor being left, as every editor switch does.
+    // A simulator extension's editor tab is selected by a virtual, session-only
+    // marker file, created the first time the tab is opened in the session.
     openSimulatorExtensionEditor(key: string): boolean {
         const mainEditorPkg = pkg.mainEditorPkg();
         if (!mainEditorPkg?.header || pxt.shell.isSandboxMode()) return false;
         if (!simulator.getProjectSimxEditorRegistrations().some(r => r.key === key)) return false;
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // Choosing the tab already shown focuses it, as choosing the active
-        // text language focuses the text editor.
         if (this.isSimulatorExtensionEditorActive(key)) {
             simulator.simxEditorHost?.focus();
             return true;
@@ -1392,15 +1372,8 @@ export class ProjectView
                 this.saveFileAsync(); // make sure state is up to date
                 if (this.editor == this.textEditor || this.editor == this.blocksEditor)
                     this.typecheck();
-                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-                // Showing a text language ends the editor toggle's memory of
-                // the simulator extension editor tab shown last (see
-                // SimxEditorHost.getLastShownKey), as choosing it sets the
-                // language preference. This runs once the language is shown,
-                // not when it is chosen, so a conversion that fails and stays
-                // in Blocks leaves the memory, and every path into JavaScript
-                // or Python ends it. Blocks leaves both the memory and the
-                // language preference as they are.
+                // Showing a text language ends the editor toggle's memory of the
+                // simulator extension editor tab shown last.
                 if (this.isJavaScriptActive() || this.isPythonActive())
                     simulator.simxEditorHost?.forgetLastShown();
 
@@ -1436,8 +1409,6 @@ export class ProjectView
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
-                // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-                // Selecting a simulator extension's editor tab never reruns the simulator.
                 else if (this.editor !== this.simxEditor)
                     this.typecheck(); // trigger at least 1 auto-run in non-code editors
             });
@@ -1856,9 +1827,6 @@ export class ProjectView
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         await this.editorMountComplete.promise;
         this.stopSimulator(true);
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // Simulator extension editor tabs close with their project; reloading
-        // the same project keeps them.
         simulator.closeSimxEditors(h.id);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
@@ -3049,8 +3017,6 @@ export class ProjectView
 
     unloadProjectAsync(home?: boolean) {
         this.stopSimulator(true); // don't keep simulator around
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // Simulator extension editor tabs close with their project.
         simulator.closeSimxEditors();
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
@@ -4080,9 +4046,6 @@ export class ProjectView
     }
 
     restartSimulator() {
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // Simulator extension editor tabs hear each command the editor gives
-        // the simulator: restart here, start in runSimulator, stop where it is issued.
         simulator.postSimxEditorSimulatorCommand("restart");
         const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == SimState.Stopped
@@ -4208,8 +4171,6 @@ export class ProjectView
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // Every run, whether the user's or an automatic rerun, starts here.
         simulator.postSimxEditorSimulatorCommand("start");
         const emptyRun = this.firstRun
             && opts.background
@@ -4781,17 +4742,6 @@ export class ProjectView
         }
     }
 
-    // PR NOTE [Issue 5] -- lift into the PR description, then remove.
-    // The asset provider (Issue 5, generated-docs/pxt-issue-drafts) lists the
-    // project's name and notifies simulator extensions when it changes, by
-    // watching the main package's config load listener. The other writers of
-    // the project's pxt.json reload the config after the write
-    // (EditorPackage.updateConfigAsync, the project settings page) or before
-    // the next read (each compile, for a direct text edit), but this rename
-    // path -- the toolbar's name box, the share dialog and the exit-and-save
-    // dialog -- set the new name on the loaded config in place, so no reload,
-    // and no notification, followed a rename. It now reloads the config after
-    // the write, as the project settings page does.
     updateHeaderNameAsync(name: string, description?: string): Promise<void> {
         // nothing to do?
         if (pkg.mainPkg.config.name == name && (description === undefined || pkg.mainPkg.config.description == description))
@@ -4808,6 +4758,7 @@ export class ProjectView
         config.name = name;
         config.description = description !== undefined ? description : config.description;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
+            // reloading the config lets the main package's config load listeners hear the rename
             .then(() => mainPkg.loadConfig())
             .then(() => {
                 if (this.state.header)
@@ -6004,8 +5955,6 @@ export class ProjectView
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         // don't show in sandbox or is blocks editor or previous editor is blocks or assets editor
-        // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-        // A simulator extension editor tab hides the file list, as Assets does.
         const showFileList = !sandbox && !inTutorial && !this.isAssetsActive() && this.editor !== this.simxEditor
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));

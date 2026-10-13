@@ -4,15 +4,6 @@ import * as simulator from "./simulator";
 import { Editor } from "./srceditor";
 import { getSimxEditorKeyOfMarker } from "./simxEditorHost";
 
-// PR NOTE [Issue 6] -- lift into the PR description, then remove.
-// The editor of simulator extension editor tabs. Like the serial editor it is
-// selected by a session-only marker file: each tab has a virtual file at the
-// project's top level, created the first time the tab is opened in the
-// session and never saved or listed, and opening that file shows the tab. A
-// virtual file does not stop or restart the simulator when the editor
-// switches to it, and this editor neither saves nor builds anything when it
-// loads or unloads. Its frames live in the simulator module's editor-tab
-// host, which keeps them loaded across editor switches.
 /**
  * Shows the editor tab of a simulator extension: the page its registration
  * names, in a frame that stays loaded, hidden, while another editor is shown,
@@ -57,10 +48,8 @@ export class SimxEditor extends Editor {
         });
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // The tab takes focus when it opens, as the text editor does (see
-    // SimxEditorHost.focus). The editor's element is displayed only by the
-    // render that follows the switch, so the focus waits for that render.
+    // Focuses the shown tab once the render that follows the switch has
+    // displayed the editor.
     domUpdate() {
         if (!this.focusPending || !this.isVisible) return;
         this.focusPending = false;
@@ -71,11 +60,6 @@ export class SimxEditor extends Editor {
         return Promise.resolve();
     }
 
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // The tab shows the editor toolbar, as Blocks, JavaScript, Python and
-    // Assets do, so the simulator can be collapsed and expanded and the
-    // project downloaded from it. It has no undo, redo or zoom of its own,
-    // so the toolbar leaves those controls out.
     hasEditorToolbarEditingControls() {
         return false;
     }

@@ -100,22 +100,11 @@ export function createProjassetsConfig(
     };
 }
 
-// PR NOTE [Issue 5] -- lift into the PR description, then remove.
-// The provider reads a project only once it has loaded. A reload (the
-// palette editor's Apply, an extension change, opening another project)
-// replaces the main package and editor package, and the new editor package
-// has its header before its files and pxt.json arrive. The webapp's asset
-// project getter (pxt.react.getTilemapProject) builds the TilemapProject on
-// first use and keeps it; built from a package that has not loaded, it is
-// empty and marked for rebuild, and the next asset build writes that empty
-// project over images.g.jres and tilemap.g.jres. Stock pxt never asks for
-// the asset project before the load completes, but simulator extension
-// requests can arrive at any moment. So each request waits on the open
-// editor package's loadedAsync, then checks the package is still the open
-// one before reading it; a change notification compares the open package
-// with the one its subscriptions were made in, and reads nothing from any
-// other.
-/** The open project as the asset host waits on it. */
+/**
+ * The open project as the asset host waits on it. The host reads a project
+ * only once it has loaded and while it is still the open one: a project read
+ * before its load has no assets yet.
+ */
 export interface ProjassetsOpenProject {
     /**
      * Returns a promise that resolves once the project has loaded, and
@@ -137,19 +126,6 @@ class ProjassetsRequestError extends Error {
     }
 }
 
-// PR NOTE [Issue 5] -- lift into the PR description, then remove.
-// The asset provider of Issue 5 (generated-docs/pxt-issue-drafts): a
-// read-only, typed view of the open project's named assets, its name and
-// its visual configuration (palette, simulator theme) for simulator
-// extensions, answered from the live TilemapProject and package config, not
-// from the asset files (images.g.jres), which are rebuilt only at build
-// time. It rides the projfs plumbing: the driver attests the requesting
-// frame's key and refuses frames whose registration lacks allowAssetRead
-// before a request reaches this host. Change notifications ride the
-// TilemapProject's project-wide change listener and the main package's
-// config load listener, deferred and merged: a burst of edits yields one
-// notification, sent after the edits have applied; a config reload notifies
-// only when it changed the project's name, palette or theme.
 /**
  * Serves the project-asset requests of simulator extensions: lists the named
  * assets of the open project by kind, with its name and visual configuration,
@@ -163,10 +139,6 @@ class ProjassetsRequestError extends Error {
  * later task, for all the changes made before it is sent.
  */
 export class ProjassetsHost {
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // An extension with an editor tab has two frames under one key, and each
-    // may subscribe; the driver gives each frame one reply function, so
-    // subscriptions are kept per frame rather than one per key.
     // per extension key: deliver change notifications to each of the extension's subscribed frames
     protected subscriptions: pxt.Map<((msg: ProjassetsNotification) => void)[]> = {};
     // the project every subscription was made in, which the host listens to, with

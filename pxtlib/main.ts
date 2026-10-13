@@ -522,13 +522,6 @@ namespace pxt {
     export const CONFIG_NAME = "pxt.json"
     export const SIMSTATE_JSON = ".simstate.json"
     export const SERIAL_EDITOR_FILE = "serial.txt"
-    // PR NOTE [Issue 6] -- lift into the PR description, then remove.
-    // A simulator extension's editor tab is selected by a marker file, which
-    // follows the serial editor's file: created virtual for the session and
-    // excluded everywhere pxt saves, lists, syncs, diffs or exports a
-    // project's files. Each of those places tested for SERIAL_EDITOR_FILE by
-    // name; they now ask isSessionOnlyFile, so the serial file and the
-    // markers share one rule.
     /** The suffix of the name of a simulator extension editor tab's marker file. */
     export const SIMX_EDITOR_MARKER_SUFFIX = ".simxeditor"
     /**
