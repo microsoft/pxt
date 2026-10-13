@@ -46,6 +46,7 @@ namespace pxsim {
             devUrl?: string;
             allowPopups?: boolean;
             allowClipboardWrite?: boolean;
+            allowDownloads?: boolean;
             allowAssetRead?: boolean;
             allowFileWrite?: boolean;
             editor?: {
@@ -115,6 +116,8 @@ namespace pxsim {
         allowPopups?: boolean;
         /** The allow list gains clipboard-write. */
         allowClipboardWrite?: boolean;
+        /** The sandbox gains allow-downloads. */
+        allowDownloads?: boolean;
     }
 
     /**
@@ -128,6 +131,8 @@ namespace pxsim {
         const sandbox = ['allow-same-origin', 'allow-scripts'];
         if (grants?.allowPopups)
             sandbox.push('allow-popups', 'allow-popups-to-escape-sandbox');
+        if (grants?.allowDownloads)
+            sandbox.push('allow-downloads');
         return { sandbox: sandbox.join(' '), allow: allow.join(';') };
     }
 

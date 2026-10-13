@@ -377,6 +377,7 @@ describe("simulator driver simulator extension frames", () => {
     interface FrameGrants {
         allowPopups?: boolean;
         allowClipboardWrite?: boolean;
+        allowDownloads?: boolean;
     }
 
     function newDriver(frames: FakeFrame[], options: pxsim.SimulatorDriverOptions = {}, grants: FrameGrants = {}): pxsim.SimulatorDriver {
@@ -489,10 +490,17 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
     });
 
-    it("gives a simulator extension frame registered with both grants both", () => {
-        const { frame } = startSimulatorExtension({}, { allowPopups: true, allowClipboardWrite: true });
+    it("lets a simulator extension frame registered with allowDownloads start downloads", () => {
+        const { frame } = startSimulatorExtension({}, { allowDownloads: true });
 
-        chai.expect(sandboxOf(frame)).to.have.members(["allow-same-origin", "allow-scripts", "allow-popups", "allow-popups-to-escape-sandbox"]);
+        chai.expect(sandboxOf(frame)).to.have.members(["allow-same-origin", "allow-scripts", "allow-downloads"]);
+        chai.expect(frame.getAttribute("allow")).equals(SIM_ALLOW);
+    });
+
+    it("gives a simulator extension frame registered with every grant all of them", () => {
+        const { frame } = startSimulatorExtension({}, { allowPopups: true, allowClipboardWrite: true, allowDownloads: true });
+
+        chai.expect(sandboxOf(frame)).to.have.members(["allow-same-origin", "allow-scripts", "allow-popups", "allow-popups-to-escape-sandbox", "allow-downloads"]);
         chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "clipboard-write"]);
     });
 

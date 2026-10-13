@@ -71,6 +71,7 @@ declare namespace pxt {
         index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
         allowPopups?: boolean; // If true, the iframe sandbox gains allow-popups and allow-popups-to-escape-sandbox. Default: false.
         allowClipboardWrite?: boolean; // If true, the iframe allow list gains clipboard-write. Default: false.
+        allowDownloads?: boolean; // If true, the iframe sandbox gains allow-downloads. Default: false.
         // PR NOTE [Issue 5] -- lift into the PR description, then remove. Each simulator extension
         // capability family carries its own opt-in grant: allowFileWrite for the file API (its own
         // folder of the project), allowAssetRead for the asset provider (all of the project's named

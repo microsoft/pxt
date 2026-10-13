@@ -3715,11 +3715,11 @@ describe("simulator extension editor tab registrations", () => {
             [OTHER]: resolved(OTHER, { allowPopups: true }),
             "plainorg/pxt-plain": {},
             "declaredorg/pxt-declared": { editor: { label: "unresolved" } },
-            [EXT]: resolved(EXT, { allowClipboardWrite: true }),
+            [EXT]: resolved(EXT, { allowClipboardWrite: true, allowDownloads: true }),
         });
         chai.expect(registrations.map(r => r.key)).deep.equals([OTHER, EXT]);
         chai.expect(registrations[0]).deep.include({ url: `https://sim.example/simx/${OTHER}/-/index.html`, allowPopups: true });
-        chai.expect(registrations[1]).deep.include({ allowClipboardWrite: true });
+        chai.expect(registrations[1]).deep.include({ allowClipboardWrite: true, allowDownloads: true });
         chai.expect(getSimxEditorRegistrations(undefined)).deep.equals([]);
     });
 
@@ -4043,7 +4043,7 @@ describe("simulator extension editor tab host", () => {
             createFrame: () => new FakeElement() as unknown as HTMLIFrameElement,
             createLoader: () => new FakeElement() as unknown as HTMLElement,
             framePermissions: grants => ({
-                sandbox: "allow-same-origin allow-scripts" + (grants.allowPopups ? " allow-popups allow-popups-to-escape-sandbox" : ""),
+                sandbox: "allow-same-origin allow-scripts" + (grants.allowPopups ? " allow-popups allow-popups-to-escape-sandbox" : "") + (grants.allowDownloads ? " allow-downloads" : ""),
                 allow: "autoplay;microphone" + (grants.allowClipboardWrite ? ";clipboard-write" : ""),
             }),
             startSimulatorExtension: key => {
@@ -4065,7 +4065,7 @@ describe("simulator extension editor tab host", () => {
 
     describe("the tab frame", () => {
         it("loads the tab's page with the simulator frame's parameters and the editor role, under the registration's grants", () => {
-            show(EXT, { allowPopups: true, allowClipboardWrite: true });
+            show(EXT, { allowPopups: true, allowClipboardWrite: true, allowDownloads: true });
             const frame = tab(EXT);
             const url = new URL(frame.src);
             chai.expect(url.origin + url.pathname).equals(`${ORIGIN}/simx/${EXT}/-/index.html`);
@@ -4075,7 +4075,7 @@ describe("simulator extension editor tab host", () => {
                 parentOrigin: "https://editor.example", channel: EXT, role: "editor", target: "arcade", project: "p1", language: "en",
             });
             chai.expect(frame.attributes).deep.equals({
-                sandbox: "allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox",
+                sandbox: "allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
                 allow: "autoplay;microphone;clipboard-write",
             });
             chai.expect(frame.allowFullscreen).equals(true);
