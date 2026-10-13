@@ -3,10 +3,6 @@ namespace pxsim {
         restart?: () => void; // restart simulator
         revealElement?: (el: HTMLElement) => void;
         removeElement?: (el: HTMLElement, onComplete?: () => void) => void;
-        // PR NOTE [Issue 7] -- lift into the PR description, then remove.
-        // The hide counterpart of removeElement for permanent frames, so a
-        // collapse keeps them mounted; a host that does not set it keeps
-        // today's removal.
         /**
          * Hides the wrapper of a permanent simulator frame when the simulator is
          * hidden, leaving the element in the container, then calls `onComplete`.
@@ -347,7 +343,6 @@ namespace pxsim {
             return frames;
         }
 
-        // PR NOTE [Issue 7] -- lift into the PR description, then remove.
         /**
          * Returns the main simulator frame: the first frame not running a
          * simulator extension, or undefined when there is none.
@@ -673,10 +668,6 @@ namespace pxsim {
             if (this.loanedSimulator) return this.loanedSimulator;
 
             // reuse first simulator or create new one
-            // PR NOTE [Issue 7] -- lift into the PR description, then remove.
-            // A permanent simulator extension frame hidden by hide() can be the
-            // container's only child, so the main frame is looked up by kind
-            // rather than position.
             this.loanedSimulator = (this.mainFrame(true)?.parentElement as HTMLDivElement) || this.createFrame();
             if (this.loanedSimulator.parentNode)
                 this.container.removeChild(this.loanedSimulator);
@@ -769,14 +760,6 @@ namespace pxsim {
 
             const frames = this.simFrames();
             frames.forEach(frame => {
-                // PR NOTE [Issue 7] -- lift into the PR description, then remove.
-                // This is the fix for Issue 7 (collapsing the simulator removed
-                // every frame, so a permanent simulator extension frame was
-                // destroyed and respawned on the next run). A permanent frame is
-                // now hidden in place: it keeps its element, id and dataset, so
-                // the spawn path finds it by its message channel and posts to it
-                // instead of starting another; unhide() reveals it and unload()
-                // still removes it.
                 if (frame.dataset[PERMANENT] && this.options.hideElement)
                     this.options.hideElement(frame.parentElement, completeHandler);
                 else
@@ -856,11 +839,6 @@ namespace pxsim {
             this.breakpointsSet = false;
 
             // first frame
-            // PR NOTE [Issue 7] -- lift into the PR description, then remove.
-            // After hide(), a hidden permanent simulator extension frame can
-            // outlive the main frame, so the main frame is looked up by kind
-            // and a new one goes first in the container, where the
-            // first-child layout rules and cleanupFrames() expect it.
             let frame = this.mainFrame();
             if (!frame) {
                 let wrapper = this.createFrame();

@@ -98,9 +98,6 @@ export async function initAsync(cfg: SimulatorConfig) {
             ...x.v
         });
 
-    // PR NOTE [Issue 7] -- lift into the PR description, then remove.
-    // Shared by removeElement and hideElement, so a hidden permanent frame
-    // leaves with the same animation as a removed one.
     // Plays the simulator frame exit animation on `el`, then calls `done`.
     const playExitAnimation = (el: HTMLElement, done: () => void) => {
         const animation = pxt.appTarget.appTheme.simAnimationExit || 'fly right out';
@@ -158,9 +155,6 @@ export async function initAsync(cfg: SimulatorConfig) {
                 });
             }
         },
-        // PR NOTE [Issue 7] -- lift into the PR description, then remove.
-        // A permanent simulator extension frame is hidden with the simHidden
-        // class instead of removed, and revealed with the enter animation.
         hideElement: (el, completeHandler) => {
             if (pxt.appTarget.simulator.headless) {
                 pxsim.U.addClass(el, 'simHeadless');

@@ -3843,7 +3843,6 @@ export class ProjectView
             simulator.unhide();
         }
         else {
-            // PR NOTE [Issue 7] -- lift into the PR description, then remove.
             // Reveals the permanent simulator extension frames the collapse hid,
             // once the run has put the main frame back ahead of them, unless the
             // simulator was collapsed again meanwhile.
