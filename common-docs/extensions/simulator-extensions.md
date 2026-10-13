@@ -21,6 +21,10 @@ Refer to the [pxt-simx-sample](https://github.com/microsoft/pxt-simx-sample) pro
 
 A simulator extension frame is as wide as the simulator column, and its height follows the `aspectRatio` of its registration. The frame can change its aspect ratio at run time by posting `{ type: "aspectratio", value, frameid }` to its parent, where `value` is the new width-to-height ratio and `frameid` is the frame's id, which the editor passes in the hash of the frame's URL.
 
+## Fullscreen simulator
+
+The editor posts `{ type: "fullscreen", enabled }` to every simulator frame when the editor enters or leaves fullscreen-simulator mode, where `enabled` is `true` while the simulator fills the editor. A simulator extension frame whose page finishes loading while the mode is on receives the message once loaded, so a frame that appears during fullscreen knows it. Until a frame receives a `fullscreen` message, the editor is not in fullscreen-simulator mode.
+
 ## Editor tab
 
 A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. The tab is offered only while the open project includes the extension, and never in embedded (sandbox) views, where the Assets editor is not offered either.
@@ -75,6 +79,7 @@ The editor posts these messages to the tab frame:
 * `{ type: "simxeditor", event: "closing" }` before the editor removes the tab frame, when the project closes.
 * `{ type: "simxeditor", event: "simulator", command }` as the editor starts, stops or restarts the simulator, where `command` is `"start"` (on every run, including the automatic reruns after an edit), `"stop"` or `"restart"`. The event carries no program; the simulator frame receives the run message and can share it over the port.
 * `{ type: "simxeditor", event: "simulatorstate", state }` when the simulator's state changes, and once after the tab is ready, where `state` is one of `"Unloaded"`, `"Stopped"`, `"Pending"`, `"Starting"`, `"Running"`, `"Paused"` and `"Suspended"`.
+* `{ type: "simxeditor", event: "fullscreen", enabled }` when the editor enters or leaves fullscreen-simulator mode, and once after the tab is ready, where `enabled` is `true` while the simulator covers the editor area, and with it the tab. The simulator frame receives the `fullscreen` message at the same time, so an extension whose tab is its main view can show that view in the simulator frame while the tab is covered.
 
 A hidden tab stays loaded, but it is not rendered, and the browser may run its timers late or not at all. Render only while the tab is shown, and keep any computation that must not pause, such as a simulation, in the simulator frame, which is visible whenever the simulator is. A tab that runs simulators of its own is responsible for them while it is hidden, for example by pausing them.
 

@@ -352,6 +352,11 @@ export function postSimxEditorSimulatorCommand(command: SimxEditorSimulatorComma
     simxEditorHost?.simulatorCommand(command);
 }
 
+/** Tells every ready simulator extension editor tab whether the editor is in fullscreen-simulator mode. */
+export function postSimxEditorFullscreen(enabled: boolean) {
+    simxEditorHost?.fullscreenChanged(enabled);
+}
+
 /**
  * Removes the simulator extension editor tab frames not created for the project
  * `projectId`, or every one if `projectId` is undefined.

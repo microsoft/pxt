@@ -216,6 +216,8 @@ namespace pxsim {
         private _dependentEditors: Window[];
         private _allowedOrigins: string[] = [];
         private debuggingFrame: string;
+        // true while the editor is in fullscreen-simulator mode
+        private fullscreen = false;
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
@@ -660,6 +662,10 @@ namespace pxsim {
                 pxsim.U.addClass(wrapper, HIDE_IN_FULLSCREEN);
                 pxsim.U.addClass(this.container, HAS_HIDE_IN_FULLSCREEN);
             }
+            messageFrame.addEventListener("load", () => {
+                if (this.fullscreen && messageFrame.contentWindow)
+                    this.postMessageCore(messageFrame, this.fullscreenMessage());
+            });
             this.startFrame(messageFrame);
             return messageFrame;
         }
@@ -804,6 +810,23 @@ namespace pxsim {
             if (this._currentRuntime)
                 this._currentRuntime.mute = mute;
             this.postMessage({ type: 'mute', source: MESSAGE_SOURCE, mute: mute } as pxsim.SimulatorMuteMessage);
+        }
+
+        /**
+         * Records whether the editor is in fullscreen-simulator mode and, if that
+         * changes it, posts a `fullscreen` message to every simulator frame. A
+         * simulator extension frame is also posted the message each time its page
+         * finishes loading while the mode is on.
+         * @param enabled true when the editor enters fullscreen-simulator mode, false when it leaves it
+         */
+        public setFullscreen(enabled: boolean) {
+            if (this.fullscreen === enabled) return;
+            this.fullscreen = enabled;
+            this.postMessage(this.fullscreenMessage());
+        }
+
+        private fullscreenMessage(): pxsim.SimulatorFullscreenMessage {
+            return { type: "fullscreen", source: MESSAGE_SOURCE, enabled: this.fullscreen };
         }
 
         public stopSound() {

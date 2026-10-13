@@ -4207,6 +4207,7 @@ describe("simulator extension editor tab host", () => {
             chai.expect(events(frame)).deep.equals([
                 { type: "simxeditor", event: "shown" },
                 { type: "simxeditor", event: "simulatorstate", state: "Running" },
+                { type: "simxeditor", event: "fullscreen", enabled: false },
                 { type: "simxeditor", event: "hidden" },
                 { type: "simxeditor", event: "shown" },
             ]);
@@ -4234,6 +4235,32 @@ describe("simulator extension editor tab host", () => {
                 { type: "simxeditor", event: "simulator", command: "restart" },
             ]);
             chai.expect(events(tab(OTHER))).deep.equals([]);
+        });
+
+        it("posts every change of fullscreen-simulator mode to every ready tab, and none to a tab not ready", () => {
+            show(EXT);
+            show(OTHER);
+            ready(EXT);
+            const before = events(tab(EXT)).length;
+            host.fullscreenChanged(true);
+            host.fullscreenChanged(true);
+            host.fullscreenChanged(false);
+            chai.expect(events(tab(EXT)).slice(before)).deep.equals([
+                { type: "simxeditor", event: "fullscreen", enabled: true },
+                { type: "simxeditor", event: "fullscreen", enabled: false },
+            ]);
+            chai.expect(events(tab(OTHER))).deep.equals([]);
+        });
+
+        it("posts the current fullscreen-simulator mode once after the tab is ready, after the simulator's state", () => {
+            host.fullscreenChanged(true);
+            show(EXT);
+            ready(EXT);
+            chai.expect(events(tab(EXT))).deep.equals([
+                { type: "simxeditor", event: "shown" },
+                { type: "simxeditor", event: "simulatorstate", state: "Running" },
+                { type: "simxeditor", event: "fullscreen", enabled: true },
+            ]);
         });
     });
 

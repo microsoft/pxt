@@ -880,3 +880,70 @@ describe("simulator driver hide-in-fullscreen classes", () => {
         chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
     });
 });
+
+describe("simulator driver fullscreen mode", () => {
+    const CHANNEL = "someorg/pxt-ext";
+
+    let container: FakeElement;
+    let mainFrame: FakeElement;
+    let driver: pxsim.SimulatorDriver;
+
+    /** Sends a channel packet from the main frame, which spawns the channel's extension frame. */
+    function spawn(): FakeElement {
+        const packet = { type: "messagepacket", channel: CHANNEL, broadcast: true } as pxsim.SimulatorMessage;
+        (driver as any).handleMessage(packet, mainFrame.contentWindow);
+        return container.getElementsByTagName("iframe")
+            .find(frame => frame.dataset["messagechannel"] === CHANNEL);
+    }
+
+    function fullscreenMessages(frame: FakeElement) {
+        return frame.contentWindow.messages.filter(m => m.type === "fullscreen");
+    }
+
+    beforeEach(() => {
+        container = new FakeElement("div");
+        const wrapper = container.appendChild(new FakeElement("div"));
+        mainFrame = wrapper.appendChild(new FakeElement("iframe"));
+        mainFrame.id = "sim-frame-1";
+        mainFrame.dataset = { origin: EDITOR_ORIGIN, runid: "" };
+        driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
+            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simulatorExtensions: {
+                [CHANNEL]: { index: "index.html", aspectRatio: 1, permanent: true },
+            },
+        });
+    });
+
+    it("posts fullscreen with enabled to every simulator frame on each change of the mode", () => {
+        const extensionFrame = spawn();
+        driver.setFullscreen(true);
+        driver.setFullscreen(true);
+        driver.setFullscreen(false);
+        driver.setFullscreen(false);
+        const expected = [
+            { type: "fullscreen", source: "pxtdriver", enabled: true },
+            { type: "fullscreen", source: "pxtdriver", enabled: false },
+        ];
+        chai.expect(fullscreenMessages(mainFrame)).deep.equals(expected);
+        chai.expect(fullscreenMessages(extensionFrame)).deep.equals(expected);
+    });
+
+    it("posts the mode to an extension frame spawned while it is on, each time the frame's page loads", () => {
+        driver.setFullscreen(true);
+        const extensionFrame = spawn();
+        extensionFrame.fire("load");
+        extensionFrame.fire("load");
+        chai.expect(fullscreenMessages(extensionFrame)).deep.equals([
+            { type: "fullscreen", source: "pxtdriver", enabled: true },
+            { type: "fullscreen", source: "pxtdriver", enabled: true },
+        ]);
+    });
+
+    it("posts nothing to an extension frame whose page loads while the mode is off", () => {
+        driver.setFullscreen(true);
+        driver.setFullscreen(false);
+        const extensionFrame = spawn();
+        extensionFrame.fire("load");
+        chai.expect(fullscreenMessages(extensionFrame)).deep.equals([]);
+    });
+});

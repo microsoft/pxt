@@ -168,6 +168,8 @@ export class SimxEditorHost {
     protected shownKey: string | undefined;
     // the key of the tab shown last, until forgotten or its frame is removed
     protected lastShownKey: string | undefined;
+    // true while the editor is in fullscreen-simulator mode
+    protected fullscreen = false;
     protected container: HTMLElement | undefined;
     protected loader: HTMLElement | undefined;
 
@@ -270,8 +272,9 @@ export class SimxEditorHost {
     /**
      * Handles a message posted to the editor's window: a ready event from a tab
      * frame, accepted only from the frame's window and origin, marks the tab
-     * ready, posts it its visibility and the simulator's state, and brokers its
-     * port if its simulator frame is loaded. Other messages are ignored.
+     * ready, posts it its visibility, the simulator's state and whether the
+     * editor is in fullscreen-simulator mode, and brokers its port if its
+     * simulator frame is loaded. Other messages are ignored.
      */
     handleMessage(ev: { data: any, source: unknown, origin: string }) {
         if (ev?.data?.type !== SIMXEDITOR_MESSAGE_TYPE || ev.data.event !== "ready") return;
@@ -281,6 +284,7 @@ export class SimxEditorHost {
         tab.ready = true;
         this.post(tab.key, { type: SIMXEDITOR_MESSAGE_TYPE, event: tab.key === this.shownKey ? "shown" : "hidden" });
         this.post(tab.key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "simulatorstate", state: this.options.getSimulatorState() });
+        this.post(tab.key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "fullscreen", enabled: this.fullscreen });
         this.broker(tab.key);
         this.updateLoader();
     }
@@ -305,6 +309,18 @@ export class SimxEditorHost {
     simulatorStateChanged(state: SimxEditorSimulatorState) {
         for (const key of Object.keys(this.tabs)) {
             this.post(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "simulatorstate", state });
+        }
+    }
+
+    /**
+     * Records whether the editor is in fullscreen-simulator mode and, if that
+     * changes it, posts the new mode to every ready tab.
+     */
+    fullscreenChanged(enabled: boolean) {
+        if (this.fullscreen === enabled) return;
+        this.fullscreen = enabled;
+        for (const key of Object.keys(this.tabs)) {
+            this.post(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "fullscreen", enabled });
         }
     }
 

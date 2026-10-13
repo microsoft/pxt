@@ -77,12 +77,25 @@ export interface SimxEditorSimulatorStateEvent {
     state: SimxEditorSimulatorState;
 }
 
+/**
+ * Posted to the tab frame when the editor enters or leaves fullscreen-simulator
+ * mode, in which the simulator covers the editor area and the tab, and once
+ * after the tab is ready.
+ */
+export interface SimxEditorFullscreenEvent {
+    type: typeof SIMXEDITOR_MESSAGE_TYPE;
+    event: "fullscreen";
+    /** True while the editor is in fullscreen-simulator mode. */
+    enabled: boolean;
+}
+
 /** A message the editor posts to the tab frame. */
 export type SimxEditorEvent =
     SimxEditorVisibilityEvent
     | SimxEditorClosingEvent
     | SimxEditorSimulatorEvent
-    | SimxEditorSimulatorStateEvent;
+    | SimxEditorSimulatorStateEvent
+    | SimxEditorFullscreenEvent;
 
 /**
  * Posted to the tab frame and to the simulator frame of the same key, each
