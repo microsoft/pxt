@@ -4,6 +4,8 @@
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { ListCreateBlock } from "../../pxtblocks/plugins/arrays/createList";
+import { ArgumentReporterBlock } from "../../pxtblocks/plugins/functions/blocks/argumentReporterBlocks";
 
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
@@ -357,6 +359,89 @@ describe("blockly compiler", function () {
         it("should compile aliases for pop, shift, unshift, and removeAt", (done: () => void) => {
             blockTestAsync("array_aliases").then(done, done);
         });
+    });
+
+    describe("adding list inputs", () => {
+        let workspace: Blockly.Workspace;
+
+        before(async () => {
+            await getBlocksInfoAsync();
+        });
+
+        beforeEach(() => {
+            workspace = new Blockly.Workspace();
+        });
+
+        afterEach(() => {
+            workspace.dispose();
+        });
+
+        const reporterTypes = [
+            "argument_reporter_boolean",
+            "argument_reporter_number",
+            "argument_reporter_string",
+            "argument_reporter_array",
+            "argument_reporter_custom"
+        ];
+
+        for (const type of reporterTypes) {
+            for (const hasShadow of [false, true]) {
+                it(`should preserve ${type} with${hasShadow ? "" : "out"} a shadow`, () => {
+                    const list = Blockly.Xml.domToBlock(Blockly.utils.xml.textToDom(`
+                        <block type="lists_create_with">
+                            <mutation items="1"/>
+                            <value name="ADD0">
+                                ${hasShadow ? '<shadow type="math_number"/>' : ""}
+                                <block type="${type}">
+                                    <mutation typename="Sprite" localizationname="parameter"/>
+                                </block>
+                            </value>
+                        </block>
+                    `), workspace) as ListCreateBlock;
+                    const original = list.getInputTargetBlock("ADD0") as ArgumentReporterBlock;
+                    const name = "my parameter <&> 名前";
+                    original.setFieldValue(name, "VALUE");
+
+                    for (let i = 1; i <= 2; i++) {
+                        list.addItem_();
+                        const copy = list.getInputTargetBlock("ADD" + i) as ArgumentReporterBlock;
+                        chai.expect(copy.type).to.equal(type);
+                        chai.expect(copy.id).to.not.equal(original.id);
+                        chai.expect(copy.getFieldValue("VALUE")).to.equal(name);
+                        chai.expect(copy.outputConnection.getCheck()).to.deep.equal(original.outputConnection.getCheck());
+                        chai.expect(Blockly.Xml.domToText(copy.mutationToDom()))
+                            .to.equal(Blockly.Xml.domToText(original.mutationToDom()));
+                        chai.expect(list.getInput("ADD" + i).connection.getShadowDom()?.getAttribute("type"))
+                            .to.equal(hasShadow ? "math_number" : undefined);
+                    }
+                    chai.expect(list.getInputTargetBlock("ADD0")).to.equal(original);
+                    chai.expect(original.getFieldValue("VALUE")).to.equal(name);
+                });
+            }
+        }
+
+        for (const { type, field, value, defaultValue } of [
+            { type: "math_number", field: "NUM", value: "42", defaultValue: 0 },
+            { type: "text", field: "TEXT", value: "hello", defaultValue: "" }
+        ]) {
+            it(`should keep default values for ${type} shadows`, () => {
+                const list = Blockly.Xml.domToBlock(Blockly.utils.xml.textToDom(`
+                    <block type="lists_create_with">
+                        <mutation items="1"/>
+                        <value name="ADD0">
+                            <shadow type="${type}"><field name="${field}">${value}</field></shadow>
+                        </value>
+                    </block>
+                `), workspace) as ListCreateBlock;
+                list.addItem_();
+                const copy = list.getInputTargetBlock("ADD1");
+                chai.expect(copy.type).to.equal(type);
+                chai.expect(copy.isShadow()).to.equal(true);
+                chai.expect(copy.getFieldValue(field)).to.equal(defaultValue);
+                chai.expect(list.getInputTargetBlock("ADD0").getFieldValue(field))
+                    .to.equal(type === "math_number" ? 42 : value);
+            });
+        }
     });
 
     describe("compiling logic", () => {
