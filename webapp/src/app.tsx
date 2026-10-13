@@ -3826,11 +3826,12 @@ export class ProjectView
     toggleSimulatorCollapse() {
         const state = this.state;
         pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !state.collapseEditorTools }, { interactiveConsent: true });
-        if (state.simState == SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
-            this.startStopSimulator();
-        }
-
         if (state.collapseEditorTools) {
+            // expandSimulator() starts a stopped simulator; the checks startStopSimulator() would have made are kept.
+            if (state.simState == SimState.Stopped && !pxt.appTarget.simulator.headless) {
+                this.maybeShowPackageErrors(true);
+                ariaAnnounce(lf("Simulator running"), "assertive", "status");
+            }
             this.expandSimulator();
         }
         else {
