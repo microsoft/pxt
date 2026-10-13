@@ -269,7 +269,8 @@ mountVirtualApi("cloud-search", {
     isOffline: () => !Cloud.isOnline(),
 })
 
-// search results for repositories served by the local server are never cached
+// a search query is repository ids joined with '|', which pxt.github.searchAsync splits the same way;
+// results for a query naming a repository served by the local server are never cached
 function ghSearchExpirationTime(path: string, expirationTime: number) {
     return stripProtocol(path).split('|').some(q => pxt.github.isLocalRepo(q)) ? 0 : expirationTime;
 }

@@ -15,7 +15,12 @@ export interface CommandFlag {
     possibleValues?: (string | RegExp)[];
     deprecated?: boolean;
     hidden?: boolean;
-    repeatable?: boolean; // flag may be given more than once; its values are collected into a string[]
+    /**
+     * The flag may be given more than once, and its values are collected into a
+     * string[]. Applies to string flags with an argument only: defineCommand
+     * throws on a repeatable flag of another type or without an argument.
+     */
+    repeatable?: boolean;
 }
 
 export interface Command {
@@ -51,6 +56,9 @@ export class CommandParser {
 
         for (const flag in c.flags) {
             const def = c.flags[flag];
+            if (def.repeatable && ((def.type && def.type !== "string") || !def.argument)) {
+                throw new Error(`Flag ${flag} of command ${c.name} is repeatable, so it must be a string flag with an argument`);
+            }
 
             recordAlias(flag, flag);
             const aliases = c.flags[flag].aliases;

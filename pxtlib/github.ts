@@ -1223,6 +1223,8 @@ namespace pxt.github {
     }
 
     function isRepoApproved(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
+        // aliased repositories exist only in an editor on localhost that listed them from its own pxt serve,
+        // so approving them widens nothing a public editor approves
         if (isOrgApproved(repo, config) || isLocalRepo(repo))
             return true;
 

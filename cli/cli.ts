@@ -3127,6 +3127,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
         saveConfig()
     }
     let localToken = globalConfig.localToken;
+    // --local-repo directories resolve against the directory serve was started from,
+    // which differs from the target root when serve moves into a target found below
     const invocationDir = process.cwd();
     if (!fs.existsSync("pxtarget.json")) {
         //Specifically when the target is being used as a library
@@ -3145,7 +3147,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             }
         }
     }
-    const localRepos = localrepos.loadLocalRepos(process.cwd(), (parsed.flags["localRepo"] as string[]) || [], invocationDir);
+    const targetDir = process.cwd();
+    const localRepos = localrepos.loadLocalRepos(targetDir, (parsed.flags["localRepo"] as string[]) || [], invocationDir);
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps, rebundle))
         .then(() => server.serveAsync({
             autoStart: !globalConfig.noAutoStart,

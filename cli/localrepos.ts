@@ -49,7 +49,23 @@ function isDirectory(dir: string) {
 }
 
 function readTextOpt(fn: string): string {
-    return fs.existsSync(fn) ? fs.readFileSync(fn, "utf8") : undefined;
+    try {
+        return fs.readFileSync(fn, "utf8");
+    } catch (e) {
+        if (e.code == "ENOENT" || e.code == "ENOTDIR")
+            return undefined;
+        throw e;
+    }
+}
+
+/**
+ * Resolves `rel` against the absolute directory `base`, and returns the
+ * resolved path if it is `base` or lies inside it, undefined otherwise.
+ */
+function resolveInside(base: string, rel: string): string {
+    const resolved = path.resolve(base, rel);
+    const prefix = base.endsWith(path.sep) ? base : base + path.sep;
+    return resolved == base || resolved.startsWith(prefix) ? resolved : undefined;
 }
 
 function addLocalRepo(localRepos: pxt.Map<string>, slug: string, dir: string, baseDir: string, source: string) {
@@ -102,7 +118,10 @@ export function loadLocalRepos(targetDir: string, flagValues: string[], cwd: str
 }
 
 function readPackageFiles(fullName: string, root: string, fileName: string): pxt.Map<string> {
-    const dir = path.join(root, fileName);
+    const dir = resolveInside(root, fileName);
+    if (!dir)
+        throw requestError(400, `${fullName}: the path is outside the repository`);
+    pxt.debug(`local repo: ${fullName} from ${dir}`);
     const configPath = path.join(dir, pxt.CONFIG_NAME);
     const configText = readTextOpt(configPath);
     if (configText === undefined)
@@ -114,7 +133,9 @@ function readPackageFiles(fullName: string, root: string, fileName: string): pxt
     const files: pxt.Map<string> = {};
     files[pxt.CONFIG_NAME] = configText;
     for (const fn of pxt.allPkgFiles(config).slice(1)) {
-        const filePath = path.join(dir, fn);
+        const filePath = resolveInside(dir, fn);
+        if (!filePath)
+            throw requestError(400, `${fullName}: ${configPath} lists ${fn}, which is outside the package directory`);
         const text = readTextOpt(filePath);
         if (text === undefined)
             throw requestError(404, `${fullName}: ${filePath}, listed in ${configPath}, does not exist`);
@@ -139,11 +160,21 @@ function readPackageFiles(fullName: string, root: string, fileName: string): pxt
  *
  * Throws an error carrying the HTTP `statusCode` to answer with: 404 when
  * the repository is not aliased, or when the package's pxt.json or a file it
- * lists does not exist; 400 when the pxt.json is not valid or the request
- * matches none of the forms above. Errors for an aliased repository are also
- * written to the console.
+ * lists does not exist; 400 when the path lies outside the repository's
+ * directory, the pxt.json is not valid or lists a file outside the package's
+ * directory, or the request matches none of the forms above. Every error is
+ * also written to the console.
  */
 export function resolveLocalRepoRequest(localRepos: pxt.Map<string>, request: string): LocalRepoMeta | LocalRepoRefs | pxt.Map<string> {
+    try {
+        return answerLocalRepoRequest(localRepos, request);
+    } catch (e) {
+        pxt.error(e.message);
+        throw e;
+    }
+}
+
+function answerLocalRepoRequest(localRepos: pxt.Map<string>, request: string): LocalRepoMeta | LocalRepoRefs | pxt.Map<string> {
     const elts = request.split("/").filter(e => !!e);
     const repo = elts.length >= 2 ? pxt.github.parseRepoId(elts.slice(0, 2).join("/")) : undefined;
     const root = repo && localRepos[repo.slug.toLowerCase()];
@@ -165,14 +196,7 @@ export function resolveLocalRepoRequest(localRepos: pxt.Map<string>, request: st
     }
     if (rest[rest.length - 1] == "text") {
         const fileName = rest.slice(0, -1).join("/");
-        const fullName = pxt.github.join(repo.slug, fileName);
-        pxt.debug(`local repo: ${fullName} from ${path.join(root, fileName)}`);
-        try {
-            return readPackageFiles(fullName, root, fileName);
-        } catch (e) {
-            pxt.error(e.message);
-            throw e;
-        }
+        return readPackageFiles(pxt.github.join(repo.slug, fileName), root, fileName);
     }
     throw requestError(400, `${request}: unknown local repository request`);
 }

@@ -122,10 +122,11 @@ describe("local repos requests", () => {
         chai.expect(JSON.parse(files["pxt.json"]).name).equals("ext");
     });
 
-    it("declines repositories that are not aliased", () => {
+    it("declines repositories that are not aliased, and logs it", () => {
         expectStatus(() => localrepos.resolveLocalRepoRequest(repos, "owner/other/text"), 404, "owner/other");
         expectStatus(() => localrepos.resolveLocalRepoRequest(repos, "owner"), 404, "owner");
-        chai.expect(logger.errors).deep.equals([]);
+        chai.expect(logger.errors.length).equals(2);
+        chai.expect(logger.errors[0]).contains("owner/other/text");
     });
 
     it("fails with the missing path when an aliased repository has no package there, and logs it", () => {
@@ -133,6 +134,33 @@ describe("local repos requests", () => {
         expectStatus(() => localrepos.resolveLocalRepoRequest(repos, "owner/mono/nothere/text"), 404, missing);
         chai.expect(logger.errors.length).equals(1);
         chai.expect(logger.errors[0]).contains(missing);
+    });
+
+    it("fails with the missing path when the request path runs through a file", () => {
+        const missing = path.join(monoDir, "ext", "main.ts", "pxt.json");
+        expectStatus(() => localrepos.resolveLocalRepoRequest(repos, "owner/mono/ext/main.ts/text"), 404, missing);
+    });
+
+    it("rejects a request path that leads outside the repository, without reading there", () => {
+        const extRepos = { "owner/ext": path.join(monoDir, "ext") };
+        const outside = path.join(monoDir, "pxt.json");
+        let err: any;
+        try {
+            localrepos.resolveLocalRepoRequest(extRepos, "owner/ext/../text");
+        } catch (e) {
+            err = e;
+        }
+        chai.expect(err, "expected an error").to.exist;
+        chai.expect(err.statusCode).equals(400);
+        chai.expect(err.message).contains("owner/ext/..");
+        chai.expect(err.message).not.contains(outside);
+        chai.expect(logger.errors).deep.equals([err.message]);
+    });
+
+    it("rejects a package that lists a file outside its directory", () => {
+        expectStatus(() => localrepos.resolveLocalRepoRequest(repos, "owner/mono/escaping/text"), 400, "../ext/main.ts");
+        chai.expect(logger.errors.length).equals(1);
+        chai.expect(logger.errors[0]).contains(path.join(monoDir, "escaping", "pxt.json"));
     });
 
     it("fails with the missing file when a package lists a file that does not exist", () => {
@@ -145,7 +173,9 @@ describe("local repos requests", () => {
             path.join(monoDir, "invalid", "pxt.json"));
     });
 
-    it("rejects unknown requests", () => {
+    it("rejects unknown requests, and logs it", () => {
         expectStatus(() => localrepos.resolveLocalRepoRequest(repos, "owner/mono/ext"), 400, "owner/mono/ext");
+        chai.expect(logger.errors.length).equals(1);
+        chai.expect(logger.errors[0]).contains("owner/mono/ext");
     });
 });
