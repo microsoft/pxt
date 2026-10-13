@@ -746,6 +746,7 @@ const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
+const testcli = cliTestTask();
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/", true);
 const browserifyKarma = () =>
@@ -786,7 +787,8 @@ const testAll = gulp.series(
     testlanguageservice,
     karma,
     testSkillmap,
-    testpxteditor
+    testpxteditor,
+    testcli
 )
 
 function testTask(testFolder, testFile, additionalFiles) {
@@ -832,6 +834,17 @@ function pxtEditorTestTask() {
     return gulp.series([buildTs, browserifyTs, buildRunner, runTests]);
 }
 
+
+function cliTestTask() {
+    // cli modules are commonjs modules that read pxtlib from the global scope
+    const outDir = "built/tests/cli-test";
+    const buildTs = () => compileTsProject("tests/cli-test", outDir, true);
+    const buildRunner = () => gulp.src(["built/pxtlib.js", `${outDir}/tests/cli-test/clirunner.js`])
+        .pipe(concat("runner.js"))
+        .pipe(gulp.dest(`${outDir}/tests/cli-test`));
+    const runTests = () => exec(`${getMochaExecutable()} ${outDir}/tests/cli-test/runner.js --reporter dot`, true);
+    return gulp.series([buildTs, buildRunner, runTests]);
+}
 
 function getMochaExecutable() {
     return isWin32 ? path.resolve("node_modules/.bin/mocha.cmd") : "./node_modules/.bin/mocha";
@@ -909,6 +922,7 @@ exports.tt = teacherTool;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
+exports.testcli = testcli;
 exports.reactCommon = reactCommon;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
