@@ -436,7 +436,7 @@ describe("blockly compiler", function () {
                 list.addItem_();
                 const copy = list.getInputTargetBlock("ADD1");
                 chai.expect(copy.type).to.equal(type);
-                chai.expect(copy.isShadow()).to.be.true;
+                chai.expect(copy.isShadow()).to.equal(true);
                 chai.expect(copy.getFieldValue(field)).to.equal(defaultValue);
                 chai.expect(list.getInputTargetBlock("ADD0").getFieldValue(field))
                     .to.equal(type === "math_number" ? 42 : value);
