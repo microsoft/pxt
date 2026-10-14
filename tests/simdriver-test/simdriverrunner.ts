@@ -16,7 +16,8 @@ class FakeWindow {
 
 /**
  * The part of a DOM element the driver touches when it creates, starts, hides
- * and removes simulator frames. An iframe carries a `contentWindow`.
+ * and removes simulator frames. An iframe carries a `contentWindow` until it is
+ * removed.
  */
 class FakeElement {
     id = "";
@@ -69,7 +70,7 @@ class FakeElement {
 
     /** Inserts `child` before `ref`, or last when `ref` is not a child. */
     insertBefore(child: FakeElement, ref: FakeElement): FakeElement {
-        if (child.parentElement) child.parentElement.removeChild(child);
+        if (child.parentElement) child.parentElement.detach(child);
         const index = ref ? this.children.indexOf(ref) : -1;
         if (index < 0) this.children.push(child);
         else this.children.splice(index, 0, child);
@@ -77,9 +78,15 @@ class FakeElement {
         return child;
     }
 
+    /**
+     * Removes `child`. Each iframe in the removed subtree loses its
+     * `contentWindow`, as an iframe detached from the document does.
+     */
     removeChild(child: FakeElement): FakeElement {
-        this.children.splice(this.children.indexOf(child), 1);
-        child.parentElement = undefined;
+        this.detach(child);
+        [child].concat(child.getElementsByTagName("iframe"))
+            .filter(el => el.tagName === "iframe")
+            .forEach(frame => frame.contentWindow = null);
         return child;
     }
 
@@ -99,6 +106,11 @@ class FakeElement {
 
     private classNames(): string[] {
         return this.className.split(/\s+/).filter(c => !!c);
+    }
+
+    private detach(child: FakeElement) {
+        this.children.splice(this.children.indexOf(child), 1);
+        child.parentElement = undefined;
     }
 }
 
@@ -127,6 +139,8 @@ describe("simulator driver hide and unhide", () => {
     let permanentWrapper: FakeElement;
     let transientWrapper: FakeElement;
     let completions: number;
+    /** The completions of the exit animations the host has started, in start order. */
+    let animations: (() => void)[];
     let driver: pxsim.SimulatorDriver;
 
     /**
@@ -161,6 +175,18 @@ describe("simulator driver hide and unhide", () => {
         completions++;
     }
 
+    /** Ends every exit animation the host has started, applying each completion in start order. */
+    function finishAnimations() {
+        const finishing = animations;
+        animations = [];
+        finishing.forEach(finish => finish());
+    }
+
+    /**
+     * Creates the driver under test. Its host plays an exit animation in
+     * `removeElement` and `hideElement`: the removal or the hidden class, and
+     * the complete handler, apply when `finishAnimations()` ends it.
+     */
     function createDriver(withHideElement: boolean) {
         const simx = (permanent: boolean) => ({ index: "index.html", aspectRatio: 1, permanent });
         driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
@@ -170,13 +196,17 @@ describe("simulator driver hide and unhide", () => {
                 [TRANSIENT_CHANNEL]: simx(false),
             },
             removeElement: (el, onComplete) => {
-                el.parentElement.removeChild(el);
-                if (onComplete) onComplete();
+                animations.push(() => {
+                    if (onComplete) onComplete();
+                    pxsim.U.remove(el);
+                });
             },
             hideElement: withHideElement
                 ? (el, onComplete) => {
-                    pxsim.U.addClass(el, HIDDEN);
-                    if (onComplete) onComplete();
+                    animations.push(() => {
+                        pxsim.U.addClass(el, HIDDEN);
+                        if (onComplete) onComplete();
+                    });
                 }
                 : undefined,
             unhideElement: el => pxsim.U.removeClass(el, HIDDEN),
@@ -189,6 +219,7 @@ describe("simulator driver hide and unhide", () => {
         permanentWrapper = simframe("sim-frame-2", PERMANENT_CHANNEL, true);
         transientWrapper = simframe("sim-frame-3", TRANSIENT_CHANNEL);
         completions = 0;
+        animations = [];
         createDriver(true);
     });
 
@@ -199,6 +230,7 @@ describe("simulator driver hide and unhide", () => {
 
     it("hides a permanent simulator extension frame in place", () => {
         driver.hide(complete);
+        finishAnimations();
         chai.expect(frameIds()).deep.equals(["sim-frame-2"]);
         chai.expect(container.children[0]).equals(permanentWrapper);
         chai.expect(pxsim.U.containsClass(permanentWrapper as unknown as HTMLElement, HIDDEN)).equals(true);
@@ -208,20 +240,24 @@ describe("simulator driver hide and unhide", () => {
 
     it("removes the main frame and non-permanent frames on hide", () => {
         driver.hide(complete);
+        finishAnimations();
         chai.expect(mainWrapper.parentElement).equals(undefined);
         chai.expect(transientWrapper.parentElement).equals(undefined);
     });
 
     it("completes the hide for hidden and removed frames", () => {
         driver.hide(complete);
+        finishAnimations();
         chai.expect(completions).equals(3);
         driver.hide(complete);
+        finishAnimations();
         chai.expect(completions).equals(4);
     });
 
     it("reveals the same permanent frame on unhide", () => {
         const frame = iframe(permanentWrapper);
         driver.hide();
+        finishAnimations();
         driver.unhide();
         chai.expect(container.children.length).equals(1);
         chai.expect(container.children[0]).equals(permanentWrapper);
@@ -232,6 +268,7 @@ describe("simulator driver hide and unhide", () => {
 
     it("starts a run after hide with a new main frame ahead of the hidden permanent frame", () => {
         driver.hide();
+        finishAnimations();
         driver.run("");
         chai.expect(container.children.length).equals(2);
         chai.expect(container.children[0]).not.equals(mainWrapper);
@@ -241,6 +278,7 @@ describe("simulator driver hide and unhide", () => {
 
     it("posts a run's channel packets to the hidden permanent frame instead of spawning another", () => {
         driver.hide();
+        finishAnimations();
         driver.run("");
         const main = iframe(container.children[0]);
         iframe(permanentWrapper).contentWindow.messages = [];
@@ -255,6 +293,7 @@ describe("simulator driver hide and unhide", () => {
     it("removes permanent frames on hide when the host sets no hideElement", () => {
         createDriver(false);
         driver.hide(complete);
+        finishAnimations();
         chai.expect(container.children.length).equals(0);
         chai.expect(completions).equals(3);
     });
@@ -266,12 +305,14 @@ describe("simulator driver hide and unhide", () => {
 
     it("removes a hidden permanent frame on unload", () => {
         driver.hide();
+        finishAnimations();
         driver.stop(true);
         chai.expect(container.children.length).equals(0);
     });
 
     it("preloads a main frame after hide ahead of the hidden permanent frame", () => {
         driver.hide();
+        finishAnimations();
         driver.preload(1.5);
         chai.expect(container.children.length).equals(2);
         chai.expect(iframe(container.children[0]).dataset["messagechannel"]).equals(undefined);
@@ -288,6 +329,7 @@ describe("simulator driver hide and unhide", () => {
         driver.run("");
         driver.stop();
         (driver as any).cleanupFrames();
+        finishAnimations();
         chai.expect(container.children).deep.equals([permanentWrapper, mainWrapper]);
         chai.expect(transientWrapper.parentElement).equals(undefined);
     });
