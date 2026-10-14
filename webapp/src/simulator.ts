@@ -329,9 +329,10 @@ export async function initAsync(cfg: SimulatorConfig) {
     config = cfg
     simxEditorHost = new SimxEditorHost({
         createFrame: () => document.createElement("iframe"),
-        createLoader: () => {
+        createLoader: label => {
             const loader = document.createElement("div");
-            loader.className = "ui active loader";
+            loader.className = "ui active text loader";
+            loader.textContent = lf("Loading {0}...", label);
             return loader;
         },
         framePermissions: grants => pxsim.simulatorFramePermissions(grants),

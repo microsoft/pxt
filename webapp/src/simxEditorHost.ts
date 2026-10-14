@@ -144,8 +144,8 @@ export interface SimxEditorFrameParams {
 export interface SimxEditorHostOptions {
     /** Creates an iframe element. */
     createFrame(): HTMLIFrameElement;
-    /** Creates an element that shows the editor's loading state. */
-    createLoader(): HTMLElement;
+    /** Creates an element that shows the editor's loading state for the tab named `label`. */
+    createLoader(label: string): HTMLElement;
     /** Returns the `sandbox` and `allow` values of a simulator frame given a registration's grants. */
     framePermissions(grants: { allowPopups?: boolean, allowClipboardWrite?: boolean, allowDownloads?: boolean }): { sandbox: string, allow: string };
     /** Returns the simulator frame of the extension registered under `key`, creating it if none exists. */
@@ -164,6 +164,8 @@ export interface SimxEditorHostOptions {
 interface SimxEditorTab {
     key: string;
     frame: HTMLIFrameElement;
+    // the element showing the editor's loading state for the tab, beside its frame
+    loader: HTMLElement;
     // the origin of the tab's page, which its messages come from and the host posts to
     origin: string;
     // true once the tab has posted the ready event
@@ -174,8 +176,8 @@ interface SimxEditorTab {
  * Hosts the editor tab frames of simulator extensions in one container element:
  * creates each on first use, shows one at a time, posts their lifecycle and
  * simulator events, and brokers a `MessageChannel` between each ready tab frame
- * and the loaded simulator frame of the same key. Shows its loading state over
- * the shown tab until that tab is ready.
+ * and the loaded simulator frame of the same key. Shows the shown tab's loader,
+ * which names the tab, over that tab until it is ready.
  */
 export class SimxEditorHost {
     protected tabs: pxt.Map<SimxEditorTab> = {};
@@ -187,8 +189,6 @@ export class SimxEditorHost {
     protected lastShownKey: string | undefined;
     // true while the editor is in fullscreen-simulator mode
     protected fullscreen = false;
-    protected container: HTMLElement | undefined;
-    protected loader: HTMLElement | undefined;
 
     constructor(protected readonly options: SimxEditorHostOptions) {
     }
@@ -287,13 +287,10 @@ export class SimxEditorHost {
         frame.style.display = "none";
         frame.src = url.toString();
 
-        if (this.container !== container) {
-            this.container = container;
-            this.loader = this.options.createLoader();
-            container.appendChild(this.loader);
-        }
+        const loader = this.options.createLoader(registration.label);
+        container.appendChild(loader);
         container.appendChild(frame);
-        this.tabs[key] = { key, frame, origin: url.origin, ready: false };
+        this.tabs[key] = { key, frame, loader, origin: url.origin, ready: false };
         this.options.addTabFrame(key, frame);
     }
 
@@ -352,17 +349,17 @@ export class SimxEditorHost {
         }
     }
 
-    /** Removes every tab frame, and forgets the shown tab and the tab shown last. */
+    /** Removes every tab frame and its loader, and forgets the shown tab and the tab shown last. */
     close() {
         for (const key of Object.keys(this.tabs)) {
-            const frame = this.tabs[key].frame;
+            const { frame, loader } = this.tabs[key];
+            loader.parentElement?.removeChild(loader);
             frame.parentElement?.removeChild(frame);
             this.options.removeTabFrame(frame);
         }
         this.tabs = {};
         this.shownKey = undefined;
         this.lastShownKey = undefined;
-        this.updateLoader();
     }
 
     // creates a MessageChannel and posts one end to the tab of `key` and the other
@@ -386,8 +383,9 @@ export class SimxEditorHost {
     }
 
     protected updateLoader() {
-        if (!this.loader) return;
-        const loading = !!this.shownKey && !this.tabs[this.shownKey]?.ready;
-        this.loader.style.display = loading ? "" : "none";
+        for (const k of Object.keys(this.tabs)) {
+            const tab = this.tabs[k];
+            tab.loader.style.display = k === this.shownKey && !tab.ready ? "" : "none";
+        }
     }
 }

@@ -4562,6 +4562,7 @@ describe("simulator extension editor tab host", () => {
         className = "";
         title = "";
         src = "";
+        textContent = "";
         allowFullscreen = false;
         get isConnected() { return !!this.parentElement; }
         setAttribute(name: string, value: string) { this.attributes[name] = value; }
@@ -4591,6 +4592,8 @@ describe("simulator extension editor tab host", () => {
     // the tab frames the host has recorded with the driver and not yet forgotten, by key
     let recorded: Map<FakeElement, string>;
     let channels: FakeChannel[];
+    // the loaders the host has created, in creation order, each holding the label it was created for
+    let loaders: FakeElement[];
     let state: SimxEditorSimulatorState;
     let host: SimxEditorHost;
 
@@ -4633,11 +4636,17 @@ describe("simulator extension editor tab host", () => {
         started = [];
         recorded = new Map();
         channels = [];
+        loaders = [];
         state = "Running";
         let nextPort = 0;
         host = new SimxEditorHost({
             createFrame: () => new FakeElement() as unknown as HTMLIFrameElement,
-            createLoader: () => new FakeElement() as unknown as HTMLElement,
+            createLoader: label => {
+                const loader = new FakeElement();
+                loader.textContent = label;
+                loaders.push(loader);
+                return loader as unknown as HTMLElement;
+            },
             // as the editor wires it
             framePermissions: grants => pxsim.simulatorFramePermissions(grants),
             startSimulatorExtension: key => {
@@ -4725,16 +4734,43 @@ describe("simulator extension editor tab host", () => {
             chai.expect(tab(EXT).focused + tab(OTHER).focused).equals(2);
         });
 
-        it("shows the loading state over the shown tab until it is ready", () => {
+        it("shows the shown tab's loader, which names the tab, beside its frame until the tab is ready", () => {
             show(EXT);
-            const loader = container.children.find(c => !c.dataset["simxkey"]);
+            chai.expect(loaders.length).equals(1);
+            const loader = loaders[0];
+            chai.expect(loader.parentElement).equals(container);
+            chai.expect(loader.textContent).not.equals("");
             chai.expect(loader.style.display).equals("");
             ready(EXT);
             chai.expect(loader.style.display).equals("none");
-            show(OTHER);
-            chai.expect(loader.style.display).equals("");
-            host.hide();
+            show(EXT);
+            chai.expect(loaders.length).equals(1);
             chai.expect(loader.style.display).equals("none");
+        });
+
+        it("shows only the loader of the shown tab, and only while that tab is not ready", () => {
+            show(EXT);
+            ready(EXT);
+            show(OTHER);
+            const [extLoader, otherLoader] = loaders;
+            chai.expect([extLoader.style.display, otherLoader.style.display]).deep.equals(["none", ""]);
+            show(EXT);
+            chai.expect([extLoader.style.display, otherLoader.style.display]).deep.equals(["none", "none"]);
+            show(OTHER);
+            chai.expect([extLoader.style.display, otherLoader.style.display]).deep.equals(["none", ""]);
+            host.hide();
+            chai.expect([extLoader.style.display, otherLoader.style.display]).deep.equals(["none", "none"]);
+            show(OTHER);
+            ready(OTHER);
+            chai.expect([extLoader.style.display, otherLoader.style.display]).deep.equals(["none", "none"]);
+        });
+
+        it("removes every tab's loader with its frame when its project closes or reloads", () => {
+            show(EXT);
+            show(OTHER);
+            host.close();
+            chai.expect(loaders.map(l => l.parentElement)).deep.equals([undefined, undefined]);
+            chai.expect(container.children.length).equals(0);
         });
 
         it("accepts the ready event only from the tab frame's window and origin", () => {
