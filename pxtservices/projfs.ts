@@ -3,13 +3,16 @@
  * editor, and a client that wraps them in promises. The editor serves them only
  * to simulator extensions registered with `allowFileWrite`.
  *
- * A simulator extension sees and changes only its own folder in the project,
- * which the editor names after the extension's key (e.g. `owner/repo`) and
- * identifies from the requesting frame. Requests and replies name files
- * relative to that folder. Within the folder, only the files pxt.json lists
- * are visible; writes list their file. Requests are posted to the editor
- * window; the editor replies to each request once, to the requesting frame
- * only, with the request's `id`.
+ * A simulator extension sees and changes only its own folder in the project:
+ * the folder of its GitHub repository, `owner/repo`, which the editor derives
+ * from the key of the requesting frame. Every registration of one repository
+ * shares the folder, whatever subfolder its key names (a key `owner/repo/sub`
+ * uses `owner/repo` too), along with the folder's size limit, rate limit and
+ * queue. Requests and replies name files relative to that folder. Within the
+ * folder, only the files pxt.json lists are visible; writes list their file.
+ * Requests are posted to the editor window; the editor replies to each
+ * request once, to the requesting frame only, with the request's `id`, and
+ * replies to one frame's requests in the order it sent them.
  *
  * Writes and deletes come in two classes. By default a change is an artifact:
  * saved with the project, and the text editor showing a written file shows the
@@ -30,7 +33,8 @@ export const PROJFS_MESSAGE_TYPE = "projfs";
  * parameter. The key is the channel the extension's simulator messages
  * carry; use it to filter those messages or to show which extension is
  * running. Projfs requests and replies never include it; a file the
- * extension names `notes.txt` appears in the project as `<key>/notes.txt`.
+ * extension names `notes.txt` appears in the project as
+ * `<owner>/<repo>/notes.txt`, in the folder of the key's repository.
  * @param channel the key, for an extension that knows it; returned as-is
  * @param search the frame URL's query string; defaults to `window.location.search`
  * @returns the key, or undefined if neither `channel` nor the URL provides one
@@ -39,6 +43,18 @@ export function getSimxChannel(channel?: string, search?: string): string | unde
     if (channel) return channel;
     const query = search !== undefined ? search : window.location.search;
     return new URLSearchParams(query).get("channel") || undefined;
+}
+
+/**
+ * Returns the origin of the editor hosting this simulator extension's frame,
+ * e.g. `https://arcade.makecode.com`, which the editor passes in the frame
+ * URL's `parentOrigin` parameter. Clients post their requests to it by default.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the origin, or undefined if the URL provides none
+ */
+export function getParentOrigin(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("parentOrigin") || undefined;
 }
 
 /**
@@ -81,16 +97,26 @@ export type ProjfsErrorCode =
      * missing one. Deletes: the folder neither stores nor lists the file.
      */
     | "NOT_FOUND"
-    /** The write would take the extension's folder over its size limit; nothing was written. */
+    /**
+     * The write would take the extension's folder over its size limit, which
+     * counts the UTF-8 bytes of each file's content and of its name relative
+     * to the folder, or over the number of files it may store; or its content
+     * alone is larger than the folder may hold. Nothing was written. A write
+     * that leaves the folder no larger than it was is accepted even while the
+     * folder is over its size limit.
+     */
     | "QUOTA_EXCEEDED"
     /**
      * The name is not a relative path, has an empty, `.` or `..` segment, or
-     * ends in `.simxeditor`, a suffix the editor reserves.
+     * ends in `.simxeditor`, a suffix the editor reserves. A write also
+     * refuses a name that does not start with a letter, digit or underscore,
+     * uses a character other than letters, digits, `_`, `-`, `.` and `/`, or
+     * is longer than the editor allows, in characters or in segments.
      */
     | "INVALID_NAME"
     /**
-     * The extension already had as many writes and deletes waiting for
-     * replies as the editor holds for one extension; the request was not
+     * The extension's folder already had as many requests waiting for
+     * replies as the editor holds for one folder; the request was not
      * applied.
      */
     | "RATE_LIMITED"
@@ -115,13 +141,16 @@ export type ProjfsErrorCode =
     | "PERMISSION_DENIED"
     /**
      * The editor met an error applying the request. A write or delete may be
-     * partly applied; repeating it completes it.
+     * partly applied; repeating it completes it. Also raised by the client
+     * when the request cannot be posted, as when it holds a value that cannot
+     * be cloned; the request was not sent.
      */
     | "FAILED"
     /**
      * The client was disposed, as when its frame is torn down, before the
-     * editor replied; the request may or may not have been applied (raised by
-     * the client).
+     * editor replied, and the request may or may not have been applied; or
+     * the request was made after the client was disposed, and was not sent
+     * (raised by the client).
      */
     | "DISPOSED";
 
@@ -230,9 +259,14 @@ export interface ProjfsClientOptions {
     target?: ProjfsTargetWindow;
     /** The window replies arrive on; defaults to `window`. */
     listener?: ProjfsListenerWindow;
-    /** The origin requests may be delivered to; defaults to `"*"`. */
+    /**
+     * The origin requests may be delivered to; defaults to the frame URL's
+     * `parentOrigin` parameter (see {@link getParentOrigin}), else `"*"`.
+     */
     targetOrigin?: string;
-    /** How long a request waits for its reply before {@link onSlowReply} hears of it; defaults to 10 seconds. */
+    /** The frame URL's query string the default {@link targetOrigin} is read from; defaults to `window.location.search`. */
+    search?: string;
+    /** How long, in milliseconds, a request waits for its reply before {@link onSlowReply} hears of it; defaults to 10 seconds. */
     slowReplyMs?: number;
     /**
      * Called once for each request still waiting for its reply after
@@ -286,7 +320,9 @@ function dirtyField(options: ProjfsMutationOptions | undefined): { dirty?: true 
  * A request waits for its reply however long that takes; a reply slower than
  * {@link ProjfsClientOptions.slowReplyMs} is reported to
  * {@link ProjfsClientOptions.onSlowReply} and never fails the request. Only
- * {@link dispose} ends the wait, failing the request with `DISPOSED`.
+ * {@link dispose} ends the wait, failing the request with `DISPOSED`. A
+ * request that cannot be posted fails at once with `FAILED`, and a request
+ * made after {@link dispose} fails at once with `DISPOSED`.
  */
 export class ProjfsClient {
     protected readonly target: ProjfsTargetWindow;
@@ -297,12 +333,13 @@ export class ProjfsClient {
     protected readonly idPrefix = Math.random().toString(36).slice(2);
     protected nextId = 0;
     protected pending: { [id: string]: PendingRequest } = {};
+    protected disposed = false;
 
     constructor(options: ProjfsClientOptions = {}) {
         this.target = options.target || window.parent;
         this.listener = options.listener || window;
-        this.targetOrigin = options.targetOrigin || "*";
-        this.slowReplyMs = options.slowReplyMs || DEFAULT_SLOW_REPLY_MS;
+        this.targetOrigin = options.targetOrigin ?? getParentOrigin(options.search) ?? "*";
+        this.slowReplyMs = options.slowReplyMs ?? DEFAULT_SLOW_REPLY_MS;
         this.onSlowReply = options.onSlowReply;
         this.listener.addEventListener("message", this.onMessage);
     }
@@ -347,9 +384,11 @@ export class ProjfsClient {
 
     /**
      * Stops listening for replies and fails every pending request with
-     * `DISPOSED`; the editor may or may not have applied it.
+     * `DISPOSED`; the editor may or may not have applied it. Later requests
+     * fail with `DISPOSED` without being sent.
      */
     dispose() {
+        this.disposed = true;
         this.listener.removeEventListener("message", this.onMessage);
         for (const id of Object.keys(this.pending)) {
             this.settle(id)?.reject(new ProjfsError("DISPOSED", "The client was disposed before the editor replied; the request may or may not have been applied."));
@@ -360,10 +399,19 @@ export class ProjfsClient {
         const id = `${this.idPrefix}-${this.nextId++}`;
         const request = { ...body, type: PROJFS_MESSAGE_TYPE, id } as ProjfsRequest;
         return new Promise<ProjfsReply>((resolve, reject) => {
+            if (this.disposed) {
+                reject(new ProjfsError("DISPOSED", "The client was disposed; the request was not sent."));
+                return;
+            }
             const onSlowReply = this.onSlowReply;
             const timer = onSlowReply && setTimeout(() => onSlowReply(request), this.slowReplyMs);
             this.pending[id] = { resolve, reject, timer };
-            this.target.postMessage(request, this.targetOrigin);
+            try {
+                this.target.postMessage(request, this.targetOrigin);
+            } catch (e) {
+                this.settle(id);
+                reject(new ProjfsError("FAILED", `The request could not be posted; it was not sent: ${e?.message || e}`));
+            }
         }).then(reply => {
             if (reply.subtype === "error") throw new ProjfsError(reply.code, reply.message);
             if (reply.subtype !== expected) throw new ProjfsError("FAILED", `Unexpected ${reply.subtype} reply to a ${body.subtype} request.`);

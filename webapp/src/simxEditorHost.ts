@@ -1,3 +1,5 @@
+/// <reference path="../../built/pxtsim.d.ts" />
+
 import {
     SIMXEDITOR_MESSAGE_TYPE,
     SIMXEDITOR_PORT_MESSAGE_TYPE,
@@ -70,12 +72,17 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
 
 /**
  * Returns true if the project includes the simulator extension registered under
- * `key`: if `key` names the GitHub repository (`owner/repo`, in any case) of one
- * of `dependencies`, the version specs of the project's dependencies, direct or
- * not, such as `github:owner/repo/path#ref`.
+ * `key`: if the GitHub repository `key` names (`owner/repo`, in any case,
+ * whatever subfolder `key` adds) is the repository of one of `dependencies`,
+ * the version specs of the project's dependencies, direct or not, such as
+ * `github:owner/repo/path#ref`. Every registration of one repository is
+ * therefore included whenever the project depends on any extension of that
+ * repository, and each such registration's tab is offered. A key that names
+ * no repository is never included.
  */
 export function isSimxInProject(key: string, dependencies: string[]): boolean {
-    const slug = key.toLowerCase();
+    const slug = pxt.github.parseRepoId(key)?.slug?.toLowerCase();
+    if (!slug) return false;
     return dependencies
         .filter(dep => /^github:/i.test(dep || ""))
         .some(dep => pxt.github.parseRepoId(dep)?.slug?.toLowerCase() === slug);
@@ -276,7 +283,7 @@ export class SimxEditorHost {
         frame.className = "simx-editor-frame";
         frame.dataset["simxkey"] = key;
         frame.dataset["simxrole"] = SIMXEDITOR_ROLE;
-        frame.dataset["origin"] = url.origin;
+        frame.dataset[pxsim.FRAME_DATA_ORIGIN] = url.origin;
         frame.style.display = "none";
         frame.src = url.toString();
 

@@ -1094,7 +1094,9 @@ namespace pxt {
          * Adds a listener called on each change to the project's assets,
          * including undo and redo. The listener is called synchronously, and
          * may be called before the change has applied; read the project from a
-         * later task to see it. Several calls may accompany one edit.
+         * later task to see it. Several calls may accompany one edit. A
+         * listener that throws is reported with `pxt.reportException`, and the
+         * change and the other listeners proceed.
          */
         public addProjectChangeListener(listener: () => void) {
             this.projectChangeListeners.push(listener);
@@ -1218,7 +1220,8 @@ namespace pxt {
                 }
             }
 
-            for (const tm of getTilemaps(jres)) {
+            const tilemaps = getTilemaps(jres);
+            for (const tm of tilemaps) {
                 this.getAssetCollection(AssetType.Tilemap, gallery).add({
                     internalID: this.getNewInternalId(),
                     type: AssetType.Tilemap,
@@ -1236,6 +1239,7 @@ namespace pxt {
                     })
                 })
             }
+            if (!gallery && tilemaps.length) this.notifyProjectChangeListeners();
         }
 
         loadAssetsJRes(jres: Map<JRes>, gallery = false) {
@@ -1270,14 +1274,19 @@ namespace pxt {
                     this.inflateAnimation(animation, this.getAssetCollection(AssetType.Image, gallery).getSnapshot())
                 );
             }
+            if (!gallery && Object.keys(jres).length) this.notifyProjectChangeListeners();
         }
 
         removeInactiveBlockAssets(activeBlockIDs: string[]) {
+            let removed = 0;
             for (const type of Object.keys(this.state.assets)) {
-                cleanupCollection(this.state.assets[type]);
+                removed += cleanupCollection(this.state.assets[type]);
             }
+            if (removed) this.notifyProjectChangeListeners();
 
-            function cleanupCollection<U extends Asset>(collection: AssetCollection<U>) {
+            // removes the collection's unnamed assets that only inactive blocks use, and drops the
+            // inactive blocks from the others; returns how many assets it removed
+            function cleanupCollection<U extends Asset>(collection: AssetCollection<U>): number {
                 const inactiveAssets = collection.getSnapshot(asset => !asset.meta.displayName && asset.meta.blockIDs?.some(id => activeBlockIDs.indexOf(id) === -1));
                 const toRemove: Asset[] = [];
                 for (const asset of inactiveAssets) {
@@ -1290,6 +1299,7 @@ namespace pxt {
                 for (const asset of toRemove) {
                     collection.removeByID(asset.id);
                 }
+                return toRemove.length;
             }
         }
 
@@ -1477,9 +1487,14 @@ namespace pxt {
             this.notifyProjectChangeListeners();
         }
 
+        /** Calls every project change listener; a listener that throws is reported, and the others are still called. */
         protected notifyProjectChangeListeners() {
             for (const listener of this.projectChangeListeners) {
-                listener();
+                try {
+                    listener();
+                } catch (e) {
+                    pxt.reportException(e);
+                }
             }
         }
 
@@ -1529,6 +1544,7 @@ namespace pxt {
             for (const image of orphaned) {
                 images.removeByID(image.id);
             }
+            if (orphaned.length) this.notifyProjectChangeListeners();
         }
 
         protected getAssetCollection(type: AssetType.Animation, gallery?: boolean): AssetCollection<Animation>

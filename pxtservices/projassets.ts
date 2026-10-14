@@ -12,7 +12,11 @@
  *
  * Requests are posted to the editor window; the editor replies to each request
  * once, to the requesting frame only, with the request's `id`. Change
- * notifications carry no `id` and go to the frames that subscribed.
+ * notifications carry no `id` and go to the frames that subscribed. A frame
+ * holds at most one subscription, which lasts until the project it was made
+ * in closes or reloads. The editor then removes the extension's frames,
+ * whose pages hear `pagehide`, and creates new ones as the next load needs
+ * them, so a page subscribes once.
  *
  * This module has no dependencies; a simulator extension can import or copy it
  * as-is.
@@ -45,11 +49,15 @@ export type ProjassetsErrorCode =
     | "UNREGISTERED"
     /** The simulator extension's registration does not set `allowAssetRead`. */
     | "PERMISSION_DENIED"
-    /** The editor met an error answering the request. */
+    /**
+     * The editor met an error answering the request. Also raised by the
+     * client when the request cannot be posted; the request was not sent.
+     */
     | "FAILED"
     /**
      * The client was disposed, as when its frame is torn down, before the
-     * editor replied (raised by the client).
+     * editor replied; or the request was made after the client was disposed,
+     * and was not sent (raised by the client).
      */
     | "DISPOSED";
 
@@ -66,10 +74,12 @@ export interface ProjassetsListRequest extends ProjassetsMessage {
 }
 
 /**
- * Subscribes the requesting extension to {@link ProjassetsNotification}s. The
- * reply is a {@link ProjassetsAckReply}. An extension holds one subscription:
- * subscribing again replaces it. A subscription ends when the project open
- * when it was made closes.
+ * Subscribes the requesting frame to {@link ProjassetsNotification}s. The
+ * reply is a {@link ProjassetsAckReply}. A frame holds at most one
+ * subscription: subscribing again from the same frame is acknowledged and
+ * changes nothing. Each frame of an extension subscribes for itself. A
+ * subscription ends, without notice, when the project open when it was made
+ * closes or reloads.
  */
 export interface ProjassetsSubscribeRequest extends ProjassetsMessage {
     subtype: "subscribe";
@@ -222,9 +232,14 @@ export interface ProjassetsClientOptions {
     target?: ProjassetsTargetWindow;
     /** The window replies and notifications arrive on; defaults to `window`. */
     listener?: ProjassetsListenerWindow;
-    /** The origin requests may be delivered to; defaults to `"*"`. */
+    /**
+     * The origin requests may be delivered to; defaults to the frame URL's
+     * `parentOrigin` parameter, else `"*"`.
+     */
     targetOrigin?: string;
-    /** How long a request waits for its reply before {@link onSlowReply} hears of it; defaults to 10 seconds. */
+    /** The frame URL's query string the default {@link targetOrigin} is read from; defaults to `window.location.search`. */
+    search?: string;
+    /** How long, in milliseconds, a request waits for its reply before {@link onSlowReply} hears of it; defaults to 10 seconds. */
     slowReplyMs?: number;
     /**
      * Called once for each request still waiting for its reply after
@@ -246,6 +261,16 @@ type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : nev
 const DEFAULT_SLOW_REPLY_MS = 10000;
 
 /**
+ * Returns the editor's origin, which the editor passes in the frame URL's
+ * `parentOrigin` parameter, or undefined if the URL provides none.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ */
+function getParentOrigin(search: string | undefined): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("parentOrigin") || undefined;
+}
+
+/**
  * Lists the open project's assets, name and visual configuration from a
  * simulator extension and hears when they change. Each method resolves with
  * the editor's reply, or rejects with a {@link ProjassetsError} carrying the
@@ -254,7 +279,9 @@ const DEFAULT_SLOW_REPLY_MS = 10000;
  * A request waits for its reply however long that takes; a reply slower than
  * {@link ProjassetsClientOptions.slowReplyMs} is reported to
  * {@link ProjassetsClientOptions.onSlowReply} and never fails the request.
- * Only {@link dispose} ends the wait, failing the request with `DISPOSED`.
+ * Only {@link dispose} ends the wait, failing the request with `DISPOSED`. A
+ * request that cannot be posted fails at once with `FAILED`, and a request
+ * made after {@link dispose} fails at once with `DISPOSED`.
  */
 export class ProjassetsClient {
     protected readonly target: ProjassetsTargetWindow;
@@ -265,14 +292,18 @@ export class ProjassetsClient {
     protected readonly idPrefix = Math.random().toString(36).slice(2);
     protected nextId = 0;
     protected pending: { [id: string]: PendingRequest } = {};
-    // called on each change notification once a subscription is acknowledged
+    protected disposed = false;
+    // called on each change notification, each once, once the subscription is acknowledged
     protected changeListeners: (() => void)[] = [];
+    // settles once the frame's subscription request is acknowledged or refused; undefined until
+    // subscribe is first called, and again after a refusal
+    protected subscription: Promise<void> | undefined;
 
     constructor(options: ProjassetsClientOptions = {}) {
         this.target = options.target || window.parent;
         this.listener = options.listener || window;
-        this.targetOrigin = options.targetOrigin || "*";
-        this.slowReplyMs = options.slowReplyMs || DEFAULT_SLOW_REPLY_MS;
+        this.targetOrigin = options.targetOrigin ?? getParentOrigin(options.search) ?? "*";
+        this.slowReplyMs = options.slowReplyMs ?? DEFAULT_SLOW_REPLY_MS;
         this.onSlowReply = options.onSlowReply;
         this.listener.addEventListener("message", this.onMessage);
     }
@@ -291,21 +322,36 @@ export class ProjassetsClient {
     }
 
     /**
-     * Subscribes this extension to change notifications, and calls `onChange`
-     * on each one once the editor has acknowledged the subscription. List the
+     * Subscribes this frame to change notifications, and calls `onChange` on
+     * each one once the editor has acknowledged the subscription. List the
      * assets again from `onChange` to see the change.
+     *
+     * The frame's first call sends the subscription request; later calls
+     * send none, and add their `onChange` once the first call's request is
+     * acknowledged. A function passed more than once is called once per
+     * notification. If the editor refuses the request, the call rejects, and
+     * the next call sends a new request.
      * @param onChange called when the project's assets, name, or visual configuration may have changed
      */
     async subscribe(onChange: () => void): Promise<void> {
-        await this.requestAsync({ subtype: "subscribe" }, "ack");
-        this.changeListeners.push(onChange);
+        if (!this.subscription) {
+            const subscription = this.requestAsync({ subtype: "subscribe" }, "ack").then(() => { });
+            this.subscription = subscription;
+            subscription.catch(() => {
+                if (this.subscription === subscription) this.subscription = undefined;
+            });
+        }
+        await this.subscription;
+        if (this.changeListeners.indexOf(onChange) < 0) this.changeListeners.push(onChange);
     }
 
     /**
      * Stops listening for replies and notifications, and fails every pending
-     * request with `DISPOSED`.
+     * request with `DISPOSED`. Later requests fail with `DISPOSED` without
+     * being sent.
      */
     dispose() {
+        this.disposed = true;
         this.listener.removeEventListener("message", this.onMessage);
         this.changeListeners = [];
         for (const id of Object.keys(this.pending)) {
@@ -317,10 +363,19 @@ export class ProjassetsClient {
         const id = `${this.idPrefix}-${this.nextId++}`;
         const request = { ...body, type: PROJASSETS_MESSAGE_TYPE, id } as ProjassetsRequest;
         return new Promise<ProjassetsReply>((resolve, reject) => {
+            if (this.disposed) {
+                reject(new ProjassetsError("DISPOSED", "The client was disposed; the request was not sent."));
+                return;
+            }
             const onSlowReply = this.onSlowReply;
             const timer = onSlowReply && setTimeout(() => onSlowReply(request), this.slowReplyMs);
             this.pending[id] = { resolve, reject, timer };
-            this.target.postMessage(request, this.targetOrigin);
+            try {
+                this.target.postMessage(request, this.targetOrigin);
+            } catch (e) {
+                this.settle(id);
+                reject(new ProjassetsError("FAILED", `The request could not be posted; it was not sent: ${e?.message || e}`));
+            }
         }).then(reply => {
             if (reply.subtype === "error") throw new ProjassetsError(reply.code, reply.message);
             if (reply.subtype !== expected) throw new ProjassetsError("FAILED", `Unexpected ${reply.subtype} reply to a ${body.subtype} request.`);

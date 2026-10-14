@@ -301,8 +301,8 @@ export async function initAsync(cfg: SimulatorConfig) {
         onProjfsMessage: (key, msg, reply) => {
             projfsHost.handleMessageAsync(key, msg, reply);
         },
-        onProjassetsMessage: (key, msg, reply) => {
-            projassetsHost.handleMessageAsync(key, msg, reply);
+        onProjassetsMessage: (key, msg, reply, frame) => {
+            projassetsHost.handleMessageAsync(key, msg, reply, frame);
         },
         onSimulatorExtensionEditorMessage: (key, msg, reply) => {
             reply(answerSimxEditorRequest(key, msg, k => cfg.openSimulatorExtensionEditor(k)) as pxsim.SimulatorMessage);
@@ -374,13 +374,15 @@ export function postSimxEditorFullscreen(enabled: boolean) {
 
 /**
  * Closes the open project to simulator extensions: removes every editor tab
- * frame, and refuses the project-file and project-asset requests still waiting
- * for the project with `PROJECT_CLOSED`. Call before the simulator unloads, as
- * the project closes or another load begins.
+ * frame, refuses the project-file and project-asset requests still waiting
+ * for the project with `PROJECT_CLOSED`, and ends every project-asset
+ * subscription. Call before the simulator unloads, as the project closes or
+ * another load begins.
  */
 export function closeSimxProject() {
     simxEditorHost?.close();
     openProject.close();
+    projassetsHost.close();
 }
 
 /**
@@ -393,7 +395,11 @@ function getOpenAssetProject(): pkg.EditorPackage | undefined {
 
 /** Returns the configuration of the open project as the asset host reads and watches it. */
 function getAssetConfig(): ProjassetsConfig {
-    return createProjassetsConfig(pkg.mainPkg, () => simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme);
+    return createProjassetsConfig(pkg.mainPkg, {
+        get: () => simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme,
+        addChangeListener: simulatorThemePreference.addSimulatorThemePreferenceListener,
+        removeChangeListener: simulatorThemePreference.removeSimulatorThemePreferenceListener,
+    });
 }
 
 // the project getProjfsProject last returned, with the editor package it stands for

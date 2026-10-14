@@ -76,27 +76,47 @@ export interface ProjassetsConfig {
     getName(): string;
     /** Returns the project's visual configuration as it is now. */
     getVisualConfig(): ProjassetsVisualConfig;
-    /** Adds a listener called each time the project's pxt.json is reloaded, whether or not it changed. */
-    addConfigLoadListener(listener: () => void): void;
-    /** Removes a listener added with addConfigLoadListener. */
-    removeConfigLoadListener(listener: () => void): void;
+    /**
+     * Adds a listener called each time the project's name or visual
+     * configuration may have changed: its pxt.json is reloaded, or the user's
+     * simulator theme preference may have changed, whether or not either did.
+     */
+    addChangeListener(listener: () => void): void;
+    /** Removes a listener added with addChangeListener. */
+    removeChangeListener(listener: () => void): void;
+}
+
+/** The user's simulator theme, as the asset host reads and watches it. */
+export interface ProjassetsAccountTheme {
+    /** Returns the user's effective simulator theme. */
+    get(): pxt.SimulatorTheme | undefined;
+    /** Adds a listener called each time the user's simulator theme preference may have changed, whether or not it did. */
+    addChangeListener(listener: () => void): void;
+    /** Removes a listener added with addChangeListener. */
+    removeChangeListener(listener: () => void): void;
 }
 
 /**
  * Returns the configuration of the project whose main package is `mainPkg`,
  * as the asset host reads and watches it; its theme is resolved against the
  * target's simulator theme presets as they are when it is read.
- * @param getAccountTheme returns the user's effective simulator theme
+ * @param accountTheme the user's simulator theme
  */
 export function createProjassetsConfig(
     mainPkg: pxt.MainPackage,
-    getAccountTheme: () => pxt.SimulatorTheme | undefined
+    accountTheme: ProjassetsAccountTheme
 ): ProjassetsConfig {
     return {
         getName: () => mainPkg.config.name,
-        getVisualConfig: () => getVisualConfig(mainPkg, pxt.appTarget.simulator?.themePresets, getAccountTheme()),
-        addConfigLoadListener: listener => mainPkg.addConfigLoadListener(listener),
-        removeConfigLoadListener: listener => mainPkg.removeConfigLoadListener(listener),
+        getVisualConfig: () => getVisualConfig(mainPkg, pxt.appTarget.simulator?.themePresets, accountTheme.get()),
+        addChangeListener: listener => {
+            mainPkg.addConfigLoadListener(listener);
+            accountTheme.addChangeListener(listener);
+        },
+        removeChangeListener: listener => {
+            mainPkg.removeConfigLoadListener(listener);
+            accountTheme.removeChangeListener(listener);
+        },
     };
 }
 
@@ -114,6 +134,12 @@ export interface ProjassetsOpenProject {
     loadedAsync(): Promise<void>;
 }
 
+/** A frame that subscribes to change notifications, as the asset host checks it. */
+export interface ProjassetsFrame {
+    /** False once the frame has been removed from the document. */
+    readonly isConnected: boolean;
+}
+
 // per asset kind the host lists: returns the project's assets of that kind
 const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => ProjassetsAsset[] } = {
     image: getImageAssets,
@@ -129,18 +155,20 @@ class ProjassetsRequestError extends Error {
 /**
  * Serves the project-asset requests of simulator extensions: lists the named
  * assets of the open project by kind, with its name and visual configuration,
- * and notifies subscribed extensions when those assets, that name or that
+ * and notifies subscribed frames when those assets, that name or that
  * configuration change. Every request gets one reply. A request applies to
  * the project open when it arrives, and is answered once that project has
- * loaded; a subscription ends when that project closes.
+ * loaded. A frame holds at most one subscription, which ends when the
+ * project it was made in closes, or when the frame is removed.
  *
  * The host listens to one project at a time, the one its subscriptions were
- * made in. Changes are merged: subscribers get one notification, sent from a
- * later task, for all the changes made before it is sent.
+ * made in, and lets go of it when it closes. Changes are merged: subscribers
+ * get one notification, sent from a later task, for all the changes made
+ * before it is sent.
  */
 export class ProjassetsHost {
-    // per extension key: deliver change notifications to each of the extension's subscribed frames
-    protected subscriptions: pxt.Map<((msg: ProjassetsNotification) => void)[]> = {};
+    // the subscribed frames, each once, with the function that delivers its notifications
+    protected subscribers: { frame: ProjassetsFrame, reply: (msg: ProjassetsNotification) => void }[] = [];
     // the project every subscription was made in, which the host listens to, with
     // its asset project, configuration, and name and visual configuration as
     // last seen, serialized; undefined while there is none
@@ -165,20 +193,26 @@ export class ProjassetsHost {
     /**
      * Answers a request from the simulator extension with the given key,
      * once the project open when it arrives has loaded. A subscribe request
-     * also makes `reply` a channel for the extension's change notifications;
-     * an extension may subscribe through several channels, one per frame, and
-     * subscribing again through the same channel changes nothing.
+     * also subscribes `frame`, whose notifications `reply` delivers, until
+     * the project closes or the frame is removed; subscribing again from
+     * the same frame changes nothing.
      * @param key the extension key the requesting frame was created for
      * @param msg the request, as received
      * @param reply delivers a reply or notification to the requesting frame
+     * @param frame the requesting frame
      * @returns a promise that resolves once the reply is sent
      */
-    async handleMessageAsync(key: string, msg: unknown, reply: (msg: ProjassetsReply | ProjassetsNotification) => void): Promise<void> {
+    async handleMessageAsync(
+        key: string,
+        msg: unknown,
+        reply: (msg: ProjassetsReply | ProjassetsNotification) => void,
+        frame: ProjassetsFrame
+    ): Promise<void> {
         const request = msg as ProjassetsRequest;
         const id = typeof request?.id === "string" ? request.id : undefined;
         let answer: ProjassetsReply;
         try {
-            answer = { ...await this.applyAsync(key, request, reply), type: PROJASSETS_MESSAGE_TYPE, id } as ProjassetsReply;
+            answer = { ...await this.applyAsync(request, reply, frame), type: PROJASSETS_MESSAGE_TYPE, id } as ProjassetsReply;
         } catch (e) {
             const code: ProjassetsErrorCode = e instanceof ProjassetsRequestError ? e.code : "FAILED";
             answer = { type: PROJASSETS_MESSAGE_TYPE, id, subtype: "error", code, message: e?.message || String(e) };
@@ -186,15 +220,15 @@ export class ProjassetsHost {
         reply(answer);
     }
 
-    protected async applyAsync(key: string, request: ProjassetsRequest, reply: (msg: ProjassetsNotification) => void): Promise<ProjassetsReplyBody> {
+    protected async applyAsync(request: ProjassetsRequest, reply: (msg: ProjassetsNotification) => void, frame: ProjassetsFrame): Promise<ProjassetsReplyBody> {
         switch (request?.subtype) {
             case "list": {
                 const kind: unknown = request.kind;
                 if (typeof kind !== "string")
                     throw new ProjassetsRequestError("INVALID_REQUEST", "The kind must be a string.");
-                const { assets: project, config } = await this.openProjectAsync();
                 if (!Object.prototype.hasOwnProperty.call(listers, kind))
                     throw new ProjassetsRequestError("UNSUPPORTED_KIND", `The editor does not list ${kind} assets.`);
+                const { assets: project, config } = await this.openProjectAsync();
                 return {
                     subtype: "assets",
                     kind: kind as ProjassetsKind,
@@ -206,8 +240,8 @@ export class ProjassetsHost {
 
             case "subscribe": {
                 this.watch(await this.openProjectAsync());
-                const subscribers = this.subscriptions[key] || (this.subscriptions[key] = []);
-                if (subscribers.indexOf(reply) < 0) subscribers.push(reply);
+                this.subscribers = this.subscribers.filter(s => s.frame.isConnected);
+                if (!this.subscribers.some(s => s.frame === frame)) this.subscribers.push({ frame, reply });
                 return { subtype: "ack" };
             }
 
@@ -241,16 +275,25 @@ export class ProjassetsHost {
         if (this.watched?.open === project.open) return;
         this.unwatch();
         project.assets.addProjectChangeListener(this.onProjectChange);
-        project.config.addConfigLoadListener(this.onConfigLoad);
+        project.config.addChangeListener(this.onConfigChange);
         this.watched = { ...project, seen: serializeConfig(project.config) };
+    }
+
+    /**
+     * Ends every subscription, stops listening to the project they were made
+     * in, and drops the host's references to it. Call when the open project
+     * closes.
+     */
+    close() {
+        this.unwatch();
     }
 
     /** Stops listening for changes and ends every subscription. */
     protected unwatch() {
         this.watched?.assets.removeProjectChangeListener(this.onProjectChange);
-        this.watched?.config.removeConfigLoadListener(this.onConfigLoad);
+        this.watched?.config.removeChangeListener(this.onConfigChange);
         this.watched = undefined;
-        this.subscriptions = {};
+        this.subscribers = [];
     }
 
     protected onProjectChange = () => {
@@ -258,7 +301,7 @@ export class ProjassetsHost {
         this.scheduleNotification();
     }
 
-    protected onConfigLoad = () => {
+    protected onConfigChange = () => {
         this.scheduleNotification();
     }
 
@@ -269,10 +312,11 @@ export class ProjassetsHost {
     }
 
     /**
-     * Notifies every subscriber if the assets, the name or the visual
-     * configuration changed, or ends the subscriptions if the open project
-     * is no longer the one they were made in, or its configuration can no
-     * longer be read; a read failure is reported, not raised.
+     * Notifies every subscriber whose frame is still in the document, and
+     * drops the others, if the assets, the name or the visual configuration
+     * changed; or ends the subscriptions if the open project is no longer the
+     * one they were made in, or its configuration can no longer be read. A
+     * read failure is reported, not raised.
      */
     protected notifySubscribers() {
         this.notifyScheduled = false;
@@ -295,9 +339,8 @@ export class ProjassetsHost {
         this.watched.seen = seen;
         if (!assetsChanged && !configChanged) return;
         const notification: ProjassetsNotification = { type: PROJASSETS_MESSAGE_TYPE, subtype: "changed" };
-        for (const key of Object.keys(this.subscriptions)) {
-            for (const subscriber of this.subscriptions[key]) subscriber(notification);
-        }
+        this.subscribers = this.subscribers.filter(s => s.frame.isConnected);
+        for (const subscriber of this.subscribers) subscriber.reply(notification);
     }
 }
 

@@ -1052,7 +1052,9 @@ namespace pxt {
         /**
          * Adds a listener called each time the project's pxt.json is reloaded
          * into the package's config, after the reload. The listener is called
-         * synchronously, whether or not the config changed.
+         * synchronously, whether or not the config changed. A listener that
+         * throws is reported with `pxt.reportException`, and the other
+         * listeners are still called.
          */
         addConfigLoadListener(listener: () => void) {
             this.configLoadListeners.push(listener);
@@ -1067,7 +1069,13 @@ namespace pxt {
 
         loadConfig(skipSave = false) {
             super.loadConfig(skipSave);
-            this.configLoadListeners.forEach(listener => listener());
+            this.configLoadListeners.forEach(listener => {
+                try {
+                    listener();
+                } catch (e) {
+                    pxt.reportException(e);
+                }
+            });
         }
 
         installAllAsync(targetVersion?: string) {

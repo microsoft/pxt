@@ -42,7 +42,7 @@ namespace pxsim {
 
     /** How the driver gates one kind of simulator extension request. */
     interface ExtensionRequestGate {
-        handler: ((key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void) | undefined;
+        handler: ((key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void) | undefined;
         permission: "allowFileWrite" | "allowAssetRead" | "allowEditorTab";
         failed: string;
     }
@@ -126,8 +126,9 @@ namespace pxsim {
          * @param msg the request, as received
          * @param reply posts a message to the requesting frame only; may be called again
          * later, to deliver notifications
+         * @param frame the requesting frame, to which `reply` posts
          */
-        onProjassetsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
+        onProjassetsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void;
         /**
          * Receives the editor-tab ("simxeditor") requests of simulator extension frames
          * whose registration declares and enables an editor tab (see `editorUrl`).
@@ -238,6 +239,13 @@ namespace pxsim {
     export interface HwDebugger {
         postMessage: (msg: pxsim.SimulatorMessage) => void;
     }
+
+    /**
+     * The `dataset` key of a simulator frame or simulator extension editor tab
+     * frame that holds the origin of the frame's page. The driver posts to a
+     * frame at that origin and serves a frame's requests only from it.
+     */
+    export const FRAME_DATA_ORIGIN = "origin";
 
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
     const FRAME_ASPECT_RATIO = "aspectratio"
@@ -741,7 +749,7 @@ namespace pxsim {
         }
 
         private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
-            const origin = U.isLocalHostDev() ? "*" : frame.dataset["origin"];
+            const origin = U.isLocalHostDev() ? "*" : frame.dataset[FRAME_DATA_ORIGIN];
             frame.contentWindow.postMessage(msg, origin);
         }
 
@@ -787,7 +795,7 @@ namespace pxsim {
             frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
-            frame.dataset['origin'] = new URL(furl).origin || "*";
+            frame.dataset[FRAME_DATA_ORIGIN] = new URL(furl).origin || "*";
             frame.dataset['loading'] = "true";
             if (this._runOptions?.autofocus) frame.setAttribute("autofocus", "true");
 
@@ -1310,7 +1318,7 @@ namespace pxsim {
                     message,
                 } as SimulatorMessage);
             };
-            if (origin !== frame.dataset["origin"]) {
+            if (origin !== frame.dataset[FRAME_DATA_ORIGIN]) {
                 refuse("UNREGISTERED", "The request did not come from the origin the frame was created with.");
                 return;
             }
@@ -1337,7 +1345,7 @@ namespace pxsim {
                 return;
             }
             try {
-                handler(key, msg, reply);
+                handler(key, msg, reply, frame);
             } catch (e) {
                 pxsim.error(e);
                 refuse(failed, `The editor failed to handle the request: ${e?.message || e}`);

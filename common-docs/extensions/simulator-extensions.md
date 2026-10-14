@@ -86,7 +86,7 @@ A hidden tab stays loaded, but it is not rendered, and the browser may run its t
 
 ### Grants
 
-The extension's grants apply to both of its frames: the tab frame may send project-file (`projfs`) requests under `allowFileWrite` and project-asset (`projassets`) requests under `allowAssetRead`, just as the simulator frame may. Both frames share one folder and one queue: the editor applies the requests of both frames in the order it receives them, under one rate limit and one size quota, and replies to the frame that sent each request. Each frame that subscribes to project-asset changes is notified.
+The extension's grants apply to both of its frames: the tab frame may send project-file (`projfs`) requests under `allowFileWrite` and project-asset (`projassets`) requests under `allowAssetRead`, just as the simulator frame may. Project files live in the folder of the extension's GitHub repository, `owner/repo/`, whatever subfolder the extension's key names. Both frames, and every other registration of the same repository, share that folder and one queue: the editor applies the requests on the folder in the order it receives them, under one rate limit and one size quota, and replies to the frame that sent each request. Each frame subscribes to project-asset changes for itself and holds at most one subscription: subscribing again from the same frame changes nothing. A subscription ends when the project closes or reloads.
 
 ### Opening the tab from the simulator frame
 

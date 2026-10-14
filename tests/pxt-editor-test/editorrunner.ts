@@ -43,15 +43,19 @@ import {
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
 import {
     applyUserEdit,
-    getScopedName,
-    getScopeUsage,
+    getFolderFileName,
+    getFolderUsage,
+    getProjfsFolder,
     getVisibleFiles,
     isValidRelativeName,
     OpenProjectTracker,
-    PROJFS_MAX_PENDING_MUTATIONS,
+    PROJFS_FOLDER_QUOTA_BYTES,
+    PROJFS_MAX_FOLDER_FILES,
+    PROJFS_MAX_NAME_LENGTH,
+    PROJFS_MAX_NAME_SEGMENTS,
+    PROJFS_MAX_PENDING_REQUESTS,
     PROJFS_RATE_LIMIT,
     PROJFS_RATE_WINDOW_MS,
-    PROJFS_SCOPE_QUOTA_BYTES,
     ProjfsConfigPackage,
     ProjfsEditor,
     ProjfsHost,
@@ -63,6 +67,7 @@ import {
     writeProjectFileAsync,
 } from "../../webapp/src/projfsHost";
 import {
+    getParentOrigin,
     getProjectId,
     getSimxChannel,
     getTargetId,
@@ -80,7 +85,9 @@ import {
     getImageAssets,
     getSongAssets,
     getVisualConfig,
+    ProjassetsAccountTheme,
     ProjassetsConfig,
+    ProjassetsFrame,
     ProjassetsHost,
     ProjassetsOpenProject,
 } from "../../webapp/src/projassetsHost";
@@ -603,22 +610,22 @@ describe("projfs guard", () => {
             chai.expect(isValidRelativeName(name), JSON.stringify(name)).equals(false);
     });
 
-    it("prepends the scope to relative names", () => {
-        chai.expect(getScopedName("owner/repo", "notes.txt")).equals("owner/repo/notes.txt");
-        chai.expect(getScopedName("owner/repo", "other/repo/x.ts")).equals("owner/repo/other/repo/x.ts");
-        chai.expect(getScopedName("owner/repo", "../x.ts")).equals(undefined);
+    it("prepends the folder to relative names", () => {
+        chai.expect(getFolderFileName("owner/repo", "notes.txt")).equals("owner/repo/notes.txt");
+        chai.expect(getFolderFileName("owner/repo", "other/repo/x.ts")).equals("owner/repo/other/repo/x.ts");
+        chai.expect(getFolderFileName("owner/repo", "../x.ts")).equals(undefined);
     });
 
     it("refuses names ending in the reserved marker suffix, at any depth", () => {
         for (const name of ["x" + pxt.SIMX_EDITOR_MARKER_SUFFIX, "a/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX, pxt.SIMX_EDITOR_MARKER_SUFFIX])
-            chai.expect(getScopedName("owner/repo", name), name).equals(undefined);
-        chai.expect(getScopedName("owner/repo", "x" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md")).equals("owner/repo/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md");
+            chai.expect(getFolderFileName("owner/repo", name), name).equals(undefined);
+        chai.expect(getFolderFileName("owner/repo", "x" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md")).equals("owner/repo/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md");
     });
 
-    it("refuses names under a malformed scope", () => {
-        chai.expect(getScopedName("../owner", "x.ts")).equals(undefined);
-        chai.expect(getScopedName("", "x.ts")).equals(undefined);
-        chai.expect(getScopedName("pxt_modules/owner", "x.ts")).equals(undefined);
+    it("refuses names under a malformed folder", () => {
+        chai.expect(getFolderFileName("../owner", "x.ts")).equals(undefined);
+        chai.expect(getFolderFileName("", "x.ts")).equals(undefined);
+        chai.expect(getFolderFileName("pxt_modules/owner", "x.ts")).equals(undefined);
     });
 
     it("measures content in UTF-8 bytes", () => {
@@ -628,7 +635,7 @@ describe("projfs guard", () => {
         chai.expect(utf8Length("\ud83d\ude00")).equals(4);
     });
 
-    it("makes visible exactly the stored scope files pxt.json lists, by relative name, in listed order", () => {
+    it("makes visible exactly the stored folder files pxt.json lists, by relative name, in listed order", () => {
         const files = {
             [pxt.CONFIG_NAME]: JSON.stringify({
                 files: [
@@ -655,13 +662,13 @@ describe("projfs guard", () => {
     });
 
     it("sees no files when pxt.json is missing or malformed", () => {
-        const scoped = { "owner/repo/a.txt": "" };
-        chai.expect(getVisibleFiles({ ...scoped }, "owner/repo")).deep.equals([]);
-        chai.expect(getVisibleFiles({ [pxt.CONFIG_NAME]: "{", ...scoped }, "owner/repo")).deep.equals([]);
-        chai.expect(getVisibleFiles({ [pxt.CONFIG_NAME]: `{"files":"owner/repo/a.txt"}`, ...scoped }, "owner/repo")).deep.equals([]);
+        const inFolder = { "owner/repo/a.txt": "" };
+        chai.expect(getVisibleFiles({ ...inFolder }, "owner/repo")).deep.equals([]);
+        chai.expect(getVisibleFiles({ [pxt.CONFIG_NAME]: "{", ...inFolder }, "owner/repo")).deep.equals([]);
+        chai.expect(getVisibleFiles({ [pxt.CONFIG_NAME]: `{"files":"owner/repo/a.txt"}`, ...inFolder }, "owner/repo")).deep.equals([]);
     });
 
-    it("counts every stored file under the scope folder, listed or not", () => {
+    it("counts every stored file under the folder, listed or not, by its content and its relative name", () => {
         const files = {
             [pxt.CONFIG_NAME]: JSON.stringify({ files: ["owner/repo/a.txt"] }),
             "owner/repo/a.txt": "aaa",
@@ -670,7 +677,22 @@ describe("projfs guard", () => {
             "owner/b.txt": "bbbbbbbb",
             "main.ts": "bbbbbbbb",
         };
-        chai.expect(getScopeUsage(files, "owner/repo")).equals(6);
+        chai.expect(getFolderUsage(files, "owner/repo")).deep.equals({
+            bytes: utf8Length("a.txt") + 3 + utf8Length("hand-made.txt") + 3,
+            files: 2,
+        });
+    });
+
+    it("gives every key of one repository the repository's folder", () => {
+        chai.expect(getProjfsFolder("owner/repo")).equals("owner/repo");
+        chai.expect(getProjfsFolder("owner/repo/sub")).equals("owner/repo");
+        chai.expect(getProjfsFolder("owner/repo/sub/deeper")).equals("owner/repo");
+        chai.expect(getProjfsFolder("other/repo")).equals("other/repo");
+    });
+
+    it("gives a key that names no repository no folder", () => {
+        for (const key of ["", "owner", "../owner", "pxt_modules/owner"])
+            chai.expect(getProjfsFolder(key), key).equals(undefined);
     });
 });
 
@@ -699,7 +721,7 @@ class FakeClock {
 }
 
 describe("projfs host", () => {
-    const SCOPE = "owner/repo";
+    const FOLDER = "owner/repo";
 
     class FakeProject implements ProjfsProject {
         calls: string[] = [];
@@ -736,6 +758,7 @@ describe("projfs host", () => {
             this.calls.push(`${listed ? "list" : "unlist"} ${name}`);
             const config = JSON.parse(this.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
             config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
+            if (!listed && config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
             this.files[pxt.CONFIG_NAME] = JSON.stringify(config);
         }
 
@@ -763,7 +786,7 @@ describe("projfs host", () => {
     }
 
     // sends a request without waiting for its reply, which lands in `replies`
-    function post(msg: any, replies: ProjfsReply[], key = SCOPE): Promise<void> {
+    function post(msg: any, replies: ProjfsReply[], key = FOLDER): Promise<void> {
         return host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r));
     }
 
@@ -777,19 +800,19 @@ describe("projfs host", () => {
         });
     }
 
-    async function send(msg: any, key = SCOPE): Promise<ProjfsReply> {
+    async function send(msg: any, key = FOLDER): Promise<ProjfsReply> {
         const replies: ProjfsReply[] = [];
         await host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r));
         chai.expect(replies.length).equals(1);
         return replies[0];
     }
 
-    async function writeMany(count: number, key = SCOPE) {
+    async function writeMany(count: number, key = FOLDER) {
         for (let i = 0; i < count; i++)
             await send({ subtype: "write", name: `f${i}.txt`, content: "x" }, key);
     }
 
-    async function expectError(msg: any, code: ProjfsErrorCode, key = SCOPE) {
+    async function expectError(msg: any, code: ProjfsErrorCode, key = FOLDER) {
         const reply = await send(msg, key);
         chai.expect(reply.subtype).equals("error");
         chai.expect((reply as ProjfsErrorReply).code).equals(code);
@@ -805,12 +828,12 @@ describe("projfs host", () => {
 
     it("replies with the request's id", async () => {
         const replies: ProjfsReply[] = [];
-        await host.handleMessageAsync(SCOPE, { type: "projfs", id: "abc", subtype: "list" }, r => replies.push(r));
+        await host.handleMessageAsync(FOLDER, { type: "projfs", id: "abc", subtype: "list" }, r => replies.push(r));
         chai.expect(replies[0].type).equals("projfs");
         chai.expect(replies[0].id).equals("abc");
     });
 
-    it("lists only the scope's listed files, by relative name", async () => {
+    it("lists only the folder's listed files, by relative name", async () => {
         const reply = await send({ subtype: "list" }) as ProjfsFilesReply;
         chai.expect(reply.subtype).equals("files");
         chai.expect(reply.files).deep.equals([
@@ -818,12 +841,12 @@ describe("projfs host", () => {
         ]);
     });
 
-    it("reads a listed scope file by its relative name", async () => {
+    it("reads a listed folder file by its relative name", async () => {
         const reply = await send({ subtype: "read", name: "listed.txt" }) as ProjfsContentReply;
         chai.expect(reply).deep.include({ subtype: "content", name: "listed.txt", content: "hello" });
     });
 
-    it("reaches no file outside the scope", async () => {
+    it("reaches no file outside the folder", async () => {
         for (const name of [pxt.MAIN_TS, pxt.CONFIG_NAME, pxt.SIMSTATE_JSON, "owner/repo/listed.txt"])
             await expectError({ subtype: "read", name }, "NOT_FOUND");
     });
@@ -835,7 +858,7 @@ describe("projfs host", () => {
         chai.expect(project.files[pxt.MAIN_TS]).equals("let x = 1");
     });
 
-    it("hides a stored scope file pxt.json does not list from list and read", async () => {
+    it("hides a stored folder file pxt.json does not list from list and read", async () => {
         project = newProject({ "owner/repo/unlisted.txt": "secret" });
         const listed = await send({ subtype: "list" }) as ProjfsFilesReply;
         chai.expect(listed.files.map(f => f.name)).deep.equals(["listed.txt"]);
@@ -851,14 +874,14 @@ describe("projfs host", () => {
             await expectError({ subtype: "read", name }, "INVALID_NAME");
     });
 
-    it("lists and reads only under the frame's scope, whatever the message names", async () => {
+    it("lists and reads only under the frame's folder, whatever the message names", async () => {
         project = newProject({ [pxt.CONFIG_NAME]: JSON.stringify({ files: ["owner/repo/listed.txt", "other/repo/theirs.txt"] }), "other/repo/theirs.txt": "theirs" });
         const listed = await send({ subtype: "list", channel: "other/repo", scope: "other/repo" }) as ProjfsFilesReply;
         chai.expect(listed.files.map(f => f.name)).deep.equals(["listed.txt"]);
         await expectError({ subtype: "read", name: "theirs.txt", channel: "other/repo", scope: "other/repo" }, "NOT_FOUND");
     });
 
-    it("keeps the scopes of two extensions apart", async () => {
+    it("keeps the folders of two repositories apart", async () => {
         project = newProject({
             [pxt.CONFIG_NAME]: JSON.stringify({ files: ["owner/repo/listed.txt", "other/repo/theirs.txt", "owner/repo2/sibling.txt"] }),
             "other/repo/theirs.txt": "theirs",
@@ -871,7 +894,7 @@ describe("projfs host", () => {
         await expectError({ subtype: "read", name: "listed.txt" }, "NOT_FOUND", "other/repo");
     });
 
-    it("writes a new file under the scope and lists it", async () => {
+    it("writes a new file under the folder and lists it", async () => {
         const reply = await send({ subtype: "write", name: "notes/today.txt", content: "hi" });
         chai.expect(reply).deep.include({ subtype: "ack", name: "notes/today.txt" });
         chai.expect(project.files["owner/repo/notes/today.txt"]).equals("hi");
@@ -885,7 +908,7 @@ describe("projfs host", () => {
         chai.expect(project.calls).deep.equals(["write owner/repo/listed.txt"]);
     });
 
-    it("lists a stored scope file pxt.json no longer lists when it is written", async () => {
+    it("lists a stored folder file pxt.json no longer lists when it is written", async () => {
         project = newProject({ "owner/repo/dropped.txt": "old" });
         await send({ subtype: "write", name: "dropped.txt", content: "new" });
         chai.expect(project.calls).deep.equals(["write owner/repo/dropped.txt", "list owner/repo/dropped.txt"]);
@@ -914,37 +937,45 @@ describe("projfs host", () => {
         chai.expect(project.calls).deep.equals([]);
     });
 
-    it("stores every write under the frame's scope, whatever the message names", async () => {
+    it("stores every write under the frame's folder, whatever the message names", async () => {
         const reply = await send({ subtype: "write", name: "other/repo/x.ts", content: "x", channel: "other/repo", scope: "other/repo" });
         chai.expect(reply).deep.include({ subtype: "ack", name: "other/repo/x.ts" });
         chai.expect(project.files["owner/repo/other/repo/x.ts"]).equals("x");
         chai.expect(Object.keys(project.files).filter(n => n.startsWith("other/"))).deep.equals([]);
     });
 
-    it("only ever changes pxt.json entries under the scope", async () => {
+    it("only ever changes pxt.json entries under the folder", async () => {
         await send({ subtype: "write", name: "a.txt", content: "a" });
         await send({ subtype: "write", name: "b/c.txt", content: "c" });
         await send({ subtype: "delete", name: "a.txt" });
         await send({ subtype: "delete", name: "listed.txt" });
         const touched = project.calls.map(c => c.split(" ")[1]);
-        chai.expect(touched.every(name => name.startsWith(SCOPE + "/"))).equals(true);
+        chai.expect(touched.every(name => name.startsWith(FOLDER + "/"))).equals(true);
         chai.expect(project.listed()).deep.equals([pxt.MAIN_TS, "owner/repo/b/c.txt"]);
     });
 
     describe("quota", () => {
         const KIB = 1024;
+        // what the folder holds before a test writes: listed.txt, its name and its content
+        const HELD = utf8Length("listed.txt") + utf8Length("hello");
 
-        it("accepts a write that brings the scope to exactly the quota", async () => {
-            const content = "x".repeat(PROJFS_SCOPE_QUOTA_BYTES - 5);
+        it("accepts a write that brings the folder to exactly the quota", async () => {
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - utf8Length("big.txt"));
             const reply = await send({ subtype: "write", name: "big.txt", content });
             chai.expect(reply.subtype).equals("ack");
         });
 
+        it("counts a file's name toward the quota", async () => {
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - utf8Length("big.txt"));
+            await expectError({ subtype: "write", name: "big2.txt", content }, "QUOTA_EXCEEDED");
+            chai.expect((await send({ subtype: "write", name: "big.txt", content })).subtype).equals("ack");
+        });
+
         it("refuses a write one byte over the quota, whole", async () => {
-            const content = "x".repeat(PROJFS_SCOPE_QUOTA_BYTES - 4);
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - utf8Length("big.txt") + 1);
             const before = { ...project.files };
             const reply = await expectError({ subtype: "write", name: "big.txt", content }, "QUOTA_EXCEEDED");
-            chai.expect(reply.message).contains(`${PROJFS_SCOPE_QUOTA_BYTES + 1} bytes`);
+            chai.expect(reply.message).contains(`${PROJFS_FOLDER_QUOTA_BYTES + 1} bytes`);
             chai.expect(project.calls).deep.equals([]);
             chai.expect(project.files).deep.equals(before);
         });
@@ -956,7 +987,7 @@ describe("projfs host", () => {
             await expectError({ subtype: "write", name: "second.bin", content: "z".repeat(20 * KIB) }, "QUOTA_EXCEEDED");
         });
 
-        it("counts unlisted files in the scope and ignores other folders", async () => {
+        it("counts unlisted files in the folder and ignores other folders", async () => {
             project = newProject({
                 "owner/repo/hand-made.txt": "x".repeat(300 * KIB),
                 "owner/repo2/big.txt": "x".repeat(500 * KIB),
@@ -967,9 +998,9 @@ describe("projfs host", () => {
         });
 
         it("counts multi-byte characters and data: URIs at their stored length", async () => {
-            const euros = "\u20ac".repeat(Math.floor(PROJFS_SCOPE_QUOTA_BYTES / 3));
+            const euros = "\u20ac".repeat(Math.floor(PROJFS_FOLDER_QUOTA_BYTES / 3));
             await expectError({ subtype: "write", name: "euros.txt", content: euros }, "QUOTA_EXCEEDED");
-            const uri = "data:application/octet-stream;base64," + "A".repeat(PROJFS_SCOPE_QUOTA_BYTES);
+            const uri = "data:application/octet-stream;base64," + "A".repeat(PROJFS_FOLDER_QUOTA_BYTES);
             await expectError({ subtype: "write", name: "blob.bin", content: uri }, "QUOTA_EXCEEDED");
         });
 
@@ -978,6 +1009,74 @@ describe("projfs host", () => {
             await expectError({ subtype: "write", name: "second.bin", content: "z".repeat(20 * KIB) }, "QUOTA_EXCEEDED");
             await send({ subtype: "delete", name: "brain.bin" });
             chai.expect((await send({ subtype: "write", name: "second.bin", content: "z".repeat(20 * KIB) })).subtype).equals("ack");
+        });
+
+        it("accepts a write that leaves a folder over the quota smaller, and refuses one that grows it", async () => {
+            const half = PROJFS_FOLDER_QUOTA_BYTES / 2;
+            project = newProject({ "owner/repo/a.bin": "x".repeat(half + KIB), "owner/repo/b.bin": "x".repeat(half + KIB) });
+            await expectError({ subtype: "write", name: "c.txt", content: "x" }, "QUOTA_EXCEEDED");
+            chai.expect((await send({ subtype: "write", name: "a.bin", content: "y".repeat(half) })).subtype).equals("ack");
+            chai.expect(project.files["owner/repo/a.bin"]).equals("y".repeat(half));
+            await expectError({ subtype: "write", name: "a.bin", content: "y".repeat(half + 1) }, "QUOTA_EXCEEDED");
+        });
+
+        it(`refuses a write that would store more than ${PROJFS_MAX_FOLDER_FILES} files in the folder, and accepts a replacement`, async () => {
+            const files: pxt.Map<string> = {};
+            for (let i = 1; i < PROJFS_MAX_FOLDER_FILES - 1; i++)
+                files[`owner/repo/f${i}.txt`] = "x";
+            project = newProject(files);
+            chai.expect((await send({ subtype: "write", name: "last.txt", content: "x" })).subtype).equals("ack");
+            await expectError({ subtype: "write", name: "over.txt", content: "x" }, "QUOTA_EXCEEDED");
+            chai.expect((await send({ subtype: "write", name: "last.txt", content: "y" })).subtype).equals("ack");
+            chai.expect(project.files).not.to.have.property("owner/repo/over.txt");
+        });
+
+        it("refuses a write whose content alone exceeds the quota on arrival, without a place in the queue", async () => {
+            project = undefined;
+            const replies: ProjfsReply[] = [];
+            const posted: Promise<void>[] = [];
+            for (let i = 0; i < PROJFS_MAX_PENDING_REQUESTS - 1; i++)
+                posted.push(post({ subtype: "list" }, replies));
+            posted.push(post({ subtype: "write", name: "big.txt", content: "x".repeat(PROJFS_FOLDER_QUOTA_BYTES + 1) }, replies));
+            posted.push(post({ subtype: "list" }, replies));
+            await Promise.all(posted);
+            const codes = replies.map(r => (r as ProjfsErrorReply).code);
+            chai.expect(codes.slice(PROJFS_MAX_PENDING_REQUESTS - 1)).deep.equals(["QUOTA_EXCEEDED", "PROJECT_CLOSED"]);
+        });
+    });
+
+    describe("name rules", () => {
+        it("refuses a written name longer than the limit", async () => {
+            const longest = "n".repeat(PROJFS_MAX_NAME_LENGTH - ".txt".length) + ".txt";
+            chai.expect((await send({ subtype: "write", name: longest, content: "x" })).subtype).equals("ack");
+            await expectError({ subtype: "write", name: "n" + longest, content: "x" }, "INVALID_NAME");
+        });
+
+        it("refuses a written name with more segments than the limit", async () => {
+            const deepest = new Array(PROJFS_MAX_NAME_SEGMENTS - 1).fill("d").join("/") + "/x.txt";
+            chai.expect((await send({ subtype: "write", name: deepest, content: "x" })).subtype).equals("ack");
+            await expectError({ subtype: "write", name: "d/" + deepest, content: "x" }, "INVALID_NAME");
+        });
+
+        it("refuses written names the file explorer refuses for a new file", async () => {
+            const names = [
+                "a b.txt", "notes.txt ", " notes.txt", "a:b.txt", "a?b.txt", "a#b.txt", "a*b.txt", "a\\b.txt",
+                "caf\u00e9.txt", "a\u0001.txt", ".hidden", "-a.txt",
+            ];
+            for (const name of names) {
+                chai.expect(pxt.isValidProjectFileName(name), name).equals(false);
+                await expectError({ subtype: "write", name, content: "x" }, "INVALID_NAME");
+            }
+            chai.expect(project.calls).deep.equals([]);
+        });
+
+        it("applies the written-name rules to writes only, so a stored file named otherwise can still be read and deleted", async () => {
+            project = newProject({
+                [pxt.CONFIG_NAME]: JSON.stringify({ files: ["owner/repo/hand made.txt"] }),
+                "owner/repo/hand made.txt": "by hand",
+            });
+            chai.expect(((await send({ subtype: "read", name: "hand made.txt" })) as ProjfsContentReply).content).equals("by hand");
+            chai.expect((await send({ subtype: "delete", name: "hand made.txt" })).subtype).equals("ack");
         });
     });
 
@@ -988,17 +1087,28 @@ describe("projfs host", () => {
         chai.expect(project.listed()).deep.equals([pxt.MAIN_TS]);
     });
 
-    it("deletes a stored scope file pxt.json does not list", async () => {
+    it("deletes a stored folder file pxt.json does not list", async () => {
         project = newProject({ "owner/repo/unlisted.txt": "x" });
         await send({ subtype: "delete", name: "unlisted.txt" });
         chai.expect(project.calls).deep.equals(["delete owner/repo/unlisted.txt"]);
     });
 
-    it("removes a listed scope file that is not stored", async () => {
+    it("removes a listed folder file that is not stored", async () => {
         project = newProject();
         delete project.files["owner/repo/listed.txt"];
         await send({ subtype: "delete", name: "listed.txt" });
         chai.expect(project.calls).deep.equals(["unlist owner/repo/listed.txt"]);
+    });
+
+    it("removes a deleted file from the testFiles list of pxt.json, stored or not", async () => {
+        project = newProject({
+            [pxt.CONFIG_NAME]: JSON.stringify({ files: [pxt.MAIN_TS], testFiles: ["owner/repo/stored.ts", "owner/repo/missing.ts", "test.ts"] }),
+            "owner/repo/stored.ts": "test",
+        });
+        chai.expect((await send({ subtype: "delete", name: "stored.ts" })).subtype).equals("ack");
+        chai.expect((await send({ subtype: "delete", name: "missing.ts" })).subtype).equals("ack");
+        chai.expect(project.calls).deep.equals(["delete owner/repo/stored.ts", "unlist owner/repo/stored.ts", "unlist owner/repo/missing.ts"]);
+        chai.expect((JSON.parse(project.files[pxt.CONFIG_NAME]) as pxt.PackageConfig).testFiles).deep.equals(["test.ts"]);
     });
 
     it("refuses to delete a file that does not exist", async () => {
@@ -1065,7 +1175,7 @@ describe("projfs host", () => {
             chai.expect((await send({ subtype: "read", name: "listed.txt" })).subtype).equals("content");
         });
 
-        it("limits each extension separately, so one extension's held writes never hold another's", async () => {
+        it("limits each repository's folder separately, so one folder's held writes never hold another's", async () => {
             await writeMany(PROJFS_RATE_LIMIT);
             const replies: ProjfsReply[] = [];
             const held = post({ subtype: "write", name: "extra.txt", content: "x" }, replies);
@@ -1078,23 +1188,113 @@ describe("projfs host", () => {
             chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
         });
 
-        it(`refuses writes and deletes beyond ${PROJFS_MAX_PENDING_MUTATIONS} waiting for replies, applying the waiting ones`, async () => {
+        it(`refuses writes and deletes beyond ${PROJFS_MAX_PENDING_REQUESTS} waiting for replies, applying the waiting ones`, async () => {
             const replies: ProjfsReply[] = [];
             const posted: Promise<void>[] = [];
-            for (let i = 0; i < PROJFS_MAX_PENDING_MUTATIONS; i++)
-                posted.push(post({ subtype: "write", name: `f${i}.txt`, content: "x" }, replies));
-            const refused: ProjfsReply[] = [];
-            await post({ subtype: "write", name: "extra.txt", content: "x" }, refused);
-            await post({ subtype: "delete", name: "f0.txt" }, refused);
-            chai.expect(refused.map(r => (r as ProjfsErrorReply).code)).deep.equals(["RATE_LIMITED", "RATE_LIMITED"]);
+            for (let i = 0; i < PROJFS_MAX_PENDING_REQUESTS; i++)
+                posted.push(post({ subtype: "write", name: `f${i % 100}.txt`, content: `${i}` }, replies));
+            posted.push(post({ subtype: "write", name: "extra.txt", content: "x" }, replies));
+            posted.push(post({ subtype: "delete", name: "f0.txt" }, replies));
 
-            while (replies.length < PROJFS_MAX_PENDING_MUTATIONS)
+            while (replies.length < PROJFS_MAX_PENDING_REQUESTS)
                 await advance(PROJFS_RATE_WINDOW_MS);
             await Promise.all(posted);
-            chai.expect(replies.every(r => r.subtype === "ack")).equals(true);
+            chai.expect(replies.slice(0, PROJFS_MAX_PENDING_REQUESTS).every(r => r.subtype === "ack")).equals(true);
+            chai.expect(replies.slice(PROJFS_MAX_PENDING_REQUESTS).map(r => (r as ProjfsErrorReply).code)).deep.equals(["RATE_LIMITED", "RATE_LIMITED"]);
             chai.expect(project.files).not.to.have.property("owner/repo/extra.txt");
             chai.expect(project.files).to.have.property("owner/repo/f0.txt");
             chai.expect((await send({ subtype: "write", name: "later.txt", content: "x" })).subtype).equals("ack");
+        });
+
+        it("sends a RATE_LIMITED reply only after the replies to the requests before it", async () => {
+            const replies: ProjfsReply[] = [];
+            const posted: Promise<void>[] = [];
+            for (let i = 0; i < PROJFS_MAX_PENDING_REQUESTS; i++)
+                posted.push(post({ subtype: "write", name: `f${i % 100}.txt`, content: "x" }, replies));
+            posted.push(post({ subtype: "write", name: "extra.txt", content: "x" }, replies));
+            await settle();
+            chai.expect(replies.map(r => r.subtype)).deep.equals(new Array(PROJFS_RATE_LIMIT).fill("ack"));
+
+            while (replies.length < PROJFS_MAX_PENDING_REQUESTS)
+                await advance(PROJFS_RATE_WINDOW_MS);
+            await Promise.all(posted);
+            chai.expect(replies.map(r => r.id)).deep.equals(new Array(PROJFS_MAX_PENDING_REQUESTS + 1).fill(0).map((_, i) => `${i}`));
+            chai.expect((replies[PROJFS_MAX_PENDING_REQUESTS] as ProjfsErrorReply).code).equals("RATE_LIMITED");
+        });
+
+        it(`counts reads and lists toward the ${PROJFS_MAX_PENDING_REQUESTS} requests that may wait for replies`, async () => {
+            const replies: ProjfsReply[] = [];
+            const posted: Promise<void>[] = [];
+            for (let i = 0; i < PROJFS_MAX_PENDING_REQUESTS; i++)
+                posted.push(post(i % 2 ? { subtype: "list" } : { subtype: "read", name: "listed.txt" }, replies));
+            posted.push(post({ subtype: "read", name: "listed.txt" }, replies));
+            posted.push(post({ subtype: "list" }, replies));
+            await Promise.all(posted);
+            chai.expect(replies.slice(0, PROJFS_MAX_PENDING_REQUESTS).every(r => r.subtype !== "error")).equals(true);
+            chai.expect(replies.slice(PROJFS_MAX_PENDING_REQUESTS).map(r => (r as ProjfsErrorReply).code)).deep.equals(["RATE_LIMITED", "RATE_LIMITED"]);
+            chai.expect((await send({ subtype: "list" })).subtype).equals("files");
+        });
+
+        it("measures the rate window on a monotonic clock, unmoved by changes to the wall clock", async () => {
+            const wallClock = Date.now;
+            const perf = performance as { now?: () => number };
+            let monotonic = 0;
+            let wall = 1000000;
+            Date.now = () => wall;
+            perf.now = () => monotonic;
+            try {
+                host = new ProjfsHost(() => project, undefined, clock.delay);
+                await writeMany(PROJFS_RATE_LIMIT);
+                wall += 2 * PROJFS_RATE_WINDOW_MS;
+                const replies: ProjfsReply[] = [];
+                const held = post({ subtype: "write", name: "extra.txt", content: "x" }, replies);
+                await settle();
+                chai.expect(replies).deep.equals([]);
+                monotonic += PROJFS_RATE_WINDOW_MS;
+                await advance(PROJFS_RATE_WINDOW_MS);
+                await held;
+                chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
+            } finally {
+                Date.now = wallClock;
+                delete perf.now;
+            }
+        });
+    });
+
+    describe("repository folders", () => {
+        it("serves a key that names a subfolder of a repository from the repository's folder", async () => {
+            const listed = await send({ subtype: "list" }, "owner/repo/sub") as ProjfsFilesReply;
+            chai.expect(listed.files.map(f => f.name)).deep.equals(["listed.txt"]);
+            chai.expect(((await send({ subtype: "read", name: "listed.txt" }, "owner/repo/sub")) as ProjfsContentReply).content).equals("hello");
+            chai.expect((await send({ subtype: "write", name: "child.txt", content: "c" }, "owner/repo/sub")).subtype).equals("ack");
+            chai.expect(project.files["owner/repo/child.txt"]).equals("c");
+            chai.expect(((await send({ subtype: "read", name: "child.txt" })) as ProjfsContentReply).content).equals("c");
+            chai.expect(Object.keys(project.files).filter(n => n.startsWith("owner/repo/sub/"))).deep.equals([]);
+        });
+
+        it("gives the keys of one repository one quota", async () => {
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES / 2);
+            chai.expect((await send({ subtype: "write", name: "a.bin", content }, "owner/repo")).subtype).equals("ack");
+            await expectError({ subtype: "write", name: "b.bin", content }, "QUOTA_EXCEEDED", "owner/repo/sub");
+            chai.expect((await send({ subtype: "write", name: "b.bin", content }, "other/repo")).subtype).equals("ack");
+        });
+
+        it("gives the keys of one repository one rate window", async () => {
+            await writeMany(PROJFS_RATE_LIMIT, "owner/repo");
+            const replies: ProjfsReply[] = [];
+            const held = post({ subtype: "write", name: "extra.txt", content: "x" }, replies, "owner/repo/sub");
+            await settle();
+            chai.expect(replies).deep.equals([]);
+            chai.expect((await send({ subtype: "write", name: "x.txt", content: "x" }, "other/repo")).subtype).equals("ack");
+            await advance(PROJFS_RATE_WINDOW_MS);
+            await held;
+            chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
+        });
+
+        it("refuses every request from a key that names no repository with UNREGISTERED", async () => {
+            await expectError({ subtype: "list" }, "UNREGISTERED", "notarepo");
+            await expectError({ subtype: "write", name: "a.txt", content: "x" }, "UNREGISTERED", "notarepo");
+            chai.expect(project.calls).deep.equals([]);
         });
     });
 
@@ -1177,9 +1377,9 @@ describe("projfs host", () => {
     it("applies requests one at a time, in order", async () => {
         const replies: ProjfsReply[] = [];
         const collect = (r: ProjfsReply) => replies.push(r);
-        host.handleMessageAsync(SCOPE, { type: "projfs", id: "1", subtype: "write", name: "a.txt", content: "first" }, collect);
-        host.handleMessageAsync(SCOPE, { type: "projfs", id: "2", subtype: "write", name: "a.txt", content: "second" }, collect);
-        await host.handleMessageAsync(SCOPE, { type: "projfs", id: "3", subtype: "read", name: "a.txt" }, collect);
+        host.handleMessageAsync(FOLDER, { type: "projfs", id: "1", subtype: "write", name: "a.txt", content: "first" }, collect);
+        host.handleMessageAsync(FOLDER, { type: "projfs", id: "2", subtype: "write", name: "a.txt", content: "second" }, collect);
+        await host.handleMessageAsync(FOLDER, { type: "projfs", id: "3", subtype: "read", name: "a.txt" }, collect);
         chai.expect(replies.map(r => r.id)).deep.equals(["1", "2", "3"]);
         chai.expect((replies[2] as ProjfsContentReply).content).equals("second");
     });
@@ -1206,7 +1406,7 @@ describe("projfs host", () => {
         await expectError({ subtype: "rename", name: "a.txt" }, "INVALID_REQUEST");
         await expectError({ subtype: "write", name: "a.txt", content: 42 }, "INVALID_REQUEST");
         const replies: ProjfsReply[] = [];
-        await host.handleMessageAsync(SCOPE, "not a request", r => replies.push(r));
+        await host.handleMessageAsync(FOLDER, "not a request", r => replies.push(r));
         chai.expect((replies[0] as ProjfsErrorReply).code).equals("INVALID_REQUEST");
     });
 
@@ -1248,7 +1448,7 @@ describe("projfs host", () => {
         it("keeps refused flagged changes out of the edit pipeline", async () => {
             await expectError({ subtype: "write", name: "../x.ts", content: "x", dirty: true }, "INVALID_NAME");
             await expectError({ subtype: "delete", name: "nope.txt", dirty: true }, "NOT_FOUND");
-            await expectError({ subtype: "write", name: "big.txt", content: "x".repeat(PROJFS_SCOPE_QUOTA_BYTES), dirty: true }, "QUOTA_EXCEEDED");
+            await expectError({ subtype: "write", name: "big.txt", content: "x".repeat(PROJFS_FOLDER_QUOTA_BYTES), dirty: true }, "QUOTA_EXCEEDED");
             chai.expect(project.calls).deep.equals([]);
         });
 
@@ -1269,9 +1469,9 @@ describe("projfs host", () => {
         it("applies flagged and unflagged changes one at a time, in order", async () => {
             const replies: ProjfsReply[] = [];
             const collect = (r: ProjfsReply) => replies.push(r);
-            host.handleMessageAsync(SCOPE, { type: "projfs", id: "1", subtype: "write", name: "a.ts", content: "1", dirty: true }, collect);
-            host.handleMessageAsync(SCOPE, { type: "projfs", id: "2", subtype: "write", name: "b.txt", content: "2" }, collect);
-            await host.handleMessageAsync(SCOPE, { type: "projfs", id: "3", subtype: "write", name: "a.ts", content: "3", dirty: true }, collect);
+            host.handleMessageAsync(FOLDER, { type: "projfs", id: "1", subtype: "write", name: "a.ts", content: "1", dirty: true }, collect);
+            host.handleMessageAsync(FOLDER, { type: "projfs", id: "2", subtype: "write", name: "b.txt", content: "2" }, collect);
+            await host.handleMessageAsync(FOLDER, { type: "projfs", id: "3", subtype: "write", name: "a.ts", content: "3", dirty: true }, collect);
             chai.expect(replies.map(r => r.id)).deep.equals(["1", "2", "3"]);
             chai.expect(project.calls).deep.equals([
                 "write owner/repo/a.ts", "list owner/repo/a.ts", "dirty owner/repo/a.ts",
@@ -1351,11 +1551,11 @@ describe("projfs host", () => {
             };
         }
 
-        /** The files of a project holding the listed scope files `scoped`, by relative name. */
-        function projectFiles(scoped: pxt.Map<string>): pxt.Map<string> {
-            const names = Object.keys(scoped).map(name => `${SCOPE}/${name}`);
+        /** The files of a project holding the listed folder files `inFolder`, by relative name. */
+        function projectFiles(inFolder: pxt.Map<string>): pxt.Map<string> {
+            const names = Object.keys(inFolder).map(name => `${FOLDER}/${name}`);
             const files: pxt.Map<string> = { [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", files: [pxt.MAIN_TS, ...names] }), [pxt.MAIN_TS]: "" };
-            Object.keys(scoped).forEach(name => files[`${SCOPE}/${name}`] = scoped[name]);
+            Object.keys(inFolder).forEach(name => files[`${FOLDER}/${name}`] = inFolder[name]);
             return files;
         }
 
@@ -1384,8 +1584,8 @@ describe("projfs host", () => {
             load.finish();
             await answered;
             chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
-            chai.expect(current.getFiles()[`${SCOPE}/pushed.ts`]).equals("brain");
-            chai.expect(stored.first[`${SCOPE}/pushed.ts`]).equals("brain");
+            chai.expect(current.getFiles()[`${FOLDER}/pushed.ts`]).equals("brain");
+            chai.expect(stored.first[`${FOLDER}/pushed.ts`]).equals("brain");
             chai.expect(((await send({ subtype: "read", name: "pushed.ts" })) as ProjfsContentReply).content).equals("brain");
             chai.expect(((await send({ subtype: "read", name: "brains.ts" })) as ProjfsContentReply).content).equals("registers a, b");
         });
@@ -1398,7 +1598,7 @@ describe("projfs host", () => {
             load.finish();
             await answered;
             chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
-            chai.expect(stored.first[`${SCOPE}/brains.ts`]).equals(undefined);
+            chai.expect(stored.first[`${FOLDER}/brains.ts`]).equals(undefined);
         });
 
         it("keeps an extension's requests in order across the load", async () => {
@@ -1421,7 +1621,7 @@ describe("projfs host", () => {
             replaced.finish();
             await answered;
             chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
-            chai.expect(stored.first[`${SCOPE}/pushed.ts`]).equals(undefined);
+            chai.expect(stored.first[`${FOLDER}/pushed.ts`]).equals(undefined);
             load.finish();
             chai.expect(((await send({ subtype: "read", name: "brains.ts" })) as ProjfsContentReply).content).equals("registers c");
         });
@@ -1692,7 +1892,7 @@ describe("projfs client", () => {
         parent = new FakeParent();
         self = new FakeSelf();
         clock = new FakeClock();
-        client = new ProjfsClient({ target: parent, listener: self });
+        client = new ProjfsClient({ target: parent, listener: self, search: "" });
     });
 
     afterEach(() => client.dispose());
@@ -1770,6 +1970,12 @@ describe("projfs client", () => {
         chai.expect(getTargetId("?target=")).equals(undefined);
     });
 
+    it("reads the editor's origin from the frame URL", () => {
+        chai.expect(getParentOrigin("?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo")).equals("https://arcade.makecode.com");
+        chai.expect(getParentOrigin("?channel=owner%2Frepo")).equals(undefined);
+        chai.expect(getParentOrigin("?parentOrigin=")).equals(undefined);
+    });
+
     it("reads the open project's id from the frame URL", () => {
         chai.expect(getProjectId("?parentOrigin=http%3A%2F%2Flocalhost%3A3232&channel=owner%2Frepo&target=arcade&project=3b1f7c2e-project")).equals("3b1f7c2e-project");
         chai.expect(getProjectId("?channel=owner%2Frepo&target=arcade")).equals(undefined);
@@ -1778,7 +1984,7 @@ describe("projfs client", () => {
 
     it("keeps waiting for a reply however late it comes, and resolves with it", async () => {
         client.dispose();
-        client = new ProjfsClient({ target: parent, listener: self, slowReplyMs: 5 });
+        client = new ProjfsClient({ target: parent, listener: self, search: "", slowReplyMs: 5 });
         let settled = false;
         const written = client.write("a.txt", "x").then(name => { settled = true; return name; });
         await new Promise(resolve => setTimeout(resolve, 30));
@@ -1790,7 +1996,7 @@ describe("projfs client", () => {
     it("reports a request still waiting after slowReplyMs once, and keeps waiting", async () => {
         client.dispose();
         const slow: ProjfsRequest[] = [];
-        client = new ProjfsClient({ target: parent, listener: self, slowReplyMs: 5, onSlowReply: r => slow.push(r) });
+        client = new ProjfsClient({ target: parent, listener: self, search: "", slowReplyMs: 5, onSlowReply: r => slow.push(r) });
         const answered = client.read("fast.txt");
         replyTo(lastRequest(), { subtype: "content", name: "fast.txt", content: "" });
         await answered;
@@ -1826,6 +2032,51 @@ describe("projfs client", () => {
             chai.expect(error.code).equals("DISPOSED");
         }
         chai.expect(self.listeners).deep.equals([]);
+    });
+
+    it("fails a request made after dispose with DISPOSED at once, without posting it", async () => {
+        client.dispose();
+        const error = await client.list().then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjfsError);
+        chai.expect(error.code).equals("DISPOSED");
+        chai.expect(parent.requests).deep.equals([]);
+    });
+
+    it("fails a request it cannot post with FAILED, and never reports it as slow", async () => {
+        client.dispose();
+        const slow: ProjfsRequest[] = [];
+        parent.postMessage = () => { throw new Error("could not be cloned"); };
+        client = new ProjfsClient({ target: parent, listener: self, search: "", slowReplyMs: 5, onSlowReply: r => slow.push(r) });
+        const error = await client.write("a.txt", "x").then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjfsError);
+        chai.expect(error.code).equals("FAILED");
+        await new Promise(resolve => setTimeout(resolve, 30));
+        chai.expect(slow).deep.equals([]);
+    });
+
+    it("reports a slow reply at once when slowReplyMs is 0", async () => {
+        client.dispose();
+        const slow: ProjfsRequest[] = [];
+        client = new ProjfsClient({ target: parent, listener: self, search: "", slowReplyMs: 0, onSlowReply: r => slow.push(r) });
+        const written = client.write("a.txt", "x");
+        await new Promise(resolve => setTimeout(resolve, 20));
+        chai.expect(slow).deep.equals([lastRequest()]);
+        replyTo(lastRequest(), { subtype: "ack", name: "a.txt" });
+        await written;
+    });
+
+    it("posts requests to the editor's origin from the frame URL by default, or to the origin it is given", async () => {
+        client.dispose();
+        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo" });
+        const listed = client.list();
+        replyTo(lastRequest(), { subtype: "files", files: [] });
+        await listed;
+        client.dispose();
+        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com", targetOrigin: "https://other.example" });
+        const again = client.list();
+        replyTo(lastRequest(), { subtype: "files", files: [] });
+        await again;
+        chai.expect(parent.origins).deep.equals(["https://arcade.makecode.com", "https://other.example"]);
     });
 
     /** Connects the client to a host serving `owner/repo`; returns the project's stored files. */
@@ -1980,6 +2231,67 @@ describe("tilemap project change listeners", () => {
         second.createNewProjectImage(testBitmap(2, 2), "elsewhere");
         chai.expect(changes).equals(0);
     });
+
+    it("hears assets loaded from an asset file, and not gallery assets", () => {
+        const seed = new pxt.TilemapProject();
+        seed.createNewProjectImage(testBitmap(2, 2), "loaded");
+        project.loadAssetsJRes(seed.getProjectAssetsJRes(), true);
+        chai.expect(changes).equals(0);
+        project.loadAssetsJRes(seed.getProjectAssetsJRes());
+        chai.expect(changes).greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Image).map(i => i.meta.displayName)).deep.equals(["loaded"]);
+    });
+
+    it("hears tilemaps loaded from a tileset file", () => {
+        const seed = new pxt.TilemapProject();
+        seed.createNewTilemap("first", 16, 4, 4);
+        project.loadTilemapJRes(seed.getProjectTilesetJRes(), true);
+        const next = new pxt.TilemapProject();
+        next.createNewTilemap("second", 16, 4, 4);
+        const tiles = project.getAssets(pxt.AssetType.Tile).length;
+        changes = 0;
+        project.loadTilemapJRes(next.getProjectTilesetJRes(), true);
+        chai.expect(changes).greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Tilemap).length).equals(2);
+        chai.expect(project.getAssets(pxt.AssetType.Tile).length).equals(tiles);
+    });
+
+    it("hears assets removed because no active block uses them", () => {
+        const image = project.createNewImage(2, 2);
+        project.updateAsset({ ...image, meta: { blockIDs: ["block1"] } });
+        changes = 0;
+        project.removeInactiveBlockAssets(["block1"]);
+        chai.expect(changes).equals(0);
+        project.removeInactiveBlockAssets([]);
+        chai.expect(changes).greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Image)).deep.equals([]);
+    });
+
+    it("hears unnamed images no block uses removed when an undo point is pushed", () => {
+        project.createNewImage(2, 2);
+        changes = 0;
+        project.pushUndo();
+        chai.expect(changes).greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Image)).deep.equals([]);
+    });
+
+    it("reports a listener that throws, and applies the change and calls the other listeners", () => {
+        const reported: unknown[] = [];
+        const report = pxt.reportException;
+        pxt.reportException = e => { reported.push(e); };
+        const throwing = () => { throw new Error("listener failed"); };
+        project.removeProjectChangeListener(listener);
+        project.addProjectChangeListener(throwing);
+        project.addProjectChangeListener(listener);
+        try {
+            project.createNewProjectImage(testBitmap(2, 2), "hero");
+        } finally {
+            pxt.reportException = report;
+        }
+        chai.expect(reported.length).greaterThan(0);
+        chai.expect(changes).greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Image).map(i => i.meta.displayName)).deep.equals(["hero"]);
+    });
 });
 
 /** The pxt.json of a project with no dependencies or files, plus the fields of `extra`. */
@@ -2012,6 +2324,37 @@ function withTargetVisuals(palette: string[], presets: pxt.SimulatorThemePreset[
 }
 
 const ACCOUNT_THEME: pxt.SimulatorTheme = { ...simulatorTheme, "background-color": "#0000aa" };
+/** The user's simulator theme as the asset host watches it, changed as a preference change would change it. */
+class FakeAccountTheme implements ProjassetsAccountTheme {
+    listeners = new Set<() => void>();
+
+    constructor(public theme: pxt.SimulatorTheme = ACCOUNT_THEME) {
+    }
+
+    get() {
+        return this.theme;
+    }
+
+    addChangeListener(listener: () => void) {
+        this.listeners.add(listener);
+    }
+
+    removeChangeListener(listener: () => void) {
+        this.listeners.delete(listener);
+    }
+
+    /** Sets the theme, which may be the same, and tells every listener the preference may have changed. */
+    change(theme: pxt.SimulatorTheme) {
+        this.theme = theme;
+        this.listeners.forEach(listener => listener());
+    }
+}
+
+/** A frame a project-asset request comes from, in the document until a test removes it. */
+function testFrame(): ProjassetsFrame & { isConnected: boolean } {
+    return { isConnected: true };
+}
+
 const THEME_PRESETS: pxt.SimulatorThemePreset[] = [
     { id: "default", name: "Default", theme: simulatorTheme },
     { id: "purple", name: "Purple", theme: { ...simulatorTheme, "background-color": "#660066" } },
@@ -2033,6 +2376,26 @@ describe("main package config load listeners", () => {
         mainPkg.removeConfigLoadListener(firstListener);
         mainPkg.loadConfig(true);
         chai.expect([first, second]).deep.equals([1, 2]);
+    });
+
+    it("reports a listener that throws, and calls the other listeners", () => {
+        const files = { [pxt.CONFIG_NAME]: testPxtJson() };
+        const mainPkg = testMainPackage(files);
+        let called = 0;
+        mainPkg.addConfigLoadListener(() => { throw new Error("listener failed"); });
+        mainPkg.addConfigLoadListener(() => called++);
+        const reported: unknown[] = [];
+        const report = pxt.reportException;
+        pxt.reportException = e => { reported.push(e); };
+        try {
+            files[pxt.CONFIG_NAME] = testPxtJson({ name: "renamed" });
+            mainPkg.loadConfig(true);
+        } finally {
+            pxt.reportException = report;
+        }
+        chai.expect(reported.length).equals(1);
+        chai.expect(called).equals(1);
+        chai.expect(mainPkg.config.name).equals("renamed");
     });
 });
 
@@ -2251,6 +2614,7 @@ describe("projassets host", () => {
     let project: pxt.TilemapProject | undefined;
     let configFiles: pxt.Map<string>;
     let mainPkg: pxt.MainPackage;
+    let accountTheme: FakeAccountTheme;
     let config: ProjassetsConfig;
     let open: ProjassetsOpenProject | undefined;
     let host: ProjassetsHost;
@@ -2266,7 +2630,8 @@ describe("projassets host", () => {
         project.createNewProjectImage(testBitmap(2, 2), "hero");
         configFiles = { [pxt.CONFIG_NAME]: testPxtJson() };
         mainPkg = testMainPackage(configFiles);
-        config = createProjassetsConfig(mainPkg, () => ACCOUNT_THEME);
+        accountTheme = new FakeAccountTheme();
+        config = createProjassetsConfig(mainPkg, accountTheme);
         open = loadedProject();
         host = new ProjassetsHost(() => open, () => project, () => config);
         nextId = 0;
@@ -2278,9 +2643,9 @@ describe("projassets host", () => {
         mainPkg.loadConfig(true);
     }
 
-    // sends a request whose replies, and notifications if it subscribes, land in `received`
-    function post(msg: any, received: (ProjassetsReply | ProjassetsNotification)[], key = SCOPE): Promise<void> {
-        return host.handleMessageAsync(key, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r));
+    // sends a request from `frame` whose replies, and notifications if it subscribes, land in `received`
+    function post(msg: any, received: (ProjassetsReply | ProjassetsNotification)[], key = SCOPE, frame: ProjassetsFrame = testFrame()): Promise<void> {
+        return host.handleMessageAsync(key, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r), frame);
     }
 
     async function send(msg: any, key = SCOPE): Promise<ProjassetsReply> {
@@ -2297,10 +2662,10 @@ describe("projassets host", () => {
         return reply as ProjassetsErrorReply;
     }
 
-    /** Subscribes `key` and returns what it receives from then on, the subscription's ack first. */
-    async function subscribe(key = SCOPE): Promise<(ProjassetsReply | ProjassetsNotification)[]> {
+    /** Subscribes `frame` of `key` and returns what it receives from then on, the subscription's ack first. */
+    async function subscribe(key = SCOPE, frame: ProjassetsFrame = testFrame()): Promise<(ProjassetsReply | ProjassetsNotification)[]> {
         const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-        await post({ subtype: "subscribe" }, received, key);
+        await post({ subtype: "subscribe" }, received, key, frame);
         chai.expect(received.map(r => r.subtype)).deep.equals(["ack"]);
         received.length = 0;
         return received;
@@ -2310,7 +2675,7 @@ describe("projassets host", () => {
 
     it("replies with the request's id", async () => {
         const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-        await host.handleMessageAsync(SCOPE, { type: "projassets", id: "abc", subtype: "list", kind: "image" }, r => received.push(r));
+        await host.handleMessageAsync(SCOPE, { type: "projassets", id: "abc", subtype: "list", kind: "image" }, r => received.push(r), testFrame());
         chai.expect(received.length).equals(1);
         chai.expect(received[0]).deep.include({ type: "projassets", id: "abc" });
     });
@@ -2372,13 +2737,20 @@ describe("projassets host", () => {
             await expectError({ subtype: "list", kind }, "UNSUPPORTED_KIND");
     });
 
+    it("refuses a kind it does not list with UNSUPPORTED_KIND without waiting for a project", async () => {
+        open = undefined;
+        await expectError({ subtype: "list", kind: "tile" }, "UNSUPPORTED_KIND");
+        open = { loadedAsync: () => new Promise<void>(() => { }) };
+        await expectError({ subtype: "list", kind: "tile" }, "UNSUPPORTED_KIND");
+    });
+
     it("refuses malformed requests with INVALID_REQUEST", async () => {
         await expectError({ subtype: "list" }, "INVALID_REQUEST");
         await expectError({ subtype: "list", kind: 7 }, "INVALID_REQUEST");
         await expectError({ subtype: "write", kind: "image" }, "INVALID_REQUEST");
         for (const msg of ["not a request", null]) {
             const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-            await host.handleMessageAsync(SCOPE, msg, r => received.push(r));
+            await host.handleMessageAsync(SCOPE, msg, r => received.push(r), testFrame());
             chai.expect(received.map(r => (r as ProjassetsErrorReply).code)).deep.equals(["INVALID_REQUEST"]);
         }
     });
@@ -2418,7 +2790,7 @@ describe("projassets host", () => {
             const seen: string[][] = [];
             await host.handleMessageAsync(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => {
                 if (r.subtype === "changed") seen.push(getImageAssets(project).map(i => i.displayName));
-            });
+            }, testFrame());
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             await settle();
             chai.expect(seen).deep.equals([["hero", "villain"]]);
@@ -2506,7 +2878,7 @@ describe("projassets host", () => {
             open = loadedProject();
             configFiles = { [pxt.CONFIG_NAME]: testPxtJson() };
             mainPkg = testMainPackage(configFiles);
-            config = createProjassetsConfig(mainPkg, () => ACCOUNT_THEME);
+            config = createProjassetsConfig(mainPkg, accountTheme);
             firstFiles[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE });
             firstPkg.loadConfig(true);
             await settle();
@@ -2525,13 +2897,72 @@ describe("projassets host", () => {
 
         it("notifies a frame once however often it subscribes", async () => {
             const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-            const reply = (r: ProjassetsReply | ProjassetsNotification) => received.push(r);
-            await host.handleMessageAsync(SCOPE, { type: "projassets", id: "s1", subtype: "subscribe" }, reply);
-            await host.handleMessageAsync(SCOPE, { type: "projassets", id: "s2", subtype: "subscribe" }, reply);
+            const frame = testFrame();
+            await post({ subtype: "subscribe" }, received, SCOPE, frame);
+            await post({ subtype: "subscribe" }, received, SCOPE, frame);
+            chai.expect(received.map(r => r.subtype)).deep.equals(["ack", "ack"]);
             received.length = 0;
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             await settle();
             chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it("notifies once after the user's simulator theme preference changes, and not after a change that leaves it as it was", async () => {
+            const received = await subscribe();
+            accountTheme.change({ ...ACCOUNT_THEME, "background-color": "#00aa00" });
+            chai.expect(received).deep.equals([]);
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+            accountTheme.change({ ...ACCOUNT_THEME, "background-color": "#00aa00" });
+            await settle();
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        /** A host whose subscribers a test can count. */
+        class CountingHost extends ProjassetsHost {
+            subscriberCount() {
+                return this.subscribers.length;
+            }
+        }
+
+        it("drops a subscriber whose frame has been removed when it next notifies", async () => {
+            const counting = new CountingHost(() => open, () => project, () => config);
+            host = counting;
+            const removedFrame = testFrame();
+            const removed = await subscribe(SCOPE, removedFrame);
+            const kept = await subscribe();
+            removedFrame.isConnected = false;
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await settle();
+            chai.expect(removed).deep.equals([]);
+            chai.expect(kept).deep.equals([CHANGED]);
+            chai.expect(counting.subscriberCount()).equals(1);
+        });
+
+        it("drops subscribers whose frames have been removed when another frame subscribes", async () => {
+            const counting = new CountingHost(() => open, () => project, () => config);
+            host = counting;
+            const removedFrames = [testFrame(), testFrame()];
+            for (const frame of removedFrames) await subscribe(SCOPE, frame);
+            removedFrames.forEach(frame => frame.isConnected = false);
+            await subscribe();
+            chai.expect(counting.subscriberCount()).equals(1);
+        });
+
+        it("lets go of the project its subscriptions were made in when it closes, and ends them", async () => {
+            const listeners = trackListeners(project);
+            const configListeners = trackConfigListeners(config);
+            const received = await subscribe();
+            chai.expect(listeners.size).equals(1);
+            chai.expect(configListeners.size).equals(1);
+            chai.expect(accountTheme.listeners.size).equals(1);
+            host.close();
+            chai.expect(listeners.size).equals(0);
+            chai.expect(configListeners.size).equals(0);
+            chai.expect(accountTheme.listeners.size).equals(0);
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await settle();
+            chai.expect(received).deep.equals([]);
         });
 
         it("notifies each subscribed frame of one extension", async () => {
@@ -2605,10 +3036,10 @@ describe("projassets host", () => {
         /** Tracks the config load listeners `tracked` holds. */
         function trackConfigListeners(tracked: ProjassetsConfig): Set<() => void> {
             const listeners = new Set<() => void>();
-            const add = tracked.addConfigLoadListener;
-            const remove = tracked.removeConfigLoadListener;
-            tracked.addConfigLoadListener = l => { listeners.add(l); add(l); };
-            tracked.removeConfigLoadListener = l => { listeners.delete(l); remove(l); };
+            const add = tracked.addChangeListener;
+            const remove = tracked.removeChangeListener;
+            tracked.addChangeListener = l => { listeners.add(l); add(l); };
+            tracked.removeChangeListener = l => { listeners.delete(l); remove(l); };
             return listeners;
         }
 
@@ -2709,7 +3140,7 @@ describe("projassets host", () => {
         // sends a request to the reload host; resolves with its one reply
         async function sendReload(msg: any): Promise<ProjassetsReply> {
             const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-            await reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r));
+            await reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r), testFrame());
             chai.expect(received.length).equals(1);
             return received[0] as ProjassetsReply;
         }
@@ -2720,7 +3151,7 @@ describe("projassets host", () => {
             reloadHost = new ProjassetsHost(
                 () => current,
                 getTilemapProject,
-                () => createProjassetsConfig(current.mainPkg, () => ACCOUNT_THEME));
+                () => createProjassetsConfig(current.mainPkg, new FakeAccountTheme()));
             chai.expect((await sendReload({ subtype: "subscribe" })).subtype).equals("ack");
         });
 
@@ -2751,7 +3182,7 @@ describe("projassets host", () => {
             const load = beginLoad("first");
             const listing = sendReload({ subtype: "list", kind: "image" });
             const received: (ProjassetsReply | ProjassetsNotification)[] = [];
-            const subscribed = reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => received.push(r));
+            const subscribed = reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => received.push(r), testFrame());
             await settle();
             chai.expect(received).deep.equals([]);
             chai.expect(current.tilemapProject).equals(undefined);
@@ -2847,7 +3278,7 @@ describe("projassets client", () => {
     beforeEach(() => {
         parent = new FakeParent();
         self = new FakeSelf();
-        client = new ProjassetsClient({ target: parent, listener: self });
+        client = new ProjassetsClient({ target: parent, listener: self, search: "" });
     });
 
     afterEach(() => client.dispose());
@@ -2926,7 +3357,7 @@ describe("projassets client", () => {
     it("reports a request still waiting after slowReplyMs once, and keeps waiting", async () => {
         client.dispose();
         const slow: ProjassetsRequest[] = [];
-        client = new ProjassetsClient({ target: parent, listener: self, slowReplyMs: 5, onSlowReply: r => slow.push(r) });
+        client = new ProjassetsClient({ target: parent, listener: self, search: "", slowReplyMs: 5, onSlowReply: r => slow.push(r) });
         const listed = client.list("image");
         await new Promise(resolve => setTimeout(resolve, 30));
         chai.expect(slow).deep.equals([lastRequest()]);
@@ -2948,6 +3379,80 @@ describe("projassets client", () => {
         chai.expect(changes).equals(0);
     });
 
+    it("subscribes once however often subscribe is called, and calls each listener once per change", async () => {
+        const calls: string[] = [];
+        const first = () => calls.push("first");
+        const second = () => calls.push("second");
+        const subscribed = [client.subscribe(first), client.subscribe(second)];
+        chai.expect(parent.requests.length).equals(1);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await Promise.all(subscribed);
+        await client.subscribe(first);
+        chai.expect(parent.requests.length).equals(1);
+        self.deliver(parent, CHANGED);
+        chai.expect(calls).deep.equals(["first", "second"]);
+    });
+
+    it("sends a new subscription request after a refused one", async () => {
+        const refused = client.subscribe(() => { });
+        replyTo(lastRequest(), { subtype: "error", code: "PROJECT_CLOSED", message: "closed" });
+        chai.expect((await refused.then(() => undefined, e => e)).code).equals("PROJECT_CLOSED");
+        let changes = 0;
+        const subscribed = client.subscribe(() => changes++);
+        chai.expect(parent.requests.map(r => r.subtype)).deep.equals(["subscribe", "subscribe"]);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        self.deliver(parent, CHANGED);
+        chai.expect(changes).equals(1);
+    });
+
+    it("fails a request made after dispose with DISPOSED at once, without posting it", async () => {
+        client.dispose();
+        for (const request of [client.list("image"), client.subscribe(() => { })]) {
+            const error = await (request as Promise<unknown>).then(() => undefined, e => e);
+            chai.expect(error).instanceOf(ProjassetsError);
+            chai.expect(error.code).equals("DISPOSED");
+        }
+        chai.expect(parent.requests).deep.equals([]);
+    });
+
+    it("fails a request it cannot post with FAILED, and never reports it as slow", async () => {
+        client.dispose();
+        const slow: ProjassetsRequest[] = [];
+        parent.postMessage = () => { throw new Error("could not be cloned"); };
+        client = new ProjassetsClient({ target: parent, listener: self, search: "", slowReplyMs: 5, onSlowReply: r => slow.push(r) });
+        const error = await client.list("image").then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjassetsError);
+        chai.expect(error.code).equals("FAILED");
+        await new Promise(resolve => setTimeout(resolve, 30));
+        chai.expect(slow).deep.equals([]);
+    });
+
+    it("reports a slow reply at once when slowReplyMs is 0", async () => {
+        client.dispose();
+        const slow: ProjassetsRequest[] = [];
+        client = new ProjassetsClient({ target: parent, listener: self, search: "", slowReplyMs: 0, onSlowReply: r => slow.push(r) });
+        const listed = client.list("image");
+        await new Promise(resolve => setTimeout(resolve, 20));
+        chai.expect(slow).deep.equals([lastRequest()]);
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE });
+        await listed;
+    });
+
+    it("posts requests to the editor's origin from the frame URL by default, or to the origin it is given", async () => {
+        client.dispose();
+        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com" });
+        const listed = client.list("image");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE });
+        await listed;
+        client.dispose();
+        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com", targetOrigin: "https://other.example" });
+        const again = client.list("image");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE });
+        await again;
+        chai.expect(parent.origins).deep.equals(["https://arcade.makecode.com", "https://other.example"]);
+    });
+
     describe("through the host", () => {
         withTargetVisuals(TARGET_PALETTE, THEME_PRESETS);
 
@@ -2958,10 +3463,11 @@ describe("projassets client", () => {
             const files = { [pxt.CONFIG_NAME]: testPxtJson() };
             const mainPkg = testMainPackage(files);
             const open: ProjassetsOpenProject = { loadedAsync: () => Promise.resolve() };
-            const host = new ProjassetsHost(() => open, () => project, () => createProjassetsConfig(mainPkg, () => ACCOUNT_THEME));
+            const host = new ProjassetsHost(() => open, () => project, () => createProjassetsConfig(mainPkg, new FakeAccountTheme()));
+            const frame = testFrame();
             // the editor posts each reply and notification back to the frame's window
             parent.postMessage = (msg: ProjassetsRequest) => {
-                host.handleMessageAsync("owner/repo", msg, reply => self.deliver(parent, reply));
+                host.handleMessageAsync("owner/repo", msg, reply => self.deliver(parent, reply), frame);
             };
             const listing: ProjassetsListing = await client.list("image");
             chai.expect(listing).deep.equals({
@@ -3787,6 +4293,22 @@ describe("simulator extension editor tab registrations", () => {
         chai.expect(isSimxInProject(EXT, ["*", "github:SomeOrg/PXT-Ext/makecode/extensions/arcade#v1.0.0"])).equals(true);
         chai.expect(isSimxInProject(EXT, ["*", "file:../pxt-ext", "github:someorg/pxt-extended", undefined])).equals(false);
         chai.expect(isSimxInProject(EXT, [])).equals(false);
+    });
+
+    it("includes every registration of a repository the project depends on, whatever subfolder its key names", () => {
+        const deps = ["*", "github:owner/repo/some/path#v1.0.0"];
+        chai.expect(isSimxInProject("owner/repo/sub", deps)).equals(true);
+        chai.expect(isSimxInProject("Owner/Repo/other/sub", deps)).equals(true);
+        chai.expect(isSimxInProject("owner/repo", deps)).equals(true);
+        chai.expect(isSimxInProject("owner/repo2/sub", deps)).equals(false);
+        chai.expect(isSimxInProject("other/repo/sub", deps)).equals(false);
+        const registrations = getSimxEditorRegistrations({ "owner/repo/sub": resolved("owner/repo/sub"), [OTHER]: resolved(OTHER) });
+        chai.expect(getProjectSimxEditors(registrations, deps).map(r => r.key)).deep.equals(["owner/repo/sub"]);
+    });
+
+    it("never includes a registration whose key names no repository", () => {
+        for (const key of ["", "owner", "owner/"])
+            chai.expect(isSimxInProject(key, ["github:owner/repo"]), key).equals(false);
     });
 
     it("names one marker file per tab and finds the tab from it", () => {

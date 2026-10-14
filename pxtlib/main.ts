@@ -536,6 +536,14 @@ namespace pxt {
         return name === SERIAL_EDITOR_FILE
             || (U.endsWith(name, SIMX_EDITOR_MARKER_SUFFIX) && name.indexOf("/") < 0);
     }
+    /**
+     * Returns true if `name` is a name the file explorer accepts for a new
+     * project file: a letter, digit or underscore, followed by letters,
+     * digits, underscores, `-`, `.` and `/`.
+     */
+    export function isValidProjectFileName(name: string): boolean {
+        return /^[\w][\/\w\-\.]*$/.test(name);
+    }
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"
     export const ASSETS_FILE = "assets.json"
