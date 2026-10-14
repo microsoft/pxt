@@ -36,8 +36,8 @@ const adapterSource = compile(`${declarations.join("\n")}\nclass SourceEditor { 
     exports.SourceEditor = SourceEditor;
     Object.assign(exports, { ${functionNames.join(", ")} });`);
 const sharedSource = compile(read("webapp/src/blockSnippet.ts"));
-const validatorSource = compile(read("webapp/src/backpack.ts"));
-const errorSource = compile(read("webapp/src/backpackErrors.ts"));
+const validatorSource = compile(read("webapp/src/components/backpack/service.ts"));
+const errorSource = compile(read("webapp/src/components/backpack/errors.ts"));
 const clipboardSource = compile(read("pxtblocks/clipboard.ts"));
 
 describe("Block snippet dependency display policy", () => {
@@ -191,10 +191,10 @@ describe("Clipboard native Blockly round trip (isolated browser, no PXT build)",
                     Object.assign(globals, errors);
                     Object.assign(pxtblockly, execute(clipboardSource, { blockly: B }));
                     pxt.reportException = error => dialogs.push({ technicalError: error.message });
-                    const validator = execute(validatorSource, { "./backpackErrors": errors, "./backpackStorage": {} });
+                    const validator = execute(validatorSource, { "./errors": errors, "./storage": {} });
                     Object.assign(globals, execute(sharedSource, {
-                        blockly: B, "../../pxtblocks": pxtblockly, "./package": pkg, "./core": core, "./backpack": validator,
-                        "./backpackErrors": errors
+                        blockly: B, "../../pxtblocks": pxtblockly, "./package": pkg, "./core": core,
+                        "./components/backpack/service": validator, "./components/backpack/errors": errors
                     }));
                     const api = execute(adapterSource);
                     const editor = new api.SourceEditor();

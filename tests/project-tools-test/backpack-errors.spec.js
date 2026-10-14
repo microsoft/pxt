@@ -15,7 +15,7 @@ function environment() {
         Util: { jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } } }
     };
     const errors = {};
-    new Function("exports", "pxt", compile(fs.readFileSync("webapp/src/backpackErrors.ts", "utf8")))(errors, pxt);
+    new Function("exports", "pxt", compile(fs.readFileSync("webapp/src/components/backpack/errors.ts", "utf8")))(errors, pxt);
     return { errors, pxt, reported };
 }
 
@@ -32,7 +32,7 @@ describe("Backpack user-facing error boundary", () => {
     });
 
     describe("Backpack validation error classification", () => {
-        const validatorSource = compile(fs.readFileSync("webapp/src/backpack.ts", "utf8"));
+        const validatorSource = compile(fs.readFileSync("webapp/src/components/backpack/service.ts", "utf8"));
         const item = () => ({
             id: "00000000-0000-4000-8000-000000000001",
             name: "Jump", kind: "code", versions: { target: "1.0.0", pxt: "13.2.4" },
@@ -44,8 +44,8 @@ describe("Backpack user-facing error boundary", () => {
             const context = environment();
             const validator = {};
             new Function("exports", "require", "pxt", "lf", validatorSource)(validator, id => {
-                if (id === "./backpackStorage") return {};
-                assert.equal(id, "./backpackErrors");
+                if (id === "./storage") return {};
+                assert.equal(id, "./errors");
                 return context.errors;
             }, context.pxt, (text, ...args) => text.replace(/\{(\d+)\}/g, (_, i) => args[i]));
             return { ...context, validator };

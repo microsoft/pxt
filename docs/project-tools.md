@@ -85,10 +85,21 @@ See [testing](../tests/project-tools-test/README.md) for developer checks.
 
 The launcher, panel shell and Whiteboard components are grouped in
 [`webapp/src/components/projectTools`](../webapp/src/components/projectTools).
-Backpack's components and hooks live in the sibling
+Backpack's components, hooks and webapp services live together in the sibling
 [`webapp/src/components/backpack`](../webapp/src/components/backpack) folder.
-Storage, serialization and other non-UI services remain in `webapp/src` and
-`pxtblocks`; shared image-editor components stay outside the feature folder.
+The collection, API and editor-registration service is in
+[`service.ts`](../webapp/src/components/backpack/service.ts), with IndexedDB
+storage, search, project imports and error handling in separate modules.
+[`assetEditor.ts`](../webapp/src/components/backpack/assetEditor.ts) owns isolated
+asset editing and the shared gallery preparation used by
+[`preview.ts`](../webapp/src/components/backpack/preview.ts), which generates
+both block and asset previews. The chooser launcher lives with its dialog in
+[`BackpackAssetChooser.tsx`](../webapp/src/components/backpack/BackpackAssetChooser.tsx);
+the webapp drag-target adapter lives in
+[`dragTargets.ts`](../webapp/src/components/backpack/dragTargets.ts).
+Import non-UI service modules directly so storage and clipboard consumers do not
+load the panel through its UI barrel. Blockly serialization remains in `pxtblocks`;
+shared clipboard and image-editor code stays outside the feature folder.
 
 `ProjectBackpack` owns item actions and dialog selection. `useBackpackCollection`
 handles subscriptions, pending operations and queued refreshes. `BackpackToolbar`

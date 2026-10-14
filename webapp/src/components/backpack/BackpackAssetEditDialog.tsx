@@ -5,10 +5,10 @@ import { Action, createStore, Store } from "redux";
 
 import { Button } from "../../../../react-common/components/controls/Button";
 import { FocusTrap } from "../../../../react-common/components/controls/FocusTrap";
-import { BackpackAssetEditorContext } from "../../backpack";
-import { BackpackAssetEditor } from "../../backpackAssetEditor";
-import { backpackUserErrorMessage } from "../../backpackErrors";
-import { getBackpackRequirements } from "../../backpackProject";
+import { BackpackAssetEditorContext } from "./service";
+import { BackpackAssetEditor } from "./assetEditor";
+import { backpackUserErrorMessage } from "./errors";
+import { getBackpackRequirements } from "./project";
 import * as pkg from "../../package";
 import { ImageFieldEditor } from "../ImageFieldEditor";
 import { AssetEditorContext } from "../AssetEditorContext";

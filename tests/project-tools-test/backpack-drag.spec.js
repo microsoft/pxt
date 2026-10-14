@@ -11,7 +11,7 @@ describe("host-provided Backpack drag targets", function () {
     let page;
     const bundle = bundleSource([
         "pxtblocks/backpackDrag.ts",
-        "webapp/src/projectToolsDragTargets.ts"
+        "webapp/src/components/backpack/dragTargets.ts"
     ], "backpackDrag", { blockly: "window.Blockly" });
 
     before(async () => { browser = await launchTestBrowser(); });

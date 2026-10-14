@@ -2,8 +2,8 @@ import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
 import * as core from "./core";
 import * as pkg from "./package";
-import { validateBackpackRequirements } from "./backpack";
-import { BackpackUserError } from "./backpackErrors";
+import { validateBackpackRequirements } from "./components/backpack/service";
+import { BackpackUserError } from "./components/backpack/errors";
 
 export interface BlockSnippetRequirements {
     dependencies: pxt.Map<string>;

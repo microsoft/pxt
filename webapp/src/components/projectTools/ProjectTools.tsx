@@ -7,7 +7,7 @@ import { ProjectToolsHeader } from "./ProjectToolsHeader";
 import { ProjectToolsResizeHandle } from "./ProjectToolsResizeHandle";
 import { useProjectToolsResize } from "./useProjectToolsResize";
 import { useProjectToolsDismiss } from "./useProjectToolsDismiss";
-import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../../backpack";
+import { BackpackOpenRequest, isBackpackEnabled, subscribeBackpackOpen } from "../backpack/service";
 import {
     isWhiteboardEnabled,
     PROJECT_TOOLS_COMPACT_QUERY,

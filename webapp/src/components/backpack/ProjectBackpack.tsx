@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import * as auth from "../../auth";
-import * as backpack from "../../backpack";
-import { createBackpackSearch } from "../../backpackSearch";
-import { BackpackUserError } from "../../backpackErrors";
+import * as backpack from "./service";
+import { createBackpackSearch } from "./search";
+import { BackpackUserError } from "./errors";
 import { getMissingBlockSnippetDependencies } from "../../blockSnippet";
 import * as data from "../../data";
 import * as pkg from "../../package";

@@ -7,7 +7,7 @@ const vm = require("vm");
 const ts = require("typescript");
 const Fuse = require("fuse.js");
 
-const filename = path.resolve(__dirname, "../../webapp/src/backpackSearch.ts");
+const filename = path.resolve(__dirname, "../../webapp/src/components/backpack/search.ts");
 const compiled = ts.transpileModule(fs.readFileSync(filename, "utf8"), {
     compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
     reportDiagnostics: true

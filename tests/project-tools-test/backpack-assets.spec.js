@@ -19,13 +19,16 @@ describe("Backpack gallery preparation", () => {
         vm.runInContext(fs.readFileSync(path.join(root, "built/pxtlib.js"), "utf8"), context);
         const pxt = context.pxt;
         pxt.AssetType = { Tilemap: "tilemap" };
-        const compiled = ts.transpileModule(fs.readFileSync(path.join(root, "webapp/src/backpackAssetGallery.ts"), "utf8"), {
+        const compiled = ts.transpileModule(fs.readFileSync(path.join(root, "webapp/src/components/backpack/assetEditor.ts"), "utf8"), {
             compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS },
             reportDiagnostics: true
         });
         assert.deepStrictEqual(compiled.diagnostics, []);
         const exports = {};
-        vm.runInContext(`(function(exports) { ${compiled.outputText}\n})`, context)(exports);
+        vm.runInContext(`(function(exports, require) { ${compiled.outputText}\n})`, context)(exports, id => {
+            assert(["blockly", "../../../../pxtblocks"].includes(id), `Unexpected editor import: ${id}`);
+            return {};
+        });
 
         const source = new pxt.TilemapProject();
         const pixels = new pxt.sprite.Bitmap(16, 16);

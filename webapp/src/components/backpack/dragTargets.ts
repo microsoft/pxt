@@ -1,5 +1,5 @@
-import type { BackpackDragTargetOptions } from "../../pxtblocks/backpackDrag";
-import { PROJECT_TOOLS_LAUNCHER_ID, projectToolPanelId, projectToolTabId } from "./projectToolsState";
+import type { BackpackDragTargetOptions } from "../../../../pxtblocks/backpackDrag";
+import { PROJECT_TOOLS_LAUNCHER_ID, projectToolPanelId, projectToolTabId } from "../../projectToolsState";
 
 export const BACKPACK_DRAG_OVER_CLASS = "project-backpack-drag-over";
 

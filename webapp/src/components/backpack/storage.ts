@@ -1,4 +1,4 @@
-import { BackpackUserError } from "./backpackErrors";
+import { BackpackUserError } from "./errors";
 
 /** IndexedDB records use the namespace and key together as their primary key. */
 export interface BackpackLocalRecord {

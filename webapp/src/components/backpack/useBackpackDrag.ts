@@ -1,5 +1,5 @@
 import * as React from "react";
-import { BackpackEntry, BackpackImportPosition, backpackEntryKey, canDropBackpack } from "../../backpack";
+import { BackpackEntry, BackpackImportPosition, backpackEntryKey, canDropBackpack } from "./service";
 
 interface BackpackDragOptions {
     headerId: string;

@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as auth from "../../auth";
-import * as backpack from "../../backpack";
-import { backpackUserErrorMessage } from "../../backpackErrors";
+import * as backpack from "./service";
+import { backpackUserErrorMessage } from "./errors";
 import { useBackpackPageFocus } from "./useBackpackPageFocus";
 
 interface BackpackOperationError {

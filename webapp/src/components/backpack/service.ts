@@ -1,7 +1,7 @@
-import { BackpackUserError, backpackUserErrorMessage } from "./backpackErrors";
-import { BackpackLocalRecord, BackpackLocalStorage, backpackLocalNamespace, createBackpackLocalStorage } from "./backpackStorage";
+import { BackpackUserError, backpackUserErrorMessage } from "./errors";
+import { BackpackLocalRecord, BackpackLocalStorage, backpackLocalNamespace, createBackpackLocalStorage } from "./storage";
 
-export { BackpackLocalRecord, BackpackLocalStorage, backpackLocalNamespace, createBackpackLocalStorage } from "./backpackStorage";
+export { BackpackLocalRecord, BackpackLocalStorage, backpackLocalNamespace, createBackpackLocalStorage } from "./storage";
 
 export const MAX_BACKPACK_ITEMS = 50;
 export const MAX_BACKPACK_ASSETS = 200;

@@ -16,7 +16,7 @@ describe("Backpack asset chooser", function () {
     let css;
 
     before(async () => {
-        bundle = bundleSource(["webapp/src/backpackAssetChooser.tsx"], "assetChooser");
+        bundle = bundleSource(["webapp/src/components/backpack/BackpackAssetChooser.tsx"], "assetChooser");
         const imports = [
             "react-common/styles/react-common-variables.less",
             "react-common/styles/controls/Button.less",

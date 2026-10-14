@@ -1,5 +1,5 @@
 import Fuse = require("fuse.js");
-import type { BackpackEntry } from "./backpack";
+import type { BackpackEntry } from "./service";
 
 interface SearchEntry {
     index: number;
