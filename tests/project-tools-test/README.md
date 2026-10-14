@@ -28,3 +28,6 @@ Backpack's webapp source modules are grouped in
 loads the launcher and dialog from the same module; asset suites exercise the
 shared gallery preparation and isolated editor together. Storage and search
 checks load their service modules without the UI barrel.
+The UI suite exercises preview generation alongside its component and page-focus
+refreshes through the collection hook. The drag suite loads the host adapter from
+the same `.tsx` module as the browser drag hook.

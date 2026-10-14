@@ -11,8 +11,8 @@ describe("host-provided Backpack drag targets", function () {
     let page;
     const bundle = bundleSource([
         "pxtblocks/backpackDrag.ts",
-        "webapp/src/components/backpack/dragTargets.ts"
-    ], "backpackDrag", { blockly: "window.Blockly" });
+        "webapp/src/components/backpack/useBackpackDrag.tsx"
+    ], "backpackDrag", { blockly: "window.Blockly", react: "window.React" });
 
     before(async () => { browser = await launchTestBrowser(); });
     after(async () => { await browser?.close(); });
@@ -26,6 +26,7 @@ describe("host-provided Backpack drag targets", function () {
         `);
         await page.addScriptTag({ path: path.resolve("node_modules/blockly/blockly_compressed.js") });
         await page.addScriptTag({ path: path.resolve("node_modules/blockly/msg/en.js") });
+        await page.addScriptTag({ path: require.resolve("react/umd/react.development.js") });
         await page.evaluate(() => {
             window.lf = text => text;
             window.dragTest = { enabled: true, visible: true, opens: 0, saves: 0, errors: [] };
