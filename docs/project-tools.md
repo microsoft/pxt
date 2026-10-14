@@ -92,19 +92,23 @@ The collection, API and editor-registration service is in
 storage, search, project imports and error handling in separate modules.
 [`assetEditor.ts`](../webapp/src/components/backpack/assetEditor.ts) owns isolated
 asset editing and the shared gallery preparation used by
-[`preview.ts`](../webapp/src/components/backpack/preview.ts), which generates
-both block and asset previews. The chooser launcher lives with its dialog in
+[`BackpackPreview.tsx`](../webapp/src/components/backpack/BackpackPreview.tsx),
+which generates and displays both block and asset previews.
+The chooser launcher lives with its dialog in
 [`BackpackAssetChooser.tsx`](../webapp/src/components/backpack/BackpackAssetChooser.tsx);
-the webapp drag-target adapter lives in
-[`dragTargets.ts`](../webapp/src/components/backpack/dragTargets.ts).
+the webapp drag-target adapter lives with the drag hook in
+[`useBackpackDrag.tsx`](../webapp/src/components/backpack/useBackpackDrag.tsx).
+Components and UI hooks use `.tsx`; pure services and utilities stay separate
+in `.ts` files.
 Import non-UI service modules directly so storage and clipboard consumers do not
 load the panel through its UI barrel. Blockly serialization remains in `pxtblocks`;
 shared clipboard and image-editor code stays outside the feature folder.
 
 `ProjectBackpack` owns item actions and dialog selection. `useBackpackCollection`
-handles subscriptions, pending operations and queued refreshes. `BackpackToolbar`
-renders the category and search controls; `useBackpackPageFocus` and `useBackpackDrag`
-handle browser-focus and drag events. Item dialogs own their input focus.
+handles subscriptions, pending operations, queued refreshes and browser-focus
+handling in [`useBackpackCollection.tsx`](../webapp/src/components/backpack/useBackpackCollection.tsx).
+`BackpackToolbar` renders the category and search controls; `useBackpackDrag`
+handles browser drag events and Blockly drop targets. Item dialogs own their input focus.
 `useProjectWhiteboard` manages notes, autosaves, conflicts and per-board undo
 stores; `ProjectWhiteboard` renders the editor and its controls.
 Feature classes use hyphenated names such as

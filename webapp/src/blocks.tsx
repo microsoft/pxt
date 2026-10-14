@@ -49,9 +49,9 @@ import { BackpackAssetChoice, chooseBackpackAssetAsync } from "./components/back
 import { assetToGalleryItem } from "./assets";
 import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./components/backpack/project";
 import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
-import { backpackPreviewAsync } from "./components/backpack/preview";
+import { backpackPreviewAsync } from "./components/backpack/BackpackPreview";
 import { clearBackpackDragState } from "../../pxtblocks/backpackDrag";
-import { BACKPACK_DRAG_OVER_CLASS, getBackpackDragTargets } from "./components/backpack/dragTargets";
+import { BACKPACK_DRAG_OVER_CLASS, getBackpackDragTargets } from "./components/backpack/useBackpackDrag";
 import { projectToolTabId } from "./projectToolsState";
 
 interface CopyDataEntry {

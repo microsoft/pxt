@@ -112,6 +112,13 @@ describe("project backpack UI", function () {
                 BLOCKS_PROJECT_NAME: "blocksprj",
                 shell: { isReadOnly: () => false },
                 appTarget: { appTheme: { backpack: true, assetEditor: true }, bundledpkgs: { core: {} } },
+                AssetType: { Image: "image", Animation: "animation", Tilemap: "tilemap" },
+                cloneAsset: asset => structuredClone(asset),
+                TilemapProject: class {
+                    constructor() { this.gallery = { assets: {} }; }
+                    saveGallerySnapshot() { return this.gallery; }
+                    loadGallerySnapshot(gallery) { this.gallery = gallery; }
+                },
                 Util: {
                     isUserLanguageRtl: () => false,
                     jsonTryParse: text => { try { return JSON.parse(text); } catch { return undefined; } }
@@ -124,7 +131,8 @@ describe("project backpack UI", function () {
                 refreshes: 0, adds: [], assetSaves: [], renames: [], deletes: [], failAdd: false,
                 modalOpen: false, collapses: 0,
                 assetPreviewURI, assetPreviewLoads: 0,
-                assetContext: { blocksInfo: {}, gallery: {}, palette: ["#000000"] },
+                assetContext: { blocksInfo: {}, gallery: { assets: {} }, palette: ["#000000"] },
+                previewWorkspaces: 0, previewEventDepth: 0,
                 reportedErrors: [],
                 modalChanged(open) { test.modalOpen = open; },
                 header: { id: "project" },
@@ -140,6 +148,43 @@ describe("project backpack UI", function () {
                 listenerCount: () => listeners.size
             };
             pxt.reportException = reason => test.reportedErrors.push(reason instanceof Error ? reason.message : String(reason));
+            const project = new pxt.TilemapProject();
+            pxt.react = { getTilemapProject: () => project };
+            test.previewBlockly = {
+                Events: {
+                    disable: () => ++test.previewEventDepth,
+                    enable: () => --test.previewEventDepth
+                },
+                Workspace: class {
+                    constructor() { ++test.previewWorkspaces; }
+                    dispose() { --test.previewWorkspaces; }
+                },
+                serialization: { blocks: { append: state => ({ state }) } }
+            };
+            class PreviewAssetField {
+                constructor(block) {
+                    this.asset = {
+                        type: block.state.type.includes("animation") ? pxt.AssetType.Animation : pxt.AssetType.Image,
+                        code: JSON.stringify({ blocks: [block.state] })
+                    };
+                    test.previewAsset = this.asset;
+                }
+                get isGreyBlock() { return !!test.noAssetPreview; }
+                onLoadedIntoWorkspace() {}
+                getAsset() { return this.asset; }
+            }
+            test.previewBlocks = {
+                parseBackpackCode: JSON.parse,
+                getBackpackAssetField: block => new PreviewAssetField(block),
+                FieldAssetEditor: PreviewAssetField,
+                FieldTileset: class {}
+            };
+            test.previewAssets = {
+                assetToGalleryItem: asset => {
+                    asset.previewURI = test.assetPreviewURI + "#" + encodeURIComponent(asset.code);
+                    return { ...asset, framePreviewURIs: test.previewFrames };
+                }
+            };
             const auth = {
                 USER_PROFILE: "auth:profile", LOGGED_IN: "auth:logged-in",
                 loggedIn: () => !!test.user, userProfile: () => test.user ? { id: test.user } : undefined,
@@ -156,6 +201,7 @@ describe("project backpack UI", function () {
             };
             const backpack = {
                 MAX_BACKPACK_NAME_LENGTH: 100,
+                MAX_BACKPACK_PREVIEW_LENGTH: 64000,
                 isBackpackEnabled: () => window.backpackValidation.isBackpackEnabled(),
                 isBackpackAssetsEnabled: () => window.backpackValidation.isBackpackAssetsEnabled(),
                 backpackEntryKey: entry => JSON.stringify([entry.source, entry.id]),
@@ -226,7 +272,10 @@ describe("project backpack UI", function () {
                 const modules = { react: React, "fuse.js": window.Fuse, "../../auth": auth, "../../data": data,
                     "./service": backpack, "./search": window.backpackSearch, "../../package": test.pkg,
                     "../../blockSnippet": window.blockSnippets,
-                    "blockly": {}, "../../pxtblocks": {}, "./core": {}, "./package": test.pkg,
+                    "blockly": test.previewBlockly, "../../../../pxtblocks": test.previewBlocks,
+                    "../../assets": test.previewAssets, "./assetEditor": window.backpackAssetEditor,
+                    "../../projectToolsState": window.projectToolsState,
+                    "../../pxtblocks": {}, "./core": {}, "./package": test.pkg,
                     "./components/backpack/service": backpack };
                 modules["./errors"] = window.backpackErrors;
                 modules["./components/backpack/errors"] = window.backpackErrors;
@@ -235,12 +284,7 @@ describe("project backpack UI", function () {
                 modules["./BackpackItemDialog"] = window.backpackItemDialog;
                 modules["./BackpackToolbar"] = window.backpackToolbar;
                 modules["./useBackpackDrag"] = window.backpackDrag;
-                modules["./useBackpackPageFocus"] = window.backpackPageFocus;
                 modules["./useBackpackCollection"] = window.backpackCollection;
-                modules["./preview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
-                    previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code),
-                    framePreviewURIs: test.previewFrames
-                }) };
                 modules["./BackpackAssetEditDialog"] = { BackpackAssetEditDialog: props => {
                     const [code, setCode] = React.useState(props.item.code);
                     return React.createElement(window.backpackControls.Modal, {
@@ -261,15 +305,16 @@ describe("project backpack UI", function () {
         await page.addScriptTag({ content: controls });
         await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/components/backpack/errors.ts")}\n})(window.backpackErrors = {});` });
         await page.addScriptTag({ content: bundleSource(["webapp/src/components/backpack/service.ts"], "backpackValidation", {}) });
+        await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/projectToolsState.ts")}\n})(window.projectToolsState = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/search.ts")}\n})(window.require, window.backpackSearch = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/assetEditor.ts")}\n})(window.require, window.backpackAssetEditor = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackToolbar.tsx")}\n})(window.require, window.backpackToolbar = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackDrag.ts")}\n})(window.require, window.backpackDrag = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackPageFocus.ts")}\n})(window.require, window.backpackPageFocus = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackCollection.ts")}\n})(window.require, window.backpackCollection = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackDrag.tsx")}\n})(window.require, window.backpackDrag = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/useBackpackCollection.tsx")}\n})(window.require, window.backpackCollection = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/ProjectBackpack.tsx")}\n})(window.require, window.backpackUI = {});` });
         await page.evaluate(() => {
             function Harness() {
@@ -393,6 +438,90 @@ describe("project backpack UI", function () {
         assert.deepStrictEqual(await page.$$eval(".project-backpack-asset i", icons => icons.map(icon => icon.className)), ["icon image", "icon music"]);
     });
 
+    it("keeps co-located asset previews isolated and restores nested events on fallback and failure", async () => {
+        const saved = asset("animation_editor", 2);
+        const result = await page.evaluate(saved => {
+            const test = backpackTest;
+            test.previewFrames = [test.assetPreviewURI + "#frame1", test.assetPreviewURI + "#frame2"];
+            const getter = pxt.react.getTilemapProject;
+            const gallery = JSON.stringify(test.assetContext.gallery);
+            const renderer = test.previewAssets.assetToGalleryItem;
+            test.previewBlockly.Events.disable();
+            try {
+                const preview = backpackPreviewUI.backpackAssetPreview(saved, test.assetContext);
+                const detached = !test.previewAsset.previewURI;
+                test.noAssetPreview = true;
+                const missing = backpackPreviewUI.backpackAssetPreview(saved, test.assetContext) === undefined;
+                test.noAssetPreview = false;
+                test.previewAssets.assetToGalleryItem = () => { throw new Error("Preview renderer failed"); };
+                const failed = backpackPreviewUI.backpackAssetPreview(saved, test.assetContext) === undefined;
+                return {
+                    preview, detached, missing, failed,
+                    restored: pxt.react.getTilemapProject === getter,
+                    unchanged: JSON.stringify(test.assetContext.gallery) === gallery,
+                    eventDepth: test.previewEventDepth,
+                    workspaces: test.previewWorkspaces
+                };
+            } finally {
+                test.previewAssets.assetToGalleryItem = renderer;
+                test.previewBlockly.Events.enable();
+            }
+        }, saved);
+        assert.deepStrictEqual(result, {
+            preview: {
+                previewURI: assetPreviewURI + "#" + encodeURIComponent(saved.code),
+                framePreviewURIs: [assetPreviewURI + "#frame1", assetPreviewURI + "#frame2"]
+            },
+            detached: true, missing: true, failed: true, restored: true, unchanged: true,
+            eventDepth: 1, workspaces: 0
+        });
+    });
+
+    it("captures block thumbnails without following siblings and retries density within the byte limit", async () => {
+        const result = await page.evaluate(async () => {
+            const test = backpackTest;
+            const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+            const source = document.createElementNS(svg.namespaceURI, "g");
+            source.setAttribute("transform", "translate(42,64)");
+            const rect = document.createElementNS(svg.namespaceURI, "rect");
+            rect.setAttribute("width", "400");
+            rect.setAttribute("height", "100");
+            const next = rect.cloneNode();
+            next.setAttribute("x", "1000");
+            source.append(rect, next);
+            svg.appendChild(source);
+            const before = source.outerHTML;
+            let request;
+            const densities = [];
+            test.previewBlocks.cleanUpBlocklySvg = () => {};
+            test.previewBlocks.blocklyToSvgAsync = async (svg, x, y, width, height, scale) => {
+                request = { x, y, width, height, scale };
+                return { xml: svg.outerHTML, width: width * scale, height: height * scale };
+            };
+            pxt.BrowserUtils = {
+                encodeToPngAsync: async (_xml, options) => {
+                    densities.push(options.pixelDensity);
+                    return densities.length === 1 ? "x".repeat(64001) : test.assetPreviewURI;
+                }
+            };
+            const saved = await backpackPreviewUI.backpackPreviewAsync({
+                getSvgRoot: () => source,
+                getNextBlock: () => ({ getSvgRoot: () => next }),
+                workspace: { getParentSvg: () => svg }
+            });
+            return {
+                saved, request, densities,
+                unchanged: source.outerHTML === before,
+                cleaned: document.querySelectorAll("body > svg").length === 0
+            };
+        });
+        assert.deepStrictEqual(result, {
+            saved: { previewUri: assetPreviewURI, previewPixelDensity: 1.5 },
+            request: { x: -1, y: -1, width: 402, height: 102, scale: 320 / 402 },
+            densities: [2, 1.5], unchanged: true, cleaned: true
+        });
+    });
+
     it("shows intended user errors but reports technical failures without displaying their details", async () => {
         await signIn([item()]);
         await page.evaluate(() => {
@@ -495,7 +624,7 @@ describe("project backpack UI", function () {
     });
 
     it("keeps unchanged card nodes and preview URLs through reopen while updating changed metadata inline", async () => {
-        const saved = asset("image_picker", 2), removed = asset("image_picker", 3);
+        const saved = asset("animation_editor", 2), removed = asset("animation_editor", 3);
         await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
         await page.evaluate(() => { backpackTest.previewFrames = [backpackTest.assetPreviewURI + "#frame1", backpackTest.assetPreviewURI + "#frame2"]; });
         await signIn([saved, removed]);
