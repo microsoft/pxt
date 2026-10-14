@@ -527,13 +527,14 @@ namespace pxt {
     /**
      * Returns true if `name` names a file the editor creates for the current
      * session only: the serial editor's file, or the marker file of a
-     * simulator extension editor tab (any name ending in
-     * {@link SIMX_EDITOR_MARKER_SUFFIX}). Such a file is never saved, shown in
-     * the file explorer (outside debug mode), synced, committed to GitHub,
+     * simulator extension editor tab (a top-level name, without a `/`, ending
+     * in {@link SIMX_EDITOR_MARKER_SUFFIX}). Such a file is never saved, shown
+     * in the file explorer (outside debug mode), synced, committed to GitHub,
      * diffed, shared or exported.
      */
     export function isSessionOnlyFile(name: string): boolean {
-        return name === SERIAL_EDITOR_FILE || U.endsWith(name, SIMX_EDITOR_MARKER_SUFFIX);
+        return name === SERIAL_EDITOR_FILE
+            || (U.endsWith(name, SIMX_EDITOR_MARKER_SUFFIX) && name.indexOf("/") < 0);
     }
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"

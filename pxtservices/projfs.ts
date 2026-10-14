@@ -83,7 +83,10 @@ export type ProjfsErrorCode =
     | "NOT_FOUND"
     /** The write would take the extension's folder over its size limit; nothing was written. */
     | "QUOTA_EXCEEDED"
-    /** The name is not a relative path, or has an empty, `.` or `..` segment. */
+    /**
+     * The name is not a relative path, has an empty, `.` or `..` segment, or
+     * ends in `.simxeditor`, a suffix the editor reserves.
+     */
     | "INVALID_NAME"
     /**
      * The extension already had as many writes and deletes waiting for

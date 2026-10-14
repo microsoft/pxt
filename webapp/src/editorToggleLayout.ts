@@ -41,6 +41,30 @@ export interface EditorToggleLayout {
     dropdownExtensions: string[];
 }
 
+/** What decides whether the editor toggle is shown with simulator extension editor tabs. */
+export interface SimxEditorTabsShownInput {
+    /** The editor is an embedded (sandbox) view. */
+    sandbox: boolean;
+    /** The editor is read-only, as in the time machine. */
+    readOnly: boolean;
+    /** A tutorial is open; its views show no editor toggle. */
+    tutorial: boolean;
+    /** The editor is in debug mode; its menu bar shows no editor toggle. */
+    debugging: boolean;
+    /** The target hides the menu bar, which holds the editor toggle. */
+    hideMenuBar: boolean;
+    /** The target shows Blocks only, without an editor toggle. */
+    blocksOnly: boolean;
+}
+
+/**
+ * Returns true if the editor toggle is shown and lists the simulator extension
+ * editor tabs the open project is offered: in none of the views of `input`.
+ */
+export function showsSimxEditorTabs(input: SimxEditorTabsShownInput): boolean {
+    return !input.sandbox && !input.readOnly && !input.tutorial && !input.debugging && !input.hideMenuBar && !input.blocksOnly;
+}
+
 /** Returns the text-language items and language dropdown of the editor toggle for `input`. */
 export function getEditorToggleLayout(input: EditorToggleLayoutInput): EditorToggleLayout {
     const { showJavaScript, showPython, showBlocks, pythonIsActive, extensionEditors, activeExtensionEditor, lastExtensionEditor } = input;

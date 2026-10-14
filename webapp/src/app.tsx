@@ -61,6 +61,7 @@ import * as serialindicator from "./serialindicator"
 import * as assetEditor from "./components/assetEditor/editor";
 import * as simxEditor from "./simxEditor";
 import { getSimxEditorMarkerName } from "./simxEditorHost";
+import { showsSimxEditorTabs } from "./editorToggleLayout";
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
@@ -687,6 +688,16 @@ export class ProjectView
     }
 
     getSimulatorExtensionEditors(): pxt.editor.SimulatorExtensionEditorInfo[] {
+        const targetTheme = pxt.appTarget.appTheme;
+        const shown = showsSimxEditorTabs({
+            sandbox: pxt.shell.isSandboxMode(),
+            readOnly: pxt.shell.isReadOnly(),
+            tutorial: !!this.state.tutorialOptions?.tutorial,
+            debugging: !!this.state.debugging,
+            hideMenuBar: !!targetTheme.hideMenuBar,
+            blocksOnly: !!targetTheme.blocksOnly,
+        });
+        if (!shown) return [];
         return simulator.getProjectSimxEditorRegistrations()
             .map(({ key, label, icon, iconUrl }) => ({ key, label, icon, iconUrl }));
     }
@@ -861,8 +872,8 @@ export class ProjectView
     // marker file, created the first time the tab is opened in the session.
     openSimulatorExtensionEditor(key: string): boolean {
         const mainEditorPkg = pkg.mainEditorPkg();
-        if (!mainEditorPkg?.header || pxt.shell.isSandboxMode()) return false;
-        if (!simulator.getProjectSimxEditorRegistrations().some(r => r.key === key)) return false;
+        if (!mainEditorPkg?.header) return false;
+        if (!this.getSimulatorExtensionEditors().some(r => r.key === key)) return false;
         if (this.isSimulatorExtensionEditorActive(key)) {
             simulator.simxEditorHost?.focus();
             return true;
@@ -1826,8 +1837,8 @@ export class ProjectView
     private async internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         await this.editorMountComplete.promise;
+        simulator.closeSimxProject();
         this.stopSimulator(true);
-        simulator.closeSimxEditors(h.id);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
         }
@@ -3016,8 +3027,8 @@ export class ProjectView
     }
 
     unloadProjectAsync(home?: boolean) {
+        simulator.closeSimxProject();
         this.stopSimulator(true); // don't keep simulator around
-        simulator.closeSimxEditors();
         simulator.driver?.setFullscreen(false);
         simulator.postSimxEditorFullscreen(false);
         this.showKeymap(false); // close keymap if open
@@ -4050,12 +4061,12 @@ export class ProjectView
     }
 
     restartSimulator() {
-        simulator.postSimxEditorSimulatorCommand("restart");
         const isDebug = this.state.tracing || this.state.debugging;
         if (this.state.simState == SimState.Stopped
             || this.debugOptionsChanged()) {
             this.startSimulator();
         } else {
+            simulator.postSimxEditorSimulatorCommand("restart");
             simulator.driver.restart(); // fast restart
         }
         if (!isDebug) {
@@ -4097,6 +4108,9 @@ export class ProjectView
         if (simulator.driver && (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded)) {
             simulator.postSimxEditorSimulatorCommand("stop");
             simulator.stop(unload);
+        } else if (unload && simulator.driver?.hasFrames()) {
+            // frames created while unloaded, such as a simulator extension's for its editor tab
+            simulator.stop(true);
         }
 
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
@@ -4175,7 +4189,6 @@ export class ProjectView
     }
 
     runSimulator(opts: compiler.CompileOptions = {}): Promise<void> {
-        simulator.postSimxEditorSimulatorCommand("start");
         const emptyRun = this.firstRun
             && opts.background
             && pxt.appTarget.simulator
@@ -4237,6 +4250,7 @@ export class ProjectView
 
                             const hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
                             if (!pxt.react.isFieldEditorViewVisible?.()) {
+                                simulator.postSimxEditorSimulatorCommand("start");
                                 simulator.run(pkg.mainPkg, opts.debug, resp, {
                                     mute: this.state.mute === pxt.editor.MuteState.Muted,
                                     highContrast: hc,

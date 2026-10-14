@@ -12,8 +12,8 @@ import {
 // The editor side of simx editor tabs: the registrations that
 // offer a tab to the open project, the tab frames (one per registration,
 // created on first selection, hidden across editor switches, removed when the
-// project closes), their lifecycle events, and the MessageChannel the editor
-// brokers between a tab frame and the simulator frame of the same key.
+// project closes or reloads), their lifecycle events, and the MessageChannel
+// the editor brokers between a tab frame and the simulator frame of the same key.
 
 /** The fields of a simulator extension registration, as the simulator driver resolved them, that its editor tab uses. */
 export interface SimxEditorRegistrationConfig {
@@ -69,17 +69,25 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
 }
 
 /**
+ * Returns true if the project includes the simulator extension registered under
+ * `key`: if `key` names the GitHub repository (`owner/repo`, in any case) of one
+ * of `dependencies`, the version specs of the project's dependencies, direct or
+ * not, such as `github:owner/repo/path#ref`.
+ */
+export function isSimxInProject(key: string, dependencies: string[]): boolean {
+    const slug = key.toLowerCase();
+    return dependencies
+        .filter(dep => /^github:/i.test(dep || ""))
+        .some(dep => pxt.github.parseRepoId(dep)?.slug?.toLowerCase() === slug);
+}
+
+/**
  * Returns the registrations among `registrations` whose extension the project
- * includes: those whose key names the GitHub repository (`owner/repo`, in any
- * case) of one of `dependencies`, the version specs of the project's
- * dependencies, direct or not, such as `github:owner/repo/path#ref`.
+ * includes, as {@link isSimxInProject} decides it.
+ * @param dependencies the version specs of the project's dependencies, direct or not
  */
 export function getProjectSimxEditors(registrations: SimxEditorRegistration[], dependencies: string[]): SimxEditorRegistration[] {
-    const repos = dependencies
-        .filter(dep => /^github:/i.test(dep || ""))
-        .map(dep => pxt.github.parseRepoId(dep)?.slug?.toLowerCase())
-        .filter(slug => !!slug);
-    return registrations.filter(r => repos.indexOf(r.key.toLowerCase()) >= 0);
+    return registrations.filter(r => isSimxInProject(r.key, dependencies));
 }
 
 /**
@@ -135,6 +143,10 @@ export interface SimxEditorHostOptions {
     framePermissions(grants: { allowPopups?: boolean, allowClipboardWrite?: boolean, allowDownloads?: boolean }): { sandbox: string, allow: string };
     /** Returns the simulator frame of the extension registered under `key`, creating it if none exists. */
     startSimulatorExtension(key: string): HTMLIFrameElement | undefined;
+    /** Tells the simulator driver that `frame` is the tab frame of the extension registered under `key`. */
+    addTabFrame(key: string, frame: HTMLIFrameElement): void;
+    /** Tells the simulator driver that `frame`, a tab frame, has been removed. */
+    removeTabFrame(frame: HTMLIFrameElement): void;
     /** Returns the simulator's state now. */
     getSimulatorState(): SimxEditorSimulatorState;
     /** Creates the channel the host brokers between two frames. */
@@ -147,8 +159,6 @@ interface SimxEditorTab {
     frame: HTMLIFrameElement;
     // the origin of the tab's page, which its messages come from and the host posts to
     origin: string;
-    // the project the frame was created for
-    project: string | undefined;
     // true once the tab has posted the ready event
     ready: boolean;
 }
@@ -194,7 +204,19 @@ export class SimxEditorHost {
      */
     show(registration: SimxEditorRegistration, container: HTMLElement, params: SimxEditorFrameParams) {
         if (!this.tabs[registration.key]) this.createTab(registration, container, params);
+        this.options.startSimulatorExtension(registration.key);
         this.setShown(registration.key);
+    }
+
+    /**
+     * Starts the simulator frame of every tab whose simulator frame does not
+     * exist, as after the simulator driver removes its frames. A port pair is
+     * brokered once each new frame loads.
+     */
+    ensureSimulatorFrames() {
+        for (const key of Object.keys(this.tabs)) {
+            this.options.startSimulatorExtension(key);
+        }
     }
 
     /** Hides the shown tab, if any, posting it `hidden` if it is ready. */
@@ -264,9 +286,8 @@ export class SimxEditorHost {
             container.appendChild(this.loader);
         }
         container.appendChild(frame);
-        this.tabs[key] = { key, frame, origin: url.origin, project: params.project, ready: false };
-        // a tab frame never exists without its simulator frame
-        this.options.startSimulatorExtension(key);
+        this.tabs[key] = { key, frame, origin: url.origin, ready: false };
+        this.options.addTabFrame(key, frame);
     }
 
     /**
@@ -324,21 +345,16 @@ export class SimxEditorHost {
         }
     }
 
-    /**
-     * Removes every tab frame not created for `project`, or every tab frame if
-     * `project` is undefined, posting each ready one `closing` first, and
-     * forgets the tab shown last if its frame is removed.
-     */
-    close(project?: string) {
+    /** Removes every tab frame, and forgets the shown tab and the tab shown last. */
+    close() {
         for (const key of Object.keys(this.tabs)) {
-            const tab = this.tabs[key];
-            if (project !== undefined && tab.project === project) continue;
-            this.post(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "closing" });
-            tab.frame.parentElement?.removeChild(tab.frame);
-            delete this.tabs[key];
-            if (this.shownKey === key) this.shownKey = undefined;
-            if (this.lastShownKey === key) this.lastShownKey = undefined;
+            const frame = this.tabs[key].frame;
+            frame.parentElement?.removeChild(frame);
+            this.options.removeTabFrame(frame);
         }
+        this.tabs = {};
+        this.shownKey = undefined;
+        this.lastShownKey = undefined;
         this.updateLoader();
     }
 

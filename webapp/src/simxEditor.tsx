@@ -7,7 +7,7 @@ import { getSimxEditorKeyOfMarker } from "./simxEditorHost";
 /**
  * Shows the editor tab of a simulator extension: the page its registration
  * names, in a frame that stays loaded, hidden, while another editor is shown,
- * until the project closes.
+ * until the project closes or reloads.
  */
 export class SimxEditor extends Editor {
     // the element the tab frames live in, once rendered

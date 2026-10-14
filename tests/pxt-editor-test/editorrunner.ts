@@ -12,10 +12,18 @@ import {
     getSimxEditorKeyOfMarker,
     getSimxEditorMarkerName,
     getSimxEditorRegistrations,
+    isSimxInProject,
     SimxEditorHost,
     SimxEditorRegistration,
 } from "../../webapp/src/simxEditorHost";
-import { getEditorToggleLayout, EditorToggleLayoutInput, getSimxEditorIconMaskStyle, getSimxEditorMenuItemContent } from "../../webapp/src/editorToggleLayout";
+import {
+    getEditorToggleLayout,
+    EditorToggleLayoutInput,
+    getSimxEditorIconMaskStyle,
+    getSimxEditorMenuItemContent,
+    showsSimxEditorTabs,
+    SimxEditorTabsShownInput,
+} from "../../webapp/src/editorToggleLayout";
 import { getEditorToolbarControls, EditorToolbarControlsInput } from "../../webapp/src/editorToolbarControls";
 import { hasEditorTab, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 import {
@@ -39,6 +47,7 @@ import {
     getScopeUsage,
     getVisibleFiles,
     isValidRelativeName,
+    OpenProjectTracker,
     PROJFS_MAX_PENDING_MUTATIONS,
     PROJFS_RATE_LIMIT,
     PROJFS_RATE_WINDOW_MS,
@@ -600,6 +609,12 @@ describe("projfs guard", () => {
         chai.expect(getScopedName("owner/repo", "../x.ts")).equals(undefined);
     });
 
+    it("refuses names ending in the reserved marker suffix, at any depth", () => {
+        for (const name of ["x" + pxt.SIMX_EDITOR_MARKER_SUFFIX, "a/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX, pxt.SIMX_EDITOR_MARKER_SUFFIX])
+            chai.expect(getScopedName("owner/repo", name), name).equals(undefined);
+        chai.expect(getScopedName("owner/repo", "x" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md")).equals("owner/repo/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md");
+    });
+
     it("refuses names under a malformed scope", () => {
         chai.expect(getScopedName("../owner", "x.ts")).equals(undefined);
         chai.expect(getScopedName("", "x.ts")).equals(undefined);
@@ -890,6 +905,15 @@ describe("projfs host", () => {
         chai.expect(project.calls).deep.equals([]);
     });
 
+    it("refuses names ending in the reserved marker suffix, at any depth, without touching the project", async () => {
+        for (const name of ["x" + pxt.SIMX_EDITOR_MARKER_SUFFIX, "a/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX]) {
+            await expectError({ subtype: "write", name, content: "x" }, "INVALID_NAME");
+            await expectError({ subtype: "read", name }, "INVALID_NAME");
+            await expectError({ subtype: "delete", name }, "INVALID_NAME");
+        }
+        chai.expect(project.calls).deep.equals([]);
+    });
+
     it("stores every write under the frame's scope, whatever the message names", async () => {
         const reply = await send({ subtype: "write", name: "other/repo/x.ts", content: "x", channel: "other/repo", scope: "other/repo" });
         chai.expect(reply).deep.include({ subtype: "ack", name: "other/repo/x.ts" });
@@ -1130,6 +1154,23 @@ describe("projfs host", () => {
             project = undefined;
             await expectError({ subtype: "list" }, "PROJECT_CLOSED");
             await expectError({ subtype: "write", name: "a.txt", content: "x" }, "PROJECT_CLOSED");
+        });
+
+        it("refuses a request held past the project's close, and every request until another project loads", async () => {
+            const tracker = new OpenProjectTracker<FakeProject>(() => project);
+            host = new ProjfsHost(() => tracker.get(), clock.now, clock.delay);
+            await writeMany(PROJFS_RATE_LIMIT);
+            const closed = project;
+            const replies: ProjfsReply[] = [];
+            const held = post({ subtype: "write", name: "extra.txt", content: "x" }, replies);
+            tracker.close();
+            await advance(PROJFS_RATE_WINDOW_MS);
+            await held;
+            chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(closed.files).not.to.have.property("owner/repo/extra.txt");
+            await expectError({ subtype: "list" }, "PROJECT_CLOSED");
+            project = newProject();
+            chai.expect((await send({ subtype: "list" })).subtype).equals("files");
         });
     });
 
@@ -3742,6 +3783,12 @@ describe("simulator extension editor tab registrations", () => {
         chai.expect(keys(["*", "file:../pxt-ext", "github:someorg/pxt-extended"])).deep.equals([]);
     });
 
+    it("tells whether a project includes an extension by the GitHub repositories of its dependencies", () => {
+        chai.expect(isSimxInProject(EXT, ["*", "github:SomeOrg/PXT-Ext/makecode/extensions/arcade#v1.0.0"])).equals(true);
+        chai.expect(isSimxInProject(EXT, ["*", "file:../pxt-ext", "github:someorg/pxt-extended", undefined])).equals(false);
+        chai.expect(isSimxInProject(EXT, [])).equals(false);
+    });
+
     it("names one marker file per tab and finds the tab from it", () => {
         const registrations = getSimxEditorRegistrations({ [EXT]: resolved(EXT), [OTHER]: resolved(OTHER) });
         const names = [EXT, OTHER].map(getSimxEditorMarkerName);
@@ -3781,6 +3828,11 @@ describe("session-only files", () => {
             "notes" + pxt.SIMX_EDITOR_MARKER_SUFFIX + ".md",
             pxt.SIMX_EDITOR_MARKER_SUFFIX.slice(1),
         ];
+        chai.expect(names.filter(pxt.isSessionOnlyFile)).deep.equals([]);
+    });
+
+    it("are never a nested name ending in the marker suffix", () => {
+        const names = ["owner/repo/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX, "a/someorg~pxt-ext" + pxt.SIMX_EDITOR_MARKER_SUFFIX];
         chai.expect(names.filter(pxt.isSessionOnlyFile)).deep.equals([]);
     });
 });
@@ -3907,6 +3959,15 @@ describe("editor toggle layout", () => {
         });
         chai.expect(getSimxEditorIconMaskStyle('https://sim.example/a"b\\c.svg').maskImage).equals('url("https://sim.example/a\\"b\\\\c.svg")');
     });
+
+    it("lists extension tabs only in a view that shows the editor toggle", () => {
+        const editorView: SimxEditorTabsShownInput = {
+            sandbox: false, readOnly: false, tutorial: false, debugging: false, hideMenuBar: false, blocksOnly: false,
+        };
+        chai.expect(showsSimxEditorTabs(editorView)).equals(true);
+        for (const field of Object.keys(editorView) as (keyof SimxEditorTabsShownInput)[])
+            chai.expect(showsSimxEditorTabs({ ...editorView, [field]: true }), field).equals(false);
+    });
 });
 
 describe("editor toolbar editing controls", () => {
@@ -3995,6 +4056,8 @@ describe("simulator extension editor tab host", () => {
     let simulatorColumn: FakeElement;
     let simulatorFrames: pxt.Map<FakeElement>;
     let started: string[];
+    // the tab frames the host has recorded with the driver and not yet forgotten, by key
+    let recorded: Map<FakeElement, string>;
     let channels: FakeChannel[];
     let state: SimxEditorSimulatorState;
     let host: SimxEditorHost;
@@ -4036,6 +4099,7 @@ describe("simulator extension editor tab host", () => {
         simulatorColumn = new FakeElement();
         simulatorFrames = {};
         started = [];
+        recorded = new Map();
         channels = [];
         state = "Running";
         let nextPort = 0;
@@ -4050,6 +4114,8 @@ describe("simulator extension editor tab host", () => {
                 started.push(key);
                 return simulatorFrames[key] as unknown as HTMLIFrameElement;
             },
+            addTabFrame: (key, frame) => recorded.set(frame as unknown as FakeElement, key),
+            removeTabFrame: frame => recorded.delete(frame as unknown as FakeElement),
             getSimulatorState: () => state,
             createChannel: () => {
                 const channel = { port1: { id: "p" + nextPort++ }, port2: { id: "p" + nextPort++ } };
@@ -4083,11 +4149,23 @@ describe("simulator extension editor tab host", () => {
             chai.expect(frame.parentElement).equals(container);
         });
 
-        it("starts the simulator frame of its key when it creates the tab frame, and only then", () => {
+        it("starts the simulator frame of its key each time the tab is shown, so a removed one is started again", () => {
             show(EXT);
+            loadSimulatorFrame(EXT);
             host.hide();
+            simulatorColumn.removeChild(simulatorFrames[EXT]);
+            delete simulatorFrames[EXT];
             show(EXT);
-            chai.expect(started).deep.equals([EXT]);
+            show(OTHER);
+            chai.expect(started).deep.equals([EXT, EXT, OTHER]);
+        });
+
+        it("records each tab frame with the simulator driver under its key, and forgets it when it is removed", () => {
+            show(EXT);
+            show(OTHER);
+            chai.expect(Array.from(recorded.entries())).deep.equals([[tab(EXT), EXT], [tab(OTHER), OTHER]]);
+            host.close();
+            chai.expect(recorded.size).equals(0);
         });
 
         it("keeps one frame per tab, loaded and merely hidden while another editor or tab is shown", () => {
@@ -4139,22 +4217,20 @@ describe("simulator extension editor tab host", () => {
             chai.expect(host.isReady(EXT)).equals(true);
         });
 
-        it("removes the tab frames of other projects, and every one when the project closes, after posting closing", () => {
+        it("removes every tab frame when its project closes or reloads, posting nothing first", () => {
             show(EXT);
             ready(EXT);
-            const frame = tab(EXT);
-            host.close("p1");
-            chai.expect(tab(EXT)).equals(frame);
-            host.close("p2");
-            chai.expect(tab(EXT)).equals(undefined);
-            chai.expect(frame.parentElement).equals(undefined);
-            chai.expect(events(frame).slice(-1)).deep.equals([{ type: "simxeditor", event: "closing" }]);
-
             show(OTHER);
-            const other = tab(OTHER);
+            const frames = [tab(EXT), tab(OTHER)];
+            const before = events(frames[0]).length;
             host.close();
-            chai.expect(other.parentElement).equals(undefined);
-            chai.expect(events(other)).deep.equals([]);
+            chai.expect([tab(EXT), tab(OTHER)]).deep.equals([undefined, undefined]);
+            chai.expect(frames.map(f => f.parentElement)).deep.equals([undefined, undefined]);
+            chai.expect(events(frames[0]).length).equals(before);
+            chai.expect(events(frames[1])).deep.equals([]);
+
+            show(EXT);
+            chai.expect(tab(EXT)).not.equals(frames[0]);
         });
     });
 
@@ -4179,16 +4255,13 @@ describe("simulator extension editor tab host", () => {
             chai.expect(host.getLastShownKey()).equals(EXT);
         });
 
-        it("is forgotten when its frame is removed with its project, and kept when the same project reloads", () => {
+        it("is forgotten when the tab frames are removed", () => {
             show(EXT);
             host.hide();
-            host.close("p1");
-            chai.expect(host.getLastShownKey()).equals(EXT);
-            host.close("p2");
+            host.close();
             chai.expect(host.getLastShownKey()).equals(undefined);
 
             show(OTHER);
-            host.hide();
             host.close();
             chai.expect(host.getLastShownKey()).equals(undefined);
         });
@@ -4301,6 +4374,30 @@ describe("simulator extension editor tab host", () => {
             chai.expect(ports(first).map(p => p.transfer)).deep.equals([[channels[0].port1]]);
             chai.expect(ports(second).map(p => p.transfer)).deep.equals([[channels[1].port1], [channels[2].port1]]);
             chai.expect(ports(tab(EXT)).map(p => p.transfer)).deep.equals(channels.map(c => [c.port2]));
+        });
+
+        it("starts the simulator frame of every tab again after the simulator unloads, and brokers a new pair once it loads", () => {
+            show(EXT);
+            ready(EXT);
+            const first = loadSimulatorFrame(EXT);
+            simulatorColumn.removeChild(first);
+            delete simulatorFrames[EXT];
+            started = [];
+            host.ensureSimulatorFrames();
+            chai.expect(started).deep.equals([EXT]);
+            chai.expect(channels.length).equals(1);
+            const second = loadSimulatorFrame(EXT);
+            chai.expect(channels.length).equals(2);
+            chai.expect(ports(second).map(p => p.transfer)).deep.equals([[channels[1].port1]]);
+            chai.expect(ports(tab(EXT)).map(p => p.transfer)).deep.equals([[channels[0].port2], [channels[1].port2]]);
+        });
+
+        it("starts no simulator frame after the simulator unloads while no tab exists", () => {
+            show(EXT);
+            host.close();
+            started = [];
+            host.ensureSimulatorFrames();
+            chai.expect(started).deep.equals([]);
         });
 
         it("brokers nothing to a simulator frame no longer in the page, nor before the tab is ready", () => {

@@ -794,7 +794,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const showJavaScript = !noJavaScript && !pyOnly && !blocksOnly;
         const showSandbox = sandbox && !headless;
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
-        const extensionEditors = sandbox ? [] : parent.getSimulatorExtensionEditors();
+        const extensionEditors = parent.getSimulatorExtensionEditors();
         const activeExtensionEditor = extensionEditors.find(e => parent.isSimulatorExtensionEditorActive(e.key));
         const layout = getEditorToggleLayout({
             python: !!python,
@@ -806,7 +806,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
             isPythonActive: parent.isPythonActive(),
             extensionEditors: extensionEditors.map(e => e.key),
             activeExtensionEditor: activeExtensionEditor?.key,
-            lastExtensionEditor: sandbox ? undefined : parent.getLastSimulatorExtensionEditor(),
+            lastExtensionEditor: parent.getLastSimulatorExtensionEditor(),
         });
         const { showDropdown, dropdownActive } = layout;
 

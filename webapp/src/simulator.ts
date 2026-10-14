@@ -10,12 +10,13 @@ import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
-import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, setFileListedAsync, writeProjectFileAsync } from "./projfsHost";
+import { applyUserEdit, OpenProjectTracker, ProjfsEditor, ProjfsHost, ProjfsProject, setFileListedAsync, writeProjectFileAsync } from "./projfsHost";
 import { createProjassetsConfig, ProjassetsConfig, ProjassetsHost } from "./projassetsHost";
 import {
     answerSimxEditorRequest,
     getProjectSimxEditors,
     getSimxEditorRegistrations,
+    isSimxInProject,
     SimxEditorHost,
     SimxEditorRegistration,
 } from "./simxEditorHost";
@@ -51,6 +52,11 @@ let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
+// the editor package of the open project, as simulator extensions read it
+const openProject = new OpenProjectTracker<pkg.EditorPackage>(() => {
+    const epkg = pkg.mainEditorPkg();
+    return epkg.header ? epkg : undefined;
+});
 const projfsHost = new ProjfsHost(getProjfsProject);
 const projassetsHost = new ProjassetsHost(getOpenAssetProject, () => pxt.react.getTilemapProject(), getAssetConfig);
 export let simTranslations: pxt.Map<string>;
@@ -304,6 +310,10 @@ export async function initAsync(cfg: SimulatorConfig) {
         onSimulatorExtensionFrameLoad: (key, frame) => {
             simxEditorHost?.simulatorFrameLoaded(key, frame);
         },
+        isSimulatorExtensionInProject: key => isSimxInProject(key, getProjectDependencies()),
+        onFramesUnloaded: () => {
+            simxEditorHost?.ensureSimulatorFrames();
+        },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim,
@@ -326,6 +336,8 @@ export async function initAsync(cfg: SimulatorConfig) {
         },
         framePermissions: grants => pxsim.simulatorFramePermissions(grants),
         startSimulatorExtension: key => driver.startSimulatorExtension(key),
+        addTabFrame: (key, frame) => driver.addEditorTabFrame(key, frame),
+        removeTabFrame: frame => driver.removeEditorTabFrame(frame),
         getSimulatorState: () => pxsim.SimulatorState[driver.state] as SimxEditorSimulatorState,
         createChannel: () => new MessageChannel(),
     });
@@ -341,10 +353,13 @@ export function getProjectSimxEditorRegistrations(): SimxEditorRegistration[] {
     if (!driver || !pkg.mainPkg) return [];
     const registrations = getSimxEditorRegistrations(driver.options.simulatorExtensions);
     if (!registrations.length) return [];
-    // every package the project has loaded, read without resolving anything, since this runs while rendering
-    const deps = pkg.mainPkg.deps;
-    const dependencies = Object.keys(deps).map(id => deps[id]?._verspec);
-    return getProjectSimxEditors(registrations, dependencies);
+    return getProjectSimxEditors(registrations, getProjectDependencies());
+}
+
+/** Returns the version specs of every package the open project has loaded, without resolving any package. */
+function getProjectDependencies(): string[] {
+    const deps = pkg.mainPkg?.deps || {};
+    return Object.keys(deps).map(id => deps[id]?._verspec);
 }
 
 /** Tells every ready simulator extension editor tab that the editor is giving the simulator `command`. */
@@ -358,11 +373,14 @@ export function postSimxEditorFullscreen(enabled: boolean) {
 }
 
 /**
- * Removes the simulator extension editor tab frames not created for the project
- * `projectId`, or every one if `projectId` is undefined.
+ * Closes the open project to simulator extensions: removes every editor tab
+ * frame, and refuses the project-file and project-asset requests still waiting
+ * for the project with `PROJECT_CLOSED`. Call before the simulator unloads, as
+ * the project closes or another load begins.
  */
-export function closeSimxEditors(projectId?: string) {
-    simxEditorHost?.close(projectId);
+export function closeSimxProject() {
+    simxEditorHost?.close();
+    openProject.close();
 }
 
 /**
@@ -370,8 +388,7 @@ export function closeSimxEditors(projectId?: string) {
  * is open: its editor package.
  */
 function getOpenAssetProject(): pkg.EditorPackage | undefined {
-    const epkg = pkg.mainEditorPkg();
-    return epkg.header ? epkg : undefined;
+    return openProject.get();
 }
 
 /** Returns the configuration of the open project as the asset host reads and watches it. */
@@ -387,8 +404,8 @@ let projfsProject: { epkg: pkg.EditorPackage, project: ProjfsProject } | undefin
  * if no project is open; the same object while the project stays open.
  */
 function getProjfsProject(): ProjfsProject | undefined {
-    const epkg = pkg.mainEditorPkg();
-    if (!epkg.header) return undefined;
+    const epkg = openProject.get();
+    if (!epkg) return undefined;
     if (projfsProject?.epkg !== epkg)
         projfsProject = { epkg, project: createProjfsProject(epkg) };
     return projfsProject.project;

@@ -160,6 +160,31 @@ export function setFileListedAsync(epkg: ProjfsConfigPackage, name: string, list
     }) || Promise.reject(new Error(`pxt.json could not be updated to ${listed ? "list" : "unlist"} ${name}.`));
 }
 
+/**
+ * The open project as the simulator extension hosts read it: the project the
+ * editor has loaded, until it closes. A closed project reads as no project
+ * until the editor loads another, which is always a new object.
+ */
+export class OpenProjectTracker<T> {
+    // the project closed last
+    protected closed: T | undefined;
+
+    /** @param getLoaded returns the project the editor has loaded, or undefined if none is */
+    constructor(protected readonly getLoaded: () => T | undefined) {
+    }
+
+    /** Returns the open project, or undefined if none is open. */
+    get(): T | undefined {
+        const project = this.getLoaded();
+        return project !== undefined && project !== this.closed ? project : undefined;
+    }
+
+    /** Closes the open project: {@link get} returns undefined until the editor loads another. */
+    close() {
+        this.closed = this.getLoaded();
+    }
+}
+
 /** Returns the size of `content` in UTF-8 bytes. */
 export function utf8Length(content: string): number {
     return new TextEncoder().encode(content).length;
@@ -176,13 +201,15 @@ export function isValidRelativeName(name: unknown): name is string {
 
 /**
  * Returns the project name of the file `name` in the folder `scope`, or undefined
- * if `name` is not a valid relative name or the result would fall under `pxt_modules/`.
+ * if `name` is not a valid relative name, ends in the reserved
+ * `pxt.SIMX_EDITOR_MARKER_SUFFIX`, or the result would fall under `pxt_modules/`
+ * or name a session-only file (see `pxt.isSessionOnlyFile`).
  * @param scope the simulator extension's key, e.g. `owner/repo`
  */
 export function getScopedName(scope: string, name: unknown): string | undefined {
-    if (!isValidRelativeName(name)) return undefined;
+    if (!isValidRelativeName(name) || name.endsWith(pxt.SIMX_EDITOR_MARKER_SUFFIX)) return undefined;
     const scoped = `${scope}/${name}`;
-    if (!isValidRelativeName(scoped) || scoped.startsWith("pxt_modules/")) return undefined;
+    if (!isValidRelativeName(scoped) || scoped.startsWith("pxt_modules/") || pxt.isSessionOnlyFile(scoped)) return undefined;
     return scoped;
 }
 
@@ -430,7 +457,7 @@ export class ProjfsHost {
     protected scopedNameOrThrow(scope: string, name: unknown): string {
         const scoped = getScopedName(scope, name);
         if (!scoped)
-            throw new ProjfsRequestError("INVALID_NAME", `${name} is not a valid relative file name.`);
+            throw new ProjfsRequestError("INVALID_NAME", `${name} is not a valid relative file name, or is reserved.`);
         return scoped;
     }
 }

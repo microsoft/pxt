@@ -27,7 +27,7 @@ The editor posts `{ type: "fullscreen", enabled }` to every simulator frame when
 
 ## Editor tab
 
-A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. The tab is offered only while the open project includes the extension, and never in embedded (sandbox) views, where the Assets editor is not offered either.
+A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. The tab is offered only while the open project includes the extension, and never in views whose editor toggle lists no tabs: embedded (sandbox), read-only (such as the time machine), tutorial and debugging views, and targets that hide the menu bar or show Blocks only.
 
 The editor toolbar stays below the tab, as it does below Blocks and the text editors, without its undo, redo and zoom controls, which the tab does not have: the simulator can be collapsed and expanded, and the project downloaded, while the tab is shown.
 
@@ -51,7 +51,7 @@ The tab is declared in the extension's `simx` entry in the target's `targetconfi
 * `editor.label` names the tab in the toggle and is its accessible name. It is shown as text, as the names of Blocks, JavaScript and Python are. It is not localized.
 * `editor.icon` is an optional icon shown on the label's left. It is either the class names of one of MakeCode's font icons, as its own editors use (for example `xicon js`), or the path to an SVG within the extension's published files, resolved the same way as `index`. A value that contains a `/` or ends in `.svg` is a path; any other value is class names.
 * An SVG icon is drawn as a mask in the toggle's text color: only its shape is used, so it follows the editor's color themes, high contrast included. A square SVG drawn in a single color, such as `currentColor`, is recommended.
-* `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor` and `allowEditorTab`.
+* `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor`, with its `index` and `label`, and `allowEditorTab`; it logs a registration that sets `allowEditorTab` without them.
 * A registration with an editor tab must be `permanent` (the default); the editor ignores, and logs, an `editor` on a registration with `permanent: false`.
 
 The editor selects the tab through a session-only marker file named after the extension's key (`owner~repo.simxeditor`), which it creates the first time the tab is opened in a session. The marker is never saved, listed with the project's files, shared or exported, so the project itself does not change. File names ending in `.simxeditor` are reserved for these markers.
@@ -60,26 +60,27 @@ The editor selects the tab through a session-only marker file named after the ex
 
 An extension with an editor tab has two frames, both created for its key:
 
-* Its **simulator frame**, in the simulator column, is the extension's simulator frame as before. Its URL also carries `editor=1`, so the frame knows at startup that the tab exists. It receives the run message and every simulator message, and it may post simulator messages.
-* Its **tab frame**, in the editor area, is created the first time the tab is opened and removed only when the project closes. Its URL carries the same parameters as the simulator frame's (`parentOrigin`, `channel`, `target`, `project`, `language`) plus `role=editor`, and it gets the same sandbox and permissions under the same grants. It is not a simulator frame: it receives no simulator messages, and nothing it posts reaches the simulator.
+* Its **simulator frame**, in the simulator column, is the extension's simulator frame as before. Its URL also carries `editor=1` when the open project includes the extension, so the frame knows at startup that the tab exists. It receives the run message and every simulator message, and it may post simulator messages.
+* Its **tab frame**, in the editor area, is created the first time the tab is opened and removed when the project closes or reloads. Its URL carries the same parameters as the simulator frame's (`parentOrigin`, `channel`, `target`, `project`, `language`) plus `role=editor`, and it gets the same sandbox and permissions under the same grants. It is not a simulator frame: it receives no simulator messages, and nothing it posts reaches the simulator.
 
-When the editor opens a tab and the extension's simulator frame does not exist (for example, because the program has not run), the editor creates it.
+Whenever the editor shows the tab and the extension's simulator frame does not exist (for example, because the program has not run), the editor creates it. It also creates it again after the simulator unloads while the tab exists, as when the simulator theme picker closes.
 
 ### Ready, and the port
 
 The editor shows its loading indicator over the tab until the tab frame posts `{ type: "simxeditor", event: "ready" }` to its parent. Post it once the page listens for messages.
 
-Once the tab is ready and the simulator frame has loaded, the editor creates a `MessageChannel` and posts `{ type: "simxeditorport", key }` to each frame, with one of the channel's ports in the event's `ports[0]`. The two frames talk over that channel; the editor never reads it. The editor brokers a new pair whenever a new simulator frame of the extension loads (after the simulator is collapsed and expanded, or the project reloads), so both frames should accept a new port at any time. Either side may close its port.
+Once the tab is ready and the simulator frame has loaded, the editor creates a `MessageChannel` and posts `{ type: "simxeditorport", key }` to each frame, with one of the channel's ports in the event's `ports[0]`. The two frames talk over that channel; the editor never reads it. The editor brokers a new pair whenever a new simulator frame of the extension loads, as when the editor creates it again after the simulator unloads, so both frames should accept a new port at any time. Either side may close its port.
 
 ### Lifecycle events
 
 The editor posts these messages to the tab frame:
 
 * `{ type: "simxeditor", event: "shown" }` and `{ type: "simxeditor", event: "hidden" }` when the user switches to or away from the tab, and once after the tab is ready.
-* `{ type: "simxeditor", event: "closing" }` before the editor removes the tab frame, when the project closes.
-* `{ type: "simxeditor", event: "simulator", command }` as the editor starts, stops or restarts the simulator, where `command` is `"start"` (on every run, including the automatic reruns after an edit), `"stop"` or `"restart"`. The event carries no program; the simulator frame receives the run message and can share it over the port.
+* `{ type: "simxeditor", event: "simulator", command }` as the editor starts, stops or restarts the simulator, where `command` is `"start"` (on every run that reaches the simulator, including the automatic reruns after an edit), `"stop"` or `"restart"` (when the editor restarts the program already in the simulator). The event carries no program; the simulator frame receives the run message and can share it over the port.
 * `{ type: "simxeditor", event: "simulatorstate", state }` when the simulator's state changes, and once after the tab is ready, where `state` is one of `"Unloaded"`, `"Stopped"`, `"Pending"`, `"Starting"`, `"Running"`, `"Paused"` and `"Suspended"`.
 * `{ type: "simxeditor", event: "fullscreen", enabled }` when the editor enters or leaves fullscreen-simulator mode, and once after the tab is ready, where `enabled` is `true` while the simulator covers the editor area, and with it the tab. The simulator frame receives the `fullscreen` message at the same time, so an extension whose tab is its main view can show that view in the simulator frame while the tab is covered.
+
+A tab lives for one load of its project: the editor removes the tab frame when the project closes or reloads, and the ports and project-asset subscriptions the tab held end with it. The editor posts no message before removing the frame; to save state, listen for `pagehide` on the tab's window.
 
 A hidden tab stays loaded, but it is not rendered, and the browser may run its timers late or not at all. Render only while the tab is shown, and keep any computation that must not pause, such as a simulation, in the simulator frame, which is visible whenever the simulator is. A tab that runs simulators of its own is responsible for them while it is hidden, for example by pausing them.
 
@@ -89,6 +90,6 @@ The extension's grants apply to both of its frames: the tab frame may send proje
 
 ### Opening the tab from the simulator frame
 
-The simulator frame may ask the editor to show the tab, for example when the user clicks a button in it, by posting `{ type: "simxeditor", subtype: "open", id }` to its parent. The editor shows the tab, creating the tab frame if needed, and replies to the simulator frame with `{ type: "simxeditor", id, subtype: "ack" }`, or with `{ type: "simxeditor", id, subtype: "error", code, message }`, where `code` is `UNREGISTERED` (the frame is not a registered simulator extension frame), `PERMISSION_DENIED` (the registration does not declare and enable a tab), `UNAVAILABLE` (the editor offers no tab here) or `INVALID_REQUEST`.
+The simulator frame may ask the editor to show the tab, for example when the user clicks a button in it, by posting `{ type: "simxeditor", subtype: "open", id }` to its parent. The editor shows the tab, creating the tab frame if needed, and replies to the simulator frame with `{ type: "simxeditor", id, subtype: "ack" }`, or with `{ type: "simxeditor", id, subtype: "error", code, message }`, where `code` is `UNREGISTERED` (the frame is not the simulator frame of a registered extension the open project includes), `PERMISSION_DENIED` (the registration does not declare and enable a tab), `UNAVAILABLE` (the editor shows no tabs in its current view) or `INVALID_REQUEST` (the request is unknown, or the editor failed to carry it out).
 
 The message types are defined in `pxtservices/simxeditor.ts`, which has no dependencies and can be copied into an extension.

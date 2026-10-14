@@ -1095,7 +1095,11 @@ declare namespace pxt.editor {
         isAssetsActive(): boolean;
         /** Returns true if the editor tab of the simulator extension registered under `key` is the active editor. */
         isSimulatorExtensionEditorActive(key: string): boolean;
-        /** Returns the simulator extension editor tabs the editor offers for the open project, in registration order. */
+        /**
+         * Returns the simulator extension editor tabs the editor offers for the open project, in registration
+         * order; none in a view whose editor toggle lists no tabs, such as an embedded, read-only, tutorial
+         * or debugging view.
+         */
         getSimulatorExtensionEditors(): SimulatorExtensionEditorInfo[];
         /**
          * Returns the key of the simulator extension editor tab shown last in the open

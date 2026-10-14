@@ -12,6 +12,11 @@
  * simulator. The two frames talk over a `MessagePort` pair the editor
  * brokers, and the editor never reads that channel.
  *
+ * A tab lives for one load of its project: the editor removes the tab frame
+ * when the project closes or reloads, and the ports and project-asset
+ * subscriptions the tab held end with it. The editor posts no message before
+ * removing the frame; to save state, listen for `pagehide` on the tab's window.
+ *
  * This module has no dependencies; a simulator extension can import or copy it
  * as-is.
  */
@@ -26,8 +31,12 @@ export const SIMXEDITOR_PORT_MESSAGE_TYPE = "simxeditorport";
 export const SIMXEDITOR_ROLE = "editor";
 
 /**
- * Returns true if the editor offers this simulator extension's tab, which the
- * editor tells its simulator frame with the `editor=1` URL parameter.
+ * Returns true if the editor offers this simulator extension's tab to the open
+ * project, which the editor tells its simulator frame with the `editor=1` URL
+ * parameter: the registration declares and enables a tab, and the project
+ * includes the extension. A true result does not guarantee an open request
+ * succeeds: in a view that shows no extension tabs, it is answered with
+ * `UNAVAILABLE`.
  * @param search the frame URL's query string; defaults to `window.location.search`
  */
 export function hasEditorTab(search?: string): boolean {
@@ -51,16 +60,14 @@ export interface SimxEditorVisibilityEvent {
     event: "shown" | "hidden";
 }
 
-/** Posted to the tab frame before the editor removes it, when its project closes. */
-export interface SimxEditorClosingEvent {
-    type: typeof SIMXEDITOR_MESSAGE_TYPE;
-    event: "closing";
-}
-
 /** A command the editor gives the simulator. */
 export type SimxEditorSimulatorCommand = "start" | "stop" | "restart";
 
-/** Posted to the tab frame as the editor starts, stops or restarts the simulator. */
+/**
+ * Posted to the tab frame as the editor gives the simulator a command: `start`
+ * on every run that reaches the simulator, `stop` when it stops the simulator,
+ * and `restart` when it restarts the program already in the simulator.
+ */
 export interface SimxEditorSimulatorEvent {
     type: typeof SIMXEDITOR_MESSAGE_TYPE;
     event: "simulator";
@@ -92,7 +99,6 @@ export interface SimxEditorFullscreenEvent {
 /** A message the editor posts to the tab frame. */
 export type SimxEditorEvent =
     SimxEditorVisibilityEvent
-    | SimxEditorClosingEvent
     | SimxEditorSimulatorEvent
     | SimxEditorSimulatorStateEvent
     | SimxEditorFullscreenEvent;
@@ -102,8 +108,10 @@ export type SimxEditorEvent =
  * with one end of a new `MessageChannel` in the event's `ports[0]`. The editor
  * posts a new pair whenever both frames exist and the tab is ready: when the
  * tab becomes ready while the simulator frame is loaded, and whenever a
- * simulator frame finishes loading while the tab is ready. Either side may
- * close its port; a new pair replaces it.
+ * simulator frame finishes loading while the tab is ready. If the simulator
+ * frame does not exist, the editor creates it each time it shows the tab and
+ * after the simulator unloads while the tab exists, and a new pair follows
+ * once it loads. Either side may close its port; a new pair replaces it.
  */
 export interface SimxEditorPortMessage {
     type: typeof SIMXEDITOR_PORT_MESSAGE_TYPE;
@@ -127,13 +135,13 @@ export interface SimxEditorOpenRequest {
  * accompanies it is for people.
  */
 export type SimxEditorErrorCode =
-    /** The requesting frame is not the simulator frame of an extension registered for the open project. */
+    /** The requesting frame is not the simulator frame of an extension registered for, and included in, the open project. */
     "UNREGISTERED"
     /** The extension's registration does not declare and enable an editor tab. */
     | "PERMISSION_DENIED"
-    /** The editor shows no extension tabs in its current mode, or the open project does not include the extension. */
+    /** The editor shows no extension tabs in its current view, such as an embedded, read-only or tutorial view. */
     | "UNAVAILABLE"
-    /** The request is not one the editor knows. */
+    /** The request is not one the editor knows, or the editor failed to carry it out. */
     | "INVALID_REQUEST";
 
 /** The reply to an open request the editor carried out. */
