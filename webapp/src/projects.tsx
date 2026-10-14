@@ -425,7 +425,10 @@ export class Projects extends auth.Component<ISettingsProps, ProjectsState> {
 
     private clearSearchFilters = () => {
         const searchFilters = {};
-        this.setState({ searchFilters });
+        this.setState({ searchFilters }, () => {
+            const filterButton = document.querySelector(".projectsdialog .home-search-filter > .menu-button") as HTMLElement;
+            (filterButton || document.getElementById("homescreen-search"))?.focus();
+        });
         this.runSearch(this.state.searchQuery || "", searchFilters);
     }
 

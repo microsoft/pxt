@@ -125,7 +125,7 @@ namespace pxt.gallery {
         const value = card[property] as string | string[];
         if (value === undefined || value === null) return;
 
-        const values = (Array.isArray(value) ? value : value.split(","))
+        const values = (Array.isArray(value) ? value : typeof value === "string" ? value.split(",") : [])
             .map(entry => typeof entry === "string" ? entry.trim() : "")
             .filter(entry => !!entry && (!allowedValues || allowedValues.indexOf(entry) !== -1))
             .filter((entry, index, entries) => entries.indexOf(entry) === index);

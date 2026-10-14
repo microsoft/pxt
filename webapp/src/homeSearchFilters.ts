@@ -70,6 +70,9 @@ function getLanguages(card: pxt.CodeCard): string[] {
 
     const values: string[] = [];
     addUnique(values, card.editor);
+    if (!card.editor && card.otherActions?.length
+        && (card.cardType === "tutorial" || card.cardType === "example"))
+        addUnique(values, "blocks");
     card.otherActions?.forEach(action => addUnique(values, action.editor));
     return values;
 }
