@@ -15,7 +15,8 @@ const compile = source => {
     return result.outputText;
 };
 const sources = Object.fromEntries([
-    "webapp/src/backpackProject.ts", "webapp/src/blockSnippet.ts", "webapp/src/backpack.ts", "webapp/src/backpackErrors.ts", "pxtblocks/backpack.ts",
+    "webapp/src/components/backpack/project.ts", "webapp/src/blockSnippet.ts",
+    "webapp/src/components/backpack/service.ts", "webapp/src/components/backpack/errors.ts", "pxtblocks/backpack.ts",
     "pxtblocks/plugins/functions/constants.ts", "pxtblocks/clipboard.ts"
 ].map(file => [file, compile(read(file))]));
 
@@ -178,10 +179,10 @@ function environment(installed = {}) {
             events.push("paste:one-undo-group");
         }
     };
-    const errors = execute(sources["webapp/src/backpackErrors.ts"]);
-    const store = execute(sources["webapp/src/backpack.ts"], id => {
-        if (id === "./backpackStorage") return {};
-        assert.equal(id, "./backpackErrors");
+    const errors = execute(sources["webapp/src/components/backpack/errors.ts"]);
+    const store = execute(sources["webapp/src/components/backpack/service.ts"], id => {
+        if (id === "./storage") return {};
+        assert.equal(id, "./errors");
         return errors;
     });
     const core = { confirmAsync: async options => {
@@ -190,14 +191,18 @@ function environment(installed = {}) {
             : options.header === "Different editor version" ? "version-confirm" : "confirm");
         return result === undefined ? 1 : result;
     } };
-    const imports = { "blockly": Blockly, "../../pxtblocks": blockly, "./package": pkg, "./core": core, "./backpack": store,
-        "./backpackErrors": errors };
+    const imports = {
+        "blockly": Blockly, "../../pxtblocks": blockly, "./package": pkg, "./core": core,
+        "./components/backpack/service": store, "./components/backpack/errors": errors,
+        "../../../../pxtblocks": blockly, "../../package": pkg, "../../core": core,
+        "./service": store, "./errors": errors
+    };
     const load = id => {
         assert(Object.prototype.hasOwnProperty.call(imports, id), `Unexpected import ${id}`);
         return imports[id];
     };
-    const shared = imports["./blockSnippet"] = execute(sources["webapp/src/blockSnippet.ts"], load);
-    const api = execute(sources["webapp/src/backpackProject.ts"], load);
+    const shared = imports["../../blockSnippet"] = execute(sources["webapp/src/blockSnippet.ts"], load);
+    const api = execute(sources["webapp/src/components/backpack/project.ts"], load);
     const workspace = {};
     const target = pxt.appTarget;
     const host = {

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
-import { BackpackEntry, MAX_BACKPACK_NAME_LENGTH } from "../../backpack";
+import { BackpackEntry, MAX_BACKPACK_NAME_LENGTH } from "./service";
 
 export interface BackpackItemEdit {
     kind: "rename" | "delete";

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Button } from "../../../../react-common/components/controls/Button";
 import { classList } from "../../../../react-common/components/util";
-import { BackpackEntry, backpackEntryKey } from "../../backpack";
+import { BackpackEntry, backpackEntryKey } from "./service";
 import { BackpackPreview } from "./BackpackPreview";
 
 export interface BackpackEntryDependency {

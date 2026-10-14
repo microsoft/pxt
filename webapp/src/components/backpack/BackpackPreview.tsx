@@ -5,8 +5,8 @@ import {
     getBackpackAssetPreviewContext,
     getBackpackPreviewAsync,
     loadBackpackAssetPreviewAsync
-} from "../../backpack";
-import { backpackAssetPreview, BackpackAssetPreview } from "../../backpackAssetPreview";
+} from "./service";
+import { backpackAssetPreview, BackpackAssetPreview } from "./preview";
 
 export interface BackpackPreviewProps {
     entry: BackpackEntry;

@@ -80,7 +80,7 @@ describe("responsive project-tools launcher", function () {
                     "./ProjectToolsHeader", "./ProjectToolsResizeHandle", "./useProjectToolsResize", "./useProjectToolsDismiss",
                     "../../../../react-common/components/controls/Button", "../../../../react-common/components/util"
                 ].includes(id)) return window.projectToolsComponents;
-                if (id === "../../backpack") return {
+                if (id === "../backpack/service") return {
                     isBackpackEnabled: () => pxt.appTarget.appTheme.backpack,
                     subscribeBackpackOpen: listener => {
                         window.backpackOpenListeners.add(listener);

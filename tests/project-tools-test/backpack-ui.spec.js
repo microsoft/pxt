@@ -224,11 +224,12 @@ describe("project backpack UI", function () {
             };
             window.require = id => {
                 const modules = { react: React, "fuse.js": window.Fuse, "../../auth": auth, "../../data": data,
-                    "../../backpack": backpack, "../../backpackSearch": window.backpackSearch, "../../package": test.pkg,
+                    "./service": backpack, "./search": window.backpackSearch, "../../package": test.pkg,
                     "../../blockSnippet": window.blockSnippets,
-                    "blockly": {}, "../../pxtblocks": {}, "./core": {}, "./package": test.pkg, "./backpack": backpack };
-                modules["../../backpackErrors"] = window.backpackErrors;
-                modules["./backpackErrors"] = window.backpackErrors;
+                    "blockly": {}, "../../pxtblocks": {}, "./core": {}, "./package": test.pkg,
+                    "./components/backpack/service": backpack };
+                modules["./errors"] = window.backpackErrors;
+                modules["./components/backpack/errors"] = window.backpackErrors;
                 modules["./BackpackPreview"] = window.backpackPreviewUI;
                 modules["./BackpackEntryCard"] = window.backpackEntryCard;
                 modules["./BackpackItemDialog"] = window.backpackItemDialog;
@@ -236,7 +237,7 @@ describe("project backpack UI", function () {
                 modules["./useBackpackDrag"] = window.backpackDrag;
                 modules["./useBackpackPageFocus"] = window.backpackPageFocus;
                 modules["./useBackpackCollection"] = window.backpackCollection;
-                modules["../../backpackAssetPreview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
+                modules["./preview"] = { backpackAssetPreview: item => test.noAssetPreview ? undefined : ({
                     previewURI: test.assetPreviewURI + "#" + encodeURIComponent(item.code),
                     framePreviewURIs: test.previewFrames
                 }) };
@@ -258,10 +259,10 @@ describe("project backpack UI", function () {
             };
         }, assetPreviewURI);
         await page.addScriptTag({ content: controls });
-        await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/backpackErrors.ts")}\n})(window.backpackErrors = {});` });
-        await page.addScriptTag({ content: bundleSource(["webapp/src/backpack.ts"], "backpackValidation", {}) });
+        await page.addScriptTag({ content: `(function(exports) { ${source("webapp/src/components/backpack/errors.ts")}\n})(window.backpackErrors = {});` });
+        await page.addScriptTag({ content: bundleSource(["webapp/src/components/backpack/service.ts"], "backpackValidation", {}) });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/blockSnippet.ts")}\n})(window.require, window.blockSnippets = {});` });
-        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/backpackSearch.ts")}\n})(window.require, window.backpackSearch = {});` });
+        await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/search.ts")}\n})(window.require, window.backpackSearch = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackPreview.tsx")}\n})(window.require, window.backpackPreviewUI = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackEntryCard.tsx")}\n})(window.require, window.backpackEntryCard = {});` });
         await page.addScriptTag({ content: `(function(require, exports) { ${source("webapp/src/components/backpack/BackpackItemDialog.tsx")}\n})(window.require, window.backpackItemDialog = {});` });

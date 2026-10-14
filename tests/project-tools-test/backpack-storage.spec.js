@@ -3,7 +3,7 @@
 const assert = require("assert");
 const { launchTestBrowser } = require("./browser");
 const { bundleSource } = require("./source");
-const storageBundle = bundleSource(["webapp/src/backpack.ts"], "store", {});
+const storageBundle = bundleSource(["webapp/src/components/backpack/service.ts"], "store", {});
 
 // Uses Chromium's IndexedDB; HTTP responses are mocked in this suite.
 describe("dedicated Backpack API and durable IndexedDB (current source)", function () {

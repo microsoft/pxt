@@ -1,10 +1,10 @@
 import * as Blockly from "blockly";
-import * as pxtblockly from "../../pxtblocks";
-import * as pkg from "./package";
-import * as core from "./core";
-import { BackpackUserError } from "./backpackErrors";
-import { BackpackImportPosition, validateBackpackItem, validateBackpackRequirements } from "./backpack";
-import { BlockSnippetProjectHost, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
+import * as pxtblockly from "../../../../pxtblocks";
+import * as pkg from "../../package";
+import * as core from "../../core";
+import { BackpackUserError } from "./errors";
+import { BackpackImportPosition, validateBackpackItem, validateBackpackRequirements } from "./service";
+import { BlockSnippetProjectHost, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "../../blockSnippet";
 
 export interface BackpackProjectHost extends BlockSnippetProjectHost {
     getWorkspace: () => Blockly.WorkspaceSvg;

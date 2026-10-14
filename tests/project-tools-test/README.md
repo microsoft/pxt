@@ -22,3 +22,9 @@ Shared browser and source-loading helpers live in [browser.js](browser.js) and
 [source.js](source.js). Network and account calls are mocked. Before release,
 manually check cross-device sync, keyboard/touch input and screen readers.
 See [feature usage](../../docs/project-tools.md).
+
+Backpack's webapp source modules are grouped in
+[components/backpack](../../webapp/src/components/backpack). The chooser suite
+loads the launcher and dialog from the same module; asset suites exercise the
+shared gallery preparation and isolated editor together. Storage and search
+checks load their service modules without the UI barrel.

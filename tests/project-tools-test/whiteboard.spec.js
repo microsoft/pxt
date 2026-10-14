@@ -20,7 +20,7 @@ describe("named private whiteboards", function () {
         const build = browserify(path.join(__dirname, "whiteboard.fixture.js"));
         const workspacePath = path.resolve("built/webapp/src/workspace.js");
         const assetsPath = path.resolve("built/webapp/src/assets.js");
-        const backpackPath = path.resolve("built/webapp/src/backpack.js");
+        const backpackPath = path.resolve("built/webapp/src/components/backpack/service.js");
         const projectBackpackPath = path.resolve("built/webapp/src/components/backpack/ProjectBackpack.js");
         build.transform(file => {
             const replacement = file === workspacePath ? "module.exports = window.whiteboardTest.workspace;"

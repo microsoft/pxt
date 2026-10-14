@@ -43,16 +43,15 @@ import { HIDDEN_CLASS_NAME } from "../../pxtblocks/plugins/flyout/blockInflater"
 import { AIFooter } from "../../react-common/components/controls/AIFooter";
 import { getShortcutKeysShort, LIST_SHORTCUTS_SHORTCUT } from "./shortcut_formatting";
 import { FlyoutButton } from "../../pxtblocks/plugins/flyout/flyoutButton";
-import * as backpack from "./backpack";
-import { BackpackUserError, backpackUserErrorMessage } from "./backpackErrors";
-import { chooseBackpackAssetAsync } from "./backpackAssetChooser";
-import { BackpackAssetChoice } from "./components/backpack/BackpackAssetChooser";
+import * as backpack from "./components/backpack/service";
+import { BackpackUserError, backpackUserErrorMessage } from "./components/backpack/errors";
+import { BackpackAssetChoice, chooseBackpackAssetAsync } from "./components/backpack/BackpackAssetChooser";
 import { assetToGalleryItem } from "./assets";
-import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./backpackProject";
+import { addBackpackToProjectAsync, BackpackProjectHost, getBackpackRequirements } from "./components/backpack/project";
 import { BlockSnippetRequirements, ensureBlockSnippetAsync, getBlockSnippetRequirements, getBlockSnippetTypes } from "./blockSnippet";
-import { backpackPreviewAsync } from "./backpackPreview";
+import { backpackPreviewAsync } from "./components/backpack/preview";
 import { clearBackpackDragState } from "../../pxtblocks/backpackDrag";
-import { BACKPACK_DRAG_OVER_CLASS, getBackpackDragTargets } from "./projectToolsDragTargets";
+import { BACKPACK_DRAG_OVER_CLASS, getBackpackDragTargets } from "./components/backpack/dragTargets";
 import { projectToolTabId } from "./projectToolsState";
 
 interface CopyDataEntry {
