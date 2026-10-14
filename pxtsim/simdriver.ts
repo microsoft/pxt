@@ -385,8 +385,8 @@ namespace pxsim {
                 // include index of the source iframe
                 broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source);
                 const sourceFrame = broadcastmsg.srcFrameIndex >= 0 ? this.simFrames()[broadcastmsg.srcFrameIndex] : undefined;
-                // jacdac messages from a board sim other than first should be dropped
-                if (broadcastmsg.srcFrameIndex > 0 && mkcdFrames.find(f => f === sourceFrame) && messageChannel === "jacdac")
+                // jacdac messages from a board sim other than the main frame should be dropped
+                if (sourceFrame !== this.mainFrame() && mkcdFrames.find(f => f === sourceFrame) && messageChannel === "jacdac")
                     return;
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
@@ -493,12 +493,13 @@ namespace pxsim {
 
             // now that we have iframe starts,
             // dispatch message to other frames
+            const mainFrame = this.mainFrame();
             for (let i = 0; i < frames.length; ++i) {
                 const frame = frames[i] as HTMLIFrameElement
                 // same frame as source
                 if (source && frame.contentWindow == source) continue;
-                // if jacdac message, don't send to other (board) simulator frames
-                if (i > 0 && !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] &&
+                // if jacdac message, don't send to (board) simulator frames other than the main frame
+                if (frame !== mainFrame && !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] &&
                     msg.type === "messagepacket" && (msg as pxsim.SimulatorControlMessage).channel === "jacdac") continue;
                 // frame not in DOM
                 if (!frame.contentWindow) continue;

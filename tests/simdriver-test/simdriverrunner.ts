@@ -311,4 +311,43 @@ describe("simulator driver hide and unhide", () => {
         chai.expect(received(permanentWrapper)).deep.equals([]);
         chai.expect(received(transientWrapper)).deep.equals([]);
     });
+
+    describe("jacdac packets", () => {
+        const jacdacPacket = () => ({ type: "messagepacket", channel: "jacdac", broadcast: true }) as pxsim.SimulatorMessage;
+        const received = (wrapper: FakeElement) => iframe(wrapper).contentWindow.messages.map(m => m.type);
+
+        beforeEach(() => {
+            container.insertBefore(permanentWrapper, mainWrapper);
+        });
+
+        it("broadcasts a jacdac packet from the main frame when a permanent frame precedes it", () => {
+            (driver as any).handleMessage(jacdacPacket(), iframe(mainWrapper).contentWindow);
+            chai.expect(received(permanentWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(transientWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(mainWrapper)).deep.equals([]);
+            const packet = iframe(permanentWrapper).contentWindow.messages[0] as pxsim.SimulatorBroadcastMessage;
+            chai.expect(packet.srcFrameIndex).equals(1);
+        });
+
+        it("delivers a jacdac packet to the main frame when a permanent frame precedes it", () => {
+            (driver as any).handleMessage(jacdacPacket(), iframe(permanentWrapper).contentWindow);
+            chai.expect(received(mainWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(transientWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(permanentWrapper)).deep.equals([]);
+        });
+
+        it("drops a jacdac packet from a second board frame", () => {
+            const secondWrapper = simframe("sim-frame-4");
+            (driver as any).handleMessage(jacdacPacket(), iframe(secondWrapper).contentWindow);
+            [mainWrapper, permanentWrapper, transientWrapper, secondWrapper].forEach(wrapper =>
+                chai.expect(received(wrapper)).deep.equals([]));
+        });
+
+        it("does not deliver a jacdac packet to a second board frame", () => {
+            const secondWrapper = simframe("sim-frame-4");
+            (driver as any).handleMessage(jacdacPacket(), iframe(permanentWrapper).contentWindow);
+            chai.expect(received(mainWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(secondWrapper)).deep.equals([]);
+        });
+    });
 });
