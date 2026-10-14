@@ -206,7 +206,7 @@ namespace pxsim {
         }
 
         focus() {
-            const frame = this.simFrames()[0];
+            const frame = this.mainFrame();
             if (frame) frame.focus();
         }
 
@@ -256,7 +256,7 @@ namespace pxsim {
         }
 
         public startRecording(width?: number): void {
-            const frame = this.simFrames()[0];
+            const frame = this.mainFrame();
             if (!frame) return undefined;
 
             this.postMessage(<SimulatorRecorderMessage>{
@@ -264,7 +264,7 @@ namespace pxsim {
                 action: 'start',
                 source: MESSAGE_SOURCE,
                 width
-            });
+            }, undefined, frame.id);
         }
 
         public stopRecording() {
@@ -614,9 +614,10 @@ namespace pxsim {
                 this._currentRuntime = undefined;
                 this.container.textContent = "";
             }
-            if (!this.simFrames().length) {
-                this.container.appendChild(this.createFrame());
-                this.applyAspectRatio(aspectRatio);
+            if (!this.mainFrame()) {
+                const wrapper = this.createFrame();
+                this.container.insertBefore(wrapper, this.container.firstElementChild);
+                this.applyAspectRatioToFrame(wrapper.firstElementChild as HTMLIFrameElement, aspectRatio);
                 this.setStarting();
             }
         }
@@ -742,8 +743,8 @@ namespace pxsim {
 
         private cleanupFrames() {
             // drop unused extras frames after 5 seconds
-            const frames = this.simFrames(true);
-            frames.shift(); // drop first frame
+            const mainFrame = this.mainFrame(true);
+            const frames = this.simFrames(true).filter(frame => frame !== mainFrame);
             frames.filter(frame => !frame.dataset[PERMANENT])
                 .forEach(frame => {
                     if (this.state == SimulatorState.Stopped

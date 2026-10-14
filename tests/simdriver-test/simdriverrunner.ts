@@ -269,4 +269,46 @@ describe("simulator driver hide and unhide", () => {
         driver.stop(true);
         chai.expect(container.children.length).equals(0);
     });
+
+    it("preloads a main frame after hide ahead of the hidden permanent frame", () => {
+        driver.hide();
+        driver.preload(1.5);
+        chai.expect(container.children.length).equals(2);
+        chai.expect(iframe(container.children[0]).dataset["messagechannel"]).equals(undefined);
+        chai.expect(container.children[1]).equals(permanentWrapper);
+        chai.expect(permanentWrapper.style["paddingBottom"]).equals(undefined);
+        const main = container.children[0];
+        driver.preload(1.5);
+        chai.expect(container.children.length).equals(2);
+        chai.expect(container.children[0]).equals(main);
+    });
+
+    it("keeps the main frame on frame cleanup when a permanent frame precedes it", () => {
+        container.insertBefore(permanentWrapper, mainWrapper);
+        driver.run("");
+        driver.stop();
+        (driver as any).cleanupFrames();
+        chai.expect(container.children).deep.equals([permanentWrapper, mainWrapper]);
+        chai.expect(transientWrapper.parentElement).equals(undefined);
+    });
+
+    it("focuses the main frame when a permanent frame precedes it", () => {
+        container.insertBefore(permanentWrapper, mainWrapper);
+        const focused: string[] = [];
+        [mainWrapper, permanentWrapper].forEach(wrapper => {
+            const frame = iframe(wrapper);
+            frame.focus = () => focused.push(frame.id);
+        });
+        driver.focus();
+        chai.expect(focused).deep.equals(["sim-frame-1"]);
+    });
+
+    it("starts recording in the main frame when a permanent frame precedes it", () => {
+        container.insertBefore(permanentWrapper, mainWrapper);
+        driver.startRecording(100);
+        const received = (wrapper: FakeElement) => iframe(wrapper).contentWindow.messages.map(m => m.type);
+        chai.expect(received(mainWrapper)).deep.equals(["recorder"]);
+        chai.expect(received(permanentWrapper)).deep.equals([]);
+        chai.expect(received(transientWrapper)).deep.equals([]);
+    });
 });
