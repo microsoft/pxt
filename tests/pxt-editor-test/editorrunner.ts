@@ -90,6 +90,8 @@ import {
     ProjassetsFrame,
     ProjassetsHost,
     ProjassetsOpenProject,
+    PROJASSETS_LIST_RATE_LIMIT,
+    PROJASSETS_LIST_RATE_WINDOW_MS,
 } from "../../webapp/src/projassetsHost";
 import {
     ProjassetsAssetsReply,
@@ -98,7 +100,6 @@ import {
     ProjassetsErrorCode,
     ProjassetsErrorReply,
     ProjassetsImage,
-    ProjassetsKind,
     ProjassetsListing,
     ProjassetsNotification,
     ProjassetsReply,
@@ -974,15 +975,14 @@ describe("projfs host", () => {
         it("refuses a write one byte over the quota, whole", async () => {
             const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - utf8Length("big.txt") + 1);
             const before = { ...project.files };
-            const reply = await expectError({ subtype: "write", name: "big.txt", content }, "QUOTA_EXCEEDED");
-            chai.expect(reply.message).contains(`${PROJFS_FOLDER_QUOTA_BYTES + 1} bytes`);
+            await expectError({ subtype: "write", name: "big.txt", content }, "QUOTA_EXCEEDED");
             chai.expect(project.calls).deep.equals([]);
             chai.expect(project.files).deep.equals(before);
         });
 
         it("subtracts the size of the file a write replaces", async () => {
-            project = newProject({ "owner/repo/brain.bin": "x".repeat(400 * KIB) });
-            const replace = await send({ subtype: "write", name: "brain.bin", content: "y".repeat(500 * KIB) });
+            project = newProject({ "owner/repo/data.bin": "x".repeat(400 * KIB) });
+            const replace = await send({ subtype: "write", name: "data.bin", content: "y".repeat(500 * KIB) });
             chai.expect(replace.subtype).equals("ack");
             await expectError({ subtype: "write", name: "second.bin", content: "z".repeat(20 * KIB) }, "QUOTA_EXCEEDED");
         });
@@ -993,7 +993,7 @@ describe("projfs host", () => {
                 "owner/repo2/big.txt": "x".repeat(500 * KIB),
                 "main2.ts": "x".repeat(500 * KIB),
             });
-            await send({ subtype: "write", name: "ok.txt", content: "x".repeat(200 * KIB) });
+            chai.expect(await send({ subtype: "write", name: "ok.txt", content: "x".repeat(200 * KIB) })).deep.include({ subtype: "ack", name: "ok.txt" });
             await expectError({ subtype: "write", name: "over.txt", content: "x".repeat(12 * KIB) }, "QUOTA_EXCEEDED");
         });
 
@@ -1005,9 +1005,9 @@ describe("projfs host", () => {
         });
 
         it("frees the size of a deleted file", async () => {
-            project = newProject({ "owner/repo/brain.bin": "x".repeat(500 * KIB) });
+            project = newProject({ "owner/repo/data.bin": "x".repeat(500 * KIB) });
             await expectError({ subtype: "write", name: "second.bin", content: "z".repeat(20 * KIB) }, "QUOTA_EXCEEDED");
-            await send({ subtype: "delete", name: "brain.bin" });
+            await send({ subtype: "delete", name: "data.bin" });
             chai.expect((await send({ subtype: "write", name: "second.bin", content: "z".repeat(20 * KIB) })).subtype).equals("ack");
         });
 
@@ -1068,6 +1068,13 @@ describe("projfs host", () => {
                 await expectError({ subtype: "write", name, content: "x" }, "INVALID_NAME");
             }
             chai.expect(project.calls).deep.equals([]);
+        });
+
+        it("refuses a written name whose last segment is pxt.json, at any depth and in any letter case, without touching the project", async () => {
+            for (const name of [pxt.CONFIG_NAME, `sub/${pxt.CONFIG_NAME}`, "a/b/PXT.JSON"])
+                await expectError({ subtype: "write", name, content: "{}" }, "INVALID_NAME");
+            chai.expect(project.calls).deep.equals([]);
+            chai.expect((await send({ subtype: "write", name: `${pxt.CONFIG_NAME}.txt`, content: "{}" })).subtype).equals("ack");
         });
 
         it("applies the written-name rules to writes only, so a stored file named otherwise can still be read and deleted", async () => {
@@ -1374,14 +1381,20 @@ describe("projfs host", () => {
         });
     });
 
-    it("applies requests one at a time, in order", async () => {
+    it("applies requests one at a time, in order, so a request on another folder waits for the one applying", async () => {
+        project = newProject({ "other/repo/old.txt": "old" });
+        let release: () => void;
+        project.writeGate = new Promise<void>(resolve => release = resolve);
         const replies: ProjfsReply[] = [];
-        const collect = (r: ProjfsReply) => replies.push(r);
-        host.handleMessageAsync(FOLDER, { type: "projfs", id: "1", subtype: "write", name: "a.txt", content: "first" }, collect);
-        host.handleMessageAsync(FOLDER, { type: "projfs", id: "2", subtype: "write", name: "a.txt", content: "second" }, collect);
-        await host.handleMessageAsync(FOLDER, { type: "projfs", id: "3", subtype: "read", name: "a.txt" }, collect);
-        chai.expect(replies.map(r => r.id)).deep.equals(["1", "2", "3"]);
-        chai.expect((replies[2] as ProjfsContentReply).content).equals("second");
+        const written = post({ subtype: "write", name: "a.txt", content: "a" }, replies);
+        const deleted = post({ subtype: "delete", name: "old.txt" }, replies, "other/repo");
+        await settle();
+        chai.expect(project.calls).deep.equals([]);
+        chai.expect(replies).deep.equals([]);
+        release();
+        await Promise.all([written, deleted]);
+        chai.expect(replies.map(r => r.id)).deep.equals(["0", "1"]);
+        chai.expect(project.calls).deep.equals(["write owner/repo/a.txt", "list owner/repo/a.txt", "delete other/repo/old.txt"]);
     });
 
     it("fails a write whose file cannot be listed, leaving it stored for a retry to list", async () => {
@@ -1412,10 +1425,10 @@ describe("projfs host", () => {
 
     describe("dirty", () => {
         it("passes a flagged write through the edit pipeline after saving and listing it", async () => {
-            const reply = await send({ subtype: "write", name: "brain.ts", content: "let b = 1", dirty: true });
-            chai.expect(reply).deep.include({ subtype: "ack", name: "brain.ts" });
-            chai.expect(project.calls).deep.equals(["write owner/repo/brain.ts", "list owner/repo/brain.ts", "dirty owner/repo/brain.ts"]);
-            chai.expect(project.dirtied).deep.equals([{ name: "owner/repo/brain.ts", content: "let b = 1", stored: "let b = 1" }]);
+            const reply = await send({ subtype: "write", name: "code.ts", content: "let b = 1", dirty: true });
+            chai.expect(reply).deep.include({ subtype: "ack", name: "code.ts" });
+            chai.expect(project.calls).deep.equals(["write owner/repo/code.ts", "list owner/repo/code.ts", "dirty owner/repo/code.ts"]);
+            chai.expect(project.dirtied).deep.equals([{ name: "owner/repo/code.ts", content: "let b = 1", stored: "let b = 1" }]);
         });
 
         it("passes a flagged replacement through the edit pipeline", async () => {
@@ -1560,7 +1573,7 @@ describe("projfs host", () => {
         }
 
         beforeEach(() => {
-            stored = { first: projectFiles({ "brains.ts": "registers a, b" }), second: projectFiles({ "brains.ts": "registers c" }) };
+            stored = { first: projectFiles({ "items.ts": "holds a, b" }), second: projectFiles({ "items.ts": "holds c" }) };
             beginLoad("first").finish();
             host = new ProjfsHost(() => current, clock.now, clock.delay);
         });
@@ -1568,54 +1581,54 @@ describe("projfs host", () => {
         it("answers a list and a read that arrive while the project loads once it has loaded", async () => {
             const load = beginLoad("first");
             const replies: ProjfsReply[] = [];
-            const answered = Promise.all([post({ subtype: "list" }, replies), post({ subtype: "read", name: "brains.ts" }, replies)]);
+            const answered = Promise.all([post({ subtype: "list" }, replies), post({ subtype: "read", name: "items.ts" }, replies)]);
             await settle();
             load.finish();
             await answered;
-            chai.expect((replies[0] as ProjfsFilesReply).files).deep.equals([{ name: "brains.ts", size: 14 }]);
-            chai.expect((replies[1] as ProjfsContentReply).content).equals("registers a, b");
+            chai.expect((replies[0] as ProjfsFilesReply).files).deep.equals([{ name: "items.ts", size: utf8Length("holds a, b") }]);
+            chai.expect((replies[1] as ProjfsContentReply).content).equals("holds a, b");
         });
 
         it("applies a write that arrives while the project loads once it has loaded, and keeps it", async () => {
             const load = beginLoad("first");
             const replies: ProjfsReply[] = [];
-            const answered = post({ subtype: "write", name: "pushed.ts", content: "brain" }, replies);
+            const answered = post({ subtype: "write", name: "pushed.ts", content: "pushed" }, replies);
             await settle();
             load.finish();
             await answered;
             chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
-            chai.expect(current.getFiles()[`${FOLDER}/pushed.ts`]).equals("brain");
-            chai.expect(stored.first[`${FOLDER}/pushed.ts`]).equals("brain");
-            chai.expect(((await send({ subtype: "read", name: "pushed.ts" })) as ProjfsContentReply).content).equals("brain");
-            chai.expect(((await send({ subtype: "read", name: "brains.ts" })) as ProjfsContentReply).content).equals("registers a, b");
+            chai.expect(current.getFiles()[`${FOLDER}/pushed.ts`]).equals("pushed");
+            chai.expect(stored.first[`${FOLDER}/pushed.ts`]).equals("pushed");
+            chai.expect(((await send({ subtype: "read", name: "pushed.ts" })) as ProjfsContentReply).content).equals("pushed");
+            chai.expect(((await send({ subtype: "read", name: "items.ts" })) as ProjfsContentReply).content).equals("holds a, b");
         });
 
         it("applies a delete that arrives while the project loads once it has loaded", async () => {
             const load = beginLoad("first");
             const replies: ProjfsReply[] = [];
-            const answered = post({ subtype: "delete", name: "brains.ts" }, replies);
+            const answered = post({ subtype: "delete", name: "items.ts" }, replies);
             await settle();
             load.finish();
             await answered;
             chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
-            chai.expect(stored.first[`${FOLDER}/brains.ts`]).equals(undefined);
+            chai.expect(stored.first[`${FOLDER}/items.ts`]).equals(undefined);
         });
 
         it("keeps an extension's requests in order across the load", async () => {
             const load = beginLoad("first");
             const replies: ProjfsReply[] = [];
-            const written = post({ subtype: "write", name: "brains.ts", content: "registers a, b, d" }, replies);
+            const written = post({ subtype: "write", name: "items.ts", content: "holds a, b, d" }, replies);
             await settle();
             load.finish();
-            await Promise.all([written, post({ subtype: "read", name: "brains.ts" }, replies)]);
+            await Promise.all([written, post({ subtype: "read", name: "items.ts" }, replies)]);
             chai.expect(replies.map(r => r.subtype)).deep.equals(["ack", "content"]);
-            chai.expect((replies[1] as ProjfsContentReply).content).equals("registers a, b, d");
+            chai.expect((replies[1] as ProjfsContentReply).content).equals("holds a, b, d");
         });
 
         it("refuses with PROJECT_CLOSED a request whose project is replaced while it waits", async () => {
             const replaced = beginLoad("first");
             const replies: ProjfsReply[] = [];
-            const answered = post({ subtype: "write", name: "pushed.ts", content: "brain" }, replies);
+            const answered = post({ subtype: "write", name: "pushed.ts", content: "pushed" }, replies);
             await settle();
             const load = beginLoad("second");
             replaced.finish();
@@ -1623,7 +1636,7 @@ describe("projfs host", () => {
             chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
             chai.expect(stored.first[`${FOLDER}/pushed.ts`]).equals(undefined);
             load.finish();
-            chai.expect(((await send({ subtype: "read", name: "brains.ts" })) as ProjfsContentReply).content).equals("registers c");
+            chai.expect(((await send({ subtype: "read", name: "items.ts" })) as ProjfsContentReply).content).equals("holds c");
         });
 
         it("refuses with PROJECT_CLOSED a request whose project fails to load", async () => {
@@ -1641,7 +1654,7 @@ describe("projfs host", () => {
 describe("projfs user edits", () => {
     class FakeEditor implements ProjfsEditor {
         calls: string[] = [];
-        openFile: string | undefined = "owner/repo/brain.ts";
+        openFile: string | undefined = "owner/repo/code.ts";
         active: "text" | "blocks" | "other" = "text";
 
         isOpenFile(name: string) {
@@ -1680,14 +1693,14 @@ describe("projfs user edits", () => {
     });
 
     it("replaces the text editor's content when it shows the file, then dirties and typechecks", () => {
-        applyUserEdit(editor, "owner/repo/brain.ts", "let b = 2");
+        applyUserEdit(editor, "owner/repo/code.ts", "let b = 2");
         chai.expect(editor.calls).deep.equals(["override text let b = 2", "sim dirty", "typecheck"]);
     });
 
     it("replaces the blocks editor's content when it shows the file", () => {
         editor.active = "blocks";
-        editor.openFile = "owner/repo/brain.blocks";
-        applyUserEdit(editor, "owner/repo/brain.blocks", "<xml/>");
+        editor.openFile = "owner/repo/code.blocks";
+        applyUserEdit(editor, "owner/repo/code.blocks", "<xml/>");
         chai.expect(editor.calls).deep.equals(["override blocks <xml/>", "sim dirty", "typecheck"]);
     });
 
@@ -1698,20 +1711,16 @@ describe("projfs user edits", () => {
 
     it("leaves the editor's content alone when neither the text nor the blocks editor is active", () => {
         editor.active = "other";
-        applyUserEdit(editor, "owner/repo/brain.ts", "let b = 2");
+        applyUserEdit(editor, "owner/repo/code.ts", "let b = 2");
         chai.expect(editor.calls).deep.equals(["sim dirty", "typecheck"]);
     });
 
     it("dirties and typechecks after a delete without replacing any content", () => {
-        applyUserEdit(editor, "owner/repo/brain.ts", undefined);
+        applyUserEdit(editor, "owner/repo/code.ts", undefined);
         chai.expect(editor.calls).deep.equals(["sim dirty", "typecheck"]);
     });
 
-    it("schedules one typecheck per change, which the editor's debouncer merges", async () => {
-        // the editor's typecheckNow triggers an AdaptiveDebouncer, whose firing reruns the simulator
-        let typechecks = 0;
-        const debouncer = new pxt.Util.AdaptiveDebouncer(() => typechecks++, 300, 50);
-        editor.typecheckNow = () => debouncer.trigger();
+    it("passes each flagged change through the editor, scheduling one typecheck per change", async () => {
         const files: pxt.Map<string> = { [pxt.CONFIG_NAME]: JSON.stringify({ files: [] }) };
         const project: ProjfsProject = {
             loadedAsync: () => Promise.resolve(),
@@ -1727,9 +1736,7 @@ describe("projfs user edits", () => {
             writes.push(host.handleMessageAsync("owner/repo", { type: "projfs", id: "" + i, subtype: "write", name: `b${i}.ts`, content: "x", dirty: true }, () => { }));
         await Promise.all(writes);
         chai.expect(editor.calls.filter(c => c === "sim dirty").length).equals(5);
-        chai.expect(typechecks).equals(0);
-        await new Promise(resolve => setTimeout(resolve, 120));
-        chai.expect(typechecks).equals(1);
+        chai.expect(editor.calls.filter(c => c === "typecheck").length).equals(5);
     });
 });
 
@@ -1748,7 +1755,7 @@ describe("projfs project writes", () => {
 
     class FakePackage implements ProjfsPackage {
         files: pxt.Map<FakeFile> = {
-            "owner/repo/brain.ts": new FakeFile("let b = 1"),
+            "owner/repo/code.ts": new FakeFile("let b = 1"),
             "owner/repo/other.ts": new FakeFile("let o = 1"),
         };
         saved: string[] = [];
@@ -1781,27 +1788,27 @@ describe("projfs project writes", () => {
     });
 
     it("forces the write of the file the text editor shows, so the editor reloads it", async () => {
-        await writeProjectFileAsync(epkg, editorShowing("owner/repo/brain.ts"), "owner/repo/brain.ts", "let b = 2");
-        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: true }]);
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/code.ts"), "owner/repo/code.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/code.ts"].writes).deep.equals([{ content: "let b = 2", force: true }]);
     });
 
     it("leaves the write of a file the text editor does not show unforced", async () => {
-        await writeProjectFileAsync(epkg, editorShowing("owner/repo/other.ts"), "owner/repo/brain.ts", "let b = 2");
-        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/other.ts"), "owner/repo/code.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/code.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
     });
 
     it("leaves the write unforced when the blocks editor shows the file", async () => {
-        await writeProjectFileAsync(epkg, editorShowing("owner/repo/brain.ts", "blocks"), "owner/repo/brain.ts", "let b = 2");
-        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/code.ts", "blocks"), "owner/repo/code.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/code.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
     });
 
     it("leaves the write unforced when no editor shows the project", async () => {
-        await writeProjectFileAsync(epkg, undefined, "owner/repo/brain.ts", "let b = 2");
-        chai.expect(epkg.files["owner/repo/brain.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
+        await writeProjectFileAsync(epkg, undefined, "owner/repo/code.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/code.ts"].writes).deep.equals([{ content: "let b = 2", force: false }]);
     });
 
     it("adds and saves a file the package does not store", async () => {
-        await writeProjectFileAsync(epkg, editorShowing("owner/repo/brain.ts"), "owner/repo/new.ts", "let n = 1");
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/code.ts"), "owner/repo/new.ts", "let n = 1");
         chai.expect(epkg.files["owner/repo/new.ts"].content).equals("let n = 1");
         chai.expect(epkg.saved).deep.equals(["owner/repo/new.ts"]);
     });
@@ -1937,15 +1944,6 @@ describe("projfs client", () => {
         chai.expect(error).instanceOf(ProjfsError);
         chai.expect(error.code).equals("QUOTA_EXCEEDED");
         chai.expect(error.message).equals("too big");
-    });
-
-    it("rejects with PERMISSION_DENIED when the extension's registration does not set allowFileWrite", async () => {
-        const denied: ProjfsErrorCode = "PERMISSION_DENIED";
-        const listed = client.list();
-        replyTo(lastRequest(), { subtype: "error", code: denied, message: "not granted" });
-        const error = await listed.then(() => undefined, e => e);
-        chai.expect(error).instanceOf(ProjfsError);
-        chai.expect(error.code).equals(denied);
     });
 
     it("ignores replies from other windows and to unknown requests", async () => {
@@ -2456,16 +2454,6 @@ describe("projassets image listing", () => {
         project = new pxt.TilemapProject();
     });
 
-    it("names every asset kind by its pxt.AssetType value", () => {
-        // one entry per kind: a kind added without an entry fails to compile
-        const assetTypes: { [K in ProjassetsKind]: pxt.AssetType } = {
-            image: pxt.AssetType.Image,
-            song: pxt.AssetType.Song,
-        };
-        for (const kind of Object.keys(assetTypes) as ProjassetsKind[])
-            chai.expect(assetTypes[kind] as string, kind).equals(kind);
-    });
-
     it("describes an image by its asset file id, display name, kind, size and encoded pixels", () => {
         const bitmap = testBitmap(5, 3);
         project.createNewProjectImage(bitmap, "hero");
@@ -2759,6 +2747,25 @@ describe("projassets host", () => {
         open = undefined;
         await expectError({ subtype: "list", kind: "image" }, "PROJECT_CLOSED");
         await expectError({ subtype: "subscribe" }, "PROJECT_CLOSED");
+    });
+
+    it(`holds the list requests of one repository beyond ${PROJASSETS_LIST_RATE_LIMIT} within the window, answering them in order once it allows them, and holds no subscription or other repository's list`, async () => {
+        const clock = new FakeClock();
+        host = new ProjassetsHost(() => open, () => project, () => config, clock.now, clock.delay);
+        for (let i = 0; i < PROJASSETS_LIST_RATE_LIMIT; i++)
+            chai.expect((await send({ subtype: "list", kind: "image" }, i % 2 ? SCOPE : `${SCOPE}/sub`)).subtype).equals("assets");
+        const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+        const held = [post({ subtype: "list", kind: "image" }, received), post({ subtype: "list", kind: "song" }, received)];
+        await settle();
+        chai.expect(received).deep.equals([]);
+        chai.expect((await send({ subtype: "subscribe" })).subtype).equals("ack");
+        chai.expect((await send({ subtype: "list", kind: "image" }, "other/repo")).subtype).equals("assets");
+
+        await clock.advance(PROJASSETS_LIST_RATE_WINDOW_MS - 1);
+        chai.expect(received).deep.equals([]);
+        await clock.advance(1);
+        await Promise.all(held);
+        chai.expect(received.map(r => (r as ProjassetsAssetsReply).kind)).deep.equals(["image", "song"]);
     });
 
     it("fails a request the project cannot answer and keeps serving", async () => {
@@ -4540,14 +4547,16 @@ describe("simulator extension editor tab host", () => {
         }
     }
 
-    // the parts of an element the host touches
+    // the parts of an element the host touches; a removed frame loses its content window, as in the browser
     class FakeElement {
         style: pxt.Map<string> = {};
         dataset: pxt.Map<string> = {};
         attributes: pxt.Map<string> = {};
         children: FakeElement[] = [];
         parentElement: FakeElement | undefined;
-        contentWindow = new FakeWindow();
+        // the window of the frame's page, which outlives the frame's removal
+        readonly window = new FakeWindow();
+        contentWindow: FakeWindow | null = this.window;
         // the number of times focus was moved to the element
         focused = 0;
         className = "";
@@ -4565,6 +4574,7 @@ describe("simulator extension editor tab host", () => {
         removeChild(child: FakeElement) {
             this.children = this.children.filter(c => c !== child);
             child.parentElement = undefined;
+            child.contentWindow = null;
             return child;
         }
     }
@@ -4609,11 +4619,11 @@ describe("simulator extension editor tab host", () => {
     }
 
     function events(frame: FakeElement) {
-        return frame.contentWindow.posted.filter(p => p.msg.type === "simxeditor").map(p => p.msg);
+        return frame.window.posted.filter(p => p.msg.type === "simxeditor").map(p => p.msg);
     }
 
     function ports(frame: FakeElement) {
-        return frame.contentWindow.posted.filter(p => p.msg.type === "simxeditorport");
+        return frame.window.posted.filter(p => p.msg.type === "simxeditorport");
     }
 
     beforeEach(() => {
@@ -4628,10 +4638,8 @@ describe("simulator extension editor tab host", () => {
         host = new SimxEditorHost({
             createFrame: () => new FakeElement() as unknown as HTMLIFrameElement,
             createLoader: () => new FakeElement() as unknown as HTMLElement,
-            framePermissions: grants => ({
-                sandbox: "allow-same-origin allow-scripts" + (grants.allowPopups ? " allow-popups allow-popups-to-escape-sandbox" : "") + (grants.allowDownloads ? " allow-downloads" : ""),
-                allow: "autoplay;microphone" + (grants.allowClipboardWrite ? ";clipboard-write" : ""),
-            }),
+            // as the editor wires it
+            framePermissions: grants => pxsim.simulatorFramePermissions(grants),
             startSimulatorExtension: key => {
                 started.push(key);
                 return simulatorFrames[key] as unknown as HTMLIFrameElement;

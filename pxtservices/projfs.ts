@@ -110,8 +110,9 @@ export type ProjfsErrorCode =
      * The name is not a relative path, has an empty, `.` or `..` segment, or
      * ends in `.simxeditor`, a suffix the editor reserves. A write also
      * refuses a name that does not start with a letter, digit or underscore,
-     * uses a character other than letters, digits, `_`, `-`, `.` and `/`, or
-     * is longer than the editor allows, in characters or in segments.
+     * uses a character other than letters, digits, `_`, `-`, `.` and `/`, is
+     * longer than the editor allows, in characters or in segments, or whose
+     * last segment is `pxt.json`, in any letter case.
      */
     | "INVALID_NAME"
     /**

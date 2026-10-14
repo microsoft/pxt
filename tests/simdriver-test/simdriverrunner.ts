@@ -4,13 +4,28 @@
 import "mocha";
 import * as chai from "chai";
 
-const EDITOR_ORIGIN = "http://localhost:3232";
+// The editor's page, the main simulator and the simulator extensions are served
+// from two origins, as in production: the editor's, and the simulator host's.
+const EDITOR_ORIGIN = "https://editor.example";
+const SIM_ORIGIN = "https://sim.example";
+const SIM_URL = SIM_ORIGIN + "/sim/simulator.html";
+
+/** A message posted to a window, with the origin it was posted to. */
+interface Post {
+    msg: pxsim.SimulatorMessage;
+    targetOrigin: string;
+}
 
 class FakeWindow {
-    messages: pxsim.SimulatorMessage[] = [];
+    posts: Post[] = [];
 
-    postMessage(msg: pxsim.SimulatorMessage) {
-        this.messages.push(msg);
+    postMessage(msg: pxsim.SimulatorMessage, targetOrigin: string) {
+        this.posts.push({ msg, targetOrigin });
+    }
+
+    /** The messages posted to the window, in order. */
+    get messages(): pxsim.SimulatorMessage[] {
+        return this.posts.map(p => p.msg);
     }
 }
 
@@ -22,7 +37,8 @@ interface FakeFrame {
 
 /**
  * The part of a DOM element the driver touches when it creates, starts and
- * removes simulator frames.
+ * removes simulator frames. An iframe removed from its parent, directly or
+ * with an ancestor, loses its content window, as in the browser.
  */
 class FakeElement implements FakeFrame {
     id = "";
@@ -34,7 +50,9 @@ class FakeElement implements FakeFrame {
     onclick: (ev: unknown) => boolean;
     dataset: pxt.Map<string> = {};
     style: pxt.Map<string> = {};
-    contentWindow = new FakeWindow();
+    // the window of the frame's page, which outlives the frame's removal
+    readonly window = new FakeWindow();
+    contentWindow = this.window;
     parentElement: FakeElement;
     children: FakeElement[] = [];
     classList = {
@@ -59,6 +77,11 @@ class FakeElement implements FakeFrame {
         return this.children[0];
     }
 
+    get nextElementSibling(): FakeElement {
+        const siblings = this.parentElement?.children || [];
+        return siblings[siblings.indexOf(this) + 1];
+    }
+
     setAttribute(name: string, value: string) {
         this.attributes[name] = value;
     }
@@ -76,6 +99,7 @@ class FakeElement implements FakeFrame {
     removeChild(child: FakeElement): FakeElement {
         this.children.splice(this.children.indexOf(child), 1);
         child.parentElement = undefined;
+        child.detach();
         return child;
     }
 
@@ -84,6 +108,11 @@ class FakeElement implements FakeFrame {
         return this.children.reduce((found, child) => found.concat(
             child.tagName === tagName ? [child] : [],
             child.getElementsByTagName(tagName)), [] as FakeElement[]);
+    }
+
+    /** Matches no element, whatever the selector. */
+    querySelectorAll(): FakeElement[] {
+        return [];
     }
 
     focus() { }
@@ -97,17 +126,32 @@ class FakeElement implements FakeFrame {
         (this.listeners[type] || []).forEach(listener => listener());
     }
 
+    // drops the content window of every iframe in this subtree, which has left the document
+    private detach() {
+        if (this.tagName === "iframe") this.contentWindow = null;
+        this.children.forEach(child => child.detach());
+    }
+
     private classNames(): string[] {
         return this.className.split(/\s+/).filter(c => !!c);
     }
 }
 
+type MessageListener = (ev: { data: unknown, source: unknown, origin: string }) => void;
+
+// the message listeners on the editor's window
+let windowListeners: MessageListener[] = [];
+
 function initGlobals() {
     const g = global as any;
     g.window = {
         location: { origin: EDITOR_ORIGIN, href: EDITOR_ORIGIN + "/index.html" },
-        addEventListener: () => { },
-        removeEventListener: () => { },
+        addEventListener: (type: string, listener: MessageListener) => {
+            if (type === "message") windowListeners.push(listener);
+        },
+        removeEventListener: (type: string, listener: MessageListener) => {
+            if (type === "message") windowListeners = windowListeners.filter(l => l !== listener);
+        },
     };
     g.location = g.window.location;
     g.document = {
@@ -116,6 +160,44 @@ function initGlobals() {
 }
 
 initGlobals();
+
+// each test starts with no driver listening on the editor's window
+beforeEach(() => {
+    windowListeners = [];
+});
+
+/**
+ * Delivers `msg` to the message listeners on the editor's window, as the
+ * browser does when the window `source`, whose page is at `origin`, posts it
+ * to the editor.
+ */
+function dispatchMessage(msg: unknown, source: FakeWindow, origin = SIM_ORIGIN) {
+    chai.expect(windowListeners.length, "listeners on the editor's window").greaterThan(0);
+    windowListeners.slice().forEach(listener => listener({ data: msg, source, origin }));
+}
+
+/**
+ * Returns a simulator frame the driver holds, at the simulator host's origin:
+ * the frame of the simulator extension listening on `channel`, or a main
+ * simulator frame when `channel` is omitted.
+ */
+function staticFrame(id: string, channel?: string): FakeFrame {
+    const dataset: pxt.Map<string> = { origin: SIM_ORIGIN, runid: "" };
+    if (channel) dataset["messagechannel"] = channel;
+    return { id, dataset, contentWindow: new FakeWindow() };
+}
+
+/**
+ * Returns the refusals posted to `frame`, without their messages, and checks
+ * that each was posted to the origin the frame was created with.
+ */
+function refusals(frame: FakeFrame) {
+    chai.expect(frame.contentWindow.posts.map(p => p.targetOrigin)).deep.equals(frame.contentWindow.posts.map(() => frame.dataset["origin"]));
+    return frame.contentWindow.messages.map(m => {
+        const { type, id, subtype, code } = m as pxsim.SimulatorMessage & { id: string, subtype: string, code: string };
+        return { type, id, subtype, code };
+    });
+}
 
 // records the errors the driver logs while `fn` runs, instead of printing them
 function loggedErrors(fn: () => void): unknown[][] {
@@ -148,14 +230,8 @@ describe("simulator driver projfs messages", () => {
     let deliveries: Delivery[];
     let driver: pxsim.SimulatorDriver;
 
-    function frame(id: string, channel?: string): FakeFrame {
-        const dataset: pxt.Map<string> = { origin: EDITOR_ORIGIN, runid: "" };
-        if (channel) dataset["messagechannel"] = channel;
-        return { id, dataset, contentWindow: new FakeWindow() };
-    }
-
-    function receive(msg: pxsim.SimulatorMessage, source: FakeWindow, origin = EDITOR_ORIGIN) {
-        (driver as any).handleMessage(msg, source, origin);
+    function receive(msg: pxsim.SimulatorMessage, source: FakeWindow, origin = SIM_ORIGIN) {
+        dispatchMessage(msg, source, origin);
     }
 
     function relayed() {
@@ -163,17 +239,17 @@ describe("simulator driver projfs messages", () => {
     }
 
     beforeEach(() => {
-        mainFrame = frame("sim-frame-1");
-        simxFrame = frame("sim-frame-2", "someorg/pxt-ext");
-        otherSimxFrame = frame("sim-frame-3", "otherorg/pxt-other");
-        unofferedFrame = frame("sim-frame-4", "someorg/pxt-removed");
-        ungrantedFrame = frame("sim-frame-5", "someorg/pxt-nofiles");
+        mainFrame = staticFrame("sim-frame-1");
+        simxFrame = staticFrame("sim-frame-2", "someorg/pxt-ext");
+        otherSimxFrame = staticFrame("sim-frame-3", "otherorg/pxt-other");
+        unofferedFrame = staticFrame("sim-frame-4", "someorg/pxt-removed");
+        ungrantedFrame = staticFrame("sim-frame-5", "someorg/pxt-nofiles");
         const frames = [mainFrame, simxFrame, otherSimxFrame, unofferedFrame, ungrantedFrame];
         const container = { getElementsByTagName: () => frames } as unknown as HTMLElement;
         const simx = () => ({ index: "index.html", aspectRatio: 1, permanent: true });
         deliveries = [];
         driver = new pxsim.SimulatorDriver(container, {
-            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simUrl: SIM_URL,
             simulatorExtensions: {
                 "someorg/pxt-ext": { ...simx(), allowFileWrite: true },
                 "otherorg/pxt-other": { ...simx(), allowFileWrite: true },
@@ -181,6 +257,8 @@ describe("simulator driver projfs messages", () => {
             },
             onProjfsMessage: (key, msg, reply) => deliveries.push({ key, msg, reply }),
         });
+        // installs the driver's listener on the editor's window; the frames already exist
+        driver.preload(1);
     });
 
     it("answers requests from a registered frame without allowFileWrite with PERMISSION_DENIED, delivering nothing", () => {
@@ -206,11 +284,11 @@ describe("simulator driver projfs messages", () => {
         chai.expect(deliveries.map(d => d.key)).deep.equals(["someorg/pxt-ext"]);
     });
 
-    it("posts replies to the requesting frame only", () => {
+    it("posts replies to the requesting frame only, at the origin it was created with", () => {
         receive(request, simxFrame.contentWindow);
         const reply = { type: "projfs", id: "1", subtype: "files", files: [] } as pxsim.SimulatorMessage;
         deliveries[0].reply(reply);
-        chai.expect(simxFrame.contentWindow.messages).deep.equals([reply]);
+        chai.expect(simxFrame.contentWindow.posts).deep.equals([{ msg: reply, targetOrigin: simxFrame.dataset["origin"] }]);
         chai.expect(relayed()).equals(false);
     });
 
@@ -218,14 +296,6 @@ describe("simulator driver projfs messages", () => {
         receive(request, simxFrame.contentWindow);
         chai.expect(relayed()).equals(false);
     });
-
-    // the refusals a frame received, without their messages
-    function refusals(frame: FakeFrame) {
-        return frame.contentWindow.messages.map(m => {
-            const { type, id, subtype, code } = m as pxsim.SimulatorMessage & { id: string, subtype: string, code: string };
-            return { type, id, subtype, code };
-        });
-    }
 
     it("answers requests from the main simulator frame with UNREGISTERED, delivering nothing", () => {
         receive(request, mainFrame.contentWindow);
@@ -275,14 +345,17 @@ describe("simulator driver projfs messages", () => {
         chai.expect(refusals(mainFrame)).deep.equals([{ type: "projfs", id: "1", subtype: "error", code: "UNREGISTERED" }]);
     });
 
-    it("answers requests from a frame's window posted from another origin with UNREGISTERED, delivering nothing", () => {
+    it("drops a request from a frame's window posted from an origin the editor does not allow, refuses one from another allowed origin with UNREGISTERED, and delivers one from the frame's own origin", () => {
         receive(request, simxFrame.contentWindow, "https://elsewhere.example");
-        (driver as any).handleMessage(request, simxFrame.contentWindow);
         chai.expect(deliveries).deep.equals([]);
-        chai.expect(refusals(simxFrame)).deep.equals([
-            { type: "projfs", id: "1", subtype: "error", code: "UNREGISTERED" },
-            { type: "projfs", id: "1", subtype: "error", code: "UNREGISTERED" },
-        ]);
+        chai.expect(simxFrame.contentWindow.posts).deep.equals([]);
+
+        receive(request, simxFrame.contentWindow, EDITOR_ORIGIN);
+        chai.expect(deliveries).deep.equals([]);
+        chai.expect(refusals(simxFrame)).deep.equals([{ type: "projfs", id: "1", subtype: "error", code: "UNREGISTERED" }]);
+
+        receive(request, simxFrame.contentWindow, simxFrame.dataset["origin"]);
+        chai.expect(deliveries.map(d => d.key)).deep.equals(["someorg/pxt-ext"]);
     });
 
     it("answers a request its handler throws on with FAILED", () => {
@@ -309,38 +382,24 @@ describe("simulator driver projassets messages", () => {
     let projfsDeliveries: Delivery[];
     let driver: pxsim.SimulatorDriver;
 
-    function frame(id: string, channel?: string): FakeFrame {
-        const dataset: pxt.Map<string> = { origin: EDITOR_ORIGIN, runid: "" };
-        if (channel) dataset["messagechannel"] = channel;
-        return { id, dataset, contentWindow: new FakeWindow() };
-    }
-
-    function receive(msg: pxsim.SimulatorMessage, source: FakeWindow, origin = EDITOR_ORIGIN) {
-        (driver as any).handleMessage(msg, source, origin);
-    }
-
-    // the refusals a frame received, without their messages
-    function refusals(frame: FakeFrame) {
-        return frame.contentWindow.messages.map(m => {
-            const { type, id, subtype, code } = m as pxsim.SimulatorMessage & { id: string, subtype: string, code: string };
-            return { type, id, subtype, code };
-        });
+    function receive(msg: pxsim.SimulatorMessage, source: FakeWindow, origin = SIM_ORIGIN) {
+        dispatchMessage(msg, source, origin);
     }
 
     beforeEach(() => {
-        mainFrame = frame("sim-frame-1");
-        grantedFrame = frame("sim-frame-2", "someorg/pxt-assets");
-        ungrantedFrame = frame("sim-frame-3", "someorg/pxt-ext");
-        unofferedFrame = frame("sim-frame-4", "someorg/pxt-removed");
-        filesOnlyFrame = frame("sim-frame-5", "someorg/pxt-files");
-        bothFrame = frame("sim-frame-6", "someorg/pxt-both");
+        mainFrame = staticFrame("sim-frame-1");
+        grantedFrame = staticFrame("sim-frame-2", "someorg/pxt-assets");
+        ungrantedFrame = staticFrame("sim-frame-3", "someorg/pxt-ext");
+        unofferedFrame = staticFrame("sim-frame-4", "someorg/pxt-removed");
+        filesOnlyFrame = staticFrame("sim-frame-5", "someorg/pxt-files");
+        bothFrame = staticFrame("sim-frame-6", "someorg/pxt-both");
         const frames = [mainFrame, grantedFrame, ungrantedFrame, unofferedFrame, filesOnlyFrame, bothFrame];
         const container = { getElementsByTagName: () => frames } as unknown as HTMLElement;
         const simx = () => ({ index: "index.html", aspectRatio: 1, permanent: true });
         assetDeliveries = [];
         projfsDeliveries = [];
         driver = new pxsim.SimulatorDriver(container, {
-            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simUrl: SIM_URL,
             simulatorExtensions: {
                 "someorg/pxt-assets": { ...simx(), allowAssetRead: true },
                 "someorg/pxt-ext": simx(),
@@ -350,6 +409,8 @@ describe("simulator driver projassets messages", () => {
             onProjassetsMessage: (key, msg) => assetDeliveries.push({ key, msg }),
             onProjfsMessage: (key, msg) => projfsDeliveries.push({ key, msg }),
         });
+        // installs the driver's listener on the editor's window; the frames already exist
+        driver.preload(1);
     });
 
     it("delivers a request from a frame registered with allowAssetRead, with the frame's key", () => {
@@ -358,7 +419,7 @@ describe("simulator driver projassets messages", () => {
         chai.expect(projfsDeliveries).deep.equals([]);
     });
 
-    it("posts replies and notifications to the requesting frame only", () => {
+    it("posts replies and notifications to the requesting frame only, at the origin it was created with", () => {
         let reply: (msg: pxsim.SimulatorMessage) => void;
         (driver as any).options.onProjassetsMessage = (key: string, msg: pxsim.SimulatorMessage, r: typeof reply) => reply = r;
         receive({ type: "projassets", id: "1", subtype: "subscribe" } as pxsim.SimulatorMessage, grantedFrame.contentWindow);
@@ -366,7 +427,8 @@ describe("simulator driver projassets messages", () => {
         const changed = { type: "projassets", subtype: "changed" } as pxsim.SimulatorMessage;
         reply(ack);
         reply(changed);
-        chai.expect(grantedFrame.contentWindow.messages).deep.equals([ack, changed]);
+        const origin = grantedFrame.dataset["origin"];
+        chai.expect(grantedFrame.contentWindow.posts).deep.equals([{ msg: ack, targetOrigin: origin }, { msg: changed, targetOrigin: origin }]);
         chai.expect([mainFrame, ungrantedFrame, unofferedFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
     });
 
@@ -420,6 +482,7 @@ describe("simulator driver projassets messages", () => {
 });
 
 describe("simulator driver simulator extension frames", () => {
+    const KEY = "someorg/pxt-ext";
     const SIM_SANDBOX = "allow-same-origin allow-scripts";
     const SIM_ALLOW = "autoplay;microphone";
 
@@ -429,55 +492,54 @@ describe("simulator driver simulator extension frames", () => {
         allowDownloads?: boolean;
     }
 
-    function newDriver(frames: FakeFrame[], options: pxsim.SimulatorDriverOptions = {}, grants: FrameGrants = {}): pxsim.SimulatorDriver {
-        const container = {
-            getElementsByTagName: () => frames,
-            appendChild: (wrapper: FakeElement) => frames.push(wrapper.firstElementChild),
-        } as unknown as HTMLElement;
-        return new pxsim.SimulatorDriver(container, {
-            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+    interface Harness {
+        driver: pxsim.SimulatorDriver;
+        container: FakeElement;
+        // the main simulator frame, already in the container
+        mainFrame: FakeElement;
+    }
+
+    /** Creates a driver whose container holds a main simulator frame, offering the extension "someorg/pxt-ext" registered with `grants`. */
+    function newDriver(options: pxsim.SimulatorDriverOptions = {}, grants: FrameGrants = {}): Harness {
+        const container = new FakeElement("div");
+        const mainFrame = container.appendChild(new FakeElement("div")).appendChild(new FakeElement("iframe"));
+        mainFrame.id = "sim-frame-1";
+        mainFrame.dataset = { origin: SIM_ORIGIN, runid: "" };
+        const driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
+            simUrl: SIM_URL,
             simulatorExtensions: {
-                "someorg/pxt-ext": { index: "index.html", aspectRatio: 1, permanent: true, ...grants },
+                [KEY]: { index: "index.html", aspectRatio: 1, permanent: true, ...grants },
             },
             ...options,
         });
+        return { driver, container, mainFrame };
+    }
+
+    function packet(): pxsim.SimulatorMessage {
+        return { type: "messagepacket", channel: KEY, broadcast: true, data: new Uint8Array(0) } as pxsim.SimulatorMessage;
     }
 
     /**
      * Starts the simulator extension offered under "someorg/pxt-ext", registered with
      * `grants`, by posting a message on its channel from the main simulator frame, and
-     * returns the frame created for it, the URL that frame loads, and every frame the
-     * driver holds.
+     * returns the frame created for it and the URL that frame loads.
      */
-    function startSimulatorExtension(options: pxsim.SimulatorDriverOptions = {}, grants: FrameGrants = {}): { url: URL, frame: FakeElement, frames: FakeFrame[] } {
-        const mainFrame: FakeFrame = { id: "sim-frame-1", dataset: { origin: EDITOR_ORIGIN, runid: "" }, contentWindow: new FakeWindow() };
-        const frames: FakeFrame[] = [mainFrame];
-        const driver = newDriver(frames, options, grants);
-        // starting the frame needs a loaded page; the created frame is all these tests inspect
-        (driver as any).startFrame = () => { };
+    function startSimulatorExtension(options: pxsim.SimulatorDriverOptions = {}, grants: FrameGrants = {}): { url: URL, frame: FakeElement } {
+        const { driver, container, mainFrame } = newDriver(options, grants);
+        driver.postMessage(packet(), mainFrame.contentWindow as unknown as Window);
 
-        const packet = { type: "messagepacket", channel: "someorg/pxt-ext", broadcast: true, data: new Uint8Array(0) };
-        driver.postMessage(packet as pxsim.SimulatorMessage, mainFrame.contentWindow as unknown as Window);
-
+        const frames = container.getElementsByTagName("iframe");
         chai.expect(frames.length).equals(2);
-        const frame = frames[1] as FakeElement;
-        return { url: new URL(frame.src), frame, frames };
+        return { url: new URL(frames[1].src), frame: frames[1] };
     }
 
-    /**
-     * Creates a frame the way every main simulator frame is created.
-     */
-    function createSimulatorFrame(): FakeElement {
-        const wrapper = (newDriver([]) as any).createFrame() as FakeElement;
-        return wrapper.firstElementChild;
-    }
+    it("passes the frame's key to the frame in its URL, beside the editor's origin as the parent origin", () => {
+        const { url, frame } = startSimulatorExtension();
 
-    it("passes the frame's key to the frame in its URL, beside the parent origin", () => {
-        const { url, frames } = startSimulatorExtension();
-
-        chai.expect(url.searchParams.get("channel")).equals("someorg/pxt-ext");
+        chai.expect(url.origin).equals(SIM_ORIGIN);
+        chai.expect(url.searchParams.get("channel")).equals(KEY);
         chai.expect(url.searchParams.get("parentOrigin")).equals(EDITOR_ORIGIN);
-        chai.expect(frames[1].dataset["messagechannel"]).equals(url.searchParams.get("channel"));
+        chai.expect(frame.dataset["messagechannel"]).equals(url.searchParams.get("channel"));
     });
 
     it("passes the running target's id to the frame in its URL when the driver is given one", () => {
@@ -489,25 +551,49 @@ describe("simulator driver simulator extension frames", () => {
         const { url } = startSimulatorExtension({ targetId: "microbit", getProjectId: () => "3b1f7c2e-project" });
 
         chai.expect(url.searchParams.get("project")).equals("3b1f7c2e-project");
-        chai.expect(url.searchParams.get("channel")).equals("someorg/pxt-ext");
+        chai.expect(url.searchParams.get("channel")).equals(KEY);
         chai.expect(url.searchParams.get("parentOrigin")).equals(EDITOR_ORIGIN);
         chai.expect(url.searchParams.get("target")).equals("microbit");
     });
 
-    it("reads the project's id when it creates the frame", () => {
+    it("reads the project's id each time it creates the frame", () => {
         let projectId = "first-project";
-        const getProjectId = () => projectId;
-        chai.expect(startSimulatorExtension({ getProjectId }).url.searchParams.get("project")).equals("first-project");
+        const { driver } = newDriver({ getProjectId: () => projectId });
+        const first = driver.startSimulatorExtension(KEY) as unknown as FakeElement;
+        chai.expect(new URL(first.src).searchParams.get("project")).equals("first-project");
+
+        driver.stop(true);
         projectId = "second-project";
-        chai.expect(startSimulatorExtension({ getProjectId }).url.searchParams.get("project")).equals("second-project");
+        const second = driver.startSimulatorExtension(KEY) as unknown as FakeElement;
+        chai.expect(second).not.equals(first);
+        chai.expect(new URL(second.src).searchParams.get("project")).equals("second-project");
     });
 
     it("omits the project's id when no project is open or the driver cannot tell", () => {
         const noProject = startSimulatorExtension({ targetId: "microbit", getProjectId: () => undefined }).url;
         chai.expect(noProject.searchParams.has("project")).equals(false);
-        chai.expect(noProject.searchParams.get("channel")).equals("someorg/pxt-ext");
+        chai.expect(noProject.searchParams.get("channel")).equals(KEY);
         chai.expect(noProject.searchParams.get("target")).equals("microbit");
         chai.expect(startSimulatorExtension().url.searchParams.has("project")).equals(false);
+    });
+
+    it("starts an extension frame spawned during a run with that run, posted to the frame's origin", () => {
+        const container = new FakeElement("div");
+        const driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
+            simUrl: SIM_URL,
+            simulatorExtensions: { [KEY]: { index: "index.html", aspectRatio: 1, permanent: true } },
+        });
+        driver.run("", {});
+        try {
+            const [mainFrame] = container.getElementsByTagName("iframe");
+            dispatchMessage(packet(), mainFrame.contentWindow);
+            const frame = container.getElementsByTagName("iframe").find(f => f.dataset["messagechannel"] === KEY);
+            const runs = (f: FakeElement) => f.contentWindow.posts.filter(p => p.msg.type === "run");
+            chai.expect(runs(frame).map(p => p.targetOrigin)).deep.equals([frame.dataset["origin"]]);
+            chai.expect(runs(mainFrame).length).equals(1);
+        } finally {
+            driver.stop(true);
+        }
     });
 
     function sandboxOf(frame: FakeElement): string[] {
@@ -553,11 +639,21 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "clipboard-write"]);
     });
 
-    it("keeps the main simulator frame's sandbox and permissions", () => {
-        const frame = createSimulatorFrame();
+    it("keeps the main simulator frame's sandbox and permissions, whatever the extensions' grants", () => {
+        const container = new FakeElement("div");
+        const driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
+            simUrl: SIM_URL,
+            simulatorExtensions: {
+                [KEY]: { index: "index.html", aspectRatio: 1, permanent: true, allowPopups: true, allowClipboardWrite: true, allowDownloads: true },
+            },
+        });
+        driver.preload(1);
 
-        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
-        chai.expect(frame.getAttribute("allow")).equals(SIM_ALLOW);
+        const frames = container.getElementsByTagName("iframe");
+        chai.expect(frames.length).equals(1);
+        chai.expect(frames[0].dataset["messagechannel"]).equals(undefined);
+        chai.expect(frames[0].getAttribute("sandbox")).equals(SIM_SANDBOX);
+        chai.expect(frames[0].getAttribute("allow")).equals(SIM_ALLOW);
     });
 });
 
@@ -576,19 +672,19 @@ describe("simulator driver simulator extension editor tabs", () => {
     }
 
     function harness(registrations: pxt.Map<Registration>, options: pxsim.SimulatorDriverOptions = {}): Harness {
-        const mainFrame: FakeFrame = { id: "sim-frame-1", dataset: { origin: EDITOR_ORIGIN, runid: "" }, contentWindow: new FakeWindow() };
+        const mainFrame = staticFrame("sim-frame-1");
         const frames: FakeFrame[] = [mainFrame];
         const container = {
             getElementsByTagName: () => frames,
             appendChild: (wrapper: FakeElement) => frames.push(wrapper.firstElementChild),
         } as unknown as HTMLElement;
         const driver = new pxsim.SimulatorDriver(container, {
-            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simUrl: SIM_URL,
             simulatorExtensions: registrations,
             ...options,
         });
-        // starting a frame needs a loaded page; these tests inspect the frames and their messages
-        (driver as any).startFrame = () => { };
+        // installs the driver's listener on the editor's window; the main frame already exists
+        driver.preload(1);
         return { driver, frames, mainFrame, registrations };
     }
 
@@ -598,13 +694,13 @@ describe("simulator driver simulator extension editor tabs", () => {
 
     // a tab frame of `key`, as the editor creates and records one
     function tabFrame(h: Harness, key: string): FakeFrame {
-        const frame: FakeFrame = { id: "", dataset: { simxkey: key, simxrole: "editor", origin: EDITOR_ORIGIN }, contentWindow: new FakeWindow() };
+        const frame: FakeFrame = { id: "", dataset: { simxkey: key, simxrole: "editor", origin: SIM_ORIGIN }, contentWindow: new FakeWindow() };
         h.driver.addEditorTabFrame(key, frame as unknown as HTMLIFrameElement);
         return frame;
     }
 
-    function receive(h: Harness, msg: any, source: FakeWindow, origin = EDITOR_ORIGIN) {
-        (h.driver as any).handleMessage(msg as pxsim.SimulatorMessage, source, origin);
+    function receive(h: Harness, msg: any, source: FakeWindow, origin = SIM_ORIGIN) {
+        dispatchMessage(msg, source, origin);
     }
 
     function packet(h: Harness) {
@@ -617,13 +713,6 @@ describe("simulator driver simulator extension editor tabs", () => {
         return new URL((h.frames[1] as FakeElement).src);
     }
 
-    function refusals(frame: FakeFrame) {
-        return frame.contentWindow.messages.map(m => {
-            const { type, id, subtype, code } = m as pxsim.SimulatorMessage & { id: string, subtype: string, code: string };
-            return { type, id, subtype, code };
-        });
-    }
-
     describe("registration", () => {
         it("resolves the tab's page, and an icon that is a path, as it resolves the extension's index", () => {
             const h = harness({
@@ -631,10 +720,10 @@ describe("simulator driver simulator extension editor tabs", () => {
                 "otherorg/pxt-other": registration({ editor: { index: "index.html", label: "Other", icon: "icon.svg" }, allowEditorTab: true }),
             });
             const simx = h.registrations[KEY];
-            chai.expect(simx.url).equals(`${EDITOR_ORIGIN}/simx/${KEY}/-/simx/index.html`);
-            chai.expect(simx.editorUrl).equals(`${EDITOR_ORIGIN}/simx/${KEY}/-/index.html`);
-            chai.expect(simx.iconUrl).equals(`${EDITOR_ORIGIN}/simx/${KEY}/-/brand/icon.svg`);
-            chai.expect(h.registrations["otherorg/pxt-other"].iconUrl).equals(`${EDITOR_ORIGIN}/simx/otherorg/pxt-other/-/icon.svg`);
+            chai.expect(simx.url).equals(`${SIM_ORIGIN}/simx/${KEY}/-/simx/index.html`);
+            chai.expect(simx.editorUrl).equals(`${SIM_ORIGIN}/simx/${KEY}/-/index.html`);
+            chai.expect(simx.iconUrl).equals(`${SIM_ORIGIN}/simx/${KEY}/-/brand/icon.svg`);
+            chai.expect(h.registrations["otherorg/pxt-other"].iconUrl).equals(`${SIM_ORIGIN}/simx/otherorg/pxt-other/-/icon.svg`);
         });
 
         it("resolves an icon that is a path against the dev URL under simxdev, as it resolves the tab's page", () => {
@@ -698,7 +787,7 @@ describe("simulator driver simulator extension editor tabs", () => {
             chai.expect(computed(KEY)).deep.equals({ url: undefined, editorUrl: undefined, iconUrl: undefined });
             chai.expect(h.driver.startSimulatorExtension(KEY)).equals(undefined);
             chai.expect(computed("otherorg/pxt-other")).deep.equals({
-                url: `${EDITOR_ORIGIN}/simx/otherorg/pxt-other/-/index.html`, editorUrl: undefined, iconUrl: undefined,
+                url: `${SIM_ORIGIN}/simx/otherorg/pxt-other/-/index.html`, editorUrl: undefined, iconUrl: undefined,
             });
         });
 
@@ -847,11 +936,17 @@ describe("simulator driver simulator extension editor tabs", () => {
             chai.expect(refusals(tab)).deep.equals([{ type: "simxeditor", id: "1", subtype: "error", code: "UNREGISTERED" }]);
         });
 
-        it("is refused as unregistered when it posts from another origin", () => {
-            const h = harness({ [KEY]: registration({ ...TAB, allowFileWrite: true }) }, { onProjfsMessage: () => chai.assert.fail("delivered") });
+        it("is dropped when it posts from an origin the editor does not allow, refused as unregistered from another allowed origin, and served from its own", () => {
+            const delivered: string[] = [];
+            const h = harness({ [KEY]: registration({ ...TAB, allowFileWrite: true }) }, { onProjfsMessage: key => delivered.push(key) });
             const tab = tabFrame(h, KEY);
             receive(h, files, tab.contentWindow, "https://elsewhere.example");
+            chai.expect(tab.contentWindow.posts).deep.equals([]);
+            receive(h, files, tab.contentWindow, EDITOR_ORIGIN);
             chai.expect(refusals(tab)).deep.equals([{ type: "projfs", id: "1", subtype: "error", code: "UNREGISTERED" }]);
+            chai.expect(delivered).deep.equals([]);
+            receive(h, files, tab.contentWindow, tab.dataset["origin"]);
+            chai.expect(delivered).deep.equals([KEY]);
         });
 
         it("is served under the key it was recorded with, and is a window outside the simulator once forgotten", () => {
@@ -892,7 +987,7 @@ describe("simulator driver simulator extension editor tabs", () => {
                 loggedErrors(() => h = harness({ [KEY]: registration(extra) }, { onSimulatorExtensionEditorMessage: () => chai.assert.fail("delivered") }));
                 packet(h);
                 const simulatorFrame = h.frames[1];
-                simulatorFrame.contentWindow.messages = [];
+                simulatorFrame.contentWindow.posts = [];
                 receive(h, open, simulatorFrame.contentWindow);
                 chai.expect(refusals(simulatorFrame)).deep.equals([{ type: "simxeditor", id: "7", subtype: "error", code: "PERMISSION_DENIED" }]);
             }
@@ -905,7 +1000,7 @@ describe("simulator driver simulator extension editor tabs", () => {
             });
             packet(h);
             const simulatorFrame = h.frames[1];
-            simulatorFrame.contentWindow.messages = [];
+            simulatorFrame.contentWindow.posts = [];
             receive(h, open, simulatorFrame.contentWindow);
             chai.expect(refusals(simulatorFrame)).deep.equals([{ type: "simxeditor", id: "7", subtype: "error", code: "UNREGISTERED" }]);
         });
@@ -914,7 +1009,7 @@ describe("simulator driver simulator extension editor tabs", () => {
             const h = harness({ [KEY]: registration(TAB) }, { onSimulatorExtensionEditorMessage: () => { throw new Error("handler failed"); } });
             packet(h);
             const simulatorFrame = h.frames[1];
-            simulatorFrame.contentWindow.messages = [];
+            simulatorFrame.contentWindow.posts = [];
             loggedErrors(() => receive(h, open, simulatorFrame.contentWindow));
             chai.expect(refusals(simulatorFrame)).deep.equals([{ type: "simxeditor", id: "7", subtype: "error", code: "INVALID_REQUEST" }]);
         });
@@ -924,7 +1019,7 @@ describe("simulator driver simulator extension editor tabs", () => {
             receive(h, open, h.mainFrame.contentWindow);
             chai.expect(refusals(h.mainFrame)).deep.equals([{ type: "simxeditor", id: "7", subtype: "error", code: "UNREGISTERED" }]);
 
-            const unregistered: FakeFrame = { id: "sim-frame-9", dataset: { origin: EDITOR_ORIGIN, runid: "", messagechannel: "someorg/pxt-removed" }, contentWindow: new FakeWindow() };
+            const unregistered = staticFrame("sim-frame-9", "someorg/pxt-removed");
             h.frames.push(unregistered);
             receive(h, open, unregistered.contentWindow);
             chai.expect(refusals(unregistered)).deep.equals([{ type: "simxeditor", id: "7", subtype: "error", code: "UNREGISTERED" }]);
@@ -944,9 +1039,9 @@ describe("simulator driver unload", () => {
         container = new FakeElement("div");
         unloads = [];
         driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
-            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simUrl: SIM_URL,
             simulatorExtensions: {
-                [CHANNEL]: { index: "index.html", aspectRatio: 1, permanent: true },
+                [CHANNEL]: { index: "index.html", aspectRatio: 1, permanent: true, allowFileWrite: true },
             },
             onFramesUnloaded: () => unloads.push(container.getElementsByTagName("iframe").length),
         });
@@ -976,6 +1071,17 @@ describe("simulator driver unload", () => {
         driver.stop(true);
         chai.expect(driver.hasFrames()).equals(false);
     });
+
+    it("posts nothing for a reply to a request whose frame it removed before the reply", () => {
+        let reply: (msg: pxsim.SimulatorMessage) => void;
+        driver.options.onProjfsMessage = (key, msg, r) => reply = r;
+        const frame = driver.startSimulatorExtension(CHANNEL) as unknown as FakeElement;
+        dispatchMessage({ type: "projfs", id: "1", subtype: "list" }, frame.contentWindow);
+        driver.stop(true);
+        chai.expect(frame.contentWindow).equals(null);
+        reply({ type: "projfs", id: "1", subtype: "files", files: [] } as pxsim.SimulatorMessage);
+        chai.expect(frame.window.posts).deep.equals([]);
+    });
 });
 
 describe("simulator driver hide-in-fullscreen classes", () => {
@@ -995,7 +1101,7 @@ describe("simulator driver hide-in-fullscreen classes", () => {
     /** Sends a channel packet from the main frame, which spawns the channel's extension frame. */
     function spawn(channel: string): FakeElement {
         const packet = { type: "messagepacket", channel, broadcast: true } as pxsim.SimulatorMessage;
-        (driver as any).handleMessage(packet, mainFrame.contentWindow);
+        dispatchMessage(packet, mainFrame.contentWindow);
         return container.getElementsByTagName("iframe")
             .find(frame => frame.dataset["messagechannel"] === channel)
             .parentElement;
@@ -1006,15 +1112,17 @@ describe("simulator driver hide-in-fullscreen classes", () => {
         const wrapper = container.appendChild(new FakeElement("div"));
         mainFrame = wrapper.appendChild(new FakeElement("iframe"));
         mainFrame.id = "sim-frame-1";
-        mainFrame.dataset = { origin: EDITOR_ORIGIN, runid: "" };
+        mainFrame.dataset = { origin: SIM_ORIGIN, runid: "" };
         const simx = (hideInFullscreen?: boolean) => ({ index: "index.html", aspectRatio: 1, permanent: true, hideInFullscreen });
         driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
-            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simUrl: SIM_URL,
             simulatorExtensions: {
                 [HIDDEN_CHANNEL]: simx(true),
                 [SHOWN_CHANNEL]: simx(),
             },
         });
+        // installs the driver's listener on the editor's window; the main frame already exists
+        driver.preload(1);
     });
 
     it("marks a hide-in-fullscreen extension frame and the container on spawn", () => {
@@ -1048,13 +1156,16 @@ describe("simulator driver fullscreen mode", () => {
     /** Sends a channel packet from the main frame, which spawns the channel's extension frame. */
     function spawn(): FakeElement {
         const packet = { type: "messagepacket", channel: CHANNEL, broadcast: true } as pxsim.SimulatorMessage;
-        (driver as any).handleMessage(packet, mainFrame.contentWindow);
+        dispatchMessage(packet, mainFrame.contentWindow);
         return container.getElementsByTagName("iframe")
             .find(frame => frame.dataset["messagechannel"] === CHANNEL);
     }
 
+    /** Returns the fullscreen messages posted to `frame`, and checks that each was posted to the origin the frame was created with. */
     function fullscreenMessages(frame: FakeElement) {
-        return frame.contentWindow.messages.filter(m => m.type === "fullscreen");
+        const posts = frame.contentWindow.posts.filter(p => p.msg.type === "fullscreen");
+        chai.expect(posts.map(p => p.targetOrigin)).deep.equals(posts.map(() => frame.dataset["origin"]));
+        return posts.map(p => p.msg);
     }
 
     beforeEach(() => {
@@ -1062,13 +1173,15 @@ describe("simulator driver fullscreen mode", () => {
         const wrapper = container.appendChild(new FakeElement("div"));
         mainFrame = wrapper.appendChild(new FakeElement("iframe"));
         mainFrame.id = "sim-frame-1";
-        mainFrame.dataset = { origin: EDITOR_ORIGIN, runid: "" };
+        mainFrame.dataset = { origin: SIM_ORIGIN, runid: "" };
         driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
-            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simUrl: SIM_URL,
             simulatorExtensions: {
                 [CHANNEL]: { index: "index.html", aspectRatio: 1, permanent: true },
             },
         });
+        // installs the driver's listener on the editor's window; the main frame already exists
+        driver.preload(1);
     });
 
     it("posts fullscreen with enabled to every simulator frame on each change of the mode", () => {

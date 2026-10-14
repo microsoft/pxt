@@ -7,6 +7,7 @@ import {
     ProjfsRequest,
     ProjfsWriteRequest,
 } from "../../pxtservices/projfs";
+import { monotonicNow, SlidingWindowAdmission } from "./slidingWindowAdmission";
 
 /**
  * The most bytes the files under one simulator extension folder may hold: the
@@ -243,14 +244,17 @@ export function getFolderFileName(folder: string, name: unknown): string | undef
 /**
  * Returns true if a write may give a file the name `name`, relative to its
  * folder: the file explorer accepts it for a new file (see
- * `pxt.isValidProjectFileName`), and it has at most
+ * `pxt.isValidProjectFileName`), it has at most
  * {@link PROJFS_MAX_NAME_LENGTH} characters in at most
- * {@link PROJFS_MAX_NAME_SEGMENTS} segments.
+ * {@link PROJFS_MAX_NAME_SEGMENTS} segments, and its last segment is not
+ * `pxt.json`, in any letter case.
  */
 export function isWritableName(name: string): boolean {
+    const segments = name.split("/");
     return pxt.isValidProjectFileName(name)
         && name.length <= PROJFS_MAX_NAME_LENGTH
-        && name.split("/").length <= PROJFS_MAX_NAME_SEGMENTS;
+        && segments.length <= PROJFS_MAX_NAME_SEGMENTS
+        && segments[segments.length - 1].toLowerCase() !== pxt.CONFIG_NAME;
 }
 
 /**
@@ -297,11 +301,6 @@ export function getFolderUsage(files: pxt.Map<string>, folder: string): ProjfsFo
     };
 }
 
-/** Returns a monotonic time in milliseconds: `performance.now()` where available, else `Date.now()`. */
-function monotonicNow(): number {
-    return typeof performance !== "undefined" ? performance.now() : Date.now();
-}
-
 class ProjfsRequestError extends Error {
     constructor(public readonly code: ProjfsErrorCode, message: string) {
         super(message);
@@ -340,8 +339,8 @@ export class ProjfsHost {
     protected tails: pxt.Map<Promise<void>> = {};
     // settles once the request applying now, whichever extension sent it, has finished
     protected applying: Promise<void> = Promise.resolve();
-    // per folder: when each write and delete within the rate window began to apply
-    protected recentMutations: pxt.Map<number[]> = {};
+    // per folder: admits each write and delete under the rate limit
+    protected readonly mutations: SlidingWindowAdmission;
     // per folder: how many requests have been received and not yet answered
     protected pendingRequests: pxt.Map<number> = {};
 
@@ -353,9 +352,10 @@ export class ProjfsHost {
      */
     constructor(
         protected readonly getProject: () => ProjfsProject | undefined,
-        protected readonly now: () => number = monotonicNow,
-        protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
+        now: () => number = monotonicNow,
+        delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
+        this.mutations = new SlidingWindowAdmission(PROJFS_RATE_LIMIT, PROJFS_RATE_WINDOW_MS, now, delay);
     }
 
     /**
@@ -448,18 +448,8 @@ export class ProjfsHost {
      * limit, counting it as applying from then on.
      * @param project the project the request arrived in
      */
-    protected async admitMutationAsync(folder: string, project: ProjfsProject | undefined): Promise<void> {
-        for (;;) {
-            this.openProjectOrThrow(project);
-            const now = this.now();
-            const recent = (this.recentMutations[folder] || []).filter(t => now - t < PROJFS_RATE_WINDOW_MS);
-            this.recentMutations[folder] = recent;
-            if (recent.length < PROJFS_RATE_LIMIT) {
-                recent.push(now);
-                return;
-            }
-            await this.delay(recent[0] + PROJFS_RATE_WINDOW_MS - now);
-        }
+    protected admitMutationAsync(folder: string, project: ProjfsProject | undefined): Promise<void> {
+        return this.mutations.admitAsync(folder, () => this.openProjectOrThrow(project));
     }
 
     /** Runs `apply` once no other request is applying. */
@@ -510,8 +500,8 @@ export class ProjfsHost {
                 if (!isWritableName(request.name))
                     throw new ProjfsRequestError("INVALID_NAME",
                         `${request.name} is not a name a write may give a file: it must start with a letter, digit or underscore, `
-                        + `use only letters, digits, "_", "-", "." and "/", and have at most ${PROJFS_MAX_NAME_LENGTH} characters `
-                        + `in at most ${PROJFS_MAX_NAME_SEGMENTS} segments.`);
+                        + `use only letters, digits, "_", "-", "." and "/", have at most ${PROJFS_MAX_NAME_LENGTH} characters `
+                        + `in at most ${PROJFS_MAX_NAME_SEGMENTS} segments, and not end in ${pxt.CONFIG_NAME}.`);
                 const stored = Object.prototype.hasOwnProperty.call(files, name);
                 const usage = getFolderUsage(files, folder);
                 if (!stored && usage.files >= PROJFS_MAX_FOLDER_FILES)
