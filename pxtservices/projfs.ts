@@ -411,7 +411,7 @@ export class ProjfsClient {
                 this.target.postMessage(request, this.targetOrigin);
             } catch (e) {
                 this.settle(id);
-                reject(new ProjfsError("FAILED", `The request could not be posted; it was not sent: ${e?.message || e}`));
+                reject(new ProjfsError("FAILED", `The request could not be posted; it was not sent: ${(e as Error)?.message || e}`));
             }
         }).then(reply => {
             if (reply.subtype === "error") throw new ProjfsError(reply.code, reply.message);

@@ -379,7 +379,7 @@ export class ProjassetsClient {
                 this.target.postMessage(request, this.targetOrigin);
             } catch (e) {
                 this.settle(id);
-                reject(new ProjassetsError("FAILED", `The request could not be posted; it was not sent: ${e?.message || e}`));
+                reject(new ProjassetsError("FAILED", `The request could not be posted; it was not sent: ${(e as Error)?.message || e}`));
             }
         }).then(reply => {
             if (reply.subtype === "error") throw new ProjassetsError(reply.code, reply.message);
