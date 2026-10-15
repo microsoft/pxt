@@ -60,8 +60,8 @@
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/field-grid-dropdown": "6.0.4",
-    "@blockly/plugin-workspace-search": "10.1.2",
+    "@blockly/field-grid-dropdown": "13.1.0",
+    "@blockly/plugin-workspace-search": "13.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
@@ -69,10 +69,10 @@
     "@types/audioworklet": "^0.0.75",
     "@types/diff-match-patch": "^1.0.32",
     "@zip.js/zip.js": "2.4.20",
-    "adm-zip": "^0.5.12",
+    "adm-zip": "^0.6.1",
     "axios": "^1.20.0",
     "blockly": "13.1.1",
-    "browserify": "17.0.0",
+    "browserify": "17.0.1",
     "chai": "^3.5.0",
     "chalk": "^4.1.2",
     "cssnano": "7.1.1",
@@ -87,7 +87,7 @@
     "less": "3.13.1",
     "lzma": "2.3.2",
     "marked": "17.0.0",
-    "mocha": "10.8.2",
+    "mocha": "12.0.3",
     "pngjs": "3.4.0",
     "postcss": "8.5.30",
     "promise.prototype.finally": "^3.1.2",
@@ -104,7 +104,6 @@
   },
   "devDependencies": {
     "@microsoft/eslint-plugin-sdl": "^0.1.5",
-    "@types/adm-zip": "^0.5.5",
     "@types/chai": "4.0.6",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
@@ -150,58 +149,12 @@
     "yargs": "^17.7.2"
   },
   "overrides": {
-    "@blockly/field-grid-dropdown": {
-      "blockly": "13.1.1"
-    },
-    "@blockly/plugin-workspace-search": {
-      "blockly": "13.1.1"
-    },
     "combine-source-map": {
       "source-map": "0.4.4"
     },
-    "mocha@10.8.2": {
-      "serialize-javascript": "7.1.2"
-    },
     "ttf2woff2@4.0.5": {
       "node-gyp": "12.4.0"
-    },
-    "node-gyp@12.4.0": {
-      "tar": "7.5.22",
-      "undici": "6.29.1"
-    },
-    "sha.js": "2.4.12",
-    "cipher-base": "1.0.7",
-    "pbkdf2": "3.1.7",
-    "elliptic": "6.6.1",
-    "@tootallnate/once@^2.0.0": "2.0.1",
-    "baseline-browser-mapping@^2.0.0": "2.11.28",
-    "body-parser@^1.0.0": "1.20.8",
-    "brace-expansion@^1.0.0": "1.1.21",
-    "brace-expansion@^2.0.0": "2.1.7",
-    "browserslist@^4.0.0": "4.29.3",
-    "colord@^2.0.0": "2.10.0",
-    "engine.io@^6.0.0": "6.6.11",
-    "fast-uri@^3.0.0": "3.1.8",
-    "flatted@^3.0.0": "3.4.4",
-    "follow-redirects@^1.0.0": "1.16.0",
-    "handlebars": "4.7.10",
-    "http-cache-semantics@^4.0.0": "4.3.0",
-    "ip-address@^10.0.0": "10.7.4",
-    "js-yaml@^3.0.0": "3.15.2",
-    "js-yaml@^4.0.0": "4.3.2",
-    "lodash@^4.0.0": "4.18.1",
-    "picomatch@^2.0.0": "2.3.2",
-    "postcss@^8.0.0": "$postcss",
-    "postcss-selector-parser@^7.0.0": "7.1.6",
-    "qs@^6.0.0": "6.16.1",
-    "shell-quote": "1.12.0",
-    "socket.io-parser@^4.0.0": "4.2.7",
-    "svgo@^4.0.0": "4.1.0",
-    "websocket-driver": "0.7.5",
-    "tar-fs": "3.1.1",
-    "tmp@^0.2.0": "0.2.7",
-    "ws@^8.0.0": "8.22.0",
-    "terser": "5.44.0"
+    }
   },
   "scripts": {
     "build": "gulp",

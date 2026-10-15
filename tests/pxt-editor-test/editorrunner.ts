@@ -1,7 +1,6 @@
 /// <reference path="../../localtypings/pxteditor.d.ts"/>
 
-/* eslint-disable import/no-unassigned-import mocha-no-side-effect-code */
-import "mocha";
+/* eslint-disable mocha-no-side-effect-code */
 import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
