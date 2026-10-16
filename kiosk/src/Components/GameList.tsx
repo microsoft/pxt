@@ -30,6 +30,7 @@ const GameList: React.FC<IProps> = ({}) => {
 
     const handleLocalSwiper = (swiper: SwiperClass) => {
         setLocalSwiper(swiper);
+        setPageInited(false);
     };
 
     useMakeNavigable(localSwiper?.el, {
@@ -138,6 +139,7 @@ const GameList: React.FC<IProps> = ({}) => {
     return (
         <div className="carouselWrap">
             <Swiper
+                key={canLoop ? "loop" : "rewind"}
                 focusableElements="div"
                 tabIndex={0}
                 loop={canLoop}
