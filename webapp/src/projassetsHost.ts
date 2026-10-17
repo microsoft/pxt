@@ -1,13 +1,18 @@
 import {
     PROJASSETS_MESSAGE_TYPE,
-    ProjassetsAsset,
+    ProjassetsAnimation,
+    ProjassetsAssetOfKind,
     ProjassetsErrorCode,
     ProjassetsImage,
+    ProjassetsJson,
     ProjassetsKind,
     ProjassetsNotification,
     ProjassetsReply,
     ProjassetsRequest,
     ProjassetsSong,
+    ProjassetsTile,
+    ProjassetsTilemap,
+    ProjassetsTilesetTile,
     ProjassetsVisualConfig,
 } from "../../pxtservices/projassets";
 import { getProjectSimulatorThemePreference } from "./simulatorTheme";
@@ -24,17 +29,21 @@ export const PROJASSETS_LIST_RATE_LIMIT = 30;
 /** The sliding window, in milliseconds, over which {@link PROJASSETS_LIST_RATE_LIMIT} applies. */
 export const PROJASSETS_LIST_RATE_WINDOW_MS = 10000;
 
+/** Returns the key under which the project's asset file stores the asset with the qualified id `id`. */
+function assetFileKey(id: string): string {
+    return id.substr(id.lastIndexOf(".") + 1);
+}
+
 /**
  * Returns the image assets of `project` as simulator extensions see them: every
  * image in the project's own assets, named by the key of its entry in the
- * project's asset file. Images supplied by extensions are not included.
+ * project's asset file.
  */
 export function getImageAssets(project: pxt.TilemapProject): ProjassetsImage[] {
     return project.getAssets(pxt.AssetType.Image).map(image => {
         const listed: ProjassetsImage = {
             kind: "image",
-            // the key under which the project's asset file stores the image
-            id: image.id.substr(image.id.lastIndexOf(".") + 1),
+            id: assetFileKey(image.id),
             width: image.bitmap.width,
             height: image.bitmap.height,
             data: image.jresData,
@@ -45,18 +54,109 @@ export function getImageAssets(project: pxt.TilemapProject): ProjassetsImage[] {
 }
 
 /**
+ * Returns the tile assets of `project` as simulator extensions see them: every
+ * tile in the project's own assets, the blank tile of each tile width
+ * included, named by its qualified id.
+ */
+export function getTileAssets(project: pxt.TilemapProject): ProjassetsTile[] {
+    return project.getAssets(pxt.AssetType.Tile).map(tile => {
+        const listed: ProjassetsTile = {
+            kind: "tile",
+            id: tile.id,
+            width: tile.bitmap.width,
+            height: tile.bitmap.height,
+            data: tile.jresData,
+        };
+        if (tile.meta.displayName) listed.displayName = tile.meta.displayName;
+        return listed;
+    });
+}
+
+/**
+ * Returns the tilemap assets of `project` as simulator extensions see them:
+ * every tilemap in the project's own assets, empty and unused ones included,
+ * with its data and tileset as the project's tileset file stores them, each
+ * tileset tile joined to the tile the project resolves its id to.
+ */
+export function getTilemapAssets(project: pxt.TilemapProject): ProjassetsTilemap[] {
+    const jres: pxt.Map<pxt.JRes> = project.getProjectTilesetJRes();
+    const listed: ProjassetsTilemap[] = [];
+    for (const key of Object.keys(jres)) {
+        const entry = jres[key];
+        if (entry.mimeType !== pxt.TILEMAP_MIME_TYPE) continue;
+        const tilemap = project.getTilemap(entry.id).data;
+        listed.push({
+            kind: "tilemap",
+            id: entry.id,
+            displayName: entry.displayName,
+            tileWidth: tilemap.tileset.tileWidth,
+            width: tilemap.tilemap.width,
+            height: tilemap.tilemap.height,
+            data: entry.data,
+            tileset: entry.tileset.map(id => getTilesetTile(project, id)),
+        });
+    }
+    return listed;
+}
+
+/** Returns the tileset tile `id` names, with the pixels of the tile `project` resolves it to, if any. */
+function getTilesetTile(project: pxt.TilemapProject, id: string): ProjassetsTilesetTile {
+    const tile = project.resolveTile(id);
+    if (!tile) return { id };
+    return { id, width: tile.bitmap.width, height: tile.bitmap.height, data: tile.jresData };
+}
+
+/**
+ * Returns the animation assets of `project` as simulator extensions see them:
+ * every animation in the project's own assets, named by the key of its entry
+ * in the project's asset file.
+ */
+export function getAnimationAssets(project: pxt.TilemapProject): ProjassetsAnimation[] {
+    return project.getAssets(pxt.AssetType.Animation).map(animation => {
+        const listed: ProjassetsAnimation = {
+            kind: "animation",
+            id: assetFileKey(animation.id),
+            width: animation.frames[0].width,
+            height: animation.frames[0].height,
+            interval: animation.interval,
+            frames: animation.frames.map(frame => pxt.sprite.base64EncodeBitmap(frame)),
+        };
+        if (animation.meta.displayName) listed.displayName = animation.meta.displayName;
+        return listed;
+    });
+}
+
+/**
  * Returns the song assets of `project` as simulator extensions see them: every
  * song in the project's own assets, named by the key of its entry in the
- * project's asset file. Songs supplied by extensions are not included.
+ * project's asset file.
  */
 export function getSongAssets(project: pxt.TilemapProject): ProjassetsSong[] {
     return project.getAssets(pxt.AssetType.Song).map(song => {
         const listed: ProjassetsSong = {
             kind: "song",
-            // the key under which the project's asset file stores the song
-            id: song.id.substr(song.id.lastIndexOf(".") + 1),
+            id: assetFileKey(song.id),
+            data: pxt.assets.music.encodeSongToHex(song.song),
         };
         if (song.meta.displayName) listed.displayName = song.meta.displayName;
+        return listed;
+    });
+}
+
+/**
+ * Returns the JSON assets of `project` as simulator extensions see them: every
+ * JSON asset in the project's own assets, named by the key of its entry in the
+ * project's asset file.
+ */
+export function getJsonAssets(project: pxt.TilemapProject): ProjassetsJson[] {
+    return project.getAssets(pxt.AssetType.Json).map(asset => {
+        const listed: ProjassetsJson = {
+            kind: "json",
+            id: assetFileKey(asset.id),
+            data: asset.data,
+        };
+        if (asset.meta.displayName) listed.displayName = asset.meta.displayName;
+        if (asset.fileName) listed.fileName = asset.fileName;
         return listed;
     });
 }
@@ -153,9 +253,13 @@ export interface ProjassetsFrame {
 }
 
 // per asset kind the host lists: returns the project's assets of that kind
-const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => ProjassetsAsset[] } = {
+const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => ProjassetsAssetOfKind[K][] } = {
     image: getImageAssets,
+    tile: getTileAssets,
+    tilemap: getTilemapAssets,
+    animation: getAnimationAssets,
     song: getSongAssets,
+    json: getJsonAssets,
 };
 
 class ProjassetsRequestError extends Error {

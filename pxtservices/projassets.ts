@@ -24,8 +24,8 @@
 
 export const PROJASSETS_MESSAGE_TYPE = "projassets";
 
-/** A kind of asset the editor lists. */
-export type ProjassetsKind = "image" | "song";
+/** A kind of asset the editor lists: the name of one of pxt's asset types. */
+export type ProjassetsKind = "image" | "tile" | "tilemap" | "animation" | "song" | "json";
 
 /**
  * Why a request failed. Clients branch on the code; the message that
@@ -114,6 +114,101 @@ export interface ProjassetsImage {
     data: string;
 }
 
+/**
+ * A tile asset of the project, for its tilemaps. The project's tiles include
+ * the blank tile the editor generates for each tile width, such as
+ * `myTiles.transparency16` for 16-pixel tiles.
+ */
+export interface ProjassetsTile {
+    kind: "tile";
+    /**
+     * The tile's qualified id, as the project's tilemaps reference it, e.g.
+     * `myTiles.tile1`. Tilesets reference tiles by qualified id, and tiles
+     * supplied by extensions have no other.
+     */
+    id: string;
+    /** The name the user gave the tile; absent if it has none. */
+    displayName?: string;
+    /** Width in pixels. */
+    width: number;
+    /** Height in pixels. */
+    height: number;
+    /**
+     * The pixels in pxt's image encoding (MIME type `image/x-mkcd-f4`),
+     * base64-encoded, as the project's tileset file (`tilemap.g.jres`)
+     * stores them.
+     */
+    data: string;
+}
+
+/**
+ * A tile of a tilemap's tileset. `width`, `height` and `data` are present
+ * together, for a tile of the project or of one of its extensions, and absent
+ * together when the id names no tile of either.
+ */
+export interface ProjassetsTilesetTile {
+    /** The tile's qualified id, e.g. `myTiles.tile1`. */
+    id: string;
+    /** Width in pixels. */
+    width?: number;
+    /** Height in pixels. */
+    height?: number;
+    /** The pixels in pxt's image encoding (MIME type `image/x-mkcd-f4`), base64-encoded. */
+    data?: string;
+}
+
+/** A tilemap asset of the project. */
+export interface ProjassetsTilemap {
+    kind: "tilemap";
+    /**
+     * The tilemap's id, as the project's tileset file (`tilemap.g.jres`)
+     * stores it, e.g. `level1`.
+     */
+    id: string;
+    /** The tilemap's name; every tilemap has one. */
+    displayName: string;
+    /** The width and height of each tile, in pixels. */
+    tileWidth: number;
+    /** Width in tiles. */
+    width: number;
+    /** Height in tiles. */
+    height: number;
+    /**
+     * The tilemap in pxt's tilemap encoding (MIME type
+     * `application/mkcd-tilemap`), as the project's tileset file stores it:
+     * the bytes written as hexadecimal text, then base64-encoded. The bytes
+     * are the tile width in pixels; the width and then the height in tiles,
+     * each 16 bits, little-endian; one byte per cell, row by row, holding the
+     * index in `tileset` of the tile the cell shows; then the walls, 4
+     * bits per cell, row by row, two cells per byte with the first in the low
+     * bits, nonzero for a wall.
+     */
+    data: string;
+    /** The tiles the map's cells index, in order. */
+    tileset: ProjassetsTilesetTile[];
+}
+
+/** An animation asset of the project. */
+export interface ProjassetsAnimation {
+    kind: "animation";
+    /**
+     * The key of the animation's entry in the project's asset file
+     * (`images.g.jres`), e.g. `anim1`. It identifies the animation among the
+     * project's animations and stays the same when the animation is renamed.
+     */
+    id: string;
+    /** The name the user gave the animation; absent if it has none. */
+    displayName?: string;
+    /** Width of each frame, in pixels. */
+    width: number;
+    /** Height of each frame, in pixels. */
+    height: number;
+    /** The time each frame shows, in milliseconds. */
+    interval: number;
+    /** The frames in order, each in pxt's image encoding (MIME type `image/x-mkcd-f4`), base64-encoded. */
+    frames: string[];
+}
+
 /** A song asset of the project. */
 export interface ProjassetsSong {
     kind: "song";
@@ -125,10 +220,38 @@ export interface ProjassetsSong {
     id: string;
     /** The name the user gave the song; absent if it has none. */
     displayName?: string;
+    /**
+     * The song in pxt's song encoding (MIME type `application/mkcd-song`),
+     * hex-encoded, as the project's asset file stores it.
+     */
+    data: string;
+}
+
+/** A JSON asset of the project. */
+export interface ProjassetsJson {
+    kind: "json";
+    /**
+     * The key of the asset's entry in the project's asset file
+     * (`images.g.jres`), e.g. `file1`. It identifies the asset among the
+     * project's JSON assets and stays the same when the asset is renamed.
+     */
+    id: string;
+    /** The name the user gave the asset; absent if it has none. */
+    displayName?: string;
+    /** The file name the asset carries, as the Assets editor shows it; absent if it has none. */
+    fileName?: string;
+    /** The asset's JSON value. */
+    data: unknown;
 }
 
 /** An asset of the project; `kind` tells which. */
-export type ProjassetsAsset = ProjassetsImage | ProjassetsSong;
+export type ProjassetsAsset =
+    | ProjassetsImage
+    | ProjassetsTile
+    | ProjassetsTilemap
+    | ProjassetsAnimation
+    | ProjassetsSong
+    | ProjassetsJson;
 
 /** The asset each kind is listed as, by kind: `ProjassetsAssetOfKind["image"]` is {@link ProjassetsImage}. */
 export type ProjassetsAssetOfKind = { [Kind in ProjassetsKind]: Extract<ProjassetsAsset, { kind: Kind }> };

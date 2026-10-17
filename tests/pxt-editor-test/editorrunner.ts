@@ -82,8 +82,12 @@ import {
 } from "../../pxtservices/projfs";
 import {
     createProjassetsConfig,
+    getAnimationAssets,
     getImageAssets,
+    getJsonAssets,
     getSongAssets,
+    getTileAssets,
+    getTilemapAssets,
     getVisualConfig,
     ProjassetsAccountTheme,
     ProjassetsConfig,
@@ -94,12 +98,14 @@ import {
     PROJASSETS_LIST_RATE_WINDOW_MS,
 } from "../../webapp/src/projassetsHost";
 import {
+    ProjassetsAssetOfKind,
     ProjassetsAssetsReply,
     ProjassetsClient,
     ProjassetsError,
     ProjassetsErrorCode,
     ProjassetsErrorReply,
     ProjassetsImage,
+    ProjassetsKind,
     ProjassetsListing,
     ProjassetsNotification,
     ProjassetsReply,
@@ -2543,18 +2549,20 @@ describe("projassets song listing", () => {
         project = new pxt.TilemapProject();
     });
 
-    it("describes each song by its asset file id, kind and display name, without a displayName field when it has none", () => {
-        project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
-        project.createNewSong(pxt.assets.music.getEmptySong(2));
+    it("describes each song by its asset file id, kind, display name and encoded song, without a displayName field when it has none", () => {
+        const song = pxt.assets.music.getEmptySong(2);
+        project.createNewSong(song, "tune");
+        project.createNewSong(song);
         const listed = getSongAssets(project);
+        const data = pxt.assets.music.encodeSongToHex(song);
         chai.expect(listed).to.have.deep.members([
-            { kind: "song", id: "song1", displayName: "tune" },
-            { kind: "song", id: "song2" },
+            { kind: "song", id: "song1", displayName: "tune", data },
+            { kind: "song", id: "song2", data },
         ]);
         chai.expect(listed.find(s => s.id === "song2")).not.to.have.property("displayName");
     });
 
-    it("reports the ids under which the project's asset file stores each song", () => {
+    it("reports the ids and encoded songs under which the project's asset file stores each song", () => {
         project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
         project.createNewSong(pxt.assets.music.getEmptySong(2));
         const jres = project.getProjectAssetsJRes();
@@ -2564,6 +2572,7 @@ describe("projassets song listing", () => {
             const entry = jres[song.id];
             chai.expect(entry, song.id).not.equals(undefined);
             chai.expect(typeof entry === "string" ? undefined : entry.mimeType, song.id).equals(pxt.SONG_MIME_TYPE);
+            chai.expect(typeof entry === "string" ? undefined : entry.data, song.id).equals(song.data);
         }
     });
 
@@ -2590,7 +2599,7 @@ describe("projassets song listing", () => {
     it("keeps a song's id when the song is renamed", () => {
         const song = project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
         project.updateAsset({ ...song, meta: { ...song.meta, displayName: "melody" } });
-        chai.expect(getSongAssets(project)).deep.equals([{ kind: "song", id: "song1", displayName: "melody" }]);
+        chai.expect(getSongAssets(project).map(s => ({ id: s.id, displayName: s.displayName }))).deep.equals([{ id: "song1", displayName: "melody" }]);
     });
 });
 
@@ -2680,11 +2689,116 @@ describe("projassets host", () => {
     it("lists the open project's songs", async () => {
         project.createNewSong(pxt.assets.music.getEmptySong(2), "tune");
         project.createNewSong(pxt.assets.music.getEmptySong(2));
-        const reply = await send({ subtype: "list", kind: "song" }) as ProjassetsAssetsReply;
+        const reply = await send({ subtype: "list", kind: "song" }) as ProjassetsAssetsReply<"song">;
         chai.expect(reply.subtype).equals("assets");
         chai.expect(reply.kind).equals("song");
         chai.expect(reply.assets).deep.equals(getSongAssets(project));
         chai.expect(reply.assets.length).equals(2);
+        const jres = project.getProjectAssetsJRes();
+        for (const song of reply.assets) {
+            chai.expect(song.data, song.id).to.be.a("string").and.not.equal("");
+            chai.expect(song.data, song.id).equals(jres[song.id].data);
+        }
+    });
+
+    it("lists the open project's tiles by qualified id, the blank tile included", async () => {
+        const grass = testBitmap(16, 16);
+        project.createNewTile(grass, undefined, "grass");
+        project.getTransparency(16);
+        const reply = await send({ subtype: "list", kind: "tile" }) as ProjassetsAssetsReply<"tile">;
+        chai.expect(reply.subtype).equals("assets");
+        chai.expect(reply.kind).equals("tile");
+        chai.expect(reply.assets).deep.equals(getTileAssets(project));
+        chai.expect(reply.assets.map(t => [t.kind, t.id, t.width, t.height])).to.have.deep.members([
+            ["tile", "myTiles.tile1", 16, 16],
+            ["tile", "myTiles.transparency16", 16, 16],
+        ]);
+        chai.expect(reply.assets.find(t => t.id === "myTiles.tile1")).deep.include({ displayName: "grass", data: pxt.sprite.base64EncodeBitmap(grass) });
+        chai.expect(reply.assets.find(t => t.id === "myTiles.transparency16")).not.to.have.property("displayName");
+        const jres = project.getProjectTilesetJRes();
+        for (const tile of reply.assets)
+            chai.expect(tile.data, tile.id).equals(jres[tile.id.substr(tile.id.lastIndexOf(".") + 1)].data);
+    });
+
+    it("lists the open project's tilemaps, empty ones included, with the data and tileset ids its tileset file stores", async () => {
+        project.createNewTilemap("level", 16, 4, 3);
+        project.createNewTilemap("castle", 8, 5, 2);
+        const reply = await send({ subtype: "list", kind: "tilemap" }) as ProjassetsAssetsReply<"tilemap">;
+        chai.expect(reply.subtype).equals("assets");
+        chai.expect(reply.kind).equals("tilemap");
+        chai.expect(reply.assets).deep.equals(getTilemapAssets(project));
+        chai.expect(reply.assets.map(m => [m.kind, m.id, m.tileWidth, m.width, m.height, m.tileset.length])).to.have.deep.members([
+            ["tilemap", "level1", 16, 4, 3, 1],
+            ["tilemap", "castle1", 8, 5, 2, 1],
+        ]);
+        const jres = project.getProjectTilesetJRes();
+        for (const tilemap of reply.assets) {
+            chai.expect(tilemap.displayName, tilemap.id).to.be.a("string").and.not.equal("");
+            chai.expect(tilemap.data, tilemap.id).equals(jres[tilemap.id].data);
+            chai.expect(tilemap.tileset.map(t => t.id), tilemap.id).deep.equals(jres[tilemap.id].tileset);
+        }
+    });
+
+    it("joins each tileset tile to the project's or an extension's tile, and lists an id naming neither alone", async () => {
+        const stone = testBitmap(16, 16);
+        project.loadAssetsJRes({
+            "*": { mimeType: pxt.IMAGE_MIME_TYPE, dataEncoding: "base64", namespace: "castle" },
+            stone: { data: pxt.sprite.base64EncodeBitmap(stone), tilemapTile: true },
+        } as any, true);
+        const grass = testBitmap(16, 16);
+        const own = project.createNewTile(grass, undefined, "grass");
+        const removed = project.createNewTile(testBitmap(16, 16), undefined, "lava");
+        const data = project.blankTilemap(16, 4, 3);
+        data.tileset.tiles.push(own, project.resolveTile("castle.stone"), removed);
+        project.createNewTilemapFromData(data, "level");
+        project.deleteTile(removed.id);
+        const reply = await send({ subtype: "list", kind: "tilemap" }) as ProjassetsAssetsReply<"tilemap">;
+        chai.expect(reply.assets.length).equals(1);
+        const tileset = reply.assets[0].tileset;
+        chai.expect(tileset.map(t => t.id)).deep.equals(["myTiles.transparency16", "myTiles.tile1", "castle.stone", "myTiles.tile2"]);
+        for (const tile of tileset.slice(0, 3)) {
+            chai.expect(Object.keys(tile).sort(), tile.id).deep.equals(["data", "height", "id", "width"]);
+            chai.expect([tile.width, tile.height], tile.id).deep.equals([16, 16]);
+            chai.expect(tile.data, tile.id).to.be.a("string").and.not.equal("");
+        }
+        chai.expect(tileset[1].data).equals(pxt.sprite.base64EncodeBitmap(grass));
+        chai.expect(tileset[2].data).equals(pxt.sprite.base64EncodeBitmap(stone));
+        chai.expect(tileset[3]).deep.equals({ id: "myTiles.tile2" });
+        chai.expect(getTileAssets(project).map(t => t.id)).not.to.include("castle.stone");
+    });
+
+    it("lists the open project's animations by asset file id, with their frames", async () => {
+        const walk = [testBitmap(4, 3), testBitmap(4, 3)];
+        project.createNewAnimationFromData(walk, 150, "walk");
+        project.createNewAnimation(2, 2);
+        const reply = await send({ subtype: "list", kind: "animation" }) as ProjassetsAssetsReply<"animation">;
+        chai.expect(reply.subtype).equals("assets");
+        chai.expect(reply.kind).equals("animation");
+        chai.expect(reply.assets).deep.equals(getAnimationAssets(project));
+        chai.expect(reply.assets.map(a => [a.kind, a.id, a.width, a.height, a.interval, a.frames.length])).to.have.deep.members([
+            ["animation", "anim1", 4, 3, 150, 2],
+            ["animation", "anim2", 2, 2, 500, 1],
+        ]);
+        const named = reply.assets.find(a => a.id === "anim1");
+        chai.expect(named.displayName).equals("walk");
+        chai.expect(named.frames).deep.equals(walk.map(frame => pxt.sprite.base64EncodeBitmap(frame)));
+        chai.expect(reply.assets.find(a => a.id === "anim2")).not.to.have.property("displayName");
+        const jres = project.getProjectAssetsJRes();
+        for (const animation of reply.assets)
+            chai.expect(jres[animation.id].mimeType, animation.id).equals(pxt.ANIMATION_MIME_TYPE);
+    });
+
+    it("lists the open project's JSON assets by asset file id, with their values", async () => {
+        project.createNewJsonAsset({ level: 1, names: ["a"] }, "level.json", "levelData");
+        project.createNewJsonAsset([1, 2, 3]);
+        const reply = await send({ subtype: "list", kind: "json" }) as ProjassetsAssetsReply<"json">;
+        chai.expect(reply.subtype).equals("assets");
+        chai.expect(reply.kind).equals("json");
+        chai.expect(reply.assets).deep.equals(getJsonAssets(project));
+        chai.expect(reply.assets).to.have.deep.members([
+            { kind: "json", id: "file1", displayName: "levelData", fileName: "level.json", data: { level: 1, names: ["a"] } },
+            { kind: "json", id: "file2", data: [1, 2, 3] },
+        ]);
     });
 
     it("carries the project's palette and simulator theme in each list reply", async () => {
@@ -2721,15 +2835,15 @@ describe("projassets host", () => {
     });
 
     it("refuses kinds it does not list with UNSUPPORTED_KIND", async () => {
-        for (const kind of ["tile", "tilemap", "animation", "json", "toString", "__proto__"])
+        for (const kind of ["sprite", "font", "toString", "__proto__"])
             await expectError({ subtype: "list", kind }, "UNSUPPORTED_KIND");
     });
 
     it("refuses a kind it does not list with UNSUPPORTED_KIND without waiting for a project", async () => {
         open = undefined;
-        await expectError({ subtype: "list", kind: "tile" }, "UNSUPPORTED_KIND");
+        await expectError({ subtype: "list", kind: "sprite" }, "UNSUPPORTED_KIND");
         open = { loadedAsync: () => new Promise<void>(() => { }) };
-        await expectError({ subtype: "list", kind: "tile" }, "UNSUPPORTED_KIND");
+        await expectError({ subtype: "list", kind: "sprite" }, "UNSUPPORTED_KIND");
     });
 
     it("refuses malformed requests with INVALID_REQUEST", async () => {
@@ -3301,6 +3415,26 @@ describe("projassets client", () => {
         replyTo(parent.requests[0], { subtype: "assets", kind: "image", assets: [IMAGE], name: NAME, palette: PALETTE, theme: THEME });
         chai.expect(await first).deep.equals({ assets: [IMAGE], name: NAME, palette: PALETTE, theme: THEME });
         chai.expect(await second).deep.equals({ assets: [], name: NAME, palette: PALETTE });
+    });
+
+    it("lists each kind the editor lists, resolving with the reply's entries", async () => {
+        const entries: { [K in ProjassetsKind]: ProjassetsAssetOfKind[K] } = {
+            image: IMAGE,
+            tile: { kind: "tile", id: "myTiles.tile1", width: 16, height: 16, data: "AAAA" },
+            tilemap: {
+                kind: "tilemap", id: "level1", displayName: "level", tileWidth: 16, width: 2, height: 2, data: "AAAA",
+                tileset: [{ id: "myTiles.transparency16", width: 16, height: 16, data: "AAAA" }, { id: "castle.stone" }],
+            },
+            animation: { kind: "animation", id: "anim1", width: 2, height: 2, interval: 100, frames: ["AAAA", "AAAA"] },
+            song: { kind: "song", id: "song1", data: "00" },
+            json: { kind: "json", id: "file1", fileName: "level.json", data: { level: 1 } },
+        };
+        for (const kind of Object.keys(entries) as ProjassetsKind[]) {
+            const listed = client.list(kind);
+            chai.expect(lastRequest()).deep.include({ type: "projassets", subtype: "list", kind });
+            replyTo(lastRequest(), { subtype: "assets", kind, assets: [entries[kind]], name: NAME, palette: PALETTE });
+            chai.expect((await listed).assets, kind).deep.equals([entries[kind]]);
+        }
     });
 
     it("rejects with the editor's error code", async () => {
