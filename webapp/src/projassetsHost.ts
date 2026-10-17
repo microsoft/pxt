@@ -29,6 +29,19 @@ export const PROJASSETS_LIST_RATE_LIMIT = 30;
 /** The sliding window, in milliseconds, over which {@link PROJASSETS_LIST_RATE_LIMIT} applies. */
 export const PROJASSETS_LIST_RATE_WINDOW_MS = 10000;
 
+/**
+ * The time, in milliseconds, after the last change of a burst at which
+ * subscribed frames are notified of it, unless
+ * {@link PROJASSETS_NOTIFY_MAX_DELAY_MS} comes first.
+ */
+export const PROJASSETS_NOTIFY_DEBOUNCE_MS = 250;
+
+/**
+ * The longest time, in milliseconds, after the first change of a burst at
+ * which subscribed frames are notified of it, however long its changes go on.
+ */
+export const PROJASSETS_NOTIFY_MAX_DELAY_MS = 2000;
+
 /** Returns the key under which the project's asset file stores the asset with the qualified id `id`. */
 function assetFileKey(id: string): string {
     return id.substr(id.lastIndexOf(".") + 1);
@@ -287,8 +300,10 @@ class ProjassetsRequestError extends Error {
  *
  * The host listens to one project at a time, the one its subscriptions were
  * made in, and lets go of it when it closes. Changes are merged: subscribers
- * get one notification, sent from a later task, for all the changes made
- * before it is sent.
+ * get one notification for all the changes made before it is sent, sent
+ * {@link PROJASSETS_NOTIFY_DEBOUNCE_MS} after the last of them, or
+ * {@link PROJASSETS_NOTIFY_MAX_DELAY_MS} after the first if that is sooner. A
+ * notification pending when the project closes is not sent.
  */
 export class ProjassetsHost {
     // the subscribed frames, each once, with the function that delivers its notifications
@@ -297,10 +312,8 @@ export class ProjassetsHost {
     // its asset project, configuration, and name and visual configuration as
     // last seen, serialized; undefined while there is none
     protected watched: { open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig, seen: string } | undefined;
-    // true while a notification is scheduled
-    protected notifyScheduled = false;
-    // true once an asset change is waiting for the scheduled notification
-    protected assetsChanged = false;
+    // the notification waiting to be sent; undefined while none is
+    protected pending: PendingNotification | undefined;
     // per repository: settles once every list request received from it has been answered
     protected listTails: pxt.Map<Promise<void>> = {};
     // per repository: admits each list request under the rate limit
@@ -318,8 +331,8 @@ export class ProjassetsHost {
         protected readonly getOpenProject: () => ProjassetsOpenProject | undefined,
         protected readonly getProject: () => pxt.TilemapProject,
         protected readonly getConfig: () => ProjassetsConfig,
-        now: () => number = monotonicNow,
-        delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
+        protected readonly now: () => number = monotonicNow,
+        protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
         this.lists = new SlidingWindowAdmission(PROJASSETS_LIST_RATE_LIMIT, PROJASSETS_LIST_RATE_WINDOW_MS, now, delay);
     }
@@ -449,27 +462,52 @@ export class ProjassetsHost {
         this.unwatch();
     }
 
-    /** Stops listening for changes and ends every subscription. */
+    /** Stops listening for changes, ends every subscription, and drops the pending notification. */
     protected unwatch() {
         this.watched?.assets.removeProjectChangeListener(this.onProjectChange);
         this.watched?.config.removeChangeListener(this.onConfigChange);
         this.watched = undefined;
         this.subscribers = [];
+        this.pending = undefined;
     }
 
     protected onProjectChange = () => {
-        this.assetsChanged = true;
-        this.scheduleNotification();
+        this.scheduleNotification(true);
     }
 
     protected onConfigChange = () => {
-        this.scheduleNotification();
+        this.scheduleNotification(false);
     }
 
-    protected scheduleNotification() {
-        if (this.notifyScheduled) return;
-        this.notifyScheduled = true;
-        setTimeout(() => this.notifySubscribers(), 0);
+    /**
+     * Adds a change to the pending notification's burst, or starts a burst with it.
+     * @param assetsChanged true for a change to the project's assets
+     */
+    protected scheduleNotification(assetsChanged: boolean) {
+        const now = this.now();
+        if (this.pending) {
+            this.pending.last = now;
+            if (assetsChanged) this.pending.assetsChanged = true;
+            return;
+        }
+        this.pending = { first: now, last: now, assetsChanged };
+        this.notifyWhenDueAsync(this.pending);
+    }
+
+    /**
+     * Waits until `pending` is due, then notifies the subscribers of it;
+     * returns without notifying once `pending` is no longer the pending
+     * notification.
+     */
+    protected async notifyWhenDueAsync(pending: PendingNotification) {
+        for (;;) {
+            const wait = Math.min(pending.last + PROJASSETS_NOTIFY_DEBOUNCE_MS, pending.first + PROJASSETS_NOTIFY_MAX_DELAY_MS) - this.now();
+            if (wait <= 0) break;
+            await this.delay(wait);
+            if (this.pending !== pending) return;
+        }
+        this.pending = undefined;
+        this.notifySubscribers(pending.assetsChanged);
     }
 
     /**
@@ -478,11 +516,9 @@ export class ProjassetsHost {
      * changed; or ends the subscriptions if the open project is no longer the
      * one they were made in, or its configuration can no longer be read. A
      * read failure is reported, not raised.
+     * @param assetsChanged true if the assets changed since the last notification
      */
-    protected notifySubscribers() {
-        this.notifyScheduled = false;
-        const assetsChanged = this.assetsChanged;
-        this.assetsChanged = false;
+    protected notifySubscribers(assetsChanged: boolean) {
         if (!this.watched) return;
         let seen: string;
         try {
@@ -503,6 +539,16 @@ export class ProjassetsHost {
         this.subscribers = this.subscribers.filter(s => s.frame.isConnected);
         for (const subscriber of this.subscribers) subscriber.reply(notification);
     }
+}
+
+/** A burst of changes subscribers are to be notified of. */
+interface PendingNotification {
+    /** When the burst's first change was made, in milliseconds on the host's clock. */
+    first: number;
+    /** When the burst's latest change was made, in milliseconds on the host's clock. */
+    last: number;
+    /** True if any change of the burst was to the project's assets. */
+    assetsChanged: boolean;
 }
 
 /** Returns the name and visual configuration of `config` as they are now, serialized for comparison. */

@@ -96,6 +96,8 @@ import {
     ProjassetsOpenProject,
     PROJASSETS_LIST_RATE_LIMIT,
     PROJASSETS_LIST_RATE_WINDOW_MS,
+    PROJASSETS_NOTIFY_DEBOUNCE_MS,
+    PROJASSETS_NOTIFY_MAX_DELAY_MS,
 } from "../../webapp/src/projassetsHost";
 import {
     ProjassetsAssetOfKind,
@@ -708,7 +710,7 @@ function settle() {
     return new Promise(resolve => setTimeout(resolve, 0));
 }
 
-/** A clock for a projfs host, whose delays resolve only as a test advances it. */
+/** A clock for a projfs or projassets host, whose delays resolve only as a test advances it. */
 class FakeClock {
     time = 1000000;
     private timers: { at: number, resolve: () => void }[] = [];
@@ -2614,6 +2616,7 @@ describe("projassets host", () => {
     let accountTheme: FakeAccountTheme;
     let config: ProjassetsConfig;
     let open: ProjassetsOpenProject | undefined;
+    let clock: FakeClock;
     let host: ProjassetsHost;
     let nextId: number;
 
@@ -2630,9 +2633,15 @@ describe("projassets host", () => {
         accountTheme = new FakeAccountTheme();
         config = createProjassetsConfig(mainPkg, accountTheme);
         open = loadedProject();
-        host = new ProjassetsHost(() => open, () => project, () => config);
+        clock = new FakeClock();
+        host = new ProjassetsHost(() => open, () => project, () => config, clock.now, clock.delay);
         nextId = 0;
     });
+
+    /** Advances the clock to the end of the notification window of a change made now, sending the notification it holds. */
+    function passNotifyWindow(): Promise<void> {
+        return clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS);
+    }
 
     /** Replaces the project's pxt.json with one holding `extra`, and loads it as the editor does after a config edit. */
     function editConfig(extra: object) {
@@ -2864,8 +2873,6 @@ describe("projassets host", () => {
     });
 
     it(`holds the list requests of one repository beyond ${PROJASSETS_LIST_RATE_LIMIT} within the window, answering them in order once it allows them, and holds no subscription or other repository's list`, async () => {
-        const clock = new FakeClock();
-        host = new ProjassetsHost(() => open, () => project, () => config, clock.now, clock.delay);
         for (let i = 0; i < PROJASSETS_LIST_RATE_LIMIT; i++)
             chai.expect((await send({ subtype: "list", kind: "image" }, i % 2 ? SCOPE : `${SCOPE}/sub`)).subtype).equals("assets");
         const received: (ProjassetsReply | ProjassetsNotification)[] = [];
@@ -2903,8 +2910,64 @@ describe("projassets host", () => {
             project.updateAsset(withBitmap(image, testBitmap(4, 4)));
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             chai.expect(received).deep.equals([]);
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it(`notifies once, ${PROJASSETS_NOTIFY_DEBOUNCE_MS} ms after the last change of a burst within the window`, async () => {
+            const received = await subscribe();
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            await clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS - 1);
+            chai.expect(received).deep.equals([]);
+            project.createNewProjectImage(testBitmap(2, 2), "ghost");
+            await clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS - 1);
+            chai.expect(received).deep.equals([]);
+            await clock.advance(1);
+            chai.expect(received).deep.equals([CHANGED]);
+            await clock.advance(PROJASSETS_NOTIFY_MAX_DELAY_MS);
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it(`notifies a stream of changes longer than ${PROJASSETS_NOTIFY_MAX_DELAY_MS} ms once at that delay, and once after the stream ends`, async () => {
+            const received = await subscribe();
+            const step = PROJASSETS_NOTIFY_DEBOUNCE_MS / 2;
+            const change = () => project.createNewProjectImage(testBitmap(2, 2));
+            change();
+            let elapsed = 0;
+            while (elapsed + step < PROJASSETS_NOTIFY_MAX_DELAY_MS) {
+                await clock.advance(step);
+                elapsed += step;
+                change();
+                chai.expect(received).deep.equals([]);
+            }
+            await clock.advance(PROJASSETS_NOTIFY_MAX_DELAY_MS - elapsed - 1);
+            chai.expect(received).deep.equals([]);
+            await clock.advance(1);
+            chai.expect(received).deep.equals([CHANGED]);
+            for (let i = 0; i < 4; i++) {
+                change();
+                await clock.advance(step);
+            }
+            chai.expect(received).deep.equals([CHANGED]);
+            await clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS - step - 1);
+            chai.expect(received).deep.equals([CHANGED]);
+            await clock.advance(1);
+            chai.expect(received).deep.equals([CHANGED, CHANGED]);
+        });
+
+        it("drops a notification pending when the project closes, sending it to no frame of the next project", async () => {
+            const received = await subscribe();
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            editConfig({ palette: PROJECT_PALETTE });
+            host.close();
+            project = new pxt.TilemapProject();
+            open = loadedProject();
+            config = createProjassetsConfig(testMainPackage({ [pxt.CONFIG_NAME]: testPxtJson() }), accountTheme);
+            const next = await subscribe();
+            accountTheme.change(ACCOUNT_THEME);
+            await clock.advance(PROJASSETS_NOTIFY_MAX_DELAY_MS);
+            chai.expect(received).deep.equals([]);
+            chai.expect(next).deep.equals([]);
         });
 
         it("notifies once the change has applied", async () => {
@@ -2913,7 +2976,7 @@ describe("projassets host", () => {
                 if (r.subtype === "changed") seen.push(getImageAssets(project).map(i => i.displayName));
             }, testFrame());
             project.createNewProjectImage(testBitmap(2, 2), "villain");
-            await settle();
+            await passNotifyWindow();
             chai.expect(seen).deep.equals([["hero", "villain"]]);
         });
 
@@ -2921,13 +2984,13 @@ describe("projassets host", () => {
             const received = await subscribe();
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             project.pushUndo();
-            await settle();
+            await passNotifyWindow();
             received.length = 0;
             project.undo();
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
             project.redo();
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED, CHANGED]);
         });
 
@@ -2937,7 +3000,7 @@ describe("projassets host", () => {
             const unsubscribed: (ProjassetsReply | ProjassetsNotification)[] = [];
             await post({ subtype: "list", kind: "image" }, unsubscribed, "third/repo");
             project.createNewProjectImage(testBitmap(2, 2), "villain");
-            await settle();
+            await passNotifyWindow();
             chai.expect(first).deep.equals([CHANGED]);
             chai.expect(second).deep.equals([CHANGED]);
             chai.expect(unsubscribed.map(r => r.subtype)).deep.equals(["assets"]);
@@ -2947,17 +3010,17 @@ describe("projassets host", () => {
             const received = await subscribe();
             editConfig({ palette: PROJECT_PALETTE });
             chai.expect(received).deep.equals([]);
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
         });
 
         it("notifies once after the project's simulator theme changes, in either declaration form", async () => {
             const received = await subscribe();
             editConfig({ theme: "purple" });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
             editConfig({ theme: { "dpad-fill": "#0a0b0c" } });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED, CHANGED]);
         });
 
@@ -2965,7 +3028,7 @@ describe("projassets host", () => {
             const received = await subscribe();
             editConfig({ name: "renamed" });
             chai.expect(received).deep.equals([]);
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
         });
 
@@ -2973,13 +3036,13 @@ describe("projassets host", () => {
             const received = await subscribe();
             editConfig({ description: "a new description" });
             editConfig({ description: "a new description", palette: TARGET_PALETTE.slice() });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
             editConfig({ palette: PROJECT_PALETTE });
-            await settle();
+            await passNotifyWindow();
             received.length = 0;
             editConfig({ palette: PROJECT_PALETTE, description: "another description" });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
         });
 
@@ -2987,7 +3050,7 @@ describe("projassets host", () => {
             const received = await subscribe();
             project.createNewProjectImage(testBitmap(2, 2), "villain");
             editConfig({ palette: PROJECT_PALETTE });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
         });
 
@@ -3002,17 +3065,17 @@ describe("projassets host", () => {
             config = createProjassetsConfig(mainPkg, accountTheme);
             firstFiles[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE });
             firstPkg.loadConfig(true);
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
             editConfig({ palette: PROJECT_PALETTE });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
         });
 
         it("sends no notification when nothing changes", async () => {
             const received = await subscribe();
             await send({ subtype: "list", kind: "image" });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
         });
 
@@ -3024,7 +3087,7 @@ describe("projassets host", () => {
             chai.expect(received.map(r => r.subtype)).deep.equals(["ack", "ack"]);
             received.length = 0;
             project.createNewProjectImage(testBitmap(2, 2), "villain");
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
         });
 
@@ -3032,10 +3095,10 @@ describe("projassets host", () => {
             const received = await subscribe();
             accountTheme.change({ ...ACCOUNT_THEME, "background-color": "#00aa00" });
             chai.expect(received).deep.equals([]);
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
             accountTheme.change({ ...ACCOUNT_THEME, "background-color": "#00aa00" });
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([CHANGED]);
         });
 
@@ -3047,21 +3110,21 @@ describe("projassets host", () => {
         }
 
         it("drops a subscriber whose frame has been removed when it next notifies", async () => {
-            const counting = new CountingHost(() => open, () => project, () => config);
+            const counting = new CountingHost(() => open, () => project, () => config, clock.now, clock.delay);
             host = counting;
             const removedFrame = testFrame();
             const removed = await subscribe(SCOPE, removedFrame);
             const kept = await subscribe();
             removedFrame.isConnected = false;
             project.createNewProjectImage(testBitmap(2, 2), "villain");
-            await settle();
+            await passNotifyWindow();
             chai.expect(removed).deep.equals([]);
             chai.expect(kept).deep.equals([CHANGED]);
             chai.expect(counting.subscriberCount()).equals(1);
         });
 
         it("drops subscribers whose frames have been removed when another frame subscribes", async () => {
-            const counting = new CountingHost(() => open, () => project, () => config);
+            const counting = new CountingHost(() => open, () => project, () => config, clock.now, clock.delay);
             host = counting;
             const removedFrames = [testFrame(), testFrame()];
             for (const frame of removedFrames) await subscribe(SCOPE, frame);
@@ -3082,7 +3145,7 @@ describe("projassets host", () => {
             chai.expect(configListeners.size).equals(0);
             chai.expect(accountTheme.listeners.size).equals(0);
             project.createNewProjectImage(testBitmap(2, 2), "villain");
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
         });
 
@@ -3090,7 +3153,7 @@ describe("projassets host", () => {
             const simulatorFrame = await subscribe();
             const tabFrame = await subscribe();
             project.createNewProjectImage(testBitmap(2, 2), "villain");
-            await settle();
+            await passNotifyWindow();
             chai.expect(simulatorFrame).deep.equals([CHANGED]);
             chai.expect(tabFrame).deep.equals([CHANGED]);
         });
@@ -3112,7 +3175,7 @@ describe("projassets host", () => {
             open = loadedProject();
             first.createNewProjectImage(testBitmap(2, 2), "late");
             project.createNewProjectImage(testBitmap(2, 2), "other");
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
         });
 
@@ -3128,10 +3191,10 @@ describe("projassets host", () => {
             chai.expect(firstListeners.size).equals(0);
             chai.expect(secondListeners.size).equals(1);
             first.createNewProjectImage(testBitmap(2, 2), "late");
-            await settle();
+            await passNotifyWindow();
             chai.expect(current).deep.equals([]);
             project.createNewProjectImage(testBitmap(2, 2), "villain");
-            await settle();
+            await passNotifyWindow();
             chai.expect(old).deep.equals([]);
             chai.expect(current).deep.equals([CHANGED]);
         });
@@ -3142,7 +3205,7 @@ describe("projassets host", () => {
             await subscribe();
             open = undefined;
             first.createNewProjectImage(testBitmap(2, 2), "late");
-            await settle();
+            await passNotifyWindow();
             chai.expect(listeners.size).equals(0);
         });
 
@@ -3171,7 +3234,7 @@ describe("projassets host", () => {
             chai.expect(listeners.size).equals(1);
             open = undefined;
             editConfig({ palette: PROJECT_PALETTE });
-            await settle();
+            await passNotifyWindow();
             chai.expect(listeners.size).equals(0);
         });
 
@@ -3185,7 +3248,7 @@ describe("projassets host", () => {
             pxt.reportException = e => { reported.push(e); };
             try {
                 project.createNewProjectImage(testBitmap(2, 2), "villain");
-                await settle();
+                await passNotifyWindow();
             } finally {
                 pxt.reportException = report;
             }
@@ -3272,7 +3335,9 @@ describe("projassets host", () => {
             reloadHost = new ProjassetsHost(
                 () => current,
                 getTilemapProject,
-                () => createProjassetsConfig(current.mainPkg, new FakeAccountTheme()));
+                () => createProjassetsConfig(current.mainPkg, new FakeAccountTheme()),
+                clock.now,
+                clock.delay);
             chai.expect((await sendReload({ subtype: "subscribe" })).subtype).equals("ack");
         });
 
@@ -3288,7 +3353,7 @@ describe("projassets host", () => {
             const edited = current;
             const load = beginLoad("first");
             applyPalette(edited, "first");
-            await settle();
+            await passNotifyWindow();
             chai.expect(current.tilemapProject).equals(undefined);
             load.finish();
             chai.expect(builtImageNames()).deep.equals(["hero", "villain"]);
@@ -3304,7 +3369,7 @@ describe("projassets host", () => {
             const listing = sendReload({ subtype: "list", kind: "image" });
             const received: (ProjassetsReply | ProjassetsNotification)[] = [];
             const subscribed = reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "s", subtype: "subscribe" }, r => received.push(r), testFrame());
-            await settle();
+            await passNotifyWindow();
             chai.expect(received).deep.equals([]);
             chai.expect(current.tilemapProject).equals(undefined);
             load.finish();
@@ -3316,7 +3381,7 @@ describe("projassets host", () => {
             chai.expect(builtImageNames()).deep.equals(["hero", "villain"]);
 
             applyPalette(current, "first");
-            await settle();
+            await passNotifyWindow();
             chai.expect(received.map(r => r.subtype)).deep.equals(["ack", "changed"]);
         });
 
@@ -3343,7 +3408,7 @@ describe("projassets host", () => {
             const edited = current;
             const load = beginLoad("second");
             applyPalette(edited, "first");
-            await settle();
+            await passNotifyWindow();
             chai.expect(current.tilemapProject).equals(undefined);
             load.finish();
             chai.expect(builtImageNames()).deep.equals(["ghost"]);
@@ -3604,7 +3669,8 @@ describe("projassets client", () => {
             const files = { [pxt.CONFIG_NAME]: testPxtJson() };
             const mainPkg = testMainPackage(files);
             const open: ProjassetsOpenProject = { loadedAsync: () => Promise.resolve() };
-            const host = new ProjassetsHost(() => open, () => project, () => createProjassetsConfig(mainPkg, new FakeAccountTheme()));
+            const clock = new FakeClock();
+            const host = new ProjassetsHost(() => open, () => project, () => createProjassetsConfig(mainPkg, new FakeAccountTheme()), clock.now, clock.delay);
             const frame = testFrame();
             // the editor posts each reply and notification back to the frame's window
             parent.postMessage = (msg: ProjassetsRequest) => {
@@ -3623,7 +3689,7 @@ describe("projassets client", () => {
             await client.subscribe(() => changes++);
             const edited = testBitmap(5, 5);
             project.updateAsset(withBitmap(image, edited));
-            await settle();
+            await clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS);
             chai.expect(changes).equals(1);
             // list types its assets by the kind it lists: this fails to compile otherwise
             const images: ProjassetsImage[] = (await client.list("image")).assets;
@@ -3631,12 +3697,12 @@ describe("projassets client", () => {
                 .deep.equals([[5, 5, pxt.sprite.base64EncodeBitmap(edited)]]);
             files[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE });
             mainPkg.loadConfig(true);
-            await settle();
+            await clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS);
             chai.expect(changes).equals(2);
             chai.expect((await client.list("image")).palette).deep.equals(PROJECT_PALETTE);
             files[pxt.CONFIG_NAME] = testPxtJson({ palette: PROJECT_PALETTE, name: "renamed" });
             mainPkg.loadConfig(true);
-            await settle();
+            await clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS);
             chai.expect(changes).equals(3);
             chai.expect((await client.list("image")).name).equals("renamed");
         });
