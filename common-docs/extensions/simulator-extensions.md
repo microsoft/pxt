@@ -41,7 +41,7 @@ The fields of the `simx` entry:
 | `ref` | The branch of `repo` that is synced. | `gh-pages` | both |
 | `devUrl` | The URL the frames load the extension from, instead of its published files, while the editor runs on `localhost` with `simxdev` in its URL. | none | both |
 | `index` | The path of the simulator frame's page within the published files. | `index.html` | simulator frame |
-| `aspectRatio` | The simulator frame's width-to-height ratio (see [Resizing the simulator extension frame](#resizing-the-simulator-extension-frame)). | the target's simulator aspect ratio, else `1.22` | simulator frame |
+| `aspectRatio` | The simulator frame's width-to-height ratio (see [Resizing](#resizing)). | the target's simulator aspect ratio, else `1.22` | simulator frame |
 | `permanent` | Keeps the simulator frame across runs, restarts and collapses of the simulator; when `false`, the frame is removed some time after the program stops or another run starts. Required by an editor tab. | `true` | simulator frame |
 | `allowPopups` | Adds `allow-popups` and `allow-popups-to-escape-sandbox` to the frame's sandbox. | `false` | both |
 | `allowClipboardWrite` | Adds `clipboard-write` to the frame's permissions. | `false` | both |
@@ -52,25 +52,30 @@ The fields of the `simx` entry:
 | `editor` | Declares the extension's editor tab: its page, label and icon. | none | tab frame |
 | `hideInFullscreen` | Hides the simulator frame while the editor is in fullscreen-simulator mode; it stays loaded and keeps messaging. | `false` | simulator frame |
 
-The frame's page receives these parameters in its URL: `parentOrigin` (the editor's origin), `channel` (the extension's key), `language` (the user's language), `target` (the target's id) and `project` (the open project's id, when one is open). `target` and `project` are informational: they grant and select nothing.
+### Grants and trust
 
-### Grants
+The grants (`allowPopups`, `allowClipboardWrite`, `allowDownloads`, `allowFileWrite`, `allowAssetRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
 
-The grants (`allowPopups`, `allowClipboardWrite`, `allowDownloads`, `allowFileWrite`, `allowAssetRead` and `allowEditorTab`) are approved by the target's owner together with the registration. They hold among the target's approved extensions, not against each other: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants.
+Two grants reach further than their names say:
+
+* `allowFileWrite` lets the extension change the user's program: every file it writes into its folder is listed in the project's `pxt.json`, so a `.ts` or `.py` file it writes is compiled with the program, and a `.jres` file adds to the project's assets.
+* `allowAssetRead` discloses the project's name beside its assets, palette and simulator theme.
 
 Whatever the grants, every simulator frame and tab frame may go fullscreen (`allowfullscreen`) and has the `autoplay` and `microphone` permissions of the main simulator frame; no grant controls them.
 
-`allowFileWrite` also lets the extension change the user's program: every file it writes into its folder is listed in the project's `pxt.json`, so a `.ts` or `.py` file it writes is compiled with the program, and a `.jres` file adds to the project's assets.
+## The simulator frame
 
-`allowAssetRead` discloses the project's name beside its assets, palette and simulator theme.
+The simulator frame is the extension's page in the simulator column. It receives the run message and every simulator message, and it may post simulator messages.
 
-A frame should accept a reply, an event or a port only from `window.parent`, and only when the event's origin is the `parentOrigin` its URL carries.
+### URL parameters
 
-## Resizing the simulator extension frame
+The frame's page receives these parameters in its URL: `parentOrigin` (the editor's origin), `channel` (the extension's key), `language` (the user's language), `target` (the target's id) and `project` (the open project's id, when one is open). `target` and `project` are informational: they grant and select nothing. The frame's id is in the URL's hash.
 
-A simulator extension frame is as wide as the simulator column, and its height follows the `aspectRatio` of its registration. The frame can change its aspect ratio at run time by posting `{ type: "aspectratio", value, frameid }` to its parent, where `value` is the new width-to-height ratio and `frameid` is the frame's id, which the editor passes in the hash of the frame's URL.
+### Resizing
 
-## Fullscreen simulator
+A simulator extension frame is as wide as the simulator column, and its height follows the `aspectRatio` of its registration. The frame can change its aspect ratio at run time by posting `{ type: "aspectratio", value, frameid }` to its parent, where `value` is the new width-to-height ratio and `frameid` is the frame's id.
+
+### Fullscreen
 
 An extension has two ways to handle fullscreen-simulator mode, in which the simulator fills the editor: listen for the `fullscreen` message and adapt, or set `hideInFullscreen` in its registration to be hidden while the mode is on.
 
@@ -78,9 +83,25 @@ The editor posts `{ type: "fullscreen", enabled }` to every simulator frame when
 
 A frame registered with `hideInFullscreen` is hidden while the mode is on, and the main simulator takes the full width beside it. It stays loaded, receives every message, `fullscreen` included, and may keep posting.
 
+## Talking to the editor
+
+The [project files](#project-files), [project assets](#project-assets) and [editor tab](#editor-tab) APIs share one shape. A frame posts a request to its parent, `{ type, id, subtype, ... }`, where `type` names the API (`projfs`, `projassets` or `simxeditor`), `id` is a string the frame chooses, and `subtype` names the request. The editor replies once to each request from one of the extension's frames, to that frame only, with the request's `id`. It drops requests from other windows, and from origins it does not serve.
+
+A refused request is answered with `{ type, id, subtype: "error", code, message }`, where `code` is one of the codes below or one of the API's own, and `message` is for people. The codes every API shares:
+
+* `INVALID_REQUEST`: the request is malformed.
+* `UNREGISTERED`: the requesting frame is not a frame of a registered extension the open project includes, or it posted from an origin other than the one its frame was created with.
+* `PERMISSION_DENIED`: the registration does not set the grant the request needs.
+* `PROJECT_CLOSED`: no project was open when the request arrived, or that project failed to load or has since closed; a later request may succeed.
+* `FAILED`: the editor met an error carrying out the request.
+
+A frame should accept a reply, an event or a port only from `window.parent`, and only when the event's origin is the `parentOrigin` its URL carries.
+
+`pxtservices/projfs.ts`, `pxtservices/projassets.ts` and `pxtservices/simxeditor.ts` define each API's messages. The first two also define promise-based clients, `ProjfsClient` and `ProjassetsClient`, which post to the parent at `parentOrigin`, match replies by `id`, and raise `DISPOSED` for a request pending when the client is disposed or made after it. The three files have no dependencies and can be copied into an extension.
+
 ## Project files
 
-An extension registered with `allowFileWrite` can list, read, write and delete files in the project by posting `projfs` requests to its parent. The editor replies once to each request from one of the extension's frames, to that frame only, with the request's `id`; it drops requests from other windows, and from origins it does not serve.
+An extension registered with `allowFileWrite` can list, read, write and delete files in the project with `projfs` requests:
 
 | Request | Reply |
 | --- | --- |
@@ -88,8 +109,6 @@ An extension registered with `allowFileWrite` can list, read, write and delete f
 | `{ type: "projfs", id, subtype: "read", name }` | `{ type: "projfs", id, subtype: "content", name, content }` |
 | `{ type: "projfs", id, subtype: "write", name, content, dirty }` | `{ type: "projfs", id, subtype: "ack", name }` |
 | `{ type: "projfs", id, subtype: "delete", name, dirty }` | `{ type: "projfs", id, subtype: "ack", name }` |
-
-A refused request is answered with `{ type: "projfs", id, subtype: "error", code, message }`, where `code` is one of the [error codes](#error-codes) and `message` is for people.
 
 `content` is text, or binary data as a `data:<mime type>;base64,` URI. By default, a write or delete is an artifact: it is saved with the project, and the text editor showing a written file shows the new content, but a running simulator keeps its code until the program next runs. With `dirty: true`, it is a user edit: the editor showing the file shows the new content, the project is typechecked, and the simulator reruns if it runs automatically, just as after the user types. Either way, a write to the file open in the text editor reloads it there, which replaces any change not yet saved from it and resets its undo history and cursor.
 
@@ -120,52 +139,49 @@ The editor keeps one queue per folder: it applies a folder's requests one at a t
 
 ### Error codes
 
+Besides the [shared codes](#talking-to-the-editor):
+
 * `NOT_FOUND`: a read names no file the folder lists, or a delete names a file the folder neither stores nor lists.
 * `QUOTA_EXCEEDED`: the write would take the folder over its size or file limit, or its content alone is larger than the folder may hold. Nothing was written.
 * `INVALID_NAME`: the name breaks the [name rules](#names).
 * `RATE_LIMITED`: the folder already had as many requests waiting for replies as the editor holds; the request was not applied.
-* `INVALID_REQUEST`: the request is malformed.
-* `PROJECT_CLOSED`: no project was open when the request arrived, or that project failed to load or has since closed; a later request may succeed.
-* `UNREGISTERED`: the requesting frame is not a frame of a registered extension the open project includes, or it posted from an origin other than the one its frame was created with.
-* `PERMISSION_DENIED`: the registration does not set `allowFileWrite`.
-* `FAILED`: the editor met an error applying the request. A write or delete may be partly applied; repeating it completes it.
 
-`pxtservices/projfs.ts` defines the messages and a promise-based client, `ProjfsClient`, which also raises `DISPOSED` for a request pending when the client is disposed or made after it. It has no dependencies and can be copied into an extension.
+A `FAILED` write or delete may be partly applied; repeating it completes it. `PERMISSION_DENIED` means the registration does not set `allowFileWrite`.
 
 ## Project assets
 
-An extension registered with `allowAssetRead` can list the open project's assets, and hear when they change, by posting `projassets` requests to its parent. The editor replies once to each request from one of the extension's frames, to that frame only, with the request's `id`; it drops requests from other windows, and from origins it does not serve.
+An extension registered with `allowAssetRead` can list the open project's assets, and hear when they change, with `projassets` requests.
 
-`{ type: "projassets", id, subtype: "list", kind }` lists the project's own assets of one kind, not those of its extensions. The reply is `{ type: "projassets", id, subtype: "assets", kind, assets, name, palette, theme }`:
+### Listing
 
-* `kind` is the name of one of pxt's asset types: `image`, `tile`, `tilemap`, `animation`, `song` or `json`. A target whose projects hold no assets of a kind lists none. A kind the editor does not list is refused with `UNSUPPORTED_KIND`.
-* Each `image` is `{ kind, id, displayName, width, height, data }`: `id` is the key of the image in the project's asset file, which stays the same when the image is renamed; `displayName` is the name the user gave it, absent if it has none; `width` and `height` are in pixels; and `data` is its pixels in pxt's image encoding (`image/x-mkcd-f4`), base64-encoded.
-* Each `tile` is `{ kind, id, displayName, width, height, data }`, with the fields of an image, except that `id` is the tile's qualified id, as the project's tilemaps reference it, such as `myTiles.tile1`: tilesets reference tiles by qualified id, and tiles supplied by extensions have no other. The blank tile the editor generates for each tile width, such as `myTiles.transparency16`, is one of the project's tiles and is listed.
-* Each `tilemap` is `{ kind, id, displayName, tileWidth, width, height, data, tileset }`: `id` is the tilemap's id in the project's tileset file, such as `level1`; `displayName` is its name, which every tilemap has; `tileWidth` is the width and height of each tile in pixels; `width` and `height` are in tiles; and `data` is the tilemap in pxt's tilemap encoding (`application/mkcd-tilemap`): its bytes written as hexadecimal text, then base64-encoded. The bytes are the tile width; the width and then the height, each 16 bits, little-endian; one byte per cell, row by row, holding the index in `tileset` of the tile the cell shows; then the walls, 4 bits per cell, row by row, two cells per byte with the first in the low bits, nonzero for a wall. Every tilemap the project holds is listed, empty and unused ones included.
-* `tileset` is the tilemap's tiles in order, each `{ id, width, height, data }`: `id` is the tile's qualified id, and `width`, `height` and `data` are its size and pixels as a tile's are, whether the tile is the project's or an extension's. A member whose id names no tile of the project or its extensions has only its `id`.
-* Each `animation` is `{ kind, id, displayName, width, height, interval, frames }`, named as an image is: `width` and `height` are each frame's size in pixels, `interval` is the time each frame shows in milliseconds, and `frames` is the frames in order, each in the image encoding.
-* Each `song` is `{ kind, id, displayName, data }`, named as an image is: `data` is the song in pxt's song encoding (`application/mkcd-song`), hex-encoded, as the project's asset file stores it.
-* Each `json` is `{ kind, id, displayName, fileName, data }`, named as an image is: `fileName` is the file name the asset carries, absent if it has none, and `data` is its JSON value.
-* `name` is the project's name.
-* `palette` is the project's palette, the project's own if its `pxt.json` sets one, else the target's: an array of `#rrggbb` colors, which a pixel value indexes.
-* `theme` is the simulator theme the project shows, mapping each token to its value; it is absent if the target offers no simulator themes.
+`{ type: "projassets", id, subtype: "list", kind }` lists the project's own assets of one kind, not those of its extensions. `kind` is the name of one of pxt's asset types; a target whose projects hold no assets of a kind lists none, and a kind the editor does not list is refused with `UNSUPPORTED_KIND`. The reply is `{ type: "projassets", id, subtype: "assets", kind, assets, name, palette, theme }`, where `name` is the project's name, `palette` is the project's palette (the project's own if its `pxt.json` sets one, else the target's) as an array of `#rrggbb` colors which a pixel value indexes, and `theme` is the simulator theme the project shows, mapping each token to its value, absent if the target offers no simulator themes.
+
+Each entry of `assets` carries its `kind`, its `id`, and its `displayName` (the name the user gave it, absent if it has none), then the fields of its kind:
+
+| Kind | Fields | Notes |
+| --- | --- | --- |
+| `image` | `width`, `height` in pixels; `data`, the pixels in the [image encoding](#encodings) | `id` is the key of the image's entry in the project's asset file, which stays the same when the image is renamed. |
+| `tile` | as `image` | `id` is the tile's qualified id, as the project's tilemaps reference it, such as `myTiles.tile1`; tilesets reference tiles by qualified id, and tiles supplied by extensions have no other. The blank tile the editor generates for each tile width, such as `myTiles.transparency16`, is one of the project's tiles and is listed. |
+| `tilemap` | `tileWidth`, each tile's width and height in pixels; `width`, `height` in tiles; `data`, the tilemap in the [tilemap encoding](#encodings); `tileset`, the tilemap's tiles in order | `id` is the tilemap's id in the project's tileset file, such as `level1`; every tilemap has a `displayName`. Each member of `tileset` is `{ id, width, height, data }` as a tile is, whether the tile is the project's or an extension's; a member whose id names no tile of the project or its extensions has only its `id`. Every tilemap the project holds is listed, empty and unused ones included. |
+| `animation` | `width`, `height`, each frame's size in pixels; `interval`, the time each frame shows in milliseconds; `frames`, the frames in order, each in the image encoding | `id` as an image's. |
+| `song` | `data`, the song in the [song encoding](#encodings) | `id` as an image's. |
+| `json` | `fileName`, the file name the asset carries, absent if it has none; `data`, the JSON value | `id` as an image's. |
 
 The editor answers the list requests of the extensions of one repository in the order they arrive, at most `PROJASSETS_LIST_RATE_LIMIT` (30) within `PROJASSETS_LIST_RATE_WINDOW_MS` (10 seconds), both defined in `webapp/src/projassetsHost.ts`; later ones wait for the window to allow them.
 
-`{ type: "projassets", id, subtype: "subscribe" }` subscribes the requesting frame and is answered with `{ type: "projassets", id, subtype: "ack" }`. The editor then posts `{ type: "projassets", subtype: "changed" }` to the frame when the project's assets, its name or its visual configuration may have changed; several changes in quick succession lead to one notification, and a `list` after it shows them all. The notification is posted `PROJASSETS_NOTIFY_DEBOUNCE_MS` (250 milliseconds) after the last change, and no later than `PROJASSETS_NOTIFY_MAX_DELAY_MS` (2 seconds) after the first, so changes that keep coming are still notified, about every 2 seconds; both are defined in `webapp/src/projassetsHost.ts`. A frame holds at most one subscription: subscribing again from the same frame is acknowledged and changes nothing, and each frame of an extension subscribes for itself. Subscribe requests are not limited.
+### Subscribing
 
-A subscription ends, without notice, when the project closes or reloads. The editor then removes the extension's frames, whose pages hear `pagehide`, and creates new ones as the next load needs them, so a page subscribes once.
+`{ type: "projassets", id, subtype: "subscribe" }` subscribes the requesting frame and is answered with `{ type: "projassets", id, subtype: "ack" }`. The editor then posts `{ type: "projassets", subtype: "changed" }` to the frame when the project's assets, its name or its visual configuration may have changed; several changes in quick succession lead to one notification, and a `list` after it shows them all. The notification is posted `PROJASSETS_NOTIFY_DEBOUNCE_MS` (250 milliseconds) after the last change, and no later than `PROJASSETS_NOTIFY_MAX_DELAY_MS` (2 seconds) after the first, so changes that keep coming are still notified, about every 2 seconds; both are defined in `webapp/src/projassetsHost.ts`.
 
-A refused request is answered with `{ type: "projassets", id, subtype: "error", code, message }`, where `code` is one of:
+A frame holds at most one subscription: subscribing again from the same frame is acknowledged and changes nothing, and each frame of an extension subscribes for itself. Subscribe requests are not limited. A subscription ends, without notice, when the project closes or reloads. The editor then removes the extension's frames, whose pages hear `pagehide`, and creates new ones as the next load needs them, so a page subscribes once.
+
+### Error codes
+
+Besides the [shared codes](#talking-to-the-editor):
 
 * `UNSUPPORTED_KIND`: the editor does not list assets of the requested kind.
-* `INVALID_REQUEST`: the request is malformed.
-* `PROJECT_CLOSED`: no project was open when the request arrived, or that project failed to load or was replaced before the request was answered; a later request may succeed.
-* `UNREGISTERED`: the requesting frame is not a frame of a registered extension the open project includes, or it posted from an origin other than the one its frame was created with.
-* `PERMISSION_DENIED`: the registration does not set `allowAssetRead`.
-* `FAILED`: the editor met an error answering the request.
 
-`pxtservices/projassets.ts` defines the messages and a promise-based client, `ProjassetsClient`, which also raises `DISPOSED` for a request pending when the client is disposed or made after it. It has no dependencies and can be copied into an extension.
+`PERMISSION_DENIED` means the registration does not set `allowAssetRead`. `PROJECT_CLOSED` also answers a request whose project was replaced before the request was answered.
 
 ## Editor tab
 
@@ -203,8 +219,8 @@ The editor selects the tab through a session-only marker file named after the ex
 
 An extension with an editor tab has two frames, both created for its key:
 
-* Its **simulator frame**, in the simulator column, is the extension's simulator frame as before. Its URL also carries `editor=1` when the open project includes the extension, so the frame knows at startup that the tab exists. It receives the run message and every simulator message, and it may post simulator messages.
-* Its **tab frame**, in the editor area, is created the first time the tab is opened and removed when the project closes or reloads. Its URL carries the same parameters as the simulator frame's (`parentOrigin`, `channel`, `target`, `project`, `language`) plus `role=editor`, and it gets the same sandbox and permissions under the same grants. It is not a simulator frame: it receives no simulator messages, and nothing it posts is relayed to the simulator. The editor-wide messages any frame may post, such as `screenshot` and `addextensions`, are handled from it as from a simulator frame.
+* Its **simulator frame**, in the simulator column, is [the simulator frame](#the-simulator-frame) as before. Its URL also carries `editor=1` when the open project includes the extension, so the frame knows at startup that the tab exists.
+* Its **tab frame**, in the editor area, is created the first time the tab is opened and removed when the project closes or reloads. Its URL carries the same parameters as the simulator frame's plus `role=editor`, and it gets the same sandbox and permissions under the same grants: it may send [project-file](#project-files) and [project-asset](#project-assets) requests just as the simulator frame may, in the same folder and under the same limits. It is not a simulator frame: it receives no simulator messages, and nothing it posts is relayed to the simulator. The editor-wide messages any frame may post, such as `screenshot` and `addextensions`, are handled from it as from a simulator frame.
 
 Whenever the editor shows the tab and the extension's simulator frame does not exist (for example, because the program has not run), the editor creates it. It also creates it again after the simulator unloads while the tab exists, as when the simulator theme picker closes.
 
@@ -221,18 +237,20 @@ The editor posts these messages to the tab frame:
 * `{ type: "simxeditor", event: "shown" }` and `{ type: "simxeditor", event: "hidden" }` when the user switches to or away from the tab, and once after the tab is ready.
 * `{ type: "simxeditor", event: "simulator", command }` as the editor starts, stops or restarts the simulator, where `command` is `"start"` (on every run that reaches the simulator, including the automatic reruns after an edit), `"stop"` or `"restart"` (when the editor restarts the program already in the simulator). The event carries no program; the simulator frame receives the run message and can share it over the port.
 * `{ type: "simxeditor", event: "simulatorstate", state }` when the simulator's state changes, and once after the tab is ready, where `state` is one of `"Unloaded"`, `"Stopped"`, `"Pending"`, `"Starting"`, `"Running"`, `"Paused"` and `"Suspended"`.
-* `{ type: "simxeditor", event: "fullscreen", enabled }` when the editor enters or leaves fullscreen-simulator mode, and once after the tab is ready, where `enabled` is `true` while the simulator covers the editor area, and with it the tab. The simulator frame receives the `fullscreen` message at the same time, so an extension whose tab is its main view can show that view in the simulator frame while the tab is covered.
+* `{ type: "simxeditor", event: "fullscreen", enabled }` when the editor enters or leaves fullscreen-simulator mode, and once after the tab is ready, where `enabled` is `true` while the simulator covers the editor area, and with it the tab. The simulator frame receives the [`fullscreen` message](#fullscreen) at the same time, so an extension whose tab is its main view can show that view in the simulator frame while the tab is covered.
 
 A tab lives for one load of its project: the editor removes the tab frame when the project closes or reloads, and the ports and project-asset subscriptions the tab held end with it. The editor posts no message before removing the frame; to save state, listen for `pagehide` on the tab's window.
 
 A hidden tab stays loaded, but it is not rendered, and the browser may run its timers late or not at all. Render only while the tab is shown, and keep any computation that must not pause, such as a simulation, in the simulator frame, which is visible whenever the simulator is. A tab that runs simulators of its own is responsible for them while it is hidden, for example by pausing them.
 
-### Grants of the tab frame
-
-The extension's grants apply to both of its frames: the tab frame may send [project-file](#project-files) requests under `allowFileWrite` and [project-asset](#project-assets) requests under `allowAssetRead`, just as the simulator frame may, in the same folder and under the same limits.
-
 ### Opening the tab from the simulator frame
 
-The simulator frame may ask the editor to show the tab, for example when the user clicks a button in it, by posting `{ type: "simxeditor", subtype: "open", id }` to its parent. The editor shows the tab, creating the tab frame if needed, and replies to the simulator frame with `{ type: "simxeditor", id, subtype: "ack" }`, or with `{ type: "simxeditor", id, subtype: "error", code, message }`, where `code` is `UNREGISTERED` (the frame is not the simulator frame of a registered extension the open project includes), `PERMISSION_DENIED` (the registration does not declare and enable a tab), `UNAVAILABLE` (the editor shows no tabs in its current view) or `INVALID_REQUEST` (the request is unknown, or the editor failed to carry it out).
+The simulator frame may ask the editor to show the tab, for example when the user clicks a button in it, by posting `{ type: "simxeditor", subtype: "open", id }` to its parent. The editor shows the tab, creating the tab frame if needed, and replies to the simulator frame with `{ type: "simxeditor", id, subtype: "ack" }`, or with an error whose `code` is one of the [shared codes](#talking-to-the-editor) or `UNAVAILABLE` (the editor shows no tabs in its current view). Here `UNREGISTERED` means the frame is not the simulator frame of a registered extension the open project includes, `PERMISSION_DENIED` that the registration does not declare and enable a tab, and `INVALID_REQUEST` that the request is unknown or the editor failed to carry it out.
 
-The message types are defined in `pxtservices/simxeditor.ts`, which has no dependencies and can be copied into an extension.
+## Encodings
+
+The asset data the editor lists is in pxt's own encodings, as the project's asset files store it:
+
+* **Image** (`image/x-mkcd-f4`): the pixels of an image, a tile or an animation frame, base64-encoded.
+* **Tilemap** (`application/mkcd-tilemap`): the bytes written as hexadecimal text, then base64-encoded. The bytes are the tile width; the width and then the height, each 16 bits, little-endian; one byte per cell, row by row, holding the index in the tilemap's `tileset` of the tile the cell shows; then the walls, 4 bits per cell, row by row, two cells per byte with the first in the low bits, nonzero for a wall.
+* **Song** (`application/mkcd-song`): the song's bytes as hexadecimal text, not base64-encoded.
