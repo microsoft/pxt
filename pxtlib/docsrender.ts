@@ -601,7 +601,6 @@ namespace pxt.docs {
 
         const versionPath = context?.versionPath;
         const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
-        const isIpcRenderer = typeof window != "undefined" && !!(window as any).ipcRenderer;
         renderer.link = function (this: MarkedRenderer, token: { href: string; title?: string | null; text: string; tokens?: any[] }) {
             const originalHref = token.href || "";
             const isRelative = /^[/#]/.test(originalHref);
@@ -613,7 +612,7 @@ namespace pxt.docs {
                 : `<a href="${adjustedToken.href}">${this.parser.parseInline(adjustedToken.tokens || [])}</a>`;
 
             const attrs: string[] = [];
-            if (!isRelative || isIpcRenderer) {
+            if (!isRelative) {
                 attrs.push('target="_blank"');
             }
             attrs.push('rel="nofollow noopener"');
