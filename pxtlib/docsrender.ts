@@ -186,9 +186,21 @@ namespace pxt.docs {
     }
 
     export let requireDOMSanitizer = () => {
-        if (typeof DOMPurify !== "undefined") return DOMPurify.sanitize;
-        if (typeof require === "undefined") return undefined;
-        return (require("dompurify") as typeof DOMPurify).sanitize;
+        let dpSanitize = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize : undefined;
+
+        if (!dpSanitize) {
+            if (typeof require === "undefined") {
+                return undefined;
+            }
+            dpSanitize = (require("dompurify") as typeof DOMPurify).sanitize;
+        }
+
+        if (dpSanitize) {
+            // allow target attribute on anchor tags
+            return (html: string) => dpSanitize!(html, { ADD_ATTR: ["target"] });
+        }
+
+        return undefined;
     }
 
     export interface RenderData {
@@ -589,6 +601,7 @@ namespace pxt.docs {
 
         const versionPath = context?.versionPath;
         const linkRenderer = renderer.link ? renderer.link.bind(renderer) : undefined;
+        const isIpcRenderer = typeof window != "undefined" && !!(window as any).ipcRenderer;
         renderer.link = function (this: MarkedRenderer, token: { href: string; title?: string | null; text: string; tokens?: any[] }) {
             const originalHref = token.href || "";
             const isRelative = /^[/#]/.test(originalHref);
@@ -600,7 +613,7 @@ namespace pxt.docs {
                 : `<a href="${adjustedToken.href}">${this.parser.parseInline(adjustedToken.tokens || [])}</a>`;
 
             const attrs: string[] = [];
-            if (!isRelative) {
+            if (!isRelative || isIpcRenderer) {
                 attrs.push('target="_blank"');
             }
             attrs.push('rel="nofollow noopener"');
