@@ -58,7 +58,7 @@ The grants (`allowPopups`, `allowClipboardWrite`, `allowDownloads`, `allowFileWr
 
 Two grants reach further than their names say:
 
-* `allowFileWrite` lets the extension change the user's program: every file it writes into its folder is listed in the project's `pxt.json`, so a `.ts` or `.py` file it writes is compiled with the program, and a `.jres` file adds to the project's assets.
+* `allowFileWrite` lets the extension change the user's program: every file it writes into its folder is listed in the project's `pxt.json`, so a `.ts` or `.py` file it writes is compiled with the program. Assets are not created through project files: a write of a `.jres` file is refused.
 * `allowAssetRead` discloses the project's name beside its assets, palette and simulator theme.
 
 Whatever the grants, every simulator frame and tab frame may go fullscreen (`allowfullscreen`) and has the `autoplay` and `microphone` permissions of the main simulator frame; no grant controls them.
@@ -120,7 +120,7 @@ An extension's folder is the folder of its GitHub repository, `owner/repo/`, wha
 
 * A name is relative: it has no empty, `.` or `..` segment, and `/` and `\` both separate segments.
 * A name ending in `.simxeditor` is refused in every request; the suffix is reserved for the editor.
-* A write follows the file explorer's rule for a new file: its name starts with a letter, digit or underscore and uses only letters, digits, `_`, `-`, `.` and `/`. A write also refuses a name whose last segment is `pxt.json`, in any letter case, at any depth.
+* A write follows the file explorer's rule for a new file: its name starts with a letter, digit or underscore and uses only letters, digits, `_`, `-`, `.` and `/`. A write also refuses a name whose last segment is `pxt.json` or ends in `.jres`, in any letter case, at any depth.
 * A stored file whose name does not follow the rules for writes can still be read and deleted.
 
 ### Limits

@@ -937,6 +937,13 @@ describe("projfs host", () => {
         chai.expect(project.calls).deep.equals([]);
     });
 
+    it("refuses writing an asset file, at any depth and letter case, without touching the project", async () => {
+        for (const name of ["a.jres", "sub/A.JRES", "a/b/c.jres"]) {
+            await expectError({ subtype: "write", name, content: "{}" }, "INVALID_NAME");
+        }
+        chai.expect(project.calls).deep.equals([]);
+    });
+
     it("refuses names ending in the reserved marker suffix, at any depth, without touching the project", async () => {
         for (const name of ["x" + pxt.SIMX_EDITOR_MARKER_SUFFIX, "a/x" + pxt.SIMX_EDITOR_MARKER_SUFFIX]) {
             await expectError({ subtype: "write", name, content: "x" }, "INVALID_NAME");

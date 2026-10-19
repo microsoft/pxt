@@ -247,14 +247,16 @@ export function getFolderFileName(folder: string, name: unknown): string | undef
  * `pxt.isValidProjectFileName`), it has at most
  * {@link PROJFS_MAX_NAME_LENGTH} characters in at most
  * {@link PROJFS_MAX_NAME_SEGMENTS} segments, and its last segment is not
- * `pxt.json`, in any letter case.
+ * `pxt.json` and does not end in `.jres`, in any letter case.
  */
 export function isWritableName(name: string): boolean {
     const segments = name.split("/");
+    const last = segments[segments.length - 1].toLowerCase();
     return pxt.isValidProjectFileName(name)
         && name.length <= PROJFS_MAX_NAME_LENGTH
         && segments.length <= PROJFS_MAX_NAME_SEGMENTS
-        && segments[segments.length - 1].toLowerCase() !== pxt.CONFIG_NAME;
+        && last !== pxt.CONFIG_NAME
+        && !last.endsWith(".jres");
 }
 
 /**
