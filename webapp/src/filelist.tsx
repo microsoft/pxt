@@ -70,6 +70,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.setFile = this.setFile.bind(this);
         this.removeFile = this.removeFile.bind(this);
+        this.renameFile = this.renameFile.bind(this);
         this.addLocalizedFile = this.addLocalizedFile.bind(this);
         this.removePkg = this.removePkg.bind(this);
         this.updatePkg = this.updatePkg.bind(this);
@@ -112,6 +113,94 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private removeFile(f: pkg.File) {
         this.props.parent.removeFile(f);
+    }
+
+    private renameFile(f: pkg.File) {
+        const validRx = /^[\w][\/\w\-\.]*$/;
+        const mainPkg = pkg.mainEditorPkg();
+        const originalExt = f.getExtension();
+
+        const lastSlash = f.name.lastIndexOf("/");
+        const dir = lastSlash >= 0 ? f.name.slice(0, lastSlash + 1) : "";
+        const baseFileName = lastSlash >= 0 ? f.name.slice(lastSlash + 1) : f.name;
+
+        core.promptAsync({
+            header: lf("Rename {0}", baseFileName),
+            body: lf("Please provide a new name for your file."),
+            agreeLbl: lf("Rename"),
+            initialValue: baseFileName,
+            hasCloseIcon: true,
+            onInputValidation: (v) => {
+                if (!v)
+                    return lf("filename is empty.");
+                v = v.trim();
+                if (!validRx.test(v))
+                    return lf("Don't use spaces or special characters.");
+                return undefined;
+            }
+        }).then(str => {
+            if (!str)
+                return Promise.resolve();
+            str = str.replace(/\s+/g, "");
+            if (str === baseFileName)
+                return Promise.resolve();
+
+            const indLastPeriod = str.lastIndexOf(".");
+            let name = str;
+            let ext = originalExt;
+
+            if (indLastPeriod !== -1) {
+                name = str.slice(0, indLastPeriod);
+                const givenExt = str.slice(indLastPeriod + 1).toLowerCase();
+                const allowedExts = ["ts", "js", "py", "md", "json", "jres"];
+                if (allowedExts.indexOf(givenExt) >= 0 || givenExt === originalExt) {
+                    ext = givenExt;
+                }
+            }
+
+            if (!name)
+                return Promise.resolve();
+
+            if (!validRx.test(name)) {
+                core.warningNotification(lf("Invalid file name"));
+                return Promise.resolve();
+            }
+
+            const newFileName = `${dir}${ext ? `${name}.${ext}` : name}`;
+            if (newFileName === f.name)
+                return Promise.resolve();
+
+            const isSpecial = newFileName === pxt.CONFIG_NAME
+                || newFileName === pxt.MAIN_TS
+                || newFileName === pxt.MAIN_BLOCKS
+                || newFileName === pxt.MAIN_PY
+                || newFileName === pxt.HISTORY_FILE;
+
+            if (isSpecial) {
+                core.warningNotification(lf("Cannot use this file name"));
+                return Promise.resolve();
+            }
+
+            const pkgCfg = pkg.mainPkg && pkg.mainPkg.config;
+            const languageRestriction = pkgCfg && pkgCfg.languageRestriction;
+            if (languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly && ext === "py") {
+                core.warningNotification(lf("Python files are not allowed in this project"));
+                return Promise.resolve();
+            } else if (languageRestriction === pxt.editor.LanguageRestriction.PythonOnly && (ext === "ts" || ext === "js")) {
+                core.warningNotification(lf("TypeScript files are not allowed in this project"));
+                return Promise.resolve();
+            } else if (languageRestriction === pxt.editor.LanguageRestriction.BlocksOnly && (ext === "py" || ext === "ts" || ext === "js")) {
+                core.warningNotification(lf("Text files are not allowed in this project"));
+                return Promise.resolve();
+            }
+
+            if (mainPkg.sortedFiles().some(file => file.name === newFileName)) {
+                core.warningNotification(lf("File already exists"));
+                return Promise.resolve();
+            }
+
+            return this.props.parent.renameFile(f, newFileName);
+        });
     }
 
     private addLocalizedFile(f: pkg.File, localizedF: string) {
@@ -194,6 +283,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 && isTutorialMd
                 && pxt.Util.userLanguage() !== (pxt.appTarget.appTheme.defaultLocale || "en")
                 && !files.some(f => f.name == localized);
+            const isSpecialFile = file.name === pxt.CONFIG_NAME
+                || file.name === pxt.MAIN_TS
+                || file.name === pxt.MAIN_BLOCKS
+                || file.name === pxt.MAIN_PY
+                || file.name === pxt.HISTORY_FILE;
+            const hasRename = topPkg && !shellReadonly && !isSpecialFile && !file.isReadonly();
             const hasDelete = deleteFiles
                 && (
                     file.name != pxt.CONFIG_NAME
@@ -209,10 +304,12 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                     meta={meta}
                     onItemClick={this.setFile}
                     onItemRemove={this.removeFile}
+                    onItemRename={this.renameFile}
                     onErrorClick={this.navigateToError}
                     onItemLocalize={this.addLocalizedFile}
                     isActive={currentFile == file}
                     hasDelete={hasDelete}
+                    hasRename={hasRename}
                     previewUrl={previewUrl}
                     shareUrl={shareUrl}
                     addLocalizedFile={addLocale && localized}
@@ -482,10 +579,12 @@ interface FileTreeItemProps {
     meta: pkg.FileMeta;
     onItemClick: (fn: pkg.File) => void;
     onItemRemove: (fn: pkg.File) => void;
+    onItemRename?: (fn: pkg.File) => void;
     onItemLocalize: (fn: pkg.File, localizedf: string) => void;
     onErrorClick?: (meta: pkg.FileMeta) => void;
     isActive: boolean;
     hasDelete?: boolean;
+    hasRename?: boolean;
     previewUrl?: string;
     shareUrl?: string;
     addLocalizedFile?: string;
@@ -499,6 +598,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
 
         this.handleClick = this.handleClick.bind(this);
         this.handleRemove = this.handleRemove.bind(this);
+        this.handleRename = this.handleRename.bind(this);
         this.handleButtonKeydown = this.handleButtonKeydown.bind(this);
         this.handlePreview = this.handlePreview.bind(this);
         this.handleShare = this.handleShare.bind(this);
@@ -522,6 +622,14 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
         e.preventDefault();
         e.stopPropagation();
         this.props.onItemRemove(this.props.file);
+    }
+
+    handleRename(e: React.MouseEvent<HTMLElement>) {
+        pxt.tickEvent("explorer.file.rename");
+        e.preventDefault();
+        e.stopPropagation();
+        if (this.props.onItemRename)
+            this.props.onItemRename(this.props.file);
     }
 
     handlePreview(e: React.MouseEvent<HTMLElement>) {
@@ -556,7 +664,7 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
     }
 
     renderCore() {
-        const { isActive, hasDelete, file, meta, previewUrl, shareUrl, addLocalizedFile, className, locked } = this.props;
+        const { isActive, hasDelete, hasRename, file, meta, previewUrl, shareUrl, addLocalizedFile, className, locked } = this.props;
 
         return (
             <a
@@ -606,6 +714,16 @@ class FileTreeItem extends sui.StatelessUIElement<FileTreeItemProps> {
                     >
                         {meta.numErrors}
                     </div> : undefined
+                }
+                {hasRename &&
+                    <sui.Button
+                        className="neutral label"
+                        icon="pencil"
+                        title={lf("Rename file {0}", file.name)}
+                        ariaLabel={lf("Rename file {0}", file.name)}
+                        onClick={this.handleRename}
+                        onKeyDown={fireClickOnEnter}
+                    />
                 }
                 {hasDelete &&
                     <sui.Button
