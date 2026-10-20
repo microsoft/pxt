@@ -387,7 +387,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             hasCloseIcon: true,
             onInputValidation: (v) => {
                 if (!v)
-                    return lf("filename is empty.");
+                    return lf("Filename is empty.");
                 v = v.trim();
                 if (!validRx.test(v))
                     return lf("Don't use spaces or special characters.");
