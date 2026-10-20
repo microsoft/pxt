@@ -70,6 +70,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     currentFlyoutKey: string;
 
     private ignoreFlyoutPreviousNode = false;
+    private flyoutNavigatorInitialized = false;
+    private keyboardControlsInitialized = false;
 
     protected intersectionObserver: IntersectionObserver;
     private errors: ErrorDisplayInfo[] = [];
@@ -549,17 +551,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * it to select the first category and clear the selection.
          */
         const that = this;
-        assertMethod(Blockly.FlyoutNavigator.prototype, "getOutNode");
-        Blockly.FlyoutNavigator.prototype.getOutNode = function(_node?: Blockly.IFocusableNode | null, _bypassAdjustments = false) {
-            // Focus the React toolbox tree and return a non-null node so the
-            // left-arrow shortcut doesn't beep. Blockly's subsequent
-            // focusNode(firstItem) is a no-op because React replaced the stock
-            // toolbox DOM, so firstItem's element is detached from the document
-            // and .focus() on it does nothing.
-            const firstItem = that.editor.getToolbox().getToolboxItems()[0];
-            Blockly.getFocusManager().focusNode(firstItem);
-            that.toolbox.focus();
-            return firstItem;
+        if (!this.flyoutNavigatorInitialized) {
+            assertMethod(Blockly.FlyoutNavigator.prototype, "getOutNode");
+            const oldFlyoutGetOutNode = Blockly.FlyoutNavigator.prototype.getOutNode;
+            Blockly.FlyoutNavigator.prototype.getOutNode = function(_node?: Blockly.IFocusableNode | null, _bypassAdjustments = false) {
+                const toolbox = that.editor.getToolbox();
+                if (!toolbox || !that.toolbox) return oldFlyoutGetOutNode.call(this, _node, _bypassAdjustments);
+
+                // Focus the React toolbox tree and return a non-null node so the
+                // left-arrow shortcut doesn't beep. Blockly's subsequent
+                // focusNode(firstItem) is a no-op because React replaced the stock
+                // toolbox DOM, so firstItem's element is detached from the document
+                // and .focus() on it does nothing.
+                const firstItem = toolbox.getToolboxItems()[0];
+                Blockly.getFocusManager().focusNode(firstItem);
+                that.toolbox.focus();
+                return firstItem;
+            }
+            this.flyoutNavigatorInitialized = true;
         }
         assertMethod(Blockly.Toolbox.prototype, "getFocusableElement");
         Blockly.Toolbox.prototype.getFocusableElement = function() {
@@ -661,6 +670,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initKeyboardControls() {
+        // Shortcuts are global, so workspace rebuilds must not register or wrap them again.
+        if (this.keyboardControlsInitialized) return;
+
         Blockly.ShortcutRegistry.registry.register({
             name: LIST_SHORTCUTS_SHORTCUT,
             callback: (workspace) => {
@@ -789,6 +801,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return true
             }
         });
+        this.keyboardControlsInitialized = true;
     }
 
     private initWorkspaceSearch() {
