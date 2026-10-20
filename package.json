@@ -56,12 +56,12 @@
   ],
   "main": "built/pxt.js",
   "engines": {
-    "node": ">=18.0.0",
+    "node": ">=24.0.0",
     "npm": ">=8.0.0"
   },
   "dependencies": {
-    "@blockly/field-grid-dropdown": "6.0.4",
-    "@blockly/plugin-workspace-search": "10.1.2",
+    "@blockly/field-grid-dropdown": "13.1.0",
+    "@blockly/plugin-workspace-search": "13.1.0",
     "@crowdin/crowdin-api-client": "^1.33.0",
     "@fortawesome/fontawesome-free": "^5.15.4",
     "@microsoft/applicationinsights-web": "^2.8.11",
@@ -69,16 +69,16 @@
     "@types/audioworklet": "^0.0.75",
     "@types/diff-match-patch": "^1.0.32",
     "@zip.js/zip.js": "2.4.20",
-    "adm-zip": "^0.5.12",
-    "axios": "^1.12.2",
+    "adm-zip": "^0.6.1",
+    "axios": "^1.20.0",
     "blockly": "13.1.1",
-    "browserify": "17.0.0",
+    "browserify": "17.0.1",
     "chai": "^3.5.0",
     "chalk": "^4.1.2",
     "cssnano": "7.1.1",
     "dashjs": "^4.4.0",
     "diff-match-patch": "^1.0.5",
-    "dompurify": "3.3.0",
+    "dompurify": "3.4.17",
     "faye-websocket": "0.11.1",
     "karma": "6.4.4",
     "karma-chai": "0.1.0",
@@ -87,14 +87,14 @@
     "less": "3.13.1",
     "lzma": "2.3.2",
     "marked": "17.0.0",
-    "mocha": "10.8.2",
+    "mocha": "12.0.3",
     "pngjs": "3.4.0",
-    "postcss": "8.5.6",
+    "postcss": "8.5.30",
     "promise.prototype.finally": "^3.1.2",
-    "puppeteer": "23.11.1",
+    "puppeteer": "25.14.0",
     "rimraf": "2.5.4",
     "rtlcss": "4.3.0",
-    "sanitize-html": "2.17.0",
+    "sanitize-html": "2.18.1",
     "semantic-ui-less": "2.4.1",
     "terser": "5.44.0"
   },
@@ -104,7 +104,6 @@
   },
   "devDependencies": {
     "@microsoft/eslint-plugin-sdl": "^0.1.5",
-    "@types/adm-zip": "^0.5.5",
     "@types/chai": "4.0.6",
     "@types/fuse": "2.5.2",
     "@types/highlight.js": "9.12.2",
@@ -150,21 +149,12 @@
     "yargs": "^17.7.2"
   },
   "overrides": {
-    "@blockly/field-grid-dropdown": {
-      "blockly": "13.1.1"
-    },
-    "@blockly/plugin-workspace-search": {
-      "blockly": "13.1.1"
-    },
     "combine-source-map": {
       "source-map": "0.4.4"
     },
-    "sha.js": "2.4.12",
-    "cipher-base": "1.0.7",
-    "pbkdf2": "3.1.5",
-    "elliptic": "6.6.1",
-    "tar-fs": "3.1.1",
-    "terser": "5.44.0"
+    "ttf2woff2@4.0.5": {
+      "node-gyp": "12.4.0"
+    }
   },
   "scripts": {
     "build": "gulp",

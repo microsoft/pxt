@@ -1,6 +1,7 @@
-import "swiper/scss";
-import "swiper/scss/navigation";
-import "swiper/scss/mousewheel";
+import "swiper/css";
+import "swiper/css/navigation";
+import "swiper/css/mousewheel";
+import "swiper/css/a11y";
 
 import * as React from "react";
 import { useContext, useState } from "react";
@@ -13,7 +14,7 @@ import { resetChecklistAsync } from "../transforms/resetChecklistAsync";
 import { loadChecklistAsync } from "../transforms/loadChecklistAsync";
 import { Constants, Strings, Ticks } from "../constants";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Mousewheel, Navigation } from "swiper";
+import { A11y, Mousewheel, Navigation } from "swiper/modules";
 import { AppStateContext } from "../state/appStateContext";
 import { CarouselCardSet, RequestStatus } from "../types";
 import { useJsonDocRequest } from "../hooks/useJsonDocRequest";
@@ -128,7 +129,14 @@ const Carousel: React.FC<CarouselProps> = ({ children }) => {
             mousewheel={{
                 forceToAxis: true,
             }}
-            modules={[Navigation, Mousewheel]}
+            modules={[Navigation, Mousewheel, A11y]}
+            a11y={{
+                prevSlideMessage: lf("Previous slide"),
+                nextSlideMessage: lf("Next slide"),
+                firstSlideMessage: lf("This is the first slide"),
+                lastSlideMessage: lf("This is the last slide"),
+                slideLabelMessage: lf("Slide {0} of {1}", "{{index}}", "{{slidesLength}}"),
+            }}
             className={css.swiperCarousel}
         >
             {cards.map((card, index) => (
