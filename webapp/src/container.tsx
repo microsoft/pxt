@@ -576,6 +576,7 @@ export class SettingsMenu extends data.Component<SettingsMenuProps, SettingsMenu
 
         items.push({
             role: "menuitem",
+            leftIcon: "icon info circle",
             label: lf("About..."),
             title: lf("About..."),
             onClick: this.showAboutDialog

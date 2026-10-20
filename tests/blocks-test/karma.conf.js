@@ -1,10 +1,10 @@
 // Karma configuration
 const process = require("process");
 const puppeteer = require('puppeteer');
-process.env.CHROME_BIN = puppeteer.executablePath()
-console.log(`chromium: `, process.env.CHROME_BIN)
 
-module.exports = function(config) {
+module.exports = async function(config) {
+  process.env.CHROME_BIN = await puppeteer.executablePath()
+  console.log(`chromium: `, process.env.CHROME_BIN)
   config.set({
 
     // base path that will be used to resolve all patterns (eg. files, exclude)

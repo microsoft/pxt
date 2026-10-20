@@ -186,9 +186,21 @@ namespace pxt.docs {
     }
 
     export let requireDOMSanitizer = () => {
-        if (typeof DOMPurify !== "undefined") return DOMPurify.sanitize;
-        if (typeof require === "undefined") return undefined;
-        return (require("dompurify") as typeof DOMPurify).sanitize;
+        let dpSanitize = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize : undefined;
+
+        if (!dpSanitize) {
+            if (typeof require === "undefined") {
+                return undefined;
+            }
+            dpSanitize = (require("dompurify") as typeof DOMPurify).sanitize;
+        }
+
+        if (dpSanitize) {
+            // allow target attribute on anchor tags
+            return (html: string) => dpSanitize!(html, { ADD_ATTR: ["target"] });
+        }
+
+        return undefined;
     }
 
     export interface RenderData {
