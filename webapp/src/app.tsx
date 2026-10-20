@@ -3843,7 +3843,12 @@ export class ProjectView
             simulator.unhide();
         }
         else {
-            this.startSimulator();
+            // Reveals the permanent simulator extension frames the collapse hid,
+            // once the run has put the main frame back ahead of them, unless the
+            // simulator was collapsed again meanwhile.
+            this.startSimulator().finally(() => {
+                if (!this.state.collapseEditorTools) simulator.unhide();
+            });
         }
         this.setState({ collapseEditorTools: false });
         this.fireResize();
