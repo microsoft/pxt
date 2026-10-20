@@ -36,8 +36,8 @@ interface FakeFrame {
 }
 
 /**
- * The part of a DOM element the driver touches when it creates, starts and
- * removes simulator frames. An iframe removed from its parent, directly or
+ * The part of a DOM element the driver touches when it creates, starts, hides
+ * and removes simulator frames. An iframe removed from its parent, directly or
  * with an ancestor, loses its content window, as in the browser.
  */
 class FakeElement implements FakeFrame {
@@ -91,14 +91,25 @@ class FakeElement implements FakeFrame {
     }
 
     appendChild(child: FakeElement): FakeElement {
-        this.children.push(child);
+        return this.insertBefore(child, undefined);
+    }
+
+    /** Inserts `child` before `ref`, or last when `ref` is not a child. */
+    insertBefore(child: FakeElement, ref: FakeElement): FakeElement {
+        if (child.parentElement) child.parentElement.unlink(child);
+        const index = ref ? this.children.indexOf(ref) : -1;
+        if (index < 0) this.children.push(child);
+        else this.children.splice(index, 0, child);
         child.parentElement = this;
         return child;
     }
 
+    /**
+     * Removes `child`. Each iframe in the removed subtree loses its
+     * `contentWindow`, as an iframe detached from the document does.
+     */
     removeChild(child: FakeElement): FakeElement {
-        this.children.splice(this.children.indexOf(child), 1);
-        child.parentElement = undefined;
+        this.unlink(child);
         child.detach();
         return child;
     }
@@ -134,6 +145,12 @@ class FakeElement implements FakeFrame {
 
     private classNames(): string[] {
         return this.className.split(/\s+/).filter(c => !!c);
+    }
+
+    // takes `child` out of this element's children without detaching its subtree
+    private unlink(child: FakeElement) {
+        this.children.splice(this.children.indexOf(child), 1);
+        child.parentElement = undefined;
     }
 }
 
@@ -1023,6 +1040,271 @@ describe("simulator driver simulator extension editor tabs", () => {
             h.frames.push(unregistered);
             receive(h, open, unregistered.contentWindow);
             chai.expect(refusals(unregistered)).deep.equals([{ type: "simxeditor", id: "7", subtype: "error", code: "UNREGISTERED" }]);
+        });
+    });
+});
+
+describe("simulator driver hide and unhide", () => {
+    const HIDDEN = "simHidden";
+    const PERMANENT_CHANNEL = "someorg/pxt-ext";
+    const TRANSIENT_CHANNEL = "someorg/pxt-transient";
+
+    let container: FakeElement;
+    let mainWrapper: FakeElement;
+    let permanentWrapper: FakeElement;
+    let transientWrapper: FakeElement;
+    let completions: number;
+    /** The completions of the exit animations the host has started, in start order. */
+    let animations: (() => void)[];
+    let driver: pxsim.SimulatorDriver;
+
+    /**
+     * Adds a frame wrapper to the container shaped as the driver builds one:
+     * the iframe, then the play icon and the loader.
+     */
+    function simframe(id: string, channel?: string, permanent?: boolean): FakeElement {
+        const wrapper = new FakeElement("div");
+        wrapper.className = "simframe ui embed";
+        const frame = new FakeElement("iframe");
+        frame.id = id;
+        frame.dataset = { origin: EDITOR_ORIGIN, runid: "" };
+        if (channel) frame.dataset["messagechannel"] = channel;
+        if (permanent) frame.dataset["permanent"] = "true";
+        wrapper.appendChild(frame);
+        wrapper.appendChild(new FakeElement("i"));
+        wrapper.appendChild(new FakeElement("div"));
+        container.appendChild(wrapper);
+        return wrapper;
+    }
+
+    function iframe(wrapper: FakeElement): FakeElement {
+        return wrapper.firstElementChild;
+    }
+
+    /** The ids of the frames in the container, in order. */
+    function frameIds(): string[] {
+        return container.children.map(wrapper => iframe(wrapper).id);
+    }
+
+    function complete() {
+        completions++;
+    }
+
+    /** Ends every exit animation the host has started, applying each completion in start order. */
+    function finishAnimations() {
+        const finishing = animations;
+        animations = [];
+        finishing.forEach(finish => finish());
+    }
+
+    /**
+     * Creates the driver under test. Its host plays an exit animation in
+     * `removeElement` and `hideElement`: the removal or the hidden class, and
+     * the complete handler, apply when `finishAnimations()` ends it.
+     */
+    function createDriver(withHideElement: boolean) {
+        const simx = (permanent: boolean) => ({ index: "index.html", aspectRatio: 1, permanent });
+        driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
+            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            simulatorExtensions: {
+                [PERMANENT_CHANNEL]: simx(true),
+                [TRANSIENT_CHANNEL]: simx(false),
+            },
+            removeElement: (el, onComplete) => {
+                animations.push(() => {
+                    if (onComplete) onComplete();
+                    pxsim.U.remove(el);
+                });
+            },
+            hideElement: withHideElement
+                ? (el, onComplete) => {
+                    animations.push(() => {
+                        pxsim.U.addClass(el, HIDDEN);
+                        if (onComplete) onComplete();
+                    });
+                }
+                : undefined,
+            unhideElement: el => pxsim.U.removeClass(el, HIDDEN),
+        });
+    }
+
+    beforeEach(() => {
+        container = new FakeElement("div");
+        mainWrapper = simframe("sim-frame-1");
+        permanentWrapper = simframe("sim-frame-2", PERMANENT_CHANNEL, true);
+        transientWrapper = simframe("sim-frame-3", TRANSIENT_CHANNEL);
+        completions = 0;
+        animations = [];
+        createDriver(true);
+    });
+
+    afterEach(() => {
+        // cancels the frame cleanup timer that hide() and run() schedule
+        (driver as any).unload();
+    });
+
+    it("hides a permanent simulator extension frame in place", () => {
+        driver.hide(complete);
+        finishAnimations();
+        chai.expect(frameIds()).deep.equals(["sim-frame-2"]);
+        chai.expect(container.children[0]).equals(permanentWrapper);
+        chai.expect(pxsim.U.containsClass(permanentWrapper as unknown as HTMLElement, HIDDEN)).equals(true);
+        chai.expect(iframe(permanentWrapper).id).equals("sim-frame-2");
+        chai.expect(iframe(permanentWrapper).dataset["messagechannel"]).equals(PERMANENT_CHANNEL);
+    });
+
+    it("removes the main frame and non-permanent frames on hide", () => {
+        driver.hide(complete);
+        finishAnimations();
+        chai.expect(mainWrapper.parentElement).equals(undefined);
+        chai.expect(transientWrapper.parentElement).equals(undefined);
+    });
+
+    it("completes the hide for hidden and removed frames", () => {
+        driver.hide(complete);
+        finishAnimations();
+        chai.expect(completions).equals(3);
+        driver.hide(complete);
+        finishAnimations();
+        chai.expect(completions).equals(4);
+    });
+
+    it("reveals the same permanent frame on unhide", () => {
+        const frame = iframe(permanentWrapper);
+        driver.hide();
+        finishAnimations();
+        driver.unhide();
+        chai.expect(container.children.length).equals(1);
+        chai.expect(container.children[0]).equals(permanentWrapper);
+        chai.expect(pxsim.U.containsClass(permanentWrapper as unknown as HTMLElement, HIDDEN)).equals(false);
+        chai.expect(iframe(permanentWrapper)).equals(frame);
+        chai.expect(frame.id).equals("sim-frame-2");
+    });
+
+    it("starts a run after hide with a new main frame ahead of the hidden permanent frame", () => {
+        driver.hide();
+        finishAnimations();
+        driver.run("");
+        chai.expect(container.children.length).equals(2);
+        chai.expect(container.children[0]).not.equals(mainWrapper);
+        chai.expect(iframe(container.children[0]).dataset["messagechannel"]).equals(undefined);
+        chai.expect(container.children[1]).equals(permanentWrapper);
+    });
+
+    it("posts a run's channel packets to the hidden permanent frame instead of spawning another", () => {
+        driver.hide();
+        finishAnimations();
+        driver.run("");
+        const main = iframe(container.children[0]);
+        iframe(permanentWrapper).contentWindow.posts = [];
+        const packet = { type: "messagepacket", channel: PERMANENT_CHANNEL, broadcast: true } as pxsim.SimulatorMessage;
+        (driver as any).handleMessage(packet, main.contentWindow);
+        chai.expect(container.children.length).equals(2);
+        chai.expect(container.children[1]).equals(permanentWrapper);
+        const received = iframe(permanentWrapper).contentWindow.messages.map(m => m.type);
+        chai.expect(received).deep.equals(["run", "messagepacket"]);
+    });
+
+    it("removes permanent frames on hide when the host sets no hideElement", () => {
+        createDriver(false);
+        driver.hide(complete);
+        finishAnimations();
+        chai.expect(container.children.length).equals(0);
+        chai.expect(completions).equals(3);
+    });
+
+    it("removes every frame on unload", () => {
+        driver.stop(true);
+        chai.expect(container.children.length).equals(0);
+    });
+
+    it("removes a hidden permanent frame on unload", () => {
+        driver.hide();
+        finishAnimations();
+        driver.stop(true);
+        chai.expect(container.children.length).equals(0);
+    });
+
+    it("preloads a main frame after hide ahead of the hidden permanent frame", () => {
+        driver.hide();
+        finishAnimations();
+        driver.preload(1.5);
+        chai.expect(container.children.length).equals(2);
+        chai.expect(iframe(container.children[0]).dataset["messagechannel"]).equals(undefined);
+        chai.expect(container.children[1]).equals(permanentWrapper);
+        chai.expect(permanentWrapper.style["paddingBottom"]).equals(undefined);
+        const main = container.children[0];
+        driver.preload(1.5);
+        chai.expect(container.children.length).equals(2);
+        chai.expect(container.children[0]).equals(main);
+    });
+
+    it("keeps the main frame on frame cleanup when a permanent frame precedes it", () => {
+        container.insertBefore(permanentWrapper, mainWrapper);
+        driver.run("");
+        driver.stop();
+        (driver as any).cleanupFrames();
+        finishAnimations();
+        chai.expect(container.children).deep.equals([permanentWrapper, mainWrapper]);
+        chai.expect(transientWrapper.parentElement).equals(undefined);
+    });
+
+    it("focuses the main frame when a permanent frame precedes it", () => {
+        container.insertBefore(permanentWrapper, mainWrapper);
+        const focused: string[] = [];
+        [mainWrapper, permanentWrapper].forEach(wrapper => {
+            const frame = iframe(wrapper);
+            frame.focus = () => focused.push(frame.id);
+        });
+        driver.focus();
+        chai.expect(focused).deep.equals(["sim-frame-1"]);
+    });
+
+    it("starts recording in the main frame when a permanent frame precedes it", () => {
+        container.insertBefore(permanentWrapper, mainWrapper);
+        driver.startRecording(100);
+        const received = (wrapper: FakeElement) => iframe(wrapper).contentWindow.messages.map(m => m.type);
+        chai.expect(received(mainWrapper)).deep.equals(["recorder"]);
+        chai.expect(received(permanentWrapper)).deep.equals([]);
+        chai.expect(received(transientWrapper)).deep.equals([]);
+    });
+
+    describe("jacdac packets", () => {
+        const jacdacPacket = () => ({ type: "messagepacket", channel: "jacdac", broadcast: true }) as pxsim.SimulatorMessage;
+        const received = (wrapper: FakeElement) => iframe(wrapper).contentWindow.messages.map(m => m.type);
+
+        beforeEach(() => {
+            container.insertBefore(permanentWrapper, mainWrapper);
+        });
+
+        it("broadcasts a jacdac packet from the main frame when a permanent frame precedes it", () => {
+            (driver as any).handleMessage(jacdacPacket(), iframe(mainWrapper).contentWindow);
+            chai.expect(received(permanentWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(transientWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(mainWrapper)).deep.equals([]);
+            const packet = iframe(permanentWrapper).contentWindow.messages[0] as pxsim.SimulatorBroadcastMessage;
+            chai.expect(packet.srcFrameIndex).equals(1);
+        });
+
+        it("delivers a jacdac packet to the main frame when a permanent frame precedes it", () => {
+            (driver as any).handleMessage(jacdacPacket(), iframe(permanentWrapper).contentWindow);
+            chai.expect(received(mainWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(transientWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(permanentWrapper)).deep.equals([]);
+        });
+
+        it("drops a jacdac packet from a second board frame", () => {
+            const secondWrapper = simframe("sim-frame-4");
+            (driver as any).handleMessage(jacdacPacket(), iframe(secondWrapper).contentWindow);
+            [mainWrapper, permanentWrapper, transientWrapper, secondWrapper].forEach(wrapper =>
+                chai.expect(received(wrapper)).deep.equals([]));
+        });
+
+        it("does not deliver a jacdac packet to a second board frame", () => {
+            const secondWrapper = simframe("sim-frame-4");
+            (driver as any).handleMessage(jacdacPacket(), iframe(permanentWrapper).contentWindow);
+            chai.expect(received(mainWrapper)).deep.equals(["messagepacket"]);
+            chai.expect(received(secondWrapper)).deep.equals([]);
         });
     });
 });

@@ -3898,11 +3898,12 @@ export class ProjectView
     toggleSimulatorCollapse() {
         const state = this.state;
         pxt.tickEvent("simulator.toggleCollapse", { view: 'computer', collapsedTo: '' + !state.collapseEditorTools }, { interactiveConsent: true });
-        if (state.simState == SimState.Stopped && state.collapseEditorTools && !pxt.appTarget.simulator.headless) {
-            this.startStopSimulator();
-        }
-
         if (state.collapseEditorTools) {
+            // expandSimulator() starts a stopped simulator; the checks startStopSimulator() would have made are kept.
+            if (state.simState == SimState.Stopped && !pxt.appTarget.simulator.headless) {
+                this.maybeShowPackageErrors(true);
+                ariaAnnounce(lf("Simulator running"), "assertive", "status");
+            }
             this.expandSimulator();
         }
         else {
@@ -3915,7 +3916,12 @@ export class ProjectView
             simulator.unhide();
         }
         else {
-            this.startSimulator();
+            // Reveals the permanent simulator extension frames the collapse hid,
+            // once the run has put the main frame back ahead of them, unless the
+            // simulator was collapsed again meanwhile.
+            this.startSimulator().finally(() => {
+                if (!this.state.collapseEditorTools) simulator.unhide();
+            });
         }
         this.setState({ collapseEditorTools: false });
         this.fireResize();
@@ -6843,6 +6849,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
             return Promise.resolve();
         })
+        .then(() => pxt.github.initLocalReposAsync())
         .then(() => {
             pxt.BrowserUtils.initTheme();
             theme = pxteditor.experiments.syncTheme();

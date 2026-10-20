@@ -1,0 +1,6 @@
+{
+    "name": "mono",
+    "description": "Monorepo root",
+    "dependencies": {},
+    "files": []
+}

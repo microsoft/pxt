@@ -241,7 +241,7 @@ export class Editor extends srceditor.Editor {
                         />
                     </div>
                 </div>
-                <div className="ui segment form text pxt-json-settings">
+                <div className="ui segment text pxt-json-settings">
                     <Input
                         label={lf("Project Name")}
                         ariaLabel={lf("Type a name for your project")}
