@@ -28,7 +28,7 @@ enum MyEnum {
 /**
  * ${lf("Custom blocks")}
  */
-//% weight=100 color=#0fbc11 icon="\uf0c3"
+//% block="Custom" weight=100 color=#0fbc11 icon="\uf0c3"
 namespace custom {
     /**
      * TODO: ${lf("describe your function here")}
@@ -131,19 +131,16 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             initialValue: baseFileName,
             hasCloseIcon: true,
             onInputValidation: (v) => {
-                if (!v)
-                    return lf("filename is empty.");
+                if (!v) return lf("Filename is empty.");
                 v = v.trim();
-                if (!validRx.test(v))
-                    return lf("Don't use spaces or special characters.");
+                if (!validRx.test(v)) return lf("Don't use spaces or special characters.");
                 return undefined;
             }
         }).then(str => {
-            if (!str)
-                return Promise.resolve();
+            if (!str) return Promise.resolve();
+
             str = str.replace(/\s+/g, "");
-            if (str === baseFileName)
-                return Promise.resolve();
+            if (str === baseFileName) return Promise.resolve();
 
             const indLastPeriod = str.lastIndexOf(".");
             let name = str;
@@ -158,8 +155,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 }
             }
 
-            if (!name)
-                return Promise.resolve();
+            if (!name) return Promise.resolve();
 
             if (!validRx.test(name)) {
                 core.warningNotification(lf("Invalid file name"));
@@ -167,8 +163,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             }
 
             const newFileName = `${dir}${ext ? `${name}.${ext}` : name}`;
-            if (newFileName === f.name)
-                return Promise.resolve();
+            if (newFileName === f.name) return Promise.resolve();
 
             const isSpecial = newFileName === pxt.CONFIG_NAME
                 || newFileName === pxt.MAIN_TS
