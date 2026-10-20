@@ -20,6 +20,7 @@ import {
     isImplicitSimulatorThemePreference,
 } from "../../react-common/components/theming/simulatorThemeDefaults";
 import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
+import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
 
 pxt.appTarget = {
     versions: {
@@ -48,6 +49,41 @@ describe("gallery code cards", () => {
         chai.expect(markdownCards[0].searchTerms).deep.equals(["platformer", "jumping", "side scroller"]);
         chai.expect(jsonCards[0].tags).deep.equals(["Community Games", "User Input", "Sprites"]);
         chai.expect(jsonCards[0].searchTerms).deep.equals(["platformer", "jumping", "side scroller"]);
+    });
+});
+
+describe("cached api info", () => {
+    it("uses the cache when the project only has generated TypeScript files", () => {
+        chai.expect(projectMayDeclareBlocks([
+            pxt.CONFIG_NAME,
+            pxt.MAIN_BLOCKS,
+            pxt.MAIN_TS,
+            pxt.TUTORIAL_CODE_START,
+            pxt.TUTORIAL_CODE_STOP,
+            pxt.TILEMAP_CODE,
+            pxt.IMAGES_CODE,
+            "README.md"
+        ])).equals(false);
+    });
+
+    it("uses the cache when the only other TypeScript files are under pxt_modules", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "pxt_modules/lib/lib.ts"])).equals(false);
+    });
+
+    it("uses the cache when files in folders are not TypeScript", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "assets/data.json", "docs/notes.md"])).equals(false);
+    });
+
+    it("skips the cache when the project has a top-level TypeScript file", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "custom.ts"])).equals(true);
+    });
+
+    it("skips the cache when the project has a TypeScript file in a folder", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "lib/blocks.ts"])).equals(true);
+    });
+
+    it("skips the cache when a folder file shares a generated file's name", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "lib/" + pxt.MAIN_TS])).equals(true);
     });
 });
 
