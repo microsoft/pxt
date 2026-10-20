@@ -1153,6 +1153,148 @@ describe("pxt.github.normalizeTutorialPath", () => {
     });
 });
 
+describe("pxt.github local repositories", () => {
+    const monoConfig = JSON.stringify({ name: "ext", description: "Nested extension", dependencies: {}, files: ["main.ts"] });
+    const serverFiles: pxt.Map<any> = {
+        "localrepos": { repos: ["owner/mono"] },
+        "gh/owner/mono": { name: "mono", description: "Monorepo root" },
+        "gh/owner/mono/refs": { refs: {} },
+        "gh/owner/mono/ext/text": { "pxt.json": monoConfig, "main.ts": "namespace ext {}" },
+    };
+    let requests: string[];
+    let refuseWithoutToken: boolean;
+    let saved: { isNodeJS: boolean, localToken: string, localRequestAsync: any, packagesConfigAsync: any };
+
+    class SilentLogger extends pxt.ConsoleLogger {
+        log() { }
+        error() { }
+    }
+
+    function serveAt(href: string) {
+        (global as any).window = { location: { href } };
+    }
+
+    before(() => {
+        saved = {
+            isNodeJS: pxt.Util.isNodeJS,
+            localToken: pxt.Cloud.localToken,
+            localRequestAsync: pxt.Cloud.localRequestAsync,
+            packagesConfigAsync: pxt.packagesConfigAsync
+        };
+        pxt.setLogger(new SilentLogger());
+        pxt.Util.isNodeJS = false;
+        pxt.Cloud.localToken = "local-token";
+        (pxt.Cloud as any).localRequestAsync = (path: string) => {
+            requests.push(path);
+            if (refuseWithoutToken && !pxt.Cloud.localToken)
+                return Promise.resolve({ statusCode: 403, headers: {}, buffer: undefined, json: undefined, text: "Error 403" });
+            const json = serverFiles[path];
+            return Promise.resolve(json
+                ? { statusCode: 200, headers: {}, buffer: undefined, json, text: JSON.stringify(json) }
+                : { statusCode: 404, headers: {}, buffer: undefined, json: undefined, text: `${path}: missing on disk` });
+        };
+        (pxt as any).packagesConfigAsync = () => Promise.resolve({});
+    });
+
+    beforeEach(() => {
+        requests = [];
+        refuseWithoutToken = false;
+        pxt.Cloud.localToken = "local-token";
+    });
+
+    after(async () => {
+        serveAt("http://localhost:3232/");
+        serverFiles["localrepos"] = { repos: [] };
+        await pxt.github.initLocalReposAsync();
+        delete (global as any).window;
+        pxt.Util.isNodeJS = saved.isNodeJS;
+        pxt.Cloud.localToken = saved.localToken;
+        (pxt.Cloud as any).localRequestAsync = saved.localRequestAsync;
+        (pxt as any).packagesConfigAsync = saved.packagesConfigAsync;
+        pxt.setLogger(new pxt.ConsoleLogger());
+    });
+
+    it("does not consult a server that is not on localhost", async () => {
+        serveAt("https://arcade.makecode.com/");
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals([]);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(false);
+    });
+
+    it("lists the locally served repositories without a local token when the server allows it (pxt serve --noauth)", async () => {
+        serveAt("http://localhost:3232/");
+        pxt.Cloud.localToken = "";
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals(["localrepos"]);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(true);
+    });
+
+    it("resolves no repositories locally when the server refuses the listing", async () => {
+        serveAt("http://localhost:3232/");
+        pxt.Cloud.localToken = "";
+        refuseWithoutToken = true;
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals(["localrepos"]);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(false);
+    });
+
+    it("lists the locally served repositories from the local server", async () => {
+        serveAt("http://localhost:3232/");
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals(["localrepos"]);
+        chai.expect(pxt.github.isLocalRepo("github:Owner/Mono/ext#v1.0.0")).equals(true);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(true);
+        chai.expect(pxt.github.isLocalRepo("owner/other")).equals(false);
+    });
+
+    it("treats locally served repositories as approved", () => {
+        chai.expect(pxt.github.repoStatus(pxt.github.parseRepoId("owner/mono/ext"), {}))
+            .equals(pxt.github.GitRepoStatus.Approved);
+        chai.expect(pxt.github.repoStatus(pxt.github.parseRepoId("owner/other"), {}))
+            .equals(pxt.github.GitRepoStatus.Unknown);
+    });
+
+    it("reads repository metadata from the local server", async () => {
+        const repo = await pxt.github.repoAsync("owner/mono/ext", {});
+        chai.expect(requests).deep.equals(["gh/owner/mono"]);
+        chai.expect(repo.name).equals("mono-ext");
+        chai.expect(repo.fullName).equals("owner/mono/ext");
+        chai.expect(repo.status).equals(pxt.github.GitRepoStatus.Approved);
+    });
+
+    it("reports no versions and no refs", async () => {
+        chai.expect(await pxt.github.latestVersionAsync("owner/mono", {})).equals(undefined);
+        chai.expect(await pxt.github.listRefsAsync("owner/mono")).deep.equals([]);
+        chai.expect(requests).deep.equals(["gh/owner/mono/refs"]);
+    });
+
+    it("adds a locally served extension without a ref", async () => {
+        const res = await pxt.github.downloadLatestPackageAsync(pxt.github.parseRepoId("owner/mono/ext"));
+        chai.expect(res.version).equals("github:owner/mono/ext");
+        chai.expect(res.config.name).equals("ext");
+        chai.expect(requests).deep.equals(["gh/owner/mono/ext/text"]);
+    });
+
+    it("serves the working tree for any requested ref", async () => {
+        const pkg = await pxt.github.downloadPackageAsync("github:owner/mono/ext#v1.0.0", {});
+        chai.expect(pkg.files["main.ts"]).equals("namespace ext {}");
+        chai.expect(requests).deep.equals(["gh/owner/mono/ext/text"]);
+    });
+
+    it("fails with the local server's error when the package is missing", async () => {
+        let err: any;
+        try {
+            await pxt.github.downloadPackageAsync("github:owner/mono/nothere", {});
+        } catch (e) {
+            err = e;
+        }
+        chai.expect(err, "expected an error").to.exist;
+        chai.expect(err.message).equals("gh/owner/mono/nothere/text: missing on disk");
+        chai.expect(err.statusCode).equals(404);
+        chai.expect(requests).deep.equals(["gh/owner/mono/nothere/text"]);
+    });
+});
+
 function createProjectText(): pxt.workspace.ScriptText {
     // A realistic timeline of project edits
     const dates = [
