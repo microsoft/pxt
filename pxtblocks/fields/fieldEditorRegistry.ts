@@ -32,7 +32,7 @@ import { FieldAutoComplete } from "./field_autocomplete";
 import { FieldColorWheel } from "./field_colorwheel";
 import { FieldScopedValueSelector } from "./field_scopedvalueselector";
 import { FieldPianoRoll } from "./field_piano_roll";
-import { FieldSimxInstanceDropdown, SIMX_INSTANCE_DROPDOWN_FIELD } from "./field_simxinstancedropdown";
+import { FieldInstanceDropdown, INSTANCE_DROPDOWN_FIELD } from "./field_instancedropdown";
 
 interface FieldEditorOptions {
     field: FieldCustomConstructor;
@@ -70,7 +70,7 @@ export function initFieldEditors() {
     registerFieldEditor('soundeffect', FieldSoundEffect);
     registerFieldEditor('autocomplete', FieldAutoComplete);
     registerFieldEditor('scopedvalueselector', FieldScopedValueSelector);
-    registerFieldEditor(SIMX_INSTANCE_DROPDOWN_FIELD, FieldSimxInstanceDropdown);
+    registerFieldEditor(INSTANCE_DROPDOWN_FIELD, FieldInstanceDropdown);
     if (pxt.appTarget.appTheme?.songEditor) {
         registerFieldEditor('musiceditor', FieldMusicEditor);
         registerFieldEditor('pianoroll', FieldPianoRoll);

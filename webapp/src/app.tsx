@@ -6726,8 +6726,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     hash = parseHash();
     blocklyFieldView.init();
 
-    pxt.react.canCreateSimxInstance = typeQName => !!theEditor?.getSimulatorExtensionInstanceCreator(typeQName);
-    pxt.react.createSimxInstance = typeQName => theEditor?.createSimulatorExtensionInstance(typeQName);
+    pxt.react.canCreateInstance = typeQName => !!theEditor?.getSimulatorExtensionInstanceCreator(typeQName);
+    pxt.react.createInstance = typeQName => theEditor?.createSimulatorExtensionInstance(typeQName);
 
     pxt.react.getTilemapProject = () => {
         const epkg = pkg.mainEditorPkg();

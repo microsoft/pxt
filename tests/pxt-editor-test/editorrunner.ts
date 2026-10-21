@@ -125,7 +125,7 @@ import {
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
-import { getSimxInstanceDropdownOptions, SIMX_CREATE_OPTION_VALUE } from "../../pxtblocks/fields/field_simxinstancedropdown";
+import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
 
 pxt.appTarget = {
     versions: {
@@ -5008,20 +5008,20 @@ describe("fixed-instance dropdown options", () => {
     const instances: [string, string][] = [["a", "ns.a"], ["b", "ns.b"]];
 
     it("appends exactly one trailing create entry, with the reserved value, when an editor tab creates the instances", () => {
-        const options = getSimxInstanceDropdownOptions(instances, "create");
+        const options = getInstanceDropdownOptions(instances, "create");
         chai.expect(options.length).equals(instances.length + 1);
         chai.expect(options.slice(0, instances.length)).deep.equals(instances);
-        chai.expect((options[instances.length] as [string, string])[1]).equals(SIMX_CREATE_OPTION_VALUE);
-        chai.expect(options.filter(o => o !== "separator" && o[1] === SIMX_CREATE_OPTION_VALUE).length).equals(1);
+        chai.expect((options[instances.length] as [string, string])[1]).equals(CREATE_INSTANCE_OPTION_VALUE);
+        chai.expect(options.filter(o => o !== "separator" && o[1] === CREATE_INSTANCE_OPTION_VALUE).length).equals(1);
     });
 
     it("lists the instances alone when no editor tab creates them", () => {
-        chai.expect(getSimxInstanceDropdownOptions(instances, undefined)).deep.equals(instances);
-        chai.expect(getSimxInstanceDropdownOptions([], undefined)).deep.equals([]);
+        chai.expect(getInstanceDropdownOptions(instances, undefined)).deep.equals(instances);
+        chai.expect(getInstanceDropdownOptions([], undefined)).deep.equals([]);
     });
 
     it("never changes the list it was given", () => {
-        getSimxInstanceDropdownOptions(instances, "create");
+        getInstanceDropdownOptions(instances, "create");
         chai.expect(instances.length).equals(2);
     });
 });
