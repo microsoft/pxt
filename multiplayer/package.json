@@ -9,7 +9,7 @@
     "@types/node": "^12.20.45",
     "engine.io-client": "^6.2.2",
     "framer-motion": "^6.5.1",
-    "nanoid": "^4.0.0",
+    "nanoid": "^6.0.1",
     "qrcode.react": "^3.1.0",
     "react-scripts": "^5.0.1",
     "smart-buffer": "^4.2.0",
