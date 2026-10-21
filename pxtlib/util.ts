@@ -1080,6 +1080,11 @@ namespace ts.pxtc.Util {
         return Date.now();
     }
 
+    /** Returns a monotonic time in milliseconds: `performance.now()` where available, else `Date.now()`. */
+    export function monotonicNow(): number {
+        return typeof performance !== "undefined" ? performance.now() : Date.now();
+    }
+
     export function nowSeconds(): number {
         return Math.round(now() / 1000)
     }

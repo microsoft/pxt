@@ -16,7 +16,7 @@ import {
     ProjassetsVisualConfig,
 } from "../../pxtservices/projassets";
 import { getProjectSimulatorThemePreference } from "./simulatorTheme";
-import { monotonicNow, SlidingWindowAdmission } from "./slidingWindowAdmission";
+import { SlidingWindowAdmission } from "./slidingWindowAdmission";
 
 /**
  * The most list requests from the frames of one GitHub repository's
@@ -331,7 +331,7 @@ export class ProjassetsHost {
         protected readonly getOpenProject: () => ProjassetsOpenProject | undefined,
         protected readonly getProject: () => pxt.TilemapProject,
         protected readonly getConfig: () => ProjassetsConfig,
-        protected readonly now: () => number = monotonicNow,
+        protected readonly now: () => number = pxt.Util.monotonicNow,
         protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
         this.lists = new SlidingWindowAdmission(PROJASSETS_LIST_RATE_LIMIT, PROJASSETS_LIST_RATE_WINDOW_MS, now, delay);

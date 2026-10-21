@@ -7,7 +7,7 @@ import {
     ProjfsRequest,
     ProjfsWriteRequest,
 } from "../../pxtservices/projfs";
-import { monotonicNow, SlidingWindowAdmission } from "./slidingWindowAdmission";
+import { SlidingWindowAdmission } from "./slidingWindowAdmission";
 
 /**
  * The most bytes the files under one simulator extension folder may hold: the
@@ -354,7 +354,7 @@ export class ProjfsHost {
      */
     constructor(
         protected readonly getProject: () => ProjfsProject | undefined,
-        now: () => number = monotonicNow,
+        now: () => number = pxt.Util.monotonicNow,
         delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
         this.mutations = new SlidingWindowAdmission(PROJFS_RATE_LIMIT, PROJFS_RATE_WINDOW_MS, now, delay);

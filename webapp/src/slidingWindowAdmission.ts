@@ -1,8 +1,3 @@
-/** Returns a monotonic time in milliseconds: `performance.now()` where available, else `Date.now()`. */
-export function monotonicNow(): number {
-    return typeof performance !== "undefined" ? performance.now() : Date.now();
-}
-
 /**
  * Admits events on each key at most `limit` times within any `windowMs`
  * milliseconds. An event over the limit waits until the window allows it.
@@ -17,13 +12,13 @@ export class SlidingWindowAdmission {
      * @param limit the most events on one key admitted within `windowMs`
      * @param windowMs the sliding window, in milliseconds
      * @param now returns the current time in milliseconds on a clock that never
-     * goes back; defaults to {@link monotonicNow}
+     * goes back; defaults to `pxt.Util.monotonicNow`
      * @param delay returns a promise that resolves after the given number of milliseconds
      */
     constructor(
         readonly limit: number,
         readonly windowMs: number,
-        protected readonly now: () => number = monotonicNow,
+        protected readonly now: () => number = pxt.Util.monotonicNow,
         protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
     }
