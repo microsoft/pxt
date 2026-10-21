@@ -147,6 +147,83 @@ The common-packages sim has its own `board()` helper and its own `CoreBoard` sub
 - **External targets:** other targets subclass `CoreBoard` and call `board()`. Keep the old names working through the migration, with deprecation comments.
 - **`hardwareVersion` timing:** `initAsync` sets it from `msg.builtinParts` before the view is built, so the state must be initialised before the view is created.
 
+## Splitting `simdriver.ts` (frame orchestration vs. DOM)
+
+### Context
+`SimulatorDriver` (about 1,140 lines) runs in the **editor**, not in the simulator frame. It can't move to `pxtsimcore` as-is, but a large part of it is policy that does not need the DOM. Separating that policy from the iframe handling makes it testable without a browser and lets other hosts (headless, Node tests, non-iframe embedding) reuse it.
+
+### What's mixed in today
+
+| Concern | Where in `simdriver.ts` | DOM-free? |
+|---|---|---|
+| Lifecycle state machine (`Unloaded`, `Stopped`, `Pending`, `Starting`, `Running`, `Paused`, `Suspended`) and transitions in `setState`, `stop`, `suspend`, `unload`, `run`, `restart` | `setState`, `stop`, `suspend`, `run`, `start` | Yes, except the `setFrameState` and `freeze` side effects |
+| **When to spin up a simulator**: secondary board for broadcast messages, extension or legacy message-simulator frames, restart if `runid` is stale, "don't start extra frames in multi-editor mode", single-simulator mode, jacdac dropping | `postMessage` (~150 lines), `startFrame`, `start` | Mostly yes, since the decisions depend on message type, channel, frame count, and run id |
+| Message routing: who receives a message, who is skipped (source frame, jacdac to non-main frames), recorder "start only one", deferred messages until a frame finishes loading | `postMessage`, `postDeferrableMessage`, `handleDeferredMessages` | Yes |
+| Run message construction and per-frame theme and id assignment | `run`, `startFrame` | Yes |
+| Origin allow-listing and sim/extension URL computation | constructor, `getSimUrl`, `createFrame`, `setRunOptionQueryParams` | Mostly (needs a base origin passed in, not `window.location`) |
+| Debugger protocol (breakpoints, resume, variables, trace interval) | `resume`, `setBreakpoints`, `handleDebuggerMessage`, `postDebuggerMessageAsync` | Yes |
+| Frame cleanup timer, aspect ratio, loaned simulator, hide/unhide | `scheduleFrameCleanup`, `applyAspectRatio*`, `loanSimulator`, `hide`, `unhide` | No (layout and DOM) |
+| iframe/DOM: `createFrame`, `simFrames`, `mainFrame`, `freeze`, `setFrameState`, `document.getElementById`, `window.addEventListener('message')`, `contentWindow.postMessage` | scattered | No |
+
+### Proposed design
+Introduce a **frame abstraction** so the policy code manipulates handles, not `HTMLIFrameElement`:
+
+```ts
+interface SimFrame {                // opaque handle, DOM implementation wraps an iframe
+    id: string;
+    messageChannel?: string;        // set for extension / message simulators
+    runId?: string;                 // last run started in this frame
+    runtimeId?: string;
+    permanent?: boolean;
+    loading: boolean;
+    origin: string;
+    isLoaned?: boolean;
+}
+
+interface SimFrameHost {            // implemented by the DOM layer
+    frames(skipLoaned?: boolean): SimFrame[];
+    createFrame(url: string, opts: { messageChannel?: string; permanent?: boolean; aspectRatio?: number }): SimFrame;
+    removeFrame(frame: SimFrame, onComplete?: () => void): void;
+    post(frame: SimFrame, msg: SimulatorMessage): void;
+    setFrameAppearance(frame: SimFrame, state: SimulatorState, opts: { autoRun: boolean }): void;
+    setAspectRatio(frame: SimFrame, ratio: number): void;
+    freeze(value: boolean): void;
+    // parent / dependent editors
+    postToParent(msg: SimulatorMessage): void;
+    postToDependentEditors(msg: SimulatorMessage, except?: unknown): void;
+    environment(): { origin: string; isLocalHost: boolean; locationHref: string };
+}
+```
+
+**`pxtsimcore`: `SimulatorCoordinator`.** It owns the policy and has no DOM:
+- State machine and `setState`.
+- `run`, `start`, `stop`, `restart`, `suspend`, `unload`, and `mute`.
+- Run-message construction (`_currentRuntime`, `frameCounter`, theme rotation, `runId`).
+- **Spin-up decisions**: given an incoming broadcast message, return an action the host performs, or perform it through `SimFrameHost`. This covers extension frame, legacy message sim, secondary board, restart stale frame, single or multi-editor suppression, jacdac filtering, and the cap of two board frames.
+- Message routing (`recipients(msg, source)`), recorder single-start, and deferred message queue.
+- Debugger protocol and trace interval.
+- Allowed-origin checks (`isOriginAllowed`), driven by `environment()`.
+
+**`pxtsim`: `DomFrameHost`**, which implements `SimFrameHost`, plus the existing public `SimulatorDriver` as a thin façade:
+- `createFrame` (iframe, wrapper div, loader/icon, sandbox attributes, localization), `simFrames`, `mainFrame`, `freeze` overlay, `setFrameState` icon and class updates, aspect-ratio padding, frame cleanup timer, `loanSimulator`/`unloanSimulator`, `hide`/`unhide` and the `removeElement`/`revealElement` options, `window.addEventListener('message')`, and `contentWindow.postMessage`.
+- `SimulatorDriver` keeps its **exact public API** (`run`, `stop`, `restart`, `postMessage`, `preload`, `resume`, `setBreakpoints`, and so on) and just constructs a `SimulatorCoordinator` with a `DomFrameHost`, so webapp, kiosk, multiplayer, and the target repos don't change.
+
+### What makes this hard
+1. **State stored in the DOM.** The code uses `frame.dataset` as its database (`runid`, `runtimeid`, `loading`, `origin`, `messagechannel`, `aspectratio`, `permanent`). These move to `SimFrame` fields, and the DOM host stores a back-reference from each `SimFrame` to its element.
+2. **`frames = this.simFrames(); // refresh`** after creating frames inside `postMessage`. The coordinator needs `host.frames()` to stay consistent after `createFrame`.
+3. **`source: Window` identity** is used to find the source frame and to avoid echoing. Make it an opaque `source` token that the host maps to a `SimFrame` (`host.frameForSource(source)`).
+4. **Side effects hidden in state changes.** `setState` currently calls `freeze` and `setFrameState` for every frame. Route these through the host.
+5. **Ordering.** `startFrame` calls `setFrameState`, aspect ratio, and trace interval in a specific order, so keep the sequencing in one place.
+
+### Suggested sequence
+1. **Characterize first.** Add unit tests for the spin-up logic using a fake `SimFrameHost` (secondary frame creation, extension reuse and restart, single-simulator mode, jacdac drop, deferred messages). There is currently no DOM-free way to test this.
+2. Introduce `SimFrame` and `SimFrameHost` inside `simdriver.ts`, with an iframe-backed implementation, and refactor in place. No file moves; behavior is unchanged.
+3. Extract the coordinator into a separate file in `pxtsim`. Verify the DOM-free tsconfig compiles it.
+4. Move the coordinator to `pxtsimcore` (or its own package) once step 1 of the main plan exists.
+
+### Does this need to be in `pxtsimcore`?
+Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what runs in the simulator frame and is the primary reason for the DOM-free split. The coordinator is useful for testing and alternate hosts, but it is **editor-side**. Consider a second DOM-free module, such as `pxtsimdriver-core`, rather than bundling it into `pxtsimcore`, so frames and the runtime don't share a bundle.
+
 ## Open questions
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
