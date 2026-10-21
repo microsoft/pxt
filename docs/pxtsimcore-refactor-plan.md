@@ -30,7 +30,34 @@
    - Run it with `node_modules/.bin/tsc -p pxtsimcore/tsconfig.json`. It is not wired into the gulp build yet, and it is expected to fail until the later steps land.
    - The errors are the work list; see the baseline below.
 
-### Baseline (137 errors across 7 files)
+### Progress: group B declaration moves (done) — 137 → 59 errors
+
+Pure moves inside `pxtsim/`, same `pxsim` namespaces, so the public `.d.ts` is unchanged except for one deliberate change (below). Verified by building `pxtsim` before and after and diffing `built/pxtsim.d.ts`.
+
+| New file | Contents (moved from) |
+|---|---|
+| `pxtsim/messages.ts` | all `Simulator*Message` interfaces, tutorial/render messages and the `multiplayer` types (from `embed.ts`; history follows this file via `git mv`) |
+| `pxtsim/embed.ts` | now only the DOM code: `print`, `Embed`, `tickEvent`, `reportError`, service worker, `reload`, load listener |
+| `pxtsim/eventbus.ts` | `BoardPin`, `BBLoc`, `BoardLoc`, `Loc`, `mkRange`, `EventBus` (from `simlib.ts`) |
+| `pxtsim/simtypes.ts` | `SimulatorState`, `SimulatorDebuggerCommand`, `SimulatorRunOptions`, `HwDebugger` (from `simdriver.ts`; `SimulatorDriverOptions` stays there because it has `HTMLElement` callbacks) |
+| `pxtsim/visuals/boardgeometry.ts` | `Coord`, `findDistSqrd`, `findClosestCoordIdx`, wire colors, `BREADBOARD_MID_ROWS/COLS`, `getRowName`, `getColumnName` (from `simlib.ts` and `breadboard.ts`) |
+
+Notes:
+- **One API change:** `AllocatorResult` is now `AllocatorResult<TPart = any, TWire = any>`, because it referenced the SVG types `IBoardPart` and `Wire`. `BoardHost.addAll` uses `AllocatorResult<IBoardPart<any>, Wire>`. Consumers that used `AllocatorResult` unparameterized now see `any[]` for `parts`/`wires`.
+- **Load order:** `breadboard.ts` evaluates constants from `boardgeometry.ts` at load time, so it has a `/// <reference path="./boardgeometry.ts" />` to keep bundle order correct.
+- `pxtsim/tsconfig.json` is unchanged; the new files are picked up automatically.
+
+### Remaining baseline (59 errors)
+
+| File | Errors | What is left |
+|---|---|---|
+| `runtime.ts` | 38 | `U` class/element helpers (`SVGElement`, `HTMLElement`, `Element`), `window` in `isElectron`/`isIpc`/`isLocalHost`/`postMessage`, `ImageData` screenshots, `Embed.frameid`, `visuals.IBoardPart`/`SVGElAndSize` on `CoreBoard`, `AudioContextManager` |
+| `sound/sequencer.ts` | 8 | `AudioContextManager`, `Metronome` |
+| `debugger.ts` | 7 | uses `SimulatorDriver`/`SimulatorDriverOptions` and `HTMLElement` directly. Probably belongs in the DOM bundle, not core |
+| `sound/soundexpression.ts` | 3 | `AudioContextManager` |
+| `messages.ts` | 3 | `ImageData` (2) and `pxsim.instructions` namespace reference (1) in message types. Loosen the types or declare minimal interfaces |
+
+### Original baseline (137 errors across 7 files)
 
 | File | Errors |
 |---|---|

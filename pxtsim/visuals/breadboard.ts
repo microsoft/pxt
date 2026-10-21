@@ -1,3 +1,4 @@
+/// <reference path="./boardgeometry.ts" />
 namespace pxsim.visuals {
     // The distance between the center of two pins. This is the constant on which everything else is based.
     const PIN_DIST = 15;
@@ -121,8 +122,6 @@ namespace pxsim.visuals {
         }
         `
     // Pin rows and coluns
-    export const BREADBOARD_MID_ROWS = 10;
-    export const BREADBOARD_MID_COLS = 30;
     const MID_ROW_GAPS = [4, 4];
     const MID_ROW_AND_GAPS = BREADBOARD_MID_ROWS + MID_ROW_GAPS.length;
     const BAR_ROWS = 2;
@@ -166,10 +165,6 @@ namespace pxsim.visuals {
     const SMALL_CHANNEL_HEIGHT = PIN_DIST * 0.05;
     // Background
     const BACKGROUND_ROUNDING = PIN_DIST * 0.3;
-    // Row and column helpers
-    const alphabet = "abcdefghij".split("").reverse();
-    export function getColumnName(colIdx: number): string { return `${colIdx + 1}` };
-    export function getRowName(rowIdx: number): string { return alphabet[rowIdx] };
 
     export interface GridPin {
         el: SVGElement,
