@@ -286,7 +286,7 @@ namespace pxsim.codal.music {
         };
     }
 
-    export function playSoundExpressionAsync(notes: string, isCancelled?: () => boolean, onPull?: AudioContextManager.SoundPreviewCallback, volume: number = 0.03) {
+    export function playSoundExpressionAsync(notes: string, isCancelled?: () => boolean, onPull?: audiohost.SoundPreviewCallback, volume: number = 0.03) {
         const synth = new SoundEmojiSynthesizer(0);
         const soundEffects = parseSoundEffects(notes);
         synth.play(soundEffects);
@@ -301,7 +301,7 @@ namespace pxsim.codal.music {
                     // play long after it was supposed to
                     cancelled = true
                 }),
-            AudioContextManager.playPCMBufferStreamAsync(() => {
+            audiohost.audio().playPCMBufferStreamAsync(() => {
                 if (!synth.effect) return undefined;
 
                 const buff = synth.pull();
@@ -318,7 +318,7 @@ namespace pxsim.codal.music {
 
     export function __stopSoundExpressions() {
         clearSoundQueue();
-        AudioContextManager.stopAll();
+        audiohost.audio().stopAll();
     }
 
     /**

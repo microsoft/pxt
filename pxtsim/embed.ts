@@ -102,11 +102,11 @@ namespace pxsim {
         }
 
         function mute(mute: boolean) {
-            AudioContextManager.mute(mute);
+            audiohost.audio().mute(mute);
         }
 
         function stopSound() {
-            AudioContextManager.stopAll();
+            audiohost.audio().stopAll();
         }
 
         function queue(msg: SimulatorMessage) {

@@ -54,15 +54,19 @@ Notes:
 - `domutils.ts` (DOM): `U.containsClass/addClass/removeClass/remove/removeChildren/clear` moved out of `runtime.ts`. Namespace merging keeps `pxsim.U.*` unchanged for pxt-microbit and pxt-common-packages.
 - `runtime.ts`: `isPxtElectron`, `isIpcRenderer`, `isLocalHost`, `Runtime.postMessage` and the `Embed.frameid` uses go through `host`. `Embed.frameid` is kept for compatibility.
 
-### Remaining baseline (31 errors)
+### Progress: step 4, audio split (done) — 31 → 17 errors
+
+- `sound/audiohost.ts` (core): `pxsim.audiohost.AudioHost` (`stopAll`, `mute`, `playInstructionsAsync`, `playPCMBufferStreamAsync`, `setListenerPosition`, `disposeAllSpatialAudioPlayers`, `createMetronome`) plus `Metronome`/`SpatialAudioPlayer` interfaces and the preview-data types. Defaults are silent no-ops.
+- `sound/audiohostdom.ts` (DOM): registers the Web Audio implementation (`AudioContextManager`, `music.Metronome`).
+- `sequencer.ts`, `soundexpression.ts`, `runtime.ts`, `embed.ts` call `audiohost.audio()` instead of `AudioContextManager`. `AudioContextManager.SoundPreviewCallback` and friends are now aliases, so the public API is unchanged.
+
+### Remaining baseline (17 errors)
 
 | File | Errors | What is left |
 |---|---|---|
-| `runtime.ts` | 10 | `ImageData` screenshots (5), `visuals.IBoardPart`/`SVGElAndSize` on `CoreBoard` (2), `AudioContextManager` (3) |
-| `sound/sequencer.ts` | 8 | `AudioContextManager`, `Metronome` |
-| `debugger.ts` | 7 | uses `SimulatorDriver`/`SimulatorDriverOptions` and `HTMLElement` directly. Probably belongs in the DOM bundle, not core |
-| `sound/soundexpression.ts` | 3 | `AudioContextManager` |
-| `messages.ts` | 3 | `ImageData` (2) and `pxsim.instructions` namespace reference (1) in message types. Loosen the types or declare minimal interfaces |
+| `runtime.ts` | 7 | `ImageData` screenshots (5), `visuals.IBoardPart`/`SVGElAndSize` on `CoreBoard` (2) |
+| `debugger.ts` | 7 | uses `SimulatorDriver`/`SimulatorDriverOptions` and `HTMLElement`. Probably belongs in the DOM bundle |
+| `messages.ts` | 3 | `ImageData` (2) and `pxsim.instructions` (1) |
 
 ### Original baseline (137 errors across 7 files)
 
