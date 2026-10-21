@@ -29,6 +29,18 @@ describe("Tutorial Tool iframe URLs", () => {
         expect(url.searchParams.has("forcelang")).to.equal(false);
     });
 
+    it("decodes and propagates an encoded host lang", () => {
+        const url = new URL(addLocaleToUrl("https://arcade.makecode.com/", `${host}?lang=pt%2DBR`, "fr"));
+        expect(url.searchParams.get("lang")).to.equal("pt-BR");
+        expect(url.searchParams.has("forcelang")).to.equal(false);
+    });
+
+    it("decodes and propagates an encoded host forcelang", () => {
+        const url = new URL(addLocaleToUrl("https://arcade.makecode.com/", `${host}?forcelang=pt%2DBR`, "fr"));
+        expect(url.searchParams.get("forcelang")).to.equal("pt-BR");
+        expect(url.searchParams.has("lang")).to.equal(false);
+    });
+
     it("preserves an iframe lang", () => {
         const url = new URL(addLocaleToUrl("https://arcade.makecode.com/?lang=es-ES", `${host}?forcelang=fr`, "de"));
         expect(url.searchParams.get("lang")).to.equal("es-ES");

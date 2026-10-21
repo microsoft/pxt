@@ -351,10 +351,14 @@ function withLocale(endpoint: string): string {
     const url = new URL(endpoint, window.location.href);
     if (url.searchParams.has("lang") || url.searchParams.has("forcelang")) return url.toString();
 
-    const requested = /(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(window.location.href);
+    const hostUrl = new URL(window.location.href);
+    const hostParams = hostUrl.searchParams;
+    const hashParams = new URLSearchParams(hostUrl.hash.slice(1));
+    const forcedLanguage = hostParams.get("forcelang") || hashParams.get("forcelang");
+    const requestedLanguage = forcedLanguage || hostParams.get("lang") || hashParams.get("lang");
     const cookie = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
-    if (requested) {
-        url.searchParams.set(requested[1] ? "forcelang" : "lang", requested[2]);
+    if (requestedLanguage) {
+        url.searchParams.set(forcedLanguage ? "forcelang" : "lang", requestedLanguage);
     } else {
         const language = (cookie && cookie[1]) || (navigator as any).userLanguage || navigator.language;
         if (language && !/^en(?:-us)?$/i.test(language)) url.searchParams.set("lang", language);

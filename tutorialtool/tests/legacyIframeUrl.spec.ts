@@ -20,6 +20,7 @@ function loadLegacyWithLocale(hostUrl: string) {
     };
     const context: any = {
         URL,
+        URLSearchParams,
         clearTimeout,
         console,
         document: {
@@ -54,6 +55,20 @@ describe("legacy Tutorial Tool iframe URLs", () => {
         const url = new URL(withLocale("https://arcade.makecode.com/?controller=1"));
         expect(url.searchParams.get("forcelang")).to.equal("fr");
         expect(url.searchParams.get("controller")).to.equal("1");
+    });
+
+    it("decodes and propagates an encoded lang through the real legacy helper", () => {
+        const withLocale = loadLegacyWithLocale("https://makecode.com/tutorial-tool?lang=pt%2DBR");
+        const url = new URL(withLocale("https://arcade.makecode.com/?controller=1"));
+        expect(url.searchParams.get("lang")).to.equal("pt-BR");
+        expect(url.searchParams.has("forcelang")).to.equal(false);
+    });
+
+    it("decodes and propagates an encoded forcelang through the real legacy helper", () => {
+        const withLocale = loadLegacyWithLocale("https://makecode.com/tutorial-tool?forcelang=pt%2DBR");
+        const url = new URL(withLocale("https://arcade.makecode.com/?controller=1"));
+        expect(url.searchParams.get("forcelang")).to.equal("pt-BR");
+        expect(url.searchParams.has("lang")).to.equal(false);
     });
 
     it("preserves an embedded locale, unrelated parameters, and fragments", () => {
