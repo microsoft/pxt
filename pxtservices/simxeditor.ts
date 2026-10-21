@@ -126,7 +126,7 @@ export interface SimxEditorActionEvent {
     type: typeof SIMXEDITOR_MESSAGE_TYPE;
     event: "action";
     action: "create";
-    /** The fully qualified name of the type, e.g. `wendoo.CompiledBrainRegistration`. */
+    /** The fully qualified name of the type, e.g. `myext.Widget`. */
     qName: string;
 }
 
