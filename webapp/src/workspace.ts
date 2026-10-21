@@ -915,9 +915,6 @@ export async function getPublishedScriptAsync(id: string) {
     const eid = encodeURIComponent(pxt.github.upgradedPackageId(config, id))
     return await scriptDlQ.enqueue(eid, async () => {
         let files: ScriptText
-        // packages of repositories served by the local server are never cached
-        if (pxt.github.isGithubId(id) && pxt.github.isLocalRepo(id))
-            return fixupFileNames((await pxt.github.downloadPackageAsync(id, config)).files)
         const scriptCache = await getScriptCacheAsync();
         try {
             files = (await scriptCache.getAsync(eid)).files

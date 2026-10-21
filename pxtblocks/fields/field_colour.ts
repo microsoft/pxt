@@ -75,12 +75,6 @@ export class FieldColorNumber extends FieldGridDropdown implements FieldCustom {
         this.setValue(text);
     }
 
-    override recomputeAriaContext(): boolean {
-        // The grid plugin queries the focus target even before the field has an SVG.
-        if (!this.fieldGroup_) return false;
-        return super.recomputeAriaContext();
-    }
-
     /**
      * FieldDropdown has complex behaviors for normalizing options that aren't
      * applicable here. Instead, just return the options as-is.
@@ -341,7 +335,7 @@ function makeSwatches(
             swatch.title = titles[index];
         }
 
-        return [swatch, colourValueFormat, swatch.title || lf("color {0}", allColoursCSSFormat[index])];
+        return [swatch, colourValueFormat];
     });
 }
 

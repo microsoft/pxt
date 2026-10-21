@@ -8,7 +8,6 @@ import * as nodeutil from './nodeutil';
 import * as hid from './hid';
 import * as net from 'net';
 import * as storage from './storage';
-import * as localrepos from './localrepos';
 import { SUB_WEBAPPS } from './subwebapp';
 
 import { promisify } from "util";
@@ -399,10 +398,6 @@ function handleApiAsync(req: http.IncomingMessage, res: http.ServerResponse, elt
         // target config
         return readFileAsync("targetconfig.json").then(buf => JSON.parse(buf.toString("utf8")));
     }
-    else if (cmd == "GET localrepos")
-        return Promise.resolve({ repos: Object.keys(serveOptions.localRepos || {}) });
-    else if (cmd == "GET gh")
-        return Promise.resolve().then(() => localrepos.resolveLocalRepoRequest(serveOptions.localRepos || {}, innerPath));
     else throw throwError(400, `unknown command ${cmd.slice(0, 140)}`)
 }
 
@@ -813,7 +808,6 @@ export interface ServeOptions {
     noauth?: boolean;
     backport?: number;
     https?: boolean;
-    localRepos?: pxt.Map<string>; // lowercase "owner/repo" -> local directory, see localrepos.ts
 }
 
 // can use http://localhost:3232/streams/nnngzlzxslfu for testing
@@ -950,21 +944,12 @@ export async function compileScriptAsync(id: string) {
     return r
 }
 
-function logLocalRepos() {
-    const slugs = Object.keys(serveOptions.localRepos || {});
-    if (!slugs.length) return;
-    console.log(`Serving GitHub repositories from local directories:`);
-    for (const slug of slugs)
-        console.log(`    ${slug} -> ${serveOptions.localRepos[slug]}`);
-}
-
 export function serveAsync(options: ServeOptions) {
     serveOptions = options;
     if (!serveOptions.port) serveOptions.port = 3232;
     if (!serveOptions.wsPort) serveOptions.wsPort = 3233;
     if (!serveOptions.hostname) serveOptions.hostname = "localhost";
     setupRootDir();
-    logLocalRepos();
     const wsServerPromise = initSocketServer(serveOptions.wsPort, serveOptions.hostname);
     if (serveOptions.serial)
         initSerialMonitor();

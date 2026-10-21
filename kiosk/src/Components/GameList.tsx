@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useContext, useCallback } from "react";
 import { Swiper, SwiperSlide } from "swiper/react";
-import { Swiper as SwiperClass } from "swiper";
-import { Pagination } from "swiper/modules";
+import { Swiper as SwiperClass, Pagination } from "swiper";
 import "swiper/css";
 import "swiper/css/keyboard";
 import GameSlide from "./GameSlide";
@@ -25,12 +24,9 @@ const GameList: React.FC<IProps> = ({}) => {
         React.useState(false);
     const [pageInited, setPageInited] = React.useState(false);
     const [generation, setGeneration] = React.useState(0);
-    // Centered looping rounds 1.8 visible slides to three and needs two buffer slides.
-    const canLoop = kiosk.allGames.length >= 5;
 
     const handleLocalSwiper = (swiper: SwiperClass) => {
         setLocalSwiper(swiper);
-        setPageInited(false);
     };
 
     useMakeNavigable(localSwiper?.el, {
@@ -66,10 +62,10 @@ const GameList: React.FC<IProps> = ({}) => {
             if (kiosk.allGames.length) {
                 if (!kiosk.selectedGameId) {
                     selectGameByIndex(0);
-                    localSwiper.slideToLoop(0);
+                    localSwiper.slideTo(2);
                 } else {
                     const index = getSelectedGameIndex() || 0;
-                    localSwiper.slideToLoop(index);
+                    localSwiper.slideTo(index + 2);
                 }
                 setPageInited(true);
             }
@@ -139,12 +135,9 @@ const GameList: React.FC<IProps> = ({}) => {
     return (
         <div className="carouselWrap">
             <Swiper
-                key={canLoop ? "loop" : "rewind"}
                 focusableElements="div"
                 tabIndex={0}
-                loop={canLoop}
-                rewind={!canLoop}
-                preventInteractionOnTransition={!canLoop}
+                loop={true}
                 slidesPerView={1.8}
                 centeredSlides={true}
                 pagination={{ type: "fraction" }}

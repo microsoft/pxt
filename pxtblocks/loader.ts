@@ -23,7 +23,6 @@ import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
-import { COLOR_PICKER_BLOCK_TYPE } from "./plugins/colorpicker";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 import { initCopyPaste } from "./copyPaste";
 export { initCopyPaste } from "./copyPaste";
@@ -111,10 +110,7 @@ export function blockSymbol(type: string): pxtc.SymbolInfo {
 export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     cachedBlockInfo = blockInfo;
 
-    setDraggableShadowBlocks([
-        COLOR_PICKER_BLOCK_TYPE,
-        ...blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId)
-    ]);
+    setDraggableShadowBlocks(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
 
     setArgumentReporterLocalizeFunction((arg, block) => {
         return localizeArgumentReporter(blockInfo, arg, block);

@@ -2,27 +2,12 @@
   "name": "skillmap",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": ">=24.0.0"
-  },
   "dependencies": {
     "@types/node": "8.0.53",
-    "dompurify": "3.4.17",
+    "dompurify": "3.3.0",
     "marked": "17.0.0",
     "react-redux": "7.2.9",
     "redux": "4.2.0"
-  },
-  "overrides": {
-    "serialize-javascript@>=4 <7": "7.1.2",
-    "jsonpath": {
-      "underscore": "1.13.8"
-    },
-    "uuid@^8.0.0": "11.1.1",
-    "@svgr/webpack": "8.1.0",
-    "http-proxy-agent@^4.0.0": "5.0.0",
-    "postcss-selector-parser@^6.0.0": "7.1.6",
-    "resolve-url-loader": "5.0.0",
-    "webpack-dev-middleware@^5.0.0": "7.4.5"
   },
   "scripts": {
     "start": "react-app-rewired start",

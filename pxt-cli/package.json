@@ -25,7 +25,7 @@
     "pxt": "./pxt"
   },
   "engines": {
-    "node": ">=24.0.0"
+    "node": ">= 4.4.5"
   },
   "dependencies": {}
 }

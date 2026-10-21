@@ -217,58 +217,6 @@ namespace pxt.github {
         pxt.debug(e);
     }
 
-    // lowercase "owner/repo" of the repositories the local server resolves from disk
-    let localRepos: pxt.Map<boolean> = {};
-
-    /**
-     * Asks the local development server (pxt serve) which GitHub repositories it
-     * resolves from local directories. Requests for those repositories then go to
-     * the local server, which serves the repository's working tree for any ref,
-     * and are never cached. Does nothing unless the editor runs on localhost; a
-     * server that refuses the request (no local token, or not pxt serve) leaves
-     * no repositories resolved locally.
-     */
-    export async function initLocalReposAsync(): Promise<void> {
-        localRepos = {};
-        if (U.isNodeJS || !BrowserUtils.isLocalHost()) return;
-        try {
-            const resp = await Cloud.localRequestAsync("localrepos");
-            if (resp.statusCode != 200) return;
-            const repos: string[] = resp.json.repos || [];
-            repos.forEach(slug => localRepos[slug.toLowerCase()] = true);
-            if (repos.length)
-                pxt.log(`github: serving ${repos.join(", ")} from the local server`);
-        } catch (e) {
-            pxt.log(`github: cannot list local repositories: ${e.message}`);
-        }
-    }
-
-    /**
-     * Indicates if the repository of a GitHub id is resolved by the local
-     * development server. See initLocalReposAsync.
-     */
-    export function isLocalRepo(repo: string | ParsedRepo): boolean {
-        const parsed = typeof repo == "string" ? parseRepoId(repo) : repo;
-        return !!parsed && !!localRepos[parsed.slug.toLowerCase()];
-    }
-
-    function localRepoJsonAsync(path: string): Promise<any> {
-        return Cloud.localRequestAsync("gh/" + path)
-            .then(resp => {
-                if (resp.statusCode != 200) {
-                    const err: any = new Error(resp.text || lf("Cannot load {0} from the local server", path));
-                    err.statusCode = resp.statusCode;
-                    throw err;
-                }
-                return resp.json;
-            });
-    }
-
-    function localPackageAsync(repo: ParsedRepo): Promise<CachedPackage> {
-        return localRepoJsonAsync(join(repo.slug, repo.fileName, "text"))
-            .then(files => ({ files }));
-    }
-
     export function isOrgAsync(owner: string): Promise<boolean> {
         return ghRequestAsync({ url: `https://api.github.com/orgs/${owner}`, method: "GET", allowHttpErrors: true })
             .then(resp => resp.statusCode == 200);
@@ -792,10 +740,7 @@ namespace pxt.github {
         const parsed = parseRepoId(repopath);
         const proxy = shouldUseProxy(useProxy);
         let head: string = null
-        const fetch = isLocalRepo(parsed) ?
-            localRepoJsonAsync(`${parsed.slug}/refs`)
-                .then(r => Object.keys(r.refs).map(k => ({ ref: k, object: { sha: r.refs[k] } }))) :
-            !proxy ?
+        const fetch = !proxy ?
             ghGetJsonAsync(`https://api.github.com/repos/${parsed.slug}/git/refs/${namespace}/?per_page=100`) :
             // no CDN caching here, bust browser cace
             U.httpGetJsonAsync(pxt.BrowserUtils.cacheBustingUrl(`${pxt.Cloud.apiRoot}gh/${parsed.slug}/refs${noCache ? "?nocache=1" : ""}`))
@@ -848,11 +793,6 @@ namespace pxt.github {
     }
 
     export async function pkgConfigAsync(repopath: string, tag: string, config: pxt.PackagesConfig) {
-        const parsed = parseRepoId(repopath);
-        if (isLocalRepo(parsed)) {
-            const pkg = await localPackageAsync(parsed);
-            return Package.parseAndValidConfig(pkg.files[pxt.CONFIG_NAME]);
-        }
         if (!tag)
             tag = await db.latestVersionAsync(repopath, config)
         return await db.loadConfigAsync(repopath, tag)
@@ -872,7 +812,7 @@ namespace pxt.github {
         }
 
         // always try to upgrade unbound versions
-        if (!p.tag && !isLocalRepo(p)) {
+        if (!p.tag) {
             try {
                 p.tag = await db.latestVersionAsync(p.slug, config)
             }
@@ -882,9 +822,7 @@ namespace pxt.github {
                 throw e;
             }
         }
-        const cached = isLocalRepo(p)
-            ? await localPackageAsync(p)
-            : await db.loadPackageAsync(p.fullName, p.tag, fallbackPackageFiles)
+        const cached = await db.loadPackageAsync(p.fullName, p.tag, fallbackPackageFiles)
         const dv = upgradedDisablesVariants(config, repoWithTag)
         if (dv) {
             const cfg = Package.parseAndValidConfig(cached.files[pxt.CONFIG_NAME])
@@ -899,11 +837,6 @@ namespace pxt.github {
 
     export async function downloadLatestPackageAsync(repo: ParsedRepo, useProxy?: boolean, noCache?: boolean): Promise<{ version: string, config: pxt.PackageConfig }> {
         const packageConfig = await pxt.packagesConfigAsync()
-        if (isLocalRepo(repo)) {
-            // a locally resolved repository has no versions: depend on it without a ref
-            const config = await pkgConfigAsync(repo.fullName, undefined, packageConfig)
-            return { version: toGithubDependencyPath(repo.fullName), config };
-        }
         const tag = await pxt.github.latestVersionAsync(repo.slug, packageConfig, useProxy, noCache)
         // download package into cache
         const repoWithTag = `${repo.fullName}#${tag}`;
@@ -1223,9 +1156,7 @@ namespace pxt.github {
     }
 
     function isRepoApproved(repo: ParsedRepo, config: pxt.PackagesConfig): boolean {
-        // aliased repositories exist only in an editor on localhost that listed them from its own pxt serve,
-        // so approving them widens nothing a public editor approves
-        if (isOrgApproved(repo, config) || isLocalRepo(repo))
+        if (isOrgApproved(repo, config))
             return true;
 
         const repoFull = repo?.fullName?.toLowerCase();
@@ -1245,9 +1176,6 @@ namespace pxt.github {
         if (status == GitRepoStatus.Banned)
             return undefined;
 
-        if (isLocalRepo(rid))
-            return repoFromProxyMeta(rid, status, await localRepoJsonAsync(rid.slug));
-
         // always try proxy first
         if (hasProxy()) {
             try {
@@ -1261,28 +1189,25 @@ namespace pxt.github {
         return mkRepo(r, { config, fullName: rid.fullName, fileName: rid.fileName, tag: rid.tag });
     }
 
-    function repoFromProxyMeta(rid: ParsedRepo, status: GitRepoStatus, meta: any) {
-        if (!meta) return undefined;
-        return {
-            github: true,
-            owner: rid.owner,
-            fullName: rid.fullName,
-            fileName: rid.fileName,
-            slug: rid.slug,
-            name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
-            displayName: meta.displayName,
-            description: meta.description,
-            defaultBranch: meta.defaultBranch || "master",
-            tag: rid.tag,
-            status
-        };
-    }
-
     function proxyRepoAsync(rid: ParsedRepo, status: GitRepoStatus): Promise<GitRepo> {
         // always use proxy
         return ghProxyWithCdnJsonAsync(rid.slug)
-            .then(meta => repoFromProxyMeta(rid, status, meta))
-            .catch(err => {
+            .then(meta => {
+                if (!meta) return undefined;
+                return {
+                    github: true,
+                    owner: rid.owner,
+                    fullName: rid.fullName,
+                    fileName: rid.fileName,
+                    slug: rid.slug,
+                    name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
+                    displayName: meta.displayName,
+                    description: meta.description,
+                    defaultBranch: meta.defaultBranch || "master",
+                    tag: rid.tag,
+                    status
+                };
+            }).catch(err => {
                 pxt.reportException(err);
                 return undefined;
             });
@@ -1468,8 +1393,6 @@ namespace pxt.github {
         const parsed = parseRepoId(repopath)
 
         if (!parsed) return Promise.resolve<string>(null);
-        // a locally resolved repository serves its working tree and has no versions
-        if (isLocalRepo(parsed)) return Promise.resolve<string>(undefined);
 
         return repoAsync(parsed.slug, config)
             .then(scr => {

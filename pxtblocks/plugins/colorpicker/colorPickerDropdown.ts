@@ -1,7 +1,6 @@
 import * as Blockly from "blockly";
 import { FieldDropdown } from "../../fields/field_dropdown";
-import { ColorPickerBlock, COLOR_PICKER_BLOCK_TYPE, getColorPickerColor } from "./colorPickerBlock";
-import { fromFormatToHex } from "./util";
+import { ColorPickerBlock, COLOR_PICKER_BLOCK_TYPE } from "./colorPickerBlock";
 
 const COLOR_FORMATS: [string, string][] = [
     ["RGB", "rgb"],
@@ -21,7 +20,7 @@ export class ColorDropdownField extends FieldDropdown {
     override onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
         if (this.sourceBlock_?.type === COLOR_PICKER_BLOCK_TYPE) {
             const colorPicker = this.sourceBlock_ as ColorPickerBlock;
-            if (!colorPicker.colorHSVLoaded || getColorPickerColor(colorPicker) !== fromFormatToHex("hsv", colorPicker.colorHSV)) {
+            if (!colorPicker.colorHSVLoaded) {
                 colorPicker.readColorFromInputs();
             }
         }
