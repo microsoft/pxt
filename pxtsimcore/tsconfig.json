@@ -18,7 +18,7 @@
         "./globals.d.ts",
         "../pxtsim/allocator.ts",
         "../pxtsim/debugProtocol.ts",
-        "../pxtsim/debugger.ts",
+        "../pxtsim/debugcore.ts",
         "../pxtsim/eventbus.ts",
         "../pxtsim/host.ts",
         "../pxtsim/sound/audiohost.ts",

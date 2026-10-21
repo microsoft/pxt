@@ -457,8 +457,8 @@ namespace pxsim {
 
         // builtin
         builtinParts: Map<any>;
-        builtinVisuals: Map<() => visuals.IBoardPart<any>>;
-        builtinPartVisuals: Map<(xy: visuals.Coord) => visuals.SVGElAndSize>;
+        builtinVisuals: Map<() => any>;
+        builtinPartVisuals: Map<(xy: visuals.Coord) => any>;
 
         constructor() {
             super()

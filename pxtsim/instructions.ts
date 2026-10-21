@@ -553,15 +553,7 @@ namespace pxsim.instructions {
         return [panel, props];
     }
 
-    export interface RenderPartsOptions {
-        name: string;
-        boardDef: BoardDefinition;
-        parts: string[];
-        partDefinitions: Map<PartDefinition>;
-        fnArgs: any;
-        configData: pxsim.ConfigData;
-        print?: boolean;
-    }
+    export interface RenderPartsOptions extends SimulatorInstructionsOptions { }
 
     export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
         if (!options.boardDef.pinStyles)

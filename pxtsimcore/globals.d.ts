@@ -23,3 +23,9 @@ declare class TextDecoder {
     constructor(label?: string);
     decode(input?: ArrayBuffer | ArrayBufferView): string;
 }
+
+interface ImageData {
+    readonly width: number;
+    readonly height: number;
+    readonly data: Uint8ClampedArray;
+}

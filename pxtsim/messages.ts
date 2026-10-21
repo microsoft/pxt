@@ -34,7 +34,17 @@ namespace pxsim {
 
     export interface SimulatorInstructionsMessage extends SimulatorMessage {
         type: "instructions";
-        options: pxsim.instructions.RenderPartsOptions;
+        options: SimulatorInstructionsOptions;
+    }
+
+    export interface SimulatorInstructionsOptions {
+        name: string;
+        boardDef: BoardDefinition;
+        parts: string[];
+        partDefinitions: Map<PartDefinition>;
+        fnArgs: any;
+        configData: ConfigData;
+        print?: boolean;
     }
 
     export interface SimulatorMuteMessage extends SimulatorMessage {

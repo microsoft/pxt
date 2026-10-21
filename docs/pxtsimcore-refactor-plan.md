@@ -60,13 +60,16 @@ Notes:
 - `sound/audiohostdom.ts` (DOM): registers the Web Audio implementation (`AudioContextManager`, `music.Metronome`).
 - `sequencer.ts`, `soundexpression.ts`, `runtime.ts`, `embed.ts` call `audiohost.audio()` instead of `AudioContextManager`. `AudioContextManager.SoundPreviewCallback` and friends are now aliases, so the public API is unchanged.
 
-### Remaining baseline (17 errors)
+### Progress: step 5, remove remaining DOM type leaks (done) — 17 → 0 errors
 
-| File | Errors | What is left |
-|---|---|---|
-| `runtime.ts` | 7 | `ImageData` screenshots (5), `visuals.IBoardPart`/`SVGElAndSize` on `CoreBoard` (2) |
-| `debugger.ts` | 7 | uses `SimulatorDriver`/`SimulatorDriverOptions` and `HTMLElement`. Probably belongs in the DOM bundle |
-| `messages.ts` | 3 | `ImageData` (2) and `pxsim.instructions` (1) |
+- `pxtsimcore/globals.d.ts` now declares only the `ImageData` fields used by core (`width`, `height`, `data`).
+- `CoreBoard`'s builtin visual factory return types are loosened to `any`, keeping the DOM-free runtime independent of SVG visual interfaces.
+- `SimulatorInstructionsOptions` is now declared with core message types, and DOM-side `instructions.RenderPartsOptions` extends it.
+- DOM-independent debugger helpers (`getWarningMessage`, heap inspection, and breakpoint message generation) moved to `debugcore.ts`; `debugger.ts` remains in the regular `pxtsim` build but is excluded from the core check because its session/driver layer uses `HTMLElement`.
+- `pxtsimcore/tsconfig.json` includes `debugcore.ts`, not `debugger.ts`.
+
+The DOM-free type-check now passes with zero diagnostics:
+`node_modules/.bin/tsc -p pxtsimcore/tsconfig.json`.
 
 ### Original baseline (137 errors across 7 files)
 
@@ -303,6 +306,4 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
-
-
 
