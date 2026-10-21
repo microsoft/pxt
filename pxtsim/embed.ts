@@ -82,6 +82,12 @@ namespace pxsim {
         action: GlobalAction;
     }
 
+    export interface SimulatorOutputMessage extends SimulatorMessage {
+        type: "output";
+        function: string;
+        args: (number | string | boolean )[];
+    }
+
     export interface SimulatorStateMessage extends SimulatorMessage {
         type: "status";
         frameid?: string;

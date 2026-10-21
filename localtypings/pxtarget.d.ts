@@ -1200,6 +1200,8 @@ declare namespace ts.pxtc {
         embedMeta?: string;
         embedBlob?: string; // base64
 
+        instrument?: string[];
+
         /* @internal */
         ignoreFileResolutionErrors?: boolean; // ignores triple-slash directive errors; debug only
         unfetteredInitializers?: boolean; // removes isNumericLiteral check on default argument values
