@@ -20,6 +20,7 @@
         "../pxtsim/debugProtocol.ts",
         "../pxtsim/debugger.ts",
         "../pxtsim/eventbus.ts",
+        "../pxtsim/host.ts",
         "../pxtsim/messages.ts",
         "../pxtsim/simtypes.ts",
         "../pxtsim/visuals/boardgeometry.ts",

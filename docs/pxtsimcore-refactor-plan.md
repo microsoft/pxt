@@ -47,11 +47,18 @@ Notes:
 - **Load order:** `breadboard.ts` evaluates constants from `boardgeometry.ts` at load time, so it has a `/// <reference path="./boardgeometry.ts" />` to keep bundle order correct.
 - `pxtsim/tsconfig.json` is unchanged; the new files are picked up automatically.
 
-### Remaining baseline (59 errors)
+### Progress: step 2, host abstractions (done) — 59 → 31 errors
+
+- `host.ts` (core): `pxsim.host.Environment` (`postToParent`, `locationHref`, `isPxtElectron`, `isIpcRenderer`, `frameId`) with inert defaults and `setEnvironment`.
+- `domhost.ts` (DOM): installs the browser environment at load time.
+- `domutils.ts` (DOM): `U.containsClass/addClass/removeClass/remove/removeChildren/clear` moved out of `runtime.ts`. Namespace merging keeps `pxsim.U.*` unchanged for pxt-microbit and pxt-common-packages.
+- `runtime.ts`: `isPxtElectron`, `isIpcRenderer`, `isLocalHost`, `Runtime.postMessage` and the `Embed.frameid` uses go through `host`. `Embed.frameid` is kept for compatibility.
+
+### Remaining baseline (31 errors)
 
 | File | Errors | What is left |
 |---|---|---|
-| `runtime.ts` | 38 | `U` class/element helpers (`SVGElement`, `HTMLElement`, `Element`), `window` in `isElectron`/`isIpc`/`isLocalHost`/`postMessage`, `ImageData` screenshots, `Embed.frameid`, `visuals.IBoardPart`/`SVGElAndSize` on `CoreBoard`, `AudioContextManager` |
+| `runtime.ts` | 10 | `ImageData` screenshots (5), `visuals.IBoardPart`/`SVGElAndSize` on `CoreBoard` (2), `AudioContextManager` (3) |
 | `sound/sequencer.ts` | 8 | `AudioContextManager`, `Metronome` |
 | `debugger.ts` | 7 | uses `SimulatorDriver`/`SimulatorDriverOptions` and `HTMLElement` directly. Probably belongs in the DOM bundle, not core |
 | `sound/soundexpression.ts` | 3 | `AudioContextManager` |

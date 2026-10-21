@@ -12,66 +12,6 @@ namespace pxsim {
     }
 
     export namespace U {
-        // Keep these helpers unified with pxtlib/browserutils.ts
-        export function containsClass(el: SVGElement | HTMLElement, classes: string) {
-            return splitClasses(classes).every(cls => containsSingleClass(el, cls));
-
-            function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
-                if (el.classList) {
-                    return el.classList.contains(cls);
-                } else {
-                    const classes = (el.className + "").split(/\s+/);
-                    return !(classes.indexOf(cls) < 0);
-                }
-            }
-        }
-
-        export function addClass(el: SVGElement | HTMLElement, classes: string) {
-            splitClasses(classes).forEach(cls => addSingleClass(el, cls));
-
-            function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
-                if (el.classList) {
-                    el.classList.add(cls);
-                } else {
-                    const classes = (el.className + "").split(/\s+/);
-                    if (classes.indexOf(cls) < 0) {
-                        el.className.baseVal += " " + cls;
-                    }
-                }
-            }
-        }
-
-        export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-            splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
-
-            function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
-                if (el.classList) {
-                    el.classList.remove(cls);
-                } else {
-                    el.className.baseVal = (el.className + "")
-                        .split(/\s+/)
-                        .filter(c => c != cls)
-                        .join(" ");
-                }
-            }
-        }
-
-        function splitClasses(classes: string) {
-            return classes.split(/\s+/).filter(s => !!s);
-        }
-
-        export function remove(element: Element) {
-            element.parentElement.removeChild(element);
-        }
-
-        export function removeChildren(element: Element) {
-            while (element.firstChild) element.removeChild(element.firstChild);
-        }
-
-        export function clear(element: Element) {
-            removeChildren(element);
-        }
-
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
                 debugger
@@ -274,11 +214,11 @@ namespace pxsim {
         }
 
         export function isPxtElectron(): boolean {
-            return typeof window != "undefined" && !!(window as any).pxtElectron;
+            return host.environment().isPxtElectron();
         }
 
         export function isIpcRenderer(): boolean {
-            return typeof window != "undefined" && !!(window as any).ipcRenderer;
+            return host.environment().isIpcRenderer();
         }
 
         export function isElectron() {
@@ -291,7 +231,8 @@ namespace pxsim {
 
         export function isLocalHost(): boolean {
             try {
-                return typeof window !== "undefined" && testLocalhost(window.location.href);
+                const href = host.environment().locationHref();
+                return href !== undefined && testLocalhost(href);
             } catch (e) { return false; }
         }
 
@@ -427,7 +368,7 @@ namespace pxsim {
 
         constructor() {
             // use a stable board id
-            this.id = Embed.frameid || ("b" + Math.round(Math.random() * 2147483647));
+            this.id = host.environment().frameId() || ("b" + Math.round(Math.random() * 2147483647));
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
@@ -1066,9 +1007,7 @@ namespace pxsim {
         static postMessage(data: SimulatorMessage) {
             if (!data) return;
             // TODO: origins
-            if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
-                window.parent.postMessage(data, "*");
-            }
+            host.environment().postToParent(data);
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
@@ -1173,7 +1112,7 @@ namespace pxsim {
                     this.startTimeUs = U.perfNowUs();
                     Runtime.postMessage(<SimulatorStateMessage>{
                         type: 'status',
-                        frameid: Embed.frameid,
+                        frameid: host.environment().frameId(),
                         runtimeid: this.id,
                         state: 'running'
                     });
@@ -1182,7 +1121,7 @@ namespace pxsim {
                     this.stopIdle();
                     Runtime.postMessage(<SimulatorStateMessage>{
                         type: 'status',
-                        frameid: Embed.frameid,
+                        frameid: host.environment().frameId(),
                         runtimeid: this.id,
                         state: 'killed'
                     });
