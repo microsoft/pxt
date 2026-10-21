@@ -1288,22 +1288,63 @@ namespace pxt.github {
             });
     }
 
+    async function withPackageDescriptionAsync(repo: GitRepo): Promise<GitRepo> {
+        if (repo.description?.trim()) return repo;
+
+        try {
+            const config = await db.loadConfigAsync(repo.fullName, repo.tag || repo.defaultBranch);
+            return { ...repo, description: config?.description?.trim() ? config.description : "" };
+        } catch (error) {
+            pxt.reportException(error);
+            return { ...repo, description: repo.description || "" };
+        }
+    }
+
+    function searchResultsAsync(query: string): Promise<SearchResults> {
+        return U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=${encodeURIComponent(query)}`);
+    }
+
+    async function repoDescriptionAsync(slug: string): Promise<string> {
+        const results = await searchResultsAsync(slug);
+        const repo = results.items.find(item => item.full_name.toLowerCase() === slug);
+        if (repo) return repo.description;
+
+        const metadata: Repo = await ghGetJsonAsync("https://api.github.com/repos/" + slug);
+        return metadata.description;
+    }
+
     export function searchAsync(query: string, config: pxt.PackagesConfig): Promise<GitRepo[]> {
         if (!config) return Promise.resolve([]);
 
         let repos = query.split('|').map(parseRepoId).filter(repo => !!repo);
-        if (repos.length > 0)
-            return Promise.all(repos.map(id => repoAsync(id.fullName, config)))
-                .then(rs => rs.filter(r => r && r.status != GitRepoStatus.Banned)); // allow deep links to github repos
+        if (repos.length > 0) {
+            const descriptions: pxt.Map<Promise<string>> = {};
+            return Promise.all(repos.map(async id => {
+                const repo = await repoAsync(id.fullName, config);
+                if (!repo || isLocalRepo(id)) return repo;
+                if (!hasProxy()) return withPackageDescriptionAsync(repo);
 
-        // todo fix search
-        const fetch = () => U.httpGetJsonAsync(`${pxt.Cloud.apiRoot}ghsearch/${appTarget.id}/${appTarget.platformid || appTarget.id}?q=${encodeURIComponent(query)}`)
-        return fetch()
+                try {
+                    // Package proxy metadata does not include the repository's GitHub About text.
+                    if (!descriptions[id.slug]) {
+                        descriptions[id.slug] = repoDescriptionAsync(id.slug);
+                    }
+                    return withPackageDescriptionAsync({ ...repo, description: await descriptions[id.slug] });
+                } catch (error) {
+                    pxt.reportException(error);
+                    return withPackageDescriptionAsync(repo);
+                }
+            }))
+                .then(rs => rs.filter(r => r && r.status != GitRepoStatus.Banned)); // allow deep links to github repos
+        }
+
+        return searchResultsAsync(query)
             .then((rs: SearchResults) =>
-                rs.items.map(item => mkRepo(item, { config, fullName: item.full_name }))
+                Promise.all(rs.items.map(item => mkRepo(item, { config, fullName: item.full_name }))
                     .filter(r => r.status == GitRepoStatus.Approved || (config.allowUnapproved && r.status == GitRepoStatus.Unknown))
                     // don't return the target itself!
                     .filter(r => !pxt.appTarget.appTheme.githubUrl || `https://github.com/${r.fullName}` != pxt.appTarget.appTheme.githubUrl.toLowerCase())
+                    .map(withPackageDescriptionAsync))
             )
             .catch(err => []); // offline
     }

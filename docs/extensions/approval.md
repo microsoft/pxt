@@ -5,6 +5,11 @@ GitHub Organizations or GitHub repos can be approved.
 
 Banned extensions are not allowed to load.
 
+GitHub-hosted extension cards use the repository's **About** description. If it is
+blank, the card falls back to the `description` field in `pxt.json`. Keyword
+searches, direct GitHub URLs, and preferred-extension listings use the same
+description precedence.
+
 ## Checklist
 
 Whenever you are submitting an extension for approval, please check that you have completed the following tasks:

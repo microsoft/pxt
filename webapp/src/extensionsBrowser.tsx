@@ -12,6 +12,7 @@ import { ExtensionCard } from "../../react-common/components/extensions/Extensio
 import { Modal } from "../../react-common/components/controls/Modal";
 import { TabList, TabListProps } from "../../react-common/components/controls/TabList";
 import { Link } from "../../react-common/components/controls/Link";
+import { withGithubDescriptions } from "./extensionDescriptions";
 
 type ExtensionMeta = pxtc.service.ExtensionMeta & {
     dependencyName?: string;
@@ -755,7 +756,9 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             }
         });
 
-        const toBeFetched: string[] = [];
+        const toBeFetched = Array.from(new Set(repos
+            .map(extension => extension.repo?.fullName)
+            .filter((repo): repo is string => !!repo && !getExtensionFromFetched(repo))));
         if (trgConfig?.packages?.approvedRepoLib) {
             Object.keys(trgConfig.packages.approvedRepoLib).forEach(repoSlug => {
                 const repoData = trgConfig.packages.approvedRepoLib[repoSlug];
@@ -764,20 +767,23 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 const fetched = getExtensionFromFetched(repoSlug);
                 if (fetched) {
                     repos.push(fetched);
-                } else {
+                } else if (!toBeFetched.some(repo => repo.toLowerCase() === repoSlug.toLowerCase())) {
                     toBeFetched.push(repoSlug);
                 }
             })
         }
         const loadingCards = [];
-        for (let i = 0; i < toBeFetched.length; i++) {
-            loadingCards.push(emptyCard)
+        for (const repo of toBeFetched) {
+            if (!repos.some(extension => extension.repo?.fullName?.toLowerCase() === repo.toLowerCase())) {
+                loadingCards.push(emptyCard)
+            }
         }
-        const uniqueRepos = mergeUniqueExtensions(repos);
+        const uniqueRepos = mergeUniqueExtensions(withGithubDescriptions(repos, Array.from(allExtensions.values())));
         setPreferredExts(prioritizeInstalledExtensions([...uniqueRepos, ...loadingCards]))
 
         const exts = await fetchGithubDataAndAddAsync(toBeFetched);
-        setPreferredExts(prioritizeInstalledExtensions(mergeUniqueExtensions(repos, exts)))
+        const refreshed = withGithubDescriptions(repos, [...allExtensions.values(), ...exts]);
+        setPreferredExts(prioritizeInstalledExtensions(mergeUniqueExtensions(refreshed, exts)))
     }
 
     async function handleImportUrl(url: string) {
