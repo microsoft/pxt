@@ -4,7 +4,8 @@
         "noImplicitAny": true,
         "noImplicitReturns": true,
         "noImplicitThis": true,
-        "noEmit": true,
+        "declaration": true,
+        "outFile": "../built/pxtsimcore.js",
         "newLine": "LF",
         "moduleResolution": "node",
         "lib": [

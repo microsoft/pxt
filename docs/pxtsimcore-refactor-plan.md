@@ -9,9 +9,9 @@
 - **`pxtsimcore/`** builds `built/pxtsimcore.js` and `.d.ts`.
   - Its tsconfig has `lib: ["es2017", "ES2018.Promise"]` with **no `dom`**, so the compiler enforces DOM-freedom.
 - **`pxtsim/`** builds `built/pxtsim.js`.
-  - It references `pxtsimcore.d.ts` via a project reference or `/// <reference>`.
-  - It keeps the DOM `lib`.
-  - The gulp bundle concatenates core and DOM code, so downstream behavior is unchanged.
+  - For compatibility it remains the existing complete bundle while the source split is in progress.
+  - The two bundles must not be loaded together yet: `pxtsim.js` still contains the core sources, so concatenating/loading `pxtsimcore.js` too would duplicate namespace initialization.
+  - Once the DOM-only source split is complete, the build can compose core and DOM outputs into the legacy bundle.
 
 ## Proposed file split
 
@@ -26,8 +26,8 @@
 ## Steps
 
 1. **Add a DOM-free type-check first (low risk).** ✅ Done.
-   - Added [pxtsimcore/tsconfig.json](../pxtsimcore/tsconfig.json) (no `dom` lib, `noEmit`, `types: []`) over the candidate core files, plus [pxtsimcore/globals.d.ts](../pxtsimcore/globals.d.ts), which declares only host-agnostic globals (timers, `console`, `performance`, `TextEncoder`/`TextDecoder`).
-   - Run it with `node_modules/.bin/tsc -p pxtsimcore/tsconfig.json`. It is not wired into the gulp build yet, and it is expected to fail until the later steps land.
+   - Added [pxtsimcore/tsconfig.json](../pxtsimcore/tsconfig.json) (no `dom` lib, `types: []`) over the candidate core files, plus [pxtsimcore/globals.d.ts](../pxtsimcore/globals.d.ts), which declares only host-agnostic globals (timers, `console`, `performance`, `TextEncoder`/`TextDecoder`).
+   - The initial config was `noEmit`; step 6 now emits the core bundle and declarations. Use `node_modules/.bin/tsc -p pxtsimcore/tsconfig.json --noEmit` for a check-only run.
    - The errors are the work list; see the baseline below.
 
 ### Progress: group B declaration moves (done) — 137 → 59 errors
@@ -129,12 +129,20 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
    - Check whether `CoreBoard` or `EventBus` reference `SVGElement` anywhere. If so, introduce opaque or generic types.
    - `SimulatorRunOptions` and `SimulatorDriverOptions` mention `HTMLElement`. The driver is DOM-side, so these can stay in pxtsim.
 
-6. **Update the build.**
-   - Add a `pxtsimcore` task in `gulpfile.js` that runs before `pxtsim`.
+6. **Update the build.** 🚧 In progress.
+   - Add a `pxtsimcore` task in `gulpfile.js`; once the DOM-only project consumes core output, establish the required build order.
    - Wire it into the existing lists that mention `built/pxtsim.js` (around lines 117, 142, 153, 474, and 804).
    - Concatenate `pxtsimcore.js` before `pxtsim.js`, or have `pxtsim` emit both.
    - Add the package to the watch task and the lint task.
    - Update the `.d.ts` copy and publish steps for the new `pxtsimcore.d.ts`.
+
+### Progress: first build-pipeline milestone (done)
+
+- `pxtsimcore/tsconfig.json` now emits declarations and targets `built/pxtsimcore.js`.
+- Added a `pxtsimcore` gulp task and wired it into full builds, CLI builds, and watch rebuilds.
+- Kept the legacy `built/pxtsim.js` output unchanged; it still compiles successfully and remains the only bundle loaded by existing consumers at this stage.
+- Verified `built/pxtsimcore.js` and `built/pxtsimcore.d.ts` are generated, `pxtsim` compiles, the core output loads in Node with neither `window` nor `document`, and the core project also passes with `--noEmit`.
+- Core artifact compilation is included in the build pipelines, but publishing/copying the new `.d.ts` and shipping the separate core bundle to consumers remains future work; the source split and legacy bundle composition are not complete yet.
 
 7. **Verify.**
    - Run `gulp` for the full build.
@@ -306,4 +314,3 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
-

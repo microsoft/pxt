@@ -100,6 +100,7 @@ const pxtlib = () => compileTsProject("pxtlib");
 const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
 const pxtsim = () => compileTsProject("pxtsim");
+const pxtsimcore = () => compileTsProject("pxtsimcore");
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
@@ -184,7 +185,7 @@ function initWatch() {
 
     const tasks = [
         pxtlib,
-        gulp.parallel(pxtcompiler, pxtsim, backendutils),
+        gulp.parallel(pxtcompiler, pxtsim, pxtsimcore, backendutils),
         pxtpy,
         gulp.parallel(pxtblocks, pxteditor, pxtservices),
         gulp.parallel(pxtrunner, cli, pxtcommon),
@@ -202,7 +203,8 @@ function initWatch() {
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
 
     gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
-    gulp.watch("./pxtsim/**/*", gulp.series(pxtsim, ...tasks.slice(2)));
+    gulp.watch("./pxtsim/**/*", gulp.series(gulp.parallel(pxtsim, pxtsimcore), ...tasks.slice(2)));
+    gulp.watch("./pxtsimcore/**/*", gulp.series(pxtsimcore, ...tasks.slice(2)));
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
@@ -857,7 +859,7 @@ const buildAll = gulp.series(
     maybeUpdateWebappStrings(),
     gulp.parallel(copyTypescriptServices, copyBlocklyMedia, inlineBlocklySourcemaps),
     gulp.parallel(pxtlib, pxtweb),
-    gulp.parallel(pxtcompiler, pxtsim, backendutils),
+    gulp.parallel(pxtcompiler, pxtsim, pxtsimcore, backendutils),
     pxtpy,
     gulp.parallel(pxteditor, pxtblocks, pxtservices),
     gulp.parallel(pxtrunner, cli, pxtcommon),
@@ -927,9 +929,10 @@ exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
 exports.testcli = testcli;
 exports.reactCommon = reactCommon;
+exports.pxtsimcore = pxtsimcore;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
-    gulp.parallel(pxtcompiler, pxtsim, backendutils),
+    gulp.parallel(pxtcompiler, pxtsim, pxtsimcore, backendutils),
     pxtpy,
     pxteditor,
     gulp.parallel(pxtrunner, cli, pxtcommon),
