@@ -21,14 +21,26 @@
  * as-is.
  */
 
-/** The type of the lifecycle events, the ready event and the open request. */
+/** The `type` of every simxeditor event, request and reply. */
 export const SIMXEDITOR_MESSAGE_TYPE = "simxeditor";
 
-/** The type of the message that carries a brokered port. */
+/** The `type` of the message that carries a brokered port. */
 export const SIMXEDITOR_PORT_MESSAGE_TYPE = "simxeditorport";
 
 /** The value of the tab frame's `role` URL parameter. */
 export const SIMXEDITOR_ROLE = "editor";
+
+/**
+ * Returns the origin of the editor hosting this simulator extension's frame,
+ * e.g. `https://arcade.makecode.com`, which the editor passes in the frame
+ * URL's `parentOrigin` parameter. Post the ready event and requests to it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the origin, or undefined if the URL provides none
+ */
+export function getParentOrigin(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("parentOrigin") || undefined;
+}
 
 /**
  * Returns true if the editor offers this simulator extension's tab to the open

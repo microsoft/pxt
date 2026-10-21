@@ -10,7 +10,7 @@ import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
-import { applyUserEdit, OpenProjectTracker, ProjfsEditor, ProjfsHost, ProjfsProject, setFileListedAsync, writeProjectFileAsync } from "./projfsHost";
+import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, writeProjectFileAsync } from "./projfsHost";
 import { createProjassetsConfig, ProjassetsConfig, ProjassetsHost } from "./projassetsHost";
 import {
     answerSimxEditorRequest,
@@ -22,6 +22,7 @@ import {
     SimxEditorHost,
     SimxEditorRegistration,
 } from "./simxEditorHost";
+import { OpenProjectTracker } from "./simxRequests";
 import { SimxEditorSimulatorCommand, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 
 
@@ -487,12 +488,13 @@ function createProjfsProject(epkg: pkg.EditorPackage): ProjfsProject {
         loadedAsync: () => epkg.loadedAsync(),
         getFiles: () => epkg.getAllFiles(),
         writeFileAsync: (name, content) => writeProjectFileAsync(epkg, config?.projfsEditor, name, content),
-        deleteFileAsync: name => {
-            delete epkg.files[name];
-            data.invalidate("open-meta:");
-            return epkg.saveFilesAsync();
+        deleteFileAsync: async name => {
+            await epkg.removeFileAsync(name);
+            await epkg.saveFilesAsync();
         },
-        setListedAsync: (name, listed) => setFileListedAsync(epkg, name, listed),
+        setListedAsync: async (name, listed) => {
+            await epkg.setFileListedAsync(name, listed);
+        },
         markDirty: (name, content) => {
             if (config?.projfsEditor) applyUserEdit(config.projfsEditor, name, content);
         },

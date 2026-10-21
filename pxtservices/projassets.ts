@@ -22,7 +22,20 @@
  * as-is.
  */
 
+/** The `type` of every projassets request, reply and notification. */
 export const PROJASSETS_MESSAGE_TYPE = "projassets";
+
+/**
+ * Returns the origin of the editor hosting this simulator extension's frame,
+ * e.g. `https://arcade.makecode.com`, which the editor passes in the frame
+ * URL's `parentOrigin` parameter. Post requests to it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the origin, or undefined if the URL provides none
+ */
+export function getParentOrigin(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("parentOrigin") || undefined;
+}
 
 /**
  * Returns the level of the simulator-extension APIs the editor hosting this
@@ -332,7 +345,9 @@ export interface ProjassetsAckReply extends ProjassetsMessage {
     subtype: "ack";
 }
 
-export interface ProjassetsErrorReply extends ProjassetsMessage {
+export interface ProjassetsErrorReply extends Omit<ProjassetsMessage, "id"> {
+    /** The request's `id`; undefined if the request carried no string `id`. */
+    id: string | undefined;
     subtype: "error";
     code: ProjassetsErrorCode;
     message: string;
@@ -403,16 +418,6 @@ interface PendingRequest {
 type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
 
 const DEFAULT_SLOW_REPLY_MS = 10000;
-
-/**
- * Returns the editor's origin, which the editor passes in the frame URL's
- * `parentOrigin` parameter, or undefined if the URL provides none.
- * @param search the frame URL's query string; defaults to `window.location.search`
- */
-function getParentOrigin(search: string | undefined): string | undefined {
-    const query = search !== undefined ? search : window.location.search;
-    return new URLSearchParams(query).get("parentOrigin") || undefined;
-}
 
 /**
  * Lists the open project's assets, name and visual configuration from a

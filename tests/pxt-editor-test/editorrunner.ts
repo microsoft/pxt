@@ -26,7 +26,12 @@ import {
     SimxEditorTabsShownInput,
 } from "../../webapp/src/editorToggleLayout";
 import { getEditorToolbarControls, EditorToolbarControlsInput } from "../../webapp/src/editorToolbarControls";
-import { getSimxApiLevel as getSimxEditorApiLevel, hasEditorTab, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
+import {
+    getParentOrigin as getSimxEditorParentOrigin,
+    getSimxApiLevel as getSimxEditorApiLevel,
+    hasEditorTab,
+    SimxEditorSimulatorState,
+} from "../../pxtservices/simxeditor";
 import {
     addSimulatorThemeToFiles,
     getProjectSimulatorThemePreference,
@@ -49,7 +54,6 @@ import {
     getProjfsFolder,
     getVisibleFiles,
     isValidRelativeName,
-    OpenProjectTracker,
     PROJFS_FOLDER_QUOTA_BYTES,
     PROJFS_MAX_FOLDER_FILES,
     PROJFS_MAX_NAME_LENGTH,
@@ -57,16 +61,14 @@ import {
     PROJFS_MAX_PENDING_REQUESTS,
     PROJFS_RATE_LIMIT,
     PROJFS_RATE_WINDOW_MS,
-    ProjfsConfigPackage,
     ProjfsEditor,
     ProjfsHost,
     ProjfsPackage,
     ProjfsPackageFile,
     ProjfsProject,
-    setFileListedAsync,
-    utf8Length,
     writeProjectFileAsync,
 } from "../../webapp/src/projfsHost";
+import { OpenProjectTracker } from "../../webapp/src/simxRequests";
 import {
     getParentOrigin,
     getProjectId,
@@ -102,6 +104,7 @@ import {
     PROJASSETS_NOTIFY_MAX_DELAY_MS,
 } from "../../webapp/src/projassetsHost";
 import {
+    getParentOrigin as getProjassetsParentOrigin,
     getSimxApiLevel as getProjassetsApiLevel,
     ProjassetsAssetOfKind,
     ProjassetsAssetsReply,
@@ -122,7 +125,7 @@ import {
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
-import { getSimxInstanceDropdownOptions, SIMX_CREATE_OPTION_VALUE } from "../../pxtblocks/fields/simxInstanceOptions";
+import { getSimxInstanceDropdownOptions, SIMX_CREATE_OPTION_VALUE } from "../../pxtblocks/fields/field_simxinstancedropdown";
 
 pxt.appTarget = {
     versions: {
@@ -824,13 +827,6 @@ describe("projfs guard", () => {
         chai.expect(getFolderFileName("pxt_modules/owner", "x.ts")).equals(undefined);
     });
 
-    it("measures content in UTF-8 bytes", () => {
-        chai.expect(utf8Length("abc")).equals(3);
-        chai.expect(utf8Length("\u00e9")).equals(2);
-        chai.expect(utf8Length("\u20ac")).equals(3);
-        chai.expect(utf8Length("\ud83d\ude00")).equals(4);
-    });
-
     it("makes visible exactly the stored folder files pxt.json lists, by relative name, in listed order", () => {
         const files = {
             [pxt.CONFIG_NAME]: JSON.stringify({
@@ -874,7 +870,7 @@ describe("projfs guard", () => {
             "main.ts": "bbbbbbbb",
         };
         chai.expect(getFolderUsage(files, "owner/repo")).deep.equals({
-            bytes: utf8Length("a.txt") + 3 + utf8Length("hand-made.txt") + 3,
+            bytes: pxt.Util.toUTF8Array("a.txt").length + 3 + pxt.Util.toUTF8Array("hand-made.txt").length + 3,
             files: 2,
         });
     });
@@ -884,6 +880,11 @@ describe("projfs guard", () => {
         chai.expect(getProjfsFolder("owner/repo/sub")).equals("owner/repo");
         chai.expect(getProjfsFolder("owner/repo/sub/deeper")).equals("owner/repo");
         chai.expect(getProjfsFolder("other/repo")).equals("other/repo");
+    });
+
+    it("gives a key in any letter case its repository's folder in lower case", () => {
+        chai.expect(getProjfsFolder("Owner/Repo")).equals("owner/repo");
+        chai.expect(getProjfsFolder("OWNER/repo/Sub")).equals("owner/repo");
     });
 
     it("gives a key that names no repository no folder", () => {
@@ -947,12 +948,19 @@ describe("projfs host", () => {
         async deleteFileAsync(name: string) {
             this.calls.push(`delete ${name}`);
             delete this.files[name];
+            this.updateListing(name, false);
         }
 
         async setListedAsync(name: string, listed: boolean) {
             if (this.failListing) throw new Error("pxt.json could not be updated");
             this.calls.push(`${listed ? "list" : "unlist"} ${name}`);
-            const config = JSON.parse(this.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            this.updateListing(name, listed);
+        }
+
+        // like the editor package, changes nothing while pxt.json is malformed or lists no files
+        private updateListing(name: string, listed: boolean) {
+            const config = pxt.Util.jsonTryParse(this.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            if (!Array.isArray(config?.files)) return;
             config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
             if (!listed && config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
             this.files[pxt.CONFIG_NAME] = JSON.stringify(config);
@@ -1160,22 +1168,22 @@ describe("projfs host", () => {
     describe("quota", () => {
         const KIB = 1024;
         // what the folder holds before a test writes: listed.txt, its name and its content
-        const HELD = utf8Length("listed.txt") + utf8Length("hello");
+        const HELD = pxt.Util.toUTF8Array("listed.txt").length + pxt.Util.toUTF8Array("hello").length;
 
         it("accepts a write that brings the folder to exactly the quota", async () => {
-            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - utf8Length("big.txt"));
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - pxt.Util.toUTF8Array("big.txt").length);
             const reply = await send({ subtype: "write", name: "big.txt", content });
             chai.expect(reply.subtype).equals("ack");
         });
 
         it("counts a file's name toward the quota", async () => {
-            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - utf8Length("big.txt"));
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - pxt.Util.toUTF8Array("big.txt").length);
             await expectError({ subtype: "write", name: "big2.txt", content }, "QUOTA_EXCEEDED");
             chai.expect((await send({ subtype: "write", name: "big.txt", content })).subtype).equals("ack");
         });
 
         it("refuses a write one byte over the quota, whole", async () => {
-            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - utf8Length("big.txt") + 1);
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - pxt.Util.toUTF8Array("big.txt").length + 1);
             const before = { ...project.files };
             await expectError({ subtype: "write", name: "big.txt", content }, "QUOTA_EXCEEDED");
             chai.expect(project.calls).deep.equals([]);
@@ -1200,6 +1208,12 @@ describe("projfs host", () => {
         });
 
         it("counts multi-byte characters and data: URIs at their stored length", async () => {
+            // two, three and four UTF-8 bytes: nine in all
+            const wide = "\u00e9\u20ac\ud83d\ude00";
+            const fill = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - "wide.txt".length - 9);
+            await expectError({ subtype: "write", name: "wide.txt", content: wide + fill + "x" }, "QUOTA_EXCEEDED");
+            chai.expect((await send({ subtype: "write", name: "wide.txt", content: wide + fill })).subtype).equals("ack");
+            project = newProject();
             const euros = "\u20ac".repeat(Math.floor(PROJFS_FOLDER_QUOTA_BYTES / 3));
             await expectError({ subtype: "write", name: "euros.txt", content: euros }, "QUOTA_EXCEEDED");
             const uri = "data:application/octet-stream;base64," + "A".repeat(PROJFS_FOLDER_QUOTA_BYTES);
@@ -1316,7 +1330,7 @@ describe("projfs host", () => {
         });
         chai.expect((await send({ subtype: "delete", name: "stored.ts" })).subtype).equals("ack");
         chai.expect((await send({ subtype: "delete", name: "missing.ts" })).subtype).equals("ack");
-        chai.expect(project.calls).deep.equals(["delete owner/repo/stored.ts", "unlist owner/repo/stored.ts", "unlist owner/repo/missing.ts"]);
+        chai.expect(project.calls).deep.equals(["delete owner/repo/stored.ts", "unlist owner/repo/missing.ts"]);
         chai.expect((JSON.parse(project.files[pxt.CONFIG_NAME]) as pxt.PackageConfig).testFiles).deep.equals(["test.ts"]);
     });
 
@@ -1500,6 +1514,16 @@ describe("projfs host", () => {
             chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
         });
 
+        it("serves a key in any letter case from its repository's lower-case folder, sharing its quota and queue", async () => {
+            chai.expect((await send({ subtype: "write", name: "mixed.txt", content: "m" }, "Owner/Repo")).subtype).equals("ack");
+            chai.expect(project.files["owner/repo/mixed.txt"]).equals("m");
+            chai.expect(Object.keys(project.files).filter(n => n.startsWith("Owner/"))).deep.equals([]);
+            chai.expect(((await send({ subtype: "read", name: "mixed.txt" }, "owner/repo")) as ProjfsContentReply).content).equals("m");
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES / 2);
+            chai.expect((await send({ subtype: "write", name: "a.bin", content }, "OWNER/REPO/sub")).subtype).equals("ack");
+            await expectError({ subtype: "write", name: "b.bin", content }, "QUOTA_EXCEEDED");
+        });
+
         it("refuses every request from a key that names no repository with UNREGISTERED", async () => {
             await expectError({ subtype: "list" }, "UNREGISTERED", "notarepo");
             await expectError({ subtype: "write", name: "a.txt", content: "x" }, "UNREGISTERED", "notarepo");
@@ -1609,6 +1633,17 @@ describe("projfs host", () => {
         chai.expect(((await send({ subtype: "read", name: "a.txt" })) as ProjfsContentReply).content).equals("x");
     });
 
+    it("acknowledges a write and a delete while pxt.json is malformed, leaving pxt.json as it is", async () => {
+        for (const config of ["not json", JSON.stringify({ name: "no files list" })]) {
+            project = newProject({ [pxt.CONFIG_NAME]: config });
+            chai.expect((await send({ subtype: "write", name: "a.txt", content: "a" })).subtype, config).equals("ack");
+            chai.expect((await send({ subtype: "delete", name: "listed.txt" })).subtype, config).equals("ack");
+            chai.expect(project.files[pxt.CONFIG_NAME], config).equals(config);
+            chai.expect(project.files["owner/repo/a.txt"], config).equals("a");
+            chai.expect(project.files, config).not.to.have.property("owner/repo/listed.txt");
+        }
+    });
+
     it("fails a request the project cannot apply and keeps serving", async () => {
         project.failWrites = true;
         const reply = await expectError({ subtype: "write", name: "a.txt", content: "x" }, "FAILED");
@@ -1640,7 +1675,8 @@ describe("projfs host", () => {
 
         it("passes a flagged delete through the edit pipeline after deleting and unlisting the file", async () => {
             await send({ subtype: "delete", name: "listed.txt", dirty: true });
-            chai.expect(project.calls).deep.equals(["delete owner/repo/listed.txt", "unlist owner/repo/listed.txt", "dirty owner/repo/listed.txt"]);
+            chai.expect(project.calls).deep.equals(["delete owner/repo/listed.txt", "dirty owner/repo/listed.txt"]);
+            chai.expect(project.listed()).deep.equals([pxt.MAIN_TS]);
             chai.expect(project.dirtied).deep.equals([{ name: "owner/repo/listed.txt", content: undefined, stored: undefined }]);
         });
 
@@ -1730,13 +1766,21 @@ describe("projfs host", () => {
         /**
          * Opens the project stored under `header` as the editor's load does,
          * its project reaching the editor package's files as the webapp's
-         * does: a new file is saved on its own, while a pxt.json change saves
-         * every file the package holds, and fails without a pxt.json.
+         * does: a new file is saved on its own, a delete unlists the file and
+         * saves every file the package holds, and a pxt.json change saves
+         * every file too, and does nothing without a pxt.json.
          */
         function beginLoad(header: string): { finish: () => void, fail: () => void } {
             const read = { ...stored[header] };
             const files: pxt.Map<string> = {};
             const loaded = pxt.Util.defer<void>();
+            const setListedAsync = async (name: string, listed: boolean) => {
+                if (!files[pxt.CONFIG_NAME]) return;
+                const config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
+                files[pxt.CONFIG_NAME] = JSON.stringify(config);
+                stored[header] = { ...files };
+            };
             current = {
                 getFiles: () => ({ ...files }),
                 writeFileAsync: async (name, content) => {
@@ -1745,15 +1789,10 @@ describe("projfs host", () => {
                 },
                 deleteFileAsync: async name => {
                     delete files[name];
+                    await setListedAsync(name, false);
                     stored[header] = { ...files };
                 },
-                setListedAsync: async (name, listed) => {
-                    if (!files[pxt.CONFIG_NAME]) throw new Error("pxt.json could not be updated");
-                    const config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
-                    config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
-                    files[pxt.CONFIG_NAME] = JSON.stringify(config);
-                    stored[header] = { ...files };
-                },
+                setListedAsync,
                 loadedAsync: () => loaded.promise,
             };
             return {
@@ -1787,7 +1826,7 @@ describe("projfs host", () => {
             await settle();
             load.finish();
             await answered;
-            chai.expect((replies[0] as ProjfsFilesReply).files).deep.equals([{ name: "items.ts", size: utf8Length("holds a, b") }]);
+            chai.expect((replies[0] as ProjfsFilesReply).files).deep.equals([{ name: "items.ts", size: pxt.Util.toUTF8Array("holds a, b").length }]);
             chai.expect((replies[1] as ProjfsContentReply).content).equals("holds a, b");
         });
 
@@ -2016,46 +2055,16 @@ describe("projfs project writes", () => {
     });
 });
 
-describe("projfs listing", () => {
-    class FakeConfigPackage implements ProjfsConfigPackage {
-        constructor(public config: string) {
-        }
-
-        updateConfigAsync(update: (config: pxt.PackageConfig) => void): Promise<void> | null {
-            // like the editor package: null when pxt.json is malformed or the update throws
-            try {
-                const config = JSON.parse(this.config) as pxt.PackageConfig;
-                update(config);
-                this.config = JSON.stringify(config);
-                return Promise.resolve();
-            } catch (e) {
-                return null;
-            }
-        }
-    }
-
-    it("lists a file once", async () => {
-        const epkg = new FakeConfigPackage(JSON.stringify({ files: ["main.ts"] }));
-        await setFileListedAsync(epkg, "owner/repo/a.txt", true);
-        await setFileListedAsync(epkg, "owner/repo/a.txt", true);
-        chai.expect(JSON.parse(epkg.config).files).deep.equals(["main.ts", "owner/repo/a.txt"]);
-    });
-
-    it("unlists a file from the files and testFiles lists", async () => {
-        const epkg = new FakeConfigPackage(JSON.stringify({ files: ["main.ts", "owner/repo/a.txt"], testFiles: ["owner/repo/a.txt", "test.ts"] }));
-        await setFileListedAsync(epkg, "owner/repo/a.txt", false);
-        chai.expect(JSON.parse(epkg.config)).deep.equals({ files: ["main.ts"], testFiles: ["test.ts"] });
-    });
-
-    it("rejects when pxt.json cannot be changed", async () => {
-        for (const config of ["not json", JSON.stringify({ name: "no files list" })]) {
-            const epkg = new FakeConfigPackage(config);
-            const error = await setFileListedAsync(epkg, "owner/repo/a.txt", true).then(() => undefined, e => e);
-            chai.expect(error, config).instanceOf(Error);
-            chai.expect(epkg.config).equals(config);
-        }
-    });
-});
+/**
+ * Checks one of the client files' editor origin readers: it returns the origin
+ * a frame URL's `parentOrigin` parameter carries, and undefined for a URL with
+ * none or an empty one.
+ */
+function expectParentOriginReader(read: (search?: string) => string | undefined) {
+    chai.expect(read("?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo")).equals("https://arcade.makecode.com");
+    chai.expect(read("?channel=owner%2Frepo")).equals(undefined);
+    chai.expect(read("?parentOrigin=")).equals(undefined);
+}
 
 /**
  * Checks one of the client files' API level readers: it returns the level a
@@ -2188,9 +2197,7 @@ describe("projfs client", () => {
     });
 
     it("reads the editor's origin from the frame URL", () => {
-        chai.expect(getParentOrigin("?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo")).equals("https://arcade.makecode.com");
-        chai.expect(getParentOrigin("?channel=owner%2Frepo")).equals(undefined);
-        chai.expect(getParentOrigin("?parentOrigin=")).equals(undefined);
+        expectParentOriginReader(getParentOrigin);
     });
 
     it("reads the open project's id from the frame URL", () => {
@@ -2310,7 +2317,10 @@ describe("projfs client", () => {
             loadedAsync: () => Promise.resolve(),
             getFiles: () => ({ ...files }),
             writeFileAsync: async (name, content) => { files[name] = content; },
-            deleteFileAsync: async name => { delete files[name]; },
+            deleteFileAsync: async name => {
+                delete files[name];
+                await project.setListedAsync(name, false);
+            },
             setListedAsync: async (name, listed) => {
                 const config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                 config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
@@ -2335,7 +2345,7 @@ describe("projfs client", () => {
         chai.expect(await client.read("notes.txt")).equals(text);
         chai.expect(await client.list()).deep.equals([
             { name: "images/pixel.png", size: png.length },
-            { name: "notes.txt", size: utf8Length(text) },
+            { name: "notes.txt", size: pxt.Util.toUTF8Array(text).length },
         ]);
         for (const name of [pxt.CONFIG_NAME, pxt.MAIN_TS]) {
             const error = await client.read(name).then(() => undefined, e => e);
@@ -3102,6 +3112,22 @@ describe("projassets host", () => {
         await clock.advance(1);
         await Promise.all(held);
         chai.expect(received.map(r => (r as ProjassetsAssetsReply).kind)).deep.equals(["image", "song"]);
+    });
+
+    it("gives a key in any letter case its repository's list queue and rate window", async () => {
+        for (let i = 0; i < PROJASSETS_LIST_RATE_LIMIT; i++)
+            chai.expect((await send({ subtype: "list", kind: "image" })).subtype).equals("assets");
+        const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+        const held = post({ subtype: "list", kind: "image" }, received, "Owner/Repo/Sub");
+        await settle();
+        chai.expect(received).deep.equals([]);
+        await clock.advance(PROJASSETS_LIST_RATE_WINDOW_MS);
+        await held;
+        chai.expect(received.map(r => r.subtype)).deep.equals(["assets"]);
+    });
+
+    it("refuses a list request from a key that names no repository with UNREGISTERED", async () => {
+        await expectError({ subtype: "list", kind: "image" }, "UNREGISTERED", "notarepo");
     });
 
     it("fails a request the project cannot answer and keeps serving", async () => {
@@ -3876,6 +3902,10 @@ describe("projassets client", () => {
 
     it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
         expectApiLevelReader(getProjassetsApiLevel);
+    });
+
+    it("reads the editor's origin from the frame URL", () => {
+        expectParentOriginReader(getProjassetsParentOrigin);
     });
 
     describe("through the host", () => {
@@ -4910,6 +4940,10 @@ describe("simulator extension editor tab registrations", () => {
 
     it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
         expectApiLevelReader(getSimxEditorApiLevel);
+    });
+
+    it("reads the editor's origin from the frame URL", () => {
+        expectParentOriginReader(getSimxEditorParentOrigin);
     });
 });
 

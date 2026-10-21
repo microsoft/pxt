@@ -498,6 +498,32 @@ describe("simulator driver projassets messages", () => {
     });
 });
 
+describe("simulator extension frame URLs", () => {
+    /** Returns the names of the parameters `url` carries, sorted. */
+    function parameterNames(url: URL): string[] {
+        const names: string[] = [];
+        url.searchParams.forEach((value, name) => names.push(name));
+        return names.sort();
+    }
+
+    it("sets exactly the parameters every frame carries, the optional ones only when given, keeping the page's own", () => {
+        const page = SIM_ORIGIN + "/ext/index.html?own=1";
+        const url = pxsim.simxFrameUrl({ url: page, key: "someorg/pxt-ext", parentOrigin: EDITOR_ORIGIN, language: "fr", target: "arcade", project: "p1" });
+        chai.expect(url.origin + url.pathname).equals(SIM_ORIGIN + "/ext/index.html");
+        chai.expect(parameterNames(url)).deep.equals(["apiLevel", "channel", "language", "own", "parentOrigin", "project", "target"]);
+        chai.expect(url.searchParams.get("own")).equals("1");
+        chai.expect(url.searchParams.get("parentOrigin")).equals(EDITOR_ORIGIN);
+        chai.expect(url.searchParams.get("channel")).equals("someorg/pxt-ext");
+        chai.expect(url.searchParams.get("apiLevel")).equals(pxsim.SIMX_API_LEVEL.toString());
+        chai.expect(url.searchParams.get("language")).equals("fr");
+        chai.expect(url.searchParams.get("target")).equals("arcade");
+        chai.expect(url.searchParams.get("project")).equals("p1");
+
+        const bare = pxsim.simxFrameUrl({ url: page, key: "someorg/pxt-ext", parentOrigin: EDITOR_ORIGIN });
+        chai.expect(parameterNames(bare)).deep.equals(["apiLevel", "channel", "own", "parentOrigin"]);
+    });
+});
+
 describe("simulator driver simulator extension frames", () => {
     const KEY = "someorg/pxt-ext";
     const SIM_SANDBOX = "allow-same-origin allow-scripts";

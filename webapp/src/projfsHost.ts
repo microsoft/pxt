@@ -8,6 +8,16 @@ import {
     ProjfsWriteRequest,
 } from "../../pxtservices/projfs";
 import { SlidingWindowAdmission } from "./slidingWindowAdmission";
+import {
+    caughtErrorReply,
+    errorReply,
+    getSimxRepository,
+    loadedOpenProjectAsync,
+    openProjectOrThrow,
+    requestId,
+    SimxReplyBody,
+    SimxRequestError,
+} from "./simxRequests";
 
 /**
  * The most bytes the files under one simulator extension folder may hold: the
@@ -57,11 +67,15 @@ export interface ProjfsProject {
     getFiles(): pxt.Map<string>;
     /** Creates or replaces a stored file; a text editor showing the file shows the new content. Leaves pxt.json unchanged. */
     writeFileAsync(name: string, content: string): Promise<void>;
-    /** Deletes a stored file. Leaves pxt.json unchanged. */
+    /**
+     * Deletes a stored file and removes it from the "files" and "testFiles"
+     * lists of pxt.json. Leaves pxt.json unchanged if it is missing or malformed.
+     */
     deleteFileAsync(name: string): Promise<void>;
     /**
      * Adds `name` to the "files" list of pxt.json, or removes it from the
-     * "files" and "testFiles" lists. Rejects if pxt.json cannot be changed.
+     * "files" and "testFiles" lists. Changes nothing if pxt.json is missing
+     * or malformed.
      */
     setListedAsync(name: string, listed: boolean): Promise<void>;
     /**
@@ -149,62 +163,6 @@ export function writeProjectFileAsync(epkg: ProjfsPackage, editor: ProjfsEditor 
     return file.setContentAsync(content, !!editor && editor.isOpenFile(name) && editor.isTextEditor());
 }
 
-/** The editor package, as {@link setFileListedAsync} changes its pxt.json. */
-export interface ProjfsConfigPackage {
-    /**
-     * Passes the parsed pxt.json to `update`, then saves it as `update` left
-     * it. Returns null, saving nothing, if pxt.json is missing or malformed or
-     * `update` throws.
-     */
-    updateConfigAsync(update: (config: pxt.PackageConfig) => void): Promise<void> | null;
-}
-
-/**
- * Adds `name` to the "files" list of the pxt.json of `epkg`, or removes it
- * from the "files" and "testFiles" lists, and saves pxt.json. Rejects if
- * pxt.json cannot be changed.
- */
-export function setFileListedAsync(epkg: ProjfsConfigPackage, name: string, listed: boolean): Promise<void> {
-    return epkg.updateConfigAsync(config => {
-        if (listed) {
-            if (config.files.indexOf(name) < 0) config.files.push(name);
-        } else {
-            config.files = config.files.filter(f => f !== name);
-            if (config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
-        }
-    }) || Promise.reject(new Error(`pxt.json could not be updated to ${listed ? "list" : "unlist"} ${name}.`));
-}
-
-/**
- * The open project as the simulator extension hosts read it: the project the
- * editor has loaded, until it closes. A closed project reads as no project
- * until the editor loads another, which is always a new object.
- */
-export class OpenProjectTracker<T> {
-    // the project closed last
-    protected closed: T | undefined;
-
-    /** @param getLoaded returns the project the editor has loaded, or undefined if none is */
-    constructor(protected readonly getLoaded: () => T | undefined) {
-    }
-
-    /** Returns the open project, or undefined if none is open. */
-    get(): T | undefined {
-        const project = this.getLoaded();
-        return project !== undefined && project !== this.closed ? project : undefined;
-    }
-
-    /** Closes the open project: {@link get} returns undefined until the editor loads another. */
-    close() {
-        this.closed = this.getLoaded();
-    }
-}
-
-/** Returns the size of `content` in UTF-8 bytes. */
-export function utf8Length(content: string): number {
-    return new TextEncoder().encode(content).length;
-}
-
 /**
  * Returns true if `name` is a relative path whose segments, split at `/` and `\`,
  * are all non-empty and none is `.` or `..`.
@@ -216,14 +174,14 @@ export function isValidRelativeName(name: unknown): name is string {
 
 /**
  * Returns the project folder of the simulator extension registered under
- * `key`: the root of its GitHub repository, `owner/repo`, whatever subfolder
- * `key` names, so every registration of one repository shares the folder.
- * Returns undefined if `key` names no repository, or the folder would fall
- * under `pxt_modules/`.
+ * `key`: the root of its GitHub repository, `owner/repo` in lower case,
+ * whatever subfolder `key` names, so every registration of one repository
+ * shares the folder. Returns undefined if `key` names no repository, or the
+ * folder would fall under `pxt_modules/`.
  * @param key the simulator extension's key, e.g. `owner/repo` or `owner/repo/sub`
  */
 export function getProjfsFolder(key: string): string | undefined {
-    const folder = pxt.github.parseRepoId(key)?.slug;
+    const folder = getSimxRepository(key);
     return isValidRelativeName(folder) && !folder.startsWith("pxt_modules/") ? folder : undefined;
 }
 
@@ -249,7 +207,7 @@ export function getFolderFileName(folder: string, name: unknown): string | undef
  * {@link PROJFS_MAX_NAME_SEGMENTS} segments, and its last segment is not
  * `pxt.json` and does not end in `.jres`, in any letter case.
  */
-export function isWritableName(name: string): boolean {
+function isWritableName(name: string): boolean {
     const segments = name.split("/");
     const last = segments[segments.length - 1].toLowerCase();
     return pxt.isValidProjectFileName(name)
@@ -263,7 +221,7 @@ export function isWritableName(name: string): boolean {
  * Returns the names in a list of the project's pxt.json.
  * @param list the list to read: `files` (the default) or `testFiles`
  */
-export function getListedFiles(files: pxt.Map<string>, list: "files" | "testFiles" = "files"): string[] {
+function getListedFiles(files: pxt.Map<string>, list: "files" | "testFiles" = "files"): string[] {
     const config = pxt.Util.jsonTryParse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
     return Array.isArray(config?.[list])
         ? config[list].filter(name => typeof name === "string")
@@ -282,7 +240,7 @@ export function getVisibleFiles(files: pxt.Map<string>, folder: string): ProjfsF
         .filter(name => name.startsWith(prefix) && Object.prototype.hasOwnProperty.call(files, name))
         .map(name => name.slice(prefix.length))
         .filter(isValidRelativeName)
-        .map(name => ({ name, size: utf8Length(files[prefix + name]) }));
+        .map(name => ({ name, size: pxt.Util.toUTF8Array(files[prefix + name]).length }));
 }
 
 /** What the stored files under a simulator extension folder take up, listed or not. */
@@ -298,16 +256,14 @@ export function getFolderUsage(files: pxt.Map<string>, folder: string): ProjfsFo
     const prefix = folder + "/";
     const names = Object.keys(files).filter(name => name.startsWith(prefix));
     return {
-        bytes: names.reduce((total, name) => total + utf8Length(name.slice(prefix.length)) + utf8Length(files[name]), 0),
+        bytes: names.reduce((total, name) => total + pxt.Util.toUTF8Array(name.slice(prefix.length)).length + pxt.Util.toUTF8Array(files[name]).length, 0),
         files: names.length,
     };
 }
 
-class ProjfsRequestError extends Error {
-    constructor(public readonly code: ProjfsErrorCode, message: string) {
-        super(message);
-    }
-}
+// the queue key of the lane every request applies in, one at a time; never a
+// folder, since every folder holds a "/"
+const APPLY_LANE = "apply";
 
 /**
  * Serves the project-file requests of simulator extensions. Each extension
@@ -337,10 +293,9 @@ class ProjfsRequestError extends Error {
  * also pass through {@link ProjfsProject.markDirty} once applied.
  */
 export class ProjfsHost {
-    // per folder: settles once every request received for the folder has been answered
-    protected tails: pxt.Map<Promise<void>> = {};
-    // settles once the request applying now, whichever extension sent it, has finished
-    protected applying: Promise<void> = Promise.resolve();
+    // per folder: the requests received for the folder, each until it has been
+    // answered; and, under APPLY_LANE, the requests of every folder, each while it applies
+    protected readonly queue = new pxt.Util.PromiseQueue();
     // per folder: admits each write and delete under the rate limit
     protected readonly mutations: SlidingWindowAdmission;
     // per folder: how many requests have been received and not yet answered
@@ -349,7 +304,7 @@ export class ProjfsHost {
     /**
      * @param getProject returns the open project, or undefined if none is open
      * @param now returns the current time in milliseconds on a clock that never
-     * goes back; defaults to `performance.now()` where available, else `Date.now()`
+     * goes back; defaults to `pxt.Util.monotonicNow`
      * @param delay returns a promise that resolves after the given number of milliseconds
      */
     constructor(
@@ -372,46 +327,37 @@ export class ProjfsHost {
      */
     handleMessageAsync(key: string, msg: unknown, reply: (msg: ProjfsReply) => void): Promise<void> {
         const request = msg as ProjfsRequest;
-        const id = typeof request?.id === "string" ? request.id : undefined;
-        const errorReply = (code: ProjfsErrorCode, message: string): ProjfsReply =>
-            ({ type: PROJFS_MESSAGE_TYPE, id, subtype: "error", code, message });
+        const id = requestId(msg);
 
         const folder = getProjfsFolder(key);
         if (folder === undefined) {
-            reply(errorReply("UNREGISTERED", `${key} names no GitHub repository, so it has no project folder.`));
+            reply(errorReply(PROJFS_MESSAGE_TYPE, id, "UNREGISTERED", `${key} names no GitHub repository, so it has no project folder.`));
             return Promise.resolve();
         }
 
-        const tail = this.tails[folder] || Promise.resolve();
         const refusal = this.arrivalRefusal(folder, request);
         if (refusal) {
-            const answer = errorReply(refusal.code, refusal.message);
-            const refused = tail
-                .then(() => reply(answer))
+            const answer = errorReply(PROJFS_MESSAGE_TYPE, id, refusal.code, refusal.message);
+            return this.queue.enqueue(folder, async () => reply(answer))
                 .catch(e => pxt.reportException(e));
-            this.tails[folder] = refused;
-            return refused;
         }
         this.pendingRequests[folder] = (this.pendingRequests[folder] || 0) + 1;
 
         const mutates = request?.subtype === "write" || request?.subtype === "delete";
         const project = this.getProject();
-        const answered = tail
-            .then(() => this.projectLoadedAsync(project))
-            .then(() => mutates ? this.admitMutationAsync(folder, project) : undefined)
-            .then(() => this.exclusiveAsync(() => this.applyAsync(folder, request, project)))
-            .then(
-                (result): ProjfsReply => ({ ...result, type: PROJFS_MESSAGE_TYPE, id }),
-                e => e instanceof ProjfsRequestError
-                    ? errorReply(e.code, e.message)
-                    : errorReply("FAILED", e?.message || String(e)))
-            .then(answer => {
-                this.pendingRequests[folder]--;
-                reply(answer);
-            })
-            .catch(e => pxt.reportException(e));
-        this.tails[folder] = answered;
-        return answered;
+        return this.queue.enqueue(folder, async () => {
+            let answer: ProjfsReply;
+            try {
+                const loaded = await loadedOpenProjectAsync(project, () => this.getProject());
+                if (mutates) await this.mutations.admitAsync(folder, () => openProjectOrThrow(loaded, () => this.getProject()));
+                const result = await this.queue.enqueue(APPLY_LANE, () => this.applyAsync(folder, request, loaded));
+                answer = { ...result, type: PROJFS_MESSAGE_TYPE, id } as ProjfsReply;
+            } catch (e) {
+                answer = caughtErrorReply<typeof PROJFS_MESSAGE_TYPE, ProjfsErrorCode>(PROJFS_MESSAGE_TYPE, id, e);
+            }
+            this.pendingRequests[folder]--;
+            reply(answer);
+        }).catch(e => pxt.reportException(e));
     }
 
     /**
@@ -420,65 +366,23 @@ export class ProjfsHost {
      * replies, `QUOTA_EXCEEDED` if it writes more content than the folder may
      * hold; undefined if it may wait its turn.
      */
-    protected arrivalRefusal(folder: string, request: ProjfsRequest): ProjfsRequestError | undefined {
+    protected arrivalRefusal(folder: string, request: ProjfsRequest): SimxRequestError<ProjfsErrorCode> | undefined {
         const pending = this.pendingRequests[folder] || 0;
         if (pending >= PROJFS_MAX_PENDING_REQUESTS)
-            return new ProjfsRequestError("RATE_LIMITED", `${pending} requests on ${folder}/ are already waiting for replies.`);
+            return new SimxRequestError("RATE_LIMITED", `${pending} requests on ${folder}/ are already waiting for replies.`);
         const content: unknown = request?.subtype === "write" ? request.content : undefined;
         // a string has at least as many UTF-8 bytes as UTF-16 code units
-        if (typeof content === "string" && (content.length > PROJFS_FOLDER_QUOTA_BYTES || utf8Length(content) > PROJFS_FOLDER_QUOTA_BYTES))
-            return new ProjfsRequestError("QUOTA_EXCEEDED", `The content is larger than the ${PROJFS_FOLDER_QUOTA_BYTES} bytes ${folder}/ may hold.`);
+        if (typeof content === "string" && (content.length > PROJFS_FOLDER_QUOTA_BYTES || pxt.Util.toUTF8Array(content).length > PROJFS_FOLDER_QUOTA_BYTES))
+            return new SimxRequestError("QUOTA_EXCEEDED", `The content is larger than the ${PROJFS_FOLDER_QUOTA_BYTES} bytes ${folder}/ may hold.`);
         return undefined;
-    }
-
-    /**
-     * Resolves once `project` has loaded, or at once if there is none.
-     * @param project the project the request arrived in
-     * @throws a `PROJECT_CLOSED` refusal if `project` fails to load
-     */
-    protected async projectLoadedAsync(project: ProjfsProject | undefined): Promise<void> {
-        if (!project) return;
-        try {
-            await project.loadedAsync();
-        } catch (e) {
-            throw new ProjfsRequestError("PROJECT_CLOSED", "The project open when the request arrived failed to load.");
-        }
-    }
-
-    /**
-     * Resolves once a write or delete on `folder` may apply under the rate
-     * limit, counting it as applying from then on.
-     * @param project the project the request arrived in
-     */
-    protected admitMutationAsync(folder: string, project: ProjfsProject | undefined): Promise<void> {
-        return this.mutations.admitAsync(folder, () => this.openProjectOrThrow(project));
-    }
-
-    /** Runs `apply` once no other request is applying. */
-    protected exclusiveAsync<T>(apply: () => Promise<T>): Promise<T> {
-        const result = this.applying.then(apply);
-        this.applying = result.then(() => { }, () => { });
-        return result;
-    }
-
-    /**
-     * Returns `project` if it is still the open project.
-     * @throws a `PROJECT_CLOSED` refusal if `project` is undefined or has closed
-     */
-    protected openProjectOrThrow(project: ProjfsProject | undefined): ProjfsProject {
-        if (!project)
-            throw new ProjfsRequestError("PROJECT_CLOSED", "No project was open when the request arrived.");
-        if (this.getProject() !== project)
-            throw new ProjfsRequestError("PROJECT_CLOSED", "The project open when the request arrived has closed.");
-        return project;
     }
 
     /**
      * Applies `request` to the project it arrived in.
      * @param arrivedIn the project open when the request arrived
      */
-    protected async applyAsync(folder: string, request: ProjfsRequest, arrivedIn: ProjfsProject | undefined): Promise<ProjfsReplyBody> {
-        const project = this.openProjectOrThrow(arrivedIn);
+    protected async applyAsync(folder: string, request: ProjfsRequest, arrivedIn: ProjfsProject): Promise<SimxReplyBody<ProjfsReply>> {
+        const project = openProjectOrThrow(arrivedIn, () => this.getProject());
         const files = project.getFiles();
 
         switch (request?.subtype) {
@@ -489,30 +393,30 @@ export class ProjfsHost {
                 const { name } = request;
                 const inFolder = this.folderFileNameOrThrow(folder, name);
                 if (!getVisibleFiles(files, folder).some(f => f.name === name))
-                    throw new ProjfsRequestError("NOT_FOUND", `${name} is not a file in ${folder}/.`);
+                    throw new SimxRequestError<ProjfsErrorCode>("NOT_FOUND", `${name} is not a file in ${folder}/.`);
                 return { subtype: "content", name, content: files[inFolder] };
             }
 
             case "write": {
                 const { content } = request;
                 if (typeof content !== "string")
-                    throw new ProjfsRequestError("INVALID_REQUEST", "The content must be a string.");
+                    throw new SimxRequestError<ProjfsErrorCode>("INVALID_REQUEST", "The content must be a string.");
                 const dirty = this.dirtyOrThrow(request);
                 const name = this.folderFileNameOrThrow(folder, request.name);
                 if (!isWritableName(request.name))
-                    throw new ProjfsRequestError("INVALID_NAME",
+                    throw new SimxRequestError<ProjfsErrorCode>("INVALID_NAME",
                         `${request.name} is not a name a write may give a file: it must start with a letter, digit or underscore, `
                         + `use only letters, digits, "_", "-", "." and "/", have at most ${PROJFS_MAX_NAME_LENGTH} characters `
-                        + `in at most ${PROJFS_MAX_NAME_SEGMENTS} segments, and not end in ${pxt.CONFIG_NAME}.`);
+                        + `in at most ${PROJFS_MAX_NAME_SEGMENTS} segments, and not end in ${pxt.CONFIG_NAME} or .jres.`);
                 const stored = Object.prototype.hasOwnProperty.call(files, name);
                 const usage = getFolderUsage(files, folder);
                 if (!stored && usage.files >= PROJFS_MAX_FOLDER_FILES)
-                    throw new ProjfsRequestError("QUOTA_EXCEEDED", `${folder}/ already stores ${usage.files} files, the most it may store.`);
-                const nameBytes = utf8Length(request.name);
-                const replaced = stored ? nameBytes + utf8Length(files[name]) : 0;
-                const total = usage.bytes - replaced + nameBytes + utf8Length(content);
+                    throw new SimxRequestError<ProjfsErrorCode>("QUOTA_EXCEEDED", `${folder}/ already stores ${usage.files} files, the most it may store.`);
+                const nameBytes = pxt.Util.toUTF8Array(request.name).length;
+                const replaced = stored ? nameBytes + pxt.Util.toUTF8Array(files[name]).length : 0;
+                const total = usage.bytes - replaced + nameBytes + pxt.Util.toUTF8Array(content).length;
                 if (total > PROJFS_FOLDER_QUOTA_BYTES && total > usage.bytes)
-                    throw new ProjfsRequestError("QUOTA_EXCEEDED",
+                    throw new SimxRequestError<ProjfsErrorCode>("QUOTA_EXCEEDED",
                         `Writing ${name} would bring ${folder}/ to ${total} bytes; it holds ${usage.bytes} of ${PROJFS_FOLDER_QUOTA_BYTES}.`);
                 await project.writeFileAsync(name, content);
                 if (getListedFiles(files).indexOf(name) < 0)
@@ -527,34 +431,31 @@ export class ProjfsHost {
                 const stored = Object.prototype.hasOwnProperty.call(files, name);
                 const listed = getListedFiles(files).indexOf(name) >= 0 || getListedFiles(files, "testFiles").indexOf(name) >= 0;
                 if (!stored && !listed)
-                    throw new ProjfsRequestError("NOT_FOUND", `${name} does not exist.`);
+                    throw new SimxRequestError<ProjfsErrorCode>("NOT_FOUND", `${name} does not exist.`);
                 if (stored)
                     await project.deleteFileAsync(name);
-                if (listed)
+                else
                     await project.setListedAsync(name, false);
                 if (dirty) project.markDirty?.(name, undefined);
                 return { subtype: "ack", name: request.name };
             }
 
             default:
-                throw new ProjfsRequestError("INVALID_REQUEST", `Unknown request ${(request as any)?.subtype}.`);
+                throw new SimxRequestError<ProjfsErrorCode>("INVALID_REQUEST", `Unknown request ${(request as any)?.subtype}.`);
         }
     }
 
     protected dirtyOrThrow(request: ProjfsWriteRequest | ProjfsDeleteRequest): boolean {
         const dirty: unknown = request.dirty;
         if (dirty !== undefined && typeof dirty !== "boolean")
-            throw new ProjfsRequestError("INVALID_REQUEST", "The dirty flag must be true or false.");
+            throw new SimxRequestError<ProjfsErrorCode>("INVALID_REQUEST", "The dirty flag must be true or false.");
         return dirty === true;
     }
 
     protected folderFileNameOrThrow(folder: string, name: unknown): string {
         const inFolder = getFolderFileName(folder, name);
         if (!inFolder)
-            throw new ProjfsRequestError("INVALID_NAME", `${name} is not a valid relative file name, or is reserved.`);
+            throw new SimxRequestError<ProjfsErrorCode>("INVALID_NAME", `${name} is not a valid relative file name, or is reserved.`);
         return inFolder;
     }
 }
-
-/** A reply without the `type` and `id` fields every reply carries. */
-type ProjfsReplyBody<R = ProjfsReply> = R extends ProjfsReply ? Omit<R, "type" | "id"> : never;

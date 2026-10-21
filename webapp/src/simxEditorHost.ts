@@ -11,6 +11,7 @@ import {
     SimxEditorSimulatorCommand,
     SimxEditorSimulatorState,
 } from "../../pxtservices/simxeditor";
+import { errorReply, getSimxRepository, requestId } from "./simxRequests";
 
 // The editor side of simx editor tabs: the registrations that
 // offer a tab to the open project, the tab frames (one per registration,
@@ -86,7 +87,7 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
  * no repository is never included.
  */
 export function isSimxInProject(key: string, dependencies: string[]): boolean {
-    const slug = pxt.github.parseRepoId(key)?.slug?.toLowerCase();
+    const slug = getSimxRepository(key);
     if (!slug) return false;
     return dependencies.some(dep => getDependencyRepository(dep)?.toLowerCase() === slug);
 }
@@ -130,7 +131,7 @@ export function findSimxInstanceCreator(registrations: SimxEditorRegistration[],
     const result: SimxInstanceCreator = { creator: undefined, ignored: [] };
     for (const r of registrations) {
         if (!r.creates?.some(type => type === typeQName)) continue;
-        if (!repository || pxt.github.parseRepoId(r.key)?.slug?.toLowerCase() !== repository)
+        if (!repository || getSimxRepository(r.key) !== repository)
             result.ignored.push({ key: r.key, reason: "OTHER_REPOSITORY" });
         else if (result.creator)
             result.ignored.push({ key: r.key, reason: "CLAIMED_EARLIER" });
@@ -171,12 +172,12 @@ export function getSimxEditorKeyOfMarker(name: string, registrations: SimxEditor
  * @param open shows the extension's tab; returns false, showing nothing, if the editor offers no such tab here
  */
 export function answerSimxEditorRequest(key: string, msg: unknown, open: (key: string) => boolean): SimxEditorReply {
-    const request = msg as { id?: unknown, subtype?: unknown };
-    const id = typeof request?.id === "string" ? request.id : undefined;
-    if (request?.subtype !== "open")
-        return { type: SIMXEDITOR_MESSAGE_TYPE, id, subtype: "error", code: "INVALID_REQUEST", message: `Unknown request ${request?.subtype}.` };
+    const subtype = (msg as { subtype?: unknown })?.subtype;
+    const id = requestId(msg);
+    if (subtype !== "open")
+        return errorReply(SIMXEDITOR_MESSAGE_TYPE, id, "INVALID_REQUEST", `Unknown request ${subtype}.`);
     if (!open(key))
-        return { type: SIMXEDITOR_MESSAGE_TYPE, id, subtype: "error", code: "UNAVAILABLE", message: "The editor does not offer this extension's tab here." };
+        return errorReply(SIMXEDITOR_MESSAGE_TYPE, id, "UNAVAILABLE", "The editor does not offer this extension's tab here.");
     return { type: SIMXEDITOR_MESSAGE_TYPE, id, subtype: "ack" };
 }
 
@@ -320,14 +321,8 @@ export class SimxEditorHost {
 
     protected createTab(registration: SimxEditorRegistration, container: HTMLElement, params: SimxEditorFrameParams) {
         const key = registration.key;
-        const url = new URL(registration.url);
-        url.searchParams.set("parentOrigin", params.parentOrigin);
-        url.searchParams.set("channel", key);
+        const url = pxsim.simxFrameUrl({ ...params, url: registration.url, key });
         url.searchParams.set("role", SIMXEDITOR_ROLE);
-        url.searchParams.set("apiLevel", pxsim.SIMX_API_LEVEL.toString());
-        if (params.language) url.searchParams.set("language", params.language);
-        if (params.target) url.searchParams.set("target", params.target);
-        if (params.project) url.searchParams.set("project", params.project);
 
         const frame = this.options.createFrame();
         const permissions = this.options.framePermissions(registration);

@@ -17,7 +17,7 @@ import { FieldLedMatrix } from "./fields";
 import { FieldStyledLabel } from "./fields";
 import { FieldUserEnum } from "./fields";
 import { createFieldEditor, initFieldEditors } from "./fields";
-import { SIMX_INSTANCE_DROPDOWN_FIELD } from "./fields/field_simxinstancedropdown";
+import { SIMX_INSTANCE_DROPDOWN_FIELD } from "./fields";
 import { promptTranslateBlock } from "./external";
 import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";

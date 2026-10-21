@@ -25,6 +25,7 @@
  * as-is.
  */
 
+/** The `type` of every projfs request and reply. */
 export const PROJFS_MESSAGE_TYPE = "projfs";
 
 /**
@@ -48,7 +49,7 @@ export function getSimxChannel(channel?: string, search?: string): string | unde
 /**
  * Returns the origin of the editor hosting this simulator extension's frame,
  * e.g. `https://arcade.makecode.com`, which the editor passes in the frame
- * URL's `parentOrigin` parameter. Clients post their requests to it by default.
+ * URL's `parentOrigin` parameter. Post requests to it.
  * @param search the frame URL's query string; defaults to `window.location.search`
  * @returns the origin, or undefined if the URL provides none
  */
@@ -128,7 +129,7 @@ export type ProjfsErrorCode =
      * refuses a name that does not start with a letter, digit or underscore,
      * uses a character other than letters, digits, `_`, `-`, `.` and `/`, is
      * longer than the editor allows, in characters or in segments, or whose
-     * last segment is `pxt.json`, in any letter case.
+     * last segment is `pxt.json` or ends in `.jres`, in any letter case.
      */
     | "INVALID_NAME"
     /**
@@ -242,7 +243,9 @@ export interface ProjfsAckReply extends ProjfsMessage {
     name: string;
 }
 
-export interface ProjfsErrorReply extends ProjfsMessage {
+export interface ProjfsErrorReply extends Omit<ProjfsMessage, "id"> {
+    /** The request's `id`; undefined if the request carried no string `id`. */
+    id: string | undefined;
     subtype: "error";
     code: ProjfsErrorCode;
     message: string;

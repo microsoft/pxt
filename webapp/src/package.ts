@@ -436,10 +436,24 @@ export class EditorPackage {
     removeFileAsync(n: string) {
         delete this.files[n];
         data.invalidate("open-meta:")
+        return this.setFileListedAsync(n, false);
+    }
+
+    /**
+     * Adds `name` to the "files" list of pxt.json, or removes it from the
+     * "files" and "testFiles" lists, and saves pxt.json. Returns null,
+     * changing nothing, if pxt.json is missing or malformed.
+     */
+    setFileListedAsync(name: string, listed: boolean) {
         return this.updateConfigAsync(cfg => {
-            cfg.files = cfg.files.filter(f => f != n)
-            if (cfg.testFiles)
-                cfg.testFiles = cfg.testFiles.filter(f => f != n)
+            if (listed) {
+                if (cfg.files.indexOf(name) < 0)
+                    cfg.files.push(name)
+            } else {
+                cfg.files = cfg.files.filter(f => f != name)
+                if (cfg.testFiles)
+                    cfg.testFiles = cfg.testFiles.filter(f => f != name)
+            }
         })
     }
 

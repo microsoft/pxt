@@ -270,6 +270,40 @@ namespace pxsim {
      */
     export const SIMX_API_LEVEL = 1;
 
+    /** The inputs {@link simxFrameUrl} builds a simulator extension frame or tab frame URL from. */
+    export interface SimxFrameUrlParams {
+        /** The URL of the frame's page, without the parameters the editor adds. */
+        url: string;
+        /** The `simulatorExtensions` key the frame is created for, passed in `channel`. */
+        key: string;
+        /** The origin of the editor window that is the frame's parent, which the frame should trust. */
+        parentOrigin: string;
+        /** The user's language; the URL carries no `language` parameter without it. */
+        language?: string;
+        /** The id of the running target; the URL carries no `target` parameter without it. */
+        target?: string;
+        /** The editor's id for the open project; the URL carries no `project` parameter without it. */
+        project?: string;
+    }
+
+    /**
+     * Returns `params.url` with the parameters every simulator extension frame
+     * and tab frame URL carries: `parentOrigin`, `channel`, `apiLevel`
+     * ({@link SIMX_API_LEVEL}), and `language`, `target` and `project` where
+     * given.
+     */
+    export function simxFrameUrl(params: SimxFrameUrlParams): URL {
+        const url = new URL(params.url);
+        // searchParams.set() encodes, so don't encode the values here.
+        url.searchParams.set("parentOrigin", params.parentOrigin);
+        url.searchParams.set("channel", params.key);
+        url.searchParams.set("apiLevel", SIMX_API_LEVEL.toString());
+        if (params.language) url.searchParams.set("language", params.language);
+        if (params.target) url.searchParams.set("target", params.target);
+        if (params.project) url.searchParams.set("project", params.project);
+        return url;
+    }
+
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
     const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
@@ -708,30 +742,20 @@ namespace pxsim {
             if (existing) return existing;
 
             this.addEventListeners();
-            const url = new URL(simulatorExtension.url);
-            // The extension's parent window is this editor, so the origin it
-            // should trust is the editor's own. options.parentOrigin is the
-            // editor's *embedder* origin (controller mode) - the extension's
-            // grandparent - so an extension that validates messages against
-            // it rejects everything the editor sends when the editor is
-            // embedded cross-origin.
-            // searchParams.set() encodes, so don't encode the values here.
-            url.searchParams.set("parentOrigin", window.location.origin);
-            // The key the frame is stamped with, so an extension served under
-            // several keys knows which one it runs as.
-            url.searchParams.set("channel", key);
-            url.searchParams.set("apiLevel", SIMX_API_LEVEL.toString());
-            if (this.options.userLanguage)
-                url.searchParams.set("language", this.options.userLanguage);
-            // The target hosting the frame, so one extension served to several
-            // targets knows which one it runs in. Informational only.
-            if (this.options.targetId)
-                url.searchParams.set("target", this.options.targetId);
-            // The project the frame serves, so an extension can keep per-project
-            // state apart. Informational only.
-            const projectId = this.options.getProjectId?.();
-            if (projectId)
-                url.searchParams.set("project", projectId);
+            const url = simxFrameUrl({
+                url: simulatorExtension.url,
+                key,
+                // The extension's parent window is this editor, so the origin it
+                // should trust is the editor's own. options.parentOrigin is the
+                // editor's *embedder* origin (controller mode) - the extension's
+                // grandparent - so an extension that validates messages against
+                // it rejects everything the editor sends when the editor is
+                // embedded cross-origin.
+                parentOrigin: window.location.origin,
+                language: this.options.userLanguage,
+                target: this.options.targetId,
+                project: this.options.getProjectId?.(),
+            });
             // Tells the frame at boot that the editor offers its editor tab.
             if (simulatorExtension.editorUrl && this.isInProject(key))
                 url.searchParams.set("editor", "1");

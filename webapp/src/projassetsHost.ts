@@ -17,6 +17,15 @@ import {
 } from "../../pxtservices/projassets";
 import { getProjectSimulatorThemePreference } from "./simulatorTheme";
 import { SlidingWindowAdmission } from "./slidingWindowAdmission";
+import {
+    caughtErrorReply,
+    getSimxRepository,
+    loadedOpenProjectAsync,
+    openProjectOrThrow,
+    requestId,
+    SimxReplyBody,
+    SimxRequestError,
+} from "./simxRequests";
 
 /**
  * The most list requests from the frames of one GitHub repository's
@@ -275,12 +284,6 @@ const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => Projass
     json: getJsonAssets,
 };
 
-class ProjassetsRequestError extends Error {
-    constructor(public readonly code: ProjassetsErrorCode, message: string) {
-        super(message);
-    }
-}
-
 /**
  * Serves the project-asset requests of simulator extensions: lists the named
  * assets of the open project by kind, with its name and visual configuration,
@@ -291,12 +294,13 @@ class ProjassetsRequestError extends Error {
  * project it was made in closes, or when the frame is removed.
  *
  * The list requests of the extensions of one GitHub repository, `owner/repo`
- * whatever subfolder their keys name, wait in one queue and are answered in
- * the order they arrive; those beyond {@link PROJASSETS_LIST_RATE_LIMIT}
- * within {@link PROJASSETS_LIST_RATE_WINDOW_MS} wait, with the list requests
- * behind them, until the window allows them. A list request whose project
- * has closed by the time its turn comes is refused with `PROJECT_CLOSED`.
- * Subscribe requests are neither queued nor limited.
+ * in any letter case, whatever subfolder their keys name, wait in one queue
+ * and are answered in the order they arrive; those beyond
+ * {@link PROJASSETS_LIST_RATE_LIMIT} within {@link PROJASSETS_LIST_RATE_WINDOW_MS}
+ * wait, with the list requests behind them, until the window allows them. A
+ * list request whose project has closed by the time its turn comes is
+ * refused with `PROJECT_CLOSED`, and one whose key names no repository with
+ * `UNREGISTERED`. Subscribe requests are neither queued nor limited.
  *
  * The host listens to one project at a time, the one its subscriptions were
  * made in, and lets go of it when it closes. Changes are merged: subscribers
@@ -314,8 +318,8 @@ export class ProjassetsHost {
     protected watched: { open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig, seen: string } | undefined;
     // the notification waiting to be sent; undefined while none is
     protected pending: PendingNotification | undefined;
-    // per repository: settles once every list request received from it has been answered
-    protected listTails: pxt.Map<Promise<void>> = {};
+    // per repository: the list requests received from it, each until it has been answered
+    protected readonly queue = new pxt.Util.PromiseQueue();
     // per repository: admits each list request under the rate limit
     protected readonly lists: SlidingWindowAdmission;
 
@@ -324,7 +328,7 @@ export class ProjassetsHost {
      * @param getProject returns the asset project of the open project; called only once it has loaded
      * @param getConfig returns the configuration of the open project; called only once it has loaded
      * @param now returns the current time in milliseconds on a clock that never
-     * goes back; defaults to `performance.now()` where available, else `Date.now()`
+     * goes back; defaults to `pxt.Util.monotonicNow`
      * @param delay returns a promise that resolves after the given number of milliseconds
      */
     constructor(
@@ -356,37 +360,36 @@ export class ProjassetsHost {
         frame: ProjassetsFrame
     ): Promise<void> {
         const request = msg as ProjassetsRequest;
-        const id = typeof request?.id === "string" ? request.id : undefined;
+        const id = requestId(msg);
         let answer: ProjassetsReply;
         try {
             answer = { ...await this.applyAsync(key, request, reply, frame), type: PROJASSETS_MESSAGE_TYPE, id } as ProjassetsReply;
         } catch (e) {
-            const code: ProjassetsErrorCode = e instanceof ProjassetsRequestError ? e.code : "FAILED";
-            answer = { type: PROJASSETS_MESSAGE_TYPE, id, subtype: "error", code, message: e?.message || String(e) };
+            answer = caughtErrorReply<typeof PROJASSETS_MESSAGE_TYPE, ProjassetsErrorCode>(PROJASSETS_MESSAGE_TYPE, id, e);
         }
         reply(answer);
     }
 
-    protected async applyAsync(key: string, request: ProjassetsRequest, reply: (msg: ProjassetsNotification) => void, frame: ProjassetsFrame): Promise<ProjassetsReplyBody> {
+    protected async applyAsync(key: string, request: ProjassetsRequest, reply: (msg: ProjassetsNotification) => void, frame: ProjassetsFrame): Promise<SimxReplyBody<ProjassetsReply>> {
         switch (request?.subtype) {
             case "list": {
                 const kind: unknown = request.kind;
                 if (typeof kind !== "string")
-                    throw new ProjassetsRequestError("INVALID_REQUEST", "The kind must be a string.");
+                    throw new SimxRequestError<ProjassetsErrorCode>("INVALID_REQUEST", "The kind must be a string.");
                 if (!Object.prototype.hasOwnProperty.call(listers, kind))
-                    throw new ProjassetsRequestError("UNSUPPORTED_KIND", `The editor does not list ${kind} assets.`);
+                    throw new SimxRequestError<ProjassetsErrorCode>("UNSUPPORTED_KIND", `The editor does not list ${kind} assets.`);
                 return this.listAsync(key, kind as ProjassetsKind, this.getOpenProject());
             }
 
             case "subscribe": {
-                this.watch(await this.openProjectAsync());
+                this.watch(await this.readProjectAsync(this.getOpenProject()));
                 this.subscribers = this.subscribers.filter(s => s.frame.isConnected);
                 if (!this.subscribers.some(s => s.frame === frame)) this.subscribers.push({ frame, reply });
                 return { subtype: "ack" };
             }
 
             default:
-                throw new ProjassetsRequestError("INVALID_REQUEST", `Unknown request ${(request as any)?.subtype}.`);
+                throw new SimxRequestError<ProjassetsErrorCode>("INVALID_REQUEST", `Unknown request ${(request as any)?.subtype}.`);
         }
     }
 
@@ -395,12 +398,15 @@ export class ProjassetsHost {
      * the list requests already received from its repository, waits for the
      * rate limit to admit it, and returns the listing of `kind` in `open`.
      * @param open the project open when the request arrived
+     * @throws an `UNREGISTERED` refusal if `key` names no GitHub repository
      */
-    protected listAsync(key: string, kind: ProjassetsKind, open: ProjassetsOpenProject | undefined): Promise<ProjassetsReplyBody> {
-        const repository = pxt.github.parseRepoId(key)?.slug || key;
-        const listed = (this.listTails[repository] || Promise.resolve()).then(async (): Promise<ProjassetsReplyBody> => {
-            await this.lists.admitAsync(repository, () => this.throwIfClosed(open));
-            const { assets: project, config } = await this.openProjectAsync(open);
+    protected listAsync(key: string, kind: ProjassetsKind, open: ProjassetsOpenProject | undefined): Promise<SimxReplyBody<ProjassetsReply>> {
+        const repository = getSimxRepository(key);
+        if (repository === undefined)
+            return Promise.reject(new SimxRequestError<ProjassetsErrorCode>("UNREGISTERED", `${key} names no GitHub repository.`));
+        return this.queue.enqueue(repository, async (): Promise<SimxReplyBody<ProjassetsReply>> => {
+            await this.lists.admitAsync(repository, () => openProjectOrThrow(open, () => this.getOpenProject()));
+            const { assets: project, config } = await this.readProjectAsync(open);
             return {
                 subtype: "assets",
                 kind,
@@ -409,39 +415,18 @@ export class ProjassetsHost {
                 ...config.getVisualConfig(),
             };
         });
-        this.listTails[repository] = listed.then(() => { }, () => { });
-        return listed;
-    }
-
-    /**
-     * Does nothing while `open` is still the open project.
-     * @throws a `PROJECT_CLOSED` refusal if `open` is undefined or has been replaced
-     */
-    protected throwIfClosed(open: ProjassetsOpenProject | undefined) {
-        if (!open)
-            throw new ProjassetsRequestError("PROJECT_CLOSED", "No project was open when the request arrived.");
-        if (this.getOpenProject() !== open)
-            throw new ProjassetsRequestError("PROJECT_CLOSED", "The project open when the request arrived has been replaced.");
     }
 
     /**
      * Waits for `open` to load, then returns it with its assets and
      * configuration.
-     * @param open the project open when the request arrived; defaults to the project open now
-     * @throws a `PROJECT_CLOSED` refusal if `open` is undefined, or if it
-     * fails to load or is replaced before it has loaded
+     * @param open the project open when the request arrived
+     * @throws a `PROJECT_CLOSED` refusal if `open` is undefined, fails to
+     * load, or is no longer the open project once it has loaded
      */
-    protected async openProjectAsync(open = this.getOpenProject()): Promise<{ open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig }> {
-        if (!open)
-            throw new ProjassetsRequestError("PROJECT_CLOSED", "No project was open when the request arrived.");
-        try {
-            await open.loadedAsync();
-        } catch (e) {
-            throw new ProjassetsRequestError("PROJECT_CLOSED", "The project open when the request arrived failed to load.");
-        }
-        if (this.getOpenProject() !== open)
-            throw new ProjassetsRequestError("PROJECT_CLOSED", "The project open when the request arrived was replaced while it loaded.");
-        return { open, assets: this.getProject(), config: this.getConfig() };
+    protected async readProjectAsync(open: ProjassetsOpenProject | undefined): Promise<{ open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig }> {
+        const loaded = await loadedOpenProjectAsync(open, () => this.getOpenProject());
+        return { open: loaded, assets: this.getProject(), config: this.getConfig() };
     }
 
     /** Listens to `project` for changes, ending the subscriptions made in any other project. */
@@ -555,6 +540,3 @@ interface PendingNotification {
 function serializeConfig(config: ProjassetsConfig): string {
     return JSON.stringify({ name: config.getName(), visual: config.getVisualConfig() });
 }
-
-/** A reply without the `type` and `id` fields every reply carries. */
-type ProjassetsReplyBody<R = ProjassetsReply> = R extends ProjassetsReply ? Omit<R, "type" | "id"> : never;

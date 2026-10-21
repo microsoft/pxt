@@ -37,4 +37,3 @@ export * from "./field_tileset";
 export * from "./field_gridpicker";
 export * from "./field_toggle";
 export * from "./field_simxinstancedropdown";
-export * from "./simxInstanceOptions";

@@ -739,6 +739,7 @@ class AssetMenuItem extends data.Component<ISettingsProps, {}> {
         return <BaseMenuItemProps className="assets-menuitem" icon="picture" text={lf("Assets")} title={lf("View project assets")} onClick={this.onClick} isActive={this.isActive} parent={this.props.parent} />
     }
 }
+
 interface ISimxEditorMenuItemProps extends ISettingsProps {
     editor: pxt.editor.SimulatorExtensionEditorInfo;
     role?: string;
