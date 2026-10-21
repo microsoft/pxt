@@ -1,0 +1,40 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "noEmit": true,
+        "newLine": "LF",
+        "moduleResolution": "node",
+        "lib": [
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "types": [],
+        "skipLibCheck": true
+    },
+    "files": [
+        "./globals.d.ts",
+        "../pxtsim/allocator.ts",
+        "../pxtsim/debugProtocol.ts",
+        "../pxtsim/debugger.ts",
+        "../pxtsim/langsupport.ts",
+        "../pxtsim/libgeneric.ts",
+        "../pxtsim/localization.ts",
+        "../pxtsim/logger.ts",
+        "../pxtsim/runtime.ts",
+        "../pxtsim/utils.ts",
+        "../pxtsim/state/buttonpair.ts",
+        "../pxtsim/state/compass.ts",
+        "../pxtsim/state/filesystem.ts",
+        "../pxtsim/state/lightsensor.ts",
+        "../pxtsim/sound/musicalProgressions.ts",
+        "../pxtsim/sound/sequencer.ts",
+        "../pxtsim/sound/song.ts",
+        "../pxtsim/sound/soundEmojiSynthesizer.ts",
+        "../pxtsim/sound/soundSynthesizer.ts",
+        "../pxtsim/sound/soundSynthesizerEffects.ts",
+        "../pxtsim/sound/soundexpression.ts"
+    ]
+}

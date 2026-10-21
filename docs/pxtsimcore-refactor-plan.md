@@ -25,9 +25,46 @@
 
 ## Steps
 
-1. **Add a DOM-free type-check first (low risk).**
-   - Create `pxtsimcore/tsconfig.json` without `dom`.
-   - Point it at the candidate files and treat the errors as the work list. The list will include `Runtime.postMessage`, `U.isLocalHost`, and the `U.*Class` helpers.
+1. **Add a DOM-free type-check first (low risk).** ✅ Done.
+   - Added [pxtsimcore/tsconfig.json](../pxtsimcore/tsconfig.json) (no `dom` lib, `noEmit`, `types: []`) over the candidate core files, plus [pxtsimcore/globals.d.ts](../pxtsimcore/globals.d.ts), which declares only host-agnostic globals (timers, `console`, `performance`, `TextEncoder`/`TextDecoder`).
+   - Run it with `node_modules/.bin/tsc -p pxtsimcore/tsconfig.json`. It is not wired into the gulp build yet, and it is expected to fail until the later steps land.
+   - The errors are the work list; see the baseline below.
+
+### Baseline (137 errors across 7 files)
+
+| File | Errors |
+|---|---|
+| `runtime.ts` | 57 |
+| `allocator.ts` | 53 |
+| `debugger.ts` | 16 |
+| `sound/sequencer.ts` | 8 |
+| `sound/soundexpression.ts` | 3 |
+
+All other files in the set (`debugProtocol.ts`, `langsupport.ts`, `libgeneric.ts`, `localization.ts`, `logger.ts`, `utils.ts`, `state/*`, and the pure sound files) report no errors once `globals.d.ts` is included.
+
+The errors fall into three groups.
+
+**A. Real DOM usage (needs host abstractions, step 2/3/5)**
+- `runtime.ts` 16–47: `HTMLElement | SVGElement` in the `U` class helpers; 63–71: `Element` in `remove`, `removeChildren`, `clear`.
+- `runtime.ts` 277–294, 1069–1070: `window` (`isElectron`, `isIpc`, `isLocalHost`, `Runtime.postMessage` to `window.parent`).
+- `runtime.ts` 470, 819, 849, 1910: `ImageData` in `screenshotAsync` and the screenshot flow.
+- `debugger.ts` 272: `HTMLElement` (driver options).
+- `runtime.ts` 519–520: `visuals.*` types on `CoreBoard` (`builtinVisuals`, `builtinPartVisuals`).
+
+**B. Leaks from files not in the core set (move or split the symbol, step 3/5)**
+These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
+- `simlib.ts`: `BBLoc`, `Loc`, `BoardLoc` and `mkRange` (needed by `allocator.ts`, 25+ uses), and `EventBus` (needed by `runtime.ts`). Split `simlib.ts` into a DOM-free part (types, `EventBus`, `mkRange`) and the SVG composition part.
+- `embed.ts`: message interfaces (`SimulatorRunMessage`, `SimulatorStateMessage`, `SimulatorCommandMessage`, `SimulatorCustomMessage`, `SimulatorScreenshotMessage`, `SimulatorRecorderMessage`, `SimulatorAutomaticThumbnailMessage`, `SetMuteButtonStateMessage`) and the `Embed` namespace (`Embed.frameid`). Move the message types to a core file and leave the `window` listeners in `embed.ts`. `Embed.frameid` becomes injected host state.
+- `simdriver.ts`: `SimulatorState`, `SimulatorDebuggerCommand`, `SimulatorDriverOptions`, `SimulatorDriver` (referenced from `debugger.ts`). Move the enums and shared option types to core, and have `debugger.ts` stop referencing the driver class directly.
+- `allocator.ts`: `visuals.*` types (`PartVisualDefinition`-style types in `visuals/`). Move the pure data types to core.
+
+**C. Audio coupling inside otherwise-core files (step 4)**
+- `runtime.ts` 539–541 and `sound/soundexpression.ts` 304/321 use `AudioContextManager`.
+- `sound/sequencer.ts` uses `Metronome` and `AudioContextManager` types.
+- Introduce an audio-output interface in core, implemented by the Web Audio code in pxtsim.
+
+**Not DOM, shimmed in `globals.d.ts`:** `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`, `console`, `performance`, `TextEncoder`, `TextDecoder`. These exist in browsers, workers and Node, so core can use them.
+
 
 2. **Introduce host abstractions in core.** Each one replaces a direct DOM or window call with an interface that pxtsim implements.
    - `Runtime.postMessage` currently calls `window.parent.postMessage` directly. Add a `pxsim.host.postMessage` hook, with the DOM implementation installed by `embed.ts`.
@@ -228,3 +265,6 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
+
+
+
