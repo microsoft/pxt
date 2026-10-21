@@ -180,7 +180,7 @@ export function answerSimxEditorRequest(key: string, msg: unknown, open: (key: s
     return { type: SIMXEDITOR_MESSAGE_TYPE, id, subtype: "ack" };
 }
 
-/** The parameters the editor passes to a tab frame in its URL, beside `channel` and `role`. */
+/** The parameters the editor passes to a tab frame in its URL, beside `channel`, `role` and `apiLevel`. */
 export interface SimxEditorFrameParams {
     /** The editor's origin, which the frame should trust. */
     parentOrigin: string;
@@ -324,6 +324,7 @@ export class SimxEditorHost {
         url.searchParams.set("parentOrigin", params.parentOrigin);
         url.searchParams.set("channel", key);
         url.searchParams.set("role", SIMXEDITOR_ROLE);
+        url.searchParams.set("apiLevel", pxsim.SIMX_API_LEVEL.toString());
         if (params.language) url.searchParams.set("language", params.language);
         if (params.target) url.searchParams.set("target", params.target);
         if (params.project) url.searchParams.set("project", params.project);

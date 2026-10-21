@@ -559,6 +559,10 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(frame.dataset["messagechannel"]).equals(url.searchParams.get("channel"));
     });
 
+    it("passes the simulator-extension API level the editor serves to the frame in its URL", () => {
+        chai.expect(startSimulatorExtension().url.searchParams.get("apiLevel")).equals(pxsim.SIMX_API_LEVEL.toString());
+    });
+
     it("passes the running target's id to the frame in its URL when the driver is given one", () => {
         chai.expect(startSimulatorExtension({ targetId: "microbit" }).url.searchParams.get("target")).equals("microbit");
         chai.expect(startSimulatorExtension().url.searchParams.has("target")).equals(false);
@@ -843,6 +847,7 @@ describe("simulator driver simulator extension editor tabs", () => {
             chai.expect(url.searchParams.get("target")).equals("arcade");
             chai.expect(url.searchParams.get("project")).equals("p1");
             chai.expect(url.searchParams.get("editor")).equals("1");
+            chai.expect(url.searchParams.get("apiLevel")).equals(pxsim.SIMX_API_LEVEL.toString());
         });
 
         it("never duplicates an existing simulator frame, whichever path finds it", () => {

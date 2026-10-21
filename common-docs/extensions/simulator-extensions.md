@@ -69,7 +69,7 @@ The simulator frame is the extension's page in the simulator column. It receives
 
 ### URL parameters
 
-The frame's page receives these parameters in its URL: `parentOrigin` (the editor's origin), `channel` (the extension's key), `language` (the user's language), `target` (the target's id) and `project` (the open project's id, when one is open). `target` and `project` are informational: they grant and select nothing. The frame's id is in the URL's hash.
+The frame's page receives these parameters in its URL: `parentOrigin` (the editor's origin), `channel` (the extension's key), `apiLevel` (the [API level](#api-level) the editor serves), `language` (the user's language), `target` (the target's id) and `project` (the open project's id, when one is open). `target` and `project` are informational: they grant and select nothing. The frame's id is in the URL's hash.
 
 ### Resizing
 
@@ -98,6 +98,14 @@ A refused request is answered with `{ type, id, subtype: "error", code, message 
 A frame should accept a reply, an event or a port only from `window.parent`, and only when the event's origin is the `parentOrigin` its URL carries.
 
 `pxtservices/projfs.ts`, `pxtservices/projassets.ts` and `pxtservices/simxeditor.ts` define each API's messages. The first two also define promise-based clients, `ProjfsClient` and `ProjassetsClient`, which post to the parent at `parentOrigin`, match replies by `id`, and raise `DISPOSED` for a request pending when the client is disposed or made after it. The three files have no dependencies and can be copied into an extension.
+
+### API level
+
+The `apiLevel` URL parameter of the simulator frame and the tab frame names the level of these APIs the editor serves, so a frame knows at startup which requests the editor answers; each of the three files reads it with `getSimxApiLevel`, which returns 0 for an editor that passes none. The level goes up by one whenever a change adds to or alters what a frame can observe of these APIs: a message family, a request, an event, an asset kind or a registration field.
+
+| Level | What it covers |
+| --- | --- |
+| 1 | The `projfs`, `projassets` and `simxeditor` APIs as this page describes them: their requests, replies, events and asset kinds, and the registration fields. |
 
 ## Project files
 

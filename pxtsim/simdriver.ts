@@ -258,6 +258,18 @@ namespace pxsim {
      */
     export const FRAME_DATA_ORIGIN = "origin";
 
+    /**
+     * The simulator-extension API level the editor serves, passed to every
+     * simulator extension frame and tab frame in the `apiLevel` URL parameter.
+     * Level 1 is the `projfs`, `projassets` and `simxeditor` message families,
+     * with their requests, replies, events and asset kinds, and the fields of a
+     * simulator extension's registration. The level goes up by one whenever a
+     * change adds to or alters what a frame can observe of this surface: a
+     * family, a request, an event, an asset kind or a field. A frame URL without
+     * the parameter comes from an editor older than level 1.
+     */
+    export const SIMX_API_LEVEL = 1;
+
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
     const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
@@ -708,6 +720,7 @@ namespace pxsim {
             // The key the frame is stamped with, so an extension served under
             // several keys knows which one it runs as.
             url.searchParams.set("channel", key);
+            url.searchParams.set("apiLevel", SIMX_API_LEVEL.toString());
             if (this.options.userLanguage)
                 url.searchParams.set("language", this.options.userLanguage);
             // The target hosting the frame, so one extension served to several

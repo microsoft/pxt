@@ -26,7 +26,7 @@ import {
     SimxEditorTabsShownInput,
 } from "../../webapp/src/editorToggleLayout";
 import { getEditorToolbarControls, EditorToolbarControlsInput } from "../../webapp/src/editorToolbarControls";
-import { hasEditorTab, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
+import { getSimxApiLevel as getSimxEditorApiLevel, hasEditorTab, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 import {
     addSimulatorThemeToFiles,
     getProjectSimulatorThemePreference,
@@ -70,6 +70,7 @@ import {
 import {
     getParentOrigin,
     getProjectId,
+    getSimxApiLevel as getProjfsApiLevel,
     getSimxChannel,
     getTargetId,
     ProjfsClient,
@@ -101,6 +102,7 @@ import {
     PROJASSETS_NOTIFY_MAX_DELAY_MS,
 } from "../../webapp/src/projassetsHost";
 import {
+    getSimxApiLevel as getProjassetsApiLevel,
     ProjassetsAssetOfKind,
     ProjassetsAssetsReply,
     ProjassetsClient,
@@ -2055,6 +2057,23 @@ describe("projfs listing", () => {
     });
 });
 
+/**
+ * Checks one of the client files' API level readers: it returns the level a
+ * frame URL's `apiLevel` parameter carries, and 0 for a URL with none or with
+ * one that is not a non-negative integer.
+ */
+function expectApiLevelReader(read: (search?: string) => number) {
+    const level = pxsim.SIMX_API_LEVEL;
+    chai.expect(read(`?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo&apiLevel=${level}`)).equals(level);
+    chai.expect(read(`?apiLevel=${level + 1}`)).equals(level + 1);
+    chai.expect(read("?apiLevel=0")).equals(0);
+    chai.expect(read("?channel=owner%2Frepo")).equals(0);
+    chai.expect(read("")).equals(0);
+    for (const malformed of ["", "-1", "1.5", "1e2", "0x1", " 1", "one"]) {
+        chai.expect(read("?apiLevel=" + encodeURIComponent(malformed)), malformed).equals(0);
+    }
+}
+
 describe("projfs client", () => {
     class FakeParent {
         requests: ProjfsRequest[] = [];
@@ -2178,6 +2197,10 @@ describe("projfs client", () => {
         chai.expect(getProjectId("?parentOrigin=http%3A%2F%2Flocalhost%3A3232&channel=owner%2Frepo&target=arcade&project=3b1f7c2e-project")).equals("3b1f7c2e-project");
         chai.expect(getProjectId("?channel=owner%2Frepo&target=arcade")).equals(undefined);
         chai.expect(getProjectId("?project=")).equals(undefined);
+    });
+
+    it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
+        expectApiLevelReader(getProjfsApiLevel);
     });
 
     it("keeps waiting for a reply however late it comes, and resolves with it", async () => {
@@ -3851,6 +3874,10 @@ describe("projassets client", () => {
         chai.expect(parent.origins).deep.equals(["https://arcade.makecode.com", "https://other.example"]);
     });
 
+    it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
+        expectApiLevelReader(getProjassetsApiLevel);
+    });
+
     describe("through the host", () => {
         withTargetVisuals(TARGET_PALETTE, THEME_PRESETS);
 
@@ -4880,6 +4907,10 @@ describe("simulator extension editor tab registrations", () => {
         chai.expect(hasEditorTab("?channel=someorg%2Fpxt-ext&editor=1")).equals(true);
         chai.expect(hasEditorTab("?channel=someorg%2Fpxt-ext")).equals(false);
     });
+
+    it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
+        expectApiLevelReader(getSimxEditorApiLevel);
+    });
 });
 
 describe("simulator extension instance creators", () => {
@@ -5299,7 +5330,8 @@ describe("simulator extension editor tab host", () => {
             const query: pxt.Map<string> = {};
             url.searchParams.forEach((value, name) => query[name] = value);
             chai.expect(query).deep.equals({
-                parentOrigin: "https://editor.example", channel: EXT, role: "editor", target: "arcade", project: "p1", language: "en",
+                parentOrigin: "https://editor.example", channel: EXT, role: "editor", apiLevel: pxsim.SIMX_API_LEVEL.toString(),
+                target: "arcade", project: "p1", language: "en",
             });
             chai.expect(frame.attributes).deep.equals({
                 sandbox: "allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
