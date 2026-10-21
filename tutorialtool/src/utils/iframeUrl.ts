@@ -7,12 +7,25 @@ export interface LocaleRequest {
 }
 
 export function getLocaleRequest(url: string): LocaleRequest {
-    const match = /(live)?(force)?lang=([a-z]{2,}(-[A-Z]+)?)/i.exec(url);
-    return {
-        language: match?.[3],
-        parameter: match?.[2] ? "forcelang" : match ? "lang" : undefined,
-        live: !!match?.[1]
-    };
+    const parsed = new URL(url, "https://makecode.com");
+    return getLocaleRequestFromParams(parsed.searchParams)
+        || getLocaleRequestFromParams(new URLSearchParams(parsed.hash.slice(1)))
+        || { live: false };
+}
+
+function getLocaleRequestFromParams(params: URLSearchParams): LocaleRequest | undefined {
+    for (const [parameter, live] of [["liveforcelang", true], ["forcelang", false], ["livelang", true], ["lang", false]] as const) {
+        const language = params.get(parameter);
+        if (language) {
+            return {
+                language,
+                parameter: parameter.endsWith("forcelang") ? "forcelang" : "lang",
+                live
+            };
+        }
+    }
+
+    return undefined;
 }
 
 export function addLocaleToUrl(
