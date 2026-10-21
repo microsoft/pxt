@@ -1,7 +1,0 @@
-{
-    "name": "escaping",
-    "dependencies": {},
-    "files": [
-        "../ext/main.ts"
-    ]
-}

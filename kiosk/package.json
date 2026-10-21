@@ -2,32 +2,17 @@
   "name": "makecode-arcade-kiosk",
   "version": "0.1.0",
   "private": true,
-  "engines": {
-    "node": ">=24.0.0"
-  },
   "dependencies": {
     "@types/node": "^16.11.33",
     "howler": "^2.2.3",
     "html5-qrcode": "^2.2.6",
     "idb": "^7.1.1",
-    "nanoid": "^5.1.16",
+    "nanoid": "^4.0.2",
     "qrcode.react": "^3.1.0",
     "react-scripts": "5.0.1",
-    "swiper": "12.2.0",
+    "swiper": "^8.4.4",
     "tslib": "^2.6.2",
     "typescript": "^4.6.4"
-  },
-  "overrides": {
-    "serialize-javascript@>=4 <7": "7.1.2",
-    "jsonpath": {
-      "underscore": "1.13.8"
-    },
-    "uuid@^8.0.0": "11.1.1",
-    "@svgr/webpack": "8.1.0",
-    "http-proxy-agent@^4.0.0": "5.0.0",
-    "postcss-selector-parser@^6.0.0": "7.1.6",
-    "resolve-url-loader": "5.0.0",
-    "webpack-dev-middleware@^5.0.0": "7.4.5"
   },
   "scripts": {
     "prestart": "node ./scripts/linkfonts.js",

@@ -55,7 +55,7 @@ If you run `npm i` afterwards (in either the target or pxt), you might need to r
 
 ## Build
 
-First, install [Node](https://nodejs.org/en/): minimum version 24.
+First, install [Node](https://nodejs.org/en/): minimum version 8.
 
 To build the PXT command line tools:
 
@@ -98,6 +98,7 @@ If you don't need to build the suite of associated webapps (skillmap, multiplaye
 ```
 gulp --no-webapps
 ```
+
 
 ### Icons
 

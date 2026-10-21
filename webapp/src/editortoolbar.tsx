@@ -126,7 +126,6 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     }
 
     componentWillUnmount() {
-        super.componentWillUnmount();
         if (this.compileTimeout) clearTimeout(this.compileTimeout)
     }
 

@@ -3,13 +3,6 @@ namespace pxsim {
         restart?: () => void; // restart simulator
         revealElement?: (el: HTMLElement) => void;
         removeElement?: (el: HTMLElement, onComplete?: () => void) => void;
-        /**
-         * Hides the wrapper of a permanent simulator frame when the simulator is
-         * hidden, leaving the element in the container, then calls `onComplete`.
-         * `unhideElement` must reveal it. When unset, `hide()` passes permanent
-         * frames to `removeElement` like any other frame.
-         */
-        hideElement?: (el: HTMLElement, onComplete?: () => void) => void;
         unhideElement?: (el: HTMLElement) => void;
         onDebuggerWarning?: (wrn: DebuggerWarningMessage) => void;
         onDebuggerBreakpoint?: (brk: DebuggerBreakpointMessage) => void;
@@ -206,7 +199,7 @@ namespace pxsim {
         }
 
         focus() {
-            const frame = this.mainFrame();
+            const frame = this.simFrames()[0];
             if (frame) frame.focus();
         }
 
@@ -256,7 +249,7 @@ namespace pxsim {
         }
 
         public startRecording(width?: number): void {
-            const frame = this.mainFrame();
+            const frame = this.simFrames()[0];
             if (!frame) return undefined;
 
             this.postMessage(<SimulatorRecorderMessage>{
@@ -264,7 +257,7 @@ namespace pxsim {
                 action: 'start',
                 source: MESSAGE_SOURCE,
                 width
-            }, undefined, frame.id);
+            });
         }
 
         public stopRecording() {
@@ -343,15 +336,6 @@ namespace pxsim {
             return frames;
         }
 
-        /**
-         * Returns the main simulator frame: the first frame not running a
-         * simulator extension, or undefined when there is none.
-         * @param skipLoaned excludes the loaned simulator's frame, as `simFrames` does
-         */
-        private mainFrame(skipLoaned = false): HTMLIFrameElement {
-            return this.simFrames(skipLoaned).find(frame => !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL]);
-        }
-
         private getSimUrl(): URL {
             const simUrl = this.options.simUrl || (window as any).pxtConfig?.simUrl || (pxt as any).webConfig?.simUrl || `${location.origin}/sim/simulator.html`;
             try {
@@ -385,8 +369,8 @@ namespace pxsim {
                 // include index of the source iframe
                 broadcastmsg.srcFrameIndex = this.simFrames().findIndex((item) => item.contentWindow === source);
                 const sourceFrame = broadcastmsg.srcFrameIndex >= 0 ? this.simFrames()[broadcastmsg.srcFrameIndex] : undefined;
-                // jacdac messages from a board sim other than the main frame should be dropped
-                if (sourceFrame !== this.mainFrame() && mkcdFrames.find(f => f === sourceFrame) && messageChannel === "jacdac")
+                // jacdac messages from a board sim other than first should be dropped
+                if (broadcastmsg.srcFrameIndex > 0 && mkcdFrames.find(f => f === sourceFrame) && messageChannel === "jacdac")
                     return;
                 // if the editor is hosted in a multi-editor setting
                 // don't start extra frames
@@ -493,13 +477,12 @@ namespace pxsim {
 
             // now that we have iframe starts,
             // dispatch message to other frames
-            const mainFrame = this.mainFrame();
             for (let i = 0; i < frames.length; ++i) {
                 const frame = frames[i] as HTMLIFrameElement
                 // same frame as source
                 if (source && frame.contentWindow == source) continue;
-                // if jacdac message, don't send to (board) simulator frames other than the main frame
-                if (frame !== mainFrame && !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] &&
+                // if jacdac message, don't send to other (board) simulator frames
+                if (i > 0 && !frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] &&
                     msg.type === "messagepacket" && (msg as pxsim.SimulatorControlMessage).channel === "jacdac") continue;
                 // frame not in DOM
                 if (!frame.contentWindow) continue;
@@ -615,10 +598,9 @@ namespace pxsim {
                 this._currentRuntime = undefined;
                 this.container.textContent = "";
             }
-            if (!this.mainFrame()) {
-                const wrapper = this.createFrame();
-                this.container.insertBefore(wrapper, this.container.firstElementChild);
-                this.applyAspectRatioToFrame(wrapper.firstElementChild as HTMLIFrameElement, aspectRatio);
+            if (!this.simFrames().length) {
+                this.container.appendChild(this.createFrame());
+                this.applyAspectRatio(aspectRatio);
                 this.setStarting();
             }
         }
@@ -670,7 +652,7 @@ namespace pxsim {
             if (this.loanedSimulator) return this.loanedSimulator;
 
             // reuse first simulator or create new one
-            this.loanedSimulator = (this.mainFrame(true)?.parentElement as HTMLDivElement) || this.createFrame();
+            this.loanedSimulator = (this.container.firstElementChild as HTMLDivElement) || this.createFrame();
             if (this.loanedSimulator.parentNode)
                 this.container.removeChild(this.loanedSimulator);
             return this.loanedSimulator;
@@ -744,8 +726,8 @@ namespace pxsim {
 
         private cleanupFrames() {
             // drop unused extras frames after 5 seconds
-            const mainFrame = this.mainFrame(true);
-            const frames = this.simFrames(true).filter(frame => frame !== mainFrame);
+            const frames = this.simFrames(true);
+            frames.shift(); // drop first frame
             frames.filter(frame => !frame.dataset[PERMANENT])
                 .forEach(frame => {
                     if (this.state == SimulatorState.Stopped
@@ -762,10 +744,7 @@ namespace pxsim {
 
             const frames = this.simFrames();
             frames.forEach(frame => {
-                if (frame.dataset[PERMANENT] && this.options.hideElement)
-                    this.options.hideElement(frame.parentElement, completeHandler);
-                else
-                    this.options.removeElement(frame.parentElement, completeHandler);
+                this.options.removeElement(frame.parentElement, completeHandler);
             });
             // Execute the complete handler if there are no frames in sim view
             if (frames.length == 0 && completeHandler) {
@@ -841,10 +820,10 @@ namespace pxsim {
             this.breakpointsSet = false;
 
             // first frame
-            let frame = this.mainFrame();
+            let frame = this.simFrames()[0];
             if (!frame) {
                 let wrapper = this.createFrame();
-                this.container.insertBefore(wrapper, this.container.firstElementChild);
+                this.container.appendChild(wrapper);
                 frame = wrapper.firstElementChild as HTMLIFrameElement;
             }
             this.startFrame(frame);
