@@ -14,6 +14,8 @@ import { applyUserEdit, OpenProjectTracker, ProjfsEditor, ProjfsHost, ProjfsProj
 import { createProjassetsConfig, ProjassetsConfig, ProjassetsHost } from "./projassetsHost";
 import {
     answerSimxEditorRequest,
+    findSimxInstanceCreator,
+    getDependencyRepository,
     getProjectSimxEditors,
     getSimxEditorRegistrations,
     isSimxInProject,
@@ -389,6 +391,33 @@ function getProjectDependencies(): string[] {
     return Object.keys(deps).map(id => deps[id]?._verspec);
 }
 
+// the ignored claims on types, by registration key and type, logged since the open project loaded
+const loggedSimxClaims = new Set<string>();
+
+/**
+ * Returns the key of the simulator extension whose editor tab creates the
+ * instances of the fixed-instance type `typeQName`, among those whose tabs the
+ * editor offers the open project, or undefined if none does. Only a
+ * registration of the GitHub repository of the type's declaring package may
+ * create them, and the first such in registration order does; every other
+ * registration naming the type in its `creates` is logged once per project load.
+ * @param declaringPackage the id of the package that declares the type, as the type's `pkg` gives it; undefined for the project's own code
+ */
+export function getProjectSimxInstanceCreator(typeQName: string, declaringPackage: string | undefined): string | undefined {
+    const registrations = getProjectSimxEditorRegistrations();
+    const spec = declaringPackage ? pkg.mainPkg?.deps[declaringPackage]?._verspec : undefined;
+    const { creator, ignored } = findSimxInstanceCreator(registrations, typeQName, getDependencyRepository(spec));
+    for (const { key, reason } of ignored) {
+        const claim = `${key} ${typeQName}`;
+        if (loggedSimxClaims.has(claim)) continue;
+        loggedSimxClaims.add(claim);
+        pxt.warn(reason === "OTHER_REPOSITORY"
+            ? `simulator extension ${key}: ignoring its claim to create ${typeQName}, which no package of its repository declares`
+            : `simulator extension ${key}: ignoring its claim to create ${typeQName}, which an earlier registration creates`);
+    }
+    return creator?.key;
+}
+
 /** Tells every ready simulator extension editor tab that the editor is giving the simulator `command`. */
 export function postSimxEditorSimulatorCommand(command: SimxEditorSimulatorCommand) {
     simxEditorHost?.simulatorCommand(command);
@@ -401,13 +430,15 @@ export function postSimxEditorFullscreen(enabled: boolean) {
 
 /**
  * Closes the open project to simulator extensions: removes every editor tab
- * frame, refuses the project-file and project-asset requests still waiting
- * for the project with `PROJECT_CLOSED`, and ends every project-asset
- * subscription. Call before the simulator unloads, as the project closes or
- * another load begins.
+ * frame, with the actions held for the tabs, forgets the ignored `creates`
+ * claims logged for the project, refuses the project-file and project-asset
+ * requests still waiting for the project with `PROJECT_CLOSED`, and ends every
+ * project-asset subscription. Call before the simulator unloads, as the
+ * project closes or another load begins.
  */
 export function closeSimxProject() {
     simxEditorHost?.close();
+    loggedSimxClaims.clear();
     openProject.close();
     projassetsHost.close();
 }

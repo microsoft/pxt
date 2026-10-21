@@ -49,7 +49,7 @@ The fields of the `simx` entry:
 | `allowFileWrite` | Lets the frame list, read, write and delete files in its folder of the project (see [Project files](#project-files)). | `false` | both |
 | `allowAssetRead` | Lets the frame list the project's assets, name, palette and simulator theme, and hear when they change (see [Project assets](#project-assets)). | `false` | both |
 | `allowEditorTab` | Enables the editor tab that `editor` declares (see [Editor tab](#editor-tab)). | `false` | tab frame, and the simulator frame's request to open it |
-| `editor` | Declares the extension's editor tab: its page, label and icon. | none | tab frame |
+| `editor` | Declares the extension's editor tab: its page, label and icon, and the types whose instances it creates. | none | tab frame |
 | `hideInFullscreen` | Hides the simulator frame while the editor is in fullscreen-simulator mode; it stays loaded and keeps messaging. | `false` | simulator frame |
 
 ### Grants and trust
@@ -187,6 +187,8 @@ Besides the [shared codes](#talking-to-the-editor):
 
 A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. The tab is offered only while the open project includes the extension from GitHub (a `github:` dependency; an extension added from a file or a local folder gets no tab), and never in views whose editor toggle lists no tabs: embedded (sandbox), read-only (such as the time machine), tutorial and debugging views, and targets that hide the menu bar or show Blocks only.
 
+A tab may also create the instances of a fixed-instance type for the block dropdowns that list them (see `editor.creates` in [Declaring the tab](#declaring-the-tab)).
+
 The editor toolbar stays below the tab, as it does below Blocks and the text editors, without its undo, redo and zoom controls, which the tab does not have: the simulator can be collapsed and expanded, and the project downloaded, while the tab is shown.
 
 ### Declaring the tab
@@ -200,7 +202,8 @@ The tab is declared in the extension's `simx` entry (see [Registration](#registr
     "editor": {
         "index": "index.html",
         "label": "My Extension",
-        "icon": "brand/icon.svg"
+        "icon": "brand/icon.svg",
+        "creates": ["myext.Thing"]
     },
     "allowEditorTab": true
 }
@@ -210,6 +213,7 @@ The tab is declared in the extension's `simx` entry (see [Registration](#registr
 * `editor.label` names the tab in the toggle and is its accessible name. It is shown as text, as the names of Blocks, JavaScript and Python are. It is not localized.
 * `editor.icon` is an optional icon shown on the label's left. It is either the class names of one of MakeCode's font icons, as its own editors use (for example `xicon js`), or the path to an SVG within the extension's published files, resolved the same way as `index`. A value that contains a `/` or ends in `.svg` is a path; any other value is class names.
 * An SVG icon is drawn as a mask in the toggle's text color: only its shape is used, so it follows the editor's color themes, high contrast included. A square SVG drawn in a single color, such as `currentColor`, is recommended.
+* `editor.creates` is an optional list of the fully qualified names of fixed-instance types whose instances the tab creates, such as `myext.Thing`. The dropdown of a block parameter of such a type, which lists the instances the project declares, then ends with a "New ..." entry naming the type by its `block` attribute, else by its name in lower case, while the editor offers the tab. Picking the entry leaves the parameter as it was, shows the tab, and posts it the [`action` event](#lifecycle-events) asking it to create an instance, typically by writing the project file that declares it. A parameter that names its own `fieldEditor` gets no entry. The editor honors a claim only on a type declared by a package of the extension's own repository (the repository its key names, whatever subfolder), and ignores, and logs, any other; of two registrations the project includes that claim one type, the first in registration order creates its instances and the other is logged.
 * `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor`, with its `index` and `label`, and `allowEditorTab`; it logs a registration that sets `allowEditorTab` without them.
 * A registration with an editor tab must be `permanent` (the default); the editor ignores, and logs, an `editor` on a registration with `permanent: false`.
 
@@ -238,6 +242,7 @@ The editor posts these messages to the tab frame:
 * `{ type: "simxeditor", event: "simulator", command }` as the editor starts, stops or restarts the simulator, where `command` is `"start"` (on every run that reaches the simulator, including the automatic reruns after an edit), `"stop"` or `"restart"` (when the editor restarts the program already in the simulator). The event carries no program; the simulator frame receives the run message and can share it over the port.
 * `{ type: "simxeditor", event: "simulatorstate", state }` when the simulator's state changes, and once after the tab is ready, where `state` is one of `"Unloaded"`, `"Stopped"`, `"Pending"`, `"Starting"`, `"Running"`, `"Paused"` and `"Suspended"`.
 * `{ type: "simxeditor", event: "fullscreen", enabled }` when the editor enters or leaves fullscreen-simulator mode, and once after the tab is ready, where `enabled` is `true` while the simulator covers the editor area, and with it the tab. The simulator frame receives the [`fullscreen` message](#fullscreen) at the same time, so an extension whose tab is its main view can show that view in the simulator frame while the tab is covered.
+* `{ type: "simxeditor", event: "action", action, qName }` when the user asks, outside the tab, for something the tab does, where `action` is `"create"`: create an instance of the type `qName`, one of those `editor.creates` names. The editor shows the tab and posts the event once the tab is ready: at once if it is, else right after the events that follow its ready event. A later request replaces one not yet posted, and one not yet posted is dropped when the tab frame is removed.
 
 A tab lives for one load of its project: the editor removes the tab frame when the project closes or reloads, and the ports and project-asset subscriptions the tab held end with it. The editor posts no message before removing the frame; to save state, listen for `pagehide` on the tab's window.
 

@@ -762,6 +762,20 @@ describe("simulator driver simulator extension editor tabs", () => {
             chai.expect(h.registrations[KEY].iconUrl).equals(undefined);
         });
 
+        it("carries the types the tab creates beside its page, and none for a registration it serves no tab for", () => {
+            const creates = ["ext.Thing", "ext.Other"];
+            let h: Harness;
+            loggedErrors(() => h = harness({
+                [KEY]: registration({ editor: { ...TAB.editor, creates }, allowEditorTab: true }),
+                "otherorg/pxt-other": registration({ editor: { ...TAB.editor, creates } }),
+                "thirdorg/pxt-third": registration({ editor: { ...TAB.editor, creates }, allowEditorTab: true, permanent: false }),
+                "fourthorg/pxt-fourth": registration(TAB),
+            }));
+            chai.expect(h.registrations[KEY].creates).deep.equals(creates);
+            chai.expect(["otherorg/pxt-other", "thirdorg/pxt-third", "fourthorg/pxt-fourth"].map(key => h.registrations[key].creates))
+                .deep.equals([undefined, undefined, undefined]);
+        });
+
         it("adds editor=1 to the simulator frame's URL when the registration declares and enables a tab", () => {
             chai.expect(simulatorFrameUrl(harness({ [KEY]: registration(TAB) })).searchParams.get("editor")).equals("1");
         });
@@ -791,20 +805,20 @@ describe("simulator driver simulator extension editor tabs", () => {
         });
 
         it("keeps no computed URL a registration arrives with, resolving only what it validates", () => {
-            const carried = { url: "https://elsewhere.example/sim.html", editorUrl: "https://elsewhere.example/tab.html", iconUrl: "https://elsewhere.example/icon.svg" };
+            const carried = { url: "https://elsewhere.example/sim.html", editorUrl: "https://elsewhere.example/tab.html", iconUrl: "https://elsewhere.example/icon.svg", creates: ["ext.Thing"] };
             let h: Harness;
             loggedErrors(() => h = harness({
                 [KEY]: { ...registration(TAB), aspectRatio: undefined, ...carried },
                 "otherorg/pxt-other": registration({ ...carried, editor: TAB.editor }),
             }));
             const computed = (key: string) => {
-                const { url, editorUrl, iconUrl } = h.registrations[key];
-                return { url, editorUrl, iconUrl };
+                const { url, editorUrl, iconUrl, creates } = h.registrations[key];
+                return { url, editorUrl, iconUrl, creates };
             };
-            chai.expect(computed(KEY)).deep.equals({ url: undefined, editorUrl: undefined, iconUrl: undefined });
+            chai.expect(computed(KEY)).deep.equals({ url: undefined, editorUrl: undefined, iconUrl: undefined, creates: undefined });
             chai.expect(h.driver.startSimulatorExtension(KEY)).equals(undefined);
             chai.expect(computed("otherorg/pxt-other")).deep.equals({
-                url: `${SIM_ORIGIN}/simx/otherorg/pxt-other/-/index.html`, editorUrl: undefined, iconUrl: undefined,
+                url: `${SIM_ORIGIN}/simx/otherorg/pxt-other/-/index.html`, editorUrl: undefined, iconUrl: undefined, creates: undefined,
             });
         });
 

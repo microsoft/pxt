@@ -96,12 +96,31 @@ export interface SimxEditorFullscreenEvent {
     enabled: boolean;
 }
 
+/**
+ * Posted to the tab frame when the user asks, outside the tab, for an action
+ * the tab carries out, which the editor also shows the tab for. `create` asks
+ * the tab to create an instance of the fixed-instance type `qName`, one of
+ * those its registration's `editor.creates` names, as when the user picks the
+ * last entry of a block dropdown listing that type's instances. Posted once the
+ * tab is ready: at once if it is, else after the events that follow its ready
+ * event. A request made before an earlier one was posted replaces it, and a
+ * request not yet posted is dropped when the tab frame is removed.
+ */
+export interface SimxEditorActionEvent {
+    type: typeof SIMXEDITOR_MESSAGE_TYPE;
+    event: "action";
+    action: "create";
+    /** The fully qualified name of the type, e.g. `wendoo.CompiledBrainRegistration`. */
+    qName: string;
+}
+
 /** A message the editor posts to the tab frame. */
 export type SimxEditorEvent =
     SimxEditorVisibilityEvent
     | SimxEditorSimulatorEvent
     | SimxEditorSimulatorStateEvent
-    | SimxEditorFullscreenEvent;
+    | SimxEditorFullscreenEvent
+    | SimxEditorActionEvent;
 
 /**
  * Posted to the tab frame and to the simulator frame of the same key, each

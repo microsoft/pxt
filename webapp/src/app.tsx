@@ -61,6 +61,7 @@ import * as serialindicator from "./serialindicator"
 import * as assetEditor from "./components/assetEditor/editor";
 import * as simxEditor from "./simxEditor";
 import { getSimxEditorMarkerName } from "./simxEditorHost";
+import { SIMXEDITOR_MESSAGE_TYPE } from "../../pxtservices/simxeditor";
 import { showsSimxEditorTabs } from "./editorToggleLayout";
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
@@ -884,6 +885,29 @@ export class ProjectView
         }
         this.setFile(mainEditorPkg.lookupFile("this/" + name));
         return true;
+    }
+
+    /**
+     * Returns the key of the simulator extension whose editor tab creates the
+     * instances of the fixed-instance type `typeQName` and is offered here, or
+     * undefined if there is none. The type's declaring package is read from the
+     * API info the blocks were built from.
+     */
+    getSimulatorExtensionInstanceCreator(typeQName: string): string | undefined {
+        const declaringPackage = pxtblockly.cachedBlockInfo?.apis.byQName[typeQName]?.pkg;
+        const key = simulator.getProjectSimxInstanceCreator(typeQName, declaringPackage);
+        return key && this.getSimulatorExtensionEditors().some(r => r.key === key) ? key : undefined;
+    }
+
+    /**
+     * Shows the editor tab that creates the instances of the fixed-instance type
+     * `typeQName` and asks it to create one, once it is ready; does nothing if no
+     * offered tab creates them.
+     */
+    createSimulatorExtensionInstance(typeQName: string) {
+        const key = this.getSimulatorExtensionInstanceCreator(typeQName);
+        if (!key || !this.openSimulatorExtensionEditor(key)) return;
+        simulator.simxEditorHost?.requestAction(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "action", action: "create", qName: typeQName });
     }
 
     openSettings() {
@@ -6701,6 +6725,9 @@ document.addEventListener("DOMContentLoaded", async () => {
     parseLocalToken();
     hash = parseHash();
     blocklyFieldView.init();
+
+    pxt.react.canCreateSimxInstance = typeQName => !!theEditor?.getSimulatorExtensionInstanceCreator(typeQName);
+    pxt.react.createSimxInstance = typeQName => theEditor?.createSimulatorExtensionInstance(typeQName);
 
     pxt.react.getTilemapProject = () => {
         const epkg = pkg.mainEditorPkg();

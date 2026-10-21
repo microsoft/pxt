@@ -92,6 +92,7 @@ declare namespace pxt {
         index: string; // The path to the tab's page within the artifact, resolved as the simulator extension's `index` is. Required.
         label: string; // The tab's name in the editor toggle, and its accessible name. Not localized. Required.
         icon?: string; // The icon shown before the label in the editor toggle: a font icon's class names (e.g. "xicon js"), or, if it contains a "/" or ends in ".svg", the path to an SVG within the artifact, resolved as `index` is and drawn in the toggle's text color. Default: none.
+        creates?: string[]; // The fully qualified names of fixed-instance types whose instances the tab creates (e.g. "wendoo.CompiledBrainRegistration"); a block dropdown listing a type's instances ends in an entry asking the tab to create one. Honoured only for a type declared by a package of the extension's own repository; for a type two registrations claim, the first in registration order. Default: none.
     }
 
     interface ShareConfig {

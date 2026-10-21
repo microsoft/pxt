@@ -99,6 +99,7 @@ namespace pxsim {
                 index: string;
                 label: string;
                 icon?: string;
+                creates?: string[];
             };
             allowEditorTab?: boolean;
             hideInFullscreen?: boolean;
@@ -110,6 +111,9 @@ namespace pxsim {
             // Computed URL of the editor tab's SVG icon; set only beside `editorUrl`, when `editor.icon` is a path
             // (see `isSimulatorExtensionIconPath`)
             iconUrl?: string;
+            // The fully qualified names of the fixed-instance types whose instances the editor tab
+            // creates, from `editor.creates`; set only beside `editorUrl`
+            creates?: string[];
         }>;
         // needed when simulatorExtensions are used to provide to their frame
         userLanguage?: string;
@@ -315,6 +319,7 @@ namespace pxsim {
                     delete simx.url;
                     delete simx.editorUrl;
                     delete simx.iconUrl;
+                    delete simx.creates;
                 }
                 // Verify essential `simx` config was provided
                 if (
@@ -351,6 +356,8 @@ namespace pxsim {
                         simx.editorUrl = resolve(simx.editor.index);
                         if (isSimulatorExtensionIconPath(simx.editor.icon))
                             simx.iconUrl = resolve(simx.editor.icon);
+                        if (Array.isArray(simx.editor.creates))
+                            simx.creates = simx.editor.creates;
                         this._allowedOrigins.push(new URL(simx.editorUrl).origin);
                     }
                 }

@@ -17,6 +17,7 @@ import { FieldLedMatrix } from "./fields";
 import { FieldStyledLabel } from "./fields";
 import { FieldUserEnum } from "./fields";
 import { createFieldEditor, initFieldEditors } from "./fields";
+import { SIMX_INSTANCE_DROPDOWN_FIELD } from "./fields/field_simxinstancedropdown";
 import { promptTranslateBlock } from "./external";
 import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
@@ -506,6 +507,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     let isConstantShim = !!fn.attributes.constantShim;
                     let isCombined = pr.type == "@combined@"
                     let customField = pr.fieldEditor;
+                    if (isFixed && !customField && pxt.react.canCreateSimxInstance?.(typeInfo.qName))
+                        customField = SIMX_INSTANCE_DROPDOWN_FIELD;
                     let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                     let fieldType = pr.type;
 

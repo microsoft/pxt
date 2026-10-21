@@ -4,6 +4,7 @@ import {
     SIMXEDITOR_MESSAGE_TYPE,
     SIMXEDITOR_PORT_MESSAGE_TYPE,
     SIMXEDITOR_ROLE,
+    SimxEditorActionEvent,
     SimxEditorEvent,
     SimxEditorPortMessage,
     SimxEditorReply,
@@ -22,6 +23,7 @@ export interface SimxEditorRegistrationConfig {
     editor?: { label: string; icon?: string };
     editorUrl?: string;
     iconUrl?: string;
+    creates?: string[];
     allowPopups?: boolean;
     allowClipboardWrite?: boolean;
     allowDownloads?: boolean;
@@ -39,6 +41,8 @@ export interface SimxEditorRegistration {
     iconUrl?: string;
     /** The URL of the tab's page, without the parameters the editor adds. */
     url: string;
+    /** The fully qualified names of the fixed-instance types whose instances the tab creates; undefined if it creates none. */
+    creates?: string[];
     /** The tab frame's sandbox gains allow-popups and allow-popups-to-escape-sandbox. */
     allowPopups?: boolean;
     /** The tab frame's allow list gains clipboard-write. */
@@ -63,6 +67,7 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
                 icon: simx.iconUrl ? undefined : simx.editor.icon,
                 iconUrl: simx.iconUrl,
                 url: simx.editorUrl,
+                creates: simx.creates,
                 allowPopups: simx.allowPopups,
                 allowClipboardWrite: simx.allowClipboardWrite,
                 allowDownloads: simx.allowDownloads,
@@ -83,9 +88,56 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
 export function isSimxInProject(key: string, dependencies: string[]): boolean {
     const slug = pxt.github.parseRepoId(key)?.slug?.toLowerCase();
     if (!slug) return false;
-    return dependencies
-        .filter(dep => /^github:/i.test(dep || ""))
-        .some(dep => pxt.github.parseRepoId(dep)?.slug?.toLowerCase() === slug);
+    return dependencies.some(dep => getDependencyRepository(dep)?.toLowerCase() === slug);
+}
+
+/**
+ * Returns the GitHub repository, `owner/repo`, of the dependency whose version
+ * spec is `dependency`, such as `github:owner/repo/path#ref`; undefined if it
+ * is not a `github:` spec, or names no repository.
+ */
+export function getDependencyRepository(dependency: string | undefined): string | undefined {
+    if (!/^github:/i.test(dependency || "")) return undefined;
+    return pxt.github.parseRepoId(dependency)?.slug;
+}
+
+/** Why the editor ignores a registration's claim, in its `creates`, on a type. */
+export type SimxCreatesIgnoredReason =
+    /** No package of the registration's repository declares the type. */
+    "OTHER_REPOSITORY"
+    /** A registration earlier in registration order already creates the type's instances. */
+    | "CLAIMED_EARLIER";
+
+/** The registration that creates a type's instances, and the claims on the type the editor ignores. */
+export interface SimxInstanceCreator {
+    /** The registration whose tab creates the type's instances; undefined if none does. */
+    creator: SimxEditorRegistration | undefined;
+    /** The claims on the type the editor ignores, in registration order. */
+    ignored: { key: string, reason: SimxCreatesIgnoredReason }[];
+}
+
+/**
+ * Returns the registration among `registrations` whose tab creates the
+ * instances of the type `typeQName`: the first, in registration order, whose
+ * `creates` names the type and whose repository (the `owner/repo` its key
+ * names, in any case) is `typeRepository`. Every other registration naming the
+ * type is returned among the ignored claims.
+ * @param registrations the registrations the project includes, in registration order
+ * @param typeRepository the GitHub repository, `owner/repo`, of the package declaring the type; undefined if that package is not from GitHub, as for the project's own code
+ */
+export function findSimxInstanceCreator(registrations: SimxEditorRegistration[], typeQName: string, typeRepository: string | undefined): SimxInstanceCreator {
+    const repository = typeRepository?.toLowerCase();
+    const result: SimxInstanceCreator = { creator: undefined, ignored: [] };
+    for (const r of registrations) {
+        if (!r.creates?.some(type => type === typeQName)) continue;
+        if (!repository || pxt.github.parseRepoId(r.key)?.slug?.toLowerCase() !== repository)
+            result.ignored.push({ key: r.key, reason: "OTHER_REPOSITORY" });
+        else if (result.creator)
+            result.ignored.push({ key: r.key, reason: "CLAIMED_EARLIER" });
+        else
+            result.creator = r;
+    }
+    return result;
 }
 
 /**
@@ -189,6 +241,8 @@ export class SimxEditorHost {
     protected lastShownKey: string | undefined;
     // true while the editor is in fullscreen-simulator mode
     protected fullscreen = false;
+    // per key: the action requested of the tab and not yet posted to it
+    protected pendingActions: pxt.Map<SimxEditorActionEvent> = {};
 
     constructor(protected readonly options: SimxEditorHostOptions) {
     }
@@ -295,11 +349,22 @@ export class SimxEditorHost {
     }
 
     /**
+     * Asks the tab of `key` to carry out `action`: posts it at once if the tab
+     * is ready, else holds it, in place of any action held for the tab, until
+     * the tab's ready event or until the tab frames are removed.
+     */
+    requestAction(key: string, action: SimxEditorActionEvent) {
+        if (this.isReady(key)) this.post(key, action);
+        else this.pendingActions[key] = action;
+    }
+
+    /**
      * Handles a message posted to the editor's window: a ready event from a tab
      * frame, accepted only from the frame's window and origin, marks the tab
-     * ready, posts it its visibility, the simulator's state and whether the
-     * editor is in fullscreen-simulator mode, and brokers its port if its
-     * simulator frame is loaded. Other messages are ignored.
+     * ready, posts it its visibility, the simulator's state, whether the editor
+     * is in fullscreen-simulator mode and the action held for it, if any, and
+     * brokers its port if its simulator frame is loaded. Other messages are
+     * ignored.
      */
     handleMessage(ev: { data: any, source: unknown, origin: string }) {
         if (ev?.data?.type !== SIMXEDITOR_MESSAGE_TYPE || ev.data.event !== "ready") return;
@@ -310,6 +375,11 @@ export class SimxEditorHost {
         this.post(tab.key, { type: SIMXEDITOR_MESSAGE_TYPE, event: tab.key === this.shownKey ? "shown" : "hidden" });
         this.post(tab.key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "simulatorstate", state: this.options.getSimulatorState() });
         this.post(tab.key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "fullscreen", enabled: this.fullscreen });
+        const action = this.pendingActions[tab.key];
+        if (action) {
+            delete this.pendingActions[tab.key];
+            this.post(tab.key, action);
+        }
         this.broker(tab.key);
         this.updateLoader();
     }
@@ -349,7 +419,7 @@ export class SimxEditorHost {
         }
     }
 
-    /** Removes every tab frame and its loader, and forgets the shown tab and the tab shown last. */
+    /** Removes every tab frame and its loader, drops every action held for a tab, and forgets the shown tab and the tab shown last. */
     close() {
         for (const key of Object.keys(this.tabs)) {
             const { frame, loader } = this.tabs[key];
@@ -358,6 +428,7 @@ export class SimxEditorHost {
             this.options.removeTabFrame(frame);
         }
         this.tabs = {};
+        this.pendingActions = {};
         this.shownKey = undefined;
         this.lastShownKey = undefined;
     }
