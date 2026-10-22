@@ -354,6 +354,36 @@ interface SimFrameHost {            // implemented by the DOM layer
 ### Does this need to be in `pxtsimcore`?
 Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what runs in the simulator frame and is the primary reason for the DOM-free split. The coordinator is useful for testing and alternate hosts, but it is **editor-side**. Consider a second DOM-free module, such as `pxtsimdriver-core`, rather than bundling it into `pxtsimcore`, so frames and the runtime don't share a bundle.
 
+## Headless simulator tests (`pxt simtest`)
+
+**Goal.** Run a compiled MakeCode program in Node against a target's real simulator state (for Micro:Bit, `DalBoardState` and its peripherals) with no browser, and assert on the outcome. This is the first automated test that exercises target simulator code; today `tsc` proves only that the core files are DOM-free in type terms.
+
+**What exists.** `pxt run` already compiles to JS and calls `runCoreAsync` (`cli/cli.ts`), which sets `pxsim.initCurrentRuntime = pxsim.initBareRuntime` and runs a `pxsim.Runtime` with a `BareBoard`. It has only `basic.pause`/`showNumber`/`serial`, so no target code runs. `pxtsimcore` has no DOM, and the Micro:Bit core compile (`sim/tsconfig.core.json`) lists the DOM-free state files but only type-checks them (no emit).
+
+**Design.**
+1. **Core bundle per target.** Give the target core config an emit (`outFile: ../built/simcore.js`, declarations not needed). It holds the DOM-free state classes plus a small headless entry, for Micro:Bit `initRuntimeWithDalBoardState()`, which creates a `DalBoard` (an empty subclass of `DalBoardState`) with no `boardView`, sets `runtime.board`, and registers `runtime.postError`. `boardView()` must stay unused on this path; any code that needs it fails with a clear "view not available headless" error.
+2. **Bundle contract.** The bundle sets `pxsim.initHeadlessRuntime` (new, optional, declared in `pxtsimcore`). The CLI uses it when present, otherwise falls back to `initBareRuntime`. Optionally it also sets `pxsim.headlessSnapshot()`, returning JSON of observable board state (LED image, pin values, serial buffer), for state assertions.
+3. **CLI command.** `pxt simtest [file|dir ...]` (target-side `pxt simtest tests/sim`), implemented by refactoring `runCoreAsync` into `runHeadlessAsync(compileResult, opts)`, which returns `{ messages, errors, serial, snapshot, timedOut }`:
+   - compile each test with `buildCoreAsync` (JS only, no native build, so no yotta or cloud);
+   - load `pxtsimcore.js` (core) and then the target's `built/simcore.js` into the Node process. `pxtsimcore` needs the globals tests already set up (`pxt`, `ts`), and nothing else;
+   - run until the top-level code finishes **and** the runtime has no pending timers or `forever` loops, or until `--timeout` (default 5s), then `Runtime.kill()`;
+   - exit non-zero on the first failure. Print one line per test: `ok`/`FAIL`, name, and for failures the diff.
+4. **Test format.** A test is a plain `.ts` (or `.py`) program. Pass means no runtime error and no failed `control.assert`. Optional expectations are leading comments, parsed by the command: `// @serial: line` (in order), `// @snapshot: path = value` (v2). This keeps tests readable in the editor and compilable in the real build, like `tests/compile-test`.
+5. **Coverage rule.** A test can only call sim functions that are in the core compile. Calls into view-only shims (screen drawing, neopixel SVG, and so on) throw. Grow the core list as more state files are made DOM-free; a test that needs a missing one is a signal to split that file.
+
+**Phases.**
+1. *Prove pxtsimcore is DOM-free at runtime.* In `pxt/tests`, a mocha test loads `built/pxtsimcore.js` in a `vm` context that has no `window`, `document` or `navigator`, and runs a `Runtime` with the bare board. This also catches top-level code that touches the DOM and was never flagged because `tsc` allows it through `any`. No CLI work yet.
+2. *Core bundle emit for Micro:Bit.* Emit `built/simcore.js`; add the headless init; load it in a `vm` context and call `initHeadlessRuntime`. Check that `DalBoardState` constructs with no DOM. Expected trouble spots: constructors that touch the view, and `/// <reference>` ordering of the concatenated output (as with `record-audio-dom.ts` and `sim.js`).
+3. *`pxt simtest`.* Refactor `runCoreAsync`, add the command, `--timeout`, `--json` for CI, and the `@serial` expectations. Unit-test it in `pxt` with a toy target.
+4. *Micro:Bit tests.* Add `tests/sim/` programs: LED matrix, buttons via `control.raiseEvent`, serial, accelerometer, music/audio host (a recording fake `AudioHost`), and recording with a fake `RecorderHost`. These are the paths I changed and could only type-check.
+5. *CI.* Run `pxt simtest tests/sim` in the target's workflow (alongside `testghpkgs`), and `gulp testsimcore` in pxt's `testAll`.
+
+**Risks and open questions.**
+- Whether the real `DalBoardState` constructor can run without a view (`edgeconnector`, `microphone`, `radio` take the board in their constructors). Phase 2 answers this.
+- Timers: the runtime uses real `setTimeout`. If tests are slow, add a fake-clock hook behind `U.nextTick`/`setTimeout` rather than sleeping.
+- Multi-target: arcade and others would opt in by emitting their own `simcore.js`; the command must tolerate a target without one.
+- `pxt testdir` in a target currently crashes (`installAsync()` called without `parsed`; see the test investigation). It is a separate bug and not required here, but `simtest` must not depend on `installAsync`.
+
 ## Open questions
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
