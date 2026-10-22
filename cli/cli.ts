@@ -4558,8 +4558,10 @@ function simtestFiles(args: string[]): string[] {
 async function simtestAsync(parsed: commandParser.ParsedCommand) {
     const targetDir = process.cwd();
     const base = path.resolve(parsed.flags["base"] as string || ".");
-    const simBundle = path.resolve(parsed.flags["sim"] as string || path.join("built", "simcore.js"));
-    const coreBundle = path.join(nodeutil.pxtCoreDir, "built", "pxtsimcore.js");
+    // by default run against the full simulator, so every API is available; --core uses the DOM-free bundles
+    const core = !!parsed.flags["core"];
+    const simBundle = path.resolve(parsed.flags["sim"] as string || path.join("built", core ? "simcore.js" : "sim.js"));
+    const coreBundle = path.join(nodeutil.pxtCoreDir, "built", core ? "pxtsimcore.js" : "pxtsim.js");
     const timeoutMs = (parsed.flags["timeout"] as number) || 5000;
     const settleMs = parsed.flags["settle"] === undefined ? 300 : parsed.flags["settle"] as number;
 
@@ -7701,9 +7703,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 type: "string"
             },
             sim: {
-                description: "the target's DOM-free simulator bundle (default: built/simcore.js)",
+                description: "the target's simulator bundle (default: built/sim.js, or built/simcore.js with --core)",
                 argument: "file",
                 type: "string"
+            },
+            core: {
+                description: "run against only the DOM-free simulator bundles (pxtsimcore.js and the target's simcore.js)"
             },
             timeout: {
                 description: "milliseconds a program may take to finish its top-level code (default: 5000)",
