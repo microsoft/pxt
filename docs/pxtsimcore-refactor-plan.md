@@ -139,10 +139,14 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
 ### Progress: first build-pipeline milestone (done)
 
 - `pxtsimcore/tsconfig.json` now emits declarations and targets `built/pxtsimcore.js`.
-- Added a `pxtsimcore` gulp task and wired it into full builds, CLI builds, and watch rebuilds.
-- Kept the legacy `built/pxtsim.js` output unchanged; it still compiles successfully and remains the only bundle loaded by existing consumers at this stage.
-- Verified `built/pxtsimcore.js` and `built/pxtsimcore.d.ts` are generated, `pxtsim` compiles, the core output loads in Node with neither `window` nor `document`, and the core project also passes with `--noEmit`.
-- Core artifact compilation is included in the build pipelines, but publishing/copying the new `.d.ts` and shipping the separate core bundle to consumers remains future work; the source split and legacy bundle composition are not complete yet.
+- Added a `pxtsimcore` gulp task that emits `built/pxtsimcore.js` and `built/pxtsimcore.d.ts`.
+- The `pxtsim` TypeScript project now compiles only the DOM-side sources against `pxtsimcore.d.ts`, emitting `built/pxtsimdom.js` and `built/pxtsimdom.d.ts`.
+- The `pxtsim` gulp task runs core first, compiles DOM sources, then composes core followed by DOM into the compatibility outputs `built/pxtsim.js` and `built/pxtsim.d.ts`. The standalone core declaration reference is removed from the composed declaration file.
+- Wired the composed task into full builds, CLI builds, source watchers and the gulp exports. Lint covers pxtsim implementation files and separately lints `pxtsimcore/globals.d.ts` with the core tsconfig for parser services.
+- Verified both project builds, the DOM-free `--noEmit` check, the composed declaration file, and Node loading of the compatibility bundle with neither `window` nor `document`. The Micro:bit simulator tsconfig also type-checks against the new output.
+- The common-packages simulator's standalone tsconfig currently fails because its expected `node_modules/pxt-core/built/pxtsim.d.ts` is absent in this workspace. Its build needs to be rechecked in the normal package-linked target environment.
+
+The remaining step-6 work is packaging/distribution of the separate `pxtsimcore` artifact if a consumer is introduced; current consumers continue to use the compatibility `pxtsim` outputs.
 
 7. **Verify.**
    - Run `gulp` for the full build.

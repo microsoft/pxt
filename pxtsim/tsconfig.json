@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "declaration": true,
-        "outFile": "../built/pxtsim.js",
+        "outFile": "../built/pxtsimdom.js",
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",
@@ -18,5 +18,39 @@
         ],
         "incremental": true,
         "skipLibCheck": true
-    }
+    },
+    "files": [
+        "../built/pxtsimcore.d.ts"
+    ],
+    "include": [
+        "**/*.ts"
+    ],
+    "exclude": [
+        "allocator.ts",
+        "debugProtocol.ts",
+        "debugcore.ts",
+        "eventbus.ts",
+        "host.ts",
+        "sound/audiohost.ts",
+        "messages.ts",
+        "simtypes.ts",
+        "visuals/boardgeometry.ts",
+        "langsupport.ts",
+        "libgeneric.ts",
+        "localization.ts",
+        "logger.ts",
+        "runtime.ts",
+        "utils.ts",
+        "state/buttonpair.ts",
+        "state/compass.ts",
+        "state/filesystem.ts",
+        "state/lightsensor.ts",
+        "sound/musicalProgressions.ts",
+        "sound/sequencer.ts",
+        "sound/song.ts",
+        "sound/soundEmojiSynthesizer.ts",
+        "sound/soundSynthesizer.ts",
+        "sound/soundSynthesizerEffects.ts",
+        "sound/soundexpression.ts"
+    ]
 }

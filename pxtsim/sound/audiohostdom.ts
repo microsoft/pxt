@@ -1,4 +1,3 @@
-/// <reference path="./audiohost.ts" />
 // Web Audio implementation of the pxsim.audiohost.AudioHost.
 namespace pxsim.audiohost {
     setAudioHost({

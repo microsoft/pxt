@@ -1,4 +1,3 @@
-/// <reference path="./host.ts" />
 // Browser implementation of the pxsim.host environment.
 namespace pxsim.host {
     setEnvironment({

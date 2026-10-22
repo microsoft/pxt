@@ -1,4 +1,3 @@
-/// <reference path="./boardgeometry.ts" />
 namespace pxsim.visuals {
     // The distance between the center of two pins. This is the constant on which everything else is based.
     const PIN_DIST = 15;

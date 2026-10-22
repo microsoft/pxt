@@ -99,8 +99,16 @@ const copyTypescriptServices = () => gulp.src("pxtcompiler/ext-typescript/lib/ty
 const pxtlib = () => compileTsProject("pxtlib");
 const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
-const pxtsim = () => compileTsProject("pxtsim");
+const pxtsimDom = () => compileTsProject("pxtsim", "built", false, "pxtsimdom");
 const pxtsimcore = () => compileTsProject("pxtsimcore");
+const combinePxtsim = () => gulp.src(["built/pxtsimcore.js", "built/pxtsimdom.js"])
+    .pipe(concat("pxtsim.js"))
+    .pipe(gulp.dest("built"));
+const combinePxtsimDeclarations = () => gulp.src(["built/pxtsimcore.d.ts", "built/pxtsimdom.d.ts"])
+    .pipe(concat("pxtsim.d.ts"))
+    .pipe(replace(/^\/\/\/ <reference path="pxtsimcore\.d\.ts" \/>[ \t]*\r?\n/gm, ""))
+    .pipe(gulp.dest("built"));
+const pxtsim = gulp.series(pxtsimcore, pxtsimDom, gulp.parallel(combinePxtsim, combinePxtsimDeclarations));
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
@@ -185,7 +193,7 @@ function initWatch() {
 
     const tasks = [
         pxtlib,
-        gulp.parallel(pxtcompiler, pxtsim, pxtsimcore, backendutils),
+        gulp.parallel(pxtcompiler, pxtsim, backendutils),
         pxtpy,
         gulp.parallel(pxtblocks, pxteditor, pxtservices),
         gulp.parallel(pxtrunner, cli, pxtcommon),
@@ -203,8 +211,8 @@ function initWatch() {
     gulp.watch("./pxtlib/**/*", gulp.series(...tasks));
 
     gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
-    gulp.watch("./pxtsim/**/*", gulp.series(gulp.parallel(pxtsim, pxtsimcore), ...tasks.slice(2)));
-    gulp.watch("./pxtsimcore/**/*", gulp.series(pxtsimcore, ...tasks.slice(2)));
+    gulp.watch("./pxtsim/**/*", gulp.series(pxtsim, ...tasks.slice(2)));
+    gulp.watch("./pxtsimcore/**/*", gulp.series(pxtsim, ...tasks.slice(2)));
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
@@ -731,7 +739,8 @@ const lintWithEslint = () => Promise.all(
         "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
         "docfiles/pxtweb", "skillmap", "authcode",
         "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
-            exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
+            exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true))
+        .concat(exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx --parser-options '{"project":"./pxtsimcore/tsconfig.json"}' ./pxtsimcore/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
 
@@ -859,7 +868,7 @@ const buildAll = gulp.series(
     maybeUpdateWebappStrings(),
     gulp.parallel(copyTypescriptServices, copyBlocklyMedia, inlineBlocklySourcemaps),
     gulp.parallel(pxtlib, pxtweb),
-    gulp.parallel(pxtcompiler, pxtsim, pxtsimcore, backendutils),
+    gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,
     gulp.parallel(pxteditor, pxtblocks, pxtservices),
     gulp.parallel(pxtrunner, cli, pxtcommon),
@@ -930,9 +939,10 @@ exports.testpxteditor = testpxteditor;
 exports.testcli = testcli;
 exports.reactCommon = reactCommon;
 exports.pxtsimcore = pxtsimcore;
+exports.pxtsim = pxtsim;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
-    gulp.parallel(pxtcompiler, pxtsim, pxtsimcore, backendutils),
+    gulp.parallel(pxtcompiler, pxtsim, backendutils),
     pxtpy,
     pxteditor,
     gulp.parallel(pxtrunner, cli, pxtcommon),

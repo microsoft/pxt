@@ -1,6 +1,3 @@
-/// <reference path="./debugProtocol.ts" />
-/// <reference path="./utils.ts" />
-
 namespace pxsim {
     export class BreakpointMap {
         public fileMap: { [index: string]: [number, DebugProtocol.Breakpoint][] } = {};
