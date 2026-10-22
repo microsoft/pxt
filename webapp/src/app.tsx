@@ -1169,11 +1169,22 @@ export class ProjectView
     _slowTypeCheck = 0;
 
     private typecheckDebouncer = new pxtc.Util.AdaptiveDebouncer(() => {
-        if (this.editor.isIncomplete()) return;
+        this.typecheckProjectAsync(true);
+    })
+
+    /**
+     * Saves the open file, typechecks the project and shows the result: the
+     * editor's diagnostics, the package errors and the target's compiled-project
+     * notification. Does nothing while the editor is incomplete.
+     * @param autoRun when true, also auto-runs the simulator if auto-run is on
+     * and the project has no errors
+     */
+    private typecheckProjectAsync(autoRun: boolean): Promise<void> {
+        if (this.editor.isIncomplete()) return Promise.resolve();
         const start = Util.now();
         this.saveFileAsync(); // don't wait for saving to backend store to finish before typechecking
         const state = this.editor.snapshotState()
-        compiler.typecheckAsync()
+        return compiler.typecheckAsync()
             .then(cr => {
                 const end = Util.now();
                 // if typecheck is slow (>10s)
@@ -1186,7 +1197,7 @@ export class ProjectView
                 pxt.tickEvent("typecheck.complete", { editor: this.getPreferredEditor() });
                 this.editor.setDiagnostics(this.editorFile, state);
                 data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
-                if (this.state.autoRun) {
+                if (autoRun) {
                     const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
                         && this.state.autoRun) {
@@ -1200,7 +1211,7 @@ export class ProjectView
                     pxt.commands.notifyProjectCompiled(this.state.header.id, cr);
                 }
             });
-    })
+    }
 
     private typecheck() {
         this.typecheckDebouncer.trigger()
@@ -1474,8 +1485,17 @@ export class ProjectView
                 this.forceUpdate();
             })
             .then(() => {
-                if (returningToBlocksFromSessionOnlyFile)
+                // Refreshes the block diagnostics once the Blocks reload that
+                // domUpdate starts has finished, without auto-running the simulator.
+                if (returningToBlocksFromSessionOnlyFile) {
+                    Promise.resolve(this.blocksEditor.loadingXmlPromise).then(() => {
+                        if (this.editor == this.blocksEditor && !this.editor.isIncomplete())
+                            this.typecheckProjectAsync(false);
+                        else
+                            pxt.debug(`sim: skipping diagnostics refresh on return, blocks not shown or still loading`);
+                    });
                     return;
+                }
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
