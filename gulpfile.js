@@ -752,6 +752,7 @@ const testerr = testTask("errors-test", "errorrunner.js");
 const testfmt = testTask("format-test", "formatrunner.js");
 const testembed = testTask("embed-test", "embedrunner.js");
 const testsimdriver = testTask("simdriver-test", "simdriverrunner.js");
+const testsimcore = testTask("simcore-test", "simcorerunner.js");
 const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
@@ -793,6 +794,7 @@ const testAll = gulp.series(
     testfmt,
     testembed,
     testsimdriver,
+    testsimcore,
     testpydecomp,
     testpycomp,
     testpytraces,
@@ -919,6 +921,7 @@ exports.testerr = testerr;
 exports.testfmt = testfmt;
 exports.testembed = testembed;
 exports.testsimdriver = testsimdriver;
+exports.testsimcore = testsimcore;
 exports.testpydecomp = testpydecomp;
 exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
