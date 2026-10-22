@@ -916,6 +916,7 @@ declare namespace ts.pxtc {
         blockCombineSetHelp?: string;
         blockCombineChangeHelp?: string;
         blockSetVariable?: string; // show block with variable assigment in toolbox. Set equal to a name to control the var name
+        blockSetVariableLocalizable?: boolean; // extract blockSetVariable as display-only localization; the stored variable name is unchanged
         fixedInstances?: boolean;
         fixedInstance?: boolean;
         expose?: boolean; // expose to VM despite being in pxt:: namespace

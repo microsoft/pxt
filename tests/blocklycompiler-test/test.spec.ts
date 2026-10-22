@@ -8,6 +8,7 @@ import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplic
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
 import "./localization.spec";
+import "./localizedFields.spec";
 
 const WEB_PREFIX = "http://localhost:9876";
 

@@ -1,5 +1,7 @@
 import * as Blockly from "blockly";
 
+let localizeFunction: ((field: FieldVariable, variable: Blockly.IVariableModel<Blockly.IVariableState>) => string) | undefined;
+
 /**
  * This is the same as the Blockly variable field but with the addition
  * of a "New Variable" option in the dropdown
@@ -9,6 +11,15 @@ export class FieldVariable extends Blockly.FieldVariable {
 
     static dropdownCreate(this: FieldVariable): Blockly.MenuOption[] {
         const options = Blockly.FieldVariable.dropdownCreate.call(this) as Blockly.MenuOption[];
+
+        for (const option of options) {
+            if (option === Blockly.FieldDropdown.SEPARATOR) continue;
+            const variable = this.sourceBlock_?.workspace.getVariableMap().getVariableById(option[1]);
+            if (variable && localizeFunction) {
+                const localized = localizeFunction(this, variable);
+                if (localized) option[0] = localized;
+            }
+        }
 
         const insertIndex = options.findIndex(e => e[1] === "RENAME_VARIABLE_ID");
 
@@ -32,6 +43,16 @@ export class FieldVariable extends Blockly.FieldVariable {
         super(varName, validator, variableTypes, defaultType, config);
 
         this.menuGenerator_ = FieldVariable.dropdownCreate;
+    }
+
+    protected override getDisplayText_(): string {
+        const variable = this.getVariable();
+        if (variable && localizeFunction) {
+            const localized = localizeFunction(this, variable);
+            if (localized) return localized;
+        }
+
+        return super.getDisplayText_();
     }
 
     protected override onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
@@ -190,3 +211,7 @@ export class FieldVariable extends Blockly.FieldVariable {
 // Override the default variable field
 Blockly.fieldRegistry.unregister("field_variable");
 Blockly.fieldRegistry.register("field_variable", FieldVariable);
+
+export function setVariableFieldLocalizeFunction(func: ((field: FieldVariable, variable: Blockly.IVariableModel<Blockly.IVariableState>) => string) | undefined) {
+    localizeFunction = func;
+}
