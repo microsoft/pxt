@@ -872,9 +872,18 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })();
 
         let shouldRestartSim = false;
+        let lastZoomPercentage = this.getZoomPercentage();
 
         this.editor.addChangeListener((ev: Blockly.Events.Abstract) => {
             Blockly.Events.disableOrphans(ev);
+
+            if (ev.type === Blockly.Events.VIEWPORT_CHANGE) {
+                const zoomPercentage = this.getZoomPercentage();
+                if (zoomPercentage !== lastZoomPercentage) {
+                    lastZoomPercentage = zoomPercentage;
+                    this.parent.forceUpdate();
+                }
+            }
 
             const ignoredChanges = [
                 Blockly.Events.UI,
@@ -1148,6 +1157,10 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     zoomOut() {
         if (!this.editor) return;
         this.editor.zoomCenter(-5);
+    }
+
+    getZoomPercentage(): number | undefined {
+        return this.editor ? Math.round(this.editor.scale * 100) : undefined;
     }
 
     setScale(scale: number) {

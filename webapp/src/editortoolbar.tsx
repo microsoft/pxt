@@ -164,8 +164,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
     }
 
     private getZoomControl(view: View): JSX.Element[] {
-        return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
-        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
+        const zoomPercentage = this.props.parent.editor.getZoomPercentage?.();
+        return [<EditorToolbarButton icon='minus circle' className="editortools-btn zoomout-editortools-btn" title={zoomPercentage === undefined ? lf("Zoom Out") : lf("Zoom Out ({0}%)", zoomPercentage)} onButtonClick={this.zoomOut} view={this.getViewString(view)} key="minus" />,
+        <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn" title={zoomPercentage === undefined ? lf("Zoom In") : lf("Zoom In ({0}%)", zoomPercentage)} onButtonClick={this.zoomIn} view={this.getViewString(view)} key="plus" />]
     }
 
     protected getUndoRedo(view: View): JSX.Element[] {
@@ -551,13 +552,14 @@ export class ZoomSlider extends data.Component<ZoomSliderProps, ZoomSliderState>
     }
 
     renderCore() {
+        const zoomPercentage = this.props.parent.editor.getZoomPercentage?.();
         return <div className="zoom">
-            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={lf("Zoom Out")} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
+            <EditorToolbarButton icon="minus circle" className="editortools-btn zoomout-editortools-btn borderless" title={zoomPercentage === undefined ? lf("Zoom Out") : lf("Zoom Out ({0}%)", zoomPercentage)} onButtonClick={this.zoomOut} view={this.props.view} key="minus"/>
             <div id="zoomSlider">
                 <input className="zoomSliderBar" type="range" min={this.zoomMin} max={this.zoomMax} step="1" value={this.state.zoomValue.toString()} onChange={this.zoomUpdate}
                 aria-valuemax={this.zoomMax} aria-valuemin={this.zoomMin} aria-valuenow={this.state.zoomValue}></input>
             </div>
-            <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn borderless" title={lf("Zoom In")} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
+            <EditorToolbarButton icon='plus circle' className="editortools-btn zoomin-editortools-btn borderless" title={zoomPercentage === undefined ? lf("Zoom In") : lf("Zoom In ({0}%)", zoomPercentage)} onButtonClick={this.zoomIn} view={this.props.view} key="plus" />
         </div>
     }
 }

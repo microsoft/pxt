@@ -726,6 +726,7 @@ declare namespace pxt.editor {
         hasRedo(): boolean;
         zoomIn(): void;
         zoomOut(): void;
+        getZoomPercentage?(): number | undefined;
         resize(): void;
         setScale(scale: number): void;
         focusWorkspace(): void;
