@@ -372,7 +372,6 @@ namespace pxsim {
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
-        public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) return;
             this.dispatchMessage(msg);
@@ -408,9 +407,6 @@ namespace pxsim {
             } as SimulatorCommandMessage)
         }
         public onDebuggerResume() { }
-        public screenshotAsync(width?: number): Promise<ImageData> {
-            return Promise.resolve(undefined);
-        }
         public kill() { }
 
         protected serialOutBuffer: string = '';
@@ -452,30 +448,12 @@ namespace pxsim {
     }
 
     export class CoreBoard extends BaseBoard {
-        // updates
-        updateSubscribers: (() => void)[];
-
-        // builtin
         builtinParts: Map<any>;
-        builtinVisuals: Map<() => any>;
-        builtinPartVisuals: Map<(xy: visuals.Coord) => any>;
 
         constructor() {
             super()
 
-            // updates
-            this.updateSubscribers = []
-            this.updateView = () => {
-                this.updateSubscribers.forEach(sub => sub());
-            }
-
             this.builtinParts = {};
-            this.builtinVisuals = {};
-            this.builtinPartVisuals = {};
-        }
-
-        public addUpdateSubscriber(subscriber: () => void) {
-            this.updateSubscribers.push(subscriber);
         }
 
         kill() {
@@ -489,6 +467,16 @@ namespace pxsim {
 
     export interface EventBusBoard {
         bus: EventBus;
+    }
+
+    export interface BoardView {
+        builtinVisuals: Map<() => any>;
+        builtinPartVisuals: Map<(xy: visuals.Coord) => any>;
+        initAsync(msg: SimulatorRunMessage): Promise<void>;
+        updateView(): void;
+        addUpdateSubscriber(subscriber: () => void): void;
+        screenshotAsync(width?: number): Promise<ImageData>;
+        kill(): void;
     }
 
     class BareBoard extends BaseBoard {
@@ -751,6 +739,7 @@ namespace pxsim {
 
     export class Runtime {
         public board: BaseBoard;
+        public boardView?: BoardView;
         numGlobals = 1000;
         errorHandler: (e: any) => void;
         postError: (e: any) => void;
@@ -1016,10 +1005,10 @@ namespace pxsim {
         }
 
         static async postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
-            const b = runtime && runtime.board;
-            if (!b) return undefined;
+            const view = runtime && runtime.boardView;
+            if (!view) return undefined;
 
-            const img = await b.screenshotAsync();
+            const img = await view.screenshotAsync();
             Runtime.postMessage({
                 type: "screenshot",
                 data: img,
@@ -1056,7 +1045,8 @@ namespace pxsim {
         }
 
         updateDisplay() {
-            this.board.updateView();
+            if (this.boardView)
+                this.boardView.updateView();
             this.postFrame();
         }
 
@@ -1081,7 +1071,7 @@ namespace pxsim {
         postFrame() {
             if (!this.recording || !this.running) return;
             let time = pxsim.U.now();
-            this.board.screenshotAsync(this.recordingWidth)
+            (this.boardView ? this.boardView.screenshotAsync(this.recordingWidth) : Promise.resolve(undefined))
                 .then(imageData => {
                     // check for duplicate images
                     if (this.recordingLastImageData && isImageDataEqual(this.recordingLastImageData, imageData)) {
@@ -1743,7 +1733,9 @@ namespace pxsim {
             this.thumbnailFrames = [];
 
             this.thumbnailRecordingIntervalRef = setInterval(async () => {
-                const imageData = await this.board.screenshotAsync();
+                const imageData = this.boardView
+                    ? await this.boardView.screenshotAsync()
+                    : undefined;
 
                 if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
                     return;

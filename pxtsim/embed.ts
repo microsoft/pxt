@@ -75,6 +75,8 @@ namespace pxsim {
                 runtime.kill();
                 if (runtime.board)
                     runtime.board.kill();
+                if (runtime.boardView)
+                    runtime.boardView.kill();
             }
         }
 
@@ -89,6 +91,7 @@ namespace pxsim {
             const rt = new Runtime(msg);
             runtime = rt;
             rt.board.initAsync(msg)
+                .then(() => rt.boardView ? rt.boardView.initAsync(msg) : undefined)
                 .then(() => {
                     if (rt === runtime) {
                         rt.run((v) => {
