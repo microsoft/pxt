@@ -41,6 +41,7 @@
         "logger.ts",
         "runtime.ts",
         "utils.ts",
+        "state/animationqueue.ts",
         "state/buttonpair.ts",
         "state/compass.ts",
         "state/filesystem.ts",

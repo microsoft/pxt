@@ -169,6 +169,11 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 - Changed the headphone SVG lookup in `state/edgeconnector.ts` and the MicroBit view-update subscription in `visuals/microbit.ts` to use `boardView()`; state call sites remain on `board()`.
 - Extracted component-state construction and state-only behavior into `DalBoardState` in `sim/state/dalboardstate.ts`. `DalBoard` remains a compatibility subclass returned by `board()`, while `DalBoardView` now depends on the state type.
 - `ensureHardwareVersion()` queues a runtime display update instead of calling the view directly, so `DalBoardState` has no view dependency.
+- Added an initial DOM-free target state project in `pxt-microbit/sim/tsconfig.core.json`. The source set passed a no-DOM compiler probe using the workspace-built pxtsimcore declarations and the live pxt-common-packages checkout.
+- Moved `AnimationQueue` into `pxtsimcore`; it is simulation scheduling logic and does not require the DOM.
+- Split `CommonNeoPixelState` and `LightBoard` declarations from the SVG implementation so state consumers no longer need to compile the mixed visual file.
+- Kept recording and sample playback state on the compatibility `DalBoard` subclass because those implementations still use browser media and audio APIs; moving those host-backed features is separate audio work.
+- The installed `pxt-microbit/node_modules` dependencies are not linked to the workspace checkouts and predate the new `neopixelstate.ts` source. The target core tsconfig expects the updated dependency package; the direct workspace-source probe passed, but the config still needs to be rerun after linking/updating those dependencies.
 
 ### Progress: move visual registries and lifecycle to `boardView()` (done)
 
@@ -186,7 +191,8 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 
 | Concern | Members |
 |---|---|
-| **State (DOM-free)** | `bus`, `id`, `runOptions`, `storedState`, `setStoredState`, `writeSerial`, `receiveMessage`, `addMessageListener`, `builtinParts`, and the component states: `ledMatrixState`, `edgeConnectorState`, `serialState`, `accelerometerState`, `compassState`, `thermometerState`, `lightSensorState`, `buttonPairState`, `radioState`, `microphoneState`, `recordingState`, `lightState`, `fileSystem`, `logoTouch`, `speakerEnabled`, `controlMessageState`, `samplesState`, `neopixelState()`, `tryGetNeopixelState()`, `hardwareVersion` (the value) |
+| **State (DOM-free)** | `bus`, `id`, `runOptions`, `storedState`, `setStoredState`, `writeSerial`, `receiveMessage`, `addMessageListener`, `builtinParts`, and component state including `ledMatrixState`, `edgeConnectorState`, `serialState`, `accelerometerState`, `compassState`, `thermometerState`, `lightSensorState`, `buttonPairState`, `radioState`, `microphoneState`, `lightState`, `fileSystem`, `logoTouch`, `speakerEnabled`, `controlMessageState`, `neopixelState()`, `tryGetNeopixelState()`, and `hardwareVersion` |
+| **Host-backed state (not yet in core)** | `recordingState` (`MediaRecorder`, `MediaStream`, `HTMLAudioElement`) and `samplesState` (audio playback through the browser audio implementation) |
 | **View (DOM)** | `DalBoardView.viewHost` (`visuals.BoardHost`), `view` (`SVGElement`), `builtinVisuals`, `builtinPartVisuals`, update subscribers and `updateView`, `screenshotAsync` (canvas), DOM initialization, view cleanup, and mute-button side effects |
 
 Component states are constructed with `builtinParts[...]` entries, but `builtinParts` itself is just a map of state objects. It is DOM-free and belongs with the state.
@@ -247,7 +253,7 @@ The common-packages sim has its own `board()` helper and its own `CoreBoard` sta
 1. In pxt, add `BaseBoardState` and `CoreBoardState`, preserving `runtime.board` as the state-facing compatibility accessor.
 2. In pxt-microbit, keep `DalBoard`/`board()` as state access and introduce `DalBoardView`/`boardView()` for view-only operations.
 3. ✅ Move view fields, visual registries, update subscriptions, and lifecycle operations to the view object; leave state call sites on `board()`.
-4. Move the state files into the core compile (`pxtsimcore` equivalent for the target) and confirm there are no DOM references with the DOM-free tsconfig.
+4. Incrementally move state files into the core compile (`pxtsimcore` equivalent for the target) and confirm there are no DOM references with the DOM-free tsconfig. Keep browser media and audio state on the host side until its interfaces are separated.
 5. Remove remaining compatibility hooks once nothing uses them, and run the microbit and common-packages simulator tests.
 
 ### Follow-up work after Micro:bit refactor and testing

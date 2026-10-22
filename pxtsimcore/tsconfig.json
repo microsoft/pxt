@@ -32,6 +32,7 @@
         "../pxtsim/logger.ts",
         "../pxtsim/runtime.ts",
         "../pxtsim/utils.ts",
+        "../pxtsim/state/animationqueue.ts",
         "../pxtsim/state/buttonpair.ts",
         "../pxtsim/state/compass.ts",
         "../pxtsim/state/filesystem.ts",
