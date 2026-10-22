@@ -89,3 +89,56 @@ describe("pxtsimcore in a context without browser globals", () => {
         chai.expect(serial).deep.equals(["total 10"]);
     });
 });
+
+describe("pxt simtest runner", () => {
+    const simtest = require(path.resolve(process.cwd(), "built", "simtest.js")) as typeof import("../../built/simtest");
+    const toyBundle = path.resolve(process.cwd(), "built", "tests", "simcore-test", "toybundle.js");
+
+    before(() => {
+        fs.mkdirSync(path.dirname(toyBundle), { recursive: true });
+        fs.writeFileSync(toyBundle, "pxsim.initHeadlessRuntime = pxsim.initBareRuntime;");
+    });
+
+    after(() => fs.unlinkSync(toyBundle));
+
+    const core = path.resolve(process.cwd(), "built", "pxtsimcore.js");
+    const options = { timeoutMs: 5000, settleMs: 300 };
+
+    async function runAsync(source: string) {
+        const compiled = await util.stsAsync(source);
+        return simtest.runHeadlessAsync(compiled.outfiles[pxtc.BINARY_JS], [core, toyBundle], options);
+    }
+
+    it("parses serial expectations", () => {
+        chai.expect(simtest.parseSerialExpectations("// @serial: a b\nlet x = 1\n  //@serial:c\n// @serial:")).deep.equals(["a b", "c", ""]);
+    });
+
+    it("collects serial lines from a program", async function () {
+        this.timeout(20000);
+        const result = await runAsync(`console.log("one"); console.log("two"); pause(10)`);
+        chai.expect(result.serial).deep.equals(["one", "two"]);
+        chai.expect(result.error).equals(undefined);
+        chai.expect(simtest.checkRun(result, ["one", "two"])).equals(undefined);
+        chai.expect(simtest.checkRun(result, ["one"])).includes("serial output mismatch");
+    });
+
+    it("reports a runtime error", async function () {
+        this.timeout(20000);
+        const result = await runAsync(`let a: number[] = null; console.log(a.length)`);
+        chai.expect(simtest.checkRun(result, [])).includes("runtime error");
+    });
+
+    it("fails when the bundle has no headless entry point", async function () {
+        this.timeout(20000);
+        fs.writeFileSync(toyBundle, "");
+        try {
+            const compiled = await util.stsAsync(`pause(1)`);
+            let message = "";
+            await simtest.runHeadlessAsync(compiled.outfiles[pxtc.BINARY_JS], [core, toyBundle], options)
+                .catch((e: Error) => message = e.message);
+            chai.expect(message).includes("does not set pxsim.initHeadlessRuntime");
+        } finally {
+            fs.writeFileSync(toyBundle, "pxsim.initHeadlessRuntime = pxsim.initBareRuntime;");
+        }
+    });
+});
