@@ -53,6 +53,7 @@ import {
     getFolderUsage,
     getProjfsFolder,
     getVisibleFiles,
+    isDeclaredInProjectFolder,
     isValidRelativeName,
     PROJFS_FOLDER_QUOTA_BYTES,
     PROJFS_MAX_FOLDER_FILES,
@@ -125,7 +126,7 @@ import {
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
-import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
+import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE, OPEN_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
 
 pxt.appTarget = {
     versions: {
@@ -890,6 +891,21 @@ describe("projfs guard", () => {
     it("gives a key that names no repository no folder", () => {
         for (const key of ["", "owner", "../owner", "pxt_modules/owner"])
             chai.expect(getProjfsFolder(key), key).equals(undefined);
+    });
+
+    it("finds a symbol of the project's own code declared in a file in the folder, at any depth", () => {
+        chai.expect(isDeclaredInProjectFolder({ pkg: undefined, fileName: "owner/repo/things.g.ts" }, "owner/repo")).equals(true);
+        chai.expect(isDeclaredInProjectFolder({ pkg: null, fileName: "owner/repo/sub/things.ts" }, "owner/repo")).equals(true);
+    });
+
+    it("does not find a symbol of the project's own code declared outside the folder", () => {
+        for (const fileName of ["main.ts", "owner/other/things.g.ts", "owner/repo-two/things.g.ts", "other/owner/repo/things.g.ts"])
+            chai.expect(isDeclaredInProjectFolder({ pkg: undefined, fileName }, "owner/repo"), fileName).equals(false);
+    });
+
+    it("does not find a symbol a package declares, whatever its file", () => {
+        chai.expect(isDeclaredInProjectFolder({ pkg: "ext", fileName: "pxt_modules/ext/things.g.ts" }, "owner/repo")).equals(false);
+        chai.expect(isDeclaredInProjectFolder({ pkg: "ext", fileName: "owner/repo/things.g.ts" }, "owner/repo")).equals(false);
     });
 });
 
@@ -4163,8 +4179,6 @@ const ONE_DAY = ONE_HOUR * 24;
 
 const testProject = createProjectText();
 
-console.log((JSON.parse(testProject[pxt.HISTORY_FILE]) as HistoryFile).entries.map(e => new Date(e.timestamp).toLocaleString()).join("\n"));
-
 
 describe("updateHistory", () => {
     it("should generate diffs", () => {
@@ -5007,21 +5021,41 @@ describe("simulator extension instance creators", () => {
 describe("fixed-instance dropdown options", () => {
     const instances: [string, string][] = [["a", "ns.a"], ["b", "ns.b"]];
 
-    it("appends exactly one trailing create entry, with the reserved value, when an editor tab creates the instances", () => {
-        const options = getInstanceDropdownOptions(instances, "create");
-        chai.expect(options.length).equals(instances.length + 1);
+    // the values of `options`, a separator standing as "separator"
+    function values(options: ReturnType<typeof getInstanceDropdownOptions>) {
+        return options.map(o => o === "separator" ? o : o[1]);
+    }
+
+    it("appends a separator and one trailing create entry, with the reserved value, when only the create entry is offered", () => {
+        const options = getInstanceDropdownOptions(instances, undefined, "create");
         chai.expect(options.slice(0, instances.length)).deep.equals(instances);
-        chai.expect((options[instances.length] as [string, string])[1]).equals(CREATE_INSTANCE_OPTION_VALUE);
-        chai.expect(options.filter(o => o !== "separator" && o[1] === CREATE_INSTANCE_OPTION_VALUE).length).equals(1);
+        chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", CREATE_INSTANCE_OPTION_VALUE]);
     });
 
-    it("lists the instances alone when no editor tab creates them", () => {
-        chai.expect(getInstanceDropdownOptions(instances, undefined)).deep.equals(instances);
-        chai.expect(getInstanceDropdownOptions([], undefined)).deep.equals([]);
+    it("appends a separator and one trailing open entry, with the reserved value, when only the open entry is offered", () => {
+        const options = getInstanceDropdownOptions(instances, "open", undefined);
+        chai.expect(options.slice(0, instances.length)).deep.equals(instances);
+        chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", OPEN_INSTANCE_OPTION_VALUE]);
+    });
+
+    it("places the open entry before the create entry, after one separator, when both are offered", () => {
+        const options = getInstanceDropdownOptions(instances, "open", "create");
+        chai.expect(options.slice(0, instances.length)).deep.equals(instances);
+        chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
+    });
+
+    it("lists the instances alone, with no separator, when neither entry is offered", () => {
+        chai.expect(getInstanceDropdownOptions(instances, undefined, undefined)).deep.equals(instances);
+        chai.expect(getInstanceDropdownOptions([], undefined, undefined)).deep.equals([]);
+    });
+
+    it("lists the command entries alone, with no separator, when there are no instances", () => {
+        chai.expect(values(getInstanceDropdownOptions([], undefined, "create"))).deep.equals([CREATE_INSTANCE_OPTION_VALUE]);
+        chai.expect(values(getInstanceDropdownOptions([], "open", "create"))).deep.equals([OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
     });
 
     it("never changes the list it was given", () => {
-        getInstanceDropdownOptions(instances, "create");
+        getInstanceDropdownOptions(instances, "open", "create");
         chai.expect(instances.length).equals(2);
     });
 });
@@ -5593,6 +5627,7 @@ describe("simulator extension editor tab host", () => {
 
     describe("actions", () => {
         const create = (qName: string) => ({ type: "simxeditor", event: "action", action: "create", qName } as const);
+        const open = (qName: string) => ({ type: "simxeditor", event: "action", action: "open", qName } as const);
 
         function actions(frame: FakeElement) {
             return events(frame).filter(e => e.event === "action");
@@ -5633,6 +5668,29 @@ describe("simulator extension editor tab host", () => {
             ready(EXT);
             ready(OTHER);
             chai.expect(actions(tab(EXT))).deep.equals([create("ext.Other")]);
+            chai.expect(actions(tab(OTHER))).deep.equals([create("other.Thing")]);
+        });
+
+        it("delivers an open action as it delivers a create action, held until the tab is ready, then at once", () => {
+            host.requestAction(EXT, open("ext.thing1"));
+            show(EXT);
+            chai.expect(actions(tab(EXT))).deep.equals([]);
+            ready(EXT);
+            chai.expect(actions(tab(EXT))).deep.equals([open("ext.thing1")]);
+            host.requestAction(EXT, open("ext.thing2"));
+            chai.expect(actions(tab(EXT))).deep.equals([open("ext.thing1"), open("ext.thing2")]);
+        });
+
+        it("holds one action per tab whatever its kind, a later open replacing a create not yet posted and the reverse", () => {
+            show(EXT);
+            show(OTHER);
+            host.requestAction(EXT, create("ext.Thing"));
+            host.requestAction(EXT, open("ext.thing1"));
+            host.requestAction(OTHER, open("other.thing1"));
+            host.requestAction(OTHER, create("other.Thing"));
+            ready(EXT);
+            ready(OTHER);
+            chai.expect(actions(tab(EXT))).deep.equals([open("ext.thing1")]);
             chai.expect(actions(tab(OTHER))).deep.equals([create("other.Thing")]);
         });
 

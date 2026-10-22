@@ -186,6 +186,17 @@ export function getProjfsFolder(key: string): string | undefined {
 }
 
 /**
+ * Returns true if the open project's own code declares `symbol` in a file in
+ * `folder`: the symbol comes from no package, and its file name, the file's
+ * project name, lies under `folder`.
+ * @param symbol the symbol, as the API info gives it
+ * @param folder a simulator extension's folder, e.g. `owner/repo`, as {@link getProjfsFolder} returns it
+ */
+export function isDeclaredInProjectFolder(symbol: Pick<pxtc.SymbolInfo, "pkg" | "fileName">, folder: string): boolean {
+    return !symbol.pkg && symbol.fileName.startsWith(folder + "/");
+}
+
+/**
  * Returns the project name of the file `name` in `folder`, or undefined if
  * `name` is not a valid relative name, ends in the reserved
  * `pxt.SIMX_EDITOR_MARKER_SUFFIX`, or the result would fall under

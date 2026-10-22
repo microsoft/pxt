@@ -24,4 +24,16 @@ namespace pxt.react {
      * false for the type.
      */
     export let createInstance: (typeQName: string) => void;
+    /**
+     * Returns true if the editor can open the fixed instance `instanceQName`, a
+     * fully qualified name, here: a block dropdown holding the instance then
+     * offers an entry asking to open it.
+     */
+    export let canOpenInstance: (instanceQName: string) => boolean;
+    /**
+     * Opens whatever edits the fixed instance `instanceQName` and asks it to
+     * open the instance; does nothing if `canOpenInstance` returns false for
+     * the instance.
+     */
+    export let openInstance: (instanceQName: string) => void;
 }

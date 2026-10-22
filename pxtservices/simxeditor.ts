@@ -129,7 +129,10 @@ export interface SimxEditorFullscreenEvent {
  * the tab carries out, which the editor also shows the tab for. `create` asks
  * the tab to create an instance of the fixed-instance type `qName`, one of
  * those its registration's `editor.creates` names, as when the user picks the
- * last entry of a block dropdown listing that type's instances. Posted once the
+ * last entry of a block dropdown listing that type's instances. `open` asks
+ * the tab to open the instance `qName` of such a type, which a file in the
+ * extension's folder of the project declares, as when the user picks the
+ * entry of such a dropdown asking to open the instance it holds. Posted once the
  * tab is ready: at once if it is, else after the events that follow its ready
  * event. A request made before an earlier one was posted replaces it, and a
  * request not yet posted is dropped when the tab frame is removed.
@@ -137,8 +140,11 @@ export interface SimxEditorFullscreenEvent {
 export interface SimxEditorActionEvent {
     type: typeof SIMXEDITOR_MESSAGE_TYPE;
     event: "action";
-    action: "create";
-    /** The fully qualified name of the type, e.g. `myext.Widget`. */
+    action: "create" | "open";
+    /**
+     * For `create`, the fully qualified name of the type, e.g. `myext.Widget`;
+     * for `open`, that of the instance, e.g. `myext.widget1`.
+     */
     qName: string;
 }
 
