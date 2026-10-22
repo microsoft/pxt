@@ -658,6 +658,8 @@ namespace pxsim {
 
     // overriden at loadtime by specific implementation
     export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
+    // set by a target's DOM-free simulator bundle; creates its board with no view, for headless runs
+    export let initHeadlessRuntime: (msg?: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
     // binds this pointer (in s.arg0) to method implementation (in s.fn)
