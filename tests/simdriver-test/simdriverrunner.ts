@@ -532,6 +532,7 @@ describe("simulator driver simulator extension frames", () => {
     interface FrameGrants {
         allowPopups?: boolean;
         allowClipboardWrite?: boolean;
+        allowCamera?: boolean;
         allowDownloads?: boolean;
     }
 
@@ -672,6 +673,13 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
     });
 
+    it("delegates the camera to a simulator extension frame registered with allowCamera", () => {
+        const { frame } = startSimulatorExtension({}, { allowCamera: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "camera"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
     it("lets a simulator extension frame registered with allowDownloads start downloads", () => {
         const { frame } = startSimulatorExtension({}, { allowDownloads: true });
 
@@ -680,10 +688,10 @@ describe("simulator driver simulator extension frames", () => {
     });
 
     it("gives a simulator extension frame registered with every grant all of them", () => {
-        const { frame } = startSimulatorExtension({}, { allowPopups: true, allowClipboardWrite: true, allowDownloads: true });
+        const { frame } = startSimulatorExtension({}, { allowPopups: true, allowClipboardWrite: true, allowCamera: true, allowDownloads: true });
 
         chai.expect(sandboxOf(frame)).to.have.members(["allow-same-origin", "allow-scripts", "allow-popups", "allow-popups-to-escape-sandbox", "allow-downloads"]);
-        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "clipboard-write"]);
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "clipboard-write", "camera"]);
     });
 
     it("keeps the main simulator frame's sandbox and permissions, whatever the extensions' grants", () => {
@@ -691,7 +699,7 @@ describe("simulator driver simulator extension frames", () => {
         const driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
             simUrl: SIM_URL,
             simulatorExtensions: {
-                [KEY]: { index: "index.html", aspectRatio: 1, permanent: true, allowPopups: true, allowClipboardWrite: true, allowDownloads: true },
+                [KEY]: { index: "index.html", aspectRatio: 1, permanent: true, allowPopups: true, allowClipboardWrite: true, allowCamera: true, allowDownloads: true },
             },
         });
         driver.preload(1);

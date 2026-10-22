@@ -45,6 +45,7 @@ The fields of the `simx` entry:
 | `permanent` | Keeps the simulator frame across runs, restarts and collapses of the simulator; when `false`, the frame is removed some time after the program stops or another run starts. Required by an editor tab. | `true` | simulator frame |
 | `allowPopups` | Adds `allow-popups` and `allow-popups-to-escape-sandbox` to the frame's sandbox. | `false` | both |
 | `allowClipboardWrite` | Adds `clipboard-write` to the frame's permissions. | `false` | both |
+| `allowCamera` | Adds `camera` to the frame's permissions. | `false` | both |
 | `allowDownloads` | Adds `allow-downloads` to the frame's sandbox. | `false` | both |
 | `allowFileWrite` | Lets the frame list, read, write and delete files in its folder of the project (see [Project files](#project-files)). | `false` | both |
 | `allowAssetRead` | Lets the frame list the project's assets, name, palette and simulator theme, and hear when they change (see [Project assets](#project-assets)). | `false` | both |
@@ -54,14 +55,14 @@ The fields of the `simx` entry:
 
 ### Grants and trust
 
-The grants (`allowPopups`, `allowClipboardWrite`, `allowDownloads`, `allowFileWrite`, `allowAssetRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
+The grants (`allowPopups`, `allowClipboardWrite`, `allowCamera`, `allowDownloads`, `allowFileWrite`, `allowAssetRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
 
 Two grants reach further than their names say:
 
 * `allowFileWrite` lets the extension change the user's program: every file it writes into its folder is listed in the project's `pxt.json`, so a `.ts` or `.py` file it writes is compiled with the program. Assets are not created through project files: a write of a `.jres` file is refused.
 * `allowAssetRead` discloses the project's name beside its assets, palette and simulator theme.
 
-Whatever the grants, every simulator frame and tab frame may go fullscreen (`allowfullscreen`) and has the `autoplay` and `microphone` permissions of the main simulator frame; no grant controls them.
+Whatever the grants, every simulator frame and tab frame may go fullscreen (`allowfullscreen`) and has the `autoplay` and `microphone` permissions of the main simulator frame; no grant controls them. `allowCamera` gives the extension's frames access to the camera; the browser asks the user before a frame can use it.
 
 ## The simulator frame
 

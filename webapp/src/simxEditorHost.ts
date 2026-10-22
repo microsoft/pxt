@@ -27,6 +27,7 @@ export interface SimxEditorRegistrationConfig {
     creates?: string[];
     allowPopups?: boolean;
     allowClipboardWrite?: boolean;
+    allowCamera?: boolean;
     allowDownloads?: boolean;
 }
 
@@ -48,6 +49,8 @@ export interface SimxEditorRegistration {
     allowPopups?: boolean;
     /** The tab frame's allow list gains clipboard-write. */
     allowClipboardWrite?: boolean;
+    /** The tab frame's allow list gains camera. */
+    allowCamera?: boolean;
     /** The tab frame's sandbox gains allow-downloads. */
     allowDownloads?: boolean;
 }
@@ -71,6 +74,7 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
                 creates: simx.creates,
                 allowPopups: simx.allowPopups,
                 allowClipboardWrite: simx.allowClipboardWrite,
+                allowCamera: simx.allowCamera,
                 allowDownloads: simx.allowDownloads,
             };
         });
@@ -200,7 +204,7 @@ export interface SimxEditorHostOptions {
     /** Creates an element that shows the editor's loading state for the tab named `label`. */
     createLoader(label: string): HTMLElement;
     /** Returns the `sandbox` and `allow` values of a simulator frame given a registration's grants. */
-    framePermissions(grants: { allowPopups?: boolean, allowClipboardWrite?: boolean, allowDownloads?: boolean }): { sandbox: string, allow: string };
+    framePermissions(grants: { allowPopups?: boolean, allowClipboardWrite?: boolean, allowCamera?: boolean, allowDownloads?: boolean }): { sandbox: string, allow: string };
     /** Returns the simulator frame of the extension registered under `key`, creating it if none exists. */
     startSimulatorExtension(key: string): HTMLIFrameElement | undefined;
     /** Tells the simulator driver that `frame` is the tab frame of the extension registered under `key`. */

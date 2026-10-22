@@ -71,6 +71,7 @@ declare namespace pxt {
         index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
         allowPopups?: boolean; // If true, the iframe sandbox gains allow-popups and allow-popups-to-escape-sandbox. Default: false.
         allowClipboardWrite?: boolean; // If true, the iframe allow list gains clipboard-write. Default: false.
+        allowCamera?: boolean; // If true, the iframe allow list gains camera. Default: false.
         allowDownloads?: boolean; // If true, the iframe sandbox gains allow-downloads. Default: false.
         allowFileWrite?: boolean; // If true, the frame may list, read, write and delete files in its own folder of the project ("projfs" messages). Default: false.
         allowAssetRead?: boolean; // If true, the frame may list the open project's assets and visual configuration (palette, simulator theme) and subscribe to their changes ("projassets" messages). Default: false.

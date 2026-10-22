@@ -92,6 +92,7 @@ namespace pxsim {
             devUrl?: string;
             allowPopups?: boolean;
             allowClipboardWrite?: boolean;
+            allowCamera?: boolean;
             allowDownloads?: boolean;
             allowAssetRead?: boolean;
             allowFileWrite?: boolean;
@@ -177,6 +178,8 @@ namespace pxsim {
         allowPopups?: boolean;
         /** The allow list gains clipboard-write. */
         allowClipboardWrite?: boolean;
+        /** The allow list gains camera. */
+        allowCamera?: boolean;
         /** The sandbox gains allow-downloads. */
         allowDownloads?: boolean;
     }
@@ -189,6 +192,8 @@ namespace pxsim {
         const allow = ['autoplay', 'microphone'];
         if (grants?.allowClipboardWrite)
             allow.push('clipboard-write');
+        if (grants?.allowCamera)
+            allow.push('camera');
         const sandbox = ['allow-same-origin', 'allow-scripts'];
         if (grants?.allowPopups)
             sandbox.push('allow-popups', 'allow-popups-to-escape-sandbox');

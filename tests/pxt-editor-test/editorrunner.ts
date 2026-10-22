@@ -5514,6 +5514,17 @@ describe("simulator extension editor tab host", () => {
             chai.expect(frame.parentElement).equals(container);
         });
 
+        it("delegates the camera to the tab frame of a registration resolved with allowCamera", () => {
+            const [resolved] = getSimxEditorRegistrations({
+                [EXT]: { editor: { label: "Ext" }, editorUrl: `${ORIGIN}/simx/${EXT}/-/index.html`, allowCamera: true },
+            });
+            host.show(resolved, container as unknown as HTMLElement, params);
+            chai.expect(tab(EXT).attributes).deep.equals({
+                sandbox: "allow-same-origin allow-scripts",
+                allow: "autoplay;microphone;camera",
+            });
+        });
+
         it("starts the simulator frame of its key each time the tab is shown, so a removed one is started again", () => {
             show(EXT);
             loadSimulatorFrame(EXT);
