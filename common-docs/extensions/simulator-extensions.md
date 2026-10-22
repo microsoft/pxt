@@ -193,7 +193,7 @@ Besides the [shared codes](#talking-to-the-editor):
 
 ## Editor tab
 
-A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. The tab is offered only while the open project includes the extension from GitHub (a `github:` dependency; an extension added from a file or a local folder gets no tab), and never in views whose editor toggle lists no tabs: embedded (sandbox), read-only (such as the time machine), tutorial and debugging views, and targets that hide the menu bar or show Blocks only.
+A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. Switching between the tab and Blocks leaves the simulator running, in both directions. The tab is offered only while the open project includes the extension from GitHub (a `github:` dependency; an extension added from a file or a local folder gets no tab), and never in views whose editor toggle lists no tabs: embedded (sandbox), read-only (such as the time machine), tutorial and debugging views, and targets that hide the menu bar or show Blocks only.
 
 A tab may also create the instances of a fixed-instance type for the block dropdowns that list them (see `editor.creates` in [Declaring the tab](#declaring-the-tab)).
 

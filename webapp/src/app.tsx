@@ -1400,11 +1400,18 @@ export class ProjectView
         }
 
         let simRunning = false;
+        // Returning to Blocks from the serial console or a simulator extension's
+        // editor tab keeps the workspace as it was and leaves the simulator as it is.
+        const returningToBlocksFromSessionOnlyFile = !this.state.debugging
+            && !!this.editorFile && pxt.isSessionOnlyFile(this.editorFile.name)
+            && (editorOverride || this.pickEditorFor(this.state.currFile as pkg.File)) == this.blocksEditor;
         this.updatingEditorFile = true;
         return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), Promise.resolve())
             .then(() => {
                 simRunning = this.state.simState != SimState.Stopped;
-                if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
+                if (returningToBlocksFromSessionOnlyFile) {
+                    this.preserveUndoStack = true;
+                } else if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
                     this.stopSimulator();
                     if (simRunning || this.state.autoRun) {
                         simulator.setPending();
@@ -1432,7 +1439,7 @@ export class ProjectView
             })
             .then(() => {
                 this.saveFileAsync(); // make sure state is up to date
-                if (this.editor == this.textEditor || this.editor == this.blocksEditor)
+                if (!returningToBlocksFromSessionOnlyFile && (this.editor == this.textEditor || this.editor == this.blocksEditor))
                     this.typecheck();
                 // Showing a text language ends the editor toggle's memory of the
                 // simulator extension editor tab shown last.
@@ -1467,6 +1474,8 @@ export class ProjectView
                 this.forceUpdate();
             })
             .then(() => {
+                if (returningToBlocksFromSessionOnlyFile)
+                    return;
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
