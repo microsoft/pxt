@@ -531,9 +531,18 @@ describe("simulator driver simulator extension frames", () => {
 
     interface FrameGrants {
         allowPopups?: boolean;
-        allowClipboardWrite?: boolean;
+        allowClipboard?: boolean;
         allowCamera?: boolean;
+        allowMidi?: boolean;
+        allowUsb?: boolean;
+        allowSerial?: boolean;
+        allowBluetooth?: boolean;
+        allowHid?: boolean;
+        allowMotionSensors?: boolean;
+        allowDisplayCapture?: boolean;
+        allowGamepad?: boolean;
         allowDownloads?: boolean;
+        allowPointerLock?: boolean;
     }
 
     interface Harness {
@@ -666,10 +675,10 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(frame.getAttribute("allow")).equals(SIM_ALLOW);
     });
 
-    it("lets a simulator extension frame registered with allowClipboardWrite write to the clipboard", () => {
-        const { frame } = startSimulatorExtension({}, { allowClipboardWrite: true });
+    it("lets a simulator extension frame registered with allowClipboard read and write the clipboard", () => {
+        const { frame } = startSimulatorExtension({}, { allowClipboard: true });
 
-        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "clipboard-write"]);
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "clipboard-read", "clipboard-write"]);
         chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
     });
 
@@ -680,6 +689,62 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
     });
 
+    it("delegates MIDI to a simulator extension frame registered with allowMidi", () => {
+        const { frame } = startSimulatorExtension({}, { allowMidi: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "midi"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
+    it("delegates USB devices to a simulator extension frame registered with allowUsb", () => {
+        const { frame } = startSimulatorExtension({}, { allowUsb: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "usb"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
+    it("delegates serial ports to a simulator extension frame registered with allowSerial", () => {
+        const { frame } = startSimulatorExtension({}, { allowSerial: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "serial"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
+    it("delegates Bluetooth devices to a simulator extension frame registered with allowBluetooth", () => {
+        const { frame } = startSimulatorExtension({}, { allowBluetooth: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "bluetooth"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
+    it("delegates HID devices to a simulator extension frame registered with allowHid", () => {
+        const { frame } = startSimulatorExtension({}, { allowHid: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "hid"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
+    it("delegates the motion sensors to a simulator extension frame registered with allowMotionSensors", () => {
+        const { frame } = startSimulatorExtension({}, { allowMotionSensors: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "accelerometer", "gyroscope", "magnetometer"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
+    it("lets a simulator extension frame registered with allowDisplayCapture capture the screen", () => {
+        const { frame } = startSimulatorExtension({}, { allowDisplayCapture: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "display-capture"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
+    it("delegates gamepads to a simulator extension frame registered with allowGamepad", () => {
+        const { frame } = startSimulatorExtension({}, { allowGamepad: true });
+
+        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "gamepad"]);
+        chai.expect(frame.getAttribute("sandbox")).equals(SIM_SANDBOX);
+    });
+
     it("lets a simulator extension frame registered with allowDownloads start downloads", () => {
         const { frame } = startSimulatorExtension({}, { allowDownloads: true });
 
@@ -687,11 +752,25 @@ describe("simulator driver simulator extension frames", () => {
         chai.expect(frame.getAttribute("allow")).equals(SIM_ALLOW);
     });
 
-    it("gives a simulator extension frame registered with every grant all of them", () => {
-        const { frame } = startSimulatorExtension({}, { allowPopups: true, allowClipboardWrite: true, allowCamera: true, allowDownloads: true });
+    it("lets a simulator extension frame registered with allowPointerLock lock the pointer", () => {
+        const { frame } = startSimulatorExtension({}, { allowPointerLock: true });
 
-        chai.expect(sandboxOf(frame)).to.have.members(["allow-same-origin", "allow-scripts", "allow-popups", "allow-popups-to-escape-sandbox", "allow-downloads"]);
-        chai.expect(allowOf(frame)).to.have.members(["autoplay", "microphone", "clipboard-write", "camera"]);
+        chai.expect(sandboxOf(frame)).to.have.members(["allow-same-origin", "allow-scripts", "allow-pointer-lock"]);
+        chai.expect(frame.getAttribute("allow")).equals(SIM_ALLOW);
+    });
+
+    it("gives a simulator extension frame registered with every grant all of them", () => {
+        const { frame } = startSimulatorExtension({}, {
+            allowPopups: true, allowClipboard: true, allowCamera: true, allowMidi: true, allowUsb: true,
+            allowSerial: true, allowBluetooth: true, allowHid: true, allowMotionSensors: true, allowDisplayCapture: true, allowGamepad: true,
+            allowDownloads: true, allowPointerLock: true,
+        });
+
+        chai.expect(sandboxOf(frame)).to.have.members(["allow-same-origin", "allow-scripts", "allow-popups", "allow-popups-to-escape-sandbox", "allow-downloads", "allow-pointer-lock"]);
+        chai.expect(allowOf(frame)).to.have.members([
+            "autoplay", "microphone", "clipboard-read", "clipboard-write", "camera", "midi", "usb", "serial", "bluetooth", "hid",
+            "accelerometer", "gyroscope", "magnetometer", "display-capture", "gamepad",
+        ]);
     });
 
     it("keeps the main simulator frame's sandbox and permissions, whatever the extensions' grants", () => {
@@ -699,7 +778,7 @@ describe("simulator driver simulator extension frames", () => {
         const driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
             simUrl: SIM_URL,
             simulatorExtensions: {
-                [KEY]: { index: "index.html", aspectRatio: 1, permanent: true, allowPopups: true, allowClipboardWrite: true, allowCamera: true, allowDownloads: true },
+                [KEY]: { index: "index.html", aspectRatio: 1, permanent: true, allowPopups: true, allowClipboard: true, allowCamera: true, allowDownloads: true },
             },
         });
         driver.preload(1);

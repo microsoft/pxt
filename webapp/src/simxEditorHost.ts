@@ -26,9 +26,18 @@ export interface SimxEditorRegistrationConfig {
     iconUrl?: string;
     creates?: string[];
     allowPopups?: boolean;
-    allowClipboardWrite?: boolean;
+    allowClipboard?: boolean;
     allowCamera?: boolean;
+    allowMidi?: boolean;
+    allowUsb?: boolean;
+    allowSerial?: boolean;
+    allowBluetooth?: boolean;
+    allowHid?: boolean;
+    allowMotionSensors?: boolean;
+    allowDisplayCapture?: boolean;
+    allowGamepad?: boolean;
     allowDownloads?: boolean;
+    allowPointerLock?: boolean;
 }
 
 /** A simulator extension's editor tab that the editor can offer. */
@@ -47,12 +56,30 @@ export interface SimxEditorRegistration {
     creates?: string[];
     /** The tab frame's sandbox gains allow-popups and allow-popups-to-escape-sandbox. */
     allowPopups?: boolean;
-    /** The tab frame's allow list gains clipboard-write. */
-    allowClipboardWrite?: boolean;
+    /** The tab frame's allow list gains clipboard-read and clipboard-write. */
+    allowClipboard?: boolean;
     /** The tab frame's allow list gains camera. */
     allowCamera?: boolean;
+    /** The tab frame's allow list gains midi. */
+    allowMidi?: boolean;
+    /** The tab frame's allow list gains usb. */
+    allowUsb?: boolean;
+    /** The tab frame's allow list gains serial. */
+    allowSerial?: boolean;
+    /** The tab frame's allow list gains bluetooth. */
+    allowBluetooth?: boolean;
+    /** The tab frame's allow list gains hid. */
+    allowHid?: boolean;
+    /** The tab frame's allow list gains accelerometer, gyroscope and magnetometer. */
+    allowMotionSensors?: boolean;
+    /** The tab frame's allow list gains display-capture. */
+    allowDisplayCapture?: boolean;
+    /** The tab frame's allow list gains gamepad. */
+    allowGamepad?: boolean;
     /** The tab frame's sandbox gains allow-downloads. */
     allowDownloads?: boolean;
+    /** The tab frame's sandbox gains allow-pointer-lock. */
+    allowPointerLock?: boolean;
 }
 
 /**
@@ -73,9 +100,18 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
                 url: simx.editorUrl,
                 creates: simx.creates,
                 allowPopups: simx.allowPopups,
-                allowClipboardWrite: simx.allowClipboardWrite,
+                allowClipboard: simx.allowClipboard,
                 allowCamera: simx.allowCamera,
+                allowMidi: simx.allowMidi,
+                allowUsb: simx.allowUsb,
+                allowSerial: simx.allowSerial,
+                allowBluetooth: simx.allowBluetooth,
+                allowHid: simx.allowHid,
+                allowMotionSensors: simx.allowMotionSensors,
+                allowDisplayCapture: simx.allowDisplayCapture,
+                allowGamepad: simx.allowGamepad,
                 allowDownloads: simx.allowDownloads,
+                allowPointerLock: simx.allowPointerLock,
             };
         });
 }
@@ -204,7 +240,7 @@ export interface SimxEditorHostOptions {
     /** Creates an element that shows the editor's loading state for the tab named `label`. */
     createLoader(label: string): HTMLElement;
     /** Returns the `sandbox` and `allow` values of a simulator frame given a registration's grants. */
-    framePermissions(grants: { allowPopups?: boolean, allowClipboardWrite?: boolean, allowCamera?: boolean, allowDownloads?: boolean }): { sandbox: string, allow: string };
+    framePermissions(grants: pxsim.SimulatorFrameGrants): { sandbox: string, allow: string };
     /** Returns the simulator frame of the extension registered under `key`, creating it if none exists. */
     startSimulatorExtension(key: string): HTMLIFrameElement | undefined;
     /** Tells the simulator driver that `frame` is the tab frame of the extension registered under `key`. */

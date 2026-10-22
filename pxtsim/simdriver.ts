@@ -91,9 +91,18 @@ namespace pxsim {
             index?: string;
             devUrl?: string;
             allowPopups?: boolean;
-            allowClipboardWrite?: boolean;
+            allowClipboard?: boolean;
             allowCamera?: boolean;
+            allowMidi?: boolean;
+            allowUsb?: boolean;
+            allowSerial?: boolean;
+            allowBluetooth?: boolean;
+            allowHid?: boolean;
+            allowMotionSensors?: boolean;
+            allowDisplayCapture?: boolean;
+            allowGamepad?: boolean;
             allowDownloads?: boolean;
+            allowPointerLock?: boolean;
             allowAssetRead?: boolean;
             allowFileWrite?: boolean;
             editor?: {
@@ -176,12 +185,30 @@ namespace pxsim {
     export interface SimulatorFrameGrants {
         /** The sandbox gains allow-popups and allow-popups-to-escape-sandbox. */
         allowPopups?: boolean;
-        /** The allow list gains clipboard-write. */
-        allowClipboardWrite?: boolean;
+        /** The allow list gains clipboard-read and clipboard-write. */
+        allowClipboard?: boolean;
         /** The allow list gains camera. */
         allowCamera?: boolean;
+        /** The allow list gains midi. */
+        allowMidi?: boolean;
+        /** The allow list gains usb. */
+        allowUsb?: boolean;
+        /** The allow list gains serial. */
+        allowSerial?: boolean;
+        /** The allow list gains bluetooth. */
+        allowBluetooth?: boolean;
+        /** The allow list gains hid. */
+        allowHid?: boolean;
+        /** The allow list gains accelerometer, gyroscope and magnetometer. */
+        allowMotionSensors?: boolean;
+        /** The allow list gains display-capture. */
+        allowDisplayCapture?: boolean;
+        /** The allow list gains gamepad. */
+        allowGamepad?: boolean;
         /** The sandbox gains allow-downloads. */
         allowDownloads?: boolean;
+        /** The sandbox gains allow-pointer-lock. */
+        allowPointerLock?: boolean;
     }
 
     /**
@@ -190,15 +217,33 @@ namespace pxsim {
      */
     export function simulatorFramePermissions(grants?: SimulatorFrameGrants): { sandbox: string, allow: string } {
         const allow = ['autoplay', 'microphone'];
-        if (grants?.allowClipboardWrite)
-            allow.push('clipboard-write');
+        if (grants?.allowClipboard)
+            allow.push('clipboard-read', 'clipboard-write');
         if (grants?.allowCamera)
             allow.push('camera');
+        if (grants?.allowMidi)
+            allow.push('midi');
+        if (grants?.allowUsb)
+            allow.push('usb');
+        if (grants?.allowSerial)
+            allow.push('serial');
+        if (grants?.allowBluetooth)
+            allow.push('bluetooth');
+        if (grants?.allowHid)
+            allow.push('hid');
+        if (grants?.allowMotionSensors)
+            allow.push('accelerometer', 'gyroscope', 'magnetometer');
+        if (grants?.allowDisplayCapture)
+            allow.push('display-capture');
+        if (grants?.allowGamepad)
+            allow.push('gamepad');
         const sandbox = ['allow-same-origin', 'allow-scripts'];
         if (grants?.allowPopups)
             sandbox.push('allow-popups', 'allow-popups-to-escape-sandbox');
         if (grants?.allowDownloads)
             sandbox.push('allow-downloads');
+        if (grants?.allowPointerLock)
+            sandbox.push('allow-pointer-lock');
         return { sandbox: sandbox.join(' '), allow: allow.join(';') };
     }
 

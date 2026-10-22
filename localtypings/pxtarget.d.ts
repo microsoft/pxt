@@ -70,9 +70,18 @@ declare namespace pxt {
         devUrl?: string; // URL to load for local development. Pass `simxdev` on URL to enable. Default: undefined.
         index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
         allowPopups?: boolean; // If true, the iframe sandbox gains allow-popups and allow-popups-to-escape-sandbox. Default: false.
-        allowClipboardWrite?: boolean; // If true, the iframe allow list gains clipboard-write. Default: false.
+        allowClipboard?: boolean; // If true, the iframe allow list gains clipboard-read and clipboard-write. Default: false.
         allowCamera?: boolean; // If true, the iframe allow list gains camera. Default: false.
+        allowMidi?: boolean; // If true, the iframe allow list gains midi. Default: false.
+        allowUsb?: boolean; // If true, the iframe allow list gains usb. Default: false.
+        allowSerial?: boolean; // If true, the iframe allow list gains serial. Default: false.
+        allowBluetooth?: boolean; // If true, the iframe allow list gains bluetooth. Default: false.
+        allowHid?: boolean; // If true, the iframe allow list gains hid. Default: false.
+        allowMotionSensors?: boolean; // If true, the iframe allow list gains accelerometer, gyroscope and magnetometer. Default: false.
+        allowDisplayCapture?: boolean; // If true, the iframe allow list gains display-capture. Default: false.
+        allowGamepad?: boolean; // If true, the iframe allow list gains gamepad. Default: false.
         allowDownloads?: boolean; // If true, the iframe sandbox gains allow-downloads. Default: false.
+        allowPointerLock?: boolean; // If true, the iframe sandbox gains allow-pointer-lock. Default: false.
         allowFileWrite?: boolean; // If true, the frame may list, read, write and delete files in its own folder of the project ("projfs" messages). Default: false.
         allowAssetRead?: boolean; // If true, the frame may list the open project's assets and visual configuration (palette, simulator theme) and subscribe to their changes ("projassets" messages). Default: false.
         editor?: SimulatorExtensionEditorConfig; // The extension's editor tab. Ignored unless allowEditorTab is set; refused on a registration with permanent set to false. Default: undefined.

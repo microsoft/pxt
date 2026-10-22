@@ -44,9 +44,18 @@ The fields of the `simx` entry:
 | `aspectRatio` | The simulator frame's width-to-height ratio (see [Resizing](#resizing)). | the target's simulator aspect ratio, else `1.22` | simulator frame |
 | `permanent` | Keeps the simulator frame across runs, restarts and collapses of the simulator; when `false`, the frame is removed some time after the program stops or another run starts. Required by an editor tab. | `true` | simulator frame |
 | `allowPopups` | Adds `allow-popups` and `allow-popups-to-escape-sandbox` to the frame's sandbox. | `false` | both |
-| `allowClipboardWrite` | Adds `clipboard-write` to the frame's permissions. | `false` | both |
+| `allowClipboard` | Adds `clipboard-read` and `clipboard-write` to the frame's permissions. | `false` | both |
 | `allowCamera` | Adds `camera` to the frame's permissions. | `false` | both |
+| `allowMidi` | Adds `midi` to the frame's permissions. | `false` | both |
+| `allowUsb` | Adds `usb` to the frame's permissions. | `false` | both |
+| `allowSerial` | Adds `serial` to the frame's permissions. | `false` | both |
+| `allowBluetooth` | Adds `bluetooth` to the frame's permissions. | `false` | both |
+| `allowHid` | Adds `hid` to the frame's permissions. | `false` | both |
+| `allowMotionSensors` | Adds `accelerometer`, `gyroscope` and `magnetometer` to the frame's permissions. | `false` | both |
+| `allowDisplayCapture` | Adds `display-capture` to the frame's permissions. | `false` | both |
+| `allowGamepad` | Adds `gamepad` to the frame's permissions. | `false` | both |
 | `allowDownloads` | Adds `allow-downloads` to the frame's sandbox. | `false` | both |
+| `allowPointerLock` | Adds `allow-pointer-lock` to the frame's sandbox. | `false` | both |
 | `allowFileWrite` | Lets the frame list, read, write and delete files in its folder of the project (see [Project files](#project-files)). | `false` | both |
 | `allowAssetRead` | Lets the frame list the project's assets, name, palette and simulator theme, and hear when they change (see [Project assets](#project-assets)). | `false` | both |
 | `allowEditorTab` | Enables the editor tab that `editor` declares (see [Editor tab](#editor-tab)). | `false` | tab frame, and the simulator frame's request to open it |
@@ -55,12 +64,18 @@ The fields of the `simx` entry:
 
 ### Grants and trust
 
-The grants (`allowPopups`, `allowClipboardWrite`, `allowCamera`, `allowDownloads`, `allowFileWrite`, `allowAssetRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
+The grants (`allowPopups`, `allowClipboard`, `allowCamera`, `allowMidi`, `allowUsb`, `allowSerial`, `allowBluetooth`, `allowHid`, `allowMotionSensors`, `allowDisplayCapture`, `allowGamepad`, `allowDownloads`, `allowPointerLock`, `allowFileWrite`, `allowAssetRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
 
-Two grants reach further than their names say:
+Eight grants deserve a second look:
 
 * `allowFileWrite` lets the extension change the user's program: every file it writes into its folder is listed in the project's `pxt.json`, so a `.ts` or `.py` file it writes is compiled with the program. Assets are not created through project files: a write of a `.jres` file is refused.
 * `allowAssetRead` discloses the project's name beside its assets, palette and simulator theme.
+* `allowClipboard` lets the extension's frames read what the user copied, as well as write to the clipboard.
+* `allowUsb` lets the extension's frames talk to the USB devices the user pairs; the browser's chooser still stands between the frames and every device.
+* `allowSerial` lets the extension's frames talk to the serial ports the user pairs; the browser's chooser still stands between the frames and every port.
+* `allowBluetooth` lets the extension's frames talk to the Bluetooth devices the user pairs; the browser's chooser still stands between the frames and every device.
+* `allowHid` lets the extension's frames talk to the HID devices the user pairs; the browser's chooser still stands between the frames and every device.
+* `allowDisplayCapture` lets the extension's frames capture the user's screen.
 
 Whatever the grants, every simulator frame and tab frame may go fullscreen (`allowfullscreen`) and has the `autoplay` and `microphone` permissions of the main simulator frame; no grant controls them. `allowCamera` gives the extension's frames access to the camera; the browser asks the user before a frame can use it.
 
