@@ -167,7 +167,8 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 - Added optional `Runtime.boardView: BoardView`; simulator startup, stop, screenshot, recording, thumbnail, and display-update paths now route view operations through it. `DalBoard` no longer exposes view lifecycle methods.
 - Moved builtin visual factories and update subscribers from `CoreBoard`/`DalBoard` into `BoardView`/`DalBoardView`. `CoreBoard` retains only `builtinParts`; `BoardHost` receives visual factories in its options.
 - Changed the headphone SVG lookup in `state/edgeconnector.ts` and the MicroBit view-update subscription in `visuals/microbit.ts` to use `boardView()`; state call sites remain on `board()`.
-- This is an incremental boundary: `DalBoard` still constructs component states and `ensureHardwareVersion()` notifies its view directly. Component state class construction has not yet moved into a separate DOM-free target project.
+- Extracted component-state construction and state-only behavior into `DalBoardState` in `sim/state/dalboardstate.ts`. `DalBoard` remains a compatibility subclass returned by `board()`, while `DalBoardView` now depends on the state type.
+- `ensureHardwareVersion()` queues a runtime display update instead of calling the view directly, so `DalBoardState` has no view dependency.
 
 ### Progress: move visual registries and lifecycle to `boardView()` (done)
 
@@ -176,10 +177,10 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 - Moved builtin visual factory maps and update subscribers off `CoreBoard` and onto `DalBoardView`; `BoardHost` receives visual factories explicitly.
 - `DalBoard` no longer exposes screenshot or view lifecycle methods. `boardView()` is backed by `runtime.boardView`.
 - Removed the obsolete no-op `BaseBoard.updateView()` method so the state-facing board no longer advertises a view operation.
-- The `DalBoard` state class still contains component-state construction, and `ensureHardwareVersion()` still asks the view to update. Extracting the state class and replacing this call with an explicit invalidation signal remain future work.
+- Component-state construction now lives in `DalBoardState`, separate from `DalBoardView`; hardware-version changes use the runtime display-update queue as the state-to-view invalidation path.
 
 ### Why
-`BaseBoard` and `CoreBoard` in `pxtsim/runtime.ts` and the original `DalBoard` implementation mixed **simulation state** with **view/DOM**. The initial split now keeps `board()` state-facing and provides `boardView()` for target view operations. The remaining state/view hooks and component state class extraction are follow-up work; the goal is to keep state call sites independent of DOM APIs as those pieces move to `pxtsimcore`.
+`BaseBoard` and `CoreBoard` in `pxtsim/runtime.ts` and the original `DalBoard` implementation mixed **simulation state** with **view/DOM**. The initial split now keeps `board()` state-facing and provides `boardView()` for target view operations. Component-state construction is separated into `DalBoardState`; the remaining goal is to move more of the generic state foundation and target state dependencies into the DOM-free `pxtsimcore` boundary.
 
 ### What is mixed in today
 
@@ -200,16 +201,15 @@ Component states are constructed with `builtinParts[...]` entries, but `builtinP
    - `CoreBoard` keeps `builtinParts`; its view factory maps and update subscribers live on the view contract.
    - The DOM host initializes, updates, screenshots, and cleans up through `runtime.boardView`.
 3. **`pxt-microbit`:**
-   - Keep `DalBoard` as the state object returned by `board()`, preserving target and package call sites.
+   - Keep `DalBoard` as the state object returned by `board()`, preserving target and package call sites; it extends `DalBoardState`.
    - Add a distinct `DalBoardView`, returned by `boardView()`, to own `viewHost`, `view`, DOM initialization, screenshots, view cleanup, visual factories, and update subscribers.
-   - Move component state initialization to a DOM-free state class in a later pass.
+   - Keep component-state construction in the DOM-free `DalBoardState`.
 4. **Runtime wiring.**
    - Keep `runtime.board` as the state object for compatibility and use `runtime.boardView` for view operations; do not change state callers to a new `boardState()` name.
    - `BareBoard` and `initBareRuntime` only need a state object.
    - Constructors that currently take `runtime` or `this` (for example `RadioState(runtime, this, ...)`, `SerialState(runtime, this)`, `ControlMessageState(this)`) should take the state object, not the view-capable board.
-5. **`ensureHardwareVersion`** is the one state operation that also pokes the view.
-   - Keep it a state method that sets `hardwareVersion` and notifies the view to update.
-   - The DOM `MicroBitBoardSvg` already reads `hardwareVersion` and re-renders on `updateState`, so no view-side change is needed beyond the event plumbing.
+5. **`ensureHardwareVersion`** changes state and queues a runtime display update; the runtime delivers the update through `boardView()`.
+   - The DOM `MicroBitBoardSvg` already reads `hardwareVersion` and re-renders on `updateState`.
 
 ### Accessors in `pxt-microbit/sim/dalboard.ts`
 
