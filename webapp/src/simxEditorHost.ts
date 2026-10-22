@@ -21,7 +21,7 @@ import { errorReply, getSimxRepository, requestId } from "./simxRequests";
 
 /** The fields of a simulator extension registration, as the simulator driver resolved them, that its editor tab uses. */
 export interface SimxEditorRegistrationConfig {
-    editor?: { label: string; icon?: string };
+    editor?: { label?: string | pxt.Map<string>; icon?: string };
     editorUrl?: string;
     iconUrl?: string;
     creates?: string[];
@@ -44,7 +44,7 @@ export interface SimxEditorRegistrationConfig {
 export interface SimxEditorRegistration {
     /** The extension's key, e.g. `owner/repo`. */
     key: string;
-    /** The tab's name and accessible name. */
+    /** The tab's name and accessible name: its label in the user's language, or the extension's key when the label holds no non-empty name. */
     label: string;
     /** The class names of a font icon shown before the label; undefined if the icon is an SVG, or there is none. */
     icon?: string;
@@ -83,37 +83,77 @@ export interface SimxEditorRegistration {
 }
 
 /**
+ * Returns the name of a simulator extension editor tab, from its registration's
+ * `editor.label`, in `userLanguage`. A non-empty text label is the name. For a map
+ * from language code to name, the name is the first non-empty value under
+ * `userLanguage` in MakeCode's letter case (e.g. "pt-BR", "fr"), then, for a code
+ * with a region, under its base language and its lower-case form (for "pt-BR":
+ * "pt-BR", "pt", "pt-br"), then under "en", then in the map's declaration order.
+ * An absent `userLanguage` counts as "en".
+ * @param label the registration's `editor.label`
+ * @param userLanguage the user's language code, such as "fr" or "pt-BR"
+ * @returns the name; undefined for no label, an empty one, or a map holding no
+ * non-empty name
+ */
+export function resolveSimxEditorLabel(label: string | pxt.Map<string> | undefined, userLanguage: string | undefined): string | undefined {
+    if (typeof label === "string") return label || undefined;
+    if (!label) return undefined;
+    const usable = (name: unknown): name is string => typeof name === "string" && name.length > 0;
+    const codes = pxt.Util.normalizeLanguageCode(userLanguage).concat("en");
+    for (const code of codes) {
+        if (usable(label[code])) return label[code];
+    }
+    return Object.keys(label).map(code => label[code]).find(usable);
+}
+
+// the keys of the registrations whose tab is named by its key for want of a label, logged since the editor loaded
+const loggedSimxLabels = new Set<string>();
+
+/**
  * Returns the editor tabs of `simulatorExtensions`, in registration order: those
  * the simulator driver resolved an `editorUrl` for, which it does only for a
- * permanent registration that declares an `editor` and sets `allowEditorTab`.
+ * permanent registration that declares an `editor` and sets `allowEditorTab`,
+ * each named in the user's language. The tab of a registration whose label holds
+ * no non-empty name (no label, an empty text, or a map whose values are all empty)
+ * is named by the registration's key, and the registration is logged once per key.
  */
 export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEditorRegistrationConfig> | undefined): SimxEditorRegistration[] {
-    return Object.keys(simulatorExtensions || {})
-        .filter(key => !!simulatorExtensions[key]?.editorUrl)
-        .map(key => {
-            const simx = simulatorExtensions[key];
-            return {
-                key,
-                label: simx.editor.label,
-                icon: simx.iconUrl ? undefined : simx.editor.icon,
-                iconUrl: simx.iconUrl,
-                url: simx.editorUrl,
-                creates: simx.creates,
-                allowPopups: simx.allowPopups,
-                allowClipboard: simx.allowClipboard,
-                allowCamera: simx.allowCamera,
-                allowMidi: simx.allowMidi,
-                allowUsb: simx.allowUsb,
-                allowSerial: simx.allowSerial,
-                allowBluetooth: simx.allowBluetooth,
-                allowHid: simx.allowHid,
-                allowMotionSensors: simx.allowMotionSensors,
-                allowDisplayCapture: simx.allowDisplayCapture,
-                allowGamepad: simx.allowGamepad,
-                allowDownloads: simx.allowDownloads,
-                allowPointerLock: simx.allowPointerLock,
-            };
+    const userLanguage = pxt.Util.userLanguage();
+    const registrations: SimxEditorRegistration[] = [];
+    for (const key of Object.keys(simulatorExtensions || {})) {
+        const simx = simulatorExtensions[key];
+        if (!simx?.editorUrl) continue;
+        let label = resolveSimxEditorLabel(simx.editor.label, userLanguage);
+        if (!label) {
+            label = key;
+            if (!loggedSimxLabels.has(key)) {
+                loggedSimxLabels.add(key);
+                pxt.warn(`simulator extension ${key}: its editor has no label in any language; naming the tab by its key`);
+            }
+        }
+        registrations.push({
+            key,
+            label,
+            icon: simx.iconUrl ? undefined : simx.editor.icon,
+            iconUrl: simx.iconUrl,
+            url: simx.editorUrl,
+            creates: simx.creates,
+            allowPopups: simx.allowPopups,
+            allowClipboard: simx.allowClipboard,
+            allowCamera: simx.allowCamera,
+            allowMidi: simx.allowMidi,
+            allowUsb: simx.allowUsb,
+            allowSerial: simx.allowSerial,
+            allowBluetooth: simx.allowBluetooth,
+            allowHid: simx.allowHid,
+            allowMotionSensors: simx.allowMotionSensors,
+            allowDisplayCapture: simx.allowDisplayCapture,
+            allowGamepad: simx.allowGamepad,
+            allowDownloads: simx.allowDownloads,
+            allowPointerLock: simx.allowPointerLock,
         });
+    }
+    return registrations;
 }
 
 /**

@@ -14,6 +14,7 @@ import {
     getSimxEditorMarkerName,
     getSimxEditorRegistrations,
     isSimxInProject,
+    resolveSimxEditorLabel,
     SimxEditorHost,
     SimxEditorRegistration,
 } from "../../webapp/src/simxEditorHost";
@@ -4859,10 +4860,40 @@ function createProjectText(): pxt.workspace.ScriptText {
 
     return currentText;
 }
+describe("simulator extension editor tab labels", () => {
+    const resolve = resolveSimxEditorLabel;
+
+    it("passes a text label through, in any language", () => {
+        chai.expect(resolve("Ext", "fr")).equals("Ext");
+        chai.expect(resolve("Ext", undefined)).equals("Ext");
+    });
+
+    it("resolves a map under the exact code, then the base language, then the lower-case code, then en, then the first entry", () => {
+        const label = { "de": "de", "en": "en", "pt": "pt", "pt-BR": "pt-BR", "zh-cn": "zh-cn" };
+        chai.expect(resolve(label, "pt-BR")).equals("pt-BR");
+        chai.expect(resolve(label, "pt-PT")).equals("pt");
+        chai.expect(resolve(label, "zh-CN")).equals("zh-cn");
+        chai.expect(resolve(label, "fr")).equals("en");
+        chai.expect(resolve(label, undefined)).equals("en");
+        chai.expect(resolve({ "de": "de", "es": "es" }, "fr")).equals("de");
+    });
+
+    it("skips empty values at every step", () => {
+        chai.expect(resolve({ "fr": "", "en": "en" }, "fr")).equals("en");
+        chai.expect(resolve({ "de": "", "en": "", "es": "es" }, "fr")).equals("es");
+    });
+
+    it("resolves nothing from an empty text, an empty map, a map of empty values, or no label", () => {
+        for (const label of ["", {}, { "fr": "", "en": "" }, undefined])
+            chai.expect(resolve(label, "fr")).equals(undefined);
+    });
+});
+
 describe("simulator extension editor tab registrations", () => {
     const EXT = "someorg/pxt-ext";
     const OTHER = "otherorg/pxt-other";
 
+    // a registration as the driver resolves one that declares and enables a tab
     function resolved(key: string, extra: object = {}) {
         return {
             editor: { index: "index.html", label: key + " label" },
@@ -4882,6 +4913,50 @@ describe("simulator extension editor tab registrations", () => {
         chai.expect(registrations[0]).deep.include({ url: `https://sim.example/simx/${OTHER}/-/index.html`, allowPopups: true });
         chai.expect(registrations[1]).deep.include({ allowClipboard: true, allowDownloads: true });
         chai.expect(getSimxEditorRegistrations(undefined)).deep.equals([]);
+    });
+
+    it("names a tab by its text label, or by its map label in the user's language", () => {
+        const language = pxt.Util.userLanguage();
+        try {
+            for (const [userLanguage, expected] of [["fr", "fr"], ["pt-BR", "pt"], ["de", "en"]]) {
+                pxt.Util.setUserLanguage(userLanguage);
+                const [text, map] = getSimxEditorRegistrations({
+                    [EXT]: resolved(EXT),
+                    [OTHER]: resolved(OTHER, { editor: { index: "index.html", label: { "en": "en", "fr": "fr", "pt": "pt" } } }),
+                });
+                chai.expect([text.label, map.label], userLanguage).deep.equals([EXT + " label", expected]);
+            }
+        } finally {
+            pxt.Util.setUserLanguage(language);
+        }
+    });
+
+    it("names a tab by its key when its label names nothing, logging each such key once", () => {
+        const unnamed: pxt.Map<object> = {
+            "nolabelorg/pxt-ext": { index: "index.html" },
+            "emptytextorg/pxt-ext": { index: "index.html", label: "" },
+            "emptymaporg/pxt-ext": { index: "index.html", label: {} },
+            "emptyvaluesorg/pxt-ext": { index: "index.html", label: { "en": "", "fr": "" } },
+        };
+        const keys = Object.keys(unnamed);
+        const warnings: unknown[][] = [];
+        class RecordingLogger extends pxt.ConsoleLogger {
+            warn(...args: unknown[]) { warnings.push(args); }
+        }
+        pxt.setLogger(new RecordingLogger());
+        try {
+            for (let i = 0; i < 2; i++) {
+                const registrations = getSimxEditorRegistrations({
+                    ...pxt.Util.mapMap(unnamed, (key, editor) => resolved(key, { editor })),
+                    [EXT]: resolved(EXT),
+                });
+                chai.expect(registrations.map(r => [r.key, r.label])).deep.equals([...keys.map(key => [key, key]), [EXT, EXT + " label"]]);
+            }
+        } finally {
+            pxt.setLogger(new pxt.ConsoleLogger());
+        }
+        chai.expect(warnings.length).equals(keys.length);
+        chai.expect(keys.map(key => warnings.filter(w => w.join(" ").indexOf(key) >= 0).length)).deep.equals(keys.map(() => 1));
     });
 
     it("carries a tab's icon as class names, or as the URL the driver resolved for an SVG path, never both", () => {

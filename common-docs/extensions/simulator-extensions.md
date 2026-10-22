@@ -59,7 +59,7 @@ The fields of the `simx` entry:
 | `allowFileWrite` | Lets the frame list, read, write and delete files in its folder of the project (see [Project files](#project-files)). | `false` | both |
 | `allowAssetRead` | Lets the frame list the project's assets, name, palette and simulator theme, and hear when they change (see [Project assets](#project-assets)). | `false` | both |
 | `allowEditorTab` | Enables the editor tab that `editor` declares (see [Editor tab](#editor-tab)). | `false` | tab frame, and the simulator frame's request to open it |
-| `editor` | Declares the extension's editor tab: its page, label and icon, and the types whose instances it creates. | none | tab frame |
+| `editor` | Declares the extension's editor tab: its page, label (text, or a map by language) and icon, and the types whose instances it creates. | none | tab frame |
 | `hideInFullscreen` | Hides the simulator frame while the editor is in fullscreen-simulator mode; it stays loaded and keeps messaging. | `false` | simulator frame |
 
 ### Grants and trust
@@ -234,11 +234,11 @@ The tab is declared in the extension's `simx` entry (see [Registration](#registr
 ```
 
 * `editor.index` is the tab's page, a path within the extension's published files, resolved the same way as `index`.
-* `editor.label` names the tab in the toggle and is its accessible name. It is shown as text, as the names of Blocks, JavaScript and Python are. It is not localized.
+* `editor.label` names the tab in the toggle and is its accessible name. It is text, or a map from language code to text, from which the editor picks the user's language (its region in either letter case), then its base language, then `en`, then the first entry with text. It is shown as text, as the names of Blocks, JavaScript and Python are. When it is absent or names nothing in any language, the tab is named by the registration's key and the editor logs it.
 * `editor.icon` is an optional icon shown on the label's left. It is either the class names of one of MakeCode's font icons, as its own editors use (for example `xicon js`), or the path to an SVG within the extension's published files, resolved the same way as `index`. A value that contains a `/` or ends in `.svg` is a path; any other value is class names.
 * An SVG icon is drawn as a mask in the toggle's text color: only its shape is used, so it follows the editor's color themes, high contrast included. A square SVG drawn in a single color, such as `currentColor`, is recommended.
 * `editor.creates` is an optional list of the fully qualified names of fixed-instance types whose instances the tab creates, such as `myext.Thing`. The dropdown of a block parameter of such a type, which lists the instances the project declares, then ends with a "New ..." entry naming the type by its `block` attribute, else by its name in lower case, while the editor offers the tab. Picking the entry leaves the parameter as it was, shows the tab, and posts it the [`action` event](#lifecycle-events) asking it to create an instance, typically by writing the project file that declares it. The dropdown also offers to open the current instance in the tab when a file in the extension's folder declares it. A parameter that names its own `fieldEditor` gets no entry. The editor honors a claim only on a type declared by a package of the extension's own repository (the repository its key names, whatever subfolder), and ignores, and logs, any other; of two registrations the project includes that claim one type, the first in registration order creates its instances and the other is logged.
-* `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor`, with its `index` and `label`, and `allowEditorTab`; it logs a registration that sets `allowEditorTab` without them.
+* `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor`, with its `index`, and `allowEditorTab`; it logs a registration that sets `allowEditorTab` without them.
 * A registration with an editor tab must be `permanent` (the default); the editor ignores, and logs, an `editor` on a registration with `permanent: false`.
 
 The editor selects the tab through a session-only marker file named after the extension's key (`owner~repo.simxeditor`), which it creates the first time the tab is opened in a session. The marker is never saved, listed with the project's files, shared or exported, so the project itself does not change. File names ending in `.simxeditor` are reserved for these markers.
@@ -254,7 +254,7 @@ Whenever the editor shows the tab and the extension's simulator frame does not e
 
 ### Ready, and the port
 
-The editor shows a loading indicator, labeled with the tab's `editor.label`, over the tab until the tab frame posts `{ type: "simxeditor", event: "ready" }` to its parent. Post it once the page listens for messages.
+The editor shows a loading indicator, labeled with the tab's label, over the tab until the tab frame posts `{ type: "simxeditor", event: "ready" }` to its parent. Post it once the page listens for messages.
 
 Once the tab is ready and the simulator frame has loaded, the editor creates a `MessageChannel` and posts `{ type: "simxeditorport", key }` to each frame, with one of the channel's ports in the event's `ports[0]`. The two frames talk over that channel; the editor never reads it. The editor brokers a new pair whenever a new simulator frame of the extension loads, as when the editor creates it again after the simulator unloads, so both frames should accept a new port at any time. Either side may close its port.
 

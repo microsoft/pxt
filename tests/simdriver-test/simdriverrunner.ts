@@ -879,6 +879,20 @@ describe("simulator driver simulator extension editor tabs", () => {
             chai.expect(h.registrations[KEY].iconUrl).equals(undefined);
         });
 
+        it("serves a tab whatever its label is, and with none", () => {
+            const labels: (string | pxt.Map<string>)[] = ["Ext", { "en": "en", "fr": "fr" }, { "en": "" }, {}, "", undefined];
+            const registrations: pxt.Map<Registration> = {};
+            const urls: string[] = [];
+            labels.forEach((label, i) => {
+                const key = `org${i}/pxt-ext`;
+                registrations[key] = registration({ editor: { index: "index.html", label }, allowEditorTab: true });
+                urls.push(`${SIM_ORIGIN}/simx/${key}/-/index.html`);
+            });
+            let h: Harness;
+            chai.expect(loggedErrors(() => h = harness(registrations))).deep.equals([]);
+            chai.expect(Object.keys(registrations).map(key => h.registrations[key].editorUrl)).deep.equals(urls);
+        });
+
         it("carries the types the tab creates beside its page, and none for a registration it serves no tab for", () => {
             const creates = ["ext.Thing", "ext.Other"];
             let h: Harness;
@@ -912,8 +926,8 @@ describe("simulator driver simulator extension editor tabs", () => {
             chai.expect(simulatorFrameUrl(h).searchParams.has("editor")).equals(false);
         });
 
-        it("logs a registration that enables a tab without an editor with an index and a label, and nothing when it only declares one", () => {
-            for (const editor of [undefined, { index: "", label: "Ext" }, { index: "index.html", label: "" }]) {
+        it("logs a registration that enables a tab without an editor with an index, and nothing when it only declares one", () => {
+            for (const editor of [undefined, { index: "", label: "Ext" }, { index: "" }]) {
                 let h: Harness;
                 chai.expect(loggedErrors(() => h = harness({ [KEY]: registration({ editor, allowEditorTab: true }) })).length).equals(1);
                 chai.expect(h.registrations[KEY].editorUrl).equals(undefined);
@@ -1131,7 +1145,7 @@ describe("simulator driver simulator extension editor tabs", () => {
         });
 
         it("is refused with PERMISSION_DENIED when the registration does not declare and enable a tab", () => {
-            for (const extra of [{ allowEditorTab: true }, { editor: TAB.editor }, { ...TAB, permanent: false }]) {
+            for (const extra of [{ allowEditorTab: true }, { editor: TAB.editor }, { ...TAB, permanent: false }, { editor: { index: "", label: "Ext" }, allowEditorTab: true }]) {
                 let h: Harness;
                 loggedErrors(() => h = harness({ [KEY]: registration(extra) }, { onSimulatorExtensionEditorMessage: () => chai.assert.fail("delivered") }));
                 packet(h);

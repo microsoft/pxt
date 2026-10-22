@@ -25,8 +25,8 @@ namespace pxsim {
      * that sets `allowEditorTab`.
      */
     function editorTabRefusal(registration: SimulatorDriverOptions["simulatorExtensions"][string]): string {
-        if (!registration.editor?.index || !registration.editor?.label)
-            return "The simulator extension's registration declares no editor with an index and a label.";
+        if (!registration.editor?.index)
+            return "The simulator extension's registration declares no editor with an index.";
         if (!registration.permanent)
             return "The simulator extension's registration is not permanent, which an editor tab needs.";
         return "The simulator extension's registration declares no editor tab the editor can serve.";
@@ -107,7 +107,7 @@ namespace pxsim {
             allowFileWrite?: boolean;
             editor?: {
                 index: string;
-                label: string;
+                label?: string | pxt.Map<string>;
                 icon?: string;
                 creates?: string[];
             };
@@ -116,7 +116,7 @@ namespace pxsim {
             // Additional fields outside of pxt.SimulatorExtensionConfig
             url?: string; // Computed URL
             // Computed URL of the editor tab's page; set only for a registration that declares
-            // `editor` (with an index and a label), sets `allowEditorTab` and is permanent
+            // `editor` (with an index), sets `allowEditorTab` and is permanent
             editorUrl?: string;
             // Computed URL of the editor tab's SVG icon; set only beside `editorUrl`, when `editor.icon` is a path
             // (see `isSimulatorExtensionIconPath`)
@@ -444,8 +444,8 @@ namespace pxsim {
                 this._allowedOrigins.push(new URL(simx.url).origin);
 
                 if (simx.allowEditorTab) {
-                    if (!simx.editor?.index || !simx.editor?.label) {
-                        pxsim.error(`simulator extension ${key}: allowEditorTab needs an editor with an index and a label; offering no editor tab`);
+                    if (!simx.editor?.index) {
+                        pxsim.error(`simulator extension ${key}: allowEditorTab needs an editor with an index; offering no editor tab`);
                     } else if (!simx.permanent) {
                         pxsim.error(`simulator extension ${key}: an editor tab needs a permanent registration; ignoring its editor`);
                     } else {
