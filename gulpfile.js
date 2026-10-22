@@ -702,6 +702,13 @@ const teacherTool = createWebappTasks("teachertool");
 *********************************************************/
 
 const tutorialTool = createWebappTasks("tutorialtool");
+const buildTutorialToolTests = () => compileTsProject("tutorialtool/tests", "built/tests", true);
+const runTutorialToolTests = () => exec(`${getMochaExecutable()} built/tests/tests/iframeUrl.spec.js built/tests/tests/legacyIframeUrl.spec.js built/tests/tests/localizationExtraction.spec.js --reporter dot`, true);
+const testTutorialTool = gulp.series(
+    () => updateWebappStrings("tutorialtool"),
+    buildTutorialToolTests,
+    runTutorialToolTests
+);
 
 /********************************************************
                  Webapp build wrappers
@@ -786,6 +793,7 @@ const testAll = gulp.series(
     testlanguageservice,
     karma,
     testSkillmap,
+    testTutorialTool,
     testpxteditor
 )
 
@@ -884,7 +892,9 @@ exports.pxtrunner = gulp.series(
 exports.pxtweb = pxtweb;
 exports.pxtlib = pxtlib;
 exports.skillmapTest = testSkillmap;
+exports.tutorialtoolTest = testTutorialTool;
 exports.updatestrings = updatestrings;
+exports.tutorialtoolstrings = () => updateWebappStrings("tutorialtool");
 exports.lint = lint
 exports.testdecompiler = testdecompiler;
 exports.testlang = testlang;
