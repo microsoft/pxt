@@ -173,7 +173,11 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 - Moved `AnimationQueue` into `pxtsimcore`; it is simulation scheduling logic and does not require the DOM.
 - Split `CommonNeoPixelState` and `LightBoard` declarations from the SVG implementation so state consumers no longer need to compile the mixed visual file.
 - Kept recording and sample playback state on the compatibility `DalBoard` subclass because those implementations still use browser media and audio APIs; moving those host-backed features is separate audio work.
-- The installed `pxt-microbit/node_modules` dependencies are not linked to the workspace checkouts and predate the new `neopixelstate.ts` source. The target core tsconfig expects the updated dependency package; the direct workspace-source probe passed, but the config still needs to be rerun after linking/updating those dependencies.
+- `pxt-microbit/node_modules` is now linked to the workspace pxt and pxt-common-packages, and `tsc -p sim/tsconfig.core.json` passes (0 errors) using a core-only ambient shim, `sim/state/corehost.d.ts`.
+- Extended `audiohost.AudioHost` with tone, stop, tone gain, stop-all subscription, mute query, audio-element activity, MIDI, sample playback, and an `AudioElementHandle` for recorded audio. `audiohostdom.ts` forwards these to `AudioContextManager`; without a host they are silent no-ops.
+- `edgeconnector.ts`, `audio-samples.ts`, and `midi.ts` now use `audiohost.audio()` and are in the core target compile. The headphone-disabled SVG moved to `DalBoardView.setAudioPinEnabled`. `samplesState` moved onto `DalBoardState`.
+- Recording is split: `record-audio.ts` is DOM-free and talks to a `record.RecorderHost` / `RecordingSession` interface; `record-audio-dom.ts` supplies the MediaRecorder/getUserMedia implementation (and Safari/Firefox quirks). `recordingState` moved onto `DalBoardState`, `DalBoard` is now an empty compatibility subclass, and `record-audio.ts` and `music.ts` are in the core target compile.
+- Where files go: DOM-free generic files from `pxtsim/` go into `pxtsimcore`. Target files stay in the target repo and are added to its `tsconfig.core.json`.
 
 ### Progress: move visual registries and lifecycle to `boardView()` (done)
 

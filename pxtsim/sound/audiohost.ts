@@ -27,7 +27,32 @@ namespace pxsim.audiohost {
         playInstructionsAsync(instructions: Uint8Array): Promise<void>;
     }
 
+    export interface PlaySampleResult {
+        promise: Promise<void>;
+        cancel: () => void;
+    }
+
+    /** The subset of HTMLAudioElement used by targets for recorded-audio playback. */
+    export interface AudioElementHandle {
+        playbackRate: number;
+        preservesPitch: boolean;
+        currentTime: number;
+        play(): Promise<void>;
+        pause(): void;
+        addEventListener(type: "play" | "ended", listener: () => void, options?: boolean): void;
+        removeEventListener(type: "play" | "ended", listener: () => void): void;
+    }
+
     export interface AudioHost {
+        tone(frequency: number, gain: number): void;
+        stop(): void;
+        setToneGain(gain: number): void;
+        onStopAll(handler: () => void): void;
+        isMuted(): boolean;
+        isAudioElementActive(): boolean;
+        sendMidiMessage(buf: RefBuffer): void;
+        startSamplePlayback(sample: RefBuffer, format: BufferMethods.NumberFormat, sampleRange: number, sampleRate: number, gain: number): PlaySampleResult;
+        createAudioElement(uri: string, clippingThreshold: number, volume: number): AudioElementHandle;
         stopAll(): void;
         mute(mute: boolean): void;
         playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: SoundPreviewCallback): Promise<void>;
@@ -47,6 +72,15 @@ namespace pxsim.audiohost {
     });
 
     const silentHost: AudioHost = {
+        tone: () => { },
+        stop: () => { },
+        setToneGain: () => { },
+        onStopAll: () => { },
+        isMuted: () => true,
+        isAudioElementActive: () => false,
+        sendMidiMessage: () => { },
+        startSamplePlayback: () => ({ promise: Promise.resolve(), cancel: () => { } }),
+        createAudioElement: () => undefined,
         stopAll: () => { },
         mute: () => { },
         playInstructionsAsync: () => Promise.resolve(),
