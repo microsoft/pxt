@@ -29,3 +29,16 @@ interface ImageData {
     readonly height: number;
     readonly data: Uint8ClampedArray;
 }
+
+declare class URLSearchParams {
+    constructor(init?: string);
+    get(name: string): string | null;
+    set(name: string, value: string): void;
+}
+
+declare class URL {
+    constructor(url: string, base?: string | URL);
+    readonly origin: string;
+    readonly searchParams: URLSearchParams;
+    toString(): string;
+}

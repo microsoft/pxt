@@ -34,6 +34,8 @@
         "sound/audiohost.ts",
         "messages.ts",
         "simtypes.ts",
+        "simframe.ts",
+        "simcoordinator.ts",
         "visuals/boardgeometry.ts",
         "langsupport.ts",
         "libgeneric.ts",

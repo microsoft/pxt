@@ -478,7 +478,7 @@ describe("simulator driver broadcast routing", () => {
             const second = frames()[1];
             chai.expect(second.dataset["loading"]).equals("true");
             chai.expect(types(second)).deep.equals([]);
-            chai.expect((driver as any).deferredMessages.map((d: any) => [d[0], d[1].type])).deep.equals([[second, "radiopacket"]]);
+            chai.expect((driver as any).deferredMessages.map((d: any) => [d[0].element, d[1].type])).deep.equals([[second, "radiopacket"]]);
             chai.expect(types(main)).deep.equals([]);
         });
 
@@ -552,7 +552,7 @@ describe("simulator driver broadcast routing", () => {
         it("defers a message to a board frame that is still loading and posts it once the frame is ready", () => {
             send(radio, main);
             const second = frames()[1];
-            (driver as any).handleDeferredMessages(second);
+            (driver as any).handleDeferredMessages((driver as any).frameHost.wrap(second));
             chai.expect(second.dataset["loading"]).equals(undefined);
             chai.expect(types(second)).deep.equals(["radiopacket"]);
             chai.expect((driver as any).deferredMessages).deep.equals([]);

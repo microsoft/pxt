@@ -25,6 +25,8 @@
         "../pxtsim/sound/audiohost.ts",
         "../pxtsim/messages.ts",
         "../pxtsim/simtypes.ts",
+        "../pxtsim/simframe.ts",
+        "../pxtsim/simcoordinator.ts",
         "../pxtsim/visuals/boardgeometry.ts",
         "../pxtsim/langsupport.ts",
         "../pxtsim/libgeneric.ts",
