@@ -474,6 +474,10 @@ namespace pxsim {
             this.builtinPartVisuals = {};
         }
 
+        public addUpdateSubscriber(subscriber: () => void) {
+            this.updateSubscribers.push(subscriber);
+        }
+
         kill() {
             super.kill();
             pxsim.codal.music.__stopSoundExpressions();

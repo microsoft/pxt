@@ -160,15 +160,23 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 
 ## Board state vs. board view (`DalBoard` split)
 
+### Progress: preserve `board()` for state and add `boardView()` (initial step done)
+
+- `DalBoard` remains the state object stored in `runtime.board` and returned by the existing `board()` helper.
+- Added `DalBoardView` and `boardView()` in pxt-microbit. The view object owns the `BoardHost`, SVG view creation, screenshot implementation, DOM initialization, and listener cleanup.
+- `DalBoard` keeps compatible lifecycle methods (`initAsync`, `screenshotAsync`, `kill`) that delegate view work to `boardView()`.
+- Changed the headphone SVG lookup in `state/edgeconnector.ts` and the MicroBit view-update subscription in `visuals/microbit.ts` to use `boardView()`; state call sites remain on `board()`.
+- This is an incremental boundary: `CoreBoard` still owns visual factory registries and update subscribers, and component state construction has not yet moved into a separate DOM-free target project.
+
 ### Why
-`BaseBoard` and `CoreBoard` in `pxtsim/runtime.ts` and `DalBoard` in `pxt-microbit/sim/dalboard.ts` mix **simulation state** with **view/DOM**. Today `board()` returns the whole thing, so every state file (`state/*.ts`) transitively depends on the DOM. The state side of the split is what has to move to `pxtsimcore`.
+`BaseBoard` and `CoreBoard` in `pxtsim/runtime.ts` and the original `DalBoard` implementation mixed **simulation state** with **view/DOM**. The initial split now keeps `board()` state-facing and provides `boardView()` for target view operations. The remaining state/view hooks and component state class extraction are follow-up work; the goal is to keep state call sites independent of DOM APIs as those pieces move to `pxtsimcore`.
 
 ### What is mixed in today
 
 | Concern | Members |
 |---|---|
 | **State (DOM-free)** | `bus`, `id`, `runOptions`, `storedState`, `setStoredState`, `writeSerial`, `receiveMessage`, `addMessageListener`, and the component states: `ledMatrixState`, `edgeConnectorState`, `serialState`, `accelerometerState`, `compassState`, `thermometerState`, `lightSensorState`, `buttonPairState`, `radioState`, `microphoneState`, `recordingState`, `lightState`, `fileSystem`, `logoTouch`, `speakerEnabled`, `controlMessageState`, `samplesState`, `neopixelState()`, `tryGetNeopixelState()`, `hardwareVersion` (the value) |
-| **View (DOM)** | `viewHost` (`visuals.BoardHost`), `view` (`SVGElement`), `builtinVisuals`, `builtinPartVisuals`, `updateSubscribers` and `updateView`, `screenshotAsync` (canvas), `initAsync` (touches `document.body`, builds the mute button), `kill()` (`viewHost.removeEventListeners`, `AudioContextManager`), `ensureHardwareVersion` (calls `updateView`) |
+| **View (DOM)** | `viewHost` (`visuals.BoardHost`), `view` (`SVGElement`), `builtinVisuals`, `builtinPartVisuals`, `updateSubscribers` and `updateView`, `screenshotAsync` (canvas), DOM creation in `initAsync`, view cleanup in `kill()`, and mute-button/audio side effects |
 
 Component states are constructed with `builtinParts[...]` entries, but `builtinParts` itself is just a map of state objects. It is DOM-free and belongs with the state.
 
@@ -177,15 +185,16 @@ Component states are constructed with `builtinParts[...]` entries, but `builtinP
 1. **`pxtsimcore`: `BaseBoardState` and `CoreBoardState`.**
    - Hold `id`, `bus`, `runOptions`, `storedState`, serial buffering, message listeners, `builtinParts`, and a `onViewInvalidated` event (replacing `updateSubscribers`).
    - `updateView()` becomes `invalidateView()`, which just raises that event and has no DOM knowledge.
-2. **`pxtsim`: `BaseBoard` and `CoreBoard` (view side).**
-   - `CoreBoard` owns, or is constructed with, a `CoreBoardState` and holds `builtinVisuals`, `builtinPartVisuals`, `viewHost`, and `view`.
-   - It subscribes to `onViewInvalidated` and drives `updateSubscribers`.
-   - It keeps `screenshotAsync`, DOM `initAsync`, and the audio and DOM parts of `kill()`.
+2. **`pxtsim`: `BaseBoard` and `CoreBoard` (state side).**
+   - Keep `runtime.board` as the state accessor and move view lifecycle into a separately-owned view object.
+   - The view subscribes to state invalidation and drives any visual update subscribers.
+   - Preserve lifecycle compatibility while moving screenshot, DOM initialization, and view cleanup to the view object.
 3. **`pxt-microbit`:**
-   - `DalBoardState` (new, core): all of the component states, `hardwareVersion`, `neopixelState()`, and so on.
-   - `DalBoard` (view): owns a `DalBoardState` plus `viewHost`, `view`, and the visual registrations. Optionally it exposes the state as `board.state`.
+   - Keep `DalBoard` as the state object returned by `board()`, preserving target and package call sites.
+   - Add a distinct `DalBoardView`, returned by `boardView()`, to own `viewHost`, `view`, DOM initialization, screenshots, and view cleanup.
+   - Move component state initialization to a DOM-free state class in a later pass; retain state constructors and visual registrations on `DalBoard` during the compatibility transition.
 4. **Runtime wiring.**
-   - Add `runtime.boardState: BaseBoardState` alongside `runtime.board`. `runtime.board` stays as the view-side accessor, typed `BaseBoard`, for compatibility.
+   - Keep `runtime.board` as the state object for compatibility. Add view storage/access only where needed by the DOM host; do not change state callers to a new `boardState()` name.
    - `BareBoard` and `initBareRuntime` only need a state object.
    - Constructors that currently take `runtime` or `this` (for example `RadioState(runtime, this, ...)`, `SerialState(runtime, this)`, `ControlMessageState(this)`) should take the state object, not the view-capable board.
 5. **`ensureHardwareVersion`** is the one state operation that also pokes the view.
@@ -195,42 +204,47 @@ Component states are constructed with `builtinParts[...]` entries, but `builtinP
 ### Accessors in `pxt-microbit/sim/dalboard.ts`
 
 ```ts
-export function boardState(): DalBoardState {   // new, DOM-free (core)
-    return runtime.boardState as DalBoardState;
-}
-export function board(): DalBoard {              // existing, DOM side
+export function board(): DalBoard {             // existing state accessor
     return runtime.board as DalBoard;
+}
+export function boardView(): DalBoardView {     // new view accessor
+    return currentBoardView;
 }
 ```
 
-Rule: **everything under `state/` uses `boardState()`. Only code that needs `viewHost`, `view`, or visuals uses `board()`.** Moving `boardState()` to core and leaving `board()` in the DOM bundle lets the compiler enforce this.
+Rule: **keep `board()` for state access. Use `boardView()` only for `viewHost`, `view`, screenshots, DOM initialization, and cleanup.** This minimizes source churn while making accidental view access visible.
 
-### Which `board()` calls can become `boardState()`
+### Which `board()` calls need `boardView()`
 
-There are roughly 84 `board()` call sites in `pxt-microbit/sim`. Based on the members each one touches:
+Most of the roughly 84 `board()` call sites in `pxt-microbit/sim` already access state and should remain unchanged.
 
-**Replace with `boardState()` (essentially all of them):**
-- `state/accelerometer.ts`, `compass.ts`, `buttonpair.ts`, `lightsensor.ts`, `thermometer.ts`, `ledmatrix.ts`, `serial.ts`, `flashlog.ts`, `misc.ts`, `audio-samples.ts`, `record-audio.ts`, `filesystem.ts`, `midi.ts`.
-  - These only touch component states, `bus`, `writeSerial`, `runOptions`, `speakerEnabled`, and so on.
-- `edgeconnector.ts`, except the headphone lookup (see below).
-- `music.ts`, `logotouch.ts`, `flashlog.ts`. These call `ensureHardwareVersion(2)`, which works as a state method per step 5.
-- `dalboard.ts`: `parsePinString`, and `postError` (which uses `ledMatrixState`).
+**Keep on `board()` (state):**
+- State files and runtime APIs using component state, `bus`, `writeSerial`, `runOptions`, `speakerEnabled`, and `ensureHardwareVersion`.
+- `dalboard.ts` state initialization, `parsePinString`, and `postError`.
 
-**Must stay on `board()` (or be refactored):**
-- `state/edgeconnector.ts` line ~202: `board().viewHost.getView().querySelector("g.sim-headphone-cmp")` is direct DOM access.
-  - Refactor to a state flag (for example `headphoneConnected`, set by the view) or an `isHeadphoneConnected()` callback registered by the view. Then the call site uses `boardState()`.
-- `visuals/microbit.ts` (2 `board()` calls and `this.board.updateSubscribers`/`hardwareVersion`): it is view code, so it stays in pxtsim.
-- `DalBoard.initAsync`, `screenshotAsync`, `kill`: view-side by definition.
+**Use `boardView()` only for view interactions:**
+- `state/edgeconnector.ts`: headphone SVG lookup (`viewHost.getView().querySelector(...)`).
+- `DalBoardView.initAsync`, screenshot, and cleanup.
+- `visuals/microbit.ts` continues to access board state for sensor and input state. Its visual instance itself remains view code.
 
 ### Same pattern in `pxt-common-packages`
-The common-packages sim has its own `board()` helper and its own `CoreBoard` subclasses (for example `EventBusBoard`, `CommonBoard`). Audit it with the same rule: introduce `boardState()` returning the state, and keep `board()` for the view. Note that those packages implement interfaces such as `EventBusBoard`, `LightBoard`, and `CommonBoard`, which will need to be redeclared against the state type.
+The common-packages sim has its own `board()` helper and its own `CoreBoard` state interfaces (for example `EventBusBoard`, `CommonBoard`). Keep `board()` as state access there; add a view accessor only if view code in that target needs one. The broad call-site review found no direct `viewHost`, `view`, screenshot, or visual-factory access through `board()`. Inspect these two indirect/dynamic call sites during the state/view split:
+
+- `pxt-common-packages/libs/screen/sim/state.ts:134-139`: `ScreenState.updateStats()` casts `board()` to `any` and invokes optional `updateStats()`. Confirm whether that hook is view-only and, if so, move it behind a view accessor or an explicit state-to-view notification.
+- `pxt-common-packages/libs/game/sim/multiplayer.ts:184`: multiplayer input handling casts `board()` to `any` and invokes `handleKeyEvent()`. Confirm ownership of this input-dispatch method and keep it on the state-facing API if it is simulation behavior.
 
 ### Migration steps
-1. In pxt, add `BaseBoardState` and `CoreBoardState` plus `runtime.boardState`, with `BaseBoard`/`CoreBoard` delegating to them. This is non-breaking.
-2. Introduce `DalBoardState` and `boardState()` in pxt-microbit, with `DalBoard` delegating (or exposing getters) during the transition. This is non-breaking.
-3. Mechanically replace `board()` with `boardState()` in `state/*.ts` (a one-pass codemod; it is only 20 files). Review the two exceptions above.
+1. In pxt, add `BaseBoardState` and `CoreBoardState`, preserving `runtime.board` as the state-facing compatibility accessor.
+2. In pxt-microbit, keep `DalBoard`/`board()` as state access and introduce `DalBoardView`/`boardView()` for view-only operations.
+3. Move remaining view fields and lifecycle operations to the view object; leave state call sites on `board()`.
 4. Move the state files into the core compile (`pxtsimcore` equivalent for the target) and confirm there are no DOM references with the DOM-free tsconfig.
 5. Remove the delegating getters once nothing uses them, and run the microbit and common-packages simulator tests.
+
+### Follow-up work after Micro:bit refactor and testing
+
+- Investigate the `pxt-arcade` simulator's board/state/view architecture and DOM dependencies.
+- Determine whether `pxt-arcade` can use the same `pxtsimcore` boundary and `board()` state / `boardView()` view pattern.
+- Do this investigation only after completing and validating the `pxt-microbit` refactor.
 
 ### Risks
 - **Constructor cycles:** `new BusEvent(runtime, this)` and the `RadioState(runtime, this, ...)` family assume the board has everything. Convert them to depend on the narrower state interface.
