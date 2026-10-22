@@ -34,6 +34,8 @@ import { getArgumentReporterParent } from "./plugins/functions/utils";
 import { isFunctionDefinition } from "./compiler/util";
 import { AUTO_DISABLED_REASON } from "./compiler/compiler";
 import { DEFAULT_LED_COLORS, FieldLEDMatrixColorPicker, getDefaultColorNames } from "./fields/field_ledmatrix_colorPicker";
+import { getFixedInstanceDropdownOptions, getSymbolDropdownOptions } from "./fields/symbolDropdownOptions";
+export { getFixedInstanceDropdownValues } from "./fields/symbolDropdownOptions";
 
 export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
 
@@ -209,14 +211,6 @@ function newLabel(part: pxtc.BlockLabel | pxtc.BlockImage): Blockly.Field {
     else {
         return new Blockly.FieldLabel(txt, undefined);
     }
-}
-
-function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
-    if (specific == general) return true
-    let inf = apis.byQName[specific]
-    if (inf && inf.extendsTypes)
-        return inf.extendsTypes.indexOf(general) >= 0
-    return false
 }
 
 function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo) {
@@ -513,58 +507,23 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     let fieldType = pr.type;
 
                     if (isEnum || isFixed || isConstantShim || isCombined) {
-                        let syms: pxtc.SymbolInfo[];
+                        let dd: Blockly.MenuOption[];
 
                         if (isEnum) {
-                            syms = getEnumDropdownValues(info.apis, pr.type);
+                            dd = getSymbolDropdownOptions(getEnumDropdownValues(info.apis, pr.type), pr.defaultValue, imgConv);
                         }
                         else if (isFixed) {
-                            syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
+                            dd = getFixedInstanceDropdownOptions(info, typeInfo.qName, pr.defaultValue, imgConv);
                         }
                         else if (isCombined) {
-                            syms = fn.combinedProperties.map(p => pxt.Util.lookup(info.apis.byQName, p))
+                            dd = getSymbolDropdownOptions(fn.combinedProperties.map(p => pxt.Util.lookup(info.apis.byQName, p)), pr.defaultValue, imgConv);
                         }
                         else {
-                            syms = getConstantDropdownValues(info.apis, fn.qName);
+                            dd = getSymbolDropdownOptions(getConstantDropdownValues(info.apis, fn.qName), pr.defaultValue, imgConv);
                         }
 
-                        if (syms.length == 0) {
+                        if (dd.length == 0) {
                             pxt.error(`no instances of ${typeInfo.qName} found`)
-                        }
-                        const dd: Blockly.MenuOption[] = syms.map(v => {
-                            let k = v.attributes.block || v.attributes.blockId || v.name;
-                            let comb = v.attributes.blockCombine
-                            if (v.attributes.jresURL && !v.attributes.iconURL && pxt.Util.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
-                                v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
-                            }
-                            if (!!comb)
-                                k = k.replace(/@set/, "")
-                            return [
-                                v.attributes.iconURL || v.attributes.blockImage ? {
-                                    src: v.attributes.iconURL || pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
-                                    alt: k,
-                                    width: 36,
-                                    height: 36,
-                                    value: v.name
-                                } : k,
-                                v.namespace + "." + v.name,
-                                v.attributes.ariaLabel
-                            ];
-                        });
-                        // if a value is provided, move it first
-                        if (pr.defaultValue) {
-                            let shadowValueIndex = -1;
-                            dd.some((v, i) => {
-                                if (v[1] === (pr as pxt.blocks.BlockParameter).defaultValue) {
-                                    shadowValueIndex = i;
-                                    return true;
-                                }
-                                return false;
-                            });
-                            if (shadowValueIndex > -1) {
-                                const shadowValue = dd.splice(shadowValueIndex, 1)[0];
-                                dd.unshift(shadowValue);
-                            }
                         }
 
                         if (customField) {
@@ -576,6 +535,10 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                 type: fieldType,
                                 blocksInfo: info
                             } as FieldCustomDropdownOptions;
+                            if (isFixed && customField === INSTANCE_DROPDOWN_FIELD) {
+                                options.getBlocksInfo = () => cachedBlockInfo;
+                                options.defaultValue = pr.defaultValue;
+                            }
                             pxt.Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
                             fields.push(namedField(createFieldEditor(customField, defl, options), defName));
                         }
@@ -1039,14 +1002,6 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
 
 function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
     return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName && !sym.attributes.blockHidden);
-}
-
-export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-    const symbols = pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
-        && sym.attributes.fixedInstance
-        && isSubtype(apis, sym.retType, qName))
-        .sort((l, r) => (r.attributes.weight || 50) - (l.attributes.weight || 50))
-    return symbols
 }
 
 export function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {

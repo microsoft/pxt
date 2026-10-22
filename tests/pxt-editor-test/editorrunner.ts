@@ -126,7 +126,9 @@ import {
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
-import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE, OPEN_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
+import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE, FieldInstanceDropdown, OPEN_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
+import type { FieldCustomDropdownOptions } from "../../pxtblocks/fields/field_utils";
+import { getFixedInstanceDropdownOptions } from "../../pxtblocks/fields/symbolDropdownOptions";
 
 pxt.appTarget = {
     versions: {
@@ -5057,6 +5059,108 @@ describe("fixed-instance dropdown options", () => {
     it("never changes the list it was given", () => {
         getInstanceDropdownOptions(instances, "open", "create");
         chai.expect(instances.length).equals(2);
+    });
+
+    // a fixed-instance symbol `ns.<name>` of the type `retType`
+    function instanceSymbol(name: string, retType: string, attributes: pxtc.CommentAttrs = {} as pxtc.CommentAttrs): pxtc.SymbolInfo {
+        return {
+            name,
+            namespace: "ns",
+            qName: `ns.${name}`,
+            fileName: "main.ts",
+            kind: pxtc.SymbolKind.Variable,
+            parameters: [],
+            retType,
+            attributes: { ...attributes, fixedInstance: true },
+        };
+    }
+
+    // a fixed-instance type `ns.<name>` extending `extendsTypes`
+    function typeSymbol(name: string, extendsTypes?: string[]): pxtc.SymbolInfo {
+        return {
+            name,
+            namespace: "ns",
+            qName: `ns.${name}`,
+            fileName: "main.ts",
+            kind: pxtc.SymbolKind.Class,
+            parameters: [],
+            retType: `ns.${name}`,
+            extendsTypes,
+            attributes: { fixedInstances: true } as pxtc.CommentAttrs,
+        };
+    }
+
+    // API info declaring the fixed-instance type `ns.Thing` and `symbols`
+    function thingBlocksInfo(symbols: pxtc.SymbolInfo[]): pxtc.BlocksInfo {
+        const byQName: pxt.Map<pxtc.SymbolInfo> = { "ns.Thing": typeSymbol("Thing") };
+        for (const symbol of symbols) byQName[symbol.qName] = symbol;
+        return { apis: { byQName }, blocks: [], blocksById: {}, enumsByName: {}, kindsByName: {} };
+    }
+
+    // an image converter returning `converted:` and the jres image it converts
+    class StubImageConverter extends pxt.ImageConverter {
+        convert(jresURL: string) {
+            return `converted:${jresURL}`;
+        }
+    }
+
+    // builds a `FieldInstanceDropdown` of `ns.Thing` with `options`
+    function instanceField(options: Partial<FieldCustomDropdownOptions>) {
+        return new FieldInstanceDropdown("", { type: "ns.Thing", blocksInfo: undefined, ...options });
+    }
+
+    // the values of the options of a `FieldInstanceDropdown` of `ns.Thing`
+    // built with `options`, read as its dropdown opens
+    function openedValues(options: Partial<FieldCustomDropdownOptions>) {
+        return values(instanceField(options).getOptions(false));
+    }
+
+    it("lists the instances the live API info declares as the field's dropdown opens, not those captured when the field was built", () => {
+        const opened = openedValues({
+            data: [["old", "ns.old"]],
+            getBlocksInfo: () => thingBlocksInfo([instanceSymbol("new", "ns.Thing")]),
+        });
+        chai.expect(opened).to.include("ns.new");
+        chai.expect(opened).to.not.include("ns.old");
+    });
+
+    it("lists the options captured when the field was built while the live API info is undefined", () => {
+        chai.expect(openedValues({ data: [["old", "ns.old"]], getBlocksInfo: () => undefined })).deep.equals(["ns.old"]);
+    });
+
+    it("keeps the field's value when the live API info no longer declares it", () => {
+        let blocksInfo: pxtc.BlocksInfo | undefined;
+        const field = instanceField({ data: [["old", "ns.old"]], getBlocksInfo: () => blocksInfo });
+        chai.expect(field.getValue()).equals("ns.old");
+        blocksInfo = thingBlocksInfo([instanceSymbol("new", "ns.Thing")]);
+        chai.expect(values(field.getOptions(false))).deep.equals(["ns.new"]);
+        chai.expect(field.getValue()).equals("ns.old");
+    });
+
+    it("builds an instance holding a jres image as an image option named by the instance, its icon converted", () => {
+        const jresURL = "data:image/x-mkcd-f4;base64,AAAA";
+        const blocksInfo = thingBlocksInfo([instanceSymbol("hero", "ns.Thing", { jresURL } as pxtc.CommentAttrs)]);
+        const [option] = getFixedInstanceDropdownOptions(blocksInfo, "ns.Thing", undefined, new StubImageConverter());
+        chai.expect(option[1]).equals("ns.hero");
+        chai.expect(option[0]).deep.include({ src: `converted:${jresURL}`, alt: "hero", value: "hero" });
+    });
+
+    it("lists the default value's instance first", () => {
+        const blocksInfo = thingBlocksInfo([
+            instanceSymbol("a", "ns.Thing", { weight: 60 } as pxtc.CommentAttrs),
+            instanceSymbol("b", "ns.Thing", { weight: 40 } as pxtc.CommentAttrs),
+        ]);
+        chai.expect(values(getFixedInstanceDropdownOptions(blocksInfo, "ns.Thing", undefined, new StubImageConverter()))).deep.equals(["ns.a", "ns.b"]);
+        chai.expect(values(getFixedInstanceDropdownOptions(blocksInfo, "ns.Thing", "ns.b", new StubImageConverter()))).deep.equals(["ns.b", "ns.a"]);
+    });
+
+    it("lists the instances of a subtype of the type and no symbol that is not a fixed instance", () => {
+        const blocksInfo = thingBlocksInfo([
+            typeSymbol("Special", ["ns.Thing"]),
+            instanceSymbol("special", "ns.Special"),
+            { ...instanceSymbol("plain", "ns.Thing"), attributes: {} as pxtc.CommentAttrs },
+        ]);
+        chai.expect(values(getFixedInstanceDropdownOptions(blocksInfo, "ns.Thing", undefined, new StubImageConverter()))).deep.equals(["ns.special"]);
     });
 });
 

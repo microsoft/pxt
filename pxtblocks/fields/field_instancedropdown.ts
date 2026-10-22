@@ -3,6 +3,7 @@
 import * as Blockly from "blockly";
 import { FieldDropdown } from "./field_dropdown";
 import { FieldCustom, FieldCustomDropdownOptions } from "./field_utils";
+import { getFixedInstanceDropdownOptions } from "./symbolDropdownOptions";
 
 /** The field editor id of `FieldInstanceDropdown`. */
 export const INSTANCE_DROPDOWN_FIELD = "instancedropdown";
@@ -42,16 +43,21 @@ export function getInstanceDropdownOptions(instances: Blockly.MenuOption[], open
 
 /**
  * The dropdown of a fixed-instance parameter whose instances the editor can
- * create. It lists the type's instances, then, after a separator, an entry
- * asking to open the instance the field holds, while the editor can open it
+ * create. Each time it opens, it lists the type's instances the current API
+ * info declares, then, after a separator, an entry asking to open the
+ * instance the field holds, while the editor can open it
  * (`pxt.react.canOpenInstance`), and an entry asking for a new instance, while
  * the editor can create one (`pxt.react.canCreateInstance`). Picking either
  * entry keeps the field's value; the first asks the editor to open the
  * instance (`pxt.react.openInstance`), the second to create one
  * (`pxt.react.createInstance`).
  *
- * Options: `data`, the options of the type's instances; `type`, the type's
- * fully qualified name; `blocksInfo`, the API info that declares the type.
+ * Options: `data`, the options of the type's instances, listed while
+ * `getBlocksInfo` is not given or returns undefined; `type`, the type's fully
+ * qualified name; `blocksInfo`, the API info that declares the type;
+ * `getBlocksInfo`, returning the current API info; `defaultValue`, the value
+ * of the instance listed first. The field's value is kept when the current
+ * API info no longer declares it.
  */
 export class FieldInstanceDropdown extends FieldDropdown implements FieldCustom {
     public isFieldCustom_ = true;
@@ -59,7 +65,7 @@ export class FieldInstanceDropdown extends FieldDropdown implements FieldCustom 
     protected typeQName: string;
 
     constructor(text: string, options: FieldCustomDropdownOptions, validator?: Blockly.FieldValidator) {
-        super(createMenuGenerator(options.data, options.type, getTypeName(options.blocksInfo, options.type)), validator);
+        super(createMenuGenerator(options, getTypeName(options.blocksInfo, options.type), new pxt.ImageConverter()), validator);
         this.typeQName = options.type;
     }
 
@@ -74,12 +80,16 @@ export class FieldInstanceDropdown extends FieldDropdown implements FieldCustom 
     }
 }
 
-// Lists `instances`, then the entry asking to open the instance the field
-// holds, while the editor can open it, and the entry asking for a new
-// instance, while the editor can create the type's instances, read each time
-// the dropdown opens.
-function createMenuGenerator(instances: Blockly.MenuOption[], typeQName: string, typeName: string): Blockly.MenuGeneratorFunction {
+// Lists the options of the type's instances, built with `imgConv` from the
+// API info `getBlocksInfo` returns, else `data`, then the entry asking to open
+// the instance the field holds, while the editor can open it, and the entry
+// asking for a new instance, while the editor can create the type's instances,
+// all read each time the dropdown opens.
+function createMenuGenerator(options: FieldCustomDropdownOptions, typeName: string, imgConv: pxt.ImageConverter): Blockly.MenuGeneratorFunction {
+    const { data, type: typeQName, getBlocksInfo, defaultValue } = options;
     return function (this: Blockly.FieldDropdown) {
+        const blocksInfo = getBlocksInfo?.();
+        const instances: Blockly.MenuOption[] = blocksInfo ? getFixedInstanceDropdownOptions(blocksInfo, typeQName, defaultValue, imgConv) : data;
         const value = this.getValue();
         const label = value && pxt.react.canOpenInstance?.(value) ? getInstanceLabel(instances, value) : undefined;
         return getInstanceDropdownOptions(instances,
