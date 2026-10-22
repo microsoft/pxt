@@ -86,7 +86,7 @@ export const buildEngines: Map<BuildEngine> = {
     codal: {
         id: "codal",
         updateEngineAsync: updateCodalBuildAsync,
-        buildAsync: () => runBuildCmdAsync("python", "build.py"),
+        buildAsync: () => runBuildCmdAsync("python3", "build.py"),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchCodalHexInfo,
         prepBuildDirAsync: prepCodalBuildDirAsync,
@@ -99,7 +99,7 @@ export const buildEngines: Map<BuildEngine> = {
     dockercodal: {
         id: "dockercodal",
         updateEngineAsync: updateCodalBuildAsync,
-        buildAsync: () => runDockerAsync(["python", "build.py"]),
+        buildAsync: () => runDockerAsync(["python3", "build.py"]),
         setPlatformAsync: noopAsync,
         patchHexInfo: patchCodalHexInfo,
         prepBuildDirAsync: prepCodalBuildDirAsync,
@@ -278,15 +278,15 @@ export function buildHexAsync(buildEngine: BuildEngine, mainPkg: pxt.MainPackage
                 fs.unlinkSync(f)
             }
         }
-
         U.iterMap(allFiles, (fn, v) => {
             fn = buildEngine.buildPath + fn
             nodeutil.mkdirP(path.dirname(fn))
             let existing: string = null
+            let isLib = U.endsWith(fn, ".a")
             if (fs.existsSync(fn))
                 existing = fs.readFileSync(fn, "utf8")
             if (existing !== v)
-                nodeutil.writeFileSync(fn, v)
+                nodeutil.writeFileSync(fn, v, isLib ? { encoding: "base64" } : undefined)
         })
     }
 
