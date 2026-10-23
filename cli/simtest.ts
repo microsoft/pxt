@@ -87,6 +87,7 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
 
     sandbox.__js = js;
     sandbox.__options = options;
+    sandbox.__clearTimers = clearTimers;
     try {
         return vm.runInContext(`
         new Promise(resolve => {
@@ -101,7 +102,7 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                 try { runtime && runtime.kill(); } catch (e) { }
                 try { runtime && runtime.board && runtime.board.kill(); } catch (e) { }
                 try { runtime && runtime.boardView && runtime.boardView.kill(); } catch (e) { }
-                clearTimers();
+                __clearTimers();
                 if (serialBuffer) result.serial.push(serialBuffer);
                 resolve(result);
             };
@@ -146,7 +147,7 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                      if (!finished) runtime.errorHandler(e);
                  });
         })
-    `, context).catch(e => {
+    `, context).catch((e: any) => {
         clearTimers();
         throw e;
     });
