@@ -91,7 +91,7 @@ namespace pxsim {
             const rt = new Runtime(msg);
             runtime = rt;
             rt.board.initAsync(msg)
-                .then(() => rt.boardView ? rt.boardView.initAsync(msg) : undefined)
+                .then(() => rt === runtime && !rt.dead && rt.boardView ? rt.boardView.initAsync(msg) : undefined)
                 .then(() => {
                     if (rt === runtime) {
                         rt.run((v) => {
