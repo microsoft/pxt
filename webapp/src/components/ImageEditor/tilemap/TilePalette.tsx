@@ -9,6 +9,7 @@ import { TimelineFrame } from '../TimelineFrame';
 import { Pivot, PivotOption } from '../Pivot';
 import { AlertOption } from '../Alert';
 import { createTile } from '../../../assets';
+import { AssetEditorContext } from '../../AssetEditorContext';
 
 import { CarouselNav } from "../../../../../react-common/components/controls/CarouselNav";
 import { Dropdown, DropdownItem } from '../../../../../react-common/components/controls/Dropdown';
@@ -98,6 +99,9 @@ interface UserTile {
 type RenderedTile = GalleryTile | UserTile
 
 class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
+    static contextType = AssetEditorContext;
+    declare context: React.ContextType<typeof AssetEditorContext>;
+
     protected renderedTiles: RenderedTile[];
     protected categoryTiles: RenderedTile[];
     protected categories: Category[];
@@ -364,7 +368,7 @@ class TilePaletteImpl extends React.Component<TilePaletteProps,{}> {
         if (!tileset.tiles[selected] || !tileset.tiles[selected].isProjectTile || selected === 0) return;
 
         const tile = tileset.tiles[selected];
-        dispatchCreateNewTile(createTile(tile.bitmap, null, tile.meta?.displayName), tileset.tiles.length, backgroundColor);
+        dispatchCreateNewTile(createTile(tile.bitmap, null, tile.meta?.displayName, this.context), tileset.tiles.length, backgroundColor);
     }
 
     protected tileDeleteAlertHandler = () => {
