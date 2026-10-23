@@ -454,6 +454,8 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
             expr = compileBoolean(e, b, comments); break;
         case "logic_negate":
             expr = compileNot(e, b, comments); break;
+        case "logic_ternary":
+            expr = compileTernary(e, b, comments); break;
         case "variables_get":
         case "variables_get_reporter":
             expr = compileVariableGet(e, b); break;
@@ -1073,6 +1075,80 @@ function compileBoolean(e: Environment, b: Blockly.Block, comments: string[]): p
 function compileNot(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
     let expr = compileExpression(e, getInputTargetBlock(e, b, "BOOL"), comments);
     return pxt.blocks.mkPrefix("!", [pxt.blocks.H.mkParenthesizedExpression(expr)]);
+}
+
+function compileTernary(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {
+    let ifBlock = getInputTargetBlock(e, b, "IF");
+    let thenBlock = getInputTargetBlock(e, b, "THEN");
+    let elseBlock = getInputTargetBlock(e, b, "ELSE");
+
+    let cond = compileExpression(e, ifBlock, comments);
+    let thenExpr = compileExpression(e, thenBlock, comments);
+    let elseExpr = compileExpression(e, elseBlock, comments);
+
+    cond = stripRelationalAsAny(cond);
+
+    if (ifBlock && ifBlock.type === "logic_ternary") {
+        cond = pxt.blocks.H.mkParenthesizedExpression(cond);
+    }
+    if (thenBlock && thenBlock.type === "logic_ternary") {
+        thenExpr = pxt.blocks.H.mkParenthesizedExpression(thenExpr);
+    }
+    if (elseBlock && elseBlock.type === "logic_ternary") {
+        elseExpr = pxt.blocks.H.mkParenthesizedExpression(elseExpr);
+    }
+
+    let res = pxt.blocks.mkGroup([
+        cond,
+        pxt.blocks.mkText(" ? "),
+        thenExpr,
+        pxt.blocks.mkText(" : "),
+        elseExpr
+    ]);
+
+    let parent = b.getParent();
+    if (parent && isHigherPrecedenceBlock(parent)) {
+        res = pxt.blocks.H.mkParenthesizedExpression(res);
+    }
+
+    return res;
+
+    function isHigherPrecedenceBlock(parentBlock: Blockly.Block): boolean {
+        switch (parentBlock.type) {
+            case "math_arithmetic":
+            case "math_modulo":
+            case "math_op2":
+            case "math_op3":
+            case "logic_compare":
+            case "logic_operation":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    function stripAsAny(arg: pxt.blocks.JsNode): pxt.blocks.JsNode {
+        if (arg && arg.children && arg.children.length === 3 &&
+            arg.children[0].op === "(" && arg.children[2].op === ")") {
+            let middle = arg.children[1];
+            if (middle && middle.children && middle.children.length === 2 &&
+                middle.children[1].op === " as any") {
+                return middle.children[0];
+            }
+        }
+        return arg;
+    }
+
+    function stripRelationalAsAny(node: pxt.blocks.JsNode): pxt.blocks.JsNode {
+        if (node && node.type === pxt.blocks.NT.Infix && ["<", "<=", ">", ">="].indexOf(node.op) !== -1 && node.children && node.children.length === 2) {
+            return pxt.blocks.mkInfix(
+                stripAsAny(node.children[0]),
+                node.op,
+                stripAsAny(node.children[1])
+            );
+        }
+        return node;
+    }
 }
 
 function compileCreateList(e: Environment, b: Blockly.Block, comments: string[]): pxt.blocks.JsNode {

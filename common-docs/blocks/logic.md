@@ -9,4 +9,4 @@ true && false;
 ```
 ## See also #seealso
 
-[if](/blocks/logic/if), [boolean](/blocks/logic/boolean)
+[if](/blocks/logic/if), [boolean](/blocks/logic/boolean), [ternary](/blocks/logic/ternary)
