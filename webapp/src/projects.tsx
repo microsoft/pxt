@@ -952,6 +952,7 @@ export class ProjectSettingsMenu extends data.Component<ProjectSettingsMenuProps
 
         items.push({
             role: "menuitem",
+            leftIcon: "icon info circle",
             label: lf("About..."),
             title: lf("About..."),
             onClick: this.showAboutDialog
