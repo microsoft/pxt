@@ -137,9 +137,11 @@ namespace pxsim {
          * registered with `allowFileWrite`.
          * @param key the `simulatorExtensions` key the requesting frame was created for
          * @param msg the request, as received
-         * @param reply posts a message to the requesting frame only
+         * @param reply posts a message to the requesting frame only; may be called again
+         * later, to deliver notifications
+         * @param frame the requesting frame, to which `reply` posts
          */
-        onProjfsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
+        onProjfsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void;
         /**
          * Receives the project-asset ("projassets") requests of simulator extensions
          * registered with `allowAssetRead`.

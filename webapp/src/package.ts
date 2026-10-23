@@ -105,7 +105,8 @@ export class File implements IFile {
     }
 
     /**
-     * Replaces the file's content and saves it.
+     * Replaces the file's content and saves it. New content is reported to
+     * the package's file change listeners before it is saved.
      * @param force if true and a force-change callback is set, the editor
      * reloads the file once it is saved, and the promise settles after the
      * reload; until then, {@link editorReloadAsync} reports the reload pending
@@ -117,6 +118,7 @@ export class File implements IFile {
             let prevContent = this.content;
             this.content = newContent;
             this.updateStatus();
+            this.epkg.notifyFileChangeListeners(this.name);
             const saved = this.epkg.saveFileAsync(this.name)
                 .then(() => {
                     if (this.content == newContent) {
@@ -203,6 +205,8 @@ export class EditorPackage {
     tilemapProject: pxt.TilemapProject;
     // settles once loadPkgAsync has loaded this main package; see loadedAsync
     private loadComplete = pxt.Util.defer<void>();
+    // the listeners called on every change to the package's stored files, with the file's name, or undefined when every file is replaced
+    private fileChangeListeners: ((name: string | undefined) => void)[] = [];
 
     id: string;
     outputPkg: EditorPackage;
@@ -424,18 +428,54 @@ export class EditorPackage {
         return this.ksPkg && this.ksPkg.level == 0;
     }
 
+    /**
+     * Adds a listener called on each change to the package's stored files:
+     * with the file's name when {@link setFile} stores a file,
+     * {@link removeFileAsync} removes one, or {@link File.setContentAsync}
+     * gives one new content, pxt.json included; and with undefined when
+     * {@link setFiles} replaces every file. The listener is called
+     * synchronously, once the change has applied to the package's files and
+     * before it is saved. A listener that throws is reported with
+     * `pxt.reportException`, and the change and the other listeners proceed.
+     */
+    addFileChangeListener(listener: (name: string | undefined) => void) {
+        this.fileChangeListeners.push(listener);
+    }
+
+    /** Removes a listener added with addFileChangeListener. */
+    removeFileChangeListener(listener: (name: string | undefined) => void) {
+        this.fileChangeListeners = this.fileChangeListeners.filter(l => l !== listener);
+    }
+
+    /**
+     * Calls every file change listener with `name`; a listener that throws is
+     * reported, and the others are still called.
+     * @param name the stored file that changed, or undefined if every file was replaced
+     */
+    notifyFileChangeListeners(name: string | undefined) {
+        for (const listener of this.fileChangeListeners) {
+            try {
+                listener(name);
+            } catch (e) {
+                pxt.reportException(e);
+            }
+        }
+    }
+
     setFile(n: string, v: string, virtual?: boolean): File {
         Util.assert(!!n, "missing file name");
         let f = new File(this, n, v)
         if (virtual) f.virtual = true;
         this.files[n] = f
         data.invalidate("open-meta:")
+        this.notifyFileChangeListeners(n);
         return f
     }
 
     removeFileAsync(n: string) {
         delete this.files[n];
         data.invalidate("open-meta:")
+        this.notifyFileChangeListeners(n);
         return this.setFileListedAsync(n, false);
     }
 
@@ -496,6 +536,7 @@ export class EditorPackage {
     setFiles(files: pxt.Map<string>) {
         this.files = Util.mapMap(files, (k, v) => new File(this, k, v))
         data.invalidate("open-meta:")
+        this.notifyFileChangeListeners(undefined);
         this.updateGitJsonCache()
     }
 

@@ -327,8 +327,8 @@ export async function initAsync(cfg: SimulatorConfig) {
             postSimEditorEvent("toplevelfinished");
         },
         onMuteButtonStateChange: cfg.onMuteButtonStateChange,
-        onProjfsMessage: (key, msg, reply) => {
-            projfsHost.handleMessageAsync(key, msg, reply);
+        onProjfsMessage: (key, msg, reply, frame) => {
+            projfsHost.handleMessageAsync(key, msg, reply, frame);
         },
         onProjassetsMessage: (key, msg, reply, frame) => {
             projassetsHost.handleMessageAsync(key, msg, reply, frame);
@@ -434,13 +434,14 @@ export function postSimxEditorFullscreen(enabled: boolean) {
  * frame, with the actions held for the tabs, forgets the ignored `creates`
  * claims logged for the project, refuses the project-file and project-asset
  * requests still waiting for the project with `PROJECT_CLOSED`, and ends every
- * project-asset subscription. Call before the simulator unloads, as the
- * project closes or another load begins.
+ * project-file and project-asset subscription. Call before the simulator
+ * unloads, as the project closes or another load begins.
  */
 export function closeSimxProject() {
     simxEditorHost?.close();
     loggedSimxClaims.clear();
     openProject.close();
+    projfsHost.close();
     projassetsHost.close();
 }
 
@@ -498,6 +499,8 @@ function createProjfsProject(epkg: pkg.EditorPackage): ProjfsProject {
         markDirty: (name, content) => {
             if (config?.projfsEditor) applyUserEdit(config.projfsEditor, name, content);
         },
+        addChangeListener: listener => epkg.addFileChangeListener(listener),
+        removeChangeListener: listener => epkg.removeFileChangeListener(listener),
     };
 }
 

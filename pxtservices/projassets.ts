@@ -445,7 +445,7 @@ export class ProjassetsClient {
     // called on each change notification, each once, once the subscription is acknowledged
     protected changeListeners: (() => void)[] = [];
     // settles once the frame's subscription request is acknowledged or refused; undefined until
-    // subscribe is first called, and again after a refusal
+    // subscribe is first called, and again after a refusal or dispose
     protected subscription: Promise<void> | undefined;
 
     constructor(options: ProjassetsClientOptions = {}) {
@@ -496,13 +496,14 @@ export class ProjassetsClient {
 
     /**
      * Stops listening for replies and notifications, and fails every pending
-     * request with `DISPOSED`. Later requests fail with `DISPOSED` without
-     * being sent.
+     * request with `DISPOSED`. Later requests, subscribe calls included, fail
+     * with `DISPOSED` without being sent.
      */
     dispose() {
         this.disposed = true;
         this.listener.removeEventListener("message", this.onMessage);
         this.changeListeners = [];
+        this.subscription = undefined;
         for (const id of Object.keys(this.pending)) {
             this.settle(id)?.reject(new ProjassetsError("DISPOSED", "The client was disposed before the editor replied."));
         }

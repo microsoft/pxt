@@ -83,6 +83,73 @@ export async function loadedOpenProjectAsync<T extends { loadedAsync(): Promise<
 }
 
 /**
+ * Merges the changes a simulator extension host notifies its subscribers of
+ * into bursts, and sends each burst once: `debounceMs` after its last change,
+ * or `maxDelayMs` after its first if that is sooner. Each burst accumulates
+ * what its changes add to a value of its own.
+ * @typeParam T the value a burst accumulates
+ */
+export class NotificationBurst<T> {
+    // the burst waiting to be sent, with when its first and latest changes were made
+    // on the clock `now` reads; undefined while none is
+    protected pending: { first: number, last: number, value: T } | undefined;
+
+    /**
+     * @param debounceMs the time, in milliseconds, after a burst's last change at which it is sent
+     * @param maxDelayMs the longest time, in milliseconds, after a burst's first change at which it is sent
+     * @param create returns the value a new burst starts with
+     * @param send sends a burst that is due, with the value its changes accumulated
+     * @param now returns the current time in milliseconds on a clock that never goes back
+     * @param delay returns a promise that resolves after the given number of milliseconds
+     */
+    constructor(
+        protected readonly debounceMs: number,
+        protected readonly maxDelayMs: number,
+        protected readonly create: () => T,
+        protected readonly send: (value: T) => void,
+        protected readonly now: () => number,
+        protected readonly delay: (ms: number) => Promise<void>
+    ) {
+    }
+
+    /**
+     * Adds a change to the pending burst, or starts a burst with it.
+     * @param apply adds the change to the burst's value
+     */
+    add(apply: (value: T) => void) {
+        const now = this.now();
+        if (this.pending) {
+            this.pending.last = now;
+            apply(this.pending.value);
+            return;
+        }
+        this.pending = { first: now, last: now, value: this.create() };
+        apply(this.pending.value);
+        this.sendWhenDueAsync(this.pending);
+    }
+
+    /** Drops the pending burst, if any, without sending it. */
+    drop() {
+        this.pending = undefined;
+    }
+
+    /**
+     * Waits until `pending` is due, then sends it; returns without sending
+     * once `pending` is no longer the pending burst.
+     */
+    protected async sendWhenDueAsync(pending: { first: number, last: number, value: T }) {
+        for (;;) {
+            const wait = Math.min(pending.last + this.debounceMs, pending.first + this.maxDelayMs) - this.now();
+            if (wait <= 0) break;
+            await this.delay(wait);
+            if (this.pending !== pending) return;
+        }
+        this.pending = undefined;
+        this.send(pending.value);
+    }
+}
+
+/**
  * The open project as the simulator extension hosts read it: the project the
  * editor has loaded, until it closes. A closed project reads as no project
  * until the editor loads another, which is always a new object.

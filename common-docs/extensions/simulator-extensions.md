@@ -159,7 +159,13 @@ The limits are defined in `webapp/src/projfsHost.ts`:
 
 ### Ordering
 
-The editor keeps one queue per folder: it applies a folder's requests one at a time, in the order they arrive, and sends their replies in that order. A request applies to the project open when it arrived, once that project has loaded.
+The editor keeps one queue per folder: it applies a folder's requests one at a time, in the order they arrive, and sends their replies in that order. A request applies to the project open when it arrived, once that project has loaded. Subscribe requests are not queued: the editor answers one without waiting for the requests before it.
+
+### Subscribing
+
+`{ type: "projfs", id, subtype: "subscribe" }` subscribes the requesting frame to changes in its folder and is answered with `{ type: "projfs", id, subtype: "ack" }`. The editor then posts `{ type: "projfs", subtype: "changed", names }` to the frame when files in the folder change: their content, whether they exist, or whether `pxt.json` lists them. `names` holds the names of the files that changed since the last notification, or since the subscription, each once, in the order they first changed, relative to the folder as `list` returns them; a `list` or `read` after it shows the changes. Several changes in quick succession lead to one notification, posted `PROJFS_NOTIFY_DEBOUNCE_MS` (250 milliseconds) after the last change, and no later than `PROJFS_NOTIFY_MAX_DELAY_MS` (2 seconds) after the first, so changes that keep coming are still notified, about every 2 seconds; both are defined in `webapp/src/projfsHost.ts`. The extension's own writes and deletes are notified like any other change.
+
+A frame holds at most one subscription: subscribing again from the same frame is acknowledged and changes nothing, and each frame of an extension subscribes for itself. Subscribe requests are not limited. A subscription ends, without notice, when the project closes or reloads. The editor then removes the extension's frames, whose pages hear `pagehide`, and creates new ones as the next load needs them, so a page subscribes once.
 
 ### Error codes
 

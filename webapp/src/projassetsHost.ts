@@ -21,6 +21,7 @@ import {
     caughtErrorReply,
     getSimxRepository,
     loadedOpenProjectAsync,
+    NotificationBurst,
     openProjectOrThrow,
     requestId,
     SimxReplyBody,
@@ -316,8 +317,8 @@ export class ProjassetsHost {
     // its asset project, configuration, and name and visual configuration as
     // last seen, serialized; undefined while there is none
     protected watched: { open: ProjassetsOpenProject, assets: pxt.TilemapProject, config: ProjassetsConfig, seen: string } | undefined;
-    // the notification waiting to be sent; undefined while none is
-    protected pending: PendingNotification | undefined;
+    // merges changes into notifications, each burst recording whether any of its changes was to the project's assets
+    protected readonly burst: NotificationBurst<{ assetsChanged: boolean }>;
     // per repository: the list requests received from it, each until it has been answered
     protected readonly queue = new pxt.Util.PromiseQueue();
     // per repository: admits each list request under the rate limit
@@ -339,6 +340,8 @@ export class ProjassetsHost {
         protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
         this.lists = new SlidingWindowAdmission(PROJASSETS_LIST_RATE_LIMIT, PROJASSETS_LIST_RATE_WINDOW_MS, now, delay);
+        this.burst = new NotificationBurst(PROJASSETS_NOTIFY_DEBOUNCE_MS, PROJASSETS_NOTIFY_MAX_DELAY_MS,
+            () => ({ assetsChanged: false }), burst => this.notifySubscribers(burst.assetsChanged), now, delay);
     }
 
     /**
@@ -453,7 +456,7 @@ export class ProjassetsHost {
         this.watched?.config.removeChangeListener(this.onConfigChange);
         this.watched = undefined;
         this.subscribers = [];
-        this.pending = undefined;
+        this.burst.drop();
     }
 
     protected onProjectChange = () => {
@@ -469,30 +472,9 @@ export class ProjassetsHost {
      * @param assetsChanged true for a change to the project's assets
      */
     protected scheduleNotification(assetsChanged: boolean) {
-        const now = this.now();
-        if (this.pending) {
-            this.pending.last = now;
-            if (assetsChanged) this.pending.assetsChanged = true;
-            return;
-        }
-        this.pending = { first: now, last: now, assetsChanged };
-        this.notifyWhenDueAsync(this.pending);
-    }
-
-    /**
-     * Waits until `pending` is due, then notifies the subscribers of it;
-     * returns without notifying once `pending` is no longer the pending
-     * notification.
-     */
-    protected async notifyWhenDueAsync(pending: PendingNotification) {
-        for (;;) {
-            const wait = Math.min(pending.last + PROJASSETS_NOTIFY_DEBOUNCE_MS, pending.first + PROJASSETS_NOTIFY_MAX_DELAY_MS) - this.now();
-            if (wait <= 0) break;
-            await this.delay(wait);
-            if (this.pending !== pending) return;
-        }
-        this.pending = undefined;
-        this.notifySubscribers(pending.assetsChanged);
+        this.burst.add(burst => {
+            if (assetsChanged) burst.assetsChanged = true;
+        });
     }
 
     /**
@@ -524,16 +506,6 @@ export class ProjassetsHost {
         this.subscribers = this.subscribers.filter(s => s.frame.isConnected);
         for (const subscriber of this.subscribers) subscriber.reply(notification);
     }
-}
-
-/** A burst of changes subscribers are to be notified of. */
-interface PendingNotification {
-    /** When the burst's first change was made, in milliseconds on the host's clock. */
-    first: number;
-    /** When the burst's latest change was made, in milliseconds on the host's clock. */
-    last: number;
-    /** True if any change of the burst was to the project's assets. */
-    assetsChanged: boolean;
 }
 
 /** Returns the name and visual configuration of `config` as they are now, serialized for comparison. */

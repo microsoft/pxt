@@ -296,6 +296,24 @@ describe("simulator driver projfs messages", () => {
         chai.expect(deliveries[0].msg).deep.equals(request);
     });
 
+    it("passes the requesting frame, and posts its replies and notifications to that frame only, at the origin it was created with", () => {
+        let reply: (msg: pxsim.SimulatorMessage) => void;
+        let requester: HTMLIFrameElement;
+        driver.options.onProjfsMessage = (key, msg, r, frame) => {
+            reply = r;
+            requester = frame;
+        };
+        receive({ type: "projfs", id: "1", subtype: "subscribe" } as pxsim.SimulatorMessage, simxFrame.contentWindow);
+        chai.expect(requester).equals(simxFrame as unknown as HTMLIFrameElement);
+        const ack = { type: "projfs", id: "1", subtype: "ack" } as pxsim.SimulatorMessage;
+        const changed = { type: "projfs", subtype: "changed", names: ["a.txt"] } as pxsim.SimulatorMessage;
+        reply(ack);
+        reply(changed);
+        const origin = simxFrame.dataset["origin"];
+        chai.expect(simxFrame.contentWindow.posts).deep.equals([{ msg: ack, targetOrigin: origin }, { msg: changed, targetOrigin: origin }]);
+        chai.expect(relayed()).equals(false);
+    });
+
     it("takes the key from the frame, not the message", () => {
         receive({ ...request, channel: "otherorg/pxt-other" } as pxsim.SimulatorMessage, simxFrame.contentWindow);
         chai.expect(deliveries.map(d => d.key)).deep.equals(["someorg/pxt-ext"]);

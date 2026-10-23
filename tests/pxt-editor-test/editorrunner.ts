@@ -61,9 +61,12 @@ import {
     PROJFS_MAX_NAME_LENGTH,
     PROJFS_MAX_NAME_SEGMENTS,
     PROJFS_MAX_PENDING_REQUESTS,
+    PROJFS_NOTIFY_DEBOUNCE_MS,
+    PROJFS_NOTIFY_MAX_DELAY_MS,
     PROJFS_RATE_LIMIT,
     PROJFS_RATE_WINDOW_MS,
     ProjfsEditor,
+    ProjfsFrame,
     ProjfsHost,
     ProjfsPackage,
     ProjfsPackageFile,
@@ -83,6 +86,7 @@ import {
     ProjfsErrorCode,
     ProjfsErrorReply,
     ProjfsFilesReply,
+    ProjfsNotification,
     ProjfsReply,
     ProjfsRequest,
 } from "../../pxtservices/projfs";
@@ -946,6 +950,13 @@ describe("projfs host", () => {
         // when set, each write waits for it before storing
         writeGate: Promise<void> | undefined;
 
+        /** Holds every write until the returned function is called. */
+        holdWrites(): () => void {
+            let release!: () => void;
+            this.writeGate = new Promise<void>(resolve => release = resolve);
+            return release;
+        }
+
         constructor(public files: pxt.Map<string>) {
         }
 
@@ -957,16 +968,20 @@ describe("projfs host", () => {
             return { ...this.files };
         }
 
+        // like the editor package: a new file is stored and reported, and an existing
+        // one is reported only when its content changes
         async writeFileAsync(name: string, content: string) {
             if (this.failWrites) throw new Error("disk full");
             await this.writeGate;
             this.calls.push(`write ${name}`);
-            this.files[name] = content;
+            this.storeContent(name, content);
         }
 
+        // like the editor package: the removal is reported, then the pxt.json change
         async deleteFileAsync(name: string) {
             this.calls.push(`delete ${name}`);
             delete this.files[name];
+            this.notify(name);
             this.updateListing(name, false);
         }
 
@@ -982,7 +997,48 @@ describe("projfs host", () => {
             if (!Array.isArray(config?.files)) return;
             config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
             if (!listed && config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
-            this.files[pxt.CONFIG_NAME] = JSON.stringify(config);
+            this.storeContent(pxt.CONFIG_NAME, JSON.stringify(config));
+        }
+
+        private storeContent(name: string, content: string) {
+            const changes = !Object.prototype.hasOwnProperty.call(this.files, name) || this.files[name] !== content;
+            this.files[name] = content;
+            if (changes) this.notify(name);
+        }
+
+        changeListeners = new Set<(name: string | undefined) => void>();
+
+        addChangeListener(listener: (name: string | undefined) => void) {
+            this.changeListeners.add(listener);
+        }
+
+        removeChangeListener(listener: (name: string | undefined) => void) {
+            this.changeListeners.delete(listener);
+        }
+
+        private notify(name: string | undefined) {
+            this.changeListeners.forEach(listener => listener(name));
+        }
+
+        /** Saves `content` to the file `name` as the editor package's setContentAsync does for a user's edit: a new file is listed first. */
+        save(name: string, content: string) {
+            if (!Object.prototype.hasOwnProperty.call(this.files, name)) {
+                this.files[name] = "";
+                if (name !== pxt.CONFIG_NAME) this.updateListing(name, true);
+            }
+            this.storeContent(name, content);
+        }
+
+        /** Stores a file as the editor package's setFile does, leaving pxt.json unchanged. */
+        setFile(name: string, content: string) {
+            this.files[name] = content;
+            this.notify(name);
+        }
+
+        /** Replaces every file as the editor package's setFiles does. */
+        setFiles(files: pxt.Map<string>) {
+            this.files = { ...files };
+            this.notify(undefined);
         }
 
         dirtied: { name: string, content: string | undefined, stored: string | undefined }[] = [];
@@ -1010,7 +1066,7 @@ describe("projfs host", () => {
 
     // sends a request without waiting for its reply, which lands in `replies`
     function post(msg: any, replies: ProjfsReply[], key = FOLDER): Promise<void> {
-        return host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r));
+        return host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r as ProjfsReply), testFrame());
     }
 
     function newProject(files: pxt.Map<string> = {}) {
@@ -1025,7 +1081,7 @@ describe("projfs host", () => {
 
     async function send(msg: any, key = FOLDER): Promise<ProjfsReply> {
         const replies: ProjfsReply[] = [];
-        await host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r));
+        await host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r as ProjfsReply), testFrame());
         chai.expect(replies.length).equals(1);
         return replies[0];
     }
@@ -1051,7 +1107,7 @@ describe("projfs host", () => {
 
     it("replies with the request's id", async () => {
         const replies: ProjfsReply[] = [];
-        await host.handleMessageAsync(FOLDER, { type: "projfs", id: "abc", subtype: "list" }, r => replies.push(r));
+        await host.handleMessageAsync(FOLDER, { type: "projfs", id: "abc", subtype: "list" }, r => replies.push(r as ProjfsReply), testFrame());
         chai.expect(replies[0].type).equals("projfs");
         chai.expect(replies[0].id).equals("abc");
     });
@@ -1182,6 +1238,340 @@ describe("projfs host", () => {
         const touched = project.calls.map(c => c.split(" ")[1]);
         chai.expect(touched.every(name => name.startsWith(FOLDER + "/"))).equals(true);
         chai.expect(project.listed()).deep.equals([pxt.MAIN_TS, "owner/repo/b/c.txt"]);
+    });
+
+    describe("subscriptions", () => {
+        /** Subscribes `frame` of `key` and returns what it receives from then on, the subscription's ack checked and cleared. */
+        async function subscribe(key = FOLDER, frame: ProjfsFrame = testFrame()): Promise<(ProjfsReply | ProjfsNotification)[]> {
+            const received: (ProjfsReply | ProjfsNotification)[] = [];
+            await host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, subtype: "subscribe" }, r => received.push(r), frame);
+            chai.expect(received.map(r => r.subtype)).deep.equals(["ack"]);
+            received.length = 0;
+            return received;
+        }
+
+        function changed(...names: string[]): ProjfsNotification {
+            return { type: "projfs", subtype: "changed", names };
+        }
+
+        /** Advances the clock to the end of the notification window of a change made now, sending the notification it holds. */
+        function passNotifyWindow(): Promise<void> {
+            return advance(PROJFS_NOTIFY_DEBOUNCE_MS);
+        }
+
+        /** Returns a pxt.json listing `names` as well as main.ts. */
+        function pxtJson(...names: string[]): string {
+            return JSON.stringify({ name: "test", files: [pxt.MAIN_TS, ...names] });
+        }
+
+        /** A host whose subscribers a test can count. */
+        class CountingHost extends ProjfsHost {
+            subscriberCount() {
+                return this.subscribers.length;
+            }
+        }
+
+        it("acknowledges a subscription with the request's id, and a second one from the same frame changes nothing", async () => {
+            const frame = testFrame();
+            const received: (ProjfsReply | ProjfsNotification)[] = [];
+            await host.handleMessageAsync(FOLDER, { type: "projfs", id: "s1", subtype: "subscribe" }, r => received.push(r), frame);
+            await host.handleMessageAsync(FOLDER, { type: "projfs", id: "s2", subtype: "subscribe" }, r => received.push(r), frame);
+            chai.expect(received).deep.equals([
+                { type: "projfs", id: "s1", subtype: "ack" },
+                { type: "projfs", id: "s2", subtype: "ack" },
+            ]);
+            received.length = 0;
+            project.save("owner/repo/listed.txt", "edited");
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt")]);
+        });
+
+        it("notifies the extension's own writes by their names relative to the folder", async () => {
+            const received = await subscribe();
+            await send({ subtype: "write", name: "listed.txt", content: "bye" });
+            await send({ subtype: "write", name: "notes/today.txt", content: "hi" });
+            chai.expect(received).deep.equals([]);
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt", "notes/today.txt")]);
+        });
+
+        it("notifies the extension's own delete", async () => {
+            const received = await subscribe();
+            await send({ subtype: "delete", name: "listed.txt" });
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt")]);
+        });
+
+        it("notifies a user's save through the editor package", async () => {
+            const received = await subscribe();
+            project.save("owner/repo/listed.txt", "edited in the text editor");
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt")]);
+        });
+
+        it("notifies nothing for a save that leaves a file's content as it was", async () => {
+            const received = await subscribe();
+            project.save("owner/repo/listed.txt", "hello");
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([]);
+        });
+
+        it("notifies a delete through the editor package", async () => {
+            const received = await subscribe();
+            await project.deleteFileAsync("owner/repo/listed.txt");
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt")]);
+        });
+
+        it("notifies a file the editor package stores", async () => {
+            const received = await subscribe();
+            project.setFile("owner/repo/new.txt", "new");
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("new.txt")]);
+        });
+
+        it("notifies a change to a file's listing in pxt.json", async () => {
+            project = newProject({ "owner/repo/unlisted.txt": "secret" });
+            const received = await subscribe();
+            project.save(pxt.CONFIG_NAME, pxtJson("owner/repo/listed.txt", "owner/repo/unlisted.txt"));
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("unlisted.txt")]);
+            await project.setListedAsync("owner/repo/listed.txt", false);
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("unlisted.txt"), changed("listed.txt")]);
+        });
+
+        it("notifies nothing for changes outside the folder", async () => {
+            const received = await subscribe();
+            project.save(pxt.MAIN_TS, "let y = 2");
+            project.setFile("owner/repo2/sibling.txt", "sibling");
+            project.setFile("other/repo/theirs.txt", "theirs");
+            project.save(pxt.CONFIG_NAME, pxtJson("owner/repo/listed.txt", "other/repo/theirs.txt"));
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([]);
+        });
+
+        it("notifies the names a replacement of every file adds, removes and changes", async () => {
+            project = newProject({
+                [pxt.CONFIG_NAME]: pxtJson("owner/repo/listed.txt", "owner/repo/kept.txt", "owner/repo/dropped.txt"),
+                "owner/repo/kept.txt": "kept",
+                "owner/repo/unlisted.txt": "secret",
+                "owner/repo/dropped.txt": "dropped",
+            });
+            const received = await subscribe();
+            project.setFiles({
+                [pxt.CONFIG_NAME]: pxtJson("owner/repo/listed.txt", "owner/repo/kept.txt", "owner/repo/unlisted.txt", "owner/repo/added.txt"),
+                [pxt.MAIN_TS]: "let x = 2",
+                "owner/repo/listed.txt": "pulled",
+                "owner/repo/kept.txt": "kept",
+                "owner/repo/unlisted.txt": "secret",
+                "owner/repo/added.txt": "added",
+            });
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt", "unlisted.txt", "dropped.txt", "added.txt")]);
+        });
+
+        it("notifies nothing for a replacement of every file that leaves the folder as it was", async () => {
+            const received = await subscribe();
+            project.setFiles({ ...project.files, [pxt.MAIN_TS]: "let x = 2" });
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([]);
+        });
+
+        it("compares a replacement with the folder as last notified", async () => {
+            const received = await subscribe();
+            project.save("owner/repo/listed.txt", "edited");
+            await passNotifyWindow();
+            project.setFiles({ ...project.files, "owner/repo/listed.txt": "edited" });
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt")]);
+        });
+
+        it("notifies a burst of changes once, each name once, in first-change order, the reported names before the compared ones", async () => {
+            const received = await subscribe();
+            project.save("owner/repo/b.txt", "b");
+            project.save("owner/repo/a.txt", "a");
+            project.save("owner/repo/b.txt", "b2");
+            await send({ subtype: "write", name: "a.txt", content: "a2" });
+            project.setFiles({ ...project.files, "owner/repo/z.txt": "z" });
+            chai.expect(received).deep.equals([]);
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("b.txt", "a.txt", "z.txt")]);
+            await advance(PROJFS_NOTIFY_MAX_DELAY_MS);
+            chai.expect(received.length).equals(1);
+        });
+
+        it(`notifies once, ${PROJFS_NOTIFY_DEBOUNCE_MS} ms after the last change of a burst within the window`, async () => {
+            const received = await subscribe();
+            project.save("owner/repo/a.txt", "a");
+            await advance(PROJFS_NOTIFY_DEBOUNCE_MS - 1);
+            chai.expect(received).deep.equals([]);
+            project.save("owner/repo/b.txt", "b");
+            await advance(PROJFS_NOTIFY_DEBOUNCE_MS - 1);
+            chai.expect(received).deep.equals([]);
+            await advance(1);
+            chai.expect(received).deep.equals([changed("a.txt", "b.txt")]);
+            await advance(PROJFS_NOTIFY_MAX_DELAY_MS);
+            chai.expect(received).deep.equals([changed("a.txt", "b.txt")]);
+        });
+
+        it(`notifies a stream of changes longer than ${PROJFS_NOTIFY_MAX_DELAY_MS} ms once at that delay, and once after the stream ends`, async () => {
+            const received = await subscribe();
+            const step = PROJFS_NOTIFY_DEBOUNCE_MS / 2;
+            let count = 0;
+            const change = () => project.save("owner/repo/stream.txt", `${count++}`);
+            change();
+            let elapsed = 0;
+            while (elapsed + step < PROJFS_NOTIFY_MAX_DELAY_MS) {
+                await advance(step);
+                elapsed += step;
+                change();
+                chai.expect(received).deep.equals([]);
+            }
+            await advance(PROJFS_NOTIFY_MAX_DELAY_MS - elapsed - 1);
+            chai.expect(received).deep.equals([]);
+            await advance(1);
+            chai.expect(received).deep.equals([changed("stream.txt")]);
+            for (let i = 0; i < 4; i++) {
+                change();
+                await advance(step);
+            }
+            chai.expect(received).deep.equals([changed("stream.txt")]);
+            await advance(PROJFS_NOTIFY_DEBOUNCE_MS - step - 1);
+            chai.expect(received).deep.equals([changed("stream.txt")]);
+            await advance(1);
+            chai.expect(received).deep.equals([changed("stream.txt"), changed("stream.txt")]);
+        });
+
+        it("notifies each folder's subscribers of that folder's changes only", async () => {
+            project = newProject({ [pxt.CONFIG_NAME]: pxtJson("owner/repo/listed.txt", "other/repo/theirs.txt"), "other/repo/theirs.txt": "theirs" });
+            const mine = await subscribe("owner/repo");
+            const theirs = await subscribe("other/repo");
+            project.save("owner/repo/listed.txt", "edited");
+            await passNotifyWindow();
+            chai.expect(mine).deep.equals([changed("listed.txt")]);
+            chai.expect(theirs).deep.equals([]);
+            await send({ subtype: "delete", name: "theirs.txt" }, "other/repo");
+            await passNotifyWindow();
+            chai.expect(mine).deep.equals([changed("listed.txt")]);
+            chai.expect(theirs).deep.equals([changed("theirs.txt")]);
+        });
+
+        it("notifies each subscribed frame of the folder, whichever registration of the repository it was created for", async () => {
+            const simulatorFrame = await subscribe("owner/repo");
+            const tabFrame = await subscribe("owner/repo");
+            const subfolderFrame = await subscribe("Owner/Repo/sub");
+            project.save("owner/repo/listed.txt", "edited");
+            await passNotifyWindow();
+            for (const received of [simulatorFrame, tabFrame, subfolderFrame])
+                chai.expect(received).deep.equals([changed("listed.txt")]);
+        });
+
+        it("answers a subscription without queueing it behind the folder's requests", async () => {
+            const release = project.holdWrites();
+            const replies: ProjfsReply[] = [];
+            const writing = post({ subtype: "write", name: "a.txt", content: "a" }, replies);
+            const received = await subscribe();
+            chai.expect(replies).deep.equals([]);
+            release();
+            await writing;
+            chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("a.txt")]);
+        });
+
+        it("refuses a subscription from a key naming no repository, or while no project is open", async () => {
+            await expectError({ subtype: "subscribe" }, "UNREGISTERED", "not a repository");
+            host = new ProjfsHost(() => undefined, clock.now, clock.delay);
+            await expectError({ subtype: "subscribe" }, "PROJECT_CLOSED");
+        });
+
+        it("drops a subscriber whose frame has been removed when it next notifies", async () => {
+            const counting = new CountingHost(() => project, clock.now, clock.delay);
+            host = counting;
+            const removedFrame = testFrame();
+            const removed = await subscribe(FOLDER, removedFrame);
+            const kept = await subscribe();
+            removedFrame.isConnected = false;
+            project.save("owner/repo/listed.txt", "edited");
+            await passNotifyWindow();
+            chai.expect(removed).deep.equals([]);
+            chai.expect(kept).deep.equals([changed("listed.txt")]);
+            chai.expect(counting.subscriberCount()).equals(1);
+        });
+
+        it("drops subscribers whose frames have been removed when another frame subscribes", async () => {
+            const counting = new CountingHost(() => project, clock.now, clock.delay);
+            host = counting;
+            const removedFrames = [testFrame(), testFrame()];
+            for (const frame of removedFrames) await subscribe(FOLDER, frame);
+            removedFrames.forEach(frame => frame.isConnected = false);
+            await subscribe();
+            chai.expect(counting.subscriberCount()).equals(1);
+        });
+
+        it("listens to a project once, however many frames subscribe", async () => {
+            await subscribe("owner/repo");
+            await subscribe("other/repo");
+            await subscribe("owner/repo");
+            chai.expect(project.changeListeners.size).equals(1);
+        });
+
+        it("drops a pending notification when the project closes, lets go of the project, and ends its subscriptions", async () => {
+            const first = project;
+            const received = await subscribe();
+            first.save("owner/repo/listed.txt", "edited");
+            host.close();
+            chai.expect(first.changeListeners.size).equals(0);
+            project = newProject();
+            const next = await subscribe();
+            await advance(PROJFS_NOTIFY_MAX_DELAY_MS);
+            chai.expect(received).deep.equals([]);
+            chai.expect(next).deep.equals([]);
+            first.save("owner/repo/listed.txt", "edited again");
+            await advance(PROJFS_NOTIFY_MAX_DELAY_MS);
+            chai.expect(received).deep.equals([]);
+        });
+
+        it("ends a subscription when its project closes, and stops listening to it", async () => {
+            const first = project;
+            const received = await subscribe();
+            project = newProject();
+            first.save("owner/repo/listed.txt", "late");
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([]);
+            chai.expect(first.changeListeners.size).equals(0);
+        });
+
+        it("follows the project a new subscription is made in", async () => {
+            const first = project;
+            const old = await subscribe();
+            project = newProject();
+            const current = await subscribe();
+            chai.expect(first.changeListeners.size).equals(0);
+            chai.expect(project.changeListeners.size).equals(1);
+            project.save("owner/repo/listed.txt", "edited");
+            await passNotifyWindow();
+            chai.expect(old).deep.equals([]);
+            chai.expect(current).deep.equals([changed("listed.txt")]);
+        });
+
+        it("ends its subscriptions, and lets nothing escape, when the files cannot be read for a notification", async () => {
+            const received = await subscribe();
+            project.save("owner/repo/listed.txt", "edited");
+            project.getFiles = () => { throw new Error("files unavailable"); };
+            const reported: unknown[] = [];
+            const report = pxt.reportException;
+            pxt.reportException = e => { reported.push(e); };
+            try {
+                await passNotifyWindow();
+            } finally {
+                pxt.reportException = report;
+            }
+            chai.expect(reported.length).equals(1);
+            chai.expect(project.changeListeners.size).equals(0);
+            chai.expect(received).deep.equals([]);
+        });
     });
 
     describe("quota", () => {
@@ -1566,8 +1956,7 @@ describe("projfs host", () => {
 
         it("completes a request that began applying in its project, and refuses the requests queued behind it", async () => {
             const first = project;
-            let release: () => void;
-            first.writeGate = new Promise<void>(resolve => release = resolve);
+            const release = first.holdWrites();
             const replies: ProjfsReply[] = [];
             const applying = post({ subtype: "write", name: "a.txt", content: "a" }, replies);
             const queued = post({ subtype: "write", name: "b.txt", content: "b" }, replies);
@@ -1583,8 +1972,7 @@ describe("projfs host", () => {
         });
 
         it("treats a reopened project as another project", async () => {
-            let release: () => void;
-            project.writeGate = new Promise<void>(resolve => release = resolve);
+            const release = project.holdWrites();
             const replies: ProjfsReply[] = [];
             const applying = post({ subtype: "write", name: "a.txt", content: "a" }, replies);
             const queued = post({ subtype: "write", name: "b.txt", content: "b" }, replies);
@@ -1628,8 +2016,7 @@ describe("projfs host", () => {
 
     it("applies requests one at a time, in order, so a request on another folder waits for the one applying", async () => {
         project = newProject({ "other/repo/old.txt": "old" });
-        let release: () => void;
-        project.writeGate = new Promise<void>(resolve => release = resolve);
+        const release = project.holdWrites();
         const replies: ProjfsReply[] = [];
         const written = post({ subtype: "write", name: "a.txt", content: "a" }, replies);
         const deleted = post({ subtype: "delete", name: "old.txt" }, replies, "other/repo");
@@ -1675,7 +2062,7 @@ describe("projfs host", () => {
         await expectError({ subtype: "rename", name: "a.txt" }, "INVALID_REQUEST");
         await expectError({ subtype: "write", name: "a.txt", content: 42 }, "INVALID_REQUEST");
         const replies: ProjfsReply[] = [];
-        await host.handleMessageAsync(FOLDER, "not a request", r => replies.push(r));
+        await host.handleMessageAsync(FOLDER, "not a request", r => replies.push(r as ProjfsReply), testFrame());
         chai.expect((replies[0] as ProjfsErrorReply).code).equals("INVALID_REQUEST");
     });
 
@@ -1738,10 +2125,10 @@ describe("projfs host", () => {
 
         it("applies flagged and unflagged changes one at a time, in order", async () => {
             const replies: ProjfsReply[] = [];
-            const collect = (r: ProjfsReply) => replies.push(r);
-            host.handleMessageAsync(FOLDER, { type: "projfs", id: "1", subtype: "write", name: "a.ts", content: "1", dirty: true }, collect);
-            host.handleMessageAsync(FOLDER, { type: "projfs", id: "2", subtype: "write", name: "b.txt", content: "2" }, collect);
-            await host.handleMessageAsync(FOLDER, { type: "projfs", id: "3", subtype: "write", name: "a.ts", content: "3", dirty: true }, collect);
+            const collect = (r: ProjfsReply | ProjfsNotification) => replies.push(r as ProjfsReply);
+            host.handleMessageAsync(FOLDER, { type: "projfs", id: "1", subtype: "write", name: "a.ts", content: "1", dirty: true }, collect, testFrame());
+            host.handleMessageAsync(FOLDER, { type: "projfs", id: "2", subtype: "write", name: "b.txt", content: "2" }, collect, testFrame());
+            await host.handleMessageAsync(FOLDER, { type: "projfs", id: "3", subtype: "write", name: "a.ts", content: "3", dirty: true }, collect, testFrame());
             chai.expect(replies.map(r => r.id)).deep.equals(["1", "2", "3"]);
             chai.expect(project.calls).deep.equals([
                 "write owner/repo/a.ts", "list owner/repo/a.ts", "dirty owner/repo/a.ts",
@@ -1766,6 +2153,8 @@ describe("projfs host", () => {
                 writeFileAsync: async (name, content) => { files[name] = content; },
                 deleteFileAsync: async name => { delete files[name]; },
                 setListedAsync: async () => { },
+                addChangeListener: () => { },
+                removeChangeListener: () => { },
             };
             host = new ProjfsHost(() => withoutEditor, clock.now, clock.delay);
             chai.expect((await send({ subtype: "write", name: "a.ts", content: "x", dirty: true })).subtype).equals("ack");
@@ -1813,6 +2202,8 @@ describe("projfs host", () => {
                 },
                 setListedAsync,
                 loadedAsync: () => loaded.promise,
+                addChangeListener: () => { },
+                removeChangeListener: () => { },
             };
             return {
                 finish: () => {
@@ -1989,11 +2380,13 @@ describe("projfs user edits", () => {
             deleteFileAsync: async name => { delete files[name]; },
             setListedAsync: async () => { },
             markDirty: (name, content) => applyUserEdit(editor, name, content),
+            addChangeListener: () => { },
+            removeChangeListener: () => { },
         };
         const host = new ProjfsHost(() => project);
         const writes: Promise<void>[] = [];
         for (let i = 0; i < 5; i++)
-            writes.push(host.handleMessageAsync("owner/repo", { type: "projfs", id: "" + i, subtype: "write", name: `b${i}.ts`, content: "x", dirty: true }, () => { }));
+            writes.push(host.handleMessageAsync("owner/repo", { type: "projfs", id: "" + i, subtype: "write", name: `b${i}.ts`, content: "x", dirty: true }, () => { }, testFrame()));
         await Promise.all(writes);
         chai.expect(editor.calls.filter(c => c === "sim dirty").length).equals(5);
         chai.expect(editor.calls.filter(c => c === "typecheck").length).equals(5);
@@ -2202,6 +2595,87 @@ describe("projfs client", () => {
         chai.expect(await read).equals("real");
     });
 
+    function changed(...names: string[]): ProjfsNotification {
+        return { type: "projfs", subtype: "changed", names };
+    }
+
+    it("subscribes once the editor acknowledges, then calls the listener with each notification's names", async () => {
+        const seen: string[][] = [];
+        const subscribed = client.subscribe(names => seen.push(names));
+        chai.expect(lastRequest()).deep.include({ type: "projfs", subtype: "subscribe" });
+        self.deliver(parent, changed("early.txt"));
+        chai.expect(seen).deep.equals([]);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        self.deliver(parent, changed("a.txt", "b/c.txt"));
+        self.deliver(parent, changed("a.txt"));
+        chai.expect(seen).deep.equals([["a.txt", "b/c.txt"], ["a.txt"]]);
+    });
+
+    it("ignores change notifications from other windows", async () => {
+        const seen: string[][] = [];
+        const subscribed = client.subscribe(names => seen.push(names));
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        self.deliver({}, changed("forged.txt"));
+        self.deliver(parent, { type: "other", subtype: "changed", names: ["other.txt"] });
+        chai.expect(seen).deep.equals([]);
+    });
+
+    it("rejects a refused subscription, never calls its listener, and sends a new request on the next call", async () => {
+        const seen: string[][] = [];
+        const refused = client.subscribe(names => seen.push(names));
+        replyTo(lastRequest(), { subtype: "error", code: "PROJECT_CLOSED", message: "closed" });
+        chai.expect((await refused.then(() => undefined, e => e)).code).equals("PROJECT_CLOSED");
+        self.deliver(parent, changed("a.txt"));
+        chai.expect(seen).deep.equals([]);
+        const subscribed = client.subscribe(names => seen.push(names));
+        chai.expect(parent.requests.map(r => r.subtype)).deep.equals(["subscribe", "subscribe"]);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        self.deliver(parent, changed("b.txt"));
+        chai.expect(seen).deep.equals([["b.txt"]]);
+    });
+
+    it("subscribes once however often subscribe is called, and calls each listener once per notification", async () => {
+        const calls: string[] = [];
+        const first = () => calls.push("first");
+        const second = () => calls.push("second");
+        const subscribed = [client.subscribe(first), client.subscribe(second)];
+        chai.expect(parent.requests.length).equals(1);
+        replyTo(lastRequest(), { subtype: "ack" });
+        await Promise.all(subscribed);
+        await client.subscribe(first);
+        chai.expect(parent.requests.length).equals(1);
+        self.deliver(parent, changed("a.txt"));
+        chai.expect(calls).deep.equals(["first", "second"]);
+    });
+
+    it("fails a subscribe after dispose with DISPOSED, without posting it, even once a subscription was acknowledged", async () => {
+        const subscribed = client.subscribe(() => { });
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        client.dispose();
+        const seen: string[][] = [];
+        const error = await client.subscribe(names => seen.push(names)).then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjfsError);
+        chai.expect(error.code).equals("DISPOSED");
+        chai.expect(parent.requests.map(r => r.subtype)).deep.equals(["subscribe"]);
+        self.deliver(parent, changed("a.txt"));
+        chai.expect(seen).deep.equals([]);
+    });
+
+    it("stops calling listeners once disposed", async () => {
+        const seen: string[][] = [];
+        const subscribed = client.subscribe(names => seen.push(names));
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        client.dispose();
+        chai.expect(self.listeners).deep.equals([]);
+        self.deliver(parent, changed("a.txt"));
+        chai.expect(seen).deep.equals([]);
+    });
+
     it("reads the frame's key from the frame URL, unless given one", () => {
         chai.expect(getSimxChannel(undefined, "?parentOrigin=http%3A%2F%2Flocalhost%3A3232&channel=owner%2Frepo&language=en")).equals("owner/repo");
         chai.expect(getSimxChannel("owner/known", "?channel=owner%2Frepo")).equals("owner/known");
@@ -2332,24 +2806,34 @@ describe("projfs client", () => {
             [pxt.CONFIG_NAME]: JSON.stringify({ files: [pxt.MAIN_TS] }),
             [pxt.MAIN_TS]: "",
         };
+        let listeners: ((name: string | undefined) => void)[] = [];
+        const notify = (name: string) => listeners.forEach(listener => listener(name));
         const project: ProjfsProject = {
             loadedAsync: () => Promise.resolve(),
             getFiles: () => ({ ...files }),
-            writeFileAsync: async (name, content) => { files[name] = content; },
+            writeFileAsync: async (name, content) => {
+                files[name] = content;
+                notify(name);
+            },
             deleteFileAsync: async name => {
                 delete files[name];
+                notify(name);
                 await project.setListedAsync(name, false);
             },
             setListedAsync: async (name, listed) => {
                 const config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
                 config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
                 files[pxt.CONFIG_NAME] = JSON.stringify(config);
+                notify(pxt.CONFIG_NAME);
             },
+            addChangeListener: listener => { listeners.push(listener); },
+            removeChangeListener: listener => { listeners = listeners.filter(l => l !== listener); },
         };
         const host = new ProjfsHost(() => project, clock.now, clock.delay);
-        // the editor posts each reply back to the frame's window
+        const frame = testFrame();
+        // the editor posts each reply and notification back to the frame's window
         parent.postMessage = (msg: ProjfsRequest) => {
-            host.handleMessageAsync("owner/repo", msg, reply => self.deliver(parent, reply));
+            host.handleMessageAsync("owner/repo", msg, reply => self.deliver(parent, reply), frame);
         };
         return files;
     }
@@ -2397,6 +2881,20 @@ describe("projfs client", () => {
         const again = await client.write("notes.txt", "hi");
         await client.delete(again);
         chai.expect(await client.list()).deep.equals([]);
+    });
+
+    it("hears its own writes and deletes through the host, by the names it gave them", async () => {
+        connectToHost();
+        const seen: string[][] = [];
+        await client.subscribe(names => seen.push(names));
+        await client.write("notes.txt", "hi");
+        await client.write("data/level1.json", "{}");
+        chai.expect(seen).deep.equals([]);
+        await clock.advance(PROJFS_NOTIFY_DEBOUNCE_MS);
+        chai.expect(seen).deep.equals([["notes.txt", "data/level1.json"]]);
+        await client.delete("notes.txt");
+        await clock.advance(PROJFS_NOTIFY_DEBOUNCE_MS);
+        chai.expect(seen).deep.equals([["notes.txt", "data/level1.json"], ["notes.txt"]]);
     });
 });
 
@@ -3857,6 +4355,20 @@ describe("projassets client", () => {
         chai.expect(parent.requests.length).equals(1);
         self.deliver(parent, CHANGED);
         chai.expect(calls).deep.equals(["first", "second"]);
+    });
+
+    it("fails a subscribe after dispose with DISPOSED, without posting it, even once a subscription was acknowledged", async () => {
+        const subscribed = client.subscribe(() => { });
+        replyTo(lastRequest(), { subtype: "ack" });
+        await subscribed;
+        client.dispose();
+        let changes = 0;
+        const error = await client.subscribe(() => changes++).then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjassetsError);
+        chai.expect(error.code).equals("DISPOSED");
+        chai.expect(parent.requests.map(r => r.subtype)).deep.equals(["subscribe"]);
+        self.deliver(parent, CHANGED);
+        chai.expect(changes).equals(0);
     });
 
     it("sends a new subscription request after a refused one", async () => {

@@ -3,6 +3,7 @@ import {
     ProjfsDeleteRequest,
     ProjfsErrorCode,
     ProjfsFileInfo,
+    ProjfsNotification,
     ProjfsReply,
     ProjfsRequest,
     ProjfsWriteRequest,
@@ -13,6 +14,7 @@ import {
     errorReply,
     getSimxRepository,
     loadedOpenProjectAsync,
+    NotificationBurst,
     openProjectOrThrow,
     requestId,
     SimxReplyBody,
@@ -52,6 +54,20 @@ export const PROJFS_RATE_WINDOW_MS = 10000;
 export const PROJFS_MAX_PENDING_REQUESTS = 1000;
 
 /**
+ * The time, in milliseconds, after the last change of a burst to a folder at
+ * which the folder's subscribed frames are notified of it, unless
+ * {@link PROJFS_NOTIFY_MAX_DELAY_MS} comes first.
+ */
+export const PROJFS_NOTIFY_DEBOUNCE_MS = 250;
+
+/**
+ * The longest time, in milliseconds, after the first change of a burst to a
+ * folder at which the folder's subscribed frames are notified of it, however
+ * long its changes go on.
+ */
+export const PROJFS_NOTIFY_MAX_DELAY_MS = 2000;
+
+/**
  * The open project, as the projfs host reads and changes it. The host tells
  * projects apart by identity: one object stands for the project from the time
  * it opens until it closes, and reopening a project yields a new object.
@@ -86,6 +102,23 @@ export interface ProjfsProject {
      * @param content the file's new content, or undefined if it was deleted
      */
     markDirty?(name: string, content: string | undefined): void;
+    /**
+     * Adds a listener called on each change to the project's stored files:
+     * with the name of a file stored, removed or given new content, pxt.json
+     * included, and with undefined when every file is replaced at once. The
+     * listener is called synchronously, once the change shows in
+     * {@link getFiles}. A listener that throws is reported with
+     * `pxt.reportException`, and the change and the other listeners proceed.
+     */
+    addChangeListener(listener: (name: string | undefined) => void): void;
+    /** Removes a listener added with addChangeListener. */
+    removeChangeListener(listener: (name: string | undefined) => void): void;
+}
+
+/** A frame that subscribes to change notifications, as the projfs host checks it. */
+export interface ProjfsFrame {
+    /** False once the frame has been removed from the document. */
+    readonly isConnected: boolean;
 }
 
 /** The editor entry points a user edit passes through, as {@link applyUserEdit} uses them. */
@@ -272,6 +305,60 @@ export function getFolderUsage(files: pxt.Map<string>, folder: string): ProjfsFo
     };
 }
 
+/** A stored file under a simulator extension folder, as the projfs host compares it between notifications. */
+interface ProjfsFolderFile {
+    /** True if the "files" list of pxt.json lists the file. */
+    listed: boolean;
+    /** The file's content. */
+    content: string;
+}
+
+/**
+ * Returns the stored files under `folder` whose names requests can address
+ * (see {@link getFolderFileName}), listed or not, keyed by their names
+ * relative to the folder.
+ * @param folder the simulator extension's folder, e.g. `owner/repo`
+ */
+function getFolderFiles(files: pxt.Map<string>, folder: string): pxt.Map<ProjfsFolderFile> {
+    const prefix = folder + "/";
+    const listed = getListedFiles(files);
+    const inFolder: pxt.Map<ProjfsFolderFile> = {};
+    for (const name of Object.keys(files)) {
+        if (!name.startsWith(prefix) || getFolderFileName(folder, name.slice(prefix.length)) !== name) continue;
+        inFolder[name.slice(prefix.length)] = { listed: listed.indexOf(name) >= 0, content: files[name] };
+    }
+    return inFolder;
+}
+
+/**
+ * Returns the names, relative to their folder, of the files that differ
+ * between `before` and `after`: those in only one of them, and those whose
+ * listing or content differs. Names follow `before`'s order, then `after`'s.
+ */
+function getChangedFolderFiles(before: pxt.Map<ProjfsFolderFile>, after: pxt.Map<ProjfsFolderFile>): string[] {
+    const changed = Object.keys(before).filter(name => {
+        const now = after[name];
+        return !now || now.listed !== before[name].listed || now.content !== before[name].content;
+    });
+    return changed.concat(Object.keys(after).filter(name => !Object.prototype.hasOwnProperty.call(before, name)));
+}
+
+/** The changes to one folder that its subscribers are to be notified of. */
+interface ProjfsBurst {
+    /** The names, relative to the folder, the project's change listener reported, each once, in first-change order. */
+    names: string[];
+    /** True if pxt.json changed or every file was replaced, so the folder's files are compared with their last notified state. */
+    compare: boolean;
+}
+
+/** A folder the projfs host compares between notifications to it. */
+interface ProjfsWatchedFolder {
+    /** The folder's stored files as last notified, or as they were when the folder was first subscribed to. */
+    files: pxt.Map<ProjfsFolderFile>;
+    /** Merges the folder's changes into notifications. */
+    burst: NotificationBurst<ProjfsBurst>;
+}
+
 // the queue key of the lane every request applies in, one at a time; never a
 // folder, since every folder holds a "/"
 const APPLY_LANE = "apply";
@@ -285,14 +372,15 @@ const APPLY_LANE = "apply";
  * folder, its quota, its rate limit and its queue.
  *
  * Every request gets one reply, and the replies for one folder are sent in
- * the order its requests arrive. One request applies at a time, and each
- * folder's requests apply in the order they arrive. A folder's writes and
- * deletes beyond {@link PROJFS_RATE_LIMIT} within {@link PROJFS_RATE_WINDOW_MS}
- * wait, with the requests behind them, until the window allows them. A
- * request applies only to the project open when it arrived, once that
- * project has loaded; if that project fails to load, or has closed by the
- * time the request's turn comes, it is refused with `PROJECT_CLOSED`, and a
- * request that has begun applying completes in the project it began in.
+ * the order its requests arrive, a subscribe request's excepted. One request
+ * applies at a time, and each folder's requests apply in the order they
+ * arrive. A folder's writes and deletes beyond {@link PROJFS_RATE_LIMIT}
+ * within {@link PROJFS_RATE_WINDOW_MS} wait, with the requests behind them,
+ * until the window allows them. A request applies only to the project open
+ * when it arrived, once that project has loaded; if that project fails to
+ * load, or has closed by the time the request's turn comes, it is refused
+ * with `PROJECT_CLOSED`, and a request that has begun applying completes in
+ * the project it began in.
  *
  * A request is refused on arrival, without waiting its turn, with
  * `RATE_LIMITED` when {@link PROJFS_MAX_PENDING_REQUESTS} requests on its
@@ -302,6 +390,23 @@ const APPLY_LANE = "apply";
  *
  * Writes and deletes are artifacts unless flagged `dirty`, in which case they
  * also pass through {@link ProjfsProject.markDirty} once applied.
+ *
+ * A subscribe request subscribes the requesting frame to its folder's
+ * changes. It is neither queued nor limited: it is answered once the project
+ * open when it arrived has loaded. A frame holds at most one subscription,
+ * which ends when the project it was made in closes, or when the frame is
+ * removed. The host listens to one project at a time, the one its
+ * subscriptions were made in, and lets go of it when it closes. A folder's
+ * subscribers are told the names, relative to the folder, of the files whose
+ * content, existence or listing in pxt.json changed: the names the project's
+ * change listener reports under the folder, then, after a pxt.json change or
+ * a replacement of every file, the names whose stored state differs from the
+ * one last notified. Changes are merged per folder: subscribers get one
+ * notification for all the changes made before it is sent, sent
+ * {@link PROJFS_NOTIFY_DEBOUNCE_MS} after the last of them, or
+ * {@link PROJFS_NOTIFY_MAX_DELAY_MS} after the first if that is sooner, and
+ * none when the changes leave no name to report. A notification pending when
+ * the project closes is not sent.
  */
 export class ProjfsHost {
     // per folder: the requests received for the folder, each until it has been
@@ -311,6 +416,15 @@ export class ProjfsHost {
     protected readonly mutations: SlidingWindowAdmission;
     // per folder: how many requests have been received and not yet answered
     protected pendingRequests: pxt.Map<number> = {};
+    // the subscribed frames, each once, with its folder and the function that delivers its notifications
+    protected subscribers: { frame: ProjfsFrame, folder: string, reply: (msg: ProjfsNotification) => void }[] = [];
+    // the project every subscription was made in, which the host listens to, with,
+    // per folder subscribed to, its stored files as last notified and the burst
+    // merging its changes; undefined while there is none
+    protected watched: {
+        project: ProjfsProject,
+        folders: pxt.Map<ProjfsWatchedFolder>,
+    } | undefined;
 
     /**
      * @param getProject returns the open project, or undefined if none is open
@@ -320,8 +434,8 @@ export class ProjfsHost {
      */
     constructor(
         protected readonly getProject: () => ProjfsProject | undefined,
-        now: () => number = pxt.Util.monotonicNow,
-        delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
+        protected readonly now: () => number = pxt.Util.monotonicNow,
+        protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
         this.mutations = new SlidingWindowAdmission(PROJFS_RATE_LIMIT, PROJFS_RATE_WINDOW_MS, now, delay);
     }
@@ -330,13 +444,17 @@ export class ProjfsHost {
      * Queues a request from the simulator extension with the given key behind
      * those already received for its folder, binds it to the project open
      * now, waits for that project to load, and sends it one reply once it has
-     * applied or been refused.
+     * applied or been refused. A subscribe request is not queued; it also
+     * subscribes `frame`, whose notifications `reply` delivers, to the
+     * folder's changes until the project closes or the frame is removed, and
+     * subscribing again from the same frame changes nothing.
      * @param key the extension key the requesting frame was created for
      * @param msg the request, as received
-     * @param reply delivers a reply to the requesting frame
+     * @param reply delivers a reply or notification to the requesting frame
+     * @param frame the requesting frame
      * @returns a promise that resolves once the reply is sent
      */
-    handleMessageAsync(key: string, msg: unknown, reply: (msg: ProjfsReply) => void): Promise<void> {
+    handleMessageAsync(key: string, msg: unknown, reply: (msg: ProjfsReply | ProjfsNotification) => void, frame: ProjfsFrame): Promise<void> {
         const request = msg as ProjfsRequest;
         const id = requestId(msg);
 
@@ -345,6 +463,9 @@ export class ProjfsHost {
             reply(errorReply(PROJFS_MESSAGE_TYPE, id, "UNREGISTERED", `${key} names no GitHub repository, so it has no project folder.`));
             return Promise.resolve();
         }
+
+        if (request?.subtype === "subscribe")
+            return this.subscribeAsync(folder, id, reply, frame);
 
         const refusal = this.arrivalRefusal(folder, request);
         if (refusal) {
@@ -468,5 +589,117 @@ export class ProjfsHost {
         if (!inFolder)
             throw new SimxRequestError<ProjfsErrorCode>("INVALID_NAME", `${name} is not a valid relative file name, or is reserved.`);
         return inFolder;
+    }
+
+    /**
+     * Waits for the project open now to load, subscribes `frame` to the
+     * changes of `folder` in it, and sends the request one reply.
+     * @param id the request's id, as {@link requestId} reads it
+     */
+    protected async subscribeAsync(folder: string, id: string | undefined, reply: (msg: ProjfsReply | ProjfsNotification) => void, frame: ProjfsFrame): Promise<void> {
+        let answer: ProjfsReply;
+        try {
+            this.watch(await loadedOpenProjectAsync(this.getProject(), () => this.getProject()));
+            this.watchFolder(folder);
+            this.subscribers = this.subscribers.filter(s => s.frame.isConnected);
+            if (!this.subscribers.some(s => s.frame === frame)) this.subscribers.push({ frame, folder, reply });
+            answer = { type: PROJFS_MESSAGE_TYPE, id, subtype: "ack" };
+        } catch (e) {
+            answer = caughtErrorReply<typeof PROJFS_MESSAGE_TYPE, ProjfsErrorCode>(PROJFS_MESSAGE_TYPE, id, e);
+        }
+        reply(answer);
+    }
+
+    /** Listens to `project` for changes, ending the subscriptions made in any other project. */
+    protected watch(project: ProjfsProject) {
+        if (this.watched?.project === project) return;
+        this.unwatch();
+        project.addChangeListener(this.onFileChange);
+        this.watched = { project, folders: {} };
+    }
+
+    /** Starts comparing the files of `folder` in the watched project with their state as of now, unless it already does. */
+    protected watchFolder(folder: string) {
+        const watched = this.watched;
+        if (!watched || Object.prototype.hasOwnProperty.call(watched.folders, folder)) return;
+        const state: ProjfsWatchedFolder = {
+            files: getFolderFiles(watched.project.getFiles(), folder),
+            burst: new NotificationBurst<ProjfsBurst>(PROJFS_NOTIFY_DEBOUNCE_MS, PROJFS_NOTIFY_MAX_DELAY_MS,
+                () => ({ names: [], compare: false }), burst => this.notifySubscribers(folder, state, burst), this.now, this.delay),
+        };
+        watched.folders[folder] = state;
+    }
+
+    /**
+     * Ends every subscription, stops listening to the project they were made
+     * in, and drops the host's references to it. Call when the open project
+     * closes.
+     */
+    close() {
+        this.unwatch();
+    }
+
+    /** Stops listening for changes, ends every subscription, and drops the pending notifications. */
+    protected unwatch() {
+        if (this.watched) {
+            this.watched.project.removeChangeListener(this.onFileChange);
+            for (const folder of Object.keys(this.watched.folders)) this.watched.folders[folder].burst.drop();
+        }
+        this.watched = undefined;
+        this.subscribers = [];
+    }
+
+    protected onFileChange = (name: string | undefined) => {
+        const folders = this.watched?.folders || {};
+        for (const folder of Object.keys(folders)) {
+            if (name === undefined || name === pxt.CONFIG_NAME) {
+                folders[folder].burst.add(burst => {
+                    burst.compare = true;
+                });
+                continue;
+            }
+            const relative = name.slice(folder.length + 1);
+            if (!name.startsWith(folder + "/") || getFolderFileName(folder, relative) !== name) continue;
+            folders[folder].burst.add(burst => {
+                if (burst.names.indexOf(relative) < 0) burst.names.push(relative);
+            });
+        }
+    }
+
+    /**
+     * Notifies the subscribers of `folder` whose frames are still in the
+     * document of the names `burst` changed, and drops the subscribers whose
+     * frames have been removed; sends nothing if there are none. Ends the
+     * subscriptions instead if the open project is no longer the one they
+     * were made in, or its files can no longer be read; a read failure is
+     * reported, not raised.
+     * @param state the folder's state `burst` was started for; nothing is sent if the host no longer holds it
+     */
+    protected notifySubscribers(folder: string, state: ProjfsWatchedFolder, burst: ProjfsBurst) {
+        const watched = this.watched;
+        if (!watched || watched.folders[folder] !== state) return;
+        const names = burst.names;
+        try {
+            if (this.getProject() !== watched.project) {
+                this.unwatch();
+                return;
+            }
+            const files = getFolderFiles(watched.project.getFiles(), folder);
+            if (burst.compare) {
+                for (const name of getChangedFolderFiles(state.files, files))
+                    if (names.indexOf(name) < 0) names.push(name);
+            }
+            state.files = files;
+        } catch (e) {
+            pxt.reportException(e);
+            this.unwatch();
+            return;
+        }
+        if (!names.length) return;
+        const notification: ProjfsNotification = { type: PROJFS_MESSAGE_TYPE, subtype: "changed", names };
+        this.subscribers = this.subscribers.filter(s => s.frame.isConnected);
+        for (const subscriber of this.subscribers) {
+            if (subscriber.folder === folder) subscriber.reply(notification);
+        }
     }
 }

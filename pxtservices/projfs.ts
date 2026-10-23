@@ -12,7 +12,11 @@
  * folder, only the files pxt.json lists are visible; writes list their file.
  * Requests are posted to the editor window; the editor replies to each
  * request once, to the requesting frame only, with the request's `id`, and
- * replies to one frame's requests in the order it sent them.
+ * replies to one frame's requests in the order it sent them, except that a
+ * subscribe request is answered without waiting for the requests before it.
+ * Change notifications carry no `id` and go to the frames that subscribed. A
+ * frame holds at most one subscription, which lasts until the project it was
+ * made in closes or reloads.
  *
  * Writes and deletes come in two classes. By default a change is an artifact:
  * saved with the project, and the text editor showing a written file shows the
@@ -216,7 +220,21 @@ export interface ProjfsDeleteRequest extends ProjfsMessage {
     dirty?: true;
 }
 
-export type ProjfsRequest = ProjfsListRequest | ProjfsReadRequest | ProjfsWriteRequest | ProjfsDeleteRequest;
+/**
+ * Subscribes the requesting frame to {@link ProjfsNotification}s of changes
+ * to the extension's folder. The reply is a {@link ProjfsSubscribeAckReply}.
+ * The editor answers it without queueing it behind the folder's other
+ * requests, and does not count it against the folder's limits. A frame
+ * holds at most one subscription: subscribing again from the same frame is
+ * acknowledged and changes nothing. Each frame of an extension subscribes
+ * for itself. A subscription ends, without notice, when the project open
+ * when it was made closes or reloads.
+ */
+export interface ProjfsSubscribeRequest extends ProjfsMessage {
+    subtype: "subscribe";
+}
+
+export type ProjfsRequest = ProjfsListRequest | ProjfsReadRequest | ProjfsWriteRequest | ProjfsDeleteRequest | ProjfsSubscribeRequest;
 
 export interface ProjfsFileInfo {
     /** The name relative to the extension's folder. */
@@ -243,6 +261,11 @@ export interface ProjfsAckReply extends ProjfsMessage {
     name: string;
 }
 
+/** Acknowledges a {@link ProjfsSubscribeRequest}. */
+export interface ProjfsSubscribeAckReply extends ProjfsMessage {
+    subtype: "ack";
+}
+
 export interface ProjfsErrorReply extends Omit<ProjfsMessage, "id"> {
     /** The request's `id`; undefined if the request carried no string `id`. */
     id: string | undefined;
@@ -251,7 +274,24 @@ export interface ProjfsErrorReply extends Omit<ProjfsMessage, "id"> {
     message: string;
 }
 
-export type ProjfsReply = ProjfsFilesReply | ProjfsContentReply | ProjfsAckReply | ProjfsErrorReply;
+export type ProjfsReply = ProjfsFilesReply | ProjfsContentReply | ProjfsAckReply | ProjfsSubscribeAckReply | ProjfsErrorReply;
+
+/**
+ * Tells a subscribed extension which files in its folder changed: their
+ * content, whether they exist, or whether pxt.json lists them. Several
+ * changes in quick succession lead to one notification. The extension's
+ * own writes and deletes are reported too.
+ */
+export interface ProjfsNotification {
+    type: "projfs";
+    subtype: "changed";
+    /**
+     * The names, relative to the extension's folder, of the files that
+     * changed since the last notification, or since the subscription, each
+     * once, in the order they first changed.
+     */
+    names: string[];
+}
 
 /** A refused or unanswered request. */
 export class ProjfsError extends Error {
@@ -268,16 +308,16 @@ export interface ProjfsTargetWindow {
     postMessage(message: any, targetOrigin: string): void;
 }
 
-/** The window a {@link ProjfsClient} receives replies on. */
+/** The window a {@link ProjfsClient} receives replies and notifications on. */
 export interface ProjfsListenerWindow {
     addEventListener(type: "message", listener: (ev: MessageEvent) => void): void;
     removeEventListener(type: "message", listener: (ev: MessageEvent) => void): void;
 }
 
 export interface ProjfsClientOptions {
-    /** The editor window; defaults to `window.parent`. Replies from any other window are ignored. */
+    /** The editor window; defaults to `window.parent`. Messages from any other window are ignored. */
     target?: ProjfsTargetWindow;
-    /** The window replies arrive on; defaults to `window`. */
+    /** The window replies and notifications arrive on; defaults to `window`. */
     listener?: ProjfsListenerWindow;
     /**
      * The origin requests may be delivered to; defaults to the frame URL's
@@ -333,9 +373,9 @@ function dirtyField(options: ProjfsMutationOptions | undefined): { dirty?: true 
 }
 
 /**
- * Reads and writes project files from a simulator extension. Each method
- * resolves with the editor's reply, or rejects with a {@link ProjfsError}
- * carrying the editor's error code.
+ * Reads and writes project files from a simulator extension, and hears when
+ * they change. Each method resolves with the editor's reply, or rejects with
+ * a {@link ProjfsError} carrying the editor's error code.
  *
  * A request waits for its reply however long that takes; a reply slower than
  * {@link ProjfsClientOptions.slowReplyMs} is reported to
@@ -354,6 +394,11 @@ export class ProjfsClient {
     protected nextId = 0;
     protected pending: { [id: string]: PendingRequest } = {};
     protected disposed = false;
+    // called on each change notification, each once, once the subscription is acknowledged
+    protected changeListeners: ((names: string[]) => void)[] = [];
+    // settles once the frame's subscription request is acknowledged or refused; undefined until
+    // subscribe is first called, and again after a refusal or dispose
+    protected subscription: Promise<void> | undefined;
 
     constructor(options: ProjfsClientOptions = {}) {
         this.target = options.target || window.parent;
@@ -403,13 +448,41 @@ export class ProjfsClient {
     }
 
     /**
-     * Stops listening for replies and fails every pending request with
-     * `DISPOSED`; the editor may or may not have applied it. Later requests
-     * fail with `DISPOSED` without being sent.
+     * Subscribes this frame to change notifications, and calls `onChange` on
+     * each one once the editor has acknowledged the subscription, with the
+     * names, relative to the extension's folder, of the files that changed.
+     * List or read the files again from `onChange` to see the change.
+     *
+     * The frame's first call sends the subscription request; later calls
+     * send none, and add their `onChange` once the first call's request is
+     * acknowledged. A function passed more than once is called once per
+     * notification. If the editor refuses the request, the call rejects, and
+     * the next call sends a new request.
+     * @param onChange called with the names of the files that changed
+     */
+    async subscribe(onChange: (names: string[]) => void): Promise<void> {
+        if (!this.subscription) {
+            const subscription = this.requestAsync({ subtype: "subscribe" }, "ack").then(() => { });
+            this.subscription = subscription;
+            subscription.catch(() => {
+                if (this.subscription === subscription) this.subscription = undefined;
+            });
+        }
+        await this.subscription;
+        if (this.changeListeners.indexOf(onChange) < 0) this.changeListeners.push(onChange);
+    }
+
+    /**
+     * Stops listening for replies and notifications, and fails every pending
+     * request with `DISPOSED`; the editor may or may not have applied it.
+     * Later requests, subscribe calls included, fail with `DISPOSED` without
+     * being sent.
      */
     dispose() {
         this.disposed = true;
         this.listener.removeEventListener("message", this.onMessage);
+        this.changeListeners = [];
+        this.subscription = undefined;
         for (const id of Object.keys(this.pending)) {
             this.settle(id)?.reject(new ProjfsError("DISPOSED", "The client was disposed before the editor replied; the request may or may not have been applied."));
         }
@@ -441,9 +514,14 @@ export class ProjfsClient {
 
     protected onMessage = (ev: MessageEvent) => {
         if (ev.source !== this.target) return;
-        const reply = ev.data as ProjfsReply;
-        if (reply?.type !== PROJFS_MESSAGE_TYPE || typeof reply.id !== "string") return;
-        this.settle(reply.id)?.resolve(reply);
+        const message = ev.data as ProjfsReply | ProjfsNotification;
+        if (message?.type !== PROJFS_MESSAGE_TYPE) return;
+        if (message.subtype === "changed") {
+            this.changeListeners.forEach(listener => listener(message.names));
+            return;
+        }
+        if (typeof message.id !== "string") return;
+        this.settle(message.id)?.resolve(message);
     }
 
     protected settle(id: string): PendingRequest | undefined {
