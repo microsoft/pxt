@@ -3,7 +3,9 @@
 
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
-import { DuplicateOnDragConnectionChecker } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { DuplicateOnDragConnectionChecker, shouldDuplicateOnDrag } from "../../pxtblocks/plugins/duplicateOnDrag";
+import { ListCreateBlock } from "../../pxtblocks/plugins/arrays/createList";
+import { ArgumentReporterBlock } from "../../pxtblocks/plugins/functions/blocks/argumentReporterBlocks";
 
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
@@ -360,6 +362,89 @@ describe("blockly compiler", function () {
         });
     });
 
+    describe("adding list inputs", () => {
+        let workspace: Blockly.Workspace;
+
+        before(async () => {
+            await getBlocksInfoAsync();
+        });
+
+        beforeEach(() => {
+            workspace = new Blockly.Workspace();
+        });
+
+        afterEach(() => {
+            workspace.dispose();
+        });
+
+        const reporterTypes = [
+            "argument_reporter_boolean",
+            "argument_reporter_number",
+            "argument_reporter_string",
+            "argument_reporter_array",
+            "argument_reporter_custom"
+        ];
+
+        for (const type of reporterTypes) {
+            for (const hasShadow of [false, true]) {
+                it(`should preserve ${type} with${hasShadow ? "" : "out"} a shadow`, () => {
+                    const list = Blockly.Xml.domToBlock(Blockly.utils.xml.textToDom(`
+                        <block type="lists_create_with">
+                            <mutation items="1"/>
+                            <value name="ADD0">
+                                ${hasShadow ? '<shadow type="math_number"/>' : ""}
+                                <block type="${type}">
+                                    <mutation typename="Sprite" localizationname="parameter"/>
+                                </block>
+                            </value>
+                        </block>
+                    `), workspace) as ListCreateBlock;
+                    const original = list.getInputTargetBlock("ADD0") as ArgumentReporterBlock;
+                    const name = "my parameter <&> 名前";
+                    original.setFieldValue(name, "VALUE");
+
+                    for (let i = 1; i <= 2; i++) {
+                        list.addItem_();
+                        const copy = list.getInputTargetBlock("ADD" + i) as ArgumentReporterBlock;
+                        chai.expect(copy.type).to.equal(type);
+                        chai.expect(copy.id).to.not.equal(original.id);
+                        chai.expect(copy.getFieldValue("VALUE")).to.equal(name);
+                        chai.expect(copy.outputConnection.getCheck()).to.deep.equal(original.outputConnection.getCheck());
+                        chai.expect(Blockly.Xml.domToText(copy.mutationToDom()))
+                            .to.equal(Blockly.Xml.domToText(original.mutationToDom()));
+                        chai.expect(list.getInput("ADD" + i).connection.getShadowDom()?.getAttribute("type"))
+                            .to.equal(hasShadow ? "math_number" : undefined);
+                    }
+                    chai.expect(list.getInputTargetBlock("ADD0")).to.equal(original);
+                    chai.expect(original.getFieldValue("VALUE")).to.equal(name);
+                });
+            }
+        }
+
+        for (const { type, field, value, defaultValue } of [
+            { type: "math_number", field: "NUM", value: "42", defaultValue: 0 },
+            { type: "text", field: "TEXT", value: "hello", defaultValue: "" }
+        ]) {
+            it(`should keep default values for ${type} shadows`, () => {
+                const list = Blockly.Xml.domToBlock(Blockly.utils.xml.textToDom(`
+                    <block type="lists_create_with">
+                        <mutation items="1"/>
+                        <value name="ADD0">
+                            <shadow type="${type}"><field name="${field}">${value}</field></shadow>
+                        </value>
+                    </block>
+                `), workspace) as ListCreateBlock;
+                list.addItem_();
+                const copy = list.getInputTargetBlock("ADD1");
+                chai.expect(copy.type).to.equal(type);
+                chai.expect(copy.isShadow()).to.equal(true);
+                chai.expect(copy.getFieldValue(field)).to.equal(defaultValue);
+                chai.expect(list.getInputTargetBlock("ADD0").getFieldValue(field))
+                    .to.equal(type === "math_number" ? 42 : value);
+            });
+        }
+    });
+
     describe("compiling logic", () => {
         it("should handle all the logic blocks in the toolbox", (done: () => void) => {
             blockTestAsync("logic_all").then(done, done);
@@ -393,6 +478,107 @@ describe("blockly compiler", function () {
     });
 
     describe("compiling text", () => {
+        it("should initialize color picker shadows in the parameter's requested mode", async () => {
+            const info = await getBlocksInfoAsync();
+            const coloredInfo = {
+                ...info,
+                blocks: info.blocks.concat({
+                    attributes: { builtinBlockId: "makecode_color_picker", color: "#6554C0" }
+                } as pxtc.SymbolInfo)
+            };
+            const workspace = new Blockly.Workspace();
+            try {
+                for (const format of ["hex", "rgb", "hsv", "hsl", "cmyk", "invalid"]) {
+                    const value = pxtblockly.createShadowValue(coloredInfo, {
+                        definitionName: "color", actualName: "color", type: "number",
+                        shadowBlockId: "makecode_color_picker", defaultValue: "0x7f3fbf",
+                        fieldOptions: { format }
+                    });
+                    const picker = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    const preview = picker.getField("PREVIEW");
+                    picker.updateColorPreview();
+                    chai.assert.isTrue(picker.isShadow());
+                    chai.assert.isTrue(preview.isVisible());
+                    chai.assert.equal(picker.getColour().toLowerCase(), "#6554c0");
+                    chai.assert.equal(picker.getFieldValue("FORMAT"), format === "invalid" ? "rgb" : format);
+                    chai.assert.equal(pxtblockly.getColorPickerColor(picker), "#7F3FBF");
+                    const mutation = value.querySelector("mutation");
+                    chai.assert.equal(mutation.getAttribute("color"), "#6554C0");
+                    chai.assert.isTrue(shouldDuplicateOnDrag(picker));
+                    mutation.removeAttribute("hue");
+                    mutation.removeAttribute("saturation");
+                    mutation.removeAttribute("value");
+                    const restored = Blockly.Xml.domToBlock(value.firstElementChild, workspace) as pxtblockly.ColorPickerBlock;
+                    restored.updateBeforeRender();
+                    chai.assert.include(restored.getField("PREVIEW").getText(), "#7F3FBF");
+                    restored.dispose();
+                    picker.setFieldValue("rgb", "FORMAT");
+                    chai.assert.deepEqual([0, 1, 2].map(i => Math.round(Number(picker.getInputTargetBlock("INPUT" + i).getFieldValue("NUM")))), [127, 63, 191]);
+                    picker.getInputTargetBlock("INPUT0").setFieldValue("255", "NUM");
+                    picker.updateColorPreview();
+                    chai.assert.include(picker.getField("PREVIEW").getText(), "#FF3FBF");
+                    // An expression has no statically known preview, even if another channel is literal.
+                    const input = picker.getInput("INPUT0");
+                    input.connection.setShadowDom(null);
+                    chai.assert.isUndefined(pxtblockly.getColorPickerColor(picker));
+                    picker.updateColorPreview();
+                    chai.assert.isFalse(preview.isVisible());
+                    picker.dispose();
+                }
+            }
+            finally {
+                workspace.dispose();
+            }
+        });
+
+        it("should share named picker defaults without taking another contributor's settings", async () => {
+            const info = await getBlocksInfoAsync();
+            const contributor = (id: string, color: string, format: string, value: string): pxtc.SymbolInfo => ({
+                name: id, namespace: "test", fileName: "test.ts", kind: pxtc.SymbolKind.Function, retType: "number",
+                attributes: {
+                    blockId: id, builtinBlockId: "makecode_color_picker", color,
+                    paramFieldEditorOptions: { value: { format } },
+                    paramDefl: { value }, callingConvention: pxtc.ir.CallingConvention.Plain
+                },
+                parameters: [{ name: "value", type: "number", description: "", default: value }]
+            });
+            const first = contributor("other_picker", "#008800", "rgb", "0xff0000");
+            const selected = contributor("test_color_picker", "#6554C0", "hex", "0x7f3fbf");
+            const namedInfo = {
+                ...info, blocks: info.blocks.concat(first, selected),
+                blocksById: {
+                    ...info.blocksById, other_picker: first, test_color_picker: selected
+                }
+            };
+            const shadow = pxtblockly.createShadowValue(namedInfo, {
+                definitionName: "color", actualName: "color", type: "number", shadowBlockId: "test_color_picker"
+            }).firstElementChild;
+            const otherShadow = pxtblockly.createShadowValue(namedInfo, {
+                definitionName: "color", actualName: "color", type: "number", shadowBlockId: "other_picker"
+            }).firstElementChild;
+            const standalone = pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected));
+            chai.assert.equal(shadow.getAttribute("type"), "makecode_color_picker");
+            chai.assert.equal(shadow.innerHTML, standalone.innerHTML);
+            chai.assert.equal(shadow.querySelector("mutation").getAttribute("color"), "#6554C0");
+            chai.assert.equal(otherShadow.querySelector("mutation").getAttribute("color"), "#008800");
+            chai.assert.equal(shadow.querySelector('field[name="FORMAT"]').textContent, "hex");
+            chai.assert.equal(shadow.querySelector('field[name="TEXT"]').textContent, "#7F3FBF");
+            const workspace = new Blockly.Workspace();
+            try {
+                const picker = Blockly.Xml.domToBlock(shadow, workspace);
+                const unmarked = Blockly.Xml.domToBlock(otherShadow, workspace);
+                const standalonePicker = Blockly.Xml.domToBlock(pxtblockly.createToolboxBlock(namedInfo, selected, pxt.blocks.compileInfo(selected)), workspace);
+                chai.assert.isTrue(shouldDuplicateOnDrag(picker));
+                chai.assert.isTrue(shouldDuplicateOnDrag(unmarked));
+                chai.assert.isFalse(shouldDuplicateOnDrag(standalonePicker));
+                const restored = Blockly.Xml.domToBlock(Blockly.Xml.blockToDom(picker, true) as Element, workspace);
+                chai.assert.isTrue(shouldDuplicateOnDrag(restored));
+            }
+            finally {
+                workspace.dispose();
+            }
+        });
+
         it("should handle the text blocks", (done: () => void) => {
             blockTestAsync("text").then(done, done);
         });

@@ -71,6 +71,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
     private ignoreFlyoutPreviousNode = false;
     private pendingResize = false;
+    private flyoutNavigatorInitialized = false;
+    private keyboardControlsInitialized = false;
 
     protected intersectionObserver: IntersectionObserver;
     private errors: ErrorDisplayInfo[] = [];
@@ -550,17 +552,24 @@ export class Editor extends toolboxeditor.ToolboxEditor {
          * it to select the first category and clear the selection.
          */
         const that = this;
-        assertMethod(Blockly.FlyoutNavigator.prototype, "getOutNode");
-        Blockly.FlyoutNavigator.prototype.getOutNode = function(_node?: Blockly.IFocusableNode | null, _bypassAdjustments = false) {
-            // Focus the React toolbox tree and return a non-null node so the
-            // left-arrow shortcut doesn't beep. Blockly's subsequent
-            // focusNode(firstItem) is a no-op because React replaced the stock
-            // toolbox DOM, so firstItem's element is detached from the document
-            // and .focus() on it does nothing.
-            const firstItem = that.editor.getToolbox().getToolboxItems()[0];
-            Blockly.getFocusManager().focusNode(firstItem);
-            that.toolbox.focus();
-            return firstItem;
+        if (!this.flyoutNavigatorInitialized) {
+            assertMethod(Blockly.FlyoutNavigator.prototype, "getOutNode");
+            const oldFlyoutGetOutNode = Blockly.FlyoutNavigator.prototype.getOutNode;
+            Blockly.FlyoutNavigator.prototype.getOutNode = function(_node?: Blockly.IFocusableNode | null, _bypassAdjustments = false) {
+                const toolbox = that.editor.getToolbox();
+                if (!toolbox || !that.toolbox) return oldFlyoutGetOutNode.call(this, _node, _bypassAdjustments);
+
+                // Focus the React toolbox tree and return a non-null node so the
+                // left-arrow shortcut doesn't beep. Blockly's subsequent
+                // focusNode(firstItem) is a no-op because React replaced the stock
+                // toolbox DOM, so firstItem's element is detached from the document
+                // and .focus() on it does nothing.
+                const firstItem = toolbox.getToolboxItems()[0];
+                Blockly.getFocusManager().focusNode(firstItem);
+                that.toolbox.focus();
+                return firstItem;
+            }
+            this.flyoutNavigatorInitialized = true;
         }
         assertMethod(Blockly.Toolbox.prototype, "getFocusableElement");
         Blockly.Toolbox.prototype.getFocusableElement = function() {
@@ -662,6 +671,9 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     }
 
     private initKeyboardControls() {
+        // Shortcuts are global, so workspace rebuilds must not register or wrap them again.
+        if (this.keyboardControlsInitialized) return;
+
         Blockly.ShortcutRegistry.registry.register({
             name: LIST_SHORTCUTS_SHORTCUT,
             callback: (workspace) => {
@@ -790,6 +802,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 return true
             }
         });
+        this.keyboardControlsInitialized = true;
     }
 
     private initWorkspaceSearch() {
@@ -957,13 +970,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         })
 
         this.editor.addChangeListener((e) => {
-            if (e.type === Blockly.Events.BLOCK_MOVE) {
+            if (e.type === Blockly.Events.BLOCK_MOVE && e.recordUndo) {
                 const parent = this.editor.getBlockById((e as Blockly.Events.BlockMove).newParentId);
-                if (parent && parent.isShadow()) {
+                const child = this.editor.getBlockById((e as Blockly.Events.BlockMove).blockId);
+                // Nested shadows change during picker format switches; only promote real inputs.
+                if (parent?.isShadow() && parent.outputConnection?.targetConnection
+                    && child && !child.isShadow() && child.getParent() === parent) {
                     Blockly.Events.setGroup(e.group)
                     const json = Blockly.serialization.blocks.save(parent);
                     // Dispose of the original block so it doesn't get saved in the parent connection's shadow state.
-                    this.editor.getBlockById((e as Blockly.Events.BlockMove).blockId).dispose();
+                    child.dispose();
                     const dupe = Blockly.serialization.blocks.append(json, this.editor, { recordUndo: true });
                     parent.outputConnection.targetConnection.connect(dupe.outputConnection);
                     Blockly.Events.setGroup(false);
@@ -2512,7 +2528,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                     const info = this.blockInfo.blocksById[type];
 
                     const shadowType = info?.attributes?.builtinBlockId || type;
-                    let b = this.getBlockXml(builtin ? builtin : { name: type, type: type, attributes: { blockId: type } }, ignoregap, true);
+                    let b = this.getBlockXml(builtin || info || { name: type, type: type, attributes: { blockId: type } }, ignoregap, true);
                     // Note: we're setting one innerHTML to another
                     if (b && b.length > 0 && b[0] && b[0].getAttribute("type") === shadowType) {
                         // eslint-disable-next-line @microsoft/sdl/no-inner-html
