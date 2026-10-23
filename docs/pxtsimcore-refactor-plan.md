@@ -71,6 +71,14 @@ Notes:
 The DOM-free type-check now passes with zero diagnostics:
 `node_modules/.bin/tsc -p pxtsimcore/tsconfig.json`.
 
+### Progress: clock, timer and random seams (done)
+
+- `pxsim.host` carries `Clock` (`now`, `perfNowUs`), `Timers` (set/clear timeout and interval, `requestFrame`/`cancelFrame`) and `RandomSource` (`next`, `seed`), with `clock()`/`timers()`/`rng()` accessors and `setClock`/`setTimers`/`setRng` overrides that fill omitted members from the defaults: `Date.now`, the performance-based microsecond clock, the global timers looked up at call time, `requestAnimationFrame` or a 16 ms timeout, `Math.random` with a no-op `seed`.
+- Routed through the host: `U.now`, `U.perfNowUs`, `U.delay`, `throttle`, `promiseTimeout`, the serial debounce, `restart`, recording, `maybeYield`, `buildResume`, the idle interval, `schedule`/`pauseScheduled`, the thumbnail recorder, `Math_.random`/`randomRange`, `seedAddRandom`, `AnimationQueue`, and the sound expression's random and delay. The serial message's `time:` field stays on `Date.now` as wall-clock telemetry.
+- Still direct: the `requestAnimationFrame` sites in `playInstructions.ts`, `audioContextManager.ts` and `audioWorkletSource.ts`, the metronome worker's timers, `embed.ts`, `debugProtocol.ts`'s request timeout, and `simcoordinator.ts`'s frame cleanup timer and frame-id random (editor side).
+- The silent audio host's `playInstructionsAsync` resolves after the buffer's summed step durations on the host clock, polling `isCancelled` on frame-sized ticks, so headless sound timing matches the browser. Without `--core`, `pxt simtest` loads the Web Audio host, so this reaches `--core` runs only.
+- `tests/simcore-test/virtualhost.ts` is a deterministic host for tests: a counter clock at a nonzero epoch (the runtime treats a performance time of 0 as unset), timers and 16 ms frames on one deadline queue with `advance(ms)` and `runUntilIdle()` that drain microtasks between callbacks, and a seeded `mulberry32`. Four tests in `simcorerunner.ts` use it: a `pause` completes without real waiting, `control.millis` reads virtual time exactly, `randomRange` repeats under one seed and differs under another, and silent instruction playback lasts the buffer's duration.
+
 ### Original baseline (137 errors across 7 files)
 
 | File | Errors |
@@ -104,7 +112,7 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
 - `sound/sequencer.ts` uses `Metronome` and `AudioContextManager` types.
 - Introduce an audio-output interface in core, implemented by the Web Audio code in pxtsim.
 
-**Not DOM, shimmed in `globals.d.ts`:** `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`, `console`, `performance`, `TextEncoder`, `TextDecoder`. These exist in browsers, workers and Node, so core can use them.
+**Not DOM, shimmed in `globals.d.ts`:** `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`, `console`, `performance`, `TextEncoder`, `TextDecoder`. These exist in browsers, workers and Node, so core can use them. Core code reads time, timers and randomness through `pxsim.host` (`host.clock()`, `host.timers()`, `host.rng()`), whose defaults wrap these globals; see the progress note under step 2.
 
 
 2. **Introduce host abstractions in core.** Each one replaces a direct DOM or window call with an interface that pxtsim implements.
@@ -114,6 +122,7 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
      - About 55 call sites use these, mostly in visuals, so that is a mechanical rename.
    - Keep deprecated aliases in `pxsim.U` that are installed by the DOM bundle. This avoids breaking `pxt-common-packages` and `pxt-microbit`.
    - Replace `requestAnimationFrame` in `playInstructions` with an injectable scheduler, defaulting to `setTimeout` in core.
+   - **Done:** time, timers and randomness go through `pxsim.host` (see the progress note below).
 
 3. **Split `runtime.ts`.**
    - Keep the VM, the message interfaces, and the `Runtime` class in core.
@@ -382,7 +391,7 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 **Risks and open questions.**
 - Whether the real `DalBoardState` constructor can run without a view (`edgeconnector`, `microphone`, `radio` take the board in their constructors). Phase 2 answers this.
-- Timers: the runtime uses real `setTimeout`. If tests are slow, add a fake-clock hook behind `U.nextTick`/`setTimeout` rather than sleeping.
+- Timers: the runtime's clock and timers go through `pxsim.host` (progress note under Steps); `pxt simtest` still runs them on real time. Installing the virtual host behind a run option is open, as is a yield policy for programs that never pause.
 - Multi-target: arcade and others would opt in by emitting their own `simcore.js`; the command must tolerate a target without one.
 - `pxt testdir` in a target currently crashes (`installAsync()` called without `parsed`; see the test investigation). It is a separate bug and not required here, but `simtest` must not depend on `installAsync`.
 
