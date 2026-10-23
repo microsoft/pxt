@@ -8,7 +8,6 @@ import {
     ProjfsRequest,
     ProjfsWriteRequest,
 } from "../../pxtservices/projfs";
-import { SlidingWindowAdmission } from "./slidingWindowAdmission";
 import {
     caughtErrorReply,
     errorReply,
@@ -413,7 +412,7 @@ export class ProjfsHost {
     // answered; and, under APPLY_LANE, the requests of every folder, each while it applies
     protected readonly queue = new pxt.Util.PromiseQueue();
     // per folder: admits each write and delete under the rate limit
-    protected readonly mutations: SlidingWindowAdmission;
+    protected readonly mutations: pxt.Util.SlidingWindowAdmission;
     // per folder: how many requests have been received and not yet answered
     protected pendingRequests: pxt.Map<number> = {};
     // the subscribed frames, each once, with its folder and the function that delivers its notifications
@@ -437,7 +436,7 @@ export class ProjfsHost {
         protected readonly now: () => number = pxt.Util.monotonicNow,
         protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
-        this.mutations = new SlidingWindowAdmission(PROJFS_RATE_LIMIT, PROJFS_RATE_WINDOW_MS, now, delay);
+        this.mutations = new pxt.Util.SlidingWindowAdmission(PROJFS_RATE_LIMIT, PROJFS_RATE_WINDOW_MS, now, delay);
     }
 
     /**

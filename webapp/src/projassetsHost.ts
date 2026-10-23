@@ -16,7 +16,6 @@ import {
     ProjassetsVisualConfig,
 } from "../../pxtservices/projassets";
 import { getProjectSimulatorThemePreference } from "./simulatorTheme";
-import { SlidingWindowAdmission } from "./slidingWindowAdmission";
 import {
     caughtErrorReply,
     getSimxRepository,
@@ -322,7 +321,7 @@ export class ProjassetsHost {
     // per repository: the list requests received from it, each until it has been answered
     protected readonly queue = new pxt.Util.PromiseQueue();
     // per repository: admits each list request under the rate limit
-    protected readonly lists: SlidingWindowAdmission;
+    protected readonly lists: pxt.Util.SlidingWindowAdmission;
 
     /**
      * @param getOpenProject returns the open project, or undefined if none is open
@@ -339,7 +338,7 @@ export class ProjassetsHost {
         protected readonly now: () => number = pxt.Util.monotonicNow,
         protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
     ) {
-        this.lists = new SlidingWindowAdmission(PROJASSETS_LIST_RATE_LIMIT, PROJASSETS_LIST_RATE_WINDOW_MS, now, delay);
+        this.lists = new pxt.Util.SlidingWindowAdmission(PROJASSETS_LIST_RATE_LIMIT, PROJASSETS_LIST_RATE_WINDOW_MS, now, delay);
         this.burst = new NotificationBurst(PROJASSETS_NOTIFY_DEBOUNCE_MS, PROJASSETS_NOTIFY_MAX_DELAY_MS,
             () => ({ assetsChanged: false }), burst => this.notifySubscribers(burst.assetsChanged), now, delay);
     }
