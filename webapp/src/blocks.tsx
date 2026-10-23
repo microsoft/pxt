@@ -1970,7 +1970,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             const refreshBlockly = () => {
                 this.delayLoadXml = this.getCurrentSource();
-                this.editor = undefined;
                 this.prepareBlockly(hasCategories);
                 this.domUpdate();
                 this.editor.scrollCenter();
