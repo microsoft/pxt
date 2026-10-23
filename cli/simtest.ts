@@ -86,7 +86,10 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                 result.error = String(e && e.stack || e);
                 finish();
             };
-            runtime.run(() => setTimeout(finish, __options.settleMs));
+            runtime.run(() => {
+                clearTimeout(timer);
+                setTimeout(finish, __options.settleMs);
+            });
         })
     `, context);
 }
