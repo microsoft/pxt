@@ -132,7 +132,7 @@ export interface SimxEditorFullscreenEvent {
  * last entry of a block dropdown listing that type's instances. `open` asks
  * the tab to open the instance `qName` of such a type, which a file in the
  * extension's folder of the project declares, as when the user picks the
- * entry of such a dropdown asking to open the instance it holds. Posted once the
+ * entry of such a dropdown asking to edit the instance it holds. Posted once the
  * tab is ready: at once if it is, else after the events that follow its ready
  * event. A request made before an earlier one was posted replaces it, and a
  * request not yet posted is dropped when the tab frame is removed.

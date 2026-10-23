@@ -27,7 +27,7 @@ namespace pxt.react {
     /**
      * Returns true if the editor can open the fixed instance `instanceQName`, a
      * fully qualified name, here: a block dropdown holding the instance then
-     * offers an entry asking to open it.
+     * offers an entry asking to edit it.
      */
     export let canOpenInstance: (instanceQName: string) => boolean;
     /**

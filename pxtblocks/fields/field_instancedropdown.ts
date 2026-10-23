@@ -17,25 +17,25 @@ export const CREATE_INSTANCE_OPTION_VALUE = "@createinstance@";
 
 /**
  * The value of the entry of the dropdown of a fixed-instance parameter that
- * asks to open the instance the field holds. It is not a qualified name, so it
+ * asks to edit the instance the field holds. It is not a qualified name, so it
  * never equals the value of an instance.
  */
 export const OPEN_INSTANCE_OPTION_VALUE = "@openinstance@";
 
 /**
  * Returns the options of the dropdown of a fixed-instance parameter: the
- * options of the type's instances, in their order, then, if `openText` or
- * `createText` is given, the entries given: one showing `openText` whose
+ * options of the type's instances, in their order, then, if `editText` or
+ * `createText` is given, the entries given: one showing `editText` whose
  * value is `OPEN_INSTANCE_OPTION_VALUE`, then one showing `createText` whose
  * value is `CREATE_INSTANCE_OPTION_VALUE`, after a separator when there are
  * instances to separate them from.
  * @param instances the options of the type's instances
- * @param openText the text of the entry asking to open the instance the field holds; undefined if the editor cannot open it here
+ * @param editText the text of the entry asking to edit the instance the field holds; undefined if the editor cannot open it here
  * @param createText the text of the entry asking for a new instance; undefined if the editor cannot create the type's instances here
  */
-export function getInstanceDropdownOptions(instances: Blockly.MenuOption[], openText: string | undefined, createText: string | undefined): Blockly.MenuOption[] {
+export function getInstanceDropdownOptions(instances: Blockly.MenuOption[], editText: string | undefined, createText: string | undefined): Blockly.MenuOption[] {
     const commands: Blockly.MenuOption[] = [];
-    if (openText !== undefined) commands.push([openText, OPEN_INSTANCE_OPTION_VALUE]);
+    if (editText !== undefined) commands.push([editText, OPEN_INSTANCE_OPTION_VALUE]);
     if (createText !== undefined) commands.push([createText, CREATE_INSTANCE_OPTION_VALUE]);
     if (!commands.length) return instances.slice();
     return instances.length ? [...instances, Blockly.FieldDropdown.SEPARATOR, ...commands] : commands;
@@ -44,7 +44,7 @@ export function getInstanceDropdownOptions(instances: Blockly.MenuOption[], open
 /**
  * The dropdown of a fixed-instance parameter whose instances the editor can
  * create. Each time it opens, it lists the type's instances the current API
- * info declares, then, after a separator, an entry asking to open the
+ * info declares, then, after a separator, an entry asking to edit the
  * instance the field holds, while the editor can open it
  * (`pxt.react.canOpenInstance`), and an entry asking for a new instance, while
  * the editor can create one (`pxt.react.canCreateInstance`). Picking either
@@ -81,7 +81,7 @@ export class FieldInstanceDropdown extends FieldDropdown implements FieldCustom 
 }
 
 // Lists the options of the type's instances, built with `imgConv` from the
-// API info `getBlocksInfo` returns, else `data`, then the entry asking to open
+// API info `getBlocksInfo` returns, else `data`, then the entry asking to edit
 // the instance the field holds, while the editor can open it, and the entry
 // asking for a new instance, while the editor can create the type's instances,
 // all read each time the dropdown opens.
@@ -93,7 +93,7 @@ function createMenuGenerator(options: FieldCustomDropdownOptions, typeName: stri
         const value = this.getValue();
         const label = value && pxt.react.canOpenInstance?.(value) ? getInstanceLabel(instances, value) : undefined;
         return getInstanceDropdownOptions(instances,
-            label !== undefined ? lf("Open {0}...", label) : undefined,
+            label !== undefined ? lf("Edit {0}...", label) : undefined,
             pxt.react.canCreateInstance?.(typeQName) ? lf("New {0}...", typeName) : undefined);
     };
 }

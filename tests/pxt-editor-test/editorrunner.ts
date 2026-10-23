@@ -5621,14 +5621,14 @@ describe("fixed-instance dropdown options", () => {
         chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", CREATE_INSTANCE_OPTION_VALUE]);
     });
 
-    it("appends a separator and one trailing open entry, with the reserved value, when only the open entry is offered", () => {
-        const options = getInstanceDropdownOptions(instances, "open", undefined);
+    it("appends a separator and one trailing edit entry, with the reserved value, when only the edit entry is offered", () => {
+        const options = getInstanceDropdownOptions(instances, "edit", undefined);
         chai.expect(options.slice(0, instances.length)).deep.equals(instances);
         chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", OPEN_INSTANCE_OPTION_VALUE]);
     });
 
-    it("places the open entry before the create entry, after one separator, when both are offered", () => {
-        const options = getInstanceDropdownOptions(instances, "open", "create");
+    it("places the edit entry before the create entry, after one separator, when both are offered", () => {
+        const options = getInstanceDropdownOptions(instances, "edit", "create");
         chai.expect(options.slice(0, instances.length)).deep.equals(instances);
         chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
     });
@@ -5640,11 +5640,11 @@ describe("fixed-instance dropdown options", () => {
 
     it("lists the command entries alone, with no separator, when there are no instances", () => {
         chai.expect(values(getInstanceDropdownOptions([], undefined, "create"))).deep.equals([CREATE_INSTANCE_OPTION_VALUE]);
-        chai.expect(values(getInstanceDropdownOptions([], "open", "create"))).deep.equals([OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
+        chai.expect(values(getInstanceDropdownOptions([], "edit", "create"))).deep.equals([OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
     });
 
     it("never changes the list it was given", () => {
-        getInstanceDropdownOptions(instances, "open", "create");
+        getInstanceDropdownOptions(instances, "edit", "create");
         chai.expect(instances.length).equals(2);
     });
 
