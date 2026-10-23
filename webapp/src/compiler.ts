@@ -7,6 +7,7 @@ import * as pxtblockly from "../../pxtblocks";
 import U = pxt.Util;
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Measurements } from "./constants";
+import { projectMayDeclareBlocks } from "./cachedApiInfo";
 
 function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
@@ -645,21 +646,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     const corePkg = bundled[corePkgName];
     if (!corePkg) return null;
 
-    // If the project has a TypeScript file beside one of the generated files, it could export blocks so we can't use the cache
-    const files = project.getAllFiles();
-    const generatedFiles = [
-        pxt.MAIN_TS,
-        pxt.TUTORIAL_CODE_START,
-        pxt.TUTORIAL_CODE_STOP,
-        pxt.TILEMAP_CODE,
-        pxt.IMAGES_CODE
-    ];
-
-    if (Object.keys(files).some(
-        filename => generatedFiles.indexOf(filename) === -1
-            && filename.indexOf("/") === -1
-            && pxt.Util.endsWith(filename, ".ts")
-    )) {
+    if (projectMayDeclareBlocks(Object.keys(project.getAllFiles()))) {
         return null;
     }
 
