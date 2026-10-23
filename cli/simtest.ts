@@ -26,12 +26,38 @@ export interface HeadlessRunOptions {
  * @param bundles simulator scripts to load, in order: pxtsimcore first, then the target's bundle
  */
 export function runHeadlessAsync(js: string, bundles: string[], options: HeadlessRunOptions): Promise<HeadlessRunResult> {
+    const timeouts = new Set<any>();
+    const intervals = new Set<any>();
+    const clearTimers = () => {
+        timeouts.forEach(timer => clearTimeout(timer));
+        intervals.forEach(timer => clearInterval(timer));
+        timeouts.clear();
+        intervals.clear();
+    };
     const sandbox: any = {
         console,
-        setTimeout,
-        clearTimeout,
-        setInterval,
-        clearInterval,
+        setTimeout: (callback: (...args: any[]) => void, delay?: number, ...args: any[]) => {
+            let timer: any;
+            timer = setTimeout(() => {
+                timeouts.delete(timer);
+                callback(...args);
+            }, delay);
+            timeouts.add(timer);
+            return timer;
+        },
+        clearTimeout: (timer: any) => {
+            timeouts.delete(timer);
+            clearTimeout(timer);
+        },
+        setInterval: (callback: (...args: any[]) => void, delay?: number, ...args: any[]) => {
+            const timer = setInterval(callback, delay, ...args);
+            intervals.add(timer);
+            return timer;
+        },
+        clearInterval: (timer: any) => {
+            intervals.delete(timer);
+            clearInterval(timer);
+        },
         performance,
         TextEncoder,
         TextDecoder,
@@ -39,15 +65,30 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
         URLSearchParams,
     };
     const context = vm.createContext(sandbox);
-    for (const bundle of bundles)
-        vm.runInContext(fs.readFileSync(bundle, "utf8"), context, { filename: bundle });
+    try {
+        for (const bundle of bundles)
+            vm.runInContext(fs.readFileSync(bundle, "utf8"), context, { filename: bundle });
+    } catch (e) {
+        clearTimers();
+        throw e;
+    }
 
-    if (vm.runInContext("typeof pxsim.initHeadlessRuntime", context) !== "function")
+    let hasHeadlessRuntime: boolean;
+    try {
+        hasHeadlessRuntime = vm.runInContext("typeof pxsim.initHeadlessRuntime", context) === "function";
+    } catch (e) {
+        clearTimers();
+        throw e;
+    }
+    if (!hasHeadlessRuntime) {
+        clearTimers();
         return Promise.reject(new Error(`${bundles[bundles.length - 1]} does not set pxsim.initHeadlessRuntime`));
+    }
 
     sandbox.__js = js;
     sandbox.__options = options;
-    return vm.runInContext(`
+    try {
+        return vm.runInContext(`
         new Promise(resolve => {
             const result = { serial: [], messages: [], timedOut: false };
             let runtime;
@@ -58,6 +99,9 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                 finished = true;
                 clearTimeout(timer);
                 try { runtime && runtime.kill(); } catch (e) { }
+                try { runtime && runtime.board && runtime.board.kill(); } catch (e) { }
+                try { runtime && runtime.boardView && runtime.boardView.kill(); } catch (e) { }
+                clearTimers();
                 if (serialBuffer) result.serial.push(serialBuffer);
                 resolve(result);
             };
@@ -86,12 +130,24 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                 result.error = String(e && e.stack || e);
                 finish();
             };
-            runtime.run(() => {
-                clearTimeout(timer);
-                setTimeout(finish, __options.settleMs);
-            });
+            try {
+                runtime.run(() => {
+                    clearTimeout(timer);
+                    setTimeout(finish, __options.settleMs);
+                });
+            } catch (e) {
+                result.error = String(e && e.stack || e);
+                finish();
+            }
         })
-    `, context);
+    `, context).catch(e => {
+        clearTimers();
+        throw e;
+    });
+    } catch (e) {
+        clearTimers();
+        return Promise.reject(e);
+    }
 }
 
 /** Lines the test expects on the serial port, from leading `// @serial: text` comments. */

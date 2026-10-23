@@ -96,7 +96,13 @@ describe("pxt simtest runner", () => {
 
     before(() => {
         fs.mkdirSync(path.dirname(toyBundle), { recursive: true });
-        fs.writeFileSync(toyBundle, "pxsim.initHeadlessRuntime = pxsim.initBareRuntime;");
+        fs.writeFileSync(toyBundle, `pxsim.initHeadlessRuntime = function (msg) {
+            pxsim.initBareRuntime(msg);
+            pxsim.runtime.startIdle();
+            pxsim.runtime.board.kill = function () {
+                pxsim.Runtime.messagePosted({ type: "boardcleanup" });
+            };
+        };`);
     });
 
     after(() => fs.unlinkSync(toyBundle));
@@ -118,13 +124,61 @@ describe("pxt simtest runner", () => {
         const result = await runAsync(`console.log("one"); console.log("two"); pause(10)`);
         chai.expect(result.serial).deep.equals(["one", "two"]);
         chai.expect(result.error).equals(undefined);
+        chai.expect(result.messages.some(msg => msg.type === "boardcleanup")).equals(true);
         chai.expect(simtest.checkRun(result, ["one", "two"])).equals(undefined);
         chai.expect(simtest.checkRun(result, ["one"])).includes("serial output mismatch");
+    });
+
+    it("clears timers for background fibers", async function () {
+        this.timeout(20000);
+        const compiled = await util.stsAsync(`control.runInBackground(() => pause(60000))`);
+        const originalSetTimeout = global.setTimeout;
+        const originalClearTimeout = global.clearTimeout;
+        const originalSetInterval = global.setInterval;
+        const originalClearInterval = global.clearInterval;
+        const longTimers: any[] = [];
+        const clearedTimers = new Set<any>();
+        const intervalTimers: any[] = [];
+        const clearedIntervals = new Set<any>();
+        (global as any).setTimeout = (callback: (...args: any[]) => void, delay?: number, ...args: any[]) => {
+            let timer: any;
+            timer = originalSetTimeout(() => callback(...args), delay);
+            if (delay === 60000)
+                longTimers.push(timer);
+            return timer;
+        };
+        (global as any).clearTimeout = (timer: any) => {
+            clearedTimers.add(timer);
+            originalClearTimeout(timer);
+        };
+        (global as any).setInterval = (callback: (...args: any[]) => void, delay?: number, ...args: any[]) => {
+            const timer = originalSetInterval(() => callback(...args), delay);
+            intervalTimers.push(timer);
+            return timer;
+        };
+        (global as any).clearInterval = (timer: any) => {
+            clearedIntervals.add(timer);
+            originalClearInterval(timer);
+        };
+        try {
+            const result = await simtest.runHeadlessAsync(compiled.outfiles[pxtc.BINARY_JS], [core, toyBundle], options);
+            chai.expect(result.error).equals(undefined);
+            chai.expect(longTimers.length).greaterThan(0);
+            chai.expect(longTimers.every(timer => clearedTimers.has(timer))).equals(true);
+            chai.expect(intervalTimers.length).greaterThan(0);
+            chai.expect(intervalTimers.every(timer => clearedIntervals.has(timer))).equals(true);
+        } finally {
+            global.setTimeout = originalSetTimeout;
+            global.clearTimeout = originalClearTimeout;
+            global.setInterval = originalSetInterval;
+            global.clearInterval = originalClearInterval;
+        }
     });
 
     it("reports a runtime error", async function () {
         this.timeout(20000);
         const result = await runAsync(`let a: number[] = null; console.log(a.length)`);
+        chai.expect(result.messages.some(msg => msg.type === "boardcleanup")).equals(true);
         chai.expect(simtest.checkRun(result, [])).includes("runtime error");
     });
 
