@@ -135,10 +135,11 @@ namespace ts.pxtc {
         "buildResume",
         "mkVTable",
         "bind",
-        "leaveAccessor"
+        "leaveAccessor",
+        "postMessage"
     ]
 
-    export function jsEmit(bin: Binary, cres: CompileResult) {
+    export function jsEmit(bin: Binary, opts: CompileOptions, cres: CompileResult) {
         let jsheader = "(function (ectx) {\n'use strict';\n"
 
         for (let n of evalIfaceFields) {
@@ -181,7 +182,7 @@ namespace ts.pxtc {
                     bin.hexlits[hexlit] = p.cachedJSHexLiterals[hexlit];
                 }
             } else {
-                curr = irToJS(bin, p)
+                curr = irToJS(bin, opts, p)
                 newLen += curr.length
             }
             jssource += "\n" + curr + "\n"
@@ -207,7 +208,7 @@ namespace ts.pxtc {
         bin.writeFile(BINARY_JS, sizes + jssource)
     }
 
-    function irToJS(bin: Binary, proc: ir.Procedure): string {
+    function irToJS(bin: Binary, opts: CompileOptions, proc: ir.Procedure): string {
         if (proc.cachedJS)
             return proc.cachedJS
 
@@ -244,6 +245,15 @@ switch (step) {
                 write(`  ${locref(l)} = (s.lambdaArgs[${i}]);`)
             })
             write(`  s.lambdaArgs = null;`)
+            write(`} else {`)
+            if (opts.instrument?.length) {
+                const declName = proc.getDeclName()
+                if (opts.instrument.find(name => name === declName)) {
+                    // post message with function name and arguments
+                    write(`  postMessage({ type: "output", function: ${JSON.stringify(declName)}, 
+args:[${proc.args.map((l) => locref(l)).join(", ")}] });`)
+                }
+            }
             write(`}`)
         }
 
