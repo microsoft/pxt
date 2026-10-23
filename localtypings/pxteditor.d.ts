@@ -986,6 +986,7 @@ declare namespace pxt.editor {
         setSideMarkdown(md: string): void;
         setSideDocCollapsed(shouldCollapse?: boolean): void;
         removeFile(fn: IFile, skipConfirm?: boolean): void;
+        renameFile(fn: IFile, newName: string): Promise<void>;
         updateFileAsync(name: string, content: string, open?: boolean): Promise<void>;
 
         openHome(): void;
