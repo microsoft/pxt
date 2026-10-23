@@ -42,7 +42,7 @@ interface SimulatorConfig {
     projfsEditor: ProjfsEditor;
     // shows the editor tab of the simulator extension registered under the key; returns false,
     // showing nothing, if the editor offers no such tab here
-    openSimulatorExtensionEditor(key: string): boolean;
+    openSimxEditor(key: string): boolean;
 }
 
 export const FAST_TRACE_INTERVAL = 100;
@@ -333,13 +333,13 @@ export async function initAsync(cfg: SimulatorConfig) {
         onProjassetsMessage: (key, msg, reply, frame) => {
             projassetsHost.handleMessageAsync(key, msg, reply, frame);
         },
-        onSimulatorExtensionEditorMessage: (key, msg, reply) => {
-            reply(answerSimxEditorRequest(key, msg, k => cfg.openSimulatorExtensionEditor(k)) as pxsim.SimulatorMessage);
+        onSimxEditorMessage: (key, msg, reply) => {
+            reply(answerSimxEditorRequest(key, msg, k => cfg.openSimxEditor(k)) as pxsim.SimulatorMessage);
         },
-        onSimulatorExtensionFrameLoad: (key, frame) => {
+        onSimxFrameLoad: (key, frame) => {
             simxEditorHost?.simulatorFrameLoaded(key, frame);
         },
-        isSimulatorExtensionInProject: key => isSimxInProject(key, getProjectDependencies()),
+        isSimxInProject: key => isSimxInProject(key, getProjectDependencies()),
         onFramesUnloaded: () => {
             simxEditorHost?.ensureSimulatorFrames();
         },

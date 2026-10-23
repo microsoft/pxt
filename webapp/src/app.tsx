@@ -684,12 +684,17 @@ export class ProjectView
             && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
     }
 
-    isSimulatorExtensionEditorActive(key: string): boolean {
+    isSimxEditorActive(key: string): boolean {
         return !this.state.embedSimView && this.editor == this.simxEditor
             && !!this.editorFile && this.editorFile.name == getSimxEditorMarkerName(key);
     }
 
-    getSimulatorExtensionEditors(): pxt.editor.SimulatorExtensionEditorInfo[] {
+    /** Returns true if the editor tab of a simulator extension, whichever it is, is the active editor. */
+    private isAnySimxEditorActive(): boolean {
+        return !this.state.embedSimView && this.editor == this.simxEditor;
+    }
+
+    getSimxEditors(): pxt.editor.SimxEditorInfo[] {
         const targetTheme = pxt.appTarget.appTheme;
         const shown = showsSimxEditorTabs({
             sandbox: pxt.shell.isSandboxMode(),
@@ -704,7 +709,7 @@ export class ProjectView
             .map(({ key, label, icon, iconUrl }) => ({ key, label, icon, iconUrl }));
     }
 
-    getLastSimulatorExtensionEditor(): string | undefined {
+    getLastSimxEditor(): string | undefined {
         return simulator.simxEditorHost?.getLastShownKey();
     }
 
@@ -872,11 +877,11 @@ export class ProjectView
 
     // A simulator extension's editor tab is selected by a virtual, session-only
     // marker file, created the first time the tab is opened in the session.
-    openSimulatorExtensionEditor(key: string): boolean {
+    openSimxEditor(key: string): boolean {
         const mainEditorPkg = pkg.mainEditorPkg();
         if (!mainEditorPkg?.header) return false;
-        if (!this.getSimulatorExtensionEditors().some(r => r.key === key)) return false;
-        if (this.isSimulatorExtensionEditorActive(key)) {
+        if (!this.getSimxEditors().some(r => r.key === key)) return false;
+        if (this.isSimxEditorActive(key)) {
             simulator.simxEditorHost?.focus();
             return true;
         }
@@ -894,10 +899,10 @@ export class ProjectView
      * undefined if there is none. The type's declaring package is read from the
      * API info the blocks were built from.
      */
-    getSimulatorExtensionInstanceCreator(typeQName: string): string | undefined {
+    getSimxInstanceCreator(typeQName: string): string | undefined {
         const declaringPackage = pxtblockly.cachedBlockInfo?.apis.byQName[typeQName]?.pkg;
         const key = simulator.getProjectSimxInstanceCreator(typeQName, declaringPackage);
-        return key && this.getSimulatorExtensionEditors().some(r => r.key === key) ? key : undefined;
+        return key && this.getSimxEditors().some(r => r.key === key) ? key : undefined;
     }
 
     /**
@@ -905,9 +910,9 @@ export class ProjectView
      * `typeQName` and asks it to create one, once it is ready; does nothing if no
      * offered tab creates them.
      */
-    createSimulatorExtensionInstance(typeQName: string) {
-        const key = this.getSimulatorExtensionInstanceCreator(typeQName);
-        if (!key || !this.openSimulatorExtensionEditor(key)) return;
+    createSimxInstance(typeQName: string) {
+        const key = this.getSimxInstanceCreator(typeQName);
+        if (!key || !this.openSimxEditor(key)) return;
         simulator.simxEditorHost?.requestAction(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "action", action: "create", qName: typeQName });
     }
 
@@ -918,10 +923,10 @@ export class ProjectView
      * a file of the open project in that extension's folder declares the
      * instance. The instance is read from the API info the blocks were built from.
      */
-    getSimulatorExtensionInstanceOpener(instanceQName: string): string | undefined {
+    getSimxInstanceOpener(instanceQName: string): string | undefined {
         const instance = pxtblockly.cachedBlockInfo?.apis.byQName[instanceQName];
         if (!instance) return undefined;
-        const key = this.getSimulatorExtensionInstanceCreator(instance.retType);
+        const key = this.getSimxInstanceCreator(instance.retType);
         const folder = key && getProjfsFolder(key);
         return folder && isDeclaredInProjectFolder(instance, folder) ? key : undefined;
     }
@@ -931,9 +936,9 @@ export class ProjectView
      * asks it to open the instance, once it is ready; does nothing if no
      * offered tab opens it.
      */
-    openSimulatorExtensionInstance(instanceQName: string) {
-        const key = this.getSimulatorExtensionInstanceOpener(instanceQName);
-        if (!key || !this.openSimulatorExtensionEditor(key)) return;
+    openSimxInstance(instanceQName: string) {
+        const key = this.getSimxInstanceOpener(instanceQName);
+        if (!key || !this.openSimxEditor(key)) return;
         simulator.simxEditorHost?.requestAction(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "action", action: "open", qName: instanceQName });
     }
 
@@ -1349,7 +1354,7 @@ export class ProjectView
                 setSimulatorDirty: () => simulator.setDirty(),
                 typecheckNow: () => this.typecheckNow(),
             },
-            openSimulatorExtensionEditor: key => this.openSimulatorExtensionEditor(key),
+            openSimxEditor: key => this.openSimxEditor(key),
         });
 
         // we now have editors prepared
@@ -4310,7 +4315,9 @@ export class ProjectView
 
             simulator.stop(false, true);
 
-            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger);
+            const autoRun = this.autoRunOnStart()
+                && (this.isBlocksEditor() || this.isAnySimxEditorActive())
+                && (this.state.autoRun || !!opts.clickTrigger);
 
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: SimState.Starting, autoRun: autoRun })
@@ -6782,10 +6789,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     hash = parseHash();
     blocklyFieldView.init();
 
-    pxt.react.canCreateInstance = typeQName => !!theEditor?.getSimulatorExtensionInstanceCreator(typeQName);
-    pxt.react.createInstance = typeQName => theEditor?.createSimulatorExtensionInstance(typeQName);
-    pxt.react.canOpenInstance = instanceQName => !!theEditor?.getSimulatorExtensionInstanceOpener(instanceQName);
-    pxt.react.openInstance = instanceQName => theEditor?.openSimulatorExtensionInstance(instanceQName);
+    pxt.react.canCreateInstance = typeQName => !!theEditor?.getSimxInstanceCreator(typeQName);
+    pxt.react.createInstance = typeQName => theEditor?.createSimxInstance(typeQName);
+    pxt.react.canOpenInstance = instanceQName => !!theEditor?.getSimxInstanceOpener(instanceQName);
+    pxt.react.openInstance = instanceQName => theEditor?.openSimxInstance(instanceQName);
 
     pxt.react.getTilemapProject = () => {
         const epkg = pkg.mainEditorPkg();

@@ -923,7 +923,7 @@ declare namespace pxt.editor {
     export type BuiltInHelp = "keyboardControls";
 
     /** A simulator extension's editor tab, as the editor toggle offers it. */
-    export interface SimulatorExtensionEditorInfo {
+    export interface SimxEditorInfo {
         /** The extension's key in the target's simulator extension registrations, e.g. `owner/repo`. */
         key: string;
         /** The tab's name and accessible name. */
@@ -949,7 +949,7 @@ declare namespace pxt.editor {
          * creating its frame if needed.
          * @returns false, showing nothing, if the editor offers no such tab for the open project here
          */
-        openSimulatorExtensionEditor(key: string): boolean;
+        openSimxEditor(key: string): boolean;
         openSettings(): void;
         openSimView(): void;
         openSimSerial(): void;
@@ -1094,18 +1094,18 @@ declare namespace pxt.editor {
         isPythonActive(): boolean;
         isAssetsActive(): boolean;
         /** Returns true if the editor tab of the simulator extension registered under `key` is the active editor. */
-        isSimulatorExtensionEditorActive(key: string): boolean;
+        isSimxEditorActive(key: string): boolean;
         /**
          * Returns the simulator extension editor tabs the editor offers for the open project, in registration
          * order; none in a view whose editor toggle lists no tabs, such as an embedded, read-only, tutorial
          * or debugging view.
          */
-        getSimulatorExtensionEditors(): SimulatorExtensionEditorInfo[];
+        getSimxEditors(): SimxEditorInfo[];
         /**
          * Returns the key of the simulator extension editor tab shown last in the open
          * project's session, unless a text language was shown since; undefined if none was.
          */
-        getLastSimulatorExtensionEditor(): string | undefined;
+        getLastSimxEditor(): string | undefined;
 
         editor: IEditor;
 

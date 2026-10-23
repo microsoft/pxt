@@ -128,7 +128,7 @@ export interface SimxEditorMenuItemContent {
 }
 
 /** Returns what the editor toggle shows for `editor`: its label, after its font icon or SVG icon, if any. */
-export function getSimxEditorMenuItemContent(editor: pxt.editor.SimulatorExtensionEditorInfo): SimxEditorMenuItemContent {
+export function getSimxEditorMenuItemContent(editor: pxt.editor.SimxEditorInfo): SimxEditorMenuItemContent {
     return {
         text: editor.label,
         ariaLabel: editor.label,

@@ -741,7 +741,7 @@ class AssetMenuItem extends data.Component<ISettingsProps, {}> {
 }
 
 interface ISimxEditorMenuItemProps extends ISettingsProps {
-    editor: pxt.editor.SimulatorExtensionEditorInfo;
+    editor: pxt.editor.SimxEditorInfo;
     role?: string;
 }
 
@@ -753,11 +753,11 @@ class SimxEditorMenuItem extends data.Component<ISimxEditorMenuItemProps, {}> {
 
     protected onClick = (): void => {
         pxt.tickEvent("menu.simxeditor", { key: this.props.editor.key }, { interactiveConsent: true });
-        this.props.parent.openSimulatorExtensionEditor(this.props.editor.key);
+        this.props.parent.openSimxEditor(this.props.editor.key);
     }
 
     protected isActive = (): boolean => {
-        return this.props.parent.isSimulatorExtensionEditorActive(this.props.editor.key);
+        return this.props.parent.isSimxEditorActive(this.props.editor.key);
     }
 
     renderCore() {
@@ -796,8 +796,8 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
         const showJavaScript = !noJavaScript && !pyOnly && !blocksOnly;
         const showSandbox = sandbox && !headless;
         const showAssets = pxt.appTarget.appTheme.assetEditor && !sandbox;
-        const extensionEditors = parent.getSimulatorExtensionEditors();
-        const activeExtensionEditor = extensionEditors.find(e => parent.isSimulatorExtensionEditorActive(e.key));
+        const extensionEditors = parent.getSimxEditors();
+        const activeExtensionEditor = extensionEditors.find(e => parent.isSimxEditorActive(e.key));
         const layout = getEditorToggleLayout({
             python: !!python,
             showJavaScript,
@@ -808,7 +808,7 @@ export class EditorSelector extends data.Component<IEditorSelectorProps, {}> {
             isPythonActive: parent.isPythonActive(),
             extensionEditors: extensionEditors.map(e => e.key),
             activeExtensionEditor: activeExtensionEditor?.key,
-            lastExtensionEditor: parent.getLastSimulatorExtensionEditor(),
+            lastExtensionEditor: parent.getLastSimxEditor(),
         });
         const { showDropdown, dropdownActive } = layout;
 

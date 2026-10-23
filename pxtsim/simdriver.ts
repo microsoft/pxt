@@ -1,6 +1,6 @@
 namespace pxsim {
     /** Returns true if a simulator extension editor tab's `icon` is the path to an SVG within the artifact, rather than a font icon's class names. */
-    function isSimulatorExtensionIconPath(icon: string | undefined): boolean {
+    function isSimxIconPath(icon: string | undefined): boolean {
         return !!icon && (icon.indexOf("/") >= 0 || /\.svg$/i.test(icon));
     }
 
@@ -119,7 +119,7 @@ namespace pxsim {
             // `editor` (with an index), sets `allowEditorTab` and is permanent
             editorUrl?: string;
             // Computed URL of the editor tab's SVG icon; set only beside `editorUrl`, when `editor.icon` is a path
-            // (see `isSimulatorExtensionIconPath`)
+            // (see `isSimxIconPath`)
             iconUrl?: string;
             // The fully qualified names of the fixed-instance types whose instances the editor tab
             // creates, from `editor.creates`; set only beside `editorUrl`
@@ -159,14 +159,14 @@ namespace pxsim {
          * @param msg the request, as received
          * @param reply posts a message to the requesting frame only
          */
-        onSimulatorExtensionEditorMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
+        onSimxEditorMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
         /**
          * Called each time a frame the driver created for a `simulatorExtensions` entry
          * finishes loading a page.
          * @param key the `simulatorExtensions` key the frame was created for
          * @param frame the frame
          */
-        onSimulatorExtensionFrameLoad?: (key: string, frame: HTMLIFrameElement) => void;
+        onSimxFrameLoad?: (key: string, frame: HTMLIFrameElement) => void;
         /**
          * Returns true if the open project includes the simulator extension registered
          * under `key`. The project-file, project-asset and editor-tab requests of the
@@ -175,7 +175,7 @@ namespace pxsim {
          * absent, the project includes every registered extension.
          * @param key the `simulatorExtensions` key
          */
-        isSimulatorExtensionInProject?: (key: string) => boolean;
+        isSimxInProject?: (key: string) => boolean;
         /** Called each time the driver has removed all of its frames, as when it stops with `unload`. */
         onFramesUnloaded?: () => void;
     }
@@ -452,7 +452,7 @@ namespace pxsim {
                         pxsim.error(`simulator extension ${key}: an editor tab needs a permanent registration; ignoring its editor`);
                     } else {
                         simx.editorUrl = resolve(simx.editor.index);
-                        if (isSimulatorExtensionIconPath(simx.editor.icon))
+                        if (isSimxIconPath(simx.editor.icon))
                             simx.iconUrl = resolve(simx.editor.icon);
                         if (Array.isArray(simx.editor.creates))
                             simx.creates = simx.editor.creates;
@@ -812,7 +812,7 @@ namespace pxsim {
             if (simulatorExtension.editorUrl && this.isInProject(key))
                 url.searchParams.set("editor", "1");
             const frame = this.createExtensionFrame(key, url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio, simulatorExtension, simulatorExtension.hideInFullscreen);
-            frame.addEventListener("load", () => this.options.onSimulatorExtensionFrameLoad?.(key, frame));
+            frame.addEventListener("load", () => this.options.onSimxFrameLoad?.(key, frame));
             return frame;
         }
 
@@ -1384,7 +1384,7 @@ namespace pxsim {
 
         /** Returns true if the open project includes the simulator extension registered under `key`. */
         private isInProject(key: string): boolean {
-            return !this.options.isSimulatorExtensionInProject || this.options.isSimulatorExtensionInProject(key);
+            return !this.options.isSimxInProject || this.options.isSimxInProject(key);
         }
 
         /**
@@ -1396,7 +1396,7 @@ namespace pxsim {
             switch (type) {
                 case "projfs": return { handler: this.options.onProjfsMessage, permission: "allowFileWrite", failed: "FAILED" };
                 case "projassets": return { handler: this.options.onProjassetsMessage, permission: "allowAssetRead", failed: "FAILED" };
-                default: return { handler: this.options.onSimulatorExtensionEditorMessage, permission: "allowEditorTab", failed: "INVALID_REQUEST" };
+                default: return { handler: this.options.onSimxEditorMessage, permission: "allowEditorTab", failed: "INVALID_REQUEST" };
             }
         }
 
