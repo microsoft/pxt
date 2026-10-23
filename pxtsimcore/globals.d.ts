@@ -4,6 +4,9 @@ declare function setTimeout(handler: (...args: any[]) => void, timeout?: number,
 declare function clearTimeout(handle?: any): void;
 declare function setInterval(handler: (...args: any[]) => void, timeout?: number, ...args: any[]): any;
 declare function clearInterval(handle?: any): void;
+// Present in browsers and workers only; check typeof before calling.
+declare const requestAnimationFrame: ((callback: () => void) => any) | undefined;
+declare const cancelAnimationFrame: ((handle: any) => void) | undefined;
 
 declare const console: {
     log(...data: any[]): void;

@@ -240,7 +240,7 @@ namespace pxsim {
         export function atanh(x: number) { return Math.atanh(x) }
         export function atan2(y: number, x: number) { return Math.atan2(y, x) }
         export function trunc(x: number) { return x > 0 ? Math.floor(x) : Math.ceil(x); }
-        export function random(): number { return Math.random(); }
+        export function random(): number { return host.rng().next(); }
         export function randomRange(min: number, max: number): number {
             if (min == max) return min;
             if (min > max) {
@@ -249,9 +249,9 @@ namespace pxsim {
                 max = t;
             }
             if (Math.floor(min) == min && Math.floor(max) == max)
-                return min + Math.floor(Math.random() * (max - min + 1));
+                return min + Math.floor(host.rng().next() * (max - min + 1));
             else
-                return min + Math.random() * (max - min);
+                return min + host.rng().next() * (max - min);
         }
     }
 

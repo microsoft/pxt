@@ -8,6 +8,7 @@ import * as path from "path";
 import * as vm from "vm";
 
 import * as util from "../common/testUtils";
+import { createVirtualHost, VirtualHost } from "./virtualhost";
 
 // setup
 function initGlobals() {
@@ -194,5 +195,143 @@ describe("pxt simtest runner", () => {
         } finally {
             fs.writeFileSync(toyBundle, "pxsim.initHeadlessRuntime = pxsim.initBareRuntime;");
         }
+    });
+});
+
+/** Declares `control.millis` for programs on the bare board. Run those programs with `startVirtualProgram`, which provides it. */
+const MILLIS_SHIM = `
+declare namespace control {
+    //% shim=control::millis
+    function millis(): number;
+}
+`;
+
+interface VirtualRun {
+    /** Serial lines posted so far, without their trailing newline. */
+    serial: string[];
+    /** Runs the virtual host until idle and resolves once the top-level code has finished. */
+    finishAsync(): Promise<string[]>;
+}
+
+/**
+ * Starts a compiled program on the bare board in a context the virtual host is installed in.
+ * The bare board gains `control.millis`, reading the runtime's running time.
+ */
+function startVirtualProgram(host: VirtualHost, context: any, js: string): VirtualRun {
+    const serial: string[] = [];
+    let finished = false;
+    let failure: any;
+    context.__js = js;
+    context.__serial = serial;
+    const done: Promise<void> = vm.runInContext(`
+        new Promise((resolve, reject) => {
+            pxsim.initCurrentRuntime = () => {
+                pxsim.initBareRuntime();
+                pxsim.control.millis = () => pxsim.runtime.runningTime();
+            };
+            pxsim.Runtime.messagePosted = msg => {
+                if (msg.type === "bulkserial")
+                    msg.data.forEach(m => __serial.push(String(m.data).replace(/\\n$/, "")));
+            };
+            const runtime = new pxsim.Runtime({ type: "run", code: __js });
+            runtime.errorHandler = reject;
+            runtime.run(() => resolve());
+        })
+    `, context);
+    done.then(() => finished = true, e => failure = e || new Error("runtime error"));
+    return {
+        serial,
+        finishAsync: async () => {
+            await host.runUntilIdle();
+            if (failure)
+                throw failure;
+            if (!finished)
+                throw new Error("the program did not finish once the virtual host was idle");
+            return serial;
+        }
+    };
+}
+
+/** A fresh context with a virtual host seeded with seed installed in it. */
+function createVirtualContext(seed = 1) {
+    const host = createVirtualHost(seed);
+    const context = createHeadlessContext();
+    host.install(context);
+    return { host, context };
+}
+
+describe("pxtsimcore on a virtual host", () => {
+    it("completes a pause without waiting for it in real time", async function () {
+        this.timeout(20000);
+        const compiled = await util.stsAsync(`
+            pause(1000)
+            console.log("done")
+        `);
+        const { host, context } = createVirtualContext();
+        const start = Date.now();
+        const serial = await startVirtualProgram(host, context, compiled.outfiles[pxtc.BINARY_JS]).finishAsync();
+        const elapsed = Date.now() - start;
+        chai.expect(serial).deep.equals(["done"]);
+        chai.expect(host.now()).greaterThan(999);
+        chai.expect(elapsed).lessThan(500);
+    });
+
+    it("reports virtual time through control.millis", async function () {
+        this.timeout(20000);
+        const compiled = await util.stsAsync(MILLIS_SHIM + `
+            console.log("t" + control.millis())
+            pause(1000)
+            console.log("t" + control.millis())
+        `);
+        const { host, context } = createVirtualContext();
+        const serial = await startVirtualProgram(host, context, compiled.outfiles[pxtc.BINARY_JS]).finishAsync();
+        chai.expect(serial).deep.equals(["t0", "t1000"]);
+    });
+
+    it("draws the same random numbers from the same seed", async function () {
+        this.timeout(20000);
+        const compiled = await util.stsAsync(`
+            for (let i = 0; i < 3; i++)
+                console.log("r" + Math.randomRange(0, 1000))
+        `);
+        const runAsync = (seed: number) => {
+            const { host, context } = createVirtualContext(seed);
+            return startVirtualProgram(host, context, compiled.outfiles[pxtc.BINARY_JS]).finishAsync();
+        };
+        const first = await runAsync(42);
+        const second = await runAsync(42);
+        const other = await runAsync(7);
+        chai.expect(first.length).equals(3);
+        chai.expect(second).deep.equals(first);
+        chai.expect(other).not.deep.equals(first);
+    });
+
+    it("plays instructions for the buffer's duration on the silent audio host", async function () {
+        this.timeout(20000);
+        const compiled = await util.stsAsync(MILLIS_SHIM + `
+            namespace testAudio {
+                //% promise shim=testAudio::playAsync
+                export function play(): void { }
+            }
+            testAudio.play()
+            console.log("t" + control.millis())
+        `);
+        // two 12-byte steps lasting 300 ms and 200 ms (UInt16LE duration at offset 4)
+        const instructions = new Uint8Array(24);
+        instructions[4] = 300 & 0xff;
+        instructions[5] = 300 >> 8;
+        instructions[12 + 4] = 200;
+        const { host, context } = createVirtualContext();
+        let resolvedAt: number;
+        context.pxsim.testAudio = {
+            playAsync: () => context.pxsim.audiohost.audio().playInstructionsAsync(instructions)
+                .then(() => { resolvedAt = host.now(); })
+        };
+        const run = startVirtualProgram(host, context, compiled.outfiles[pxtc.BINARY_JS]);
+        await host.advance(499);
+        chai.expect(resolvedAt).equals(undefined);
+        await host.advance(1);
+        chai.expect(resolvedAt).equals(500);
+        chai.expect(await run.finishAsync()).deep.equals(["t500"]);
     });
 });

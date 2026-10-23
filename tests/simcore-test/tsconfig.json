@@ -18,6 +18,7 @@
     },
     "files": [
         "simcorerunner.ts",
+        "virtualhost.ts",
         "../common/testUtils.ts",
         "../common/testHost.ts"
     ]

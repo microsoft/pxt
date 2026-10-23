@@ -1,5 +1,6 @@
 // Audio abstraction for the DOM-free core. The browser bundle registers a Web Audio
-// implementation (see audiohostdom.ts); without one, audio calls are silent no-ops.
+// implementation (see audiohostdom.ts); without one, audio calls are silent no-ops, except that
+// playing instructions takes as long as the sound would.
 namespace pxsim.audiohost {
     export interface SoundOscilloscopeData {
         data: Float32Array;
@@ -62,6 +63,38 @@ namespace pxsim.audiohost {
         createMetronome(): Metronome;
     }
 
+    const INSTRUCTION_STEP_BYTES = 12;
+    const CANCEL_POLL_MS = 16;
+
+    /**
+     * Total duration in milliseconds of a play-instructions buffer: the sum of each 12-byte step's
+     * UInt16LE duration at offset 4. Bytes past the end of the buffer read as 0.
+     */
+    function instructionsDurationMs(instructions: Uint8Array): number {
+        let total = 0;
+        for (let i = 0; i < instructions.length; i += INSTRUCTION_STEP_BYTES)
+            total += (instructions[i + 4] | 0) | ((instructions[i + 5] | 0) << 8);
+        return total;
+    }
+
+    /**
+     * Resolves once the buffer's duration has elapsed on the host clock, or early once isCancelled
+     * returns true; isCancelled is polled every frame-sized tick on the host timers.
+     */
+    function silentPlayInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean): Promise<void> {
+        return new Promise<void>(resolve => {
+            const deadline = host.clock().now() + instructionsDurationMs(instructions);
+            const tick = () => {
+                const remaining = deadline - host.clock().now();
+                if (remaining <= 0 || (isCancelled && isCancelled()))
+                    resolve();
+                else
+                    host.timers().setTimeout(tick, isCancelled ? Math.min(remaining, CANCEL_POLL_MS) : remaining);
+            };
+            tick();
+        });
+    }
+
     const silentMetronome = (): Metronome => ({
         initAsync: () => Promise.resolve(),
         start: () => { },
@@ -83,7 +116,7 @@ namespace pxsim.audiohost {
         createAudioElement: () => undefined,
         stopAll: () => { },
         mute: () => { },
-        playInstructionsAsync: () => Promise.resolve(),
+        playInstructionsAsync: silentPlayInstructionsAsync,
         playPCMBufferStreamAsync: () => Promise.resolve(),
         setListenerPosition: () => { },
         disposeAllSpatialAudioPlayers: () => { },
@@ -96,7 +129,7 @@ namespace pxsim.audiohost {
         return current;
     }
 
-    /** Overrides parts of the audio host; omitted members stay silent no-ops. */
+    /** Overrides parts of the audio host; omitted members keep the silent defaults. */
     export function setAudioHost(host: Partial<AudioHost>) {
         current = { ...silentHost, ...host };
     }
