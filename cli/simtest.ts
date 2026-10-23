@@ -86,10 +86,21 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                 result.error = String(e && e.stack || e);
                 finish();
             };
-            runtime.run(() => {
-                clearTimeout(timer);
-                setTimeout(finish, __options.settleMs);
-            });
+            Promise.resolve()
+                 .then(() => {
+                     if (!finished)
+                         return runtime.board.initAsync({ type: "run", code: __js });
+                 })
+                 .then(() => {
+                     if (!finished)
+                        runtime.run(() => {
+                            clearTimeout(timer);
+                            setTimeout(finish, __options.settleMs);
+                        });
+                 })
+                 .catch(e => {
+                     if (!finished) runtime.errorHandler(e);
+                 });
         })
     `, context);
 }
