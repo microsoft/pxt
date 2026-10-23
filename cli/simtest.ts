@@ -52,17 +52,21 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
             const result = { serial: [], messages: [], timedOut: false };
             let runtime;
             let finished = false;
+            let serialBuffer = "";
             const finish = () => {
                 if (finished) return;
                 finished = true;
                 clearTimeout(timer);
                 try { runtime && runtime.kill(); } catch (e) { }
+                if (serialBuffer) result.serial.push(serialBuffer);
                 resolve(result);
             };
             const timer = setTimeout(() => { result.timedOut = true; finish(); }, __options.timeoutMs);
-            const addSerial = data => String(data).split(/\\r?\\n/).forEach((line, i, lines) => {
-                if (i < lines.length - 1 || line) result.serial.push(line);
-            });
+            const addSerial = data => {
+                const lines = (serialBuffer + String(data)).split(/\\r?\\n/);
+                serialBuffer = lines.pop();
+                result.serial.push(...lines);
+            };
             pxsim.initCurrentRuntime = pxsim.initHeadlessRuntime;
             pxsim.Runtime.messagePosted = msg => {
                 if (msg.type === "bulkserial")
