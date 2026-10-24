@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "noImplicitThis": true,
+        "declaration": true,
+        "outFile": "../built/pxtsimcore.js",
+        "newLine": "LF",
+        "moduleResolution": "node",
+        "lib": [
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "types": [],
+        "skipLibCheck": true
+    },
+    "include": [
+        "**/*.ts"
+    ]
+}

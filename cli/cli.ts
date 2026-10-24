@@ -31,6 +31,7 @@ import * as pyconv from './pyconv';
 import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
+import * as simtest from './simtest';
 import { SUB_WEBAPPS } from './subwebapp';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
@@ -1690,36 +1691,52 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
     return Promise.resolve();
 }
 
-function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
-        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+/**
+ * Compiles the TypeScript project `configName` (default `tsconfig.json`) in folder `p` by running
+ * tsc from that folder, then prepends any files listed in the config's `prepend` to its outFile.
+ * Returns a promise that resolves when the build finishes and rejects if tsc fails.
+ * A missing config file is a user error unless `optional`, in which case nothing is built.
+ * With `outputName`, compilerOptions.outFile must be `../built/<outputName>.js`; a config in a
+ * `node_modules/pxt-*-sim` folder may instead use `./built/<outputName>.js`, in which case its
+ * output is copied to `built/`. Any other outFile, `prepend` in a config other than
+ * `tsconfig.json`, or a missing `node_modules/typescript` is a user error, thrown synchronously
+ * before tsc runs.
+ */
+function buildFolderAsync(p: string, optional?: boolean, outputName?: string, configName = "tsconfig.json"): Promise<void> {
+    const configFile = `${p}/${configName}`;
+    if (!fs.existsSync(path.join(p, configName))) {
+        if (!optional) U.userError(`${configFile} not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    const isMainConfig = configName === "tsconfig.json";
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, configName), "utf8"));
     let isNodeModule = false;
     if (outputName && tsConfig.compilerOptions.outFile !== `../built/${outputName}.js`) {
         // Special case to support target sim as an NPM package
         if (/^node_modules[\/\\]+pxt-.*?-sim$/.test(p)) {
             // Allow the out dir be inside the folder being built, and manually copy the result to ./built afterwards
             if (tsConfig.compilerOptions.outFile !== `./built/${outputName}.js`) {
-                U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"./built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
+                U.userError(`${configFile} expected compilerOptions.outFile:"./built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
             }
             isNodeModule = true;
         } else {
-            U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"../built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
+            U.userError(`${configFile} expected compilerOptions.outFile:"../built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
         }
+    }
+    if (!isMainConfig && tsConfig.prepend) {
+        U.userError(`${configFile}: "prepend" is supported only in tsconfig.json`);
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
         U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
 
-    pxt.log(`building ${p}...`)
+    pxt.log(`building ${isMainConfig ? p : configFile}...`)
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`],
+        args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`, "-p", configName],
         cwd: p
     }).then(() => {
         if (tsConfig.prepend) {
@@ -2576,8 +2593,18 @@ function rebundleAsync() {
         .then(() => buildSimAsync());
 }
 
-function buildSimAsync() {
-    return buildFolderAsync(simDir(), true, pxt.appTarget.id === "common" ? "common-sim" : "sim");
+/**
+ * Compiles the target's sim folder (`sim/`, else `node_modules/pxt-<target>-sim/`, whichever
+ * first has a tsconfig.json): its tsconfig.json to built/sim.js and, when the folder has one,
+ * its tsconfig.core.json to built/simcore.js; the common target uses common-sim in place of sim.
+ * Resolves without building anything when neither folder has a tsconfig.json. Rejects if either
+ * build fails or a config's compilerOptions.outFile is not the path buildFolderAsync requires.
+ */
+async function buildSimAsync() {
+    const outputName = pxt.appTarget.id === "common" ? "common-sim" : "sim";
+    await buildFolderAsync(simDir(), true, outputName);
+    if (simDir())
+        await buildFolderAsync(simDir(), true, outputName + "core", "tsconfig.core.json");
 }
 
 function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
@@ -4533,6 +4560,92 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 console.log("All OK.")
             }
         })
+}
+
+function simtestFiles(args: string[]): string[] {
+    const files: string[] = [];
+    for (const arg of args.length ? args : ["."]) {
+        const full = path.resolve(arg);
+        if (nodeutil.existsDirSync(full))
+            fs.readdirSync(full).sort()
+                .filter(f => f[0] != "." && /\.ts$/.test(f))
+                .forEach(f => files.push(path.join(full, f)));
+        else
+            files.push(full);
+    }
+    return files;
+}
+
+/**
+ * Compiles each test program on top of a base project and runs it headless against the target's
+ * simulator bundle (the DOM-free bundles with --core). A program passes when it runs without a
+ * runtime error and, if it has `// @serial: text` comments, writes exactly those lines to the
+ * serial port.
+ */
+async function simtestAsync(parsed: commandParser.ParsedCommand) {
+    const targetDir = process.cwd();
+    const base = path.resolve(parsed.flags["base"] as string || ".");
+    // by default run against the full simulator, so every API is available; --core uses the DOM-free bundles
+    const core = !!parsed.flags["core"];
+    const simBundle = path.resolve(parsed.flags["sim"] as string || path.join("built", core ? "simcore.js" : "sim.js"));
+    const coreBundle = path.join(nodeutil.pxtCoreDir, "built", core ? "pxtsimcore.js" : "pxtsim.js");
+    const timeoutMs = (parsed.flags["timeout"] as number) || 5000;
+    const settleMs = parsed.flags["settle"] === undefined ? 300 : parsed.flags["settle"] as number;
+
+    if (!fs.existsSync(coreBundle))
+        U.userError(`simulator bundle not found: ${coreBundle}`);
+    if (!fs.existsSync(simBundle)) {
+        if (core && !parsed.flags["sim"])
+            U.userError(`DOM-free simulator bundle not found: ${simBundle}; the target has no sim/tsconfig.core.json, or has not been built with 'pxt buildtarget'. 'pxt simtest' without --core runs against the full simulator bundle.`);
+        U.userError(`simulator bundle not found: ${simBundle}`);
+    }
+    if (!fs.existsSync(path.join(base, pxt.CONFIG_NAME)))
+        U.userError(`no ${pxt.CONFIG_NAME} in base project ${base}; use --base <dir>`);
+
+    const tests = simtestFiles(parsed.args);
+    if (!tests.length)
+        U.userError("no test programs found");
+
+    process.chdir(base);
+    mainPkg = new pxt.MainPackage(new Host());
+    const failures: string[] = [];
+    try {
+        for (const file of tests) {
+            const name = path.basename(file);
+            const source = fs.readFileSync(file, "utf8");
+            let failure: string;
+            try {
+                await mainPkg.loadAsync();
+                // the test replaces the base project's only .ts file
+                (mainPkg.host() as Host).fileOverrides = { [findTestFile()]: source };
+                const opts = await prepBuildOptionsAsync(BuildOption.Run, true);
+                const res = pxtc.compile(opts);
+                if (!res.success || !res.outfiles[pxtc.BINARY_JS]) {
+                    reportDiagnostics(res.diagnostics);
+                    failure = "compilation failed";
+                } else {
+                    const result = await simtest.runHeadlessAsync(res.outfiles[pxtc.BINARY_JS], [coreBundle, simBundle], { timeoutMs, settleMs });
+                    failure = simtest.checkRun(result, simtest.parseSerialExpectations(source));
+                }
+            } catch (e) {
+                failure = String(e && e.message || e);
+            }
+            // each test starts from the base project's original file list
+            mainPkg = new pxt.MainPackage(new Host());
+            if (failure) {
+                failures.push(name);
+                console.log(`FAIL ${name}: ${failure}`);
+            } else {
+                console.log(`ok   ${name}`);
+            }
+        }
+    } finally {
+        process.chdir(targetDir);
+    }
+
+    console.log(`${tests.length - failures.length}/${tests.length} simulator tests passed`);
+    if (failures.length)
+        process.exit(1);
 }
 
 function replaceFileExtension(file: string, extension: string) {
@@ -7609,6 +7722,37 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
+    p.defineCommand({
+        name: "simtest",
+        help: "run programs headless against the target's simulator bundle (DOM-free bundles with --core)",
+        argString: "<file|dir>...",
+        advanced: true,
+        flags: {
+            base: {
+                description: "project to compile each test on top of (default: current directory)",
+                argument: "dir",
+                type: "string"
+            },
+            sim: {
+                description: "the target's simulator bundle (default: built/sim.js, or with --core built/simcore.js, which 'pxt buildtarget' emits from sim/tsconfig.core.json)",
+                argument: "file",
+                type: "string"
+            },
+            core: {
+                description: "run against only the DOM-free simulator bundles: pxtsimcore.js and the target's built/simcore.js, which 'pxt buildtarget' emits from sim/tsconfig.core.json"
+            },
+            timeout: {
+                description: "real milliseconds a run may take, settling included (default: 5000)",
+                argument: "ms",
+                type: "number"
+            },
+            settle: {
+                description: "virtual milliseconds the program runs after its top-level code finishes (default: 300)",
+                argument: "ms",
+                type: "number"
+            }
+        }
+    }, simtestAsync);
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
     advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 

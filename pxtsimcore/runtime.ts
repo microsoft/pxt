@@ -12,66 +12,6 @@ namespace pxsim {
     }
 
     export namespace U {
-        // Keep these helpers unified with pxtlib/browserutils.ts
-        export function containsClass(el: SVGElement | HTMLElement, classes: string) {
-            return splitClasses(classes).every(cls => containsSingleClass(el, cls));
-
-            function containsSingleClass(el: SVGElement | HTMLElement, cls: string) {
-                if (el.classList) {
-                    return el.classList.contains(cls);
-                } else {
-                    const classes = (el.className + "").split(/\s+/);
-                    return !(classes.indexOf(cls) < 0);
-                }
-            }
-        }
-
-        export function addClass(el: SVGElement | HTMLElement, classes: string) {
-            splitClasses(classes).forEach(cls => addSingleClass(el, cls));
-
-            function addSingleClass(el: SVGElement | HTMLElement, cls: string) {
-                if (el.classList) {
-                    el.classList.add(cls);
-                } else {
-                    const classes = (el.className + "").split(/\s+/);
-                    if (classes.indexOf(cls) < 0) {
-                        el.className.baseVal += " " + cls;
-                    }
-                }
-            }
-        }
-
-        export function removeClass(el: SVGElement | HTMLElement, classes: string) {
-            splitClasses(classes).forEach(cls => removeSingleClass(el, cls));
-
-            function removeSingleClass(el: SVGElement | HTMLElement, cls: string) {
-                if (el.classList) {
-                    el.classList.remove(cls);
-                } else {
-                    el.className.baseVal = (el.className + "")
-                        .split(/\s+/)
-                        .filter(c => c != cls)
-                        .join(" ");
-                }
-            }
-        }
-
-        function splitClasses(classes: string) {
-            return classes.split(/\s+/).filter(s => !!s);
-        }
-
-        export function remove(element: Element) {
-            element.parentElement.removeChild(element);
-        }
-
-        export function removeChildren(element: Element) {
-            while (element.firstChild) element.removeChild(element.firstChild);
-        }
-
-        export function clear(element: Element) {
-            removeChildren(element);
-        }
-
         export function assert(cond: boolean, msg = "Assertion failed") {
             if (!cond) {
                 debugger
@@ -93,22 +33,12 @@ namespace pxsim {
         }
 
         export function now(): number {
-            return Date.now();
+            return host.clock().now();
         }
-
-        let perf: () => number
 
         // current time in microseconds
         export function perfNowUs(): number {
-            if (!perf)
-                perf = typeof performance != "undefined" ?
-                    performance.now.bind(performance) ||
-                    (performance as any).moznow.bind(performance) ||
-                    (performance as any).msNow.bind(performance) ||
-                    (performance as any).webkitNow.bind(performance) ||
-                    (performance as any).oNow.bind(performance) :
-                    Date.now;
-            return perf() * 1000;
+            return host.clock().perfNowUs();
         }
 
         const _nextTickResolvedPromise = Promise.resolve();
@@ -122,7 +52,7 @@ namespace pxsim {
         export async function delay<T>(duration: number, value?: T): Promise<T> {
             // eslint-disable-next-line
             const output = await value;
-            await new Promise<void>(resolve => setTimeout(() => resolve(), duration));
+            await new Promise<void>(resolve => host.timers().setTimeout(() => resolve(), duration));
             return output;
         }
 
@@ -139,7 +69,7 @@ namespace pxsim {
                     if (!immediate) func.apply(context, args);
                 };
                 let callNow = immediate && !timeout;
-                if (!timeout) timeout = setTimeout(later, wait);
+                if (!timeout) timeout = host.timers().setTimeout(later, wait);
                 if (callNow) func.apply(context, args);
             };
         }
@@ -186,9 +116,9 @@ namespace pxsim {
 
             const timeoutPromise: Promise<T> = new Promise((resolve, reject) => {
                 res = resolve;
-                timeoutId = setTimeout(() => {
+                timeoutId = host.timers().setTimeout(() => {
                     res = undefined;
-                    clearTimeout(timeoutId);
+                    host.timers().clearTimeout(timeoutId);
                     reject(msg || `Promise timed out after ${ms}ms`);
                 }, ms);
             });
@@ -197,7 +127,7 @@ namespace pxsim {
                 .then(output => {
                     // clear any dangling timeout
                     if (res) {
-                        clearTimeout(timeoutId);
+                        host.timers().clearTimeout(timeoutId);
                         res();
                     }
                     return <T>output;
@@ -274,11 +204,11 @@ namespace pxsim {
         }
 
         export function isPxtElectron(): boolean {
-            return typeof window != "undefined" && !!(window as any).pxtElectron;
+            return host.environment().isPxtElectron();
         }
 
         export function isIpcRenderer(): boolean {
-            return typeof window != "undefined" && !!(window as any).ipcRenderer;
+            return host.environment().isIpcRenderer();
         }
 
         export function isElectron() {
@@ -291,7 +221,8 @@ namespace pxsim {
 
         export function isLocalHost(): boolean {
             try {
-                return typeof window !== "undefined" && testLocalhost(window.location.href);
+                const href = host.environment().locationHref();
+                return href !== undefined && testLocalhost(href);
             } catch (e) { return false; }
         }
 
@@ -427,11 +358,10 @@ namespace pxsim {
 
         constructor() {
             // use a stable board id
-            this.id = Embed.frameid || ("b" + Math.round(Math.random() * 2147483647));
+            this.id = host.environment().frameId() || ("b" + Math.round(Math.random() * 2147483647));
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
-        public updateView() { }
         public receiveMessage(msg: SimulatorMessage) {
             if (!runtime || runtime.dead) return;
             this.dispatchMessage(msg);
@@ -467,9 +397,6 @@ namespace pxsim {
             } as SimulatorCommandMessage)
         }
         public onDebuggerResume() { }
-        public screenshotAsync(width?: number): Promise<ImageData> {
-            return Promise.resolve(undefined);
-        }
         public kill() { }
 
         protected serialOutBuffer: string = '';
@@ -481,6 +408,7 @@ namespace pxsim {
             this.serialOutBuffer += s;
             if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
                 this.messages.push({
+                    // real wall-clock time the line was written, for telemetry
                     time: Date.now(),
                     data: this.serialOutBuffer
                 });
@@ -490,9 +418,9 @@ namespace pxsim {
         }
 
         private debouncedPostAll = () => {
-            const nowtime = Date.now();
+            const nowtime = host.clock().now();
             if (nowtime - this.lastSerialTime > MIN_MESSAGE_WAIT_MS) {
-                clearTimeout(this.serialTimeout);
+                host.timers().clearTimeout(this.serialTimeout);
                 if (this.messages.length) {
                     Runtime.postMessage(<any>{
                         type: 'bulkserial',
@@ -505,45 +433,41 @@ namespace pxsim {
                 }
             }
             else {
-                this.serialTimeout = setTimeout(this.debouncedPostAll, 50);
+                this.serialTimeout = host.timers().setTimeout(this.debouncedPostAll, 50);
             }
         }
     }
 
     export class CoreBoard extends BaseBoard {
-        // updates
-        updateSubscribers: (() => void)[];
-
-        // builtin
         builtinParts: Map<any>;
-        builtinVisuals: Map<() => visuals.IBoardPart<any>>;
-        builtinPartVisuals: Map<(xy: visuals.Coord) => visuals.SVGElAndSize>;
 
         constructor() {
             super()
 
-            // updates
-            this.updateSubscribers = []
-            this.updateView = () => {
-                this.updateSubscribers.forEach(sub => sub());
-            }
-
             this.builtinParts = {};
-            this.builtinVisuals = {};
-            this.builtinPartVisuals = {};
         }
 
         kill() {
             super.kill();
             pxsim.codal.music.__stopSoundExpressions();
-            AudioContextManager.stopAll();
-            AudioContextManager.SpatialAudioPlayer.disposeAll();
-            AudioContextManager.setListenerPosition(0, 0, 0);
+            audiohost.audio().stopAll();
+            audiohost.audio().disposeAllSpatialAudioPlayers();
+            audiohost.audio().setListenerPosition(0, 0, 0);
         }
     }
 
     export interface EventBusBoard {
         bus: EventBus;
+    }
+
+    export interface BoardView {
+        builtinVisuals: Map<() => any>;
+        builtinPartVisuals: Map<(xy: visuals.Coord) => any>;
+        initAsync(msg: SimulatorRunMessage): Promise<void>;
+        updateView(): void;
+        addUpdateSubscriber(subscriber: () => void): void;
+        screenshotAsync(width?: number): Promise<ImageData>;
+        kill(): void;
     }
 
     class BareBoard extends BaseBoard {
@@ -725,6 +649,8 @@ namespace pxsim {
 
     // overriden at loadtime by specific implementation
     export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
+    // set by a target's DOM-free simulator bundle; creates its board with no view, for headless runs
+    export let initHeadlessRuntime: (msg?: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
     // binds this pointer (in s.arg0) to method implementation (in s.fn)
@@ -804,8 +730,12 @@ namespace pxsim {
         statsByType: Map<TypeStats>
     }
 
+    // Maximum consecutive maybeYield calls on one clock reading before a yield is forced
+    const YIELD_BUDGET = 100000;
+
     export class Runtime {
         public board: BaseBoard;
+        public boardView?: BoardView;
         numGlobals = 1000;
         errorHandler: (e: any) => void;
         postError: (e: any) => void;
@@ -1066,17 +996,15 @@ namespace pxsim {
         static postMessage(data: SimulatorMessage) {
             if (!data) return;
             // TODO: origins
-            if (typeof window !== 'undefined' && window.parent && window.parent.postMessage) {
-                window.parent.postMessage(data, "*");
-            }
+            host.environment().postToParent(data);
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
 
         static async postScreenshotAsync(opts?: SimulatorScreenshotMessage): Promise<void> {
-            const b = runtime && runtime.board;
-            if (!b) return undefined;
+            const view = runtime && runtime.boardView;
+            if (!view) return undefined;
 
-            const img = await b.screenshotAsync();
+            const img = await view.screenshotAsync();
             Runtime.postMessage({
                 type: "screenshot",
                 data: img,
@@ -1096,7 +1024,7 @@ namespace pxsim {
 
         restart() {
             this.kill();
-            setTimeout(() =>
+            host.timers().setTimeout(() =>
                 pxsim.Runtime.postMessage(<pxsim.SimulatorCommandMessage>{
                     type: "simulator",
                     command: "restart"
@@ -1113,7 +1041,8 @@ namespace pxsim {
         }
 
         updateDisplay() {
-            this.board.updateView();
+            if (this.boardView)
+                this.boardView.updateView();
             this.postFrame();
         }
 
@@ -1121,14 +1050,14 @@ namespace pxsim {
             if (this.recording || !this.running) return;
 
             this.recording = true;
-            this.recordingTimer = setInterval(() => this.postFrame(), 66);
+            this.recordingTimer = host.timers().setInterval(() => this.postFrame(), 66);
             this.recordingLastImageData = undefined;
             this.recordingWidth = width;
         }
 
         stopRecording() {
             if (!this.recording) return;
-            if (this.recordingTimer) clearInterval(this.recordingTimer);
+            if (this.recordingTimer) host.timers().clearInterval(this.recordingTimer);
             this.recording = false;
             this.recordingTimer = 0;
             this.recordingLastImageData = undefined;
@@ -1138,7 +1067,7 @@ namespace pxsim {
         postFrame() {
             if (!this.recording || !this.running) return;
             let time = pxsim.U.now();
-            this.board.screenshotAsync(this.recordingWidth)
+            (this.boardView ? this.boardView.screenshotAsync(this.recordingWidth) : Promise.resolve(undefined))
                 .then(imageData => {
                     // check for duplicate images
                     if (this.recordingLastImageData && isImageDataEqual(this.recordingLastImageData, imageData)) {
@@ -1173,7 +1102,7 @@ namespace pxsim {
                     this.startTimeUs = U.perfNowUs();
                     Runtime.postMessage(<SimulatorStateMessage>{
                         type: 'status',
-                        frameid: Embed.frameid,
+                        frameid: host.environment().frameId(),
                         runtimeid: this.id,
                         state: 'running'
                     });
@@ -1182,7 +1111,7 @@ namespace pxsim {
                     this.stopIdle();
                     Runtime.postMessage(<SimulatorStateMessage>{
                         type: 'status',
-                        frameid: Embed.frameid,
+                        frameid: host.environment().frameId(),
                         runtimeid: this.id,
                         state: 'killed'
                     });
@@ -1207,7 +1136,10 @@ namespace pxsim {
             let dbgHeap: Map<any>;
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
-            let lastYield = Date.now()
+            let lastYield = host.clock().now()
+            // maybeYield calls seen while the clock read yieldClock, and the reading they were counted at
+            let yieldCalls = 0
+            let yieldClock = lastYield
             let userGlobals: string[];
             let __this = this // ex
             this.traceDisabled = !!msg.traceDisabled;
@@ -1285,12 +1217,17 @@ namespace pxsim {
 
                 __this.cleanScheduledExpired()
                 yieldReset();
-                let now = Date.now()
-                if (now - lastYield >= 20) {
+                let now = host.clock().now()
+                if (now !== yieldClock) {
+                    yieldClock = now
+                    yieldCalls = 0
+                }
+                if (now - lastYield >= 20 || ++yieldCalls > YIELD_BUDGET) {
                     lastYield = now
+                    yieldCalls = 0
                     s.pc = pc;
                     s.r0 = r0;
-                    setTimeout(loopForSchedule(s), yieldDelay)
+                    host.timers().setTimeout(loopForSchedule(s), yieldDelay)
                     return true
                 }
                 return false
@@ -1589,7 +1526,7 @@ namespace pxsim {
             function buildResume(s: StackFrame, retPC: number) {
                 if (currResume) oops("already has resume")
                 s.pc = retPC;
-                let start = Date.now()
+                let start = host.clock().now()
                 __this.otherFrames.push(s)
                 let fn = (v: any) => {
                     if (__this.dead) return;
@@ -1598,7 +1535,7 @@ namespace pxsim {
                         return;
                     }
                     runtime = __this;
-                    let now = Date.now()
+                    let now = host.clock().now()
                     if (now - start > 3)
                         lastYield = now
                     U.assert(s.pc == retPC);
@@ -1716,7 +1653,7 @@ namespace pxsim {
         startIdle() {
             // schedules handlers to run every 20ms
             if (this.idleTimer === undefined) {
-                this.idleTimer = setInterval(() => {
+                this.idleTimer = host.timers().setInterval(() => {
                     if (!this.running || this.pausedOnBreakpoint) return;
                     const bus = this.board.bus;
                     if (bus)
@@ -1727,7 +1664,7 @@ namespace pxsim {
 
         stopIdle() {
             if (this.idleTimer !== undefined) {
-                clearInterval(this.idleTimer);
+                host.timers().clearInterval(this.idleTimer);
                 this.idleTimer = undefined;
             }
         }
@@ -1748,7 +1685,7 @@ namespace pxsim {
                     this.timeoutsScheduled.splice(idx, 1)
                 fn();
             }
-            to.id = setTimeout(removeAndExecute, timeout);
+            to.id = host.timers().setTimeout(removeAndExecute, timeout);
             this.timeoutsScheduled.push(to);
             return to.id;
         }
@@ -1757,7 +1694,7 @@ namespace pxsim {
         pauseScheduled() {
             this.pausedOnBreakpoint = true;
             this.timeoutsScheduled.forEach(ts => {
-                clearTimeout(ts.id);
+                host.timers().clearTimeout(ts.id);
                 let elapsed = U.now() - ts.timestampCall;
                 let timeRemaining = ts.totalRuntime - elapsed;
 
@@ -1794,13 +1731,15 @@ namespace pxsim {
         }
 
         registerUserInteraction() {
-            this.lastInteractionTime = Date.now();
+            this.lastInteractionTime = host.clock().now();
 
             if (this.thumbnailRecordingIntervalRef || this.lastThumbnailTime && this.lastInteractionTime - this.lastThumbnailTime < 1000) return;
             this.thumbnailFrames = [];
 
-            this.thumbnailRecordingIntervalRef = setInterval(async () => {
-                const imageData = await this.board.screenshotAsync();
+            this.thumbnailRecordingIntervalRef = host.timers().setInterval(async () => {
+                const imageData = this.boardView
+                    ? await this.boardView.screenshotAsync()
+                    : undefined;
 
                 if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
                     return;
@@ -1808,11 +1747,11 @@ namespace pxsim {
 
                 this.thumbnailFrames.push(imageData);
 
-                if (Date.now() - this.lastInteractionTime > 10000 || this.thumbnailFrames.length > 30) {
-                    clearInterval(this.thumbnailRecordingIntervalRef);
+                if (host.clock().now() - this.lastInteractionTime > 10000 || this.thumbnailFrames.length > 30) {
+                    host.timers().clearInterval(this.thumbnailRecordingIntervalRef);
                     this.thumbnailRecordingIntervalRef = undefined;
 
-                    this.lastThumbnailTime = Date.now();
+                    this.lastThumbnailTime = host.clock().now();
 
                     Runtime.postMessage({
                         type: "thumbnail",

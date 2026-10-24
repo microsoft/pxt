@@ -1,15 +1,7 @@
 namespace pxsim.AudioContextManager {
-    export interface SoundOscilloscopeData {
-        data: Float32Array;
-        fft: Uint8Array;
-    }
-
-    export interface SoundSnapshotData {
-        frequency: number;
-        volume: number;
-    }
-
-    export type SoundPreviewCallback = (data: SoundOscilloscopeData | SoundSnapshotData) => void;
+    export type SoundOscilloscopeData = audiohost.SoundOscilloscopeData;
+    export type SoundSnapshotData = audiohost.SoundSnapshotData;
+    export type SoundPreviewCallback = audiohost.SoundPreviewCallback;
 
     let _context: AudioContext;
 
