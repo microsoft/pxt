@@ -100,8 +100,8 @@ the code the real button uses, and removes the last DOM dependence on those stat
 ### Timing
 
 `advance(ms)` is the open design point for the API, not for the clock: pxt's `pxsim.host` lets a host replace time
-(`setClock`/`setTimers`/`setRng`), and `cli/virtualhost.ts` is one that moves only when asked, with `advance(ms)` and
-`runUntilIdle()`.
+(`setClock`/`setTimers`/`setRng`), and `pxsim.host.createVirtualHost` is one that moves only when asked, with `advance(ms)`
+and `runUntil(done)`.
 - Simple option (phase 1): tests use `pause(ms)` in the program; inputs are queued by the program itself, so
   ordering is deterministic within the program's own scheduler. Virtual time.
 - Later option: a host-side driver in `pxt simtest` that schedules `{ at: ms, input }` steps (from `// @input` comments or

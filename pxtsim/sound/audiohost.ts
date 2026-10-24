@@ -63,19 +63,7 @@ namespace pxsim.audiohost {
         createMetronome(): Metronome;
     }
 
-    const INSTRUCTION_STEP_BYTES = 12;
     const CANCEL_POLL_MS = 16;
-
-    /**
-     * Total duration in milliseconds of a play-instructions buffer: the sum of each 12-byte step's
-     * UInt16LE duration at offset 4. Bytes past the end of the buffer read as 0.
-     */
-    function instructionsDurationMs(instructions: Uint8Array): number {
-        let total = 0;
-        for (let i = 0; i < instructions.length; i += INSTRUCTION_STEP_BYTES)
-            total += (instructions[i + 4] | 0) | ((instructions[i + 5] | 0) << 8);
-        return total;
-    }
 
     /**
      * Resolves once the buffer's duration has elapsed on the host clock, or early once isCancelled
@@ -83,7 +71,7 @@ namespace pxsim.audiohost {
      */
     function silentPlayInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean): Promise<void> {
         return new Promise<void>(resolve => {
-            const deadline = host.clock().now() + instructionsDurationMs(instructions);
+            const deadline = host.clock().now() + music.instructionsDurationMs(instructions);
             const tick = () => {
                 const remaining = deadline - host.clock().now();
                 if (remaining <= 0 || (isCancelled && isCancelled()))

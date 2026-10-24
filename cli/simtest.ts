@@ -1,9 +1,7 @@
+/// <reference path="../built/pxtsim.d.ts"/>
+
 import * as fs from "fs";
 import * as vm from "vm";
-
-import { createVirtualHost, VirtualHost } from "./virtualhost";
-
-export { createVirtualHost, DEFAULT_SEED, VirtualHost } from "./virtualhost";
 
 /** The outcome of running one compiled program in a context that has no browser globals. */
 export interface HeadlessRunResult {
@@ -15,6 +13,8 @@ export interface HeadlessRunResult {
     error?: string;
     /** True when the run did not finish within the timeout. */
     timedOut: boolean;
+    /** The virtual host the run ran on, stopped once the run finished; `now()` reads the virtual time it reached. */
+    readonly host: pxsim.host.VirtualHost;
 }
 
 export interface HeadlessRunOptions {
@@ -22,24 +22,24 @@ export interface HeadlessRunOptions {
     timeoutMs: number;
     /** Virtual milliseconds the program runs after its top-level code finishes, before the run ends. */
     settleMs: number;
-    /** The virtual host to run on; a fresh one seeded with DEFAULT_SEED when omitted. */
-    host?: VirtualHost;
+    /** The seed the virtual host's random source starts from; `pxsim.host.DEFAULT_SEED` when omitted. */
+    seed?: number;
 }
 
 /**
  * Runs compiled simulator JS in a fresh vm context that contains only the JavaScript built-ins and
  * timers, so that any use of the DOM by the loaded simulator code fails the run.
  *
- * The runtime runs on a virtual host: its clock, timers, frames and random numbers come from
- * `options.host`, so the run takes no real time for pauses and two runs of one program produce
- * the same output. The host is driven until the top-level code finishes, then advanced by
+ * The runtime runs on a virtual host made in the context with `pxsim.host.createVirtualHost`: its
+ * clock, timers, frames and random numbers come from that host, seeded with `options.seed`, so the
+ * run takes no real time for pauses and two runs of one program with one seed produce the same
+ * output. The host is driven until the top-level code finishes, then advanced by
  * `settleMs`, and then the run ends, whatever the program still has scheduled. Only the timeout
  * watchdog, and anything the bundles schedule on the global timers, run on the sandbox's real
  * timers, which are cleared when the run finishes.
  * @param bundles simulator scripts to load, in order: pxtsimcore first, then the target's bundle
  */
 export function runHeadlessAsync(js: string, bundles: string[], options: HeadlessRunOptions): Promise<HeadlessRunResult> {
-    const host = options.host || createVirtualHost();
     const timeouts = new Set<any>();
     const intervals = new Set<any>();
     const clearTimers = () => {
@@ -99,15 +99,22 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
         return Promise.reject(new Error(`${bundles[bundles.length - 1]} does not set pxsim.initHeadlessRuntime`));
     }
 
-    host.install(context);
+    sandbox.__seed = options.seed;
+    sandbox.__yieldToEventLoop = () => new Promise<void>(resolve => setImmediate(resolve));
+    try {
+        sandbox.__host = vm.runInContext("pxsim.host.createVirtualHost({ seed: __seed, yieldToEventLoop: __yieldToEventLoop })", context);
+        vm.runInContext("__host.use()", context);
+    } catch (e) {
+        clearTimers();
+        throw e;
+    }
     sandbox.__js = js;
     sandbox.__options = options;
-    sandbox.__host = host;
     sandbox.__clearTimers = clearTimers;
     try {
         return vm.runInContext(`
         new Promise(resolve => {
-            const result = { serial: [], messages: [], timedOut: false };
+            const result = { serial: [], messages: [], timedOut: false, host: __host };
             let runtime;
             let finished = false;
             let serialBuffer = "";

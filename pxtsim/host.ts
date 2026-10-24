@@ -59,6 +59,25 @@ namespace pxsim.host {
         seed(value: number): void;
     }
 
+    /**
+     * Creates a deterministic random source: a 32-bit mulberry32 generator returning numbers in
+     * [0, 1), starting from seed. `seed(value)` restarts the sequence from value, so one seed always
+     * yields the same sequence.
+     */
+    export function createSeededRandom(seed: number): RandomSource {
+        let state = seed;
+        return {
+            next: () => {
+                state = (state + 0x6D2B79F5) | 0;
+                let t = state;
+                t = Math.imul(t ^ (t >>> 15), t | 1);
+                t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+                return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+            },
+            seed: value => { state = value; }
+        };
+    }
+
     let perf: () => number;
 
     const defaultClock: Clock = {

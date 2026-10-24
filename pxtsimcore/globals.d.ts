@@ -7,6 +7,13 @@ declare function clearInterval(handle?: any): void;
 // Present in browsers and workers only; check typeof before calling.
 declare const requestAnimationFrame: ((callback: () => void) => any) | undefined;
 declare const cancelAnimationFrame: ((handle: any) => void) | undefined;
+// Present in Node only; check typeof before calling.
+declare const setImmediate: ((callback: () => void) => any) | undefined;
+// Present in browsers, workers and Node; check typeof before calling.
+declare const MessageChannel: (new () => {
+    port1: { onmessage: ((event: any) => void) | null; close(): void };
+    port2: { postMessage(message: any): void };
+}) | undefined;
 
 declare const console: {
     log(...data: any[]): void;

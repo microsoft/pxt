@@ -202,13 +202,13 @@ namespace pxsim.AudioContextManager {
                     resolve();
                 }
 
-                for (let i = 0; i < instructions.length; i += 12) {
-                    const wave = instructions[i];
-                    const startFrequency = readUint16(instructions, i + 2);
-                    const duration = readUint16(instructions, i + 4) / 1000;
-                    const startVolume = readUint16(instructions, i + 6);
-                    const endVolume = readUint16(instructions, i + 8);
-                    const endFrequency = readUint16(instructions, i + 10);
+                for (let i = 0; i < instructions.length; i += music.INSTRUCTION_STEP_BYTES) {
+                    const wave = instructions[i + music.INSTRUCTION_WAVE_OFFSET];
+                    const startFrequency = music.readUint16(instructions, i + music.INSTRUCTION_START_FREQUENCY_OFFSET);
+                    const duration = music.readUint16(instructions, i + music.INSTRUCTION_DURATION_OFFSET) / 1000;
+                    const startVolume = music.readUint16(instructions, i + music.INSTRUCTION_START_VOLUME_OFFSET);
+                    const endVolume = music.readUint16(instructions, i + music.INSTRUCTION_END_VOLUME_OFFSET);
+                    const endFrequency = music.readUint16(instructions, i + music.INSTRUCTION_END_FREQUENCY_OFFSET);
                     totalDuration += duration
 
                     if (wave === 0) {
@@ -290,22 +290,15 @@ namespace pxsim.AudioContextManager {
     }
 
 
-    function readUint16(buf: Uint8Array, offset: number) {
-        const temp = new Uint8Array(2);
-        temp[0] = buf[offset];
-        temp[1] = buf[offset + 1];
-        return new Uint16Array(temp.buffer)[0];
-    }
-
     function findFrequencyAndVolumeAtTime(millis: number, instructions: Uint8Array) {
         let currentTime = 0;
 
-        for (let i = 0; i < instructions.length; i += 12) {
-            const startFrequency = readUint16(instructions, i + 2);
-            const duration = readUint16(instructions, i + 4);
-            const startVolume = readUint16(instructions, i + 6);
-            const endVolume = readUint16(instructions, i + 8);
-            const endFrequency = readUint16(instructions, i + 10);
+        for (let i = 0; i < instructions.length; i += music.INSTRUCTION_STEP_BYTES) {
+            const startFrequency = music.readUint16(instructions, i + music.INSTRUCTION_START_FREQUENCY_OFFSET);
+            const duration = music.readUint16(instructions, i + music.INSTRUCTION_DURATION_OFFSET);
+            const startVolume = music.readUint16(instructions, i + music.INSTRUCTION_START_VOLUME_OFFSET);
+            const endVolume = music.readUint16(instructions, i + music.INSTRUCTION_END_VOLUME_OFFSET);
+            const endFrequency = music.readUint16(instructions, i + music.INSTRUCTION_END_FREQUENCY_OFFSET);
 
             if (currentTime + duration < millis) {
                 currentTime += duration;
