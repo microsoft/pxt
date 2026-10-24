@@ -405,3 +405,4 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
+- **Layout (near-future move):** move the core sources into the `pxtsimcore/` folder so each project compiles its own directory and the `exclude` list in `pxtsim/tsconfig.json` goes away; location becomes membership, and a core file can no longer compile into both bundles by omission. A pure move of files and `/// <reference>` paths, no behavior change.
