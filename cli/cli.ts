@@ -1691,36 +1691,52 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
     return Promise.resolve();
 }
 
-function buildFolderAsync(p: string, optional?: boolean, outputName?: string): Promise<void> {
-    if (!fs.existsSync(path.join(p, "tsconfig.json"))) {
-        if (!optional) U.userError(`${p}/tsconfig.json not found`);
+/**
+ * Compiles the TypeScript project `configName` (default `tsconfig.json`) in folder `p` by running
+ * tsc from that folder, then prepends any files listed in the config's `prepend` to its outFile.
+ * Returns a promise that resolves when the build finishes and rejects if tsc fails.
+ * A missing config file is a user error unless `optional`, in which case nothing is built.
+ * With `outputName`, compilerOptions.outFile must be `../built/<outputName>.js`; a config in a
+ * `node_modules/pxt-*-sim` folder may instead use `./built/<outputName>.js`, in which case its
+ * output is copied to `built/`. Any other outFile, `prepend` in a config other than
+ * `tsconfig.json`, or a missing `node_modules/typescript` is a user error, thrown synchronously
+ * before tsc runs.
+ */
+function buildFolderAsync(p: string, optional?: boolean, outputName?: string, configName = "tsconfig.json"): Promise<void> {
+    const configFile = `${p}/${configName}`;
+    if (!fs.existsSync(path.join(p, configName))) {
+        if (!optional) U.userError(`${configFile} not found`);
         return Promise.resolve()
     }
 
-    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, "tsconfig.json"), "utf8"));
+    const isMainConfig = configName === "tsconfig.json";
+    const tsConfig = JSON.parse(fs.readFileSync(path.join(p, configName), "utf8"));
     let isNodeModule = false;
     if (outputName && tsConfig.compilerOptions.outFile !== `../built/${outputName}.js`) {
         // Special case to support target sim as an NPM package
         if (/^node_modules[\/\\]+pxt-.*?-sim$/.test(p)) {
             // Allow the out dir be inside the folder being built, and manually copy the result to ./built afterwards
             if (tsConfig.compilerOptions.outFile !== `./built/${outputName}.js`) {
-                U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"./built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
+                U.userError(`${configFile} expected compilerOptions.outFile:"./built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
             }
             isNodeModule = true;
         } else {
-            U.userError(`${p}/tsconfig.json expected compilerOptions.outFile:"../built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
+            U.userError(`${configFile} expected compilerOptions.outFile:"../built/${outputName}.js", got "${tsConfig.compilerOptions.outFile}"`);
         }
+    }
+    if (!isMainConfig && tsConfig.prepend) {
+        U.userError(`${configFile}: "prepend" is supported only in tsconfig.json`);
     }
 
     if (!fs.existsSync("node_modules/typescript")) {
         U.userError("Oops, typescript does not seem to be installed, did you run 'npm install'?");
     }
 
-    pxt.log(`building ${p}...`)
+    pxt.log(`building ${isMainConfig ? p : configFile}...`)
     dirsToWatch.push(p)
     return nodeutil.spawnAsync({
         cmd: "node",
-        args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`],
+        args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`, "-p", configName],
         cwd: p
     }).then(() => {
         if (tsConfig.prepend) {
@@ -2577,8 +2593,18 @@ function rebundleAsync() {
         .then(() => buildSimAsync());
 }
 
-function buildSimAsync() {
-    return buildFolderAsync(simDir(), true, pxt.appTarget.id === "common" ? "common-sim" : "sim");
+/**
+ * Compiles the target's sim folder (`sim/`, else `node_modules/pxt-<target>-sim/`, whichever
+ * first has a tsconfig.json): its tsconfig.json to built/sim.js and, when the folder has one,
+ * its tsconfig.core.json to built/simcore.js; the common target uses common-sim in place of sim.
+ * Resolves without building anything when neither folder has a tsconfig.json. Rejects if either
+ * build fails or a config's compilerOptions.outFile is not the path buildFolderAsync requires.
+ */
+async function buildSimAsync() {
+    const outputName = pxt.appTarget.id === "common" ? "common-sim" : "sim";
+    await buildFolderAsync(simDir(), true, outputName);
+    if (simDir())
+        await buildFolderAsync(simDir(), true, outputName + "core", "tsconfig.core.json");
 }
 
 function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
@@ -4552,8 +4578,9 @@ function simtestFiles(args: string[]): string[] {
 
 /**
  * Compiles each test program on top of a base project and runs it headless against the target's
- * DOM-free simulator bundle. A program passes when it runs without a runtime error and, if it
- * has `// @serial: text` comments, writes exactly those lines to the serial port.
+ * simulator bundle (the DOM-free bundles with --core). A program passes when it runs without a
+ * runtime error and, if it has `// @serial: text` comments, writes exactly those lines to the
+ * serial port.
  */
 async function simtestAsync(parsed: commandParser.ParsedCommand) {
     const targetDir = process.cwd();
@@ -4565,9 +4592,13 @@ async function simtestAsync(parsed: commandParser.ParsedCommand) {
     const timeoutMs = (parsed.flags["timeout"] as number) || 5000;
     const settleMs = parsed.flags["settle"] === undefined ? 300 : parsed.flags["settle"] as number;
 
-    for (const f of [coreBundle, simBundle])
-        if (!fs.existsSync(f))
-            U.userError(`simulator bundle not found: ${f}`);
+    if (!fs.existsSync(coreBundle))
+        U.userError(`simulator bundle not found: ${coreBundle}`);
+    if (!fs.existsSync(simBundle)) {
+        if (core && !parsed.flags["sim"])
+            U.userError(`DOM-free simulator bundle not found: ${simBundle}; the target has no sim/tsconfig.core.json, or has not been built with 'pxt buildtarget'. 'pxt simtest' without --core runs against the full simulator bundle.`);
+        U.userError(`simulator bundle not found: ${simBundle}`);
+    }
     if (!fs.existsSync(path.join(base, pxt.CONFIG_NAME)))
         U.userError(`no ${pxt.CONFIG_NAME} in base project ${base}; use --base <dir>`);
 
@@ -7693,7 +7724,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
     p.defineCommand({
         name: "simtest",
-        help: "run programs headless against the target's DOM-free simulator bundle",
+        help: "run programs headless against the target's simulator bundle (DOM-free bundles with --core)",
         argString: "<file|dir>...",
         advanced: true,
         flags: {
@@ -7703,12 +7734,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 type: "string"
             },
             sim: {
-                description: "the target's simulator bundle (default: built/sim.js, or built/simcore.js with --core)",
+                description: "the target's simulator bundle (default: built/sim.js, or with --core built/simcore.js, which 'pxt buildtarget' emits from sim/tsconfig.core.json)",
                 argument: "file",
                 type: "string"
             },
             core: {
-                description: "run against only the DOM-free simulator bundles (pxtsimcore.js and the target's simcore.js)"
+                description: "run against only the DOM-free simulator bundles: pxtsimcore.js and the target's built/simcore.js, which 'pxt buildtarget' emits from sim/tsconfig.core.json"
             },
             timeout: {
                 description: "real milliseconds a run may take, settling included (default: 5000)",
