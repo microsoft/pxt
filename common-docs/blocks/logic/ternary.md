@@ -51,13 +51,11 @@ let message = temperature > 30 ? "Hot" : (temperature > 15 ? "Warm" : "Cold");
 ## JavaScript and Python syntax #syntax
 
 ### JavaScript / TypeScript
-
 ```typescript
 let result = condition ? valueIfTrue : valueIfFalse;
 ```
 
 ### Python
-
 ```python
 result = valueIfTrue if condition else valueIfFalse
 ```
