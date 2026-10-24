@@ -158,7 +158,8 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
 - Added a `pxtsimcore` gulp task that emits `built/pxtsimcore.js` and `built/pxtsimcore.d.ts`.
 - The `pxtsim` TypeScript project now compiles only the DOM-side sources against `pxtsimcore.d.ts`, emitting `built/pxtsimdom.js` and `built/pxtsimdom.d.ts`.
 - The `pxtsim` gulp task runs core first, compiles DOM sources, then composes core followed by DOM into the compatibility outputs `built/pxtsim.js` and `built/pxtsim.d.ts`. The standalone core declaration reference is removed from the composed declaration file.
-- Wired the composed task into full builds, CLI builds, source watchers and the gulp exports. The pxtsim ESLint project list includes both the DOM and core tsconfigs so core source files remain lintable after the split; `pxtsimcore/globals.d.ts` is linted separately with the core tsconfig.
+- Wired the composed task into full builds, CLI builds, source watchers and the gulp exports. The pxtsim ESLint project list names the DOM tsconfig; the lint task lints `pxtsimcore/` separately with the core tsconfig.
+- Each project compiles its own directory: `pxtsimcore/tsconfig.json` includes `pxtsimcore/**/*.ts`, and `pxtsim/tsconfig.json` includes `pxtsim/**/*.ts` plus `built/pxtsimcore.d.ts`. Membership is location: a core source file lives under `pxtsimcore/`, and a file that reads another file's members at load time pins that file ahead of it with `/// <reference path>`.
 - Verified both project builds, the DOM-free `--noEmit` check, the composed declaration file, and Node loading of the compatibility bundle with neither `window` nor `document`. The Micro:bit simulator tsconfig also type-checks against the new output.
 - The common-packages simulator's standalone tsconfig currently fails because its expected `node_modules/pxt-core/built/pxtsim.d.ts` is absent in this workspace. Its build needs to be rechecked in the normal package-linked target environment.
 
@@ -208,7 +209,7 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 - Component-state construction now lives in `DalBoardState`, separate from `DalBoardView`; hardware-version changes use the runtime display-update queue as the state-to-view invalidation path.
 
 ### Why
-`BaseBoard` and `CoreBoard` in `pxtsim/runtime.ts` and the original `DalBoard` implementation mixed **simulation state** with **view/DOM**. The initial split now keeps `board()` state-facing and provides `boardView()` for target view operations. Component-state construction is separated into `DalBoardState`; the remaining goal is to move more of the generic state foundation and target state dependencies into the DOM-free `pxtsimcore` boundary.
+`BaseBoard` and `CoreBoard` in `pxtsimcore/runtime.ts` and the original `DalBoard` implementation mixed **simulation state** with **view/DOM**. The initial split now keeps `board()` state-facing and provides `boardView()` for target view operations. Component-state construction is separated into `DalBoardState`; the remaining goal is to move more of the generic state foundation and target state dependencies into the DOM-free `pxtsimcore` boundary.
 
 ### What is mixed in today
 
@@ -406,4 +407,3 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
-- **Layout (near-future move):** move the core sources into the `pxtsimcore/` folder so each project compiles its own directory and the `exclude` list in `pxtsim/tsconfig.json` goes away; location becomes membership, and a core file can no longer compile into both bundles by omission. A pure move of files and `/// <reference>` paths, no behavior change.

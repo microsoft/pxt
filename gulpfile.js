@@ -317,6 +317,7 @@ function updatestrings() {
         "pxtlib",
         "pxtpy",
         "pxtsim",
+        "pxtsimcore",
         "webapp/src",
         "react-common"
     ], true);
