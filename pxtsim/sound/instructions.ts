@@ -5,6 +5,8 @@ namespace pxsim.music {
     export const INSTRUCTION_STEP_BYTES = 12;
     /** Offset of a step's waveform byte; 0 is a rest. */
     export const INSTRUCTION_WAVE_OFFSET = 0;
+    /** Offset of a step's flags byte; always 0. */
+    export const INSTRUCTION_FLAGS_OFFSET = 1;
     /** Offset of a step's UInt16LE start frequency, in Hz. */
     export const INSTRUCTION_START_FREQUENCY_OFFSET = 2;
     /** Offset of a step's UInt16LE duration, in milliseconds. */
