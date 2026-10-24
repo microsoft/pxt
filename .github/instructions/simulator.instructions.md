@@ -7,6 +7,10 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 
 ## Simulator Architecture
 
+- Follow the modular board/state pattern established in the codebase
+- Separate visual rendering from simulation logic
+- Use TypeScript interfaces to define board state contracts
+- Implement proper cleanup in simulation lifecycle methods
 - `pxtsimcore` is the DOM-free core project; it compiles without the `dom` lib, which is the check
 - New runtime, board-state and synthesis code belongs to `pxtsimcore`; only view code belongs to `pxtsim`
 - Globals the core may use are declared in `pxtsimcore/globals.d.ts`; never add the `dom` lib to core
@@ -24,6 +28,14 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 - A board state must construct and run with no view; the Node boot test proves it
 - Tests inject input through the board state the same way the visuals do, not by raising DAL events by id
 
+## Audio/Media Handling
+
+- Web Audio lives in the `audiohost` DOM implementation; core code plays sound through `audiohost.audio()`
+- Implement proper gain control and volume management
+- Handle browser compatibility issues (Chrome, Firefox, Safari)
+- Use MediaStream API for recording functionality
+- Always clean up audio resources when stopping simulation
+
 ## Headless Runs
 
 - `pxt simtest` and the simcore tests run on the virtual host (`pxsim.host.createVirtualHost`), so pauses take no real time and runs are repeatable
@@ -33,8 +45,33 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 ## Visual Components
 
 - Use SVG for scalable simulator graphics
-- Support light and dark themes with CSS custom properties
-- Call `requestAnimationFrame` from view code only; core uses `host.timers().requestFrame`
+- Implement proper coordinate systems and transforms
+- Support both light and dark themes
+- Ensure responsive design for different screen sizes
+- Use CSS custom properties for theming
+
+## Performance Optimization
+
+- Minimize DOM manipulations during animation
+- Use `requestAnimationFrame` for smooth animations in view code; core uses `host.timers().requestFrame`
+- Implement efficient update cycles
+- Cache frequently accessed DOM elements
+- Profile performance in different browsers
+
+## Hardware Simulation
+
+- Accurately model hardware behavior and constraints
+- Implement realistic timing and delays on the host clock
+- Handle edge cases and error conditions
+- Support debugging and breakpoint functionality
+- Maintain compatibility with runtime implementations
+
+## Debugging Support
+
+- Include comprehensive logging for development
+- Implement proper error handling and recovery
+- Support simulator reset and state inspection
+- Provide clear error messages for debugging
 
 ## Workflow
 
