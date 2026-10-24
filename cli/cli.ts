@@ -7711,12 +7711,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 description: "run against only the DOM-free simulator bundles (pxtsimcore.js and the target's simcore.js)"
             },
             timeout: {
-                description: "milliseconds a program may take to finish its top-level code (default: 5000)",
+                description: "real milliseconds a run may take, settling included (default: 5000)",
                 argument: "ms",
                 type: "number"
             },
             settle: {
-                description: "milliseconds to keep running after the top-level code finishes (default: 300)",
+                description: "virtual milliseconds the program runs after its top-level code finishes (default: 300)",
                 argument: "ms",
                 type: "number"
             }

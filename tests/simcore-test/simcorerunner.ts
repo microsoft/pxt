@@ -8,6 +8,7 @@ import * as path from "path";
 import * as vm from "vm";
 
 import * as util from "../common/testUtils";
+import type { HeadlessRunOptions } from "../../built/simtest";
 
 // setup
 function initGlobals() {
@@ -22,99 +23,87 @@ initGlobals();
 
 pxt.setAppTarget(util.testAppTarget);
 
+const simtest = require(path.resolve(process.cwd(), "built", "simtest.js")) as typeof import("../../built/simtest");
+
 const BROWSER_GLOBALS = ["window", "document", "navigator", "location", "self", "HTMLElement", "Element", "localStorage"];
 
-/** A context with the JavaScript built-ins and timers, and none of the browser globals. */
-function createHeadlessContext(): any {
-    const sandbox: any = {
-        console,
-        setTimeout,
-        clearTimeout,
-        setInterval,
-        clearInterval,
-        performance,
-        TextEncoder,
-        TextDecoder,
-        URL,
-        URLSearchParams,
-    };
-    const context = vm.createContext(sandbox);
-    const corePath = path.resolve(process.cwd(), "built", "pxtsimcore.js");
-    vm.runInContext(fs.readFileSync(corePath, "utf8"), context, { filename: corePath });
+const core = path.resolve(process.cwd(), "built", "pxtsimcore.js");
+/** Where the test project emits the compiled fixtures under fixtures/. */
+const bundleDir = path.resolve(process.cwd(), "built", "tests", "simcore-test", "fixtures");
+
+/** The toy bundle, compiled with this test project from fixtures/toybundle.ts; its `probe` message reports the type of each name in BROWSER_GLOBALS. */
+const toyBundle = path.join(bundleDir, "toybundle.js");
+
+/** The empty bundle, compiled with this test project from fixtures/emptybundle.ts; it sets no `pxsim.initHeadlessRuntime`. */
+const emptyBundle = path.join(bundleDir, "emptybundle.js");
+
+/** Declares `control.millis`, which the toy board provides. */
+const MILLIS_SHIM = `
+declare namespace control {
+    //% shim=control::millis
+    function millis(): number;
+}
+`;
+
+const RANDOM_PROGRAM = `
+    for (let i = 0; i < 3; i++)
+        console.log("r" + Math.randomRange(0, 1000))
+`;
+
+const options = { timeoutMs: 5000, settleMs: 300 };
+
+
+/** Creates a vm context with no browser globals and loads pxtsimcore.js alone into it. */
+function createCoreContext() {
+    const context = vm.createContext({ console, setTimeout, clearTimeout, setInterval, clearInterval, performance, TextEncoder, TextDecoder, URL, URLSearchParams });
+    vm.runInContext(fs.readFileSync(core, "utf8"), context, { filename: core });
     return context;
 }
 
-function runProgramAsync(context: any, js: string, timeoutMs = 5000): Promise<string[]> {
-    context.__js = js;
-    context.__timeoutMs = timeoutMs;
-    return vm.runInContext(`
-        new Promise((resolve, reject) => {
-            const serial = [];
-            const timer = setTimeout(() => reject(new Error("Simulating code timed out")), __timeoutMs);
-            pxsim.initCurrentRuntime = pxsim.initBareRuntime;
-            pxsim.Runtime.messagePosted = msg => {
-                if (msg.type === "bulkserial")
-                    msg.data.forEach(m => serial.push(String(m.data).replace(/\\n$/, "")));
-            };
-            const runtime = new pxsim.Runtime({ type: "run", code: __js });
-            runtime.errorHandler = e => { clearTimeout(timer); reject(e); };
-            runtime.run(() => { clearTimeout(timer); resolve(serial); });
-        })
-    `, context);
+async function compileAsync(source: string) {
+    return (await util.stsAsync(source)).outfiles[pxtc.BINARY_JS];
+}
+
+/** Runs compiled JS headless on the toy board, with `options` overridden by `overrides`. */
+function runCompiledAsync(js: string, overrides: Partial<HeadlessRunOptions> = {}) {
+    return simtest.runHeadlessAsync(js, [core, toyBundle], { ...options, ...overrides });
+}
+
+async function runAsync(source: string, overrides: Partial<HeadlessRunOptions> = {}) {
+    return runCompiledAsync(await compileAsync(source), overrides);
 }
 
 describe("pxtsimcore in a context without browser globals", () => {
-    it("loads and defines the runtime", () => {
-        const context = createHeadlessContext();
-        chai.expect(vm.runInContext("typeof pxsim.Runtime", context)).equals("function");
-        chai.expect(vm.runInContext("typeof pxsim.initBareRuntime", context)).equals("function");
+    it("loads and defines the runtime", async function () {
+        this.timeout(20000);
+        const result = await runAsync(`pause(1)`);
+        const probe = result.messages.find(msg => msg.type === "probe");
+        chai.expect(probe.runtime).equals("function");
+        chai.expect(probe.bareRuntime).equals("function");
     });
 
-    it("has no browser globals", () => {
-        const context = createHeadlessContext();
+    it("has no browser globals", async function () {
+        this.timeout(20000);
+        const result = await runAsync(`pause(1)`);
+        const probe = result.messages.find(msg => msg.type === "probe");
         for (const name of BROWSER_GLOBALS)
-            chai.expect(vm.runInContext(`typeof ${name}`, context), name).equals("undefined");
+            chai.expect(probe.globals[name], name).equals("undefined");
     });
 
     it("runs a compiled program on the bare board", async function () {
         this.timeout(20000);
-        const compiled = await util.stsAsync(`
+        const result = await runAsync(`
             let total = 0
             for (let i = 1; i <= 4; i++) total += i
             console.log("total " + total)
             pause(10)
         `);
-        const context = createHeadlessContext();
-        const serial = await runProgramAsync(context, compiled.outfiles[pxtc.BINARY_JS]);
-        chai.expect(serial).deep.equals(["total 10"]);
+        chai.expect(result.error).equals(undefined);
+        chai.expect(result.serial).deep.equals(["total 10"]);
     });
 });
 
 describe("pxt simtest runner", () => {
-    const simtest = require(path.resolve(process.cwd(), "built", "simtest.js")) as typeof import("../../built/simtest");
-    const toyBundle = path.resolve(process.cwd(), "built", "tests", "simcore-test", "toybundle.js");
-
-    before(() => {
-        fs.mkdirSync(path.dirname(toyBundle), { recursive: true });
-        fs.writeFileSync(toyBundle, `pxsim.initHeadlessRuntime = function (msg) {
-            pxsim.initBareRuntime(msg);
-            pxsim.runtime.startIdle();
-            pxsim.runtime.board.kill = function () {
-                pxsim.Runtime.messagePosted({ type: "boardcleanup" });
-            };
-        };`);
-    });
-
-    after(() => fs.unlinkSync(toyBundle));
-
-    const core = path.resolve(process.cwd(), "built", "pxtsimcore.js");
-    const options = { timeoutMs: 5000, settleMs: 300 };
-
-    async function runAsync(source: string) {
-        const compiled = await util.stsAsync(source);
-        return simtest.runHeadlessAsync(compiled.outfiles[pxtc.BINARY_JS], [core, toyBundle], options);
-    }
-
     it("parses serial expectations", () => {
         chai.expect(simtest.parseSerialExpectations("// @serial: a b\nlet x = 1\n  //@serial:c\n// @serial:")).deep.equals(["a b", "c", ""]);
     });
@@ -129,44 +118,49 @@ describe("pxt simtest runner", () => {
         chai.expect(simtest.checkRun(result, ["one"])).includes("serial output mismatch");
     });
 
-    it("clears timers for background fibers", async function () {
+    it("runs background fibers through virtual settle time and leaves no timer", async function () {
         this.timeout(20000);
-        const compiled = await util.stsAsync(`control.runInBackground(() => pause(60000))`);
+        const js = await compileAsync(`control.runInBackground(() => { pause(60000); console.log("woke") })`);
         const originalSetTimeout = global.setTimeout;
         const originalClearTimeout = global.clearTimeout;
         const originalSetInterval = global.setInterval;
         const originalClearInterval = global.clearInterval;
-        const longTimers: any[] = [];
-        const clearedTimers = new Set<any>();
-        const intervalTimers: any[] = [];
-        const clearedIntervals = new Set<any>();
+        let created = 0;
+        const pending = new Set<any>();
         (global as any).setTimeout = (callback: (...args: any[]) => void, delay?: number, ...args: any[]) => {
             let timer: any;
-            timer = originalSetTimeout(() => callback(...args), delay);
-            if (delay === 60000)
-                longTimers.push(timer);
+            timer = originalSetTimeout(() => {
+                pending.delete(timer);
+                callback(...args);
+            }, delay);
+            created++;
+            pending.add(timer);
             return timer;
         };
         (global as any).clearTimeout = (timer: any) => {
-            clearedTimers.add(timer);
+            pending.delete(timer);
             originalClearTimeout(timer);
         };
         (global as any).setInterval = (callback: (...args: any[]) => void, delay?: number, ...args: any[]) => {
             const timer = originalSetInterval(() => callback(...args), delay);
-            intervalTimers.push(timer);
+            created++;
+            pending.add(timer);
             return timer;
         };
         (global as any).clearInterval = (timer: any) => {
-            clearedIntervals.add(timer);
+            pending.delete(timer);
             originalClearInterval(timer);
         };
         try {
-            const result = await simtest.runHeadlessAsync(compiled.outfiles[pxtc.BINARY_JS], [core, toyBundle], options);
+            const start = Date.now();
+            const result = await runCompiledAsync(js, { settleMs: 61000 });
+            const elapsed = Date.now() - start;
             chai.expect(result.error).equals(undefined);
-            chai.expect(longTimers.length).greaterThan(0);
-            chai.expect(longTimers.every(timer => clearedTimers.has(timer))).equals(true);
-            chai.expect(intervalTimers.length).greaterThan(0);
-            chai.expect(intervalTimers.every(timer => clearedIntervals.has(timer))).equals(true);
+            chai.expect(result.timedOut).equals(false);
+            chai.expect(result.serial).deep.equals(["woke"]);
+            chai.expect(elapsed).lessThan(options.timeoutMs);
+            chai.expect(created).greaterThan(0);
+            chai.expect(pending.size).equals(0);
         } finally {
             global.setTimeout = originalSetTimeout;
             global.clearTimeout = originalClearTimeout;
@@ -184,15 +178,173 @@ describe("pxt simtest runner", () => {
 
     it("fails when the bundle has no headless entry point", async function () {
         this.timeout(20000);
-        fs.writeFileSync(toyBundle, "");
-        try {
-            const compiled = await util.stsAsync(`pause(1)`);
-            let message = "";
-            await simtest.runHeadlessAsync(compiled.outfiles[pxtc.BINARY_JS], [core, toyBundle], options)
-                .catch((e: Error) => message = e.message);
-            chai.expect(message).includes("does not set pxsim.initHeadlessRuntime");
-        } finally {
-            fs.writeFileSync(toyBundle, "pxsim.initHeadlessRuntime = pxsim.initBareRuntime;");
-        }
+        const js = await compileAsync(`pause(1)`);
+        let message = "";
+        await simtest.runHeadlessAsync(js, [core, emptyBundle], options)
+            .catch((e: Error) => message = e.message);
+        chai.expect(message).includes("does not set pxsim.initHeadlessRuntime");
+    });
+});
+
+describe("deterministic time and randomness", () => {
+    it("advances a virtual host defined by pxtsimcore alone in a context without browser globals", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            const fired = [];
+            host.timers.setTimeout(() => fired.push(host.now()), 100);
+            await host.advance(150);
+            return JSON.stringify({ fired, now: host.now() });
+        })()`, context));
+        chai.expect(result.fired).deep.equals([100]);
+        chai.expect(result.now).equals(150);
+    });
+
+    it("completes a pause without waiting for it in real time", async function () {
+        this.timeout(20000);
+        const js = await compileAsync(`
+            pause(1000)
+            console.log("done")
+        `);
+        const start = Date.now();
+        const result = await runCompiledAsync(js);
+        const elapsed = Date.now() - start;
+        chai.expect(result.serial).deep.equals(["done"]);
+        chai.expect(result.host.now()).greaterThan(999);
+        chai.expect(elapsed).lessThan(500);
+    });
+
+    it("reports virtual time through control.millis", async function () {
+        this.timeout(20000);
+        const result = await runAsync(MILLIS_SHIM + `
+            console.log("t" + control.millis())
+            pause(1000)
+            console.log("t" + control.millis())
+        `);
+        chai.expect(result.serial).deep.equals(["t0", "t1000"]);
+    });
+
+    it("draws the same random numbers from the same seed", async function () {
+        this.timeout(20000);
+        const js = await compileAsync(RANDOM_PROGRAM);
+        const first = (await runCompiledAsync(js, { seed: 42 })).serial;
+        const second = (await runCompiledAsync(js, { seed: 42 })).serial;
+        const other = (await runCompiledAsync(js, { seed: 7 })).serial;
+        chai.expect(first.length).equals(3);
+        chai.expect(second).deep.equals(first);
+        chai.expect(other).not.deep.equals(first);
+    });
+
+    it("draws the same random numbers on every run without a seed", async function () {
+        this.timeout(20000);
+        const js = await compileAsync(RANDOM_PROGRAM);
+        const first = (await runCompiledAsync(js)).serial;
+        const second = (await runCompiledAsync(js)).serial;
+        chai.expect(first.length).equals(3);
+        chai.expect(second).deep.equals(first);
+    });
+
+    it("plays instructions for the buffer's duration on the silent audio host", async function () {
+        this.timeout(20000);
+        const result = await runAsync(MILLIS_SHIM + `
+            namespace testAudio {
+                //% promise shim=testAudio::playAsync
+                export function play(): void { }
+            }
+            testAudio.play()
+            console.log("t" + control.millis())
+        `);
+        const played = result.messages.find(msg => msg.type === "testaudio");
+        chai.expect(played.resolvedAt).equals(500);
+        chai.expect(result.serial).deep.equals(["t500"]);
+    });
+
+    it("ticks the silent audio host's metronome on virtual time", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            host.use();
+            const metronome = pxsim.audiohost.audio().createMetronome();
+            await metronome.initAsync();
+            const ticks = [];
+            metronome.addTickListener(() => ticks.push(host.now()));
+            metronome.start(100);
+            await host.advance(350);
+            const started = ticks.slice();
+            metronome.setInterval(50);
+            await host.advance(100);
+            const restarted = ticks.slice();
+            metronome.stop();
+            await host.advance(500);
+            const stopped = ticks.slice();
+            metronome.setInterval(50);
+            await host.advance(500);
+            const setWhileStopped = ticks.slice();
+            metronome.start(100);
+            metronome.dispose();
+            await host.advance(500);
+            return JSON.stringify({ started, restarted, stopped, setWhileStopped, disposed: ticks });
+        })()`, context));
+        chai.expect(result.started).deep.equals([100, 200, 300]);
+        chai.expect(result.restarted).deep.equals([100, 200, 300, 400, 450]);
+        chai.expect(result.stopped).deep.equals(result.restarted);
+        chai.expect(result.setWhileStopped).deep.equals(result.restarted);
+        chai.expect(result.disposed).deep.equals(result.restarted);
+    });
+
+    it("plays a song to its end on the silent audio host's metronome", async function () {
+        this.timeout(20000);
+        // 150 bpm at 4 ticks per beat is 100 ms per tick; 2 measures of 4 beats is 32 ticks
+        const song: pxt.assets.music.Song = {
+            measures: 2,
+            beatsPerMeasure: 4,
+            beatsPerMinute: 150,
+            ticksPerBeat: 4,
+            tracks: [{
+                id: 0,
+                instrument: {
+                    waveform: 1,
+                    ampEnvelope: { attack: 10, decay: 100, sustain: 500, release: 100, amplitude: 1024 }
+                },
+                notes: [{ startTick: 0, endTick: 4, notes: [{ note: 49, enharmonicSpelling: "normal" }] }]
+            }]
+        };
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            host.use();
+            const sequencer = new pxsim.music.Sequencer();
+            await sequencer.initAsync();
+            let stoppedAt;
+            sequencer.addEventListener("stop", () => stoppedAt = host.now());
+            sequencer.start(${JSON.stringify(song)}, false);
+            const duration = sequencer.duration();
+            await host.advance(duration - 1);
+            const before = { state: sequencer.state(), tick: sequencer.currentTick() };
+            await host.advance(1);
+            const after = { state: sequencer.state(), tick: sequencer.currentTick() };
+            return JSON.stringify({ duration, maxTick: sequencer.maxTick(), before, after, stoppedAt });
+        })()`, context));
+        chai.expect(result.duration).equals(3200);
+        chai.expect(result.maxTick).equals(32);
+        chai.expect(result.before).deep.equals({ state: "play", tick: 31 });
+        chai.expect(result.after).deep.equals({ state: "stop", tick: 32 });
+        chai.expect(result.stoppedAt).equals(3200);
+    });
+
+    it("times out a busy loop that never pauses", async function () {
+        this.timeout(20000);
+        const js = await compileAsync(`
+            let x = 0
+            while (true) { x++ }
+        `);
+        const start = Date.now();
+        const result = await runCompiledAsync(js, { timeoutMs: 1000 });
+        const elapsed = Date.now() - start;
+        chai.expect(result.timedOut).equals(true);
+        chai.expect(simtest.checkRun(result, [])).includes("timed out");
+        chai.expect(elapsed).lessThan(3000);
     });
 });

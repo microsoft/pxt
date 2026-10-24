@@ -1,3 +1,5 @@
+/// <reference path="../built/pxtsim.d.ts"/>
+
 import * as fs from "fs";
 import * as vm from "vm";
 
@@ -9,20 +11,32 @@ export interface HeadlessRunResult {
     messages: any[];
     /** Set when the runtime reported an error. */
     error?: string;
-    /** True when the program did not finish within the timeout. */
+    /** True when the run did not finish within the timeout. */
     timedOut: boolean;
+    /** The virtual host the run ran on, stopped once the run finished; `now()` reads the virtual time it reached. */
+    readonly host: pxsim.host.VirtualHost;
 }
 
 export interface HeadlessRunOptions {
-    /** Maximum time for the top-level code to finish. */
+    /** Maximum real time, in milliseconds, for the whole run, settling included. */
     timeoutMs: number;
-    /** How long to keep running after the top-level code finishes, for events and background work. */
+    /** Virtual milliseconds the program runs after its top-level code finishes, before the run ends. */
     settleMs: number;
+    /** The seed the virtual host's random source starts from; `pxsim.host.DEFAULT_SEED` when omitted. */
+    seed?: number;
 }
 
 /**
  * Runs compiled simulator JS in a fresh vm context that contains only the JavaScript built-ins and
  * timers, so that any use of the DOM by the loaded simulator code fails the run.
+ *
+ * The runtime runs on a virtual host made in the context with `pxsim.host.createVirtualHost`: its
+ * clock, timers, frames and random numbers come from that host, seeded with `options.seed`, so the
+ * run takes no real time for pauses and two runs of one program with one seed produce the same
+ * output. The host is driven until the top-level code finishes, then advanced by
+ * `settleMs`, and then the run ends, whatever the program still has scheduled. Only the timeout
+ * watchdog, and anything the bundles schedule on the global timers, run on the sandbox's real
+ * timers, which are cleared when the run finishes.
  * @param bundles simulator scripts to load, in order: pxtsimcore first, then the target's bundle
  */
 export function runHeadlessAsync(js: string, bundles: string[], options: HeadlessRunOptions): Promise<HeadlessRunResult> {
@@ -85,13 +99,22 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
         return Promise.reject(new Error(`${bundles[bundles.length - 1]} does not set pxsim.initHeadlessRuntime`));
     }
 
+    sandbox.__seed = options.seed;
+    sandbox.__yieldToEventLoop = () => new Promise<void>(resolve => setImmediate(resolve));
+    try {
+        sandbox.__host = vm.runInContext("pxsim.host.createVirtualHost({ seed: __seed, yieldToEventLoop: __yieldToEventLoop })", context);
+        vm.runInContext("__host.use()", context);
+    } catch (e) {
+        clearTimers();
+        throw e;
+    }
     sandbox.__js = js;
     sandbox.__options = options;
     sandbox.__clearTimers = clearTimers;
     try {
         return vm.runInContext(`
         new Promise(resolve => {
-            const result = { serial: [], messages: [], timedOut: false };
+            const result = { serial: [], messages: [], timedOut: false, host: __host };
             let runtime;
             let finished = false;
             let serialBuffer = "";
@@ -99,6 +122,7 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                 if (finished) return;
                 finished = true;
                 clearTimeout(timer);
+                __host.stop();
                 try { runtime && runtime.kill(); } catch (e) { }
                 try { runtime && runtime.board && runtime.board.kill(); } catch (e) { }
                 try { runtime && runtime.boardView && runtime.boardView.kill(); } catch (e) { }
@@ -131,21 +155,25 @@ export function runHeadlessAsync(js: string, bundles: string[], options: Headles
                 result.error = String(e && e.stack || e);
                 finish();
             };
+            const fail = e => {
+                if (!finished) runtime.errorHandler(e);
+            };
             Promise.resolve()
                  .then(() => {
                      if (!finished)
                          return runtime.board.initAsync({ type: "run", code: __js });
                  })
                  .then(() => {
-                     if (!finished)
-                        runtime.run(() => {
-                            clearTimeout(timer);
-                            setTimeout(finish, __options.settleMs);
-                        });
+                     if (finished) return;
+                     let topLevelDone = false;
+                     runtime.run(() => { topLevelDone = true; });
+                     return __host.runUntil(() => topLevelDone);
                  })
-                 .catch(e => {
-                     if (!finished) runtime.errorHandler(e);
-                 });
+                 .then(() => {
+                     if (!finished)
+                         return __host.advance(__options.settleMs);
+                 })
+                 .then(finish, fail);
         })
     `, context).catch((e: any) => {
         clearTimers();
@@ -172,7 +200,7 @@ export function checkRun(result: HeadlessRunResult, expectedSerial: string[]): s
     if (result.error)
         return `runtime error: ${result.error}`;
     if (result.timedOut)
-        return "timed out before the top-level code finished";
+        return "timed out before the run finished";
     if (expectedSerial.length && JSON.stringify(result.serial) !== JSON.stringify(expectedSerial))
         return `serial output mismatch\n  expected: ${JSON.stringify(expectedSerial)}\n  actual:   ${JSON.stringify(result.serial)}`;
     return undefined;

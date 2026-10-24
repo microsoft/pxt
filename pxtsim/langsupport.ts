@@ -220,7 +220,7 @@ namespace pxsim {
 
     export namespace pxtcore {
         export function seedAddRandom(num: number) {
-            // nothing yet
+            host.rng().seed(num);
         }
 
         export function mkAction(len: number, fn: LabelFn) {

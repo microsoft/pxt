@@ -99,12 +99,15 @@ the code the real button uses, and removes the last DOM dependence on those stat
 
 ### Timing
 
-`advance(ms)` is the open design point:
+`advance(ms)` is the open design point for the API, not for the clock: pxt's `pxsim.host` lets a host replace time
+(`setClock`/`setTimers`/`setRng`), and `pxsim.host.createVirtualHost` is one that moves only when asked, with `advance(ms)`
+and `runUntil(done)`.
 - Simple option (phase 1): tests use `pause(ms)` in the program; inputs are queued by the program itself, so
-  ordering is deterministic within the program's own scheduler.
+  ordering is deterministic within the program's own scheduler. Virtual time.
 - Later option: a host-side driver in `pxt simtest` that schedules `{ at: ms, input }` steps (from `// @input` comments or
-  a sidecar JSON) and sends them as messages into the runtime, with a fake clock. Not needed until tests need
-  inputs that arrive while the program is blocked.
+  a sidecar JSON) and sends them as messages into the runtime on the virtual host, so inputs can arrive while the
+  program is blocked and `advance(ms)` becomes a message to the driver. `simtest` runs on the virtual host, and
+  busy loops yield on an instruction budget.
 
 ## Phases
 
@@ -258,8 +261,8 @@ network.
   message router implementing the protocol above.
 - The controller's own runtime has `postMessage` routed to the registry; messages for `id` are handled by calling the
   input primitives on that instance's board and queuing events.
-- Time: all instances share the Node event loop. Deterministic cross-simulator timing needs the fake clock (see
-  Timing in the first plan); V1 uses real timers and `pause`.
+- Time: all instances share the Node event loop. Deterministic cross-simulator timing uses the host clock seams
+  (`pxsim.host`, see Timing in the first plan); `pxt simtest` runs on the virtual host.
 - Safety: loading from the network in a test run must be explicit (`--allow-network`), with a resolver cache so repeated
   runs do not depend on the network; github/share loads are pinned to a tag or script id.
 
@@ -401,6 +404,4 @@ A + B + C + F, with D opt-in and E as helpers:
 
 1. Snapshot granularity: whole-board snapshot each change (simple, larger) or per-area deltas (smaller, more code)?
 2. Should observation require opting in per area (`handle.watch("leds")`) to keep messages small, or always on?
-3. Do assertions about timing (for example "the LED turned on within 200 ms of the click") need the fake clock now, or is
-   real time with generous timeouts acceptable for V1?
-4. Which visible outputs matter first for Micro:Bit tests: LEDs and serial, then pins/radio, then sound?
+3. Which visible outputs matter first for Micro:Bit tests: LEDs and serial, then pins/radio, then sound?

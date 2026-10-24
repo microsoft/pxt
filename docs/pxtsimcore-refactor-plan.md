@@ -56,7 +56,7 @@ Notes:
 
 ### Progress: step 4, audio split (done) — 31 → 17 errors
 
-- `sound/audiohost.ts` (core): `pxsim.audiohost.AudioHost` (`stopAll`, `mute`, `playInstructionsAsync`, `playPCMBufferStreamAsync`, `setListenerPosition`, `disposeAllSpatialAudioPlayers`, `createMetronome`) plus `Metronome`/`SpatialAudioPlayer` interfaces and the preview-data types. Defaults are silent no-ops.
+- `sound/audiohost.ts` (core): `pxsim.audiohost.AudioHost` (`stopAll`, `mute`, `playInstructionsAsync`, `playPCMBufferStreamAsync`, `setListenerPosition`, `disposeAllSpatialAudioPlayers`, `createMetronome`) plus `Metronome`/`SpatialAudioPlayer` interfaces and the preview-data types. Defaults are silent no-ops, except that `playInstructionsAsync` waits out the sound's duration and `createMetronome` returns a `TimerMetronome` ticking on `host.timers()`.
 - `sound/audiohostdom.ts` (DOM): registers the Web Audio implementation (`AudioContextManager`, `music.Metronome`).
 - `sequencer.ts`, `soundexpression.ts`, `runtime.ts`, `embed.ts` call `audiohost.audio()` instead of `AudioContextManager`. `AudioContextManager.SoundPreviewCallback` and friends are now aliases, so the public API is unchanged.
 
@@ -70,6 +70,21 @@ Notes:
 
 The DOM-free type-check now passes with zero diagnostics:
 `node_modules/.bin/tsc -p pxtsimcore/tsconfig.json`.
+
+### Progress: clock, timer and random seams (done)
+
+- `pxsim.host` carries `Clock` (`now`, `perfNowUs`), `Timers` (set/clear timeout and interval, `requestFrame`/`cancelFrame`) and `RandomSource` (`next`, `seed`), with `clock()`/`timers()`/`rng()` accessors and `setClock`/`setTimers`/`setRng` overrides that fill omitted members from the defaults: `Date.now`, the performance-based microsecond clock, the global timers looked up at call time, `requestAnimationFrame` or a 16 ms timeout, `Math.random` with a no-op `seed`.
+- Routed through the host: `U.now`, `U.perfNowUs`, `U.delay`, `throttle`, `promiseTimeout`, the serial debounce, `restart`, recording, `maybeYield`, `buildResume`, the idle interval, `schedule`/`pauseScheduled`, the thumbnail recorder, `Math_.random`/`randomRange`, `seedAddRandom`, `AnimationQueue`, and the sound expression's random and delay. The serial message's `time:` field stays on `Date.now` as wall-clock telemetry.
+- Still direct: the `requestAnimationFrame` sites in `playInstructions.ts`, `audioContextManager.ts` and `audioWorkletSource.ts`, `embed.ts`, `debugProtocol.ts`'s request timeout, and `simcoordinator.ts`'s frame cleanup timer and frame-id random (editor side).
+- The silent audio host's `playInstructionsAsync` resolves after the buffer's summed step durations on the host clock, polling `isCancelled` on frame-sized ticks, so headless sound timing matches the browser. Without `--core`, `pxt simtest` loads the Web Audio host, so this reaches `--core` runs only.
+- The silent audio host's metronome is `audiohost.TimerMetronome`: it ticks on `host.timers()` with the worker metronome's `start`/`stop`/`setInterval` semantics. The Web Audio host keeps the worker metronome.
+- `pxsim.host.createVirtualHost` in the DOM-free core is the deterministic host: a counter clock at a nonzero epoch (the runtime treats a performance time of 0 as unset), timers and 16 ms frames on one deadline queue, `advance(ms)`, `runUntil(done)`, `stop()` and `use()`, with the event-loop turn injected through `yieldToEventLoop` (default `setImmediate`, else a `MessageChannel` message, else `setTimeout(fn, 0)`); `runHeadlessAsync` creates it inside the vm context and returns it as `result.host`.
+- `pxsim.host.createSeededRandom(seed)` is the seeded `mulberry32` random source; the virtual host starts it from `DEFAULT_SEED` unless given `seed`.
+- The play-instructions format helpers (`INSTRUCTION_STEP_BYTES`, the field offsets, `readUint16`, `instructionsDurationMs`) live in `pxsim.music` in `sound/instructions.ts`, written by `song.ts` and read by the silent audio host and `playInstructions.ts`.
+- Headless means virtual time. `runHeadlessAsync` installs the virtual host before constructing the `Runtime`, every run; there is no wall-clock mode and no flag for one. Two runs of one program write identical serial; a program that wants another sequence calls `seedAddRandom`.
+- Settling is a bounded advance: the host is stepped until the top-level code finishes, advanced by `settleMs` (`--settle`, virtual milliseconds), and the run then ends whatever is still scheduled. Nothing in a run waits for idle, so a `forever` program passes. The `timeoutMs` watchdog stays on the sandbox's real `setTimeout` and bounds the whole run, so a hung program and a stopped clock do not look alike.
+- `maybeYield` yields after 20 ms of host time, as before, or after `YIELD_BUDGET` (100000) calls on an unchanged clock reading, so a busy loop on the virtual clock yields and times out instead of hanging Node. A real clock fits at most about 5100 calls in one millisecond tick, so the browser keeps yielding on the 20 ms rule.
+- The simcore tests run through `runHeadlessAsync` on the toy bundle `tests/simcore-test/fixtures/toybundle.ts`, a TypeScript fixture the test project compiles against `pxtsimcore.d.ts`, plus cases that load `pxtsimcore.js` alone and drive a virtual host directly. pxt-microbit `tests/sim` runs on the same virtual host.
 
 ### Original baseline (137 errors across 7 files)
 
@@ -104,7 +119,7 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
 - `sound/sequencer.ts` uses `Metronome` and `AudioContextManager` types.
 - Introduce an audio-output interface in core, implemented by the Web Audio code in pxtsim.
 
-**Not DOM, shimmed in `globals.d.ts`:** `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`, `console`, `performance`, `TextEncoder`, `TextDecoder`. These exist in browsers, workers and Node, so core can use them.
+**Not DOM, shimmed in `globals.d.ts`:** `setTimeout`, `clearTimeout`, `setInterval`, `clearInterval`, `console`, `performance`, `TextEncoder`, `TextDecoder`. These exist in browsers, workers and Node, so core can use them. Core code reads time, timers and randomness through `pxsim.host` (`host.clock()`, `host.timers()`, `host.rng()`), whose defaults wrap these globals; see the progress note under step 2.
 
 
 2. **Introduce host abstractions in core.** Each one replaces a direct DOM or window call with an interface that pxtsim implements.
@@ -114,6 +129,7 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
      - About 55 call sites use these, mostly in visuals, so that is a mechanical rename.
    - Keep deprecated aliases in `pxsim.U` that are installed by the DOM bundle. This avoids breaking `pxt-common-packages` and `pxt-microbit`.
    - Replace `requestAnimationFrame` in `playInstructions` with an injectable scheduler, defaulting to `setTimeout` in core.
+   - **Done:** time, timers and randomness go through `pxsim.host` (see the progress note below).
 
 3. **Split `runtime.ts`.**
    - Keep the VM, the message interfaces, and the `Runtime` class in core.
@@ -376,13 +392,13 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
    - **Done:** `tests/simcore-test/simcorerunner.ts` (`gulp testsimcore`, also in `testAll`) loads only `built/pxtsimcore.js` into a Node `vm` context that has no `window`, `document`, `navigator` or `location`, checks those are undefined, then compiles a program with pxtc and runs it on the bare board in that context. Caveat found: the full `pxtsim.js` also *loads* in such a context (its DOM use is inside functions), so loading alone proves little; the run is what guards against DOM use in the runtime path. The guard grows with phases 2 to 4.
 2. *Core bundle emit for Micro:Bit.* Emit `built/simcore.js`; add the headless init; load it in a `vm` context and call `initHeadlessRuntime`. Check that `DalBoardState` constructs with no DOM. Expected trouble spots: constructors that touch the view, and `/// <reference>` ordering of the concatenated output (as with `record-audio-dom.ts` and `sim.js`).
    - **Done:** `pxt-microbit/sim/tsconfig.core.json` now emits `built/simcore.js` (file order matters now: `dalboardstate.ts` before `boardaccess.ts`). New `sim/state/headless.ts` (excluded from the browser `sim/tsconfig.json`) defines `initHeadlessDalBoard`, which creates a `DalBoard` with no view, and registers it as `pxsim.initHeadlessRuntime` (new optional hook declared in `pxtsim/runtime.ts`). Verified in a Node `vm` context with no DOM: loading `pxtsimcore.js` then `simcore.js`, setting `initCurrentRuntime = initHeadlessRuntime` and constructing a `Runtime` yields a `DalBoard` with its LED matrix, edge connector, recording and samples state, and `boardView` undefined. So the constructor-cycle risk did not materialize for construction; behavior under real programs is for phase 4. Not yet a checked-in test: phase 3 provides the harness.
-3. *`pxt simtest`.* **Done** (except `--json`): `cli/simtest.ts` (`runHeadlessAsync`, `parseSerialExpectations`, `checkRun`) plus the `simtest` command in `cli/cli.ts` (`--base`, `--sim`, `--timeout`, `--settle`, default settle 300ms because serial is debounced by 200ms). Each test's source overrides the base project's single main `.ts` via `host.fileOverrides`; editing `config.files` does not work because `getExtensionInfo` calls `loadConfig(true)`, which re-reads `pxt.json`. Unit-tested with a toy bundle in `tests/simcore-test` (7 passing). Run in pxt-microbit: `pxt simtest --base libs/blocksprj tests/sim`.
+3. *`pxt simtest`.* **Done** (except `--json`): `cli/simtest.ts` (`runHeadlessAsync`, `parseSerialExpectations`, `checkRun`) plus the `simtest` command in `cli/cli.ts` (`--base`, `--sim`, `--timeout`, `--settle`, default settle 300 virtual ms because serial is debounced by 200 ms of host time). Each test's source overrides the base project's single main `.ts` via `host.fileOverrides`; editing `config.files` does not work because `getExtensionInfo` calls `loadConfig(true)`, which re-reads `pxt.json`. Unit-tested with a toy bundle in `tests/simcore-test` (see the clock, timer and random seams progress note). Run in pxt-microbit: `pxt simtest --base libs/blocksprj tests/sim`.
 4. *Micro:Bit tests.* **Started:** `pxt simtest` now defaults to the full `pxtsim.js` + target `sim.js` (all APIs, no view; `--core` restricts to the DOM-free bundles). `headless.ts` is now part of `sim.js` too. `tests/sim/` has `buttons` (onButtonPressed, raiseEvent, showString), `led-serial`, `led-brightness`, `led-image` and `sensors` (temperature, rotation), all passing; a failing expectation exits 1. Buttons, audio and recording remain: they need DOM-free state files or fake hosts. Original scope:  Add `tests/sim/` programs: LED matrix, buttons via `control.raiseEvent`, serial, accelerometer, music/audio host (a recording fake `AudioHost`), and recording with a fake `RecorderHost`. These are the paths I changed and could only type-check.
 5. *CI.* Run `pxt simtest tests/sim` in the target's workflow (alongside `testghpkgs`), and `gulp testsimcore` in pxt's `testAll`.
 
 **Risks and open questions.**
 - Whether the real `DalBoardState` constructor can run without a view (`edgeconnector`, `microphone`, `radio` take the board in their constructors). Phase 2 answers this.
-- Timers: the runtime uses real `setTimeout`. If tests are slow, add a fake-clock hook behind `U.nextTick`/`setTimeout` rather than sleeping.
+- Timers: resolved. Headless runs always use the virtual host with a bounded settle and a real-time watchdog (progress note under Steps); a `forever` program passes.
 - Multi-target: arcade and others would opt in by emitting their own `simcore.js`; the command must tolerate a target without one.
 - `pxt testdir` in a target currently crashes (`installAsync()` called without `parsed`; see the test investigation). It is a separate bug and not required here, but `simtest` must not depend on `installAsync`.
 
@@ -390,3 +406,4 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
+- **Layout (near-future move):** move the core sources into the `pxtsimcore/` folder so each project compiles its own directory and the `exclude` list in `pxtsim/tsconfig.json` goes away; location becomes membership, and a core file can no longer compile into both bundles by omission. A pure move of files and `/// <reference>` paths, no behavior change.

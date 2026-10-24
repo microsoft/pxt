@@ -548,7 +548,7 @@ namespace pxsim.codal.music {
     }
 
     function random(max: number) {
-        return Math.floor(Math.random() * max);
+        return Math.floor(host.rng().next() * max);
     }
 
     function CLAMP(min: number, value: number, max: number) {
@@ -589,7 +589,7 @@ namespace pxsim.codal.music {
     }
 
     function delayAsync(millis: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, millis));
+        return new Promise(resolve => host.timers().setTimeout(resolve, millis));
     }
 
     function constrain(val: number, min: number, max: number) {
