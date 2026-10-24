@@ -730,6 +730,9 @@ namespace pxsim {
         statsByType: Map<TypeStats>
     }
 
+    // Maximum consecutive maybeYield calls on one clock reading before a yield is forced
+    const YIELD_BUDGET = 100000;
+
     export class Runtime {
         public board: BaseBoard;
         public boardView?: BoardView;
@@ -1134,6 +1137,9 @@ namespace pxsim {
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = host.clock().now()
+            // maybeYield calls seen while the clock read yieldClock, and the reading they were counted at
+            let yieldCalls = 0
+            let yieldClock = lastYield
             let userGlobals: string[];
             let __this = this // ex
             this.traceDisabled = !!msg.traceDisabled;
@@ -1212,8 +1218,13 @@ namespace pxsim {
                 __this.cleanScheduledExpired()
                 yieldReset();
                 let now = host.clock().now()
-                if (now - lastYield >= 20) {
+                if (now !== yieldClock) {
+                    yieldClock = now
+                    yieldCalls = 0
+                }
+                if (now - lastYield >= 20 || ++yieldCalls > YIELD_BUDGET) {
                     lastYield = now
+                    yieldCalls = 0
                     s.pc = pc;
                     s.r0 = r0;
                     host.timers().setTimeout(loopForSchedule(s), yieldDelay)

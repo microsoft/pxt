@@ -21,9 +21,9 @@ export interface VirtualRng {
 }
 
 /**
- * A deterministic simulator host for tests: a clock that only moves when the test advances it,
- * timers on a queue ordered by virtual time, and a seeded random source. Install it in a vm
- * context with `install`.
+ * A deterministic simulator host for headless runs: a clock that only moves when the caller
+ * advances it, timers on a queue ordered by virtual time, and a seeded random source. Install it
+ * in a vm context with `install`.
  */
 export interface VirtualHost {
     clock: VirtualClock;
@@ -41,9 +41,23 @@ export interface VirtualHost {
      * remain. Intervals fire as their times come up but do not by themselves keep it running.
      */
     runUntilIdle(): Promise<void>;
+    /**
+     * Fires queued callbacks one at a time in time order, intervals included, moving virtual time
+     * to each and draining microtasks before and after each one, until done returns true. While
+     * nothing is queued it waits on event loop turns, so real timers can still make done true.
+     */
+    runUntil(done: () => boolean): Promise<void>;
+    /**
+     * Stops the host for good: an `advance`, `runUntilIdle` or `runUntil` in progress returns at
+     * its next step without firing anything more, and later calls return at once.
+     */
+    stop(): void;
     /** Installs the clock, timers and random source into the pxsim loaded in a vm context. */
     install(context: any): void;
 }
+
+/** The seed a virtual host's random source starts from when none is given. */
+export const DEFAULT_SEED = 0x5EED1234;
 
 /** One frame at 60 Hz, the delay requestFrame waits on the virtual queue. */
 const FRAME_MS = 16;
@@ -72,14 +86,15 @@ function mulberry32(state: number) {
     };
 }
 
-/** Resolves once every pending microtask has run. */
+/** Resolves once every pending microtask has run and the event loop has had a turn, so real timers due by then fire. */
 function drainMicrotasks(): Promise<void> {
     return new Promise(resolve => setImmediate(resolve));
 }
 
-/** Creates a virtual host whose random source starts from seed. */
-export function createVirtualHost(seed: number): VirtualHost {
+/** Creates a virtual host whose random source starts from seed, or from DEFAULT_SEED when omitted. */
+export function createVirtualHost(seed = DEFAULT_SEED): VirtualHost {
     let time = 0;
+    let stopped = false;
     let nextId = 1;
     let nextSeq = 0;
     let queue: Entry[] = [];
@@ -132,19 +147,30 @@ export function createVirtualHost(seed: number): VirtualHost {
         advance: async (ms: number) => {
             const target = time + ms;
             await drainMicrotasks();
-            for (let entry = earliest(e => e.at <= target); entry; entry = earliest(e => e.at <= target)) {
+            for (let entry = earliest(e => e.at <= target); !stopped && entry; entry = earliest(e => e.at <= target)) {
                 fire(entry);
                 await drainMicrotasks();
             }
-            time = target;
+            if (!stopped)
+                time = target;
         },
         runUntilIdle: async () => {
             await drainMicrotasks();
-            while (queue.some(e => e.period === undefined)) {
+            while (!stopped && queue.some(e => e.period === undefined)) {
                 fire(earliest(() => true));
                 await drainMicrotasks();
             }
         },
+        runUntil: async (done: () => boolean) => {
+            await drainMicrotasks();
+            while (!stopped && !done()) {
+                const entry = earliest(() => true);
+                if (entry)
+                    fire(entry);
+                await drainMicrotasks();
+            }
+        },
+        stop: () => { stopped = true; },
         install: (context: any) => {
             context.pxsim.host.setClock(host.clock);
             context.pxsim.host.setTimers(host.timers);
