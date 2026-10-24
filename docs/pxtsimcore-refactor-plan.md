@@ -6,12 +6,12 @@
 
 ## Target layout
 
-- **`pxtsimcore/`** builds `built/pxtsimcore.js` and `.d.ts`.
+- **`pxtsimcore/`** compiles its own directory to `built/pxtsimcore.js` and `built/pxtsimcore.d.ts`.
   - Its tsconfig has `lib: ["es2017", "ES2018.Promise"]` with **no `dom`**, so the compiler enforces DOM-freedom.
-- **`pxtsim/`** builds `built/pxtsim.js`.
-  - For compatibility it remains the existing complete bundle while the source split is in progress.
-  - The two bundles must not be loaded together yet: `pxtsim.js` still contains the core sources, so concatenating/loading `pxtsimcore.js` too would duplicate namespace initialization.
-  - Once the DOM-only source split is complete, the build can compose core and DOM outputs into the legacy bundle.
+- **`pxtsim/`** compiles the DOM sources against `built/pxtsimcore.d.ts` to `built/pxtsimdom.js` and `built/pxtsimdom.d.ts`.
+- The gulp `pxtsim` task composes `built/pxtsim.js` and `built/pxtsim.d.ts` as core followed by DOM.
+- A target opts into DOM-free runs with `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`.
+- Consumers load `pxtsim.js` + `sim.js`, or `pxtsimcore.js` + `simcore.js`; never both pairs, since `pxtsim.js` already contains core.
 
 ## Proposed file split
 
@@ -158,7 +158,8 @@ These are not DOM calls, but the symbol lives in a file that mixes DOM and core:
 - Added a `pxtsimcore` gulp task that emits `built/pxtsimcore.js` and `built/pxtsimcore.d.ts`.
 - The `pxtsim` TypeScript project now compiles only the DOM-side sources against `pxtsimcore.d.ts`, emitting `built/pxtsimdom.js` and `built/pxtsimdom.d.ts`.
 - The `pxtsim` gulp task runs core first, compiles DOM sources, then composes core followed by DOM into the compatibility outputs `built/pxtsim.js` and `built/pxtsim.d.ts`. The standalone core declaration reference is removed from the composed declaration file.
-- Wired the composed task into full builds, CLI builds, source watchers and the gulp exports. The pxtsim ESLint project list includes both the DOM and core tsconfigs so core source files remain lintable after the split; `pxtsimcore/globals.d.ts` is linted separately with the core tsconfig.
+- Wired the composed task into full builds, CLI builds, source watchers and the gulp exports. The pxtsim ESLint project list names the DOM tsconfig; the lint task lints `pxtsimcore/` separately with the core tsconfig.
+- Each project compiles its own directory: `pxtsimcore/tsconfig.json` includes `pxtsimcore/**/*.ts`, and `pxtsim/tsconfig.json` includes `pxtsim/**/*.ts` plus `built/pxtsimcore.d.ts`. Membership is location: a core source file lives under `pxtsimcore/`, and a file that reads another file's members at load time pins that file ahead of it with `/// <reference path>`.
 - Verified both project builds, the DOM-free `--noEmit` check, the composed declaration file, and Node loading of the compatibility bundle with neither `window` nor `document`. The Micro:bit simulator tsconfig also type-checks against the new output.
 - The common-packages simulator's standalone tsconfig currently fails because its expected `node_modules/pxt-core/built/pxtsim.d.ts` is absent in this workspace. Its build needs to be rechecked in the normal package-linked target environment.
 
@@ -208,7 +209,7 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 - Component-state construction now lives in `DalBoardState`, separate from `DalBoardView`; hardware-version changes use the runtime display-update queue as the state-to-view invalidation path.
 
 ### Why
-`BaseBoard` and `CoreBoard` in `pxtsim/runtime.ts` and the original `DalBoard` implementation mixed **simulation state** with **view/DOM**. The initial split now keeps `board()` state-facing and provides `boardView()` for target view operations. Component-state construction is separated into `DalBoardState`; the remaining goal is to move more of the generic state foundation and target state dependencies into the DOM-free `pxtsimcore` boundary.
+`BaseBoard` and `CoreBoard` in `pxtsimcore/runtime.ts` and the original `DalBoard` implementation mixed **simulation state** with **view/DOM**. The initial split now keeps `board()` state-facing and provides `boardView()` for target view operations. Component-state construction is separated into `DalBoardState`; the remaining goal is to move more of the generic state foundation and target state dependencies into the DOM-free `pxtsimcore` boundary.
 
 ### What is mixed in today
 
@@ -394,16 +395,15 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
    - **Done:** `pxt-microbit/sim/tsconfig.core.json` now emits `built/simcore.js` (file order matters now: `dalboardstate.ts` before `boardaccess.ts`). New `sim/state/headless.ts` (excluded from the browser `sim/tsconfig.json`) defines `initHeadlessDalBoard`, which creates a `DalBoard` with no view, and registers it as `pxsim.initHeadlessRuntime` (new optional hook declared in `pxtsim/runtime.ts`). Verified in a Node `vm` context with no DOM: loading `pxtsimcore.js` then `simcore.js`, setting `initCurrentRuntime = initHeadlessRuntime` and constructing a `Runtime` yields a `DalBoard` with its LED matrix, edge connector, recording and samples state, and `boardView` undefined. So the constructor-cycle risk did not materialize for construction; behavior under real programs is for phase 4. Not yet a checked-in test: phase 3 provides the harness.
 3. *`pxt simtest`.* **Done** (except `--json`): `cli/simtest.ts` (`runHeadlessAsync`, `parseSerialExpectations`, `checkRun`) plus the `simtest` command in `cli/cli.ts` (`--base`, `--sim`, `--timeout`, `--settle`, default settle 300 virtual ms because serial is debounced by 200 ms of host time). Each test's source overrides the base project's single main `.ts` via `host.fileOverrides`; editing `config.files` does not work because `getExtensionInfo` calls `loadConfig(true)`, which re-reads `pxt.json`. Unit-tested with a toy bundle in `tests/simcore-test` (see the clock, timer and random seams progress note). Run in pxt-microbit: `pxt simtest --base libs/blocksprj tests/sim`.
 4. *Micro:Bit tests.* **Started:** `pxt simtest` now defaults to the full `pxtsim.js` + target `sim.js` (all APIs, no view; `--core` restricts to the DOM-free bundles). `headless.ts` is now part of `sim.js` too. `tests/sim/` has `buttons` (onButtonPressed, raiseEvent, showString), `led-serial`, `led-brightness`, `led-image` and `sensors` (temperature, rotation), all passing; a failing expectation exits 1. Buttons, audio and recording remain: they need DOM-free state files or fake hosts. Original scope:  Add `tests/sim/` programs: LED matrix, buttons via `control.raiseEvent`, serial, accelerometer, music/audio host (a recording fake `AudioHost`), and recording with a fake `RecorderHost`. These are the paths I changed and could only type-check.
-5. *CI.* Run `pxt simtest tests/sim` in the target's workflow (alongside `testghpkgs`), and `gulp testsimcore` in pxt's `testAll`.
+5. *CI.* Run `pxt simtest tests/sim` and `pxt simtest --core tests/sim` in the target's workflow (alongside `testghpkgs`), after `pxt buildtarget` emits `built/simcore.js`, and `gulp testsimcore` in pxt's `testAll`.
 
 **Risks and open questions.**
 - Whether the real `DalBoardState` constructor can run without a view (`edgeconnector`, `microphone`, `radio` take the board in their constructors). Phase 2 answers this.
 - Timers: resolved. Headless runs always use the virtual host with a bounded settle and a real-time watchdog (progress note under Steps); a `forever` program passes.
-- Multi-target: arcade and others would opt in by emitting their own `simcore.js`; the command must tolerate a target without one.
+- Multi-target: a target opts in by adding `sim/tsconfig.core.json` with `outFile: ../built/simcore.js` (`../built/common-simcore.js` for the common target; a sim shipped as an npm package, `node_modules/pxt-<target>-sim`, uses `./built/simcore.js` and the output is copied to `built/`, as its `sim.js` is); `pxt buildtarget` and `pxt serve` compile it after `sim/tsconfig.json`, and a wrong `outFile` is a build error. For a target without `built/simcore.js`, `pxt simtest --core` stops with a message that the target has no `sim/tsconfig.core.json` or has not been built, and that `pxt simtest` without `--core` runs against the full bundle.
 - `pxt testdir` in a target currently crashes (`installAsync()` called without `parsed`; see the test investigation). It is a separate bug and not required here, but `simtest` must not depend on `installAsync`.
 
 ## Open questions
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
-- **Layout (near-future move):** move the core sources into the `pxtsimcore/` folder so each project compiles its own directory and the `exclude` list in `pxtsim/tsconfig.json` goes away; location becomes membership, and a core file can no longer compile into both bundles by omission. A pure move of files and `/// <reference>` paths, no behavior change.

@@ -15,38 +15,7 @@
         "types": [],
         "skipLibCheck": true
     },
-    "files": [
-        "./globals.d.ts",
-        "../pxtsim/allocator.ts",
-        "../pxtsim/debugProtocol.ts",
-        "../pxtsim/debugcore.ts",
-        "../pxtsim/eventbus.ts",
-        "../pxtsim/host.ts",
-        "../pxtsim/virtualhost.ts",
-        "../pxtsim/sound/audiohost.ts",
-        "../pxtsim/sound/instructions.ts",
-        "../pxtsim/messages.ts",
-        "../pxtsim/simtypes.ts",
-        "../pxtsim/simframe.ts",
-        "../pxtsim/simcoordinator.ts",
-        "../pxtsim/visuals/boardgeometry.ts",
-        "../pxtsim/langsupport.ts",
-        "../pxtsim/libgeneric.ts",
-        "../pxtsim/localization.ts",
-        "../pxtsim/logger.ts",
-        "../pxtsim/runtime.ts",
-        "../pxtsim/utils.ts",
-        "../pxtsim/state/animationqueue.ts",
-        "../pxtsim/state/buttonpair.ts",
-        "../pxtsim/state/compass.ts",
-        "../pxtsim/state/filesystem.ts",
-        "../pxtsim/state/lightsensor.ts",
-        "../pxtsim/sound/musicalProgressions.ts",
-        "../pxtsim/sound/sequencer.ts",
-        "../pxtsim/sound/song.ts",
-        "../pxtsim/sound/soundEmojiSynthesizer.ts",
-        "../pxtsim/sound/soundSynthesizer.ts",
-        "../pxtsim/sound/soundSynthesizerEffects.ts",
-        "../pxtsim/sound/soundexpression.ts"
+    "include": [
+        "**/*.ts"
     ]
 }

@@ -317,6 +317,7 @@ function updatestrings() {
         "pxtlib",
         "pxtpy",
         "pxtsim",
+        "pxtsimcore",
         "webapp/src",
         "react-common"
     ], true);
@@ -482,6 +483,7 @@ const copyWebapp = () =>
         "built/pxtcompiler.js",
         "built/pxtpy.js",
         "built/pxtsim.js",
+        "built/pxtsimcore.js",
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
         "built/webapp/src/simulatorserviceworker.js",

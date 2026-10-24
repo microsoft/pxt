@@ -24,38 +24,5 @@
     ],
     "include": [
         "**/*.ts"
-    ],
-    "exclude": [
-        "allocator.ts",
-        "debugProtocol.ts",
-        "debugcore.ts",
-        "eventbus.ts",
-        "host.ts",
-        "virtualhost.ts",
-        "sound/audiohost.ts",
-        "sound/instructions.ts",
-        "messages.ts",
-        "simtypes.ts",
-        "simframe.ts",
-        "simcoordinator.ts",
-        "visuals/boardgeometry.ts",
-        "langsupport.ts",
-        "libgeneric.ts",
-        "localization.ts",
-        "logger.ts",
-        "runtime.ts",
-        "utils.ts",
-        "state/animationqueue.ts",
-        "state/buttonpair.ts",
-        "state/compass.ts",
-        "state/filesystem.ts",
-        "state/lightsensor.ts",
-        "sound/musicalProgressions.ts",
-        "sound/sequencer.ts",
-        "sound/song.ts",
-        "sound/soundEmojiSynthesizer.ts",
-        "sound/soundSynthesizer.ts",
-        "sound/soundSynthesizerEffects.ts",
-        "sound/soundexpression.ts"
     ]
 }
