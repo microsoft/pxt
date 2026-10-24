@@ -53,6 +53,13 @@ const RANDOM_PROGRAM = `
 const options = { timeoutMs: 5000, settleMs: 300 };
 
 
+/** Creates a vm context with no browser globals and loads pxtsimcore.js alone into it. */
+function createCoreContext() {
+    const context = vm.createContext({ console, setTimeout, clearTimeout, setInterval, clearInterval, performance, TextEncoder, TextDecoder, URL, URLSearchParams });
+    vm.runInContext(fs.readFileSync(core, "utf8"), context, { filename: core });
+    return context;
+}
+
 async function compileAsync(source: string) {
     return (await util.stsAsync(source)).outfiles[pxtc.BINARY_JS];
 }
@@ -93,23 +100,6 @@ describe("pxtsimcore in a context without browser globals", () => {
         `);
         chai.expect(result.error).equals(undefined);
         chai.expect(result.serial).deep.equals(["total 10"]);
-    });
-});
-
-describe("pxtsimcore virtual host", () => {
-    it("is defined by pxtsimcore alone and advances in a context without browser globals", async function () {
-        this.timeout(20000);
-        const context = vm.createContext({ console, setTimeout, clearTimeout, setInterval, clearInterval, performance, TextEncoder, TextDecoder, URL, URLSearchParams });
-        vm.runInContext(fs.readFileSync(core, "utf8"), context, { filename: core });
-        const result = JSON.parse(await vm.runInContext(`(async () => {
-            const host = pxsim.host.createVirtualHost();
-            const fired = [];
-            host.timers.setTimeout(() => fired.push(host.now()), 100);
-            await host.advance(150);
-            return JSON.stringify({ fired, now: host.now() });
-        })()`, context));
-        chai.expect(result.fired).deep.equals([100]);
-        chai.expect(result.now).equals(150);
     });
 });
 
@@ -197,6 +187,20 @@ describe("pxt simtest runner", () => {
 });
 
 describe("deterministic time and randomness", () => {
+    it("advances a virtual host defined by pxtsimcore alone in a context without browser globals", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            const fired = [];
+            host.timers.setTimeout(() => fired.push(host.now()), 100);
+            await host.advance(150);
+            return JSON.stringify({ fired, now: host.now() });
+        })()`, context));
+        chai.expect(result.fired).deep.equals([100]);
+        chai.expect(result.now).equals(150);
+    });
+
     it("completes a pause without waiting for it in real time", async function () {
         this.timeout(20000);
         const js = await compileAsync(`
@@ -254,6 +258,80 @@ describe("deterministic time and randomness", () => {
         const played = result.messages.find(msg => msg.type === "testaudio");
         chai.expect(played.resolvedAt).equals(500);
         chai.expect(result.serial).deep.equals(["t500"]);
+    });
+
+    it("ticks the silent audio host's metronome on virtual time", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            host.use();
+            const metronome = pxsim.audiohost.audio().createMetronome();
+            await metronome.initAsync();
+            const ticks = [];
+            metronome.addTickListener(() => ticks.push(host.now()));
+            metronome.start(100);
+            await host.advance(350);
+            const started = ticks.slice();
+            metronome.setInterval(50);
+            await host.advance(100);
+            const restarted = ticks.slice();
+            metronome.stop();
+            await host.advance(500);
+            const stopped = ticks.slice();
+            metronome.setInterval(50);
+            await host.advance(500);
+            const setWhileStopped = ticks.slice();
+            metronome.start(100);
+            metronome.dispose();
+            await host.advance(500);
+            return JSON.stringify({ started, restarted, stopped, setWhileStopped, disposed: ticks });
+        })()`, context));
+        chai.expect(result.started).deep.equals([100, 200, 300]);
+        chai.expect(result.restarted).deep.equals([100, 200, 300, 400, 450]);
+        chai.expect(result.stopped).deep.equals(result.restarted);
+        chai.expect(result.setWhileStopped).deep.equals(result.restarted);
+        chai.expect(result.disposed).deep.equals(result.restarted);
+    });
+
+    it("plays a song to its end on the silent audio host's metronome", async function () {
+        this.timeout(20000);
+        // 150 bpm at 4 ticks per beat is 100 ms per tick; 2 measures of 4 beats is 32 ticks
+        const song: pxt.assets.music.Song = {
+            measures: 2,
+            beatsPerMeasure: 4,
+            beatsPerMinute: 150,
+            ticksPerBeat: 4,
+            tracks: [{
+                id: 0,
+                instrument: {
+                    waveform: 1,
+                    ampEnvelope: { attack: 10, decay: 100, sustain: 500, release: 100, amplitude: 1024 }
+                },
+                notes: [{ startTick: 0, endTick: 4, notes: [{ note: 49, enharmonicSpelling: "normal" }] }]
+            }]
+        };
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            host.use();
+            const sequencer = new pxsim.music.Sequencer();
+            await sequencer.initAsync();
+            let stoppedAt;
+            sequencer.addEventListener("stop", () => stoppedAt = host.now());
+            sequencer.start(${JSON.stringify(song)}, false);
+            const duration = sequencer.duration();
+            await host.advance(duration - 1);
+            const before = { state: sequencer.state(), tick: sequencer.currentTick() };
+            await host.advance(1);
+            const after = { state: sequencer.state(), tick: sequencer.currentTick() };
+            return JSON.stringify({ duration, maxTick: sequencer.maxTick(), before, after, stoppedAt });
+        })()`, context));
+        chai.expect(result.duration).equals(3200);
+        chai.expect(result.maxTick).equals(32);
+        chai.expect(result.before).deep.equals({ state: "play", tick: 31 });
+        chai.expect(result.after).deep.equals({ state: "stop", tick: 32 });
+        chai.expect(result.stoppedAt).equals(3200);
     });
 
     it("times out a busy loop that never pauses", async function () {

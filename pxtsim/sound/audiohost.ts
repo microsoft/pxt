@@ -1,6 +1,6 @@
 // Audio abstraction for the DOM-free core. The browser bundle registers a Web Audio
 // implementation (see audiohostdom.ts); without one, audio calls are silent no-ops, except that
-// playing instructions takes as long as the sound would.
+// playing instructions takes as long as the sound would and the metronome ticks on the host timers.
 namespace pxsim.audiohost {
     export interface SoundOscilloscopeData {
         data: Float32Array;
@@ -21,6 +21,7 @@ namespace pxsim.audiohost {
         stop(): void;
         setInterval(interval: number): void;
         addTickListener(listener: () => void): void;
+        removeTickListener(listener: () => void): void;
         dispose(): void;
     }
 
@@ -83,14 +84,68 @@ namespace pxsim.audiohost {
         });
     }
 
-    const silentMetronome = (): Metronome => ({
-        initAsync: () => Promise.resolve(),
-        start: () => { },
-        stop: () => { },
-        setInterval: () => { },
-        addTickListener: () => { },
-        dispose: () => { }
-    });
+    /**
+     * A metronome that ticks on `host.timers()`: while running, it calls every tick listener, in the
+     * order added, once per interval. It is running from `start` until `stop` or `dispose`.
+     */
+    export class TimerMetronome implements Metronome {
+        protected tickListeners: (() => void)[] = [];
+        /** The host interval id while running, else undefined. */
+        protected timerId: any;
+
+        /** Resolves at once. */
+        initAsync(): Promise<void> {
+            return Promise.resolve();
+        }
+
+        /** Starts ticking every interval ms, the first tick interval ms from now; when already running, restarts the period from now. */
+        start(interval: number) {
+            this.updateInterval(interval, true);
+        }
+
+        /** Stops ticking; does nothing when not running. */
+        stop() {
+            if (this.timerId !== undefined) {
+                host.timers().clearInterval(this.timerId);
+                this.timerId = undefined;
+            }
+        }
+
+        /** When running, restarts ticking every interval ms from now; when not running, does nothing. */
+        setInterval(interval: number) {
+            this.updateInterval(interval, false);
+        }
+
+        addTickListener(listener: () => void) {
+            this.tickListeners.push(listener);
+        }
+
+        /** Removes every registration of listener. */
+        removeTickListener(listener: () => void) {
+            this.tickListeners = this.tickListeners.filter(l => l !== listener);
+        }
+
+        /** Stops ticking and removes every tick listener. */
+        dispose() {
+            this.stop();
+            this.tickListeners = [];
+        }
+
+        /** Reschedules ticking every interval ms from now when running or when startIfStopped is true. */
+        protected updateInterval(interval: number, startIfStopped: boolean) {
+            if (this.timerId !== undefined) {
+                host.timers().clearInterval(this.timerId);
+                startIfStopped = true;
+            }
+            if (startIfStopped)
+                this.timerId = host.timers().setInterval(this.onTick, interval);
+        }
+
+        protected onTick = () => {
+            for (const listener of this.tickListeners)
+                listener();
+        };
+    }
 
     const silentHost: AudioHost = {
         tone: () => { },
@@ -108,7 +163,7 @@ namespace pxsim.audiohost {
         playPCMBufferStreamAsync: () => Promise.resolve(),
         setListenerPosition: () => { },
         disposeAllSpatialAudioPlayers: () => { },
-        createMetronome: silentMetronome
+        createMetronome: () => new TimerMetronome()
     };
 
     let current: AudioHost = silentHost;
