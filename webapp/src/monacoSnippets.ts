@@ -100,6 +100,19 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 paramDefl: {}
             }
         };
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.ternaryBlock) {
+            _cachedBuiltinCategories[CategoryNameID.Logic].blocks.push({
+                name: "logic_ternary",
+                snippetName: "ternary",
+                snippet: `true ? 1 : 0`,
+                pySnippet: `1 if True else 0`,
+                attributes: {
+                    blockId: 'logic_ternary',
+                    weight: 30,
+                    jsDoc: lf("If the condition is true, returns the first value; otherwise returns the second value")
+                }
+            });
+        }
         _cachedBuiltinCategories[CategoryNameID.Variables] = {
             name: lf("{id:category}Variables"),
             nameid: 'variables',

@@ -3,6 +3,7 @@
 import * as Blockly from "blockly";
 
 import { installBuiltinHelpInfo } from "../help";
+import { provider } from "../constants";
 
 export function initLogic() {
     const msg = Blockly.Msg;
@@ -55,4 +56,35 @@ export function initLogic() {
     msg.LOGIC_BOOLEAN_TRUE = logicBooleanDef.block["LOGIC_BOOLEAN_TRUE"];
     msg.LOGIC_BOOLEAN_FALSE = logicBooleanDef.block["LOGIC_BOOLEAN_FALSE"];
     installBuiltinHelpInfo(logicBooleanId);
+
+    // builtin logic_ternary
+    const logicTernaryId = "logic_ternary";
+    const logicTernaryDef = pxt.blocks.getBlockDefinition(logicTernaryId);
+    if (logicTernaryDef) {
+        let block = Blockly.Blocks[logicTernaryId];
+        block.init = function () {
+            this.jsonInit({
+                "message0": logicTernaryDef.block.message0,
+                "args0": [
+                    {
+                        "type": "input_value",
+                        "name": "IF",
+                        "check": "Boolean"
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "THEN"
+                    },
+                    {
+                        "type": "input_value",
+                        "name": "ELSE"
+                    }
+                ],
+                "inputsInline": true,
+                "output": null,
+                "outputShape": provider.SHAPES.ROUND
+            });
+        };
+        installBuiltinHelpInfo(logicTernaryId);
+    }
 }
