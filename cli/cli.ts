@@ -1646,6 +1646,7 @@ export async function internalBuildTargetAsync(options: BuildTargetOptions = {})
     await simshimAsync();
     await buildFolderAsync('compiler', true, 'compiler');
     fillInCompilerExtension(pxt.appTarget);
+    await buildSimAsync();
 
     if (options.rebundle) {
         await buildTargetCoreAsync({ quick: true });
@@ -1654,7 +1655,6 @@ export async function internalBuildTargetAsync(options: BuildTargetOptions = {})
         await buildTargetCoreAsync(options);
     }
 
-    await buildSimAsync();
     await buildFolderAsync('cmds', true);
     await buildSemanticUIAsync();
     await buildEditorExtensionAsync("editor", "extendEditor");
@@ -2611,8 +2611,8 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
 }
 
 function rebundleAsync() {
-    return buildTargetCoreAsync({ quick: true })
-        .then(() => buildSimAsync());
+    return buildSimAsync()
+        .then(() => buildTargetCoreAsync({ quick: true }));
 }
 
 /**
