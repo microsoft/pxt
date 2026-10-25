@@ -774,7 +774,7 @@ namespace pxsim {
         running = false;
         idleTimer: host.TimerHandle = undefined;
         recording = false;
-        recordingTimer: any = 0;
+        recordingTimer: host.TimerHandle | undefined = undefined;
         recordingLastImageData: ImageData = undefined;
         recordingWidth: number = undefined;
         startTime = 0;
@@ -804,7 +804,7 @@ namespace pxsim {
 
         lastInteractionTime: number;
         lastThumbnailTime: number;
-        thumbnailRecordingIntervalRef: number;
+        thumbnailRecordingIntervalRef: host.TimerHandle | undefined;
         thumbnailFrames: ImageData[];
 
         public refCountingDebug = false;
@@ -1088,15 +1088,15 @@ namespace pxsim {
             if (!this.recording) return;
             if (this.recordingTimer) host.timers().clearInterval(this.recordingTimer);
             this.recording = false;
-            this.recordingTimer = 0;
+            this.recordingTimer = undefined;
             this.recordingLastImageData = undefined;
             this.recordingWidth = undefined;
         }
 
         postFrame() {
-            if (!this.recording || !this.running) return;
+            if (!this.recording || !this.running || !this.boardView) return;
             let time = pxsim.U.now();
-            (this.boardView ? this.boardView.screenshotAsync(this.recordingWidth) : Promise.resolve(undefined))
+            this.boardView.screenshotAsync(this.recordingWidth)
                 .then(imageData => {
                     // check for duplicate images
                     if (this.recordingLastImageData && isImageDataEqual(this.recordingLastImageData, imageData)) {
@@ -1761,14 +1761,13 @@ namespace pxsim {
 
         registerUserInteraction() {
             this.lastInteractionTime = host.clock().now();
+            if (!this.boardView) return;
 
             if (this.thumbnailRecordingIntervalRef || this.lastThumbnailTime && this.lastInteractionTime - this.lastThumbnailTime < 1000) return;
             this.thumbnailFrames = [];
 
             this.thumbnailRecordingIntervalRef = host.timers().setInterval(async () => {
-                const imageData = this.boardView
-                    ? await this.boardView.screenshotAsync()
-                    : undefined;
+                const imageData = await this.boardView.screenshotAsync();
 
                 if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
                     return;
@@ -1787,7 +1786,7 @@ namespace pxsim {
                         frames: this.thumbnailFrames
                     } as SimulatorAutomaticThumbnailMessage)
                 }
-            }, 66) as any
+            }, 66);
         }
     }
 

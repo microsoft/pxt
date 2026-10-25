@@ -180,6 +180,23 @@ namespace pxsim.audiohost {
             listener();
     }
 
+    /**
+     * Returns a new audio element for the silent host: play() resolves at once and fires no events,
+     * pause and the listener calls do nothing, and the properties read playbackRate 1,
+     * preservesPitch true and currentTime 0 until assigned.
+     */
+    function silentCreateAudioElement(): AudioElementHandle {
+        return {
+            playbackRate: 1,
+            preservesPitch: true,
+            currentTime: 0,
+            play: () => Promise.resolve(),
+            pause: () => { },
+            addEventListener: () => { },
+            removeEventListener: () => { }
+        };
+    }
+
     const silentHost: AudioHost = {
         tone: () => { },
         stop: () => { },
@@ -189,7 +206,7 @@ namespace pxsim.audiohost {
         isAudioElementActive: () => false,
         sendMidiMessage: () => { },
         startSamplePlayback: () => ({ promise: Promise.resolve(), cancel: () => { } }),
-        createAudioElement: () => undefined,
+        createAudioElement: silentCreateAudioElement,
         stopAll: silentStopAll,
         mute: () => { },
         playInstructionsAsync: silentPlayInstructionsAsync,

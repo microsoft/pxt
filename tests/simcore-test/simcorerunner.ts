@@ -386,6 +386,26 @@ describe("deterministic time and randomness", () => {
         chai.expect(result.calls).deep.equals(["first", "second", "first", "second"]);
     });
 
+    it("hands out an inert audio element from the silent audio host", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const element = pxsim.audiohost.audio().createAudioElement("data:,", 0, 1);
+            const listener = () => { };
+            element.addEventListener("ended", listener);
+            const played = await element.play().then(() => "resolved");
+            element.pause();
+            element.removeEventListener("ended", listener);
+            return JSON.stringify({
+                played,
+                playbackRate: element.playbackRate,
+                preservesPitch: element.preservesPitch,
+                currentTime: element.currentTime
+            });
+        })()`, context));
+        chai.expect(result).deep.equals({ played: "resolved", playbackRate: 1, preservesPitch: true, currentTime: 0 });
+    });
+
     it("times out a busy loop that never pauses", async function () {
         this.timeout(20000);
         const js = await compileAsync(`
