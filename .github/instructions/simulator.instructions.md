@@ -16,6 +16,7 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 - Globals the core may use are declared in `pxtsimcore/globals.d.ts`; never add the `dom` lib to core
 - Consumers load `built/pxtsim.js`, which is core followed by the DOM code; keep the `pxsim` namespace
 - A target's or library's DOM-free simulator files live in its `core/` folder, and its `tsconfig.core.json` globs that folder
+- In a full bundle a lib's or target's view files may emit before its core files, so a view file whose top-level code reads a core class pins it with `/// <reference path>`
 
 ## Host Abstractions
 
