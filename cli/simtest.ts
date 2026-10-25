@@ -88,6 +88,8 @@ export async function runHeadlessAsync(js: string, bundles: string[], options: H
         sandbox.__yieldToEventLoop = () => new Promise<void>(resolve => setImmediate(resolve));
         sandbox.__host = vm.runInContext("pxsim.host.createVirtualHost({ seed: __seed, yieldToEventLoop: __yieldToEventLoop })", context);
         vm.runInContext("__host.use()", context);
+        // a headless run plays sound on the silent audio host, whichever host the bundles registered
+        vm.runInContext("pxsim.audiohost.setAudioHost({})", context);
         sandbox.__js = js;
         sandbox.__options = options;
         return await vm.runInContext(`

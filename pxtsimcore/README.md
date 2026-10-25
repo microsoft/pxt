@@ -215,8 +215,8 @@ a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync
   (default 5000). `--settle <ms>` is the
   virtual time a program runs after its top-level code finishes (default 300).
 - A directory argument runs every `.ts` file in it, in name order.
-- Each run installs a virtual host before constructing the `Runtime`, sets
-  `pxsim.initCurrentRuntime` to `pxsim.initHeadlessRuntime`, steps the host until the top-level
+- Each run installs a virtual host and the silent audio host before constructing the `Runtime`,
+  sets `pxsim.initCurrentRuntime` to `pxsim.initHeadlessRuntime`, steps the host until the top-level
   code finishes, advances it by `--settle`, and then ends whatever is still scheduled. A run
   never waits for the program to go idle, so a `forever` program passes. The timeout watchdog
   stays on real time.
@@ -236,8 +236,6 @@ a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync
   `libs/wifi---esp32/sim/wifisockets.ts`, `libs/text-to-speech/sim/tts.ts`) are view code only.
 - pxt-microbit keeps its own accelerometer, edge connector, thermometer and music simulators in
   `sim/core/` instead of using pxt-common-packages' versions.
-- Without `--core`, `pxt simtest` runs on the Web Audio host, which reads `window`; a program
-  that plays sound needs `--core`.
 - `debugProtocol.ts` times out pending requests on the global `setTimeout`, not on
   `host.timers()`.
 - The coordinator has no tests through a fake `SimFrameHost`; its tests go through
