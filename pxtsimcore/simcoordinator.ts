@@ -533,16 +533,16 @@ namespace pxsim {
             this.postMessage({ type: 'stopsound', source: MESSAGE_SOURCE } as pxsim.SimulatorStopSoundMessage)
         }
 
-        private frameCleanupTimeout: any = undefined;
+        private frameCleanupTimeout: host.TimerHandle | undefined = undefined;
         private cancelFrameCleanup() {
             if (this.frameCleanupTimeout) {
-                clearTimeout(this.frameCleanupTimeout);
+                host.timers().clearTimeout(this.frameCleanupTimeout);
                 this.frameCleanupTimeout = undefined;
             }
         }
         private scheduleFrameCleanup() {
             this.cancelFrameCleanup();
-            this.frameCleanupTimeout = setTimeout(() => {
+            this.frameCleanupTimeout = host.timers().setTimeout(() => {
                 this.frameCleanupTimeout = undefined;
                 this.cleanupFrames();
             }, 5000);
@@ -961,7 +961,7 @@ namespace pxsim {
         }
 
         private nextId(): string {
-            return this.nextFrameId++ + (Math.random() + '' + Math.random()).replace(/[^\d]/, '')
+            return this.nextFrameId++ + (host.rng().next() + '' + host.rng().next()).replace(/[^\d]/, '')
         }
 
         private get stoppedClass() {

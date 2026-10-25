@@ -358,7 +358,7 @@ namespace pxsim {
 
         constructor() {
             // use a stable board id
-            this.id = host.environment().frameId() || ("b" + Math.round(Math.random() * 2147483647));
+            this.id = host.environment().frameId() || ("b" + Math.round(host.rng().next() * 2147483647));
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
