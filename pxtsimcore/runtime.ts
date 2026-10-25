@@ -464,7 +464,7 @@ namespace pxsim {
      * The view of a board. A target sets it on `runtime.boardView` next to `runtime.board`; a
      * headless run has none, and the runtime skips every view call while it is unset.
      */
-    export interface BoardView {
+    export interface RuntimeBoardView {
         /**
          * Part view constructors keyed by simulation behavior name. The parts instructions page reads
          * them when it builds a board host.
@@ -764,7 +764,7 @@ namespace pxsim {
 
     export class Runtime {
         public board: BaseBoard;
-        public boardView?: BoardView;
+        public boardView?: RuntimeBoardView;
         numGlobals = 1000;
         errorHandler: (e: any) => void;
         postError: (e: any) => void;
