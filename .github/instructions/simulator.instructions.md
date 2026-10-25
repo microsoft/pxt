@@ -22,6 +22,7 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 
 - Core reads time, timers and randomness through `host.clock()`, `host.timers()` and `host.rng()`, never `Date.now`, `setTimeout`, `setInterval`, `requestAnimationFrame` or `Math.random`
 - Core reaches the parent page through `host.environment()` and audio through `audiohost.audio()`
+- Core reports through `pxsim.log`, `pxsim.warn` and `pxsim.error` (the `pxsim.Logger` a host may replace), never `console` directly
 - A new seam defaults to today's behavior and lets callers override members one at a time, as `setEnvironment` does
 
 ## Board State and View
