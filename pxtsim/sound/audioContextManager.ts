@@ -19,8 +19,6 @@ namespace pxsim.AudioContextManager {
         return AudioToneSource.isActive();
     }
 
-    export let soundEventCallback: (ev: "playinstructions" | "muteallchannels", data?: Uint8Array) => void;
-
     function context(): AudioContext {
         if (!_context) {
             _context = freshContext();
@@ -90,7 +88,7 @@ namespace pxsim.AudioContextManager {
 
     let instrStopId = 1
     export function muteAllChannels() {
-        soundEventCallback?.("muteallchannels");
+        audiohost.notifySoundEvent("muteallchannels");
         instrStopId++;
 
         stopTone();
@@ -103,13 +101,7 @@ namespace pxsim.AudioContextManager {
     }
 
     export function queuePlayInstructions(when: number, b: RefBuffer) {
-        const prevStop = instrStopId
-        U.delay(when)
-            .then(() => {
-                if (prevStop != instrStopId)
-                    return Promise.resolve()
-                return playInstructionsAsync(b.data)
-            });
+        audiohost.queuePlayInstructions(when, b.data);
     }
 
     export function tone(frequency: number, gain: number) {
@@ -177,7 +169,7 @@ namespace pxsim.AudioContextManager {
     }
 
     export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: SoundPreviewCallback) {
-        soundEventCallback?.("playinstructions", instructions);
+        audiohost.notifySoundEvent("playinstructions", instructions);
 
         const channel = new PlayInstructionsSource(context(), destination);
 
