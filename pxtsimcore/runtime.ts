@@ -460,13 +460,42 @@ namespace pxsim {
         bus: EventBus;
     }
 
+    /**
+     * The view of a board. A target sets it on `runtime.boardView` next to `runtime.board`; a
+     * headless run has none, and the runtime skips every view call while it is unset.
+     */
     export interface BoardView {
+        /**
+         * Part view constructors keyed by simulation behavior name. The parts instructions page reads
+         * them when it builds a board host.
+         */
         builtinVisuals: Map<() => any>;
+        /**
+         * Part image constructors keyed by built-in part name, each called with the image's position.
+         * The parts instructions page reads them when it draws a built-in part.
+         */
         builtinPartVisuals: Map<(xy: visuals.Coord) => any>;
+        /**
+         * Builds the view for a run. The embed calls it with each run message once the board's
+         * initAsync has resolved, while that runtime is still current and alive, and starts the
+         * program when it resolves.
+         */
         initAsync(msg: SimulatorRunMessage): Promise<void>;
+        /**
+         * Redraws the view from the board state. The runtime calls it from updateDisplay, which runs
+         * when a target requests a redraw and when queued display updates are flushed.
+         */
         updateView(): void;
+        /** Registers subscriber to run on every updateView. */
         addUpdateSubscriber(subscriber: () => void): void;
+        /**
+         * Renders the view to an image width pixels wide, or at a size the view picks when width is
+         * omitted; resolves undefined when it cannot render. The runtime calls it for each screenshot
+         * request, for each frame while recording, and for each thumbnail frame after a user
+         * interaction.
+         */
         screenshotAsync(width?: number): Promise<ImageData>;
+        /** Releases the view. The embed calls it when it stops a run, after killing the runtime and the board. */
         kill(): void;
     }
 
