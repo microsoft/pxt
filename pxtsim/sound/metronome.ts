@@ -12,7 +12,6 @@ namespace pxsim.music {
 
         initAsync() {
             if (this.metronomeLoadPromise) return this.metronomeLoadPromise;
-            if (this.metronomeWorker) return this.metronomeWorker;
 
             this.metronomeLoadPromise = new Promise(resolve => {
                 this.metronomeWorker = new Worker("data:application/javascript," + encodeURIComponent(metronomeWorkerJS));
