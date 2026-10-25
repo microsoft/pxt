@@ -10,7 +10,12 @@
   - Its tsconfig has `lib: ["es2017", "ES2018.Promise"]` with **no `dom`**, so the compiler enforces DOM-freedom.
 - **`pxtsim/`** compiles the DOM sources against `built/pxtsimcore.d.ts` to `built/pxtsimdom.js` and `built/pxtsimdom.d.ts`.
 - The gulp `pxtsim` task composes `built/pxtsim.js` and `built/pxtsim.d.ts` as core followed by DOM.
-- A target opts into DOM-free runs with `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`.
+- A target ships a DOM-free simulator bundle by adding `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`.
+- The gulp `pxtsimcore` task copies `pxtsimcore/globals.d.ts` to `built/pxtsimcore-globals.d.ts`, published with the other declarations. A core config lists it after `built/pxtsimcore.d.ts` instead of copying the declarations.
+- **`pxt-common-packages`** keeps each library's DOM-free simulator files in `libs/<lib>/sim/core/` and its view files in `libs/<lib>/sim/`. Membership is location: no `files` or `exclude` lists for sources.
+  - `sim/tsconfig.core.json` compiles `../libs/*/sim/core/*.ts` against `pxtsimcore.d.ts` and `pxtsimcore-globals.d.ts`, with no `dom` lib, to `built/common-simcore.js` and `built/common-simcore.d.ts`.
+  - `sim/tsconfig.json` compiles `../libs/*/sim/**/*.ts` against `pxtsim.d.ts` to `built/common-sim.js` and `built/common-sim.d.ts`, a superset of the core bundle.
+  - A target's `pxt buildtarget` and `pxt serve` build both configs of the common sim folder (`buildtarget` only when `common-sim.js` is missing) and copy both pairs into the target's `built/`.
 - Consumers load `pxtsim.js` + `sim.js`, or `pxtsimcore.js` + `simcore.js`; never both pairs, since `pxtsim.js` already contains core.
 
 ## Proposed file split
@@ -193,11 +198,11 @@ Do steps 1–2 first, since they surface the full list of violations without mov
 - `pxt-microbit/node_modules` is now linked to the workspace pxt and pxt-common-packages, and `tsc -p sim/tsconfig.core.json` passes (0 errors) against the real sources; the temporary `corehost.d.ts` shim is gone.
 - `board()`, `boardView()`, and `DalBoard` moved to the DOM-free `sim/state/boardaccess.ts`. `boardView()` returns `DalBoardViewContract` (`addUpdateSubscriber`, `setAudioPinEnabled`), which `DalBoardView` implements. The core compile also uses the real `state/misc.ts` and `base/sim/control.ts`.
 - Moved the neopixel state functions (`neopixelState`, `sendBufferAsm`, `light.sendBuffer`) from `pxt-common-packages/libs/core/sim/neopixel.ts` into `neopixelstate.ts`, leaving only the SVG view in `neopixel.ts`.
-- `state/hostglobals.d.ts` declares only `setTimeout`, `clearTimeout`, and `console` (the same host-agnostic globals as `pxtsimcore/globals.d.ts`) for the core compile.
+- The core compile takes its host-agnostic globals from pxt-core's shipped `built/pxtsimcore-globals.d.ts`.
 - Extended `audiohost.AudioHost` with tone, stop, tone gain, stop-all subscription, mute query, audio-element activity, MIDI, sample playback, and an `AudioElementHandle` for recorded audio. `audiohostdom.ts` forwards these to `AudioContextManager`; without a host they are silent no-ops.
 - `edgeconnector.ts`, `audio-samples.ts`, and `midi.ts` now use `audiohost.audio()` and are in the core target compile. The headphone-disabled SVG moved to `DalBoardView.setAudioPinEnabled`. `samplesState` moved onto `DalBoardState`.
 - Recording is split: `record-audio.ts` is DOM-free and talks to a `record.RecorderHost` / `RecordingSession` interface; `record-audio-dom.ts` supplies the MediaRecorder/getUserMedia implementation (and Safari/Firefox quirks). `recordingState` moved onto `DalBoardState`, `DalBoard` is now an empty compatibility subclass, and `record-audio.ts` and `music.ts` are in the core target compile.
-- Where files go: DOM-free generic files from `pxtsim/` go into `pxtsimcore`. Target files stay in the target repo and are added to its `tsconfig.core.json`.
+- Where files go: DOM-free generic files from `pxtsim/` go into `pxtsimcore`. A target's or library's DOM-free simulator files live in its `core/` folder (`libs/<lib>/sim/core/` in pxt-common-packages), which its `tsconfig.core.json` globs; its view files stay outside that folder.
 
 ### Progress: move visual registries and lifecycle to `boardView()` (done)
 
@@ -270,7 +275,7 @@ Most of the roughly 84 `board()` call sites in `pxt-microbit/sim` already access
 ### Same pattern in `pxt-common-packages`
 The common-packages sim has its own `board()` helper and its own `CoreBoard` state interfaces (for example `EventBusBoard`, `CommonBoard`). Keep `board()` as state access there; add a view accessor only if view code in that target needs one. The broad call-site review found no direct `viewHost`, `view`, screenshot, or visual-factory access through `board()`. Inspect these two indirect/dynamic call sites during the state/view split:
 
-- `pxt-common-packages/libs/screen/sim/state.ts:134-139`: `ScreenState.updateStats()` casts `board()` to `any` and invokes optional `updateStats()`. Inspection: neither pxt-common-packages nor pxt-microbit defines `updateStats` on a board (it is only a `//% shim=pxt::updateStats` in the screen targetoverrides), so it is implemented by an arcade-style board outside these repos. It only updates a stats overlay, so it is view-only. Microbit is unaffected (no-op because `b.updateStats` is undefined). Resolution: when investigating pxt-arcade, move it to `boardView()` (optional `updateStats`).
+- `pxt-common-packages/libs/screen/sim/core/state.ts` (`updateStats`): `ScreenState.updateStats()` casts `board()` to `any` and invokes optional `updateStats()`. Inspection: neither pxt-common-packages nor pxt-microbit defines `updateStats` on a board (it is only a `//% shim=pxt::updateStats` in the screen targetoverrides), so it is implemented by an arcade-style board outside these repos. It only updates a stats overlay, so it is view-only. Microbit is unaffected (no-op because `b.updateStats` is undefined). Resolution: when investigating pxt-arcade, move it to `boardView()` (optional `updateStats`).
 - `pxt-common-packages/libs/game/sim/multiplayer.ts:184`: multiplayer input handling casts `board()` to `any` and invokes `handleKeyEvent()`. Inspection: no definition of `handleKeyEvent` exists in pxt-common-packages or pxt-microbit; it is only reached through the `any` cast, and only for the multiplayer "server" origin, so it is an arcade board method. It injects simulated key input, so it is simulation behavior and should stay on `board()` as an optional state-side interface (for example `KeyEventBoard`) once the arcade board is inspected.
 
 ### Migration steps
@@ -400,7 +405,7 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 **Risks and open questions.**
 - Whether the real `DalBoardState` constructor can run without a view (`edgeconnector`, `microphone`, `radio` take the board in their constructors). Phase 2 answers this.
 - Timers: resolved. Headless runs always use the virtual host with a bounded settle and a real-time watchdog (progress note under Steps); a `forever` program passes.
-- Multi-target: a target opts in by adding `sim/tsconfig.core.json` with `outFile: ../built/simcore.js` (`../built/common-simcore.js` for the common target; a sim shipped as an npm package, `node_modules/pxt-<target>-sim`, uses `./built/simcore.js` and the output is copied to `built/`, as its `sim.js` is); `pxt buildtarget` and `pxt serve` compile it after `sim/tsconfig.json`, and a wrong `outFile` is a build error. For a target without `built/simcore.js`, `pxt simtest --core` stops with a message that the target has no `sim/tsconfig.core.json` or has not been built, and that `pxt simtest` without `--core` runs against the full bundle.
+- Multi-target: a target ships its DOM-free bundle by adding `sim/tsconfig.core.json` with `outFile: ../built/simcore.js` (`../built/common-simcore.js` for the common target; a sim shipped as an npm package, `node_modules/pxt-<target>-sim`, uses `./built/simcore.js` and the output is copied to `built/`, as its `sim.js` is); `pxt buildtarget` and `pxt serve` compile it after `sim/tsconfig.json`, and a wrong `outFile` is a build error. For a target without `built/simcore.js`, `pxt simtest --core` stops with a message that the target has no `sim/tsconfig.core.json` or has not been built, and that `pxt simtest` without `--core` runs against the full bundle.
 - `pxt testdir` in a target currently crashes (`installAsync()` called without `parsed`; see the test investigation). It is a separate bug and not required here, but `simtest` must not depend on `installAsync`.
 
 ## Open questions

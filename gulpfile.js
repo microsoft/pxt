@@ -100,7 +100,11 @@ const pxtlib = () => compileTsProject("pxtlib");
 const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
 const pxtsimDom = () => compileTsProject("pxtsim", "built", false, "pxtsimdom");
-const pxtsimcore = () => compileTsProject("pxtsimcore");
+const compilePxtsimcore = () => compileTsProject("pxtsimcore");
+const copyPxtsimcoreGlobals = () => gulp.src("pxtsimcore/globals.d.ts")
+    .pipe(concat("pxtsimcore-globals.d.ts"))
+    .pipe(gulp.dest("built"));
+const pxtsimcore = gulp.parallel(compilePxtsimcore, copyPxtsimcoreGlobals);
 const combinePxtsim = () => gulp.src(["built/pxtsimcore.js", "built/pxtsimdom.js"])
     .pipe(concat("pxtsim.js"))
     .pipe(gulp.dest("built"));

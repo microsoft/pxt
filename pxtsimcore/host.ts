@@ -41,14 +41,17 @@ namespace pxsim.host {
     }
 
     /** The timer source the runtime schedules work on. Ids are opaque and only valid for the matching clear call. */
+    /** A pending timer or frame request, as returned by Timers; pass it to the matching cancel call. */
+    export type TimerHandle = unknown;
+
     export interface Timers {
-        setTimeout(fn: () => void, ms: number): any;
-        clearTimeout(id: any): void;
-        setInterval(fn: () => void, ms: number): any;
-        clearInterval(id: any): void;
+        setTimeout(fn: () => void, ms: number): TimerHandle;
+        clearTimeout(id: TimerHandle): void;
+        setInterval(fn: () => void, ms: number): TimerHandle;
+        clearInterval(id: TimerHandle): void;
         /** Runs fn before the next display frame. */
-        requestFrame(fn: () => void): any;
-        cancelFrame(id: any): void;
+        requestFrame(fn: () => void): TimerHandle;
+        cancelFrame(id: TimerHandle): void;
     }
 
     /** The random number source behind program randomness. */

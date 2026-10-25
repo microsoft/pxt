@@ -25,6 +25,10 @@ declare const console: {
 
 declare const performance: { now(): number };
 
+// Present in browsers, workers and Node.
+declare function btoa(data: string): string;
+declare function atob(data: string): string;
+
 declare class TextEncoder {
     encode(input?: string): Uint8Array;
 }

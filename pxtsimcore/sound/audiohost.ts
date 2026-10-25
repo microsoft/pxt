@@ -91,7 +91,7 @@ namespace pxsim.audiohost {
     export class TimerMetronome implements Metronome {
         protected tickListeners: (() => void)[] = [];
         /** The host interval id while running, else undefined. */
-        protected timerId: any;
+        protected timerId: host.TimerHandle | undefined;
 
         /** Resolves at once. */
         initAsync(): Promise<void> {

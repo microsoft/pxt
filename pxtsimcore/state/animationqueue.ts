@@ -3,7 +3,7 @@ namespace pxsim {
         interval: number;
         frame: () => boolean;
         whenDone?: (cancelled: boolean) => void;
-        setTimeoutHandle?: any;
+        setTimeoutHandle?: host.TimerHandle;
     }
 
     export class AnimationQueue {

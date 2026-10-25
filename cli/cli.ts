@@ -1762,6 +1762,10 @@ function copyCommonSim() {
         pxt.log(`copying common-sim...`)
         nodeutil.cp(path.join(p, "common-sim.js"), "built");
         nodeutil.cp(path.join(p, "common-sim.d.ts"), "built");
+        for (const f of ["common-simcore.js", "common-simcore.d.ts"]) {
+            if (fs.existsSync(path.join(p, f)))
+                nodeutil.cp(path.join(p, f), "built");
+        }
     }
 }
 
@@ -2596,15 +2600,27 @@ function rebundleAsync() {
 /**
  * Compiles the target's sim folder (`sim/`, else `node_modules/pxt-<target>-sim/`, whichever
  * first has a tsconfig.json): its tsconfig.json to built/sim.js and, when the folder has one,
- * its tsconfig.core.json to built/simcore.js; the common target uses common-sim in place of sim.
- * Resolves without building anything when neither folder has a tsconfig.json. Rejects if either
- * build fails or a config's compilerOptions.outFile is not the path buildFolderAsync requires.
+ * its tsconfig.core.json to built/simcore.js; the common target writes built/common-sim.js and
+ * built/common-simcore.js instead. Resolves without building anything when neither folder has a
+ * tsconfig.json. Rejects if either build fails or a config's compilerOptions.outFile is not the
+ * required built/ path.
  */
 async function buildSimAsync() {
-    const outputName = pxt.appTarget.id === "common" ? "common-sim" : "sim";
-    await buildFolderAsync(simDir(), true, outputName);
-    if (simDir())
-        await buildFolderAsync(simDir(), true, outputName + "core", "tsconfig.core.json");
+    await buildSimFolderAsync(simDir(), pxt.appTarget.id === "common" ? "common-sim" : "sim");
+}
+
+/**
+ * Compiles sim folder `dir` (the empty string means the working directory): its tsconfig.json
+ * to `../built/<outputName>.js` and, when `dir` is not empty and has one, its tsconfig.core.json
+ * to `../built/<outputName>core.js`, both relative to `dir`. A `node_modules/pxt-*-sim` folder
+ * may use `./built/` instead, and its output is then copied to the working directory's
+ * `built/`. An absent config skips its own build. Rejects if either build fails or a config's
+ * compilerOptions.outFile is not one of those paths.
+ */
+async function buildSimFolderAsync(dir: string, outputName: string) {
+    await buildFolderAsync(dir, true, outputName);
+    if (dir)
+        await buildFolderAsync(dir, true, outputName + "core", "tsconfig.core.json");
 }
 
 function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
@@ -3035,14 +3051,14 @@ async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: bo
 
     // some of the watched targets for buildTarget include nested built files,
     // such as libs/game/_locales/*, so can't just grab subdirectories
-    await buildAndWatchAsync(buildTarget, 1);
+    await buildAndWatchAsync(buildTarget, 2);
     await buildAndWatchAsync(buildCss, 6);
 }
 
 function buildCommonSimAsync() {
     const simPath = path.resolve("node_modules/pxt-common-packages/sim");
     if (fs.existsSync(simPath)) {
-        return buildFolderAsync(simPath)
+        return buildSimFolderAsync(simPath, "common-sim")
     }
     else {
         return Promise.resolve();
