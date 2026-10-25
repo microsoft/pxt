@@ -567,7 +567,7 @@ describe("simulator driver broadcast routing", () => {
             const wrapper = ext.parentElement;
             chai.expect(ext.dataset["messagechannel"]).equals(EXT_CHANNEL);
             chai.expect(ext.dataset["permanent"]).equals("true");
-            chai.expect(ext.dataset["aspectratio"] || ext.dataset["aspectRatio"]).equals("2");
+            chai.expect(ext.dataset["aspectratio"]).equals("2");
             chai.expect(wrapper.classList.contains("simmsg")).equals(true);
             chai.expect(ext.src.indexOf("/simx/" + EXT_CHANNEL + "/-/index.html")).to.be.greaterThan(0);
         });

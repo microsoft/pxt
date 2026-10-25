@@ -554,7 +554,7 @@ namespace pxsim.instructions {
         return [panel, props];
     }
 
-    export interface RenderPartsOptions extends SimulatorInstructionsOptions { }
+    export type RenderPartsOptions = SimulatorInstructionsOptions;
 
     export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
         if (!options.boardDef.pinStyles)

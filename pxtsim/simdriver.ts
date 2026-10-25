@@ -41,23 +41,27 @@ namespace pxsim {
 
     /** The browser simulator driver: a coordinator whose frames are iframes inside `container`. */
     export class SimulatorDriver extends SimulatorCoordinator {
+        /** The coordinator's frameHost, as the DomSimFrameHost this driver created. */
+        private readonly domFrameHost: DomSimFrameHost;
+
         constructor(public container: HTMLElement,
             public options: SimulatorDriverOptions = {}) {
             super(new DomSimFrameHost(container, options), new DomSimEnvironment(), options);
+            this.domFrameHost = this.frameHost as DomSimFrameHost;
         }
 
         public isLoanedSimulator(el: HTMLElement) {
-            return (this.frameHost as DomSimFrameHost).isLoanedFrame(el);
+            return this.domFrameHost.isLoanedFrame(el);
         }
 
         // returns a simulator iframe that can be hosted anywhere in the page
         // while a loaned simulator is active, all other iframes are suspended
         public loanSimulator(): HTMLDivElement {
-            return (this.frameHost as DomSimFrameHost).loanSimulator(() => this.createFrame("detached"));
+            return this.domFrameHost.loanSimulator(() => this.createFrame("detached"));
         }
 
         public unloanSimulator() {
-            (this.frameHost as DomSimFrameHost).unloanSimulator();
+            this.domFrameHost.unloanSimulator();
         }
     }
 }

@@ -1024,7 +1024,6 @@ namespace pxsim {
         static messagePosted: (data: SimulatorMessage) => void;
         static postMessage(data: SimulatorMessage) {
             if (!data) return;
-            // TODO: origins
             host.environment().postToParent(data);
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
