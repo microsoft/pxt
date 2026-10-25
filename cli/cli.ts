@@ -2711,6 +2711,10 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.setAppTarget(cfg);
     pxt.reloadAppTargetVariant();
     dirsToWatch = cfg.bundleddirs.slice()
+    dirsToWatch = dirsToWatch.concat(
+        cfg.bundleddirs
+            .map(d => path.join(d, "sim", "core"))
+            .filter(d => nodeutil.existsDirSync(d))); // library simulator core folders
     if (pxt.appTarget.id != "core") {
         if (fs.existsSync("theme")) {
             dirsToWatch.push("theme"); // simulator
@@ -3069,7 +3073,7 @@ async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: bo
 
     // some of the watched targets for buildTarget include nested built files,
     // such as libs/game/_locales/*, so can't just grab subdirectories
-    await buildAndWatchAsync(buildTarget, 2);
+    await buildAndWatchAsync(buildTarget, 1);
     await buildAndWatchAsync(buildCss, 6);
 }
 
