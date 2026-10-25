@@ -176,7 +176,6 @@ namespace pxsim.AudioContextManager {
 
         playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: (freq: number, volume: number) => void) {
             return new Promise<void>(async resolve => {
-                soundEventCallback?.("playinstructions", instructions);
                 let resolved = false;
 
                 const oscillators: pxt.Map<OscillatorNode | AudioBufferSourceNode> = {};

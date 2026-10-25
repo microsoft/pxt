@@ -743,7 +743,7 @@ namespace pxsim {
 
         dead = false;
         running = false;
-        idleTimer: any = undefined;
+        idleTimer: host.TimerHandle = undefined;
         recording = false;
         recordingTimer: any = 0;
         recordingLastImageData: ImageData = undefined;

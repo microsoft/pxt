@@ -92,7 +92,7 @@ namespace pxsim.host {
             queue.push(entry);
             return entry.id;
         };
-        const remove = (id: number) => {
+        const remove = (id: host.TimerHandle) => {
             queue = queue.filter(e => e.id !== id);
         };
         const earliest = (filter: (e: Entry) => boolean) => {

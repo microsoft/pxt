@@ -1646,6 +1646,7 @@ export async function internalBuildTargetAsync(options: BuildTargetOptions = {})
     await simshimAsync();
     await buildFolderAsync('compiler', true, 'compiler');
     fillInCompilerExtension(pxt.appTarget);
+    await buildSimAsync();
 
     if (options.rebundle) {
         await buildTargetCoreAsync({ quick: true });
@@ -1654,7 +1655,6 @@ export async function internalBuildTargetAsync(options: BuildTargetOptions = {})
         await buildTargetCoreAsync(options);
     }
 
-    await buildSimAsync();
     await buildFolderAsync('cmds', true);
     await buildSemanticUIAsync();
     await buildEditorExtensionAsync("editor", "extendEditor");
@@ -1693,14 +1693,16 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
 
 /**
  * Compiles the TypeScript project `configName` (default `tsconfig.json`) in folder `p` by running
- * tsc from that folder, then prepends any files listed in the config's `prepend` to its outFile.
+ * tsc from that folder, then prepends any files listed in the config's `prepend` to its outFile,
+ * in list order. When compilerOptions.declaration is set, each prepended `x.js` that has a sibling
+ * `x.d.ts` also has that `.d.ts` prepended to the emitted `.d.ts`, in the same order.
  * Returns a promise that resolves when the build finishes and rejects if tsc fails.
  * A missing config file is a user error unless `optional`, in which case nothing is built.
  * With `outputName`, compilerOptions.outFile must be `../built/<outputName>.js`; a config in a
  * `node_modules/pxt-*-sim` folder may instead use `./built/<outputName>.js`, in which case its
- * output is copied to `built/`. Any other outFile, `prepend` in a config other than
- * `tsconfig.json`, or a missing `node_modules/typescript` is a user error, thrown synchronously
- * before tsc runs.
+ * output, and its `.d.ts` when compilerOptions.declaration is set, is copied to `built/`. Any
+ * other outFile, `prepend` in a config other than `tsconfig.json`, or a missing
+ * `node_modules/typescript` is a user error, thrown synchronously before tsc runs.
  */
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string, configName = "tsconfig.json"): Promise<void> {
     const configFile = `${p}/${configName}`;
@@ -1739,21 +1741,37 @@ function buildFolderAsync(p: string, optional?: boolean, outputName?: string, co
         args: [`../${isNodeModule ? "" : "node_modules/"}typescript/bin/tsc`, "-p", configName],
         cwd: p
     }).then(() => {
+        const outFile: string = tsConfig.compilerOptions.outFile;
+        const emitsDeclarations = !!tsConfig.compilerOptions.declaration;
+        const toDeclaration = (f: string) => f.replace(/\.js$/, ".d.ts");
         if (tsConfig.prepend) {
-            let files: string[] = tsConfig.prepend
-            files.push(tsConfig.compilerOptions.outFile)
-            let s = ""
-            for (let f of files) {
-                s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
+            const prepends: string[] = tsConfig.prepend;
+            concatFiles(prepends.concat([outFile]), outFile);
+            if (emitsDeclarations) {
+                const declarations = prepends
+                    .filter(f => /\.js$/.test(f))
+                    .map(toDeclaration)
+                    .filter(f => fs.existsSync(path.resolve(p, f)));
+                concatFiles(declarations.concat([toDeclaration(outFile)]), toDeclaration(outFile));
             }
-            fs.writeFileSync(path.resolve(p, tsConfig.compilerOptions.outFile), s)
         }
 
         if (isNodeModule) {
-            const content = fs.readFileSync(path.resolve(p, tsConfig.compilerOptions.outFile), "utf8");
-            fs.writeFileSync(path.resolve("built", path.basename(tsConfig.compilerOptions.outFile)), content);
+            const outputs = emitsDeclarations ? [outFile, toDeclaration(outFile)] : [outFile];
+            for (const f of outputs) {
+                const content = fs.readFileSync(path.resolve(p, f), "utf8");
+                fs.writeFileSync(path.resolve("built", path.basename(f)), content);
+            }
         }
     })
+
+    function concatFiles(sources: string[], dest: string) {
+        let s = ""
+        for (const f of sources) {
+            s += fs.readFileSync(path.resolve(p, f), "utf8") + "\n"
+        }
+        fs.writeFileSync(path.resolve(p, dest), s)
+    }
 }
 
 function copyCommonSim() {
@@ -1762,6 +1780,10 @@ function copyCommonSim() {
         pxt.log(`copying common-sim...`)
         nodeutil.cp(path.join(p, "common-sim.js"), "built");
         nodeutil.cp(path.join(p, "common-sim.d.ts"), "built");
+        for (const f of ["common-simcore.js", "common-simcore.d.ts"]) {
+            if (fs.existsSync(path.join(p, f)))
+                nodeutil.cp(path.join(p, f), "built");
+        }
     }
 }
 
@@ -2589,22 +2611,34 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
 }
 
 function rebundleAsync() {
-    return buildTargetCoreAsync({ quick: true })
-        .then(() => buildSimAsync());
+    return buildSimAsync()
+        .then(() => buildTargetCoreAsync({ quick: true }));
 }
 
 /**
  * Compiles the target's sim folder (`sim/`, else `node_modules/pxt-<target>-sim/`, whichever
  * first has a tsconfig.json): its tsconfig.json to built/sim.js and, when the folder has one,
- * its tsconfig.core.json to built/simcore.js; the common target uses common-sim in place of sim.
- * Resolves without building anything when neither folder has a tsconfig.json. Rejects if either
- * build fails or a config's compilerOptions.outFile is not the path buildFolderAsync requires.
+ * its tsconfig.core.json to built/simcore.js; the common target writes built/common-sim.js and
+ * built/common-simcore.js instead. Resolves without building anything when neither folder has a
+ * tsconfig.json. Rejects if either build fails or a config's compilerOptions.outFile is not the
+ * required built/ path.
  */
 async function buildSimAsync() {
-    const outputName = pxt.appTarget.id === "common" ? "common-sim" : "sim";
-    await buildFolderAsync(simDir(), true, outputName);
-    if (simDir())
-        await buildFolderAsync(simDir(), true, outputName + "core", "tsconfig.core.json");
+    await buildSimFolderAsync(simDir(), pxt.appTarget.id === "common" ? "common-sim" : "sim");
+}
+
+/**
+ * Compiles sim folder `dir` (the empty string means the working directory): first, when `dir` is
+ * not empty and has one, its tsconfig.core.json to `../built/<outputName>core.js`, then its
+ * tsconfig.json to `../built/<outputName>.js`, both relative to `dir`. A `node_modules/pxt-*-sim`
+ * folder may use `./built/` instead, and its output is then copied to the working directory's
+ * `built/`. An absent config skips its own build. Rejects if either build fails or a config's
+ * compilerOptions.outFile is not one of those paths.
+ */
+async function buildSimFolderAsync(dir: string, outputName: string) {
+    if (dir)
+        await buildFolderAsync(dir, true, outputName + "core", "tsconfig.core.json");
+    await buildFolderAsync(dir, true, outputName);
 }
 
 function compressApiInfo(inf: Map<pxt.PackageApiInfo>) {
@@ -2677,6 +2711,10 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
     pxt.setAppTarget(cfg);
     pxt.reloadAppTargetVariant();
     dirsToWatch = cfg.bundleddirs.slice()
+    dirsToWatch = dirsToWatch.concat(
+        cfg.bundleddirs
+            .map(d => path.join(d, "sim", "core"))
+            .filter(d => nodeutil.existsDirSync(d))); // library simulator core folders
     if (pxt.appTarget.id != "core") {
         if (fs.existsSync("theme")) {
             dirsToWatch.push("theme"); // simulator
@@ -3042,7 +3080,7 @@ async function buildAndWatchTargetAsync(includeSourceMaps: boolean, rebundle: bo
 function buildCommonSimAsync() {
     const simPath = path.resolve("node_modules/pxt-common-packages/sim");
     if (fs.existsSync(simPath)) {
-        return buildFolderAsync(simPath)
+        return buildSimFolderAsync(simPath, "common-sim")
     }
     else {
         return Promise.resolve();
@@ -4247,6 +4285,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         sf.statements.forEach(doStmt)
     }
 
+    const missing: string[] = []
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
         if (pxtc.isBuiltinSimOp(shim))
@@ -4254,8 +4293,12 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         let simName = pxtc.shimToJs(shim)
         let sym = U.lookup(decls, simName)
         if (!sym) {
-            pxt.log("missing in sim: " + simName)
+            missing.push(simName)
         }
+    }
+    if (missing.length) {
+        pxt.log(`${missing.length} target functions have no simulator implementation (run with -d to list them)`)
+        missing.forEach(simName => pxt.debug("missing in sim: " + simName))
     }
 
     /*
@@ -4343,7 +4386,8 @@ function simshimAsync() {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTscCompileDir(path.resolve(simDir()))
+    // the shim scan reads only the //% annotations; the simulator's own build reports its errors
+    let prog = pxtc.plainTscCompileDir(path.resolve(simDir()), false)
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {

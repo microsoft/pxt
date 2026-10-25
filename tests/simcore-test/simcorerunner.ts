@@ -334,6 +334,58 @@ describe("deterministic time and randomness", () => {
         chai.expect(result.stoppedAt).equals(3200);
     });
 
+    it("plays queued instructions after their delay on the silent audio host", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            host.use();
+            const events = [];
+            pxsim.audiohost.setSoundEventHandler((ev, data) => events.push({ ev, at: host.now(), data: data && Array.from(data) }));
+            const buf = new Uint8Array(pxsim.music.INSTRUCTION_STEP_BYTES);
+            buf[0] = 3;
+            pxsim.audiohost.queuePlayInstructions(300, buf);
+            await host.advance(299);
+            const before = events.slice();
+            await host.advance(1);
+            return JSON.stringify({ before, after: events, buf: Array.from(buf) });
+        })()`, context));
+        chai.expect(result.before).deep.equals([]);
+        chai.expect(result.after).deep.equals([{ ev: "playinstructions", at: 300, data: result.buf }]);
+    });
+
+    it("cancels queued instructions on stopAll on the silent audio host", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const host = pxsim.host.createVirtualHost();
+            host.use();
+            const events = [];
+            pxsim.audiohost.setSoundEventHandler(ev => events.push({ ev, at: host.now() }));
+            pxsim.audiohost.queuePlayInstructions(300, new Uint8Array(pxsim.music.INSTRUCTION_STEP_BYTES));
+            await host.advance(100);
+            pxsim.audiohost.audio().stopAll();
+            await host.advance(500);
+            return JSON.stringify({ events });
+        })()`, context));
+        chai.expect(result.events).deep.equals([{ ev: "muteallchannels", at: 100 }]);
+    });
+
+    it("runs onStopAll listeners on stopAll on the silent audio host", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(vm.runInContext(`(() => {
+            const calls = [];
+            const audio = pxsim.audiohost.audio();
+            audio.onStopAll(() => calls.push("first"));
+            audio.onStopAll(() => calls.push("second"));
+            audio.stopAll();
+            audio.stopAll();
+            return JSON.stringify({ calls });
+        })()`, context));
+        chai.expect(result.calls).deep.equals(["first", "second", "first", "second"]);
+    });
+
     it("times out a busy loop that never pauses", async function () {
         this.timeout(20000);
         const js = await compileAsync(`

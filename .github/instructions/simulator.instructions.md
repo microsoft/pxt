@@ -15,6 +15,8 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 - New runtime, board-state and synthesis code belongs to `pxtsimcore`; only view code belongs to `pxtsim`
 - Globals the core may use are declared in `pxtsimcore/globals.d.ts`; never add the `dom` lib to core
 - Consumers load `built/pxtsim.js`, which is core followed by the DOM code; keep the `pxsim` namespace
+- A target's or library's DOM-free simulator files live in its `core/` folder, and its `tsconfig.core.json` globs that folder
+- A lib's or target's full simulator config compiles only its view files against the core bundle's `.d.ts` and prepends the core bundle, so `sim.js` is `simcore.js` followed by the view code; a view file never references a core source file, only the core declarations
 
 ## Host Abstractions
 
@@ -41,7 +43,7 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 - `pxt simtest` and the simcore tests run on the virtual host (`pxsim.host.createVirtualHost`), so pauses take no real time and runs are repeatable
 - After the top-level code finishes, a run advances virtual time by `--settle` and stops; it never waits for the program to go idle, and its timeout watchdog stays on real time
 - Fixtures are TypeScript under `tests/simcore-test/fixtures/`, compiled by the test project; do not generate them at test time or embed them as strings
-- A target opts into DOM-free runs with `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`
+- A target ships a DOM-free simulator bundle by adding `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`
 
 ## Visual Components
 

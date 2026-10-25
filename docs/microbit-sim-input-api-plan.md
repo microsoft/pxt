@@ -23,7 +23,7 @@ automated browser test or a "simulate inputs" UI.
 - `Button` (`A=1, B=2, AB=3`), `Gesture`, `Rotation`, `Dimension`, `AcceleratorRange` etc. are `const enum`s in
   `pxt-microbit/libs/core/enums.d.ts`. A `Button` value already equals the DAL id (`DEVICE_ID_BUTTON_A = 1`), so
   no translation table is needed for A/B/AB, but the API should still map explicitly so the two can diverge.
-- Sensor state lives in `DalBoardState` (`pxt-microbit/sim/state/`): `ledMatrixState`, `accelerometerState`
+- Sensor state lives in `DalBoardState` (`pxt-microbit/sim/core/`): `ledMatrixState`, `accelerometerState`
   (`Accelerometer.update(x, y, z)`), `thermometerState.temperature`, `compassState`, `lightSensorState`,
   `microphoneState` (an `AnalogSensorState`, `setLevel`), `logoTouch`, `edgeConnectorState` (pins), `radioState`,
   `serialState`.
@@ -42,7 +42,7 @@ automated browser test or a "simulate inputs" UI.
 
 1. **Sim-side input primitives (DOM-free).** One class per concern that applies an input to the board state and raises
    the matching events. Pointer handlers, tests and future tooling all call these, so there is one code path.
-   Lives in `pxt-microbit/sim/state/` and joins `simcore.js`.
+   Lives in `pxt-microbit/sim/core/` and joins `simcore.js`.
 2. **Program-side API (typed, uses the shim enums).** A hidden namespace compiled into the test program that
    calls the primitives through shims. Tests use it directly; it is not shown in the toolbox.
 
@@ -82,8 +82,8 @@ Rules:
 ### Shim wiring
 
 - Declare shims in a `.d.ts`/`.ts` in the new namespace with `//% shim=simInput::press` etc.; implement
-  `namespace pxsim.simInput` in a DOM-free file in `sim/state/` listed in both `sim/tsconfig.core.json` and
-  `sim/tsconfig.json` (same pattern as the other state files).
+  `namespace pxsim.simInput` in a DOM-free file in `sim/core/`, which both `sim/tsconfig.core.json` and
+  `sim/tsconfig.json` glob.
 - The implementations call `board()` (never `boardView()`), so they run under `pxt simtest` in both default and
   `--core` mode.
 - The shim namespace is only compiled when a project includes the package, so real user programs and the
@@ -112,7 +112,7 @@ and `runUntil(done)`.
 ## Phases
 
 1. **Primitives + buttons.** Extract button press/release/click from `buttonpairsim.ts` into a DOM-free
-   `sim/state/siminput.ts`; add `Button` API and a test `tests/sim/input-buttons.ts` that replaces
+   `sim/core/siminput.ts`; add `Button` API and a test `tests/sim/input-buttons.ts` that replaces
    `control.raiseEvent(DAL...)` in the current `buttons.ts`. Verify the browser button still works (manual).
 2. **Sensors.** Acceleration, gestures, temperature, light, compass, sound; tests for each that read the value
    back through the user-facing `input.*` APIs.
