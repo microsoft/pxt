@@ -4285,6 +4285,7 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         sf.statements.forEach(doStmt)
     }
 
+    const missing: string[] = []
     for (let info of pkgOpts.extinfo.functions) {
         let shim = info.name
         if (pxtc.isBuiltinSimOp(shim))
@@ -4292,8 +4293,12 @@ function simulatorCoverage(pkgCompileRes: pxtc.CompileResult, pkgOpts: pxtc.Comp
         let simName = pxtc.shimToJs(shim)
         let sym = U.lookup(decls, simName)
         if (!sym) {
-            pxt.log("missing in sim: " + simName)
+            missing.push(simName)
         }
+    }
+    if (missing.length) {
+        pxt.log(`${missing.length} target functions have no simulator implementation (run with -d to list them)`)
+        missing.forEach(simName => pxt.debug("missing in sim: " + simName))
     }
 
     /*
@@ -4381,7 +4386,8 @@ function simshimAsync() {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    let prog = pxtc.plainTscCompileDir(path.resolve(simDir()))
+    // the shim scan reads only the //% annotations; the simulator's own build reports its errors
+    let prog = pxtc.plainTscCompileDir(path.resolve(simDir()), false)
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
     for (const s of Object.keys(shims)) {
