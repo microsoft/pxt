@@ -51,11 +51,12 @@ pxsim.initHeadlessRuntime = function () {
         pxsim.Runtime.messagePosted({ type: "boardcleanup" });
     };
     pxsim.control.millis = function () { return pxsim.runtime.runningTime(); };
-    // UInt16LE step duration at offset 4 of each 12-byte step
-    const instructions = new Uint8Array(24);
-    instructions[4] = 300 & 0xff;
-    instructions[5] = 300 >> 8;
-    instructions[12 + 4] = 200;
+    const step = pxsim.music.INSTRUCTION_STEP_BYTES;
+    const duration = pxsim.music.INSTRUCTION_DURATION_OFFSET;
+    const instructions = new Uint8Array(2 * step);
+    instructions[duration] = 300 & 0xff;
+    instructions[duration + 1] = 300 >> 8;
+    instructions[step + duration] = 200;
     pxsim.testAudio = {
         playAsync: function () {
             return pxsim.audiohost.audio().playInstructionsAsync(instructions).then(function () {

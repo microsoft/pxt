@@ -358,7 +358,7 @@ namespace pxsim {
 
         constructor() {
             // use a stable board id
-            this.id = host.environment().frameId() || ("b" + Math.round(Math.random() * 2147483647));
+            this.id = host.environment().frameId() || ("b" + Math.round(host.rng().next() * 2147483647));
             this.bus = new pxsim.EventBus(runtime, this);
         }
 
@@ -460,13 +460,42 @@ namespace pxsim {
         bus: EventBus;
     }
 
-    export interface BoardView {
+    /**
+     * The view of a board. A target sets it on `runtime.boardView` next to `runtime.board`; a
+     * headless run has none, and the runtime skips every view call while it is unset.
+     */
+    export interface RuntimeBoardView {
+        /**
+         * Part view constructors keyed by simulation behavior name. The parts instructions page reads
+         * them when it builds a board host.
+         */
         builtinVisuals: Map<() => any>;
+        /**
+         * Part image constructors keyed by built-in part name, each called with the image's position.
+         * The parts instructions page reads them when it draws a built-in part.
+         */
         builtinPartVisuals: Map<(xy: visuals.Coord) => any>;
+        /**
+         * Builds the view for a run. The embed calls it with each run message once the board's
+         * initAsync has resolved, while that runtime is still current and alive, and starts the
+         * program when it resolves.
+         */
         initAsync(msg: SimulatorRunMessage): Promise<void>;
+        /**
+         * Redraws the view from the board state. The runtime calls it from updateDisplay, which runs
+         * when a target requests a redraw and when queued display updates are flushed.
+         */
         updateView(): void;
+        /** Registers subscriber to run on every updateView. */
         addUpdateSubscriber(subscriber: () => void): void;
+        /**
+         * Renders the view to an image width pixels wide, or at a size the view picks when width is
+         * omitted; resolves undefined when it cannot render. The runtime calls it for each screenshot
+         * request, for each frame while recording, and for each thumbnail frame after a user
+         * interaction.
+         */
         screenshotAsync(width?: number): Promise<ImageData>;
+        /** Releases the view. The embed calls it when it stops a run, after killing the runtime and the board. */
         kill(): void;
     }
 
@@ -735,7 +764,7 @@ namespace pxsim {
 
     export class Runtime {
         public board: BaseBoard;
-        public boardView?: BoardView;
+        public boardView?: RuntimeBoardView;
         numGlobals = 1000;
         errorHandler: (e: any) => void;
         postError: (e: any) => void;
@@ -745,7 +774,7 @@ namespace pxsim {
         running = false;
         idleTimer: host.TimerHandle = undefined;
         recording = false;
-        recordingTimer: any = 0;
+        recordingTimer: host.TimerHandle | undefined = undefined;
         recordingLastImageData: ImageData = undefined;
         recordingWidth: number = undefined;
         startTime = 0;
@@ -775,7 +804,7 @@ namespace pxsim {
 
         lastInteractionTime: number;
         lastThumbnailTime: number;
-        thumbnailRecordingIntervalRef: number;
+        thumbnailRecordingIntervalRef: host.TimerHandle | undefined;
         thumbnailFrames: ImageData[];
 
         public refCountingDebug = false;
@@ -995,7 +1024,6 @@ namespace pxsim {
         static messagePosted: (data: SimulatorMessage) => void;
         static postMessage(data: SimulatorMessage) {
             if (!data) return;
-            // TODO: origins
             host.environment().postToParent(data);
             if (Runtime.messagePosted) Runtime.messagePosted(data);
         }
@@ -1059,15 +1087,15 @@ namespace pxsim {
             if (!this.recording) return;
             if (this.recordingTimer) host.timers().clearInterval(this.recordingTimer);
             this.recording = false;
-            this.recordingTimer = 0;
+            this.recordingTimer = undefined;
             this.recordingLastImageData = undefined;
             this.recordingWidth = undefined;
         }
 
         postFrame() {
-            if (!this.recording || !this.running) return;
+            if (!this.recording || !this.running || !this.boardView) return;
             let time = pxsim.U.now();
-            (this.boardView ? this.boardView.screenshotAsync(this.recordingWidth) : Promise.resolve(undefined))
+            this.boardView.screenshotAsync(this.recordingWidth)
                 .then(imageData => {
                     // check for duplicate images
                     if (this.recordingLastImageData && isImageDataEqual(this.recordingLastImageData, imageData)) {
@@ -1732,14 +1760,13 @@ namespace pxsim {
 
         registerUserInteraction() {
             this.lastInteractionTime = host.clock().now();
+            if (!this.boardView) return;
 
             if (this.thumbnailRecordingIntervalRef || this.lastThumbnailTime && this.lastInteractionTime - this.lastThumbnailTime < 1000) return;
             this.thumbnailFrames = [];
 
             this.thumbnailRecordingIntervalRef = host.timers().setInterval(async () => {
-                const imageData = this.boardView
-                    ? await this.boardView.screenshotAsync()
-                    : undefined;
+                const imageData = await this.boardView.screenshotAsync();
 
                 if (this.thumbnailFrames.length && isImageDataEqual(imageData, this.thumbnailFrames[this.thumbnailFrames.length - 1])) {
                     return;
@@ -1758,7 +1785,7 @@ namespace pxsim {
                         frames: this.thumbnailFrames
                     } as SimulatorAutomaticThumbnailMessage)
                 }
-            }, 66) as any
+            }, 66);
         }
     }
 

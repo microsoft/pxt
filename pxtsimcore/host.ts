@@ -40,10 +40,10 @@ namespace pxsim.host {
         perfNowUs(): number;
     }
 
-    /** The timer source the runtime schedules work on. Ids are opaque and only valid for the matching clear call. */
     /** A pending timer or frame request, as returned by Timers; pass it to the matching cancel call. */
     export type TimerHandle = unknown;
 
+    /** The timer source the runtime schedules work on. */
     export interface Timers {
         setTimeout(fn: () => void, ms: number): TimerHandle;
         clearTimeout(id: TimerHandle): void;
@@ -81,24 +81,31 @@ namespace pxsim.host {
         };
     }
 
+    /**
+     * Returns the first of performance.now, mozNow, msNow, webkitNow and oNow that exists, bound to
+     * performance; Date.now when performance is undefined or has none of them.
+     */
+    function highResolutionNow(): () => number {
+        if (typeof performance == "undefined")
+            return Date.now;
+        const p = performance as any;
+        const now: () => number = p.now || p.mozNow || p.msNow || p.webkitNow || p.oNow;
+        return now ? now.bind(performance) : Date.now;
+    }
+
     let perf: () => number;
 
     const defaultClock: Clock = {
         now: () => Date.now(),
         perfNowUs: () => {
             if (!perf)
-                perf = typeof performance != "undefined" ?
-                    performance.now.bind(performance) ||
-                    (performance as any).moznow.bind(performance) ||
-                    (performance as any).msNow.bind(performance) ||
-                    (performance as any).webkitNow.bind(performance) ||
-                    (performance as any).oNow.bind(performance) :
-                    Date.now;
+                perf = highResolutionNow();
             return perf() * 1000;
         }
     };
 
-    const FRAME_MS = 16;
+    /** One frame at about 60 Hz, in milliseconds: the delay requestFrame waits when there is no display frame to wait for. */
+    export const FRAME_MS = 16;
 
     const defaultTimers: Timers = {
         setTimeout: (fn, ms) => setTimeout(fn, ms),

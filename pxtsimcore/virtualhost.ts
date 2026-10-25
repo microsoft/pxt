@@ -47,9 +47,6 @@ namespace pxsim.host {
         use(): void;
     }
 
-    /** One frame at 60 Hz, the delay requestFrame waits on the virtual queue. */
-    const FRAME_MS = 16;
-
     /** What the clock reads at virtual time 0. Must be nonzero: the runtime treats a performance time of 0 as unset. */
     const EPOCH_MS = 1000000;
 

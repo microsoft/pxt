@@ -1,7 +1,5 @@
 module.exports = {
     "parserOptions": {
-        "project": [
-            "pxtsim/tsconfig.json"
-        ],
+        "project": "pxtsim/tsconfig.json",
     },
 }

@@ -4461,17 +4461,18 @@ function getApiInfoAsync() {
         })
 }
 
-function findTestFile() {
+/** Returns the main package's only .ts file; fails with a user error naming command when it has none or several. */
+function findTestFile(command: string) {
     let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
     if (tsFiles.length != 1)
-        U.userError("need exactly one .ts file in package to 'testdir'")
+        U.userError(`need exactly one .ts file in package to '${command}'`)
     return tsFiles[0]
 }
 
 function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
         .then(opts => {
-            let tsFile = findTestFile()
+            let tsFile = findTestFile("testdir")
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
             return opts
@@ -4545,7 +4546,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
             if (currBase != ti.base) {
                 U.userError("Base directory: " + ti.base + " not found.")
             } else {
-                let tsf = findTestFile()
+                let tsf = findTestFile("testdir")
                 let files = mainPkg.config.files
                 let idx = files.indexOf(tsf)
                 U.assert(idx >= 0)
@@ -4661,7 +4662,7 @@ async function simtestAsync(parsed: commandParser.ParsedCommand) {
             try {
                 await mainPkg.loadAsync();
                 // the test replaces the base project's only .ts file
-                (mainPkg.host() as Host).fileOverrides = { [findTestFile()]: source };
+                (mainPkg.host() as Host).fileOverrides = { [findTestFile("simtest")]: source };
                 const opts = await prepBuildOptionsAsync(BuildOption.Run, true);
                 const res = pxtc.compile(opts);
                 if (!res.success || !res.outfiles[pxtc.BINARY_JS]) {

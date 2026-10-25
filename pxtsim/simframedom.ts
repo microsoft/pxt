@@ -113,7 +113,6 @@ namespace pxsim {
 
             const l = document.createElement("div");
             l.className = "ui active loader";
-            i.style.display = "none";
             wrapper.appendChild(l);
 
             if (position === "first")
@@ -216,7 +215,7 @@ namespace pxsim {
 
         setDimmed(value: boolean) {
             if (value) this.container.style.opacity = "0.3";
-            else delete this.container.style.opacity;
+            else this.container.style.opacity = "";
         }
 
         // A simulator can be lent out to be hosted anywhere in the page. While one is

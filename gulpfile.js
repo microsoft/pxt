@@ -742,11 +742,10 @@ const maybeBuildWebapps = () => {
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
-        "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
+        "pxtpy", "pxtrunner", "pxtsim", "pxtsimcore", "webapp", "pxtservices",
         "docfiles/pxtweb", "skillmap", "authcode",
         "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
-            exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true))
-        .concat(exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx --parser-options '{"project":"./pxtsimcore/tsconfig.json"}' ./pxtsimcore/`, true)))
+            exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
     .then(() => console.log("linted"))
 const lint = lintWithEslint
 

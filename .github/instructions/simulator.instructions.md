@@ -22,6 +22,7 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 
 - Core reads time, timers and randomness through `host.clock()`, `host.timers()` and `host.rng()`, never `Date.now`, `setTimeout`, `setInterval`, `requestAnimationFrame` or `Math.random`
 - Core reaches the parent page through `host.environment()` and audio through `audiohost.audio()`
+- Core reports through `pxsim.log`, `pxsim.warn` and `pxsim.error` (the `pxsim.Logger` a host may replace), never `console` directly
 - A new seam defaults to today's behavior and lets callers override members one at a time, as `setEnvironment` does
 
 ## Board State and View
@@ -40,7 +41,7 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 
 ## Headless Runs
 
-- `pxt simtest` and the simcore tests run on the virtual host (`pxsim.host.createVirtualHost`), so pauses take no real time and runs are repeatable
+- `pxt simtest` and the simcore tests run on the virtual host (`pxsim.host.createVirtualHost`) and the silent audio host, so pauses take no real time and runs are repeatable
 - After the top-level code finishes, a run advances virtual time by `--settle` and stops; it never waits for the program to go idle, and its timeout watchdog stays on real time
 - Fixtures are TypeScript under `tests/simcore-test/fixtures/`, compiled by the test project; do not generate them at test time or embed them as strings
 - A target ships a DOM-free simulator bundle by adding `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`

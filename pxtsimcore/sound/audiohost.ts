@@ -18,7 +18,8 @@ namespace pxsim.audiohost {
 
     /** Periodic tick source used by the music sequencer. */
     export interface Metronome {
-        initAsync(): any;
+        /** Resolves once the metronome can start; the value it resolves with is unspecified. */
+        initAsync(): Promise<unknown>;
         start(interval: number): void;
         stop(): void;
         setInterval(interval: number): void;
@@ -180,6 +181,23 @@ namespace pxsim.audiohost {
             listener();
     }
 
+    /**
+     * Returns a new audio element for the silent host: play() resolves at once and fires no events,
+     * pause and the listener calls do nothing, and the properties read playbackRate 1,
+     * preservesPitch true and currentTime 0 until assigned.
+     */
+    function silentCreateAudioElement(): AudioElementHandle {
+        return {
+            playbackRate: 1,
+            preservesPitch: true,
+            currentTime: 0,
+            play: () => Promise.resolve(),
+            pause: () => { },
+            addEventListener: () => { },
+            removeEventListener: () => { }
+        };
+    }
+
     const silentHost: AudioHost = {
         tone: () => { },
         stop: () => { },
@@ -189,7 +207,7 @@ namespace pxsim.audiohost {
         isAudioElementActive: () => false,
         sendMidiMessage: () => { },
         startSamplePlayback: () => ({ promise: Promise.resolve(), cancel: () => { } }),
-        createAudioElement: () => undefined,
+        createAudioElement: silentCreateAudioElement,
         stopAll: silentStopAll,
         mute: () => { },
         playInstructionsAsync: silentPlayInstructionsAsync,
@@ -206,22 +224,21 @@ namespace pxsim.audiohost {
     }
 
     /** Overrides parts of the audio host; omitted members keep the silent defaults. */
-    export function setAudioHost(host: Partial<AudioHost>) {
-        current = { ...silentHost, ...host };
+    export function setAudioHost(overrides: Partial<AudioHost>) {
+        current = { ...silentHost, ...overrides };
     }
 
-    /** Incremented by the stopAll of every audio host queuePlayInstructions has run on. */
+    /** Incremented by the stopAll of every audio host queuePlay has run on. */
     let stopGeneration = 0;
-    /** The audio host of the latest queuePlayInstructions call, else undefined. */
+    /** The audio host of the latest queuePlay call, else undefined. */
     let stopGenerationHost: AudioHost | undefined;
 
     /**
-     * Calls audio().playInstructionsAsync(instructions) `when` milliseconds from now on host.timers(),
-     * unless the stopAll of an audio host this function has run on runs in between. Registers an
-     * onStopAll listener on audio() on the first call and on every call whose audio() differs from
-     * the previous call's.
+     * Calls play `when` milliseconds from now on host.timers(), unless the stopAll of an audio host
+     * this function has run on runs in between. Registers an onStopAll listener on audio() on the
+     * first call and on every call whose audio() differs from the previous call's.
      */
-    export function queuePlayInstructions(when: number, instructions: Uint8Array): void {
+    export function queuePlay(when: number, play: () => void): void {
         const target = audio();
         if (stopGenerationHost !== target) {
             stopGenerationHost = target;
@@ -230,7 +247,12 @@ namespace pxsim.audiohost {
         const queuedGeneration = stopGeneration;
         host.timers().setTimeout(() => {
             if (queuedGeneration === stopGeneration)
-                audio().playInstructionsAsync(instructions);
+                play();
         }, when);
+    }
+
+    /** Calls audio().playInstructionsAsync(instructions) `when` milliseconds from now through queuePlay. */
+    export function queuePlayInstructions(when: number, instructions: Uint8Array): void {
+        queuePlay(when, () => audio().playInstructionsAsync(instructions));
     }
 }

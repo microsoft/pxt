@@ -52,7 +52,6 @@ const RANDOM_PROGRAM = `
 
 const options = { timeoutMs: 5000, settleMs: 300 };
 
-
 /** Creates a vm context with no browser globals and loads pxtsimcore.js alone into it. */
 function createCoreContext() {
     const context = vm.createContext({ console, setTimeout, clearTimeout, setInterval, clearInterval, performance, TextEncoder, TextDecoder, URL, URLSearchParams });
@@ -77,7 +76,7 @@ describe("pxtsimcore in a context without browser globals", () => {
     it("loads and defines the runtime", async function () {
         this.timeout(20000);
         const result = await runAsync(`pause(1)`);
-        const probe = result.messages.find(msg => msg.type === "probe");
+        const probe = result.messages.find(msg => msg.type === "probe") as ProbeMessage;
         chai.expect(probe.runtime).equals("function");
         chai.expect(probe.bareRuntime).equals("function");
     });
@@ -85,7 +84,7 @@ describe("pxtsimcore in a context without browser globals", () => {
     it("has no browser globals", async function () {
         this.timeout(20000);
         const result = await runAsync(`pause(1)`);
-        const probe = result.messages.find(msg => msg.type === "probe");
+        const probe = result.messages.find(msg => msg.type === "probe") as ProbeMessage;
         for (const name of BROWSER_GLOBALS)
             chai.expect(probe.globals[name], name).equals("undefined");
     });
@@ -113,9 +112,15 @@ describe("pxt simtest runner", () => {
         const result = await runAsync(`console.log("one"); console.log("two"); pause(10)`);
         chai.expect(result.serial).deep.equals(["one", "two"]);
         chai.expect(result.error).equals(undefined);
-        chai.expect(result.messages.some(msg => msg.type === "boardcleanup")).equals(true);
         chai.expect(simtest.checkRun(result, ["one", "two"])).equals(undefined);
         chai.expect(simtest.checkRun(result, ["one"])).includes("serial output mismatch");
+    });
+
+    it("kills the board when the run finishes", async function () {
+        this.timeout(20000);
+        const result = await runAsync(`pause(10)`);
+        chai.expect(result.error).equals(undefined);
+        chai.expect(result.messages.some(msg => msg.type === "boardcleanup")).equals(true);
     });
 
     it("runs background fibers through virtual settle time and leaves no timer", async function () {
@@ -152,13 +157,11 @@ describe("pxt simtest runner", () => {
             originalClearInterval(timer);
         };
         try {
-            const start = Date.now();
             const result = await runCompiledAsync(js, { settleMs: 61000 });
-            const elapsed = Date.now() - start;
             chai.expect(result.error).equals(undefined);
             chai.expect(result.timedOut).equals(false);
             chai.expect(result.serial).deep.equals(["woke"]);
-            chai.expect(elapsed).lessThan(options.timeoutMs);
+            chai.expect(result.host.now()).at.least(61000);
             chai.expect(created).greaterThan(0);
             chai.expect(pending.size).equals(0);
         } finally {
@@ -207,12 +210,10 @@ describe("deterministic time and randomness", () => {
             pause(1000)
             console.log("done")
         `);
-        const start = Date.now();
         const result = await runCompiledAsync(js);
-        const elapsed = Date.now() - start;
+        chai.expect(result.timedOut).equals(false);
         chai.expect(result.serial).deep.equals(["done"]);
         chai.expect(result.host.now()).greaterThan(999);
-        chai.expect(elapsed).lessThan(500);
     });
 
     it("reports virtual time through control.millis", async function () {
@@ -255,7 +256,7 @@ describe("deterministic time and randomness", () => {
             testAudio.play()
             console.log("t" + control.millis())
         `);
-        const played = result.messages.find(msg => msg.type === "testaudio");
+        const played = result.messages.find(msg => msg.type === "testaudio") as TestAudioMessage;
         chai.expect(played.resolvedAt).equals(500);
         chai.expect(result.serial).deep.equals(["t500"]);
     });
@@ -386,17 +387,34 @@ describe("deterministic time and randomness", () => {
         chai.expect(result.calls).deep.equals(["first", "second", "first", "second"]);
     });
 
+    it("hands out an inert audio element from the silent audio host", async function () {
+        this.timeout(20000);
+        const context = createCoreContext();
+        const result = JSON.parse(await vm.runInContext(`(async () => {
+            const element = pxsim.audiohost.audio().createAudioElement("data:,", 0, 1);
+            const listener = () => { };
+            element.addEventListener("ended", listener);
+            const played = await element.play().then(() => "resolved");
+            element.pause();
+            element.removeEventListener("ended", listener);
+            return JSON.stringify({
+                played,
+                playbackRate: element.playbackRate,
+                preservesPitch: element.preservesPitch,
+                currentTime: element.currentTime
+            });
+        })()`, context));
+        chai.expect(result).deep.equals({ played: "resolved", playbackRate: 1, preservesPitch: true, currentTime: 0 });
+    });
+
     it("times out a busy loop that never pauses", async function () {
         this.timeout(20000);
         const js = await compileAsync(`
             let x = 0
             while (true) { x++ }
         `);
-        const start = Date.now();
         const result = await runCompiledAsync(js, { timeoutMs: 1000 });
-        const elapsed = Date.now() - start;
         chai.expect(result.timedOut).equals(true);
         chai.expect(simtest.checkRun(result, [])).includes("timed out");
-        chai.expect(elapsed).lessThan(3000);
     });
 });

@@ -86,10 +86,8 @@ namespace pxsim.AudioContextManager {
         return AudioToneSource.getFrequency();
     }
 
-    let instrStopId = 1
     export function muteAllChannels() {
         audiohost.notifySoundEvent("muteallchannels");
-        instrStopId++;
 
         stopTone();
 
@@ -318,15 +316,8 @@ namespace pxsim.AudioContextManager {
 
     export function queuePlayInstructionsAtSpatialAudioPlayer(id: number, when: number, b: RefBuffer) {
         const player = SpatialAudioPlayer.getPlayerById(id);
-        if (player) {
-            const prevStop = instrStopId
-            U.delay(when)
-                .then(() => {
-                    if (prevStop != instrStopId)
-                        return Promise.resolve()
-                    return player.playInstructionsAsync(b.data)
-                });
-        }
+        if (player)
+            audiohost.queuePlay(when, () => player.playInstructionsAsync(b.data));
     }
 
     export function setListenerPosition(x: number, y: number, z: number) {

@@ -103,6 +103,7 @@ namespace pxsim {
         return frameVars(v, fields);
     }
 
+    /** Evaluates getter fn on target and returns its value. fn must have no side effects. */
     function evalGetter(fn: LabelFn, target: RefObject) {
         let parentFrame: any = {};
         let stackFrame: any = {

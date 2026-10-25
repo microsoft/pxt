@@ -12,6 +12,10 @@ namespace pxsim.visuals {
         boardDef: BoardDefinition,
         partsList: string[],
         partDefs: Map<PartDefinition>,
+        /**
+         * Part view constructors keyed by simulation behavior name; addPart builds the view of each
+         * part instance that declares a simulationBehavior with the matching entry.
+         */
         builtinVisuals: Map<() => any>,
         fnArgs: any,
         forceBreadboardLayout?: boolean,
@@ -127,7 +131,6 @@ namespace pxsim.visuals {
                 if (opts.maxHeight)
                     svg.hydrate(this.view, { height: opts.maxHeight });
             }
-
         }
 
         public highlightBoardPin(pinNm: string) {
@@ -200,6 +203,7 @@ namespace pxsim.visuals {
             })
         }
 
+        /** Calls updateState on every part view. Call it from the owning view's updateView. */
         public updateState() {
             this.parts.forEach(c => c.updateState());
         }

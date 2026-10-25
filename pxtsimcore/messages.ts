@@ -326,7 +326,7 @@ namespace pxsim {
 
         export type AudioMessage = MessageBase & {
             content: "Audio";
-            instruction: "playinstructions" | "muteallchannels";
+            instruction: audiohost.SoundEvent;
             soundbuf?: Uint8Array;
         };
 

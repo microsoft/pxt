@@ -267,7 +267,8 @@ namespace pxsim.instructions {
         } else {
             let partVis = <PartVisualDefinition>cmp;
             if (typeof partVis.builtIn == "string") {
-                const cnstr = runtime.boardView.builtinPartVisuals[partVis.builtIn];
+                const builtinPartVisuals = runtime.boardView ? runtime.boardView.builtinPartVisuals : {};
+                const cnstr = builtinPartVisuals[partVis.builtIn];
                 el = cnstr([0, 0]);
             } else {
                 el = visuals.mkGenericPartSVG(partVis);
@@ -553,7 +554,7 @@ namespace pxsim.instructions {
         return [panel, props];
     }
 
-    export interface RenderPartsOptions extends SimulatorInstructionsOptions { }
+    export type RenderPartsOptions = SimulatorInstructionsOptions;
 
     export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
         if (!options.boardDef.pinStyles)

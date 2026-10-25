@@ -1,5 +1,5 @@
-// Minimal declarations for host-agnostic globals (available in browsers, workers and Node)
-// that pxtsimcore may use. Anything DOM-specific must NOT be declared here.
+// Minimal declarations for the host-agnostic globals pxtsimcore may use (available in browsers,
+// workers and Node), and for the structural ImageData shape core reads from board view screenshots.
 declare function setTimeout(handler: (...args: any[]) => void, timeout?: number, ...args: any[]): any;
 declare function clearTimeout(handle?: any): void;
 declare function setInterval(handler: (...args: any[]) => void, timeout?: number, ...args: any[]): any;
