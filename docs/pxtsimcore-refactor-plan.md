@@ -15,6 +15,7 @@
 - **`pxt-common-packages`** keeps each library's DOM-free simulator files in `libs/<lib>/sim/core/` and its view files in `libs/<lib>/sim/`. Membership is location: no `files` or `exclude` lists for sources.
   - `sim/tsconfig.core.json` compiles `../libs/*/sim/core/*.ts` against `pxtsimcore.d.ts` and `pxtsimcore-globals.d.ts`, with no `dom` lib, to `built/common-simcore.js` and `built/common-simcore.d.ts`.
   - `sim/tsconfig.json` compiles `../libs/*/sim/**/*.ts` against `pxtsim.d.ts` to `built/common-sim.js` and `built/common-sim.d.ts`, a superset of the core bundle.
+  - A board view drives the accelerometer through `visuals.AccelerometerTiltInput`, which it constructs with the board's `AccelerometerState` and attaches to the board element; the state has no view methods.
   - A target's `pxt buildtarget` and `pxt serve` build both configs of the common sim folder (`buildtarget` only when `common-sim.js` is missing) and copy both pairs into the target's `built/`.
 - Consumers load `pxtsim.js` + `sim.js`, or `pxtsimcore.js` + `simcore.js`; never both pairs, since `pxtsim.js` already contains core.
 
@@ -412,3 +413,4 @@ Not necessarily. The runtime side (the VM, boards, `Runtime`, `Embed`) is what r
 
 - **Namespace:** Should core keep the `pxsim` namespace (recommended, for compatibility), or become something like `pxsimcore`?
 - **Publishing:** Should `pxtsimcore` be a separate npm artifact, or only an internal build layer?
+- **Accelerometer tilt callers:** pxt-arcade is a customer of the common accelerometer (its built-in `controller` extension exposes accelerometer blocks), so pxt-arcade-sim must construct a `visuals.AccelerometerTiltInput` with the board's `AccelerometerState` and call `attach` where it called `accelerometerState.attachEvents`; no caller is in pxt, pxt-microbit or pxt-common-packages. Other targets that attach tilt the old way need the same change.
