@@ -11,10 +11,11 @@
 - **`pxtsim/`** compiles the DOM sources against `built/pxtsimcore.d.ts` to `built/pxtsimdom.js` and `built/pxtsimdom.d.ts`.
 - The gulp `pxtsim` task composes `built/pxtsim.js` and `built/pxtsim.d.ts` as core followed by DOM.
 - A target ships a DOM-free simulator bundle by adding `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`.
+- A target's or library's full simulator config composes on its core bundle: `sim/tsconfig.json` compiles only the view files, against the core bundle's `.d.ts`, and lists the core bundle's `.js` in its top-level `prepend`. `pxt buildtarget` builds `tsconfig.core.json` first, then prepends the core `.js` and `.d.ts` to the full outputs, so `sim.js` is `simcore.js` followed by the view code and `common-sim.js` is `common-simcore.js` followed by the view code.
 - The gulp `pxtsimcore` task copies `pxtsimcore/globals.d.ts` to `built/pxtsimcore-globals.d.ts`, published with the other declarations. A core config lists it after `built/pxtsimcore.d.ts` instead of copying the declarations.
 - **`pxt-common-packages`** keeps each library's DOM-free simulator files in `libs/<lib>/sim/core/` and its view files in `libs/<lib>/sim/`. Membership is location: no `files` or `exclude` lists for sources.
   - `sim/tsconfig.core.json` compiles `../libs/*/sim/core/*.ts` against `pxtsimcore.d.ts` and `pxtsimcore-globals.d.ts`, with no `dom` lib, to `built/common-simcore.js` and `built/common-simcore.d.ts`.
-  - `sim/tsconfig.json` compiles `../libs/*/sim/**/*.ts` against `pxtsim.d.ts` to `built/common-sim.js` and `built/common-sim.d.ts`, a superset of the core bundle.
+  - `sim/tsconfig.json` compiles the view files `../libs/*/sim/*.ts` against `pxtsim.d.ts` and `built/common-simcore.d.ts`, and prepends `built/common-simcore.js`, to `built/common-sim.js` and `built/common-sim.d.ts`.
   - A board view drives the accelerometer through `visuals.AccelerometerTiltInput`, which it constructs with the board's `AccelerometerState` and attaches to the board element; the state has no view methods.
   - A target's `pxt buildtarget` and `pxt serve` build both configs of the common sim folder (`buildtarget` only when `common-sim.js` is missing) and copy both pairs into the target's `built/`.
 - Consumers load `pxtsim.js` + `sim.js`, or `pxtsimcore.js` + `simcore.js`; never both pairs, since `pxtsim.js` already contains core.
