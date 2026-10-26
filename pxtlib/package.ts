@@ -2,6 +2,14 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="shared/packageutils.ts"/>
+
+namespace pxt.cpp {
+    export interface PkgConflictError {
+        pkg0: Package;
+        pkg1: Package;
+    }
+}
 
 namespace pxt {
     const extensionInfoCache: Map<pxtc.ExtensionInfo> = {};
@@ -108,8 +116,8 @@ namespace pxt {
             this.addedBy = [addedBy];
         }
 
-        disablesVariant(v: string) {
-            return this.config && this.config.disablesVariants && this.config.disablesVariants.indexOf(v) >= 0
+        disablesVariant(v: string): boolean {
+            return packageUtils.isVariantDisabled(this.config, v);
         }
 
         invalid(): boolean {
@@ -120,10 +128,8 @@ namespace pxt {
             return this.resolvedVersion || this._verspec;
         }
 
-        verProtocol() {
-            let spl = this.version().split(':')
-            if (spl.length > 1) return spl[0]
-            else return ""
+        verProtocol(): string {
+            return packageUtils.getVersionProtocol(this.version());
         }
 
         verArgument() {
@@ -641,21 +647,12 @@ namespace pxt {
         }
 
         dependencies(includeCpp = false): pxt.Map<string> {
-            if (!this.config) return {};
-
-            const dependencies = Util.clone(this.config.dependencies || {});
-            // add test dependencies if nedeed
-            if (this.level == 0 && this.config.testDependencies) {
-                // only add testDepdencies that can be resolved
-                Util.iterMap(this.config.testDependencies, (k, v) => {
-                    if (v != "*" || pxt.appTarget.bundledpkgs[k])
-                        dependencies[k] = v;
-                })
-            }
-            if (includeCpp && this.config.cppDependencies) {
-                Util.jsonMergeFrom(dependencies, this.config.cppDependencies);
-            }
-            return dependencies;
+            return packageUtils.getConfigDependencies(
+                this.config,
+                this.level == 0,
+                includeCpp,
+                (id, version) => version != "*" || !!pxt.appTarget.bundledpkgs[id]
+            );
         }
 
         async loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
@@ -897,41 +894,22 @@ namespace pxt {
         }
 
         static depWarnings: Map<boolean> = {}
-        getFiles() {
-            let res: string[]
-            if (this.level == 0 && !this.ignoreTests)
-                res = this.config.files.concat(this.config.testFiles || [])
-            else
-                res = this.config.files.slice(0);
-            const fd = this.config.fileDependencies
-            if (this.config.fileDependencies)
-                res = res.filter(fn => {
-                    const evalCond = (cond: string): boolean => {
-                        cond = cond.trim()
-                        if (cond[0] == '!')
-                            return !evalCond(cond.slice(1))
-                        if (/^[\w-]+$/.test(cond)) {
-                            const dep = this.parent.resolveDep(cond)
-                            if (dep && !dep.cppOnly)
-                                return true
-                            return false
-                        }
-                        const m = /^target:(\w+)$/.exec(cond)
-                        if (m)
-                            return m[1] == pxt.appTarget.id || m[1] == pxt.appTarget.platformid
-
-                        if (!Package.depWarnings[cond]) {
-                            Package.depWarnings[cond] = true
-                            pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
-                        }
-                        return false
+        getFiles(): string[] {
+            return packageUtils.getConfigFiles(
+                this.config,
+                this.level == 0 && !this.ignoreTests,
+                pxt.appTarget,
+                id => {
+                    const dep = this.parent.resolveDep(id);
+                    return !!dep && !dep.cppOnly;
+                },
+                (condition, filename) => {
+                    if (!Package.depWarnings[condition]) {
+                        Package.depWarnings[condition] = true;
+                        pxt.log(`invalid dependency expression: ${condition} in ${this.id}/${filename}`);
                     }
-
-                    const cond = U.lookup(fd, fn)
-                    if (!cond || !cond.trim()) return true
-                    return cond.split('||').some(c => c.split('&&').every(evalCond))
-                })
-            return res
+                }
+            );
         }
 
         addSnapshot(files: Map<string>, exts: string[] = [""]) {

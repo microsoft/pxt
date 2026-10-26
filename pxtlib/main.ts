@@ -5,6 +5,7 @@
 /// <reference path="util.ts"/>
 /// <reference path="apptarget.ts"/>
 /// <reference path="tickEvent.ts"/>
+/// <reference path="shared/targetutils.ts"/>
 
 namespace pxt.perf {
     export type EventSource<T> = {
@@ -42,9 +43,6 @@ namespace pxt.perf {
 })()
 
 namespace pxt {
-    export import U = pxtc.Util;
-    export import Util = pxtc.Util;
-
     export interface TCPIO {
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;
@@ -131,19 +129,6 @@ namespace pxt {
         return target;
     }
 
-    /** Resolves compile defaults and a variant without modifying the supplied target. */
-    export function getAppTargetVariant(target: TargetBundle, variant: string): TargetBundle {
-        const result = U.cloneTargetBundle(target);
-        if (variant) {
-            const overrides = result.variants && result.variants[variant];
-            if (!overrides)
-                U.userError(U.lf("Variant '{0}' not defined in pxtarget.json", variant));
-            U.jsonMergeFrom(result, overrides);
-        }
-        patchCompileTarget(result);
-        return result;
-    }
-
     export function setCompileSwitch(name: string, value: boolean) {
         if (/^csv-/.test(name)) {
             pxt.setAppTargetVariant(name.replace(/^csv-*/, ""))
@@ -219,31 +204,6 @@ namespace pxt {
 
     function replaceCdnUrlsInJsonBlob(cfg: any): any {
         return replaceStringsInJsonBlob(cfg, /^@cdnUrl@/i, m => pxt.BrowserUtils.patchCdn(m));
-    }
-
-    function patchCompileTarget(target: AppTarget): void {
-        let comp = target.compile
-        if (!comp)
-            comp = target.compile = { isNative: false, hasHex: false, switches: {} }
-        if (comp.hasHex) {
-            if (!comp.nativeType)
-                comp.nativeType = pxtc.NATIVE_TYPE_THUMB
-        }
-        if (!comp.switches)
-            comp.switches = {}
-        if (comp.nativeType == pxtc.NATIVE_TYPE_VM)
-            comp.sourceMap = true
-        // JS ref counting currently not supported
-        comp.jsRefCounting = false
-        if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
-            comp.noSourceInFlash = true // no point putting sources in hex to be flashed
-        if (comp.utf8 === undefined)
-            comp.utf8 = true
-        let cs = target.compileService
-        if (cs) {
-            if (cs.yottaTarget && !cs.yottaBinary)
-                cs.yottaBinary = "pxt-microbit-app-combined.hex"
-        }
     }
 
     function patchAppTarget() {

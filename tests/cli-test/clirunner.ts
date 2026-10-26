@@ -3,7 +3,10 @@
 /* eslint-disable import/no-unassigned-import */
 import "mocha";
 import * as chai from "chai";
+import * as crypto from "crypto";
+import * as fs from "fs";
 import * as path from "path";
+import * as vm from "vm";
 
 import * as localrepos from "../../cli/localrepos";
 
@@ -46,6 +49,157 @@ namespace test {
 `
     };
 }
+
+describe("backend extension info", () => {
+    it("generates and caches variant extension info without the Package class or browser globals", () => {
+        const backendGlobal: { pxt?: typeof pxt } = {};
+        vm.runInNewContext(fs.readFileSync("built/backendutils.js", "utf8"), {
+            global: backendGlobal,
+            TextEncoder,
+            btoa: (value: string) => Buffer.from(value, "binary").toString("base64")
+        });
+        const backend = backendGlobal.pxt;
+        chai.assert.isDefined(backend);
+        chai.expect(backend.Package).equals(undefined);
+        for (const key of ["appTarget", "appTargetVariant", "debug", "perf"]) {
+            Object.defineProperty(backend, key, {
+                get: () => { throw new Error(`Unexpected backend global access: pxt.${key}`); }
+            });
+        }
+        const messages: string[] = [];
+        const measurements: string[] = [];
+        const host: pxt.cpp.ExtensionInfoHost = {
+            cache: {},
+            logger: {
+                debug: message => messages.push(message),
+                log: message => messages.push(message)
+            },
+            perf: {
+                measureStart: name => measurements.push("start:" + name),
+                measureEnd: name => measurements.push("end:" + name)
+            }
+        };
+        const files = extensionTestFiles();
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.codal = { libraries: ["github:owner/native#v1"] };
+        files["pxt.json"] = JSON.stringify(config);
+        const target = extensionTestTarget();
+        const variant = extensionTestTarget();
+        variant.compileService = {
+            serviceId: "codal", gittag: "v1", buildEngine: "codal",
+            codalTarget: "board", githubCorePackage: "owner/core"
+        };
+        variant.compile.switches.profile = true;
+        target.variants = { codal: variant };
+        const result = backend.cpp.getExtensionInfo(files, target, "codal", host);
+        chai.expect(result.shimsDTS).contains("function run(value?: int32): int32;");
+        chai.expect(result.generatedFiles["/pxtapp/pxtconfig.h"]).contains("#define PXT_PROFILE 1");
+        chai.expect(result.generatedFiles["/codal.json"]).contains("https://github.com/owner/native");
+        const compileData = Buffer.from(result.compileData, "base64");
+        chai.expect(result.sha).equals(crypto.createHash("sha256").update(compileData).digest("hex"));
+        chai.expect(backend.cpp.getExtensionInfo(files, target, "codal", host)).deep.equals(result);
+        chai.expect(messages[messages.length - 1]).equals("Using cached extinfo");
+        chai.expect(measurements).deep.equals(["start:sha256buffer", "end:sha256buffer"]);
+        chai.expect(backend.docs.normalizeStaticMarkdown("text")).equals("text");
+    });
+});
+
+describe("shared package configuration helpers", () => {
+    it("keeps file conditions, test files and warning behavior consistent with Package.getFiles", () => {
+        const target = extensionTestTarget();
+        target.id = "board";
+        target.platformid = "platform";
+        const config: pxt.PackageConfig = {
+            name: "project",
+            dependencies: { feature: "*", native: "*" },
+            files: ["enabled.cpp", "native.cpp", "platform.cpp", "target.cpp", "invalid.cpp", "short-circuit.cpp"],
+            testFiles: ["test.cpp"],
+            fileDependencies: {
+                "enabled.cpp": "missing && feature || !!feature && !native",
+                "native.cpp": "native",
+                "platform.cpp": " target:platform ",
+                "target.cpp": "target:board",
+                "invalid.cpp": " unknown:condition ",
+                "short-circuit.cpp": "feature || invalid:syntax"
+            }
+        };
+        const snapshot = JSON.stringify(config);
+        const invalid: string[] = [];
+        const expected = ["enabled.cpp", "platform.cpp", "target.cpp", "short-circuit.cpp", "test.cpp"];
+        chai.expect(pxt.packageUtils.getConfigFiles(
+            config, true, target, id => id == "feature",
+            (condition, filename) => invalid.push(`${condition} in ${filename}`)
+        )).deep.equals(expected);
+        chai.expect(invalid).deep.equals(["unknown:condition in invalid.cpp"]);
+        chai.expect(JSON.stringify(config)).equals(snapshot);
+
+        const previousTarget = pxt.appTarget;
+        const previousLog = pxt.log;
+        const previousWarnings = pxt.Package.depWarnings;
+        const warnings: string[] = [];
+        try {
+            pxt.appTarget = target;
+            pxt.log = message => warnings.push(message);
+            pxt.Package.depWarnings = {};
+            const main = new pxt.MainPackage(undefined);
+            main.config = config;
+            main.deps["feature"] = new pxt.Package("feature", "*", main, main, "feature");
+            const native = main.deps["native"] = new pxt.Package("native", "*", main, main, "native");
+            native.cppOnly = true;
+            chai.expect(main.getFiles()).deep.equals(expected);
+            main.ignoreTests = true;
+            chai.expect(main.getFiles()).deep.equals(expected.slice(0, -1));
+            chai.expect(warnings).deep.equals(["invalid dependency expression: unknown:condition in this/invalid.cpp"]);
+        } finally {
+            pxt.appTarget = previousTarget;
+            pxt.log = previousLog;
+            pxt.Package.depWarnings = previousWarnings;
+        }
+    });
+
+    it("shares dependency merging without changing test availability, precedence or input configs", () => {
+        const config: pxt.PackageConfig = {
+            name: "project",
+            files: [],
+            dependencies: { regular: "pub:regular", override: "pub:base" },
+            testDependencies: {
+                override: "pub:test", test: "*", unavailable: "*", external: "github:owner/test"
+            },
+            cppDependencies: { override: "embed:cpp", native: "embed:native" }
+        };
+        const snapshot = JSON.stringify(config);
+        const expected = {
+            regular: "pub:regular", override: "embed:cpp",
+            test: "*", external: "github:owner/test", native: "embed:native"
+        };
+        const dependencies = pxt.packageUtils.getConfigDependencies(
+            config, true, true, (id, version) => version != "*" || id == "test"
+        );
+        chai.expect(dependencies).deep.equals(expected);
+        dependencies["regular"] = "changed";
+        chai.expect(JSON.stringify(config)).equals(snapshot);
+        chai.expect(pxt.packageUtils.getConfigDependencies(
+            config, false, false, () => { throw new Error("Unexpected test dependency lookup"); }
+        )).deep.equals(config.dependencies);
+
+        const previousTarget = pxt.appTarget;
+        try {
+            const target = extensionTestTarget();
+            target.bundledpkgs["test"] = {};
+            pxt.appTarget = target;
+            const main = new pxt.MainPackage(undefined);
+            main.config = config;
+            chai.expect(main.dependencies(true)).deep.equals(expected);
+            const dependency = new pxt.Package("dependency", "*", main, main, "dependency");
+            dependency.config = config;
+            chai.expect(dependency.dependencies(true)).deep.equals({
+                regular: "pub:regular", override: "embed:cpp", native: "embed:native"
+            });
+        } finally {
+            pxt.appTarget = previousTarget;
+        }
+    });
+});
 
 describe("extension info explicit inputs", () => {
     const descriptors: pxt.Map<PropertyDescriptor> = {};
