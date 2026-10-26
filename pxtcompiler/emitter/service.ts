@@ -355,10 +355,18 @@ namespace ts.pxtc {
                         locStrings[param.labelLocalizationKey] = param.label;
                     }
 
-                    const defaultString = pxt.blocks.parameterDefaultToLocalizationString(param.defaultValue, param.type);
-                    const defaultLocalizationKey = pxt.blocks.parameterDefaultLocalizationKey(si.qName, param.actualName);
-                    if (defaultLocalizationKey && defaultString !== undefined) {
-                        locStrings[defaultLocalizationKey] = defaultString;
+                    const variableName = pxt.blocks.variableDefaultName(param.defaultValue, param.shadowBlockId);
+                    if (variableName) {
+                        if (pxt.blocks.isVariableNameLocalizable(param)) {
+                            locStrings[pxt.blocks.variableNameLocalizationKey(variableName)] = variableName;
+                        }
+                    }
+                    else {
+                        const defaultString = pxt.blocks.parameterDefaultToLocalizationString(param.defaultValue, param.type);
+                        const defaultLocalizationKey = pxt.blocks.parameterDefaultLocalizationKey(si.qName, param.actualName);
+                        if (defaultLocalizationKey && defaultString !== undefined) {
+                            locStrings[defaultLocalizationKey] = defaultString;
+                        }
                     }
                 }
                 if (comp.handlerArgs?.length) {
@@ -366,6 +374,11 @@ namespace ts.pxtc {
                         locStrings[arg.localizationKey] = arg.name;
                     }
                 }
+            }
+
+            const blockSetVariableName = pxt.blocks.blockSetVariableName(si);
+            if (blockSetVariableName && si.attributes.blockSetVariableLocalizable) {
+                locStrings[pxt.blocks.variableNameLocalizationKey(blockSetVariableName)] = blockSetVariableName;
             }
 
             if (si.attributes.ariaLabel) {

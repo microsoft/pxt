@@ -14,6 +14,7 @@ import "./workspaceResize.spec";
 import "./blockInjection.spec";
 import "./tutorialToolbox.spec";
 import "./gridpicker.spec";
+import "./localizedFields.spec";
 
 const WEB_PREFIX = "http://localhost:9876";
 
