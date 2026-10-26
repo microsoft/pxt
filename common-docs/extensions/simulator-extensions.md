@@ -1,6 +1,6 @@
 # Simulator Extensions
 
-A simulator extension is a static web application that complements a traditional MakeCode extension. When you add an extension containing a simulator extension to your MakeCode project, the simulator extension is loaded into a separate iframe within the MakeCode editor. This enables extensions to display custom UI when the project is running. A simulator extension can also read and write files in the project, read the project's assets, and contribute an editor tab beside Blocks and the text editors.
+A simulator extension is a static web application that complements a traditional MakeCode extension. When you add an extension containing a simulator extension to your MakeCode project, the simulator extension is loaded into a separate iframe within the MakeCode editor. This enables extensions to display custom UI when the project is running. A simulator extension can also read and write files in the project, read the project's assets, compile the project, and contribute an editor tab beside Blocks and the text editors.
 
 > [!IMPORTANT]
 > Simulator extensions are only supported for [Approved Extensions](./approval.md), and they must go through an additional approval process. The MakeCode team reserves the right to approve or decline simulator extensions at their discretion. We strongly recommend consulting with the MakeCode team before investing time and resources into creating a simulator extension.
@@ -58,18 +58,20 @@ The fields of the `simx` entry:
 | `allowPointerLock` | Adds `allow-pointer-lock` to the frame's sandbox. | `false` | both |
 | `allowFileWrite` | Lets the frame list, read, write and delete files in its folder of the project (see [Project files](#project-files)). | `false` | both |
 | `allowAssetRead` | Lets the frame list the project's assets, name, palette and simulator theme, and hear when they change (see [Project assets](#project-assets)). | `false` | both |
+| `allowProgramRead` | Lets the frame compile the open project and receive the program the simulator runs (see [Compiled program](#compiled-program)). | `false` | both |
 | `allowEditorTab` | Enables the editor tab that `editor` declares (see [Editor tab](#editor-tab)). | `false` | tab frame, and the simulator frame's request to open it |
 | `editor` | Declares the extension's editor tab: its page, label (text, or a map by language) and icon, and the types whose instances it creates. | none | tab frame |
 | `hideInFullscreen` | Hides the simulator frame while the editor is in fullscreen-simulator mode; it stays loaded and keeps messaging. | `false` | simulator frame |
 
 ### Grants and trust
 
-The grants (`allowPopups`, `allowClipboard`, `allowCamera`, `allowMidi`, `allowUsb`, `allowSerial`, `allowBluetooth`, `allowHid`, `allowMotionSensors`, `allowDisplayCapture`, `allowGamepad`, `allowDownloads`, `allowPointerLock`, `allowFileWrite`, `allowAssetRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
+The grants (`allowPopups`, `allowClipboard`, `allowCamera`, `allowMidi`, `allowUsb`, `allowSerial`, `allowBluetooth`, `allowHid`, `allowMotionSensors`, `allowDisplayCapture`, `allowGamepad`, `allowDownloads`, `allowPointerLock`, `allowFileWrite`, `allowAssetRead`, `allowProgramRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
 
-Eight grants deserve a second look:
+Nine grants deserve a second look:
 
 * `allowFileWrite` lets the extension change the user's program: every file it writes into its folder is listed in the project's `pxt.json`, so a `.ts` or `.py` file it writes is compiled with the program. Assets are not created through project files: a write of a `.jres` file is refused.
 * `allowAssetRead` discloses the project's name beside its assets, palette and simulator theme.
+* `allowProgramRead` discloses the user's whole compiled program, the code of its extensions included.
 * `allowClipboard` lets the extension's frames read what the user copied, as well as write to the clipboard.
 * `allowUsb` lets the extension's frames talk to the USB devices the user pairs; the browser's chooser still stands between the frames and every device.
 * `allowSerial` lets the extension's frames talk to the serial ports the user pairs; the browser's chooser still stands between the frames and every port.
@@ -101,7 +103,7 @@ A frame registered with `hideInFullscreen` is hidden while the mode is on, and t
 
 ## Talking to the editor
 
-The [project files](#project-files), [project assets](#project-assets) and [editor tab](#editor-tab) APIs share one shape. A frame posts a request to its parent, `{ type, id, subtype, ... }`, where `type` names the API (`projfs`, `projassets` or `simxeditor`), `id` is a string the frame chooses, and `subtype` names the request. The editor replies once to each request from one of the extension's frames, to that frame only, with the request's `id`. It drops requests from other windows, and from origins it does not serve.
+The [project files](#project-files), [project assets](#project-assets), [compiled program](#compiled-program) and [editor tab](#editor-tab) APIs share one shape. A frame posts a request to its parent, `{ type, id, subtype, ... }`, where `type` names the API (`projfs`, `projassets`, `projprogram` or `simxeditor`), `id` is a string the frame chooses, and `subtype` names the request. The editor replies once to each request from one of the extension's frames, to that frame only, with the request's `id`. It drops requests from other windows, and from origins it does not serve.
 
 A refused request is answered with `{ type, id, subtype: "error", code, message }`, where `code` is one of the codes below or one of the API's own, and `message` is for people. The codes every API shares:
 
@@ -113,15 +115,15 @@ A refused request is answered with `{ type, id, subtype: "error", code, message 
 
 A frame should accept a reply, an event or a port only from `window.parent`, and only when the event's origin is the `parentOrigin` its URL carries.
 
-`pxtservices/projfs.ts`, `pxtservices/projassets.ts` and `pxtservices/simxeditor.ts` define each API's messages. The first two also define promise-based clients, `ProjfsClient` and `ProjassetsClient`, which post to the parent at `parentOrigin`, match replies by `id`, and raise `DISPOSED` for a request pending when the client is disposed or made after it. The three files have no dependencies and can be copied into an extension.
+`pxtservices/projfs.ts`, `pxtservices/projassets.ts`, `pxtservices/projprogram.ts` and `pxtservices/simxeditor.ts` define each API's messages. The first three also define promise-based clients, `ProjfsClient`, `ProjassetsClient` and `ProjprogramClient`, which post to the parent at `parentOrigin`, match replies by `id`, and raise `DISPOSED` for a request pending when the client is disposed or made after it. The four files have no dependencies and can be copied into an extension.
 
 ### API level
 
-The `apiLevel` URL parameter of the simulator frame and the tab frame names the level of these APIs the editor serves, so a frame knows at startup which requests the editor answers; each of the three files reads it with `getSimxApiLevel`, which returns 0 for an editor that passes none. The level goes up by one whenever a change adds to or alters what a frame can observe of these APIs: a message family, a request, an event, an asset kind or a registration field.
+The `apiLevel` URL parameter of the simulator frame and the tab frame names the level of these APIs the editor serves, so a frame knows at startup which requests the editor answers; each of the four files reads it with `getSimxApiLevel`, which returns 0 for an editor that passes none. The level goes up by one whenever a change adds to or alters what a frame can observe of these APIs: a message family, a request, an event, an asset kind or a registration field.
 
 | Level | What it covers |
 | --- | --- |
-| 1 | The `projfs`, `projassets` and `simxeditor` APIs as this page describes them: their requests, replies, events and asset kinds, and the registration fields. |
+| 1 | The `projfs`, `projassets`, `projprogram` and `simxeditor` APIs as this page describes them: their requests, replies, events and asset kinds, and the registration fields. |
 
 ## Project files
 
@@ -213,6 +215,30 @@ Besides the [shared codes](#talking-to-the-editor):
 
 `PERMISSION_DENIED` means the registration does not set `allowAssetRead`. `PROJECT_CLOSED` also answers a request whose project was replaced before the request was answered.
 
+## Compiled program
+
+An extension registered with `allowProgramRead` can compile the open project and receive the program the simulator runs, for example to run the project outside the simulator frame, with `projprogram` requests:
+
+| Request | Reply |
+| --- | --- |
+| `{ type: "projprogram", id, subtype: "compile" }` | `{ type: "projprogram", id, subtype: "program", code, options }` |
+
+`code` is the program's JavaScript, as the simulator runs it. `options` is the run options (`pxsim.SimulatorRunOptions`) the editor would pass its simulator for a plain run of the project: without debugging or tracing, with sound on and normal contrast, and with the board definition, parts and part definitions, function arguments, aspect ratio, CDN URL, localized strings, version, dependencies, stored state, active player and simulator theme the editor computes for a run.
+
+Every request compiles the project, as the editor holds it when the compile starts: changes the user has not saved are included, and what the user types in a text editor reaches the project about half a second after the last keystroke. A compile changes nothing the user sees: the editor shows no diagnostics for it, and the simulator neither stops nor starts.
+
+### Ordering
+
+The editor answers the requests of the extensions of one repository in the order they arrive, and compiles for one request at a time, whichever extension sent it: a request that arrives while a compile runs waits for it and then compiles again. At most `PROJPROGRAM_RATE_LIMIT` (5) compiles for one repository start within `PROJPROGRAM_RATE_WINDOW_MS` (10 seconds), both defined in `webapp/src/projprogramHost.ts`; later ones wait, with the requests behind them, until the window allows them. A request applies to the project open when it arrived, once that project has loaded.
+
+### Error codes
+
+Besides the [shared codes](#talking-to-the-editor):
+
+* `COMPILE_FAILED`: the compile produced no program, as when the project has errors. The reply also carries `diagnostics`, what the compile reported, in its order, each `{ fileName, line, column, code, category, message }`: the project file, and the zero-based line and column it starts at, all three absent for a diagnostic that concerns no file; the compiler's number for it; `"error"`, `"warning"` or `"message"`; and its text.
+
+`PERMISSION_DENIED` means the registration does not set `allowProgramRead`. `PROJECT_CLOSED` also answers a request whose project closed or was replaced before its program was ready; the editor never sends the program of a project that is no longer open.
+
 ## Editor tab
 
 A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. Switching between the tab and Blocks leaves the simulator running, in both directions. The tab is offered only while the open project includes the extension from GitHub (a `github:` dependency; an extension added from a file or a local folder gets no tab), and never in views whose editor toggle lists no tabs: embedded (sandbox), read-only (such as the time machine), tutorial and debugging views, and targets that hide the menu bar or show Blocks only.
@@ -254,7 +280,7 @@ The editor selects the tab through a session-only marker file named after the ex
 An extension with an editor tab has two frames, both created for its key:
 
 * Its **simulator frame**, in the simulator column, is [the simulator frame](#the-simulator-frame) as before. Its URL also carries `editor=1` when the open project includes the extension, so the frame knows at startup that the tab exists.
-* Its **tab frame**, in the editor area, is created the first time the tab is opened and removed when the project closes or reloads. Its URL carries the same parameters as the simulator frame's plus `role=editor`, and it gets the same sandbox and permissions under the same grants: it may send [project-file](#project-files) and [project-asset](#project-assets) requests just as the simulator frame may, in the same folder and under the same limits. It is not a simulator frame: it receives no simulator messages, and nothing it posts is relayed to the simulator. The editor-wide messages any frame may post, such as `screenshot` and `addextensions`, are handled from it as from a simulator frame.
+* Its **tab frame**, in the editor area, is created the first time the tab is opened and removed when the project closes or reloads. Its URL carries the same parameters as the simulator frame's plus `role=editor`, and it gets the same sandbox and permissions under the same grants: it may send [project-file](#project-files), [project-asset](#project-assets) and [compiled-program](#compiled-program) requests just as the simulator frame may, in the same folder and under the same limits. It is not a simulator frame: it receives no simulator messages, and nothing it posts is relayed to the simulator. The editor-wide messages any frame may post, such as `screenshot` and `addextensions`, are handled from it as from a simulator frame.
 
 Whenever the editor shows the tab and the extension's simulator frame does not exist (for example, because the program has not run), the editor creates it. It also creates it again after the simulator unloads while the tab exists, as when the simulator theme picker closes.
 

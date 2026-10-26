@@ -59,9 +59,10 @@ export function hasEditorTab(search?: string): boolean {
 /**
  * Returns the level of the simulator-extension APIs the editor hosting this
  * frame serves, which the editor passes in the frame URL's `apiLevel`
- * parameter. Level 1 is the `projfs`, `projassets` and `simxeditor` messages
- * and the registration fields; each later level adds to or alters them. Read
- * it at startup to learn whether the editor answers a request before sending it.
+ * parameter. Level 1 is the `projfs`, `projassets`, `projprogram` and
+ * `simxeditor` messages and the registration fields; each later level adds to
+ * or alters them. Read it at startup to learn whether the editor answers a
+ * request before sending it.
  * @param search the frame URL's query string; defaults to `window.location.search`
  * @returns the level; 0, the level of an editor older than level 1, if the URL
  * provides none or one that is not a non-negative integer

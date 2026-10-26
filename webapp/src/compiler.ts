@@ -157,7 +157,14 @@ export function emptyCompileResult(): pxtc.CompileResult {
     }
 }
 
-export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
+/**
+ * Compiles the open project from the files the editor holds now, after
+ * building the project's assets into its asset files, and returns the result.
+ * Sets no diagnostics and leaves the output package and the editor as they
+ * are. Rejects if the project's compile options cannot be built, as when
+ * pxt.json does not list a file the compile generates.
+ */
+export function compileProjectAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
     return pkg.mainEditorPkg().buildAssetsAsync()
@@ -183,6 +190,10 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             return opts;
         })
         .then(compileCoreAsync)
+}
+
+export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
+    return compileProjectAsync(options)
         .then(resp => {
             let outpkg = pkg.mainEditorPkg().outputPkg
 

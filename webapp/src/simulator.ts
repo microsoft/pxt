@@ -10,8 +10,10 @@ import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
 import * as pkg from "./package";
+import * as compiler from "./compiler";
 import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, writeProjectFileAsync } from "./projfsHost";
 import { createProjassetsConfig, ProjassetsConfig, ProjassetsHost } from "./projassetsHost";
+import { ProjprogramCompileOutcome, ProjprogramHost } from "./projprogramHost";
 import {
     answerSimxEditorRequest,
     findSimxInstanceCreator,
@@ -62,6 +64,7 @@ const openProject = new OpenProjectTracker<pkg.EditorPackage>(() => {
 });
 const projfsHost = new ProjfsHost(getProjfsProject);
 const projassetsHost = new ProjassetsHost(getOpenAssetProject, () => pxt.react.getTilemapProject(), getAssetConfig);
+const projprogramHost = new ProjprogramHost(() => openProject.get(), compileSimulatorProgramAsync);
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
@@ -333,6 +336,9 @@ export async function initAsync(cfg: SimulatorConfig) {
         onProjassetsMessage: (key, msg, reply, frame) => {
             projassetsHost.handleMessageAsync(key, msg, reply, frame);
         },
+        onProjprogramMessage: (key, msg, reply) => {
+            projprogramHost.handleMessageAsync(key, msg, reply);
+        },
         onSimxEditorMessage: (key, msg, reply) => {
             reply(answerSimxEditorRequest(key, msg, k => cfg.openSimxEditor(k)) as pxsim.SimulatorMessage);
         },
@@ -432,9 +438,10 @@ export function postSimxEditorFullscreen(enabled: boolean) {
 /**
  * Closes the open project to simulator extensions: removes every editor tab
  * frame, with the actions held for the tabs, forgets the ignored `creates`
- * claims logged for the project, refuses the project-file and project-asset
- * requests still waiting for the project with `PROJECT_CLOSED`, and ends every
- * project-file and project-asset subscription. Call before the simulator
+ * claims logged for the project, refuses the project-file, project-asset and
+ * compiled-program requests still waiting for the project, compiled-program
+ * requests whose compile is running included, with `PROJECT_CLOSED`, and ends
+ * every project-file and project-asset subscription. Call before the simulator
  * unloads, as the project closes or another load begins.
  */
 export function closeSimxProject() {
@@ -542,8 +549,23 @@ export interface RunOptions {
     autoRun?: boolean;
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean,
-    res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
+/** The program a simulator run executes: its JavaScript and the options the editor passes the driver with it. */
+export interface SimulatorProgram {
+    /** The program's JavaScript, the compile result's simulator output. */
+    code: string;
+    /** The options `driver.run` receives with `code`. */
+    options: pxsim.SimulatorRunOptions;
+}
+
+/**
+ * Returns the program a simulator run of `res`, the compile result of the
+ * project whose main package is `pkg`, executes, with the run options the
+ * editor passes the driver for it. Reads the editor's simulator theme
+ * preference, the theme being previewed and the simulator translations, and
+ * changes nothing.
+ */
+export function buildSimulatorProgram(pkg: pxt.MainPackage, debug: boolean,
+    res: pxtc.CompileResult, options: RunOptions, trace: boolean): SimulatorProgram {
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const {
         js,
@@ -552,7 +574,6 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         usedBuiltinParts,
         allParts
     } = pxtc.buildSimJsInfo(res);
-    lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
     const dependencies: pxt.Map<string> = {}
@@ -560,13 +581,6 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         dependencies[dep.id] = dep.version()
 
     const playerNumber = allParts && allParts.indexOf("multiplayer") >= 0 ? 1 : undefined;
-    if (playerNumber) {
-        const root = document.getElementById("root");
-        for (let i = 1; i <= 4; i++) {
-            const cssVar = `--multiplayer-presence-icon-${i}`;
-            root?.style?.removeProperty(cssVar);
-        }
-    }
 
     const deviceTheme = pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected()
         ? pxt.packetio.deviceVariant()
@@ -603,11 +617,45 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         activePlayer: playerNumber,
         theme: theme,
     }
+    return { code: js, options: opts };
+}
+
+export function run(pkg: pxt.MainPackage, debug: boolean,
+    res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
+    const { code: js, options: opts } = buildSimulatorProgram(pkg, debug, res, options, trace);
+    lastCompileResult = res;
+
+    if (opts.activePlayer) {
+        const root = document.getElementById("root");
+        for (let i = 1; i <= 4; i++) {
+            const cssVar = `--multiplayer-presence-icon-${i}`;
+            root?.style?.removeProperty(cssVar);
+        }
+    }
+
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
     postSimEditorEvent("started");
 
     driver.run(js, opts);
+}
+
+/**
+ * Compiles the open project as the editor holds it now and returns the
+ * program a plain simulator run of it executes: no debugging, no tracing,
+ * sound on, normal contrast, the project's stored simulator state. Sets
+ * no diagnostics, and touches neither the editor nor the simulator.
+ * @returns the program, or the compile result if the compile produced no simulator JavaScript
+ */
+async function compileSimulatorProgramAsync(): Promise<ProjprogramCompileOutcome> {
+    const res = await compiler.compileProjectAsync();
+    if (!res.outfiles[pxtc.BINARY_JS]) return { failed: res };
+    return buildSimulatorProgram(pkg.mainPkg, false, res, {
+        mute: false,
+        highContrast: false,
+        light: false,
+        storedState: pkg.mainEditorPkg().getSimState(),
+    }, false);
 }
 
 export function mute(mute: boolean) {

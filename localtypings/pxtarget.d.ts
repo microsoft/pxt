@@ -84,6 +84,7 @@ declare namespace pxt {
         allowPointerLock?: boolean; // If true, the iframe sandbox gains allow-pointer-lock. Default: false.
         allowFileWrite?: boolean; // If true, the frame may list, read, write and delete files in its own folder of the project ("projfs" messages). Default: false.
         allowAssetRead?: boolean; // If true, the frame may list the open project's assets and visual configuration (palette, simulator theme) and subscribe to their changes ("projassets" messages). Default: false.
+        allowProgramRead?: boolean; // If true, the frame may compile the open project and receive the program the simulator runs ("projprogram" messages). Default: false.
         editor?: SimxEditorConfig; // The extension's editor tab. Ignored unless allowEditorTab is set; refused on a registration with permanent set to false. Default: undefined.
         allowEditorTab?: boolean; // If true, the editor offers the tab `editor` describes, brokers a port between it and the simulator frame, and serves the simulator frame's request to open it ("simxeditor" messages); the registration's grants above apply to the tab frame as well as the simulator frame. Default: false.
         hideInFullscreen?: boolean; // If true, hide the iframe in fullscreen-simulator mode; it stays loaded and keeps messaging. Default: false.

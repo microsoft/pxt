@@ -5,13 +5,15 @@ namespace pxsim {
     }
 
     /**
-     * Returns true if `msg` is a project-file, project-asset or editor-tab request of a
-     * simulator extension; an editor-tab event, which carries `event`, is not a request.
+     * Returns true if `msg` is a project-file, project-asset, compiled-program or editor-tab
+     * request of a simulator extension; an editor-tab event, which carries `event`, is not a
+     * request.
      */
     function isExtensionRequest(msg: SimulatorMessage): boolean {
         switch (msg?.type) {
             case "projfs":
             case "projassets":
+            case "projprogram":
                 return true;
             case "simxeditor":
                 return (msg as SimulatorMessage & { event?: unknown }).event === undefined;
@@ -43,7 +45,7 @@ namespace pxsim {
     /** How the driver gates one kind of simulator extension request. */
     interface ExtensionRequestGate {
         handler: ((key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void) | undefined;
-        permission: "allowFileWrite" | "allowAssetRead" | "allowEditorTab";
+        permission: "allowFileWrite" | "allowAssetRead" | "allowProgramRead" | "allowEditorTab";
         failed: string;
     }
 
@@ -105,6 +107,7 @@ namespace pxsim {
             allowPointerLock?: boolean;
             allowAssetRead?: boolean;
             allowFileWrite?: boolean;
+            allowProgramRead?: boolean;
             editor?: {
                 index: string;
                 label?: string | pxt.Map<string>;
@@ -153,6 +156,14 @@ namespace pxsim {
          */
         onProjassetsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void;
         /**
+         * Receives the compiled-program ("projprogram") requests of simulator extensions
+         * registered with `allowProgramRead`.
+         * @param key the `simulatorExtensions` key the requesting frame was created for
+         * @param msg the request, as received
+         * @param reply posts a message to the requesting frame only
+         */
+        onProjprogramMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
+        /**
          * Receives the editor-tab ("simxeditor") requests of simulator extension frames
          * whose registration declares and enables an editor tab (see `editorUrl`).
          * @param key the `simulatorExtensions` key the requesting frame was created for
@@ -169,10 +180,10 @@ namespace pxsim {
         onSimxFrameLoad?: (key: string, frame: HTMLIFrameElement) => void;
         /**
          * Returns true if the open project includes the simulator extension registered
-         * under `key`. The project-file, project-asset and editor-tab requests of the
-         * frames of an extension it does not include are refused with `UNREGISTERED`,
-         * and the extension's simulator frame gets no `editor=1` URL parameter. When
-         * absent, the project includes every registered extension.
+         * under `key`. The project-file, project-asset, compiled-program and editor-tab
+         * requests of the frames of an extension it does not include are refused with
+         * `UNREGISTERED`, and the extension's simulator frame gets no `editor=1` URL
+         * parameter. When absent, the project includes every registered extension.
          * @param key the `simulatorExtensions` key
          */
         isSimxInProject?: (key: string) => boolean;
@@ -313,9 +324,9 @@ namespace pxsim {
     /**
      * The simulator-extension API level the editor serves, passed to every
      * simulator extension frame and tab frame in the `apiLevel` URL parameter.
-     * Level 1 is the `projfs`, `projassets` and `simxeditor` message families,
-     * with their requests, replies, events and asset kinds, and the fields of a
-     * simulator extension's registration. The level goes up by one whenever a
+     * Level 1 is the `projfs`, `projassets`, `projprogram` and `simxeditor` message
+     * families, with their requests, replies, events and asset kinds, and the fields
+     * of a simulator extension's registration. The level goes up by one whenever a
      * change adds to or alters what a frame can observe of this surface: a
      * family, a request, an event, an asset kind or a field. A frame URL without
      * the parameter comes from an editor older than level 1.
@@ -1322,6 +1333,7 @@ namespace pxsim {
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
                 case 'projfs':
                 case 'projassets':
+                case 'projprogram':
                 case 'simxeditor': this.handleExtensionRequest(msg, this.simulatorFrameOf(source), origin); break;
                 default:
                     this.postMessage(msg, source);
@@ -1334,10 +1346,10 @@ namespace pxsim {
 
         /**
          * Records `frame` as the editor tab frame of the simulator extension registered
-         * under `key`. Its project-file and project-asset requests are served as the
-         * extension's simulator frame's are, its editor-tab requests are refused, and
-         * nothing it posts reaches the simulators. Call `removeEditorTabFrame` when the
-         * frame is removed.
+         * under `key`. Its project-file, project-asset and compiled-program requests are
+         * served as the extension's simulator frame's are, its editor-tab requests are
+         * refused, and nothing it posts reaches the simulators. Call
+         * `removeEditorTabFrame` when the frame is removed.
          * @param key the `simulatorExtensions` key
          */
         public addEditorTabFrame(key: string, frame: HTMLIFrameElement) {
@@ -1388,30 +1400,31 @@ namespace pxsim {
         }
 
         /**
-         * Returns the handler of the project-file, project-asset or editor-tab request
-         * `type`, the registration flag a frame needs for it, and the error code that
-         * answers a request the handler throws on.
+         * Returns the handler of the project-file, project-asset, compiled-program or
+         * editor-tab request `type`, the registration flag a frame needs for it, and the
+         * error code that answers a request the handler throws on.
          */
         private extensionRequestGate(type: string): ExtensionRequestGate {
             switch (type) {
                 case "projfs": return { handler: this.options.onProjfsMessage, permission: "allowFileWrite", failed: "FAILED" };
                 case "projassets": return { handler: this.options.onProjassetsMessage, permission: "allowAssetRead", failed: "FAILED" };
+                case "projprogram": return { handler: this.options.onProjprogramMessage, permission: "allowProgramRead", failed: "FAILED" };
                 default: return { handler: this.options.onSimxEditorMessage, permission: "allowEditorTab", failed: "INVALID_REQUEST" };
             }
         }
 
         /**
-         * Passes a project-file, project-asset or editor-tab request from a simulator
-         * extension frame or editor tab frame to its handler with the frame's key, and
-         * answers it with an error instead when:
+         * Passes a project-file, project-asset, compiled-program or editor-tab request
+         * from a simulator extension frame or editor tab frame to its handler with the
+         * frame's key, and answers it with an error instead when:
          * - `UNREGISTERED`: `origin` is not the origin the frame was created with; the
          *   frame is an editor tab frame and the request an editor-tab request; the frame
          *   is a simulator frame that no `options.simulatorExtensions` key was created
          *   for; no handler is set; or the open project does not include the extension;
          * - `PERMISSION_DENIED`: the registration does not set the request's flag
-         *   (`allowFileWrite`, `allowAssetRead` or `allowEditorTab`), or, for an
-         *   editor-tab request, declares no editor tab the driver can serve (one it
-         *   computed `editorUrl` for);
+         *   (`allowFileWrite`, `allowAssetRead`, `allowProgramRead` or `allowEditorTab`),
+         *   or, for an editor-tab request, declares no editor tab the driver can serve
+         *   (one it computed `editorUrl` for);
          * - the request family's failure code (`FAILED`, or `INVALID_REQUEST` for an
          *   editor-tab request): the handler throws.
          * Errors carry the request's type and id. Requests from windows that are

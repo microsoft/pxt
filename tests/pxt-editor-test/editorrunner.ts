@@ -126,6 +126,27 @@ import {
     ProjassetsRequest,
 } from "../../pxtservices/projassets";
 import {
+    getProgramDiagnostics,
+    ProjprogramBuild,
+    ProjprogramCompileOutcome,
+    ProjprogramHost,
+    ProjprogramOpenProject,
+    PROJPROGRAM_RATE_LIMIT,
+    PROJPROGRAM_RATE_WINDOW_MS,
+} from "../../webapp/src/projprogramHost";
+import {
+    getParentOrigin as getProjprogramParentOrigin,
+    getSimxApiLevel as getProjprogramApiLevel,
+    ProjprogramClient,
+    ProjprogramDiagnostic,
+    ProjprogramError,
+    ProjprogramErrorCode,
+    ProjprogramErrorReply,
+    ProjprogramProgramReply,
+    ProjprogramReply,
+    ProjprogramRequest,
+} from "../../pxtservices/projprogram";
+import {
     filterHomeSearchCards,
     getAvailableHomeSearchFilters,
     getHomeSearchFilterOptionCounts,
@@ -4486,6 +4507,481 @@ describe("projassets client", () => {
             chai.expect(changes).equals(3);
             chai.expect((await client.list("image")).name).equals("renamed");
         });
+    });
+});
+
+/** A promise a test settles when it chooses. */
+interface Deferred<T> {
+    promise: Promise<T>;
+    resolve: (value: T) => void;
+    reject: (error: unknown) => void;
+}
+
+function deferred<T>(): Deferred<T> {
+    let resolve: (value: T) => void;
+    let reject: (error: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
+
+/** A program a test's fake compiler returns, told apart from others by `n`. */
+function testProgram(n = 0): ProjprogramBuild {
+    return {
+        code: `(function () { return ${n}; })`,
+        options: { parts: ["led"], fnArgs: {}, mute: false, aspectRatio: 1.22, storedState: { n } } as pxsim.SimulatorRunOptions,
+    };
+}
+
+/** A compile result holding no simulator JavaScript, with an error in a file and one that concerns no file. */
+function failedCompile(): pxtc.CompileResult {
+    return {
+        success: false,
+        times: {},
+        breakpoints: [],
+        outfiles: {},
+        diagnostics: [
+            {
+                fileName: "main.ts", start: 10, length: 3, line: 2, column: 4,
+                code: 2304, category: ts.pxtc.DiagnosticCategory.Error, messageText: "Cannot find name 'foo'.",
+            },
+            {
+                fileName: undefined, start: 0, length: 0,
+                code: 9200, category: ts.pxtc.DiagnosticCategory.Warning,
+                messageText: { messageText: "outer", category: ts.pxtc.DiagnosticCategory.Warning, code: 9200, next: { messageText: "inner", category: ts.pxtc.DiagnosticCategory.Warning, code: 9201 } } as any,
+            },
+        ],
+    };
+}
+
+describe("projprogram host", () => {
+    const SCOPE = "owner/repo";
+
+    let open: ProjprogramOpenProject | undefined;
+    // the arguments of each call of the compile function, in order
+    let compileCalls: unknown[][];
+    // what the compile function returns for the call it is given the index of
+    let compileImpl: (call: number) => Promise<ProjprogramCompileOutcome>;
+    let clock: FakeClock;
+    let host: ProjprogramHost;
+    let nextId: number;
+
+    /** An open project that has loaded. */
+    function loadedProject(): ProjprogramOpenProject {
+        return { loadedAsync: () => Promise.resolve() };
+    }
+
+    beforeEach(() => {
+        open = loadedProject();
+        compileCalls = [];
+        compileImpl = call => Promise.resolve(testProgram(call));
+        clock = new FakeClock();
+        host = new ProjprogramHost(() => open, (...args: unknown[]) => {
+            compileCalls.push(args);
+            return compileImpl(compileCalls.length - 1);
+        }, clock.now, clock.delay);
+        nextId = 0;
+    });
+
+    // sends a request whose reply lands in `received`
+    function post(msg: any, received: ProjprogramReply[], key = SCOPE): Promise<void> {
+        return host.handleMessageAsync(key, { type: "projprogram", id: "" + nextId++, ...msg }, r => received.push(r));
+    }
+
+    async function send(msg: any, key = SCOPE): Promise<ProjprogramReply> {
+        const received: ProjprogramReply[] = [];
+        await post(msg, received, key);
+        chai.expect(received.length).equals(1);
+        return received[0];
+    }
+
+    async function expectError(msg: any, code: ProjprogramErrorCode, key = SCOPE): Promise<ProjprogramErrorReply> {
+        const reply = await send(msg, key);
+        chai.expect(reply.subtype).equals("error");
+        chai.expect((reply as ProjprogramErrorReply).code).equals(code);
+        return reply as ProjprogramErrorReply;
+    }
+
+    /** Returns each reply's subtype, or its code for an error. */
+    function outcomes(replies: ProjprogramReply[]): string[] {
+        return replies.map(r => r.subtype === "error" ? r.code : r.subtype);
+    }
+
+    it("replies with the program the compile function returns, under the request's id", async () => {
+        const received: ProjprogramReply[] = [];
+        await host.handleMessageAsync(SCOPE, { type: "projprogram", id: "abc", subtype: "compile" }, r => received.push(r));
+        const program = testProgram(0);
+        chai.expect(received).deep.equals([{ type: "projprogram", id: "abc", subtype: "program", code: program.code, options: program.options }]);
+    });
+
+    it("calls the compile function once per request with nothing, and reads the open project only to wait for its load", async () => {
+        const read: PropertyKey[] = [];
+        const project = loadedProject();
+        open = new Proxy(project, {
+            get: (target, property) => {
+                read.push(property);
+                return (target as any)[property];
+            },
+        });
+        await send({ subtype: "compile" });
+        await send({ subtype: "compile" });
+        chai.expect(compileCalls).deep.equals([[], []]);
+        // awaiting an async function's result looks up its `then`
+        chai.expect(read.filter(p => p !== "loadedAsync" && p !== "then")).deep.equals([]);
+        chai.expect(read.filter(p => p === "loadedAsync").length).equals(2);
+    });
+
+    it("replies with COMPILE_FAILED and the compile's diagnostics when the compile produces no program", async () => {
+        const failed = failedCompile();
+        compileImpl = () => Promise.resolve({ failed });
+        const reply = await expectError({ subtype: "compile" }, "COMPILE_FAILED");
+        chai.expect(reply.diagnostics).deep.equals(getProgramDiagnostics(failed));
+        chai.expect(reply.diagnostics.map(({ message, ...rest }) => rest)).deep.equals([
+            { fileName: "main.ts", line: 2, column: 4, code: 2304, category: "error" },
+            { code: 9200, category: "warning" },
+        ]);
+        for (const diagnostic of reply.diagnostics)
+            chai.expect(diagnostic.message).to.be.a("string").and.not.equal("");
+    });
+
+    it("refuses an unknown or malformed request with INVALID_REQUEST without compiling", async () => {
+        await expectError({ subtype: "run" }, "INVALID_REQUEST");
+        await expectError({}, "INVALID_REQUEST");
+        for (const msg of ["not a request", null]) {
+            const received: ProjprogramReply[] = [];
+            await host.handleMessageAsync(SCOPE, msg, r => received.push(r));
+            chai.expect(outcomes(received)).deep.equals(["INVALID_REQUEST"]);
+        }
+        chai.expect(compileCalls).deep.equals([]);
+    });
+
+    it("refuses a request from a key that names no repository with UNREGISTERED", async () => {
+        await expectError({ subtype: "compile" }, "UNREGISTERED", "notarepo");
+        chai.expect(compileCalls).deep.equals([]);
+    });
+
+    it("fails a request whose compile throws, and keeps serving", async () => {
+        compileImpl = call => call === 0 ? Promise.reject(new Error("worker gone")) : Promise.resolve(testProgram(call));
+        await expectError({ subtype: "compile" }, "FAILED");
+        chai.expect((await send({ subtype: "compile" })).subtype).equals("program");
+    });
+
+    it("compiles one request at a time, answering each repository's requests in order, each with a compile of its own", async () => {
+        const pending: Deferred<ProjprogramCompileOutcome>[] = [];
+        compileImpl = () => {
+            const d = deferred<ProjprogramCompileOutcome>();
+            pending.push(d);
+            return d.promise;
+        };
+        const received: ProjprogramReply[] = [];
+        const other: ProjprogramReply[] = [];
+        const requests = [
+            post({ subtype: "compile" }, received),
+            post({ subtype: "compile" }, received, `${SCOPE}/sub`),
+            post({ subtype: "compile" }, other, "other/repo"),
+        ];
+        await settle();
+        chai.expect(compileCalls.length).equals(1);
+        chai.expect(received.concat(other)).deep.equals([]);
+
+        pending[0].resolve(testProgram(10));
+        await settle();
+        chai.expect((received as ProjprogramProgramReply[]).map(r => r.code)).deep.equals([testProgram(10).code]);
+        chai.expect(compileCalls.length).equals(2);
+
+        pending[1].resolve(testProgram(11));
+        await settle();
+        chai.expect((other as ProjprogramProgramReply[]).map(r => r.code)).deep.equals([testProgram(11).code]);
+        chai.expect(compileCalls.length).equals(3);
+
+        pending[2].resolve(testProgram(12));
+        await Promise.all(requests);
+        chai.expect((received as ProjprogramProgramReply[]).map(r => r.code)).deep.equals([testProgram(10).code, testProgram(12).code]);
+    });
+
+    it(`holds the compiles of one repository beyond ${PROJPROGRAM_RATE_LIMIT} within the window, answering them in order once it allows them, and holds no other repository's`, async () => {
+        for (let i = 0; i < PROJPROGRAM_RATE_LIMIT; i++)
+            chai.expect((await send({ subtype: "compile" }, i % 2 ? SCOPE : `${SCOPE}/sub`)).subtype).equals("program");
+        const received: ProjprogramReply[] = [];
+        const held = [post({ subtype: "compile" }, received), post({ subtype: "compile" }, received, "Owner/Repo")];
+        await settle();
+        chai.expect(received).deep.equals([]);
+        chai.expect((await send({ subtype: "compile" }, "other/repo")).subtype).equals("program");
+
+        await clock.advance(PROJPROGRAM_RATE_WINDOW_MS - 1);
+        chai.expect(received).deep.equals([]);
+        await clock.advance(1);
+        await Promise.all(held);
+        chai.expect(outcomes(received)).deep.equals(["program", "program"]);
+        chai.expect(compileCalls.length).equals(PROJPROGRAM_RATE_LIMIT + 3);
+    });
+
+    describe("project switches", () => {
+        it("refuses a request that arrives when no project is open with PROJECT_CLOSED, without compiling", async () => {
+            open = undefined;
+            await expectError({ subtype: "compile" }, "PROJECT_CLOSED");
+            chai.expect(compileCalls).deep.equals([]);
+        });
+
+        it("refuses a request whose project fails to load with PROJECT_CLOSED, without compiling", async () => {
+            open = { loadedAsync: () => Promise.reject(new Error("load failed")) };
+            await expectError({ subtype: "compile" }, "PROJECT_CLOSED");
+            chai.expect(compileCalls).deep.equals([]);
+        });
+
+        it("refuses a request whose project switches during its compile with PROJECT_CLOSED, never sending its program, and refuses the requests queued behind it without compiling", async () => {
+            const compile = deferred<ProjprogramCompileOutcome>();
+            compileImpl = () => compile.promise;
+            const received: ProjprogramReply[] = [];
+            const compiling = post({ subtype: "compile" }, received);
+            const queued = post({ subtype: "compile" }, received);
+            await settle();
+            open = loadedProject();
+            compile.resolve(testProgram(1));
+            await Promise.all([compiling, queued]);
+            chai.expect(outcomes(received)).deep.equals(["PROJECT_CLOSED", "PROJECT_CLOSED"]);
+            chai.expect(compileCalls.length).equals(1);
+        });
+
+        it("refuses a request waiting for another repository's compile when its project switches, without compiling, and keeps serving", async () => {
+            const compile = deferred<ProjprogramCompileOutcome>();
+            compileImpl = call => call === 0 ? compile.promise : Promise.resolve(testProgram(call));
+            const received: ProjprogramReply[] = [];
+            const other: ProjprogramReply[] = [];
+            const compiling = post({ subtype: "compile" }, received);
+            const waiting = post({ subtype: "compile" }, other, "other/repo");
+            await settle();
+            open = loadedProject();
+            compile.resolve(testProgram(0));
+            await Promise.all([compiling, waiting]);
+            chai.expect(outcomes(received)).deep.equals(["PROJECT_CLOSED"]);
+            chai.expect(outcomes(other)).deep.equals(["PROJECT_CLOSED"]);
+            chai.expect(compileCalls.length).equals(1);
+            chai.expect((await send({ subtype: "compile" }, "other/repo")).subtype).equals("program");
+        });
+
+        it("refuses a request whose compile fails after its project closed with PROJECT_CLOSED", async () => {
+            const compile = deferred<ProjprogramCompileOutcome>();
+            compileImpl = () => compile.promise;
+            const received: ProjprogramReply[] = [];
+            const compiling = post({ subtype: "compile" }, received);
+            await settle();
+            open = undefined;
+            compile.reject(new Error("no project"));
+            await compiling;
+            chai.expect(outcomes(received)).deep.equals(["PROJECT_CLOSED"]);
+        });
+
+        it("refuses a request held by the rate limit past its project's switch with PROJECT_CLOSED, without compiling", async () => {
+            for (let i = 0; i < PROJPROGRAM_RATE_LIMIT; i++)
+                await send({ subtype: "compile" });
+            const received: ProjprogramReply[] = [];
+            const held = post({ subtype: "compile" }, received);
+            await settle();
+            open = loadedProject();
+            await clock.advance(PROJPROGRAM_RATE_WINDOW_MS);
+            await held;
+            chai.expect(outcomes(received)).deep.equals(["PROJECT_CLOSED"]);
+            chai.expect(compileCalls.length).equals(PROJPROGRAM_RATE_LIMIT);
+        });
+
+        it("compiles a request that arrives after a switch in the project open then", async () => {
+            open = loadedProject();
+            chai.expect((await send({ subtype: "compile" })).subtype).equals("program");
+        });
+    });
+});
+
+describe("projprogram client", () => {
+    class FakeParent {
+        requests: ProjprogramRequest[] = [];
+        origins: string[] = [];
+
+        postMessage(msg: ProjprogramRequest, targetOrigin: string) {
+            this.requests.push(msg);
+            this.origins.push(targetOrigin);
+        }
+    }
+
+    class FakeSelf {
+        listeners: ((ev: MessageEvent) => void)[] = [];
+
+        addEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners.push(listener);
+        }
+
+        removeEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners = this.listeners.filter(l => l !== listener);
+        }
+
+        deliver(source: unknown, data: unknown) {
+            this.listeners.forEach(l => l({ source, data } as MessageEvent));
+        }
+    }
+
+    const PROGRAM = { code: "(function () {})", options: { parts: ["led"], mute: false } };
+
+    let parent: FakeParent;
+    let self: FakeSelf;
+    let client: ProjprogramClient;
+
+    function lastRequest() {
+        return parent.requests[parent.requests.length - 1];
+    }
+
+    function replyTo(request: ProjprogramRequest, body: object, source: unknown = parent) {
+        self.deliver(source, { type: "projprogram", id: request.id, ...body });
+    }
+
+    beforeEach(() => {
+        parent = new FakeParent();
+        self = new FakeSelf();
+        client = new ProjprogramClient({ target: parent, listener: self, search: "" });
+    });
+
+    afterEach(() => client.dispose());
+
+    it("posts compile requests to the editor with unique ids, and resolves each with its own reply", async () => {
+        const first = client.compile();
+        const second = client.compile();
+        chai.expect(parent.requests.map(r => ({ type: r.type, subtype: r.subtype })))
+            .deep.equals([{ type: "projprogram", subtype: "compile" }, { type: "projprogram", subtype: "compile" }]);
+        chai.expect(parent.requests[0].id).not.equals(parent.requests[1].id);
+        chai.expect(parent.origins).deep.equals(["*", "*"]);
+        replyTo(parent.requests[1], { subtype: "program", code: "second", options: {} });
+        replyTo(parent.requests[0], { subtype: "program", ...PROGRAM });
+        chai.expect(await first).deep.equals(PROGRAM);
+        chai.expect(await second).deep.equals({ code: "second", options: {} });
+    });
+
+    it("rejects with the editor's error code", async () => {
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "error", code: "PERMISSION_DENIED", message: "not granted" });
+        const error = await compiled.then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjprogramError);
+        chai.expect(error.code).equals("PERMISSION_DENIED");
+        chai.expect(error.diagnostics).deep.equals([]);
+    });
+
+    it("rejects with COMPILE_FAILED carrying the reply's diagnostics", async () => {
+        const diagnostics: ProjprogramDiagnostic[] = [
+            { fileName: "main.ts", line: 2, column: 4, code: 2304, category: "error", message: "m" },
+            { code: 9200, category: "warning", message: "w" },
+        ];
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "error", code: "COMPILE_FAILED", message: "failed", diagnostics });
+        const error = await compiled.then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjprogramError);
+        chai.expect(error.code).equals("COMPILE_FAILED");
+        chai.expect(error.diagnostics).deep.equals(diagnostics);
+    });
+
+    it("rejects an unexpected reply with FAILED", async () => {
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "ack" });
+        const error = await compiled.then(() => undefined, e => e);
+        chai.expect(error.code).equals("FAILED");
+    });
+
+    it("ignores replies from other windows, to unknown requests and of other families", async () => {
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "program", code: "forged", options: {} }, {});
+        self.deliver(parent, { type: "projprogram", id: "unknown", subtype: "program", code: "unknown", options: {} });
+        self.deliver(parent, { type: "projfs", id: lastRequest().id, subtype: "files", files: [] });
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        chai.expect(await compiled).deep.equals(PROGRAM);
+    });
+
+    it("reports a request still waiting after slowReplyMs once, and keeps waiting", async () => {
+        client.dispose();
+        const slow: ProjprogramRequest[] = [];
+        client = new ProjprogramClient({ target: parent, listener: self, search: "", slowReplyMs: 5, onSlowReply: r => slow.push(r) });
+        const compiled = client.compile();
+        await new Promise(resolve => setTimeout(resolve, 30));
+        chai.expect(slow).deep.equals([lastRequest()]);
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        chai.expect(await compiled).deep.equals(PROGRAM);
+    });
+
+    it("reports a slow reply at once when slowReplyMs is 0", async () => {
+        client.dispose();
+        const slow: ProjprogramRequest[] = [];
+        client = new ProjprogramClient({ target: parent, listener: self, search: "", slowReplyMs: 0, onSlowReply: r => slow.push(r) });
+        const compiled = client.compile();
+        await new Promise(resolve => setTimeout(resolve, 20));
+        chai.expect(slow).deep.equals([lastRequest()]);
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        await compiled;
+    });
+
+    it("fails pending requests with DISPOSED when disposed, and stops listening", async () => {
+        const compiled = client.compile();
+        client.dispose();
+        const error = await compiled.then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjprogramError);
+        chai.expect(error.code).equals("DISPOSED");
+        chai.expect(self.listeners).deep.equals([]);
+    });
+
+    it("fails a request made after dispose with DISPOSED at once, without posting it", async () => {
+        client.dispose();
+        const error = await client.compile().then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjprogramError);
+        chai.expect(error.code).equals("DISPOSED");
+        chai.expect(parent.requests).deep.equals([]);
+    });
+
+    it("fails a request it cannot post with FAILED, and never reports it as slow", async () => {
+        client.dispose();
+        const slow: ProjprogramRequest[] = [];
+        parent.postMessage = () => { throw new Error("could not be cloned"); };
+        client = new ProjprogramClient({ target: parent, listener: self, search: "", slowReplyMs: 5, onSlowReply: r => slow.push(r) });
+        const error = await client.compile().then(() => undefined, e => e);
+        chai.expect(error).instanceOf(ProjprogramError);
+        chai.expect(error.code).equals("FAILED");
+        await new Promise(resolve => setTimeout(resolve, 30));
+        chai.expect(slow).deep.equals([]);
+    });
+
+    it("posts requests to the editor's origin from the frame URL by default, or to the origin it is given", async () => {
+        client.dispose();
+        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com" });
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        await compiled;
+        client.dispose();
+        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com", targetOrigin: "https://other.example" });
+        const again = client.compile();
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        await again;
+        chai.expect(parent.origins).deep.equals(["https://arcade.makecode.com", "https://other.example"]);
+    });
+
+    it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
+        expectApiLevelReader(getProjprogramApiLevel);
+    });
+
+    it("reads the editor's origin from the frame URL", () => {
+        expectParentOriginReader(getProjprogramParentOrigin);
+    });
+
+    it("receives the program the host's compile function returns, and a compile failure's diagnostics, through the host", async () => {
+        const failed = failedCompile();
+        let outcome: ProjprogramCompileOutcome = testProgram(3);
+        const open: ProjprogramOpenProject = { loadedAsync: () => Promise.resolve() };
+        const clock = new FakeClock();
+        const host = new ProjprogramHost(() => open, () => Promise.resolve(outcome), clock.now, clock.delay);
+        // the editor posts each reply back to the frame's window
+        parent.postMessage = (msg: ProjprogramRequest) => {
+            host.handleMessageAsync("owner/repo", msg, reply => self.deliver(parent, reply));
+        };
+        chai.expect(await client.compile()).deep.equals({ code: testProgram(3).code, options: testProgram(3).options });
+        outcome = { failed };
+        const error = await client.compile().then(() => undefined, e => e);
+        chai.expect(error.code).equals("COMPILE_FAILED");
+        chai.expect(error.diagnostics).deep.equals(getProgramDiagnostics(failed));
     });
 });
 

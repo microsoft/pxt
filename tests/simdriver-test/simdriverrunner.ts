@@ -516,6 +516,115 @@ describe("simulator driver projassets messages", () => {
     });
 });
 
+describe("simulator driver projprogram messages", () => {
+    interface Delivery {
+        key: string;
+        msg: pxsim.SimulatorMessage;
+    }
+
+    const request = { type: "projprogram", id: "1", subtype: "compile" } as pxsim.SimulatorMessage;
+    const files = { type: "projfs", id: "2", subtype: "list" } as pxsim.SimulatorMessage;
+    const assets = { type: "projassets", id: "3", subtype: "list", kind: "image" } as pxsim.SimulatorMessage;
+    let mainFrame: FakeFrame;
+    let programFrame: FakeFrame;
+    let ungrantedFrame: FakeFrame;
+    let othersFrame: FakeFrame;
+    let programDeliveries: Delivery[];
+    let projfsDeliveries: Delivery[];
+    let assetDeliveries: Delivery[];
+    let driver: pxsim.SimulatorDriver;
+
+    function receive(msg: pxsim.SimulatorMessage, source: FakeWindow, origin = SIM_ORIGIN) {
+        dispatchMessage(msg, source, origin);
+    }
+
+    beforeEach(() => {
+        mainFrame = staticFrame("sim-frame-1");
+        programFrame = staticFrame("sim-frame-2", "someorg/pxt-program");
+        ungrantedFrame = staticFrame("sim-frame-3", "someorg/pxt-ext");
+        othersFrame = staticFrame("sim-frame-4", "someorg/pxt-others");
+        const frames = [mainFrame, programFrame, ungrantedFrame, othersFrame];
+        const container = { getElementsByTagName: () => frames } as unknown as HTMLElement;
+        const simx = () => ({ index: "index.html", aspectRatio: 1, permanent: true });
+        programDeliveries = [];
+        projfsDeliveries = [];
+        assetDeliveries = [];
+        driver = new pxsim.SimulatorDriver(container, {
+            simUrl: SIM_URL,
+            simulatorExtensions: {
+                "someorg/pxt-program": { ...simx(), allowProgramRead: true },
+                "someorg/pxt-ext": simx(),
+                "someorg/pxt-others": { ...simx(), allowFileWrite: true, allowAssetRead: true },
+                "someorg/pxt-tab": { ...simx(), editor: { index: "editor/index.html" }, allowEditorTab: true, allowProgramRead: true },
+            },
+            onProjprogramMessage: (key, msg) => programDeliveries.push({ key, msg }),
+            onProjfsMessage: (key, msg) => projfsDeliveries.push({ key, msg }),
+            onProjassetsMessage: (key, msg) => assetDeliveries.push({ key, msg }),
+        });
+        // installs the driver's listener on the editor's window; the frames already exist
+        driver.preload(1);
+    });
+
+    it("delivers a request from a frame registered with allowProgramRead, with the frame's key", () => {
+        receive(request, programFrame.contentWindow);
+        chai.expect(programDeliveries).deep.equals([{ key: "someorg/pxt-program", msg: request }]);
+        chai.expect(projfsDeliveries).deep.equals([]);
+        chai.expect(assetDeliveries).deep.equals([]);
+    });
+
+    it("posts replies to the requesting frame only, at the origin it was created with", () => {
+        let reply: (msg: pxsim.SimulatorMessage) => void;
+        (driver as any).options.onProjprogramMessage = (key: string, msg: pxsim.SimulatorMessage, r: typeof reply) => reply = r;
+        receive(request, programFrame.contentWindow);
+        const program = { type: "projprogram", id: "1", subtype: "program", code: "", options: {} } as pxsim.SimulatorMessage;
+        reply(program);
+        chai.expect(programFrame.contentWindow.posts).deep.equals([{ msg: program, targetOrigin: programFrame.dataset["origin"] }]);
+        chai.expect([mainFrame, ungrantedFrame, othersFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
+    });
+
+    it("answers requests from a registered frame without allowProgramRead with PERMISSION_DENIED, delivering nothing", () => {
+        receive(request, ungrantedFrame.contentWindow);
+        chai.expect(programDeliveries).deep.equals([]);
+        chai.expect(refusals(ungrantedFrame)).deep.equals([{ type: "projprogram", id: "1", subtype: "error", code: "PERMISSION_DENIED" }]);
+        chai.expect([mainFrame, programFrame, othersFrame].some(f => f.contentWindow.messages.length > 0)).equals(false);
+    });
+
+    it("answers requests from the main simulator frame with UNREGISTERED", () => {
+        receive(request, mainFrame.contentWindow);
+        chai.expect(programDeliveries).deep.equals([]);
+        chai.expect(refusals(mainFrame)).deep.equals([{ type: "projprogram", id: "1", subtype: "error", code: "UNREGISTERED" }]);
+    });
+
+    it("gates projprogram by allowProgramRead alone, independent of allowFileWrite and allowAssetRead", () => {
+        for (const msg of [request, files, assets]) {
+            receive(msg, programFrame.contentWindow);
+            receive(msg, othersFrame.contentWindow);
+        }
+        chai.expect(programDeliveries.map(d => d.key)).deep.equals(["someorg/pxt-program"]);
+        chai.expect(projfsDeliveries.map(d => d.key)).deep.equals(["someorg/pxt-others"]);
+        chai.expect(assetDeliveries.map(d => d.key)).deep.equals(["someorg/pxt-others"]);
+        chai.expect(refusals(othersFrame)).deep.equals([{ type: "projprogram", id: "1", subtype: "error", code: "PERMISSION_DENIED" }]);
+        chai.expect(refusals(programFrame)).deep.equals([
+            { type: "projfs", id: "2", subtype: "error", code: "PERMISSION_DENIED" },
+            { type: "projassets", id: "3", subtype: "error", code: "PERMISSION_DENIED" },
+        ]);
+    });
+
+    it("delivers a request from an editor tab frame under its registration's grant, with the key it was recorded with", () => {
+        const tab: FakeFrame = { id: "", dataset: { origin: SIM_ORIGIN }, contentWindow: new FakeWindow() };
+        driver.addEditorTabFrame("someorg/pxt-tab", tab as unknown as HTMLIFrameElement);
+        receive(request, tab.contentWindow);
+        chai.expect(programDeliveries).deep.equals([{ key: "someorg/pxt-tab", msg: request }]);
+        chai.expect(tab.contentWindow.messages).deep.equals([]);
+    });
+
+    it("answers a request its handler throws on with FAILED", () => {
+        (driver as any).options.onProjprogramMessage = () => { throw new Error("handler failed"); };
+        loggedErrors(() => receive(request, programFrame.contentWindow));
+        chai.expect(refusals(programFrame)).deep.equals([{ type: "projprogram", id: "1", subtype: "error", code: "FAILED" }]);
+    });
+});
+
 describe("simulator extension frame URLs", () => {
     /** Returns the names of the parameters `url` carries, sorted. */
     function parameterNames(url: URL): string[] {
