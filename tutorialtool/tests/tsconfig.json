@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "ES2017",
+        "lib": ["dom", "ES2017"],
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "strict": true,
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "types": ["chai", "mocha", "node"]
+    },
+    "include": [
+        "*.spec.ts",
+        "../src/utils/iframeUrl.ts"
+    ]
+}

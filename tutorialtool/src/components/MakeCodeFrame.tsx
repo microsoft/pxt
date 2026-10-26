@@ -2,6 +2,8 @@ import * as React from "react";
 import css from "./styling/MakeCodeFrame.module.scss";
 import { setEditorRef } from "../services/makecodeEditorService";
 import { getEditorUrl } from "../utils";
+import { createTutorialToolEditorUrl } from "../utils/iframeUrl";
+import { getLocaleParameter, getRequestedLocale } from "../utils/localization";
 
 export interface MakeCodeFrameProps {
 }
@@ -16,8 +18,7 @@ export const MakeCodeFrame = (props: MakeCodeFrameProps) => {
         if (editorUrl.charAt(editorUrl.length - 1) === "/" && !pxt.BrowserUtils.isLocalHost()) {
             url = editorUrl.substr(0, editorUrl.length - 1);
         }
-        url += `?controller=1&teachertool=1&ws=mem&nocookiebanner=1`;
-        return url;
+        return createTutorialToolEditorUrl(url, window.location.href, getRequestedLocale() || pxt.Util.userLanguage(), getLocaleParameter());
     }
 
     const handleIframeRef = React.useCallback((ref: HTMLIFrameElement) => {
@@ -30,6 +31,7 @@ export const MakeCodeFrame = (props: MakeCodeFrameProps) => {
         <iframe
             className={css["makecode-frame"]}
             src={createIFrameUrl()} ref={handleIframeRef}
+            title={lf("MakeCode editor")}
         />
     );
 }
