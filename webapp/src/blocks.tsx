@@ -1985,7 +1985,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             const refreshBlockly = () => {
                 this.delayLoadXml = this.getCurrentSource();
-                this.editor = undefined;
                 this.prepareBlockly(hasCategories);
                 this.domUpdate();
                 this.editor.scrollCenter();
@@ -2567,7 +2566,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .filter(shadow => !shadow.innerHTML)
                 .forEach((shadow, i) => {
                     let type = shadow.getAttribute('type');
-                    if (type === block.type) return;
+                    if (type === block.type || type === block.attributes.blockId) return;
                     const builtin = snippets.allBuiltinBlocks()[type];
                     const info = this.blockInfo.blocksById[type];
 
