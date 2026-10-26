@@ -11,6 +11,8 @@ import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
 import "./localization.spec";
 import "./workspaceResize.spec";
+import "./blockInjection.spec";
+import "./tutorialToolbox.spec";
 
 const WEB_PREFIX = "http://localhost:9876";
 
