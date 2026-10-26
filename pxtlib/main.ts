@@ -119,6 +119,31 @@ namespace pxt {
         return savedAppTarget ? savedAppTarget.appTheme : undefined;
     }
 
+    export function getUnpatchedAppTarget(): TargetBundle {
+        const target = U.cloneTargetBundle(savedAppTarget);
+        for (const variant of Object.keys(target.variants || {})) {
+            const compile = target.variants[variant].compile;
+            if (compile) {
+                if (!compile.switches) compile.switches = {};
+                U.jsonCopyFrom(compile.switches, savedSwitches);
+            }
+        }
+        return target;
+    }
+
+    /** Resolves compile defaults and a variant without modifying the supplied target. */
+    export function getAppTargetVariant(target: TargetBundle, variant: string): TargetBundle {
+        const result = U.cloneTargetBundle(target);
+        if (variant) {
+            const overrides = result.variants && result.variants[variant];
+            if (!overrides)
+                U.userError(U.lf("Variant '{0}' not defined in pxtarget.json", variant));
+            U.jsonMergeFrom(result, overrides);
+        }
+        patchCompileTarget(result);
+        return result;
+    }
+
     export function setCompileSwitch(name: string, value: boolean) {
         if (/^csv-/.test(name)) {
             pxt.setAppTargetVariant(name.replace(/^csv-*/, ""))
@@ -196,11 +221,10 @@ namespace pxt {
         return replaceStringsInJsonBlob(cfg, /^@cdnUrl@/i, m => pxt.BrowserUtils.patchCdn(m));
     }
 
-    function patchAppTarget() {
-        // patch-up the target
-        let comp = appTarget.compile
+    function patchCompileTarget(target: AppTarget): void {
+        let comp = target.compile
         if (!comp)
-            comp = appTarget.compile = { isNative: false, hasHex: false, switches: {} }
+            comp = target.compile = { isNative: false, hasHex: false, switches: {} }
         if (comp.hasHex) {
             if (!comp.nativeType)
                 comp.nativeType = pxtc.NATIVE_TYPE_THUMB
@@ -209,21 +233,25 @@ namespace pxt {
             comp.switches = {}
         if (comp.nativeType == pxtc.NATIVE_TYPE_VM)
             comp.sourceMap = true
-        U.jsonCopyFrom(comp.switches, savedSwitches)
         // JS ref counting currently not supported
         comp.jsRefCounting = false
         if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
             comp.noSourceInFlash = true // no point putting sources in hex to be flashed
         if (comp.utf8 === undefined)
             comp.utf8 = true
-        if (!appTarget.appTheme) appTarget.appTheme = {}
-        if (!appTarget.appTheme.embedUrl)
-            appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
-        let cs = appTarget.compileService
+        let cs = target.compileService
         if (cs) {
             if (cs.yottaTarget && !cs.yottaBinary)
                 cs.yottaBinary = "pxt-microbit-app-combined.hex"
         }
+    }
+
+    function patchAppTarget() {
+        patchCompileTarget(appTarget);
+        U.jsonCopyFrom(appTarget.compile.switches, savedSwitches);
+        if (!appTarget.appTheme) appTarget.appTheme = {}
+        if (!appTarget.appTheme.embedUrl)
+            appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
 
         // patch cdn url locations
         appTarget = replaceCdnUrlsInJsonBlob(appTarget);

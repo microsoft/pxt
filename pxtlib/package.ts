@@ -4,6 +4,8 @@
 /// <reference path="util.ts"/>
 
 namespace pxt {
+    const extensionInfoCache: Map<pxtc.ExtensionInfo> = {};
+
     const CONFIG_FIELDS_ORDER = [
         "name",
         "version",
@@ -1171,32 +1173,36 @@ namespace pxt {
             const disabledVariants = pxt.appTarget.disabledVariants;
 
             let shimsGenerated = false
+            const extensionFiles: Map<string> = {};
+            let extensionTarget: TargetBundle;
+            const extensionHost: cpp.ExtensionInfoHost = {
+                cache: extensionInfoCache,
+                logger: { debug: pxt.debug, log: pxt.log },
+                perf: { measureStart: pxt.perf.measureStart, measureEnd: pxt.perf.measureEnd }
+            };
 
             const fillExtInfoAsync = async (variant: string) => {
                 const res: pxtc.ExtensionTarget = {
                     extinfo: null,
                     target: null
                 }
-                const prevVariant = pxt.appTargetVariant
-
-                if (variant) {
-                    pxt.setAppTargetVariant(variant, { temporary: true });
-                }
-
                 let einfo: pxtc.ExtensionInfo;
 
                 try {
-                    res.target = pxt.appTarget.compile;
-                    einfo = cpp.getExtensionInfo(this)
+                    const compileVariant = variant || pxt.appTargetVariant;
+                    res.target = pxt.getAppTargetVariant(extensionTarget, compileVariant).compile;
+                    einfo = cpp.getExtensionInfo(extensionFiles, extensionTarget, compileVariant, extensionHost);
                     if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }
-                } finally {
-                    if (variant) {
-                        pxt.setAppTargetVariant(prevVariant, { temporary: true })
+                } catch (e) {
+                    if (e instanceof cpp.PkgConflictError) {
+                        e.pkg0 = this.resolveDep(e.pkg0Id);
+                        e.pkg1 = this.resolveDep(e.pkg1Id);
                     }
+                    throw e;
                 }
 
                 einfo.appVariant = variant;
@@ -1215,6 +1221,31 @@ namespace pxt {
             }
 
             await this.loadAsync()
+            this.loadConfig(true);
+            extensionTarget = pxt.getUnpatchedAppTarget();
+            for (const pkg of this.sortedDeps(true)) {
+                const prefix = pkg == this ? "" : "pxt_modules/" + pkg.id + "/";
+                const config = U.clone(pkg.config);
+                const resolveVersions = (deps: Map<string>): Map<string> => {
+                    const result: Map<string> = {};
+                    for (const id of Object.keys(deps || {})) {
+                        const dep = pkg.resolveDep(id);
+                        if (dep) result[id] = dep.version();
+                    }
+                    return result;
+                };
+                config.dependencies = resolveVersions(pkg.dependencies());
+                config.cppDependencies = resolveVersions(config.cppDependencies);
+                // testDependencies are merged into the main dependencies by pkg.dependencies(), so
+                // it's safe to delete them from the config object here
+                delete config.testDependencies;
+                if (pkg != this || pkg.ignoreTests) {
+                    delete config.testFiles;
+                }
+                extensionFiles[prefix + pxt.CONFIG_NAME] = JSON.stringify(config);
+                for (const fn of config.files.concat(config.testFiles || []))
+                    extensionFiles[prefix + fn] = pkg.readFile(fn);
+            }
 
             opts.bannedCategories = this.resolveBannedCategories();
             pxt.debug(`building: ${this.sortedDeps().map(p => p.config?.name).join(", ")}`)
@@ -1238,8 +1269,7 @@ namespace pxt {
                     variants = variants.filter(v => !disabledVariants.includes(v));
                 }
             } else {
-                // no multi-variants, use empty variant name,
-                // so we don't mess with pxt.setAppTargetVariant() in fillExtInfoAsync()
+                // no multi-variants, use empty variant name
                 variants = [null]
             }
 

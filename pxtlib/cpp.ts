@@ -139,11 +139,11 @@ namespace pxt.cpp {
         return null
     }
 
-    let prevExtInfos: Map<pxtc.ExtensionInfo> = {};
-
     export class PkgConflictError extends Error {
         pkg0: Package;
         pkg1: Package;
+        pkg0Id: string;
+        pkg1Id: string;
         settingName: string;
         isUserError: boolean;
         isVersionConflict: boolean;
@@ -155,52 +155,102 @@ namespace pxt.cpp {
         }
     }
 
-    export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
-        const pkgSnapshot: Map<string> = {
-            "__appVariant": pxt.appTargetVariant || ""
-        }
+    interface ExtensionPackage {
+        id: string;
+        config: PackageConfig;
+        files: string[];
+        version: string;
+    }
+
+    export interface ExtensionInfoHost {
+        cache: Map<pxtc.ExtensionInfo>;
+        logger: Pick<Logger, "debug" | "log">;
+        perf: {
+            measureStart(name: string): void;
+            measureEnd(name: string): void;
+        };
+    }
+
+    /**
+     * Generates native extension files from pxt.json and project files, with dependencies
+     * under pxt_modules/<id>/. The target must not have variant overrides applied.
+     * @example getExtensionInfo({ "pxt.json": config, "main.cpp": source }, target, "v2", host)
+     */
+    export function getExtensionInfo(files: Map<string>, target: TargetBundle, variant: string, host: ExtensionInfoHost): pxtc.ExtensionInfo {
+        const appTarget = getAppTargetVariant(target, variant);
         const constsName = "dal.d.ts"
         let sourcePath = "/source/"
         let disabledDeps = ""
-        let mainDeps: Package[] = []
+        const packages: Map<ExtensionPackage> = {};
+        const runtimePackages: Map<boolean> = {};
+        const readFile = (pkg: ExtensionPackage, name: string): string =>
+            files[(pkg.id == "this" ? "" : "pxt_modules/" + pkg.id + "/") + name];
+        const dependencies = (pkg: ExtensionPackage): Map<string> => {
+            const result = { ...pkg.config.dependencies };
+            if (pkg.id == "this") {
+                for (const id of Object.keys(pkg.config.testDependencies || {})) {
+                    if (files["pxt_modules/" + id + "/pxt.json"] != null)
+                        result[id] = pkg.config.testDependencies[id];
+                }
+            }
+            return result;
+        };
+        const visit = (id: string, version: string, runtime: boolean): void => {
+            if (runtimePackages[id] || (!runtime && packages[id])) return;
+            if (runtime) runtimePackages[id] = true;
+            let pkg = packages[id];
+            if (!pkg) {
+                const configText = files[id == "this" ? "pxt.json" : "pxt_modules/" + id + "/pxt.json"];
+                if (!configText)
+                    U.userError(`extension ${id} is missing pxt.json`);
+                const config = JSON.parse(configText) as PackageConfig;
+                if (!config.dependencies || !Array.isArray(config.files))
+                    U.userError(`Invalid pxt.json in extension ${id}`);
+                pkg = packages[id] = { id, config, files: [], version };
+            }
+            const deps = dependencies(pkg);
+            for (const dep of Object.keys(deps))
+                visit(dep, deps[dep], runtime);
+            for (const dep of Object.keys(pkg.config.cppDependencies || {}))
+                visit(dep, pkg.config.cppDependencies[dep], false);
+        };
+        visit("this", "file:.", true);
+        const mainPkg = packages["this"];
+        const mainPkgDeps = U.values(packages).sort((a, b) =>
+            a.id == b.id ? 0 : a.id == "this" ? 1 : b.id == "this" ? -1 : U.strcmp(a.id, b.id));
 
-        mainPkg.loadConfig(true);
+        for (const pkg of mainPkgDeps) {
+            const evalCondition = (condition: string): boolean => {
+                condition = condition.trim();
+                if (condition[0] == "!") return !evalCondition(condition.slice(1));
+                if (/^[\w-]+$/.test(condition)) return !!runtimePackages[condition];
+                const match = /^target:(\w+)$/.exec(condition);
+                if (match) return match[1] == appTarget.id || match[1] == appTarget.platformid;
+                host.logger.log(`invalid dependency expression: ${condition} in ${pkg.id}`);
+                return false;
+            };
+            pkg.files = pkg.config.files.concat(pkg == mainPkg ? pkg.config.testFiles || [] : [])
+                .filter(fn => {
+                    const condition = pkg.config.fileDependencies && U.lookup(pkg.config.fileDependencies, fn);
+                    return !condition || !condition.trim() ||
+                        condition.split("||").some(c => c.split("&&").every(evalCondition));
+                });
+        }
 
-        // order shouldn't matter for c++ compilation,
-        // so use a stable order to prevent order changes from fetching a new hex file
-        const mainPkgDeps = mainPkg.sortedDeps(true)
-            .sort((a, b) => {
-                if (a.id == "this") return 1;
-                else if (b.id == "this") return -1;
-                else return U.strcmp(a.id, b.id);
-            });
-
+        const mainDeps: ExtensionPackage[] = [];
+        const disablesVariant = (pkg: ExtensionPackage): boolean =>
+            !!pkg.config.disablesVariants && pkg.config.disablesVariants.indexOf(variant) >= 0;
         for (let pkg of mainPkgDeps) {
-            if (pkg.disablesVariant(pxt.appTargetVariant) ||
-                pkg.resolvedDependencies().some(d => d.disablesVariant(pxt.appTargetVariant))) {
+            if (disablesVariant(pkg) ||
+                Object.keys(dependencies(pkg)).some(id => disablesVariant(packages[id]))) {
                 if (disabledDeps)
                     disabledDeps += ", "
                 disabledDeps += pkg.id
-                pxt.debug(`disable variant ${pxt.appTargetVariant} due to ${pkg.id}`)
+                host.logger.debug(`disable variant ${variant} due to ${pkg.id}`)
                 continue
             }
             mainDeps.push(pkg)
-            pkg.addSnapshot(pkgSnapshot, [constsName, ".h", ".cpp"])
         }
-
-        const key = JSON.stringify(pkgSnapshot)
-        const prevInfo = prevExtInfos[key]
-        if (prevInfo) {
-            pxt.debug("Using cached extinfo")
-            const r = U.flatClone(prevInfo)
-            r.disabledDeps = disabledDeps
-            return r
-        }
-
-        pxt.debug("Generating new extinfo")
-        const res = pxtc.emptyExtInfo();
-
-        res.disabledDeps = disabledDeps
 
         let compileService = appTarget.compileService;
         if (!compileService)
@@ -210,13 +260,36 @@ namespace pxt.cpp {
             }
         compileService = U.clone(compileService)
 
-        let compile = mainPkg.getTargetOptions()
-        if (!compile)
-            compile = {
-                isNative: false,
-                hasHex: false,
-                switches: {}
-            }
+        const compile = appTarget.compile;
+        if (mainPkgDeps.some(pkg => pkg.config.utf8))
+            compile.utf8 = true;
+
+        const key = JSON.stringify({
+            variant: variant || "",
+            targetId: appTarget.id,
+            compile,
+            compileService,
+            mainConfig: mainPkg.config,
+            packages: mainDeps.map(pkg => ({
+                id: pkg.id,
+                config: pkg.config,
+                version: pkg.version,
+                files: pkg.files.filter(fn => fn == constsName ||
+                    /\.(h|cpp|c|S|s|mk)$/.test(fn) ||
+                    ["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0)
+                    .map(fn => [fn, readFile(pkg, fn)])
+            }))
+        });
+        const prevInfo = host.cache[key];
+        if (prevInfo) {
+            host.logger.debug("Using cached extinfo");
+            const result = U.clone(prevInfo);
+            result.disabledDeps = disabledDeps;
+            return result;
+        }
+        host.logger.debug("Generating new extinfo");
+        const res = pxtc.emptyExtInfo(compileService);
+        res.disabledDeps = disabledDeps;
 
         const isPlatformio = !!compileService.platformioIni;
         const isCodal = compileService.buildEngine == "codal" || compileService.buildEngine == "dockercodal"
@@ -262,8 +335,8 @@ namespace pxt.cpp {
         }
 
         for (const pkg of mainDeps) {
-            if (pkg.getFiles().indexOf(constsName) >= 0) {
-                const src = pkg.host().readFile(pkg, constsName)
+            if (pkg.files.indexOf(constsName) >= 0) {
+                const src = readFile(pkg, constsName)
                 Util.assert(!!src, `${constsName} not found in ${pkg.id}`)
                 src.split(/\r?\n/).forEach(ln => {
                     let m = /^\s*(\w+) = (.*),/.exec(ln)
@@ -273,9 +346,9 @@ namespace pxt.cpp {
                 })
             }
 
-            for (const fn of pkg.getFiles()) {
+            for (const fn of pkg.files) {
                 if (["Makefile", "sdkconfig.defaults", "CMakeLists.txt"].indexOf(fn) >= 0 || U.endsWith(fn, ".mk")) {
-                    res.generatedFiles["/" + fn] = pkg.host().readFile(pkg, fn)
+                    res.generatedFiles["/" + fn] = readFile(pkg, fn)
                 }
             }
         }
@@ -840,10 +913,10 @@ namespace pxt.cpp {
 
         const currSettings: Map<any> = U.clone(compileService.yottaConfig || {})
         const optSettings: Map<any> = {}
-        const settingSrc: Map<Package> = {}
+        const settingSrc: Map<ExtensionPackage> = {}
         const codalLibraries: pxt.Map<github.ParsedRepo> = {}
 
-        function parseJson(pkg: Package) {
+        function parseJson(pkg: ExtensionPackage) {
             const j0 = pkg.config.platformio
             if (j0 && j0.dependencies) {
                 U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
@@ -887,11 +960,11 @@ namespace pxt.cpp {
                         currSettings[settingName] = settingValue
                     } else if (currSettings[settingName] === settingValue) {
                         // OK
-                    } else if (!pkg.parent.config.yotta || !pkg.parent.config.yotta.ignoreConflicts) {
+                    } else if (!mainPkg.config.yotta || !mainPkg.config.yotta.ignoreConflicts) {
                         let err = new PkgConflictError(lf("conflict on yotta setting {0} between extensions {1} and {2}",
                             settingName, pkg.id, prev.id))
-                        err.pkg0 = prev
-                        err.pkg1 = pkg
+                        err.pkg0Id = prev.id
+                        err.pkg1Id = pkg.id
                         err.settingName = settingName
                         throw err;
                     }
@@ -939,8 +1012,8 @@ namespace pxt.cpp {
                 // listed in invalid order...
                 const isHeaderFn = (fn: string) => U.endsWith(fn, ".h")
                 const ext = ".cpp"
-                const files = pkg.getFiles().filter(isHeaderFn)
-                    .concat(pkg.getFiles().filter(s => !isHeaderFn(s)))
+                const files = pkg.files.filter(isHeaderFn)
+                    .concat(pkg.files.filter(s => !isHeaderFn(s)))
                 for (let fn of files) {
                     const isHeader = isHeaderFn(fn)
                     if (isHeader || U.endsWith(fn, ext)) {
@@ -949,7 +1022,7 @@ namespace pxt.cpp {
                             fullName = fn
                         if (isHeader)
                             includesInc += `#include "${isYotta ? sourcePath.slice(1) : ""}${fullName}"\n`
-                        let src = pkg.readFile(fn)
+                        let src = readFile(pkg, fn)
                         if (src == null)
                             U.userError(lf("C++ file {0} is missing in extension {1}.", fn, pkg.config.name))
                         fileName = fullName
@@ -958,13 +1031,14 @@ namespace pxt.cpp {
                         // src = src.replace(/^[ \t]*/mg, "") // HACK: shrink the files
                         res.extensionFiles[sourcePath + fullName] = src
 
-                        if (pkg.level == 0)
+                        if (pkg == mainPkg)
                             res.onlyPublic = false
-                        if (pkg.verProtocol() && pkg.verProtocol() != "pub" && pkg.verProtocol() != "embed")
+                        const protocol = pkg.version.indexOf(":") < 0 ? "" : pkg.version.split(":")[0];
+                        if (protocol && protocol != "pub" && protocol != "embed")
                             res.onlyPublic = false
                     }
                     if (U.endsWith(fn, ".c") || U.endsWith(fn, ".S") || U.endsWith(fn, ".s")) {
-                        let src = pkg.readFile(fn)
+                        let src = readFile(pkg, fn)
                         res.extensionFiles[sourcePath + pkg.config.name + "/" + fn.replace(/\.S$/, ".s")] = src
                     }
                 }
@@ -1056,7 +1130,7 @@ namespace pxt.cpp {
                 cfg[k] = v
             })
             res.generatedFiles["/codal.json"] = JSON.stringify(codalJson, null, 4) + "\n"
-            pxt.debug(`codal.json: ${res.generatedFiles["/codal.json"]}`);
+            host.logger.debug(`codal.json: ${res.generatedFiles["/codal.json"]}`);
             res.codal = codalJson
         } else if (isPlatformio) {
             const iniLines = compileService.platformioIni.slice()
@@ -1082,7 +1156,7 @@ namespace pxt.cpp {
                 "bin": "./source"
             }
             res.generatedFiles["/module.json"] = JSON.stringify(moduleJson, null, 4) + "\n"
-            pxt.debug(`module.json: ${res.generatedFiles["/module.json"]}`)
+            host.logger.debug(`module.json: ${res.generatedFiles["/module.json"]}`)
         }
 
         for (let k of Object.keys(cpp_options)) {
@@ -1095,10 +1169,10 @@ namespace pxt.cpp {
         res.generatedFiles[sourcePath + "pointers.cpp"] = includesInc + protos.finish() + abiInc +
             pointerIncPre + pointersInc + "\nPXT_SHIMS_END\n"
         res.generatedFiles[sourcePath + "pxtconfig.h"] = pxtConfig
-        pxt.debug(`pxtconfig.h: ${res.generatedFiles[sourcePath + "pxtconfig.h"]}`)
+        host.logger.debug(`pxtconfig.h: ${res.generatedFiles[sourcePath + "pxtconfig.h"]}`)
         if (isYotta) {
             res.generatedFiles["/config.json"] = JSON.stringify(configJson, null, 4) + "\n"
-            pxt.debug(`yotta config.json: ${res.generatedFiles["/config.json"]}`)
+            host.logger.debug(`yotta config.json: ${res.generatedFiles["/config.json"]}`)
         }
         res.generatedFiles[sourcePath + "main.cpp"] = `
 #include "pxt.h"
@@ -1140,15 +1214,22 @@ int main() {
         }
 
         let data = JSON.stringify(creq)
-        res.sha = U.sha256(data)
+        host.perf.measureStart(Measurements.Sha256Buffer);
+        try {
+            res.sha = pxtc.BrowserImpl.sha256buffer(U.toUTF8Array(data));
+        } finally {
+            host.perf.measureEnd(Measurements.Sha256Buffer);
+        }
         res.skipCloudBuild = !!compileService.skipCloudBuild
         res.compileData = ts.pxtc.encodeBase64(U.toUTF8(data))
         res.shimsDTS = shimsDTS.finish()
         res.enumsDTS = enumsDTS.finish()
 
-        if (Object.keys(prevExtInfos).length > 10)
-            prevExtInfos = {}
-        prevExtInfos[key] = res
+        if (Object.keys(host.cache).length > 10) {
+            for (const key of Object.keys(host.cache))
+                delete host.cache[key];
+        }
+        host.cache[key] = U.clone(res);
 
         return res;
     }

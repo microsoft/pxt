@@ -935,8 +935,8 @@ namespace ts.pxtc {
             && a.definitionName == b.definitionName;
     }
 
-    export function emptyExtInfo(): ExtensionInfo {
-        let cs = pxt.appTarget.compileService
+    export function emptyExtInfo(compileService: pxt.TargetCompileService = pxt.appTarget.compileService): ExtensionInfo {
+        let cs = compileService
         if (!cs) cs = {} as any
         const pio = !!cs.platformioIni;
         const docker = cs.buildEngine == "dockermake" || cs.buildEngine == "dockercross" || cs.buildEngine == "dockerespidf";
