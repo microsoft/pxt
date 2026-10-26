@@ -913,7 +913,7 @@ function upgradeFromBlocksAsync(): Promise<UpgradeResult> {
     return pxt.BrowserUtils.loadBlocklyAsync()
         .then(() => getBlocksAsync())
         .then(info => {
-            ws = new Blockly.Workspace();
+            ws = new Blockly.Workspace(new Blockly.Options({ disable: true }));
             const text = pxtblockly.importXml(targetVersion, fileText, info, true);
 
             const xml = Blockly.utils.xml.textToDom(text);

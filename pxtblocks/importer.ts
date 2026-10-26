@@ -31,6 +31,7 @@ export function domToWorkspaceNoEvents(dom: Element, workspace: Blockly.Workspac
     let newBlockIds: string[] = [];
     patchCommentIds(dom);
     patchShadows(dom, false);
+    patchLegacyDisabled(dom);
 
     if (pxt.react.getTilemapProject) {
         updateTilemapXml(dom, pxt.react.getTilemapProject());
@@ -105,8 +106,8 @@ export function saveWorkspaceXml(ws: Blockly.Workspace, keepIds?: boolean): stri
 // Same as Blockly's workspaceToDom but always saves all the variables in the workspace and not
 // just the ones that are used. We store some extra variables in the workspace for fields like
 // FieldKind and FieldUserEnum
-export function workspaceToDom(workspace: Blockly.Workspace, keepIds?: boolean): Element {
-    const xml = Blockly.Xml.workspaceToDom(workspace, keepIds);
+export function workspaceToDom(workspace: Blockly.Workspace, opt_noId?: boolean): Element {
+    const xml = Blockly.Xml.workspaceToDom(workspace, opt_noId);
     const variables = Blockly.Xml.variablesToDom(workspace.getVariableMap().getAllVariables());
 
     const existingVariables = getDirectChildren(xml, "variables");
@@ -190,7 +191,7 @@ export function loadBlocksXml(ws: Blockly.WorkspaceSvg, text: string) {
  * Loads the xml into a off-screen workspace (not suitable for size computations)
  */
 export function loadWorkspaceXml(xml: string, skipReport = false, opts?: DomToWorkspaceOptions): Blockly.Workspace {
-    const workspace = new Blockly.Workspace() as Blockly.WorkspaceSvg;
+    const workspace = new Blockly.Workspace(new Blockly.Options({ disable: true })) as Blockly.WorkspaceSvg;
     try {
         const dom = Blockly.utils.xml.textToDom(xml);
         domToWorkspaceNoEvents(dom, workspace, opts);
@@ -278,6 +279,7 @@ export function importXml(pkgTargetVersion: string, xml: string, info: pxtc.Bloc
 
         patchShadows(doc.documentElement, false);
         patchCommentIds(doc.documentElement);
+        patchLegacyDisabled(doc.documentElement);
 
         // build upgrade map
         const enums: pxt.Map<string> = {};
@@ -321,6 +323,20 @@ export function patchCommentIds(xml: Element) {
     for (const comment of xml.querySelectorAll("comment:not([h])")) {
         comment.setAttribute("h", "80");
         comment.setAttribute("w", "160");
+    }
+}
+
+export function patchLegacyDisabled(xml: Element) {
+    // In older MakeCode versions, orphaned blocks were automatically saved with disabled="true"
+    // without any disabled-reasons attribute. In modern Blockly, this gets loaded as MANUALLY_DISABLED.
+    // Strip the legacy disabled attribute so it isn't treated as manually disabled by the user;
+    // updateDisabledBlocks will re-apply AUTO_DISABLED_REASON to real orphans.
+    const blocks = xml.getElementsByTagName("block");
+    for (let i = 0; i < blocks.length; i++) {
+        const b = blocks[i];
+        if (b.getAttribute("disabled") === "true" && !b.hasAttribute("disabled-reasons")) {
+            b.removeAttribute("disabled");
+        }
     }
 }
 

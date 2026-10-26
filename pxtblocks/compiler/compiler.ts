@@ -256,9 +256,6 @@ function setChildrenEnabled(block: Blockly.Block, enabled: boolean) {
 function clearDisabled(block: Blockly.Block) {
     block.setDisabledReason(false, AUTO_DISABLED_REASON);
 
-    // for legacy projects, the disabled reason will be MANUALLY_DISABLED
-    block.setDisabledReason(false, Blockly.constants.MANUALLY_DISABLED);
-
     // this is the reason for blocks that are disabled via Blockly.Events.disableOrphans
     block.setDisabledReason(false, "ORPHANED_BLOCK");
 }

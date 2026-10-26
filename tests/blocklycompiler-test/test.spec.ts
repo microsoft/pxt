@@ -217,7 +217,7 @@ async function blockTestAsync(name: string) {
         trashcan: false,
         collapse: true,
         comments: true,
-        disable: false,
+        disable: true,
         readOnly: false,
         plugins: {
             // 'blockDragger': pxtblockly.BlockDragger,
@@ -263,7 +263,7 @@ async function blockTestAsync(name: string) {
 
     let res: pxtblockly.BlockCompilationResult;
     try {
-        const workspace = new Blockly.Workspace();
+        const workspace = new Blockly.Workspace(new Blockly.Options({ disable: true }));
         const xml = Blockly.utils.xml.textToDom(blocksFile);
         pxtblockly.domToWorkspaceNoEvents(xml, workspace);
         res = await pxtblockly.compileAsync(workspace, blocksInfo)
@@ -823,5 +823,5 @@ describe("blockly compiler", function () {
         it("should attempt narrow types to the most specific type when set", done => {
             blockTestAsync("inheritance").then(done, done);
         });
-    })
+    });
 });
