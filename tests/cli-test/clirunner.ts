@@ -349,6 +349,135 @@ describe("extension info explicit inputs", () => {
             .extensionFiles["/pxtapp/test/test.cpp"]).equals("// test dependency");
     });
 
+    it("resolves runtime, test and C++ dependencies by configuration name independently of their directory", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({
+                name: "project", files: ["main.cpp"], dependencies: { hw: "*" },
+                testDependencies: { test: "*" }, cppDependencies: { native: "*" },
+                fileDependencies: { "main.cpp": "hw && test && !native" }
+            }),
+            "main.cpp": "// project",
+            "pxt_modules/hw---stm32f401/pxt.json": JSON.stringify({
+                name: "hw", files: ["hw.cpp"], dependencies: {}
+            }),
+            "pxt_modules/hw---stm32f401/hw.cpp": "// hardware",
+            "pxt_modules/test-extension/pxt.json": JSON.stringify({
+                name: "test", files: ["test.cpp"], dependencies: {}
+            }),
+            "pxt_modules/test-extension/test.cpp": "// test",
+            "pxt_modules/native-extension/pxt.json": JSON.stringify({
+                name: "native", files: ["native.cpp"], dependencies: {}
+            }),
+            "pxt_modules/native-extension/native.cpp": "// native"
+        };
+        const target = extensionTestTarget();
+        const result = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(result.extensionFiles["/pxtapp/hw/hw.cpp"]).equals("// hardware");
+        chai.expect(result.extensionFiles["/pxtapp/test/test.cpp"]).equals("// test");
+        chai.expect(result.extensionFiles["/pxtapp/native/native.cpp"]).equals("// native");
+        chai.expect(result.extensionFiles["/pxtapp/project/main.cpp"]).equals("// project");
+        chai.expect(pxt.cpp.getExtensionInfo(files, target, undefined, host)).deep.equals(result);
+        files["pxt_modules/hw---stm32f401/hw.cpp"] = "// changed hardware";
+        const changed = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(changed.extensionFiles["/pxtapp/hw/hw.cpp"]).equals("// changed hardware");
+        chai.expect(changed.sha).not.equals(result.sha);
+    });
+
+    it("resolves variant package prefixes even when the configuration name includes the variant", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({ name: "project", files: [], dependencies: { hw: "*" } }),
+            "pxt_modules/hw---stm32f401/pxt.json": JSON.stringify({
+                name: "hw---stm32f401", files: ["hw.cpp"], dependencies: {}
+            }),
+            "pxt_modules/hw---stm32f401/hw.cpp": "// hardware"
+        };
+        chai.expect(pxt.cpp.getExtensionInfo(files, extensionTestTarget(), undefined, host)
+            .extensionFiles["/pxtapp/hw---stm32f401/hw.cpp"]).equals("// hardware");
+    });
+
+    it("prefers exact dependency directories and rejects ambiguous configuration names", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({ name: "project", files: [], dependencies: { hw: "*" } }),
+            "pxt_modules/first/pxt.json": JSON.stringify({ name: "hw", files: [], dependencies: {} }),
+            "pxt_modules/second/pxt.json": JSON.stringify({ name: "hw", files: [], dependencies: {} })
+        };
+        const target = extensionTestTarget();
+        chai.expect(() => pxt.cpp.getExtensionInfo(files, target, undefined, host))
+            .throws("extension hw matches multiple directories");
+        files["pxt_modules/hw/pxt.json"] = JSON.stringify({
+            name: "hardware", files: ["hw.cpp"], dependencies: {}
+        });
+        files["pxt_modules/hw/hw.cpp"] = "// exact directory";
+        chai.expect(pxt.cpp.getExtensionInfo(files, target, undefined, host)
+            .extensionFiles["/pxtapp/hardware/hw.cpp"]).equals("// exact directory");
+    });
+
+    it("rejects ambiguous variant prefixes instead of picking a hardware package", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({ name: "project", files: [], dependencies: { hw: "*" } }),
+            "pxt_modules/hw---first/pxt.json": JSON.stringify({
+                name: "hw---first", files: [], dependencies: {}
+            }),
+            "pxt_modules/hw---second/pxt.json": JSON.stringify({
+                name: "hw---second", files: [], dependencies: {}
+            })
+        };
+        chai.expect(() => pxt.cpp.getExtensionInfo(files, extensionTestTarget(), undefined, host))
+            .throws("extension hw matches multiple directories");
+    });
+
+    it("generates identical compile requests for aliases and canonical package identifiers", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({
+                name: "project", files: [], dependencies: { core: "*", consumer: "*" }
+            }),
+            "pxt_modules/core---board/pxt.json": JSON.stringify({
+                name: "core---board", files: ["core.h", "core.cpp"], dependencies: {}
+            }),
+            "pxt_modules/core---board/core.h": "// core header",
+            "pxt_modules/core---board/core.cpp": extensionTestFiles()["main.cpp"],
+            "pxt_modules/consumer/pxt.json": JSON.stringify({
+                name: "consumer", files: [], dependencies: { "core---board": "*" }
+            })
+        };
+        const target = extensionTestTarget();
+        const aliased = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(aliased.functions.map(fn => fn.name)).deep.equals(["test::run"]);
+        chai.expect(aliased.generatedFiles["/pxtapp/pointers.cpp"].match(/#include "core.h"/g)).length(1);
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.dependencies = { "core---board": "*", consumer: "*" };
+        files["pxt.json"] = JSON.stringify(config);
+        const canonical = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(aliased.compileData).equals(canonical.compileData);
+        chai.expect(aliased.sha).equals(canonical.sha);
+    });
+
+    it("tracks runtime membership and disabled variants across package aliases", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({
+                name: "project", files: ["main.cpp"], dependencies: { consumer: "*", hw: "*" },
+                fileDependencies: { "main.cpp": "hw && hw---board" }
+            }),
+            "main.cpp": "// project",
+            "pxt_modules/consumer/pxt.json": JSON.stringify({
+                name: "consumer", files: [], dependencies: {}, cppDependencies: { "hw---board": "*" }
+            }),
+            "pxt_modules/hw---board/pxt.json": JSON.stringify({
+                name: "hw---board", files: ["hw.cpp"], dependencies: {},
+                fileDependencies: { "hw.cpp": "hw && hw---board" }, disablesVariants: ["disabled"]
+            }),
+            "pxt_modules/hw---board/hw.cpp": extensionTestFiles()["main.cpp"]
+        };
+        const target = extensionTestTarget();
+        target.variants = { disabled: extensionTestTarget() };
+        const enabled = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(enabled.functions.map(fn => fn.name)).deep.equals(["test::run"]);
+        chai.expect(enabled.extensionFiles["/pxtapp/project/main.cpp"]).equals("// project");
+        const disabled = pxt.cpp.getExtensionInfo(files, target, "disabled", host);
+        chai.expect(disabled.disabledDeps).equals("hw---board, this");
+        chai.expect(disabled.functions).deep.equals([]);
+    });
+
     it("does not reuse stale or caller-mutated results for changed native inputs", () => {
         const target = extensionTestTarget();
         const files = extensionTestFiles();
@@ -429,6 +558,13 @@ describe("package extension info integration", () => {
         target.multiVariants = ["first", "second"];
         target.alwaysMultiVariant = true;
         const files = extensionTestFiles();
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.dependencies.hw = "*";
+        files["pxt.json"] = JSON.stringify(config);
+        files["pxt_modules/hw---stm32f401/pxt.json"] = JSON.stringify({
+            name: "hw", files: ["hw.cpp"], dependencies: {}
+        });
+        files["pxt_modules/hw---stm32f401/hw.cpp"] = "// hardware";
         const host: pxt.Host = {
             readFile: (pkg, name) => files[(pkg.id == "this" ? "" : "pxt_modules/" + pkg.id + "/") + name],
             writeFile: (pkg, name, content) => { files[name] = content; },
@@ -446,6 +582,10 @@ describe("package extension info integration", () => {
             const pkg = new pxt.MainPackage(host);
             pkg.isLoaded = true;
             pkg.loadConfig(true);
+            const hardware = new pxt.Package("hw---stm32f401", "*", pkg, pkg, "hw---stm32f401");
+            hardware.config = JSON.parse(files["pxt_modules/hw---stm32f401/pxt.json"]);
+            hardware.isLoaded = true;
+            pkg.deps.hw = pkg.deps[hardware.id] = hardware;
             const options = await pkg.getCompileOptionsAsync({
                 ...pkg.getTargetOptions(),
                 keepCppFiles: true
@@ -455,6 +595,7 @@ describe("package extension info integration", () => {
             chai.expect(options.otherMultiVariants.length).equals(1);
             const other = options.otherMultiVariants[0];
             chai.expect(other.extinfo.appVariant).equals("second");
+            chai.expect(other.extinfo.extensionFiles["/pxtapp/hw/hw.cpp"]).equals("// hardware");
             chai.expect(other.extinfo.generatedFiles["/pxtapp/pxtconfig.h"]).contains("#define PXT_PROFILE 1");
             chai.expect(other.target.switches.profile).equals(true);
             chai.expect(pxt.appTarget).equals(activeTarget);

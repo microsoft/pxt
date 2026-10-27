@@ -117,6 +117,7 @@ namespace pxt.cpp {
 
     interface ExtensionPackage {
         id: string;
+        path: string;
         config: PackageConfig;
         files: string[];
         version: string;
@@ -133,7 +134,9 @@ namespace pxt.cpp {
 
     /**
      * Generates native extension files from pxt.json and project files, with dependencies
-     * under pxt_modules/<id>/. The target must not have variant overrides applied.
+     * under pxt_modules/<directory>/. Dependencies resolve by directory, pxt.json name,
+     * or their prefix before "---".
+     * The target must not have variant overrides applied.
      * @example getExtensionInfo({ "pxt.json": config, "main.cpp": source }, target, "v2", host)
      */
     export function getExtensionInfo(files: Map<string>, target: TargetBundle, variant: string, host: ExtensionInfoHost): pxtc.ExtensionInfo {
@@ -143,26 +146,54 @@ namespace pxt.cpp {
         let disabledDeps = ""
         const packages: Map<ExtensionPackage> = {};
         const runtimePackages: Map<boolean> = {};
+        const packagePaths: Map<string[]> = {};
+        for (const path of Object.keys(files)) {
+            const match = /^pxt_modules\/([^/]+)\/pxt\.json$/.exec(path);
+            if (!match) continue;
+            const config = JSON.parse(files[path]) as PackageConfig;
+            const directory = path.slice(0, -"pxt.json".length);
+            for (const id of [match[1], config.name]) {
+                if (!id) continue;
+                for (const alias of [id, id.replace(/---.*/, "")]) {
+                    const paths = packagePaths[alias] || (packagePaths[alias] = []);
+                    if (paths.indexOf(directory) < 0)
+                        paths.push(directory);
+                }
+            }
+        }
+        const resolvePath = (id: string): string => {
+            if (id == "this") return "";
+            const path = "pxt_modules/" + id + "/";
+            if (files[path + "pxt.json"] != null) return path;
+            const paths = packagePaths[id];
+            if (paths && paths.length > 1)
+                U.userError(`extension ${id} matches multiple directories: ${paths.join(", ")}`);
+            return paths && paths[0];
+        };
         const readFile = (pkg: ExtensionPackage, name: string): string =>
-            files[(pkg.id == "this" ? "" : "pxt_modules/" + pkg.id + "/") + name];
+            files[pkg.path + name];
         const dependencies = (pkg: ExtensionPackage): Map<string> => packageUtils.getConfigDependencies(
             pkg.config,
             pkg.id == "this",
             false,
-            id => files["pxt_modules/" + id + "/pxt.json"] != null
+            id => resolvePath(id) != null
         );
         const visit = (id: string, version: string, runtime: boolean): void => {
-            if (runtimePackages[id] || (!runtime && packages[id])) return;
-            if (runtime) runtimePackages[id] = true;
-            let pkg = packages[id];
+            const path = resolvePath(id);
+            if (path == null)
+                U.userError(`extension ${id} is missing pxt.json`);
+            if (runtimePackages[path] || (!runtime && packages[path])) return;
+            if (runtime) runtimePackages[path] = true;
+            let pkg = packages[path];
             if (!pkg) {
-                const configText = files[id == "this" ? "pxt.json" : "pxt_modules/" + id + "/pxt.json"];
+                const configText = files[path + "pxt.json"];
                 if (!configText)
                     U.userError(`extension ${id} is missing pxt.json`);
                 const config = JSON.parse(configText) as PackageConfig;
                 if (!config.dependencies || !Array.isArray(config.files))
                     U.userError(`Invalid pxt.json in extension ${id}`);
-                pkg = packages[id] = { id, config, files: [], version };
+                const packageId = path ? path.slice("pxt_modules/".length, -1) : "this";
+                pkg = packages[path] = { id: packageId, path, config, files: [], version };
             }
             const deps = dependencies(pkg);
             for (const dep of Object.keys(deps))
@@ -171,7 +202,7 @@ namespace pxt.cpp {
                 visit(dep, pkg.config.cppDependencies[dep], false);
         };
         visit("this", "file:.", true);
-        const mainPkg = packages["this"];
+        const mainPkg = packages[""];
         const mainPkgDeps = U.values(packages).sort((a, b) =>
             a.id == b.id ? 0 : a.id == "this" ? 1 : b.id == "this" ? -1 : U.strcmp(a.id, b.id));
 
@@ -180,7 +211,7 @@ namespace pxt.cpp {
                 pkg.config,
                 pkg == mainPkg,
                 appTarget,
-                id => !!runtimePackages[id],
+                id => !!runtimePackages[resolvePath(id)],
                 condition => host.logger.log(`invalid dependency expression: ${condition} in ${pkg.id}`)
             );
         }
@@ -190,7 +221,7 @@ namespace pxt.cpp {
             packageUtils.isVariantDisabled(pkg.config, variant);
         for (let pkg of mainPkgDeps) {
             if (disablesVariant(pkg) ||
-                Object.keys(dependencies(pkg)).some(id => disablesVariant(packages[id]))) {
+                Object.keys(dependencies(pkg)).some(id => disablesVariant(packages[resolvePath(id)]))) {
                 if (disabledDeps)
                     disabledDeps += ", "
                 disabledDeps += pkg.id

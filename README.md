@@ -39,15 +39,6 @@ Examples of Editors built with MakeCode:
 
 Please follow the [instructions here](https://makecode.com/cli).
 
-## Backend utilities
-
-Build the standalone backend utilities with `npx tsc -p backendutils`. Loading
-`built/backendutils.js` exposes `global.pxt.docs` and
-`global.pxt.cpp.getExtensionInfo(files, target, variant, host)` without loading the
-package manager or browser application. Project files include `pxt.json`, with
-dependencies under `pxt_modules/<id>/`; pass an unpatched target, a variant name,
-and an `ExtensionInfoHost` supplying the cache, logger, and performance hooks.
-
 ## Linking a target to PXT
 
 If you are modifying your own instance of PXT and want a target (such as pxt-microbit) to use your local version, cd to the directory of the target (pxt-microbit, in our example, which should be a directory sibling of pxt) and perform
