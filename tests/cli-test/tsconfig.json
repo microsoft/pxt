@@ -24,6 +24,8 @@
     },
     "files": [
         "clirunner.ts",
-        "../../cli/localrepos.ts"
+        "bump.ts",
+        "../../cli/localrepos.ts",
+        "../../cli/nodeutil.ts"
     ]
 }

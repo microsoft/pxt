@@ -715,10 +715,15 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         }
     } catch (e) {
         console.warn(chalk.yellow("Unable to determine branch protection status."), e.message);
+        pr = true;
     }
 
     if (nopr) {
         pr = false;
+    }
+
+    if (pr && (!currBranchName || !token || !user || !owner || !repo)) {
+        U.userError("Unable to prepare a bump pull request. Check GitHub credentials and the origin URL, or explicitly use --nopr for a direct push.");
     }
 
     if (fs.existsSync(pxt.CONFIG_NAME)) {
@@ -734,7 +739,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => justBumpPkgAsync(bumpType, false)) // don't tag when creating a PR
-                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.gitPushAsync(false).then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] bump version to ${version}`,
                     body:   "__Do not edit the PR title.__\n" +
@@ -753,8 +758,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => justBumpPkgAsync(bumpType))
-                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
-                .then(() => nodeutil.runGitAsync("push"))
+                .then(() => nodeutil.gitPushAsync())
         }
     }
     else if (fs.existsSync("pxtarget.json"))
@@ -767,7 +771,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
                 .then(() => nodeutil.npmVersionBumpAsync(bumpType, false)) // don't tag when creating a PR
-                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.gitPushAsync(false).then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] bump version to ${version}`,
                     body:   "__Do not edit the PR title.__\n" +
@@ -785,10 +789,9 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
             console.log("Bumping via direct push.");
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
-                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
+                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.gitPushAsync(false)) : Promise.resolve())
                 .then(() => nodeutil.runNpmAsync("version", bumpType))
-                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
-                .then(() => nodeutil.runGitAsync("push"))
+                .then(() => nodeutil.gitPushAsync())
                 .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
         }
     else {
@@ -7346,7 +7349,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             update: { description: "(package only) Updates pxt-core reference to the latest release" },
             upload: { description: "(package only) Upload after bumping" },
             pr: { description: "Bump via pull request rather than direct push" },
-            nopr: { description: "Bump via direct push rather than pull request (overrides --pr)" },
+            nopr: { description: "Force a direct bump (overrides --pr and protection detection)" },
             version: {
                 description: "Which part of the version to bump, or a complete version number to assign. Defaults to 'patch'",
                 argument: "version",
