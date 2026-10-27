@@ -45,6 +45,7 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/
 - After the top-level code finishes, a run advances virtual time by `--settle` and stops; it never waits for the program to go idle, and its timeout watchdog stays on real time
 - Fixtures are TypeScript under `tests/simcore-test/fixtures/`, compiled by the test project; do not generate them at test time or embed them as strings
 - A target ships a DOM-free simulator bundle by adding `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`
+- The headless test harness (contributors, scenarios, the trace, worlds, media, recording) is outlined in `pxtsimcore/headless-harness-overview.md`, designed in `pxtsimcore/headless-harness.md`, whose Status section says which parts exist, and sequenced in `pxtsimcore/headless-harness-plan.md`; the frame is its unit of time, and scripted inputs and expectations are addressed by frame
 
 ## Visual Components
 
