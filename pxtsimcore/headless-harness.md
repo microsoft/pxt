@@ -39,6 +39,9 @@ One shape serves every source:
   handle a program contributor registers through carries it, and a module's factory receives it as
   its second argument. The contributor calls it at the moment an event happens; the driver
   collects.
+- `saveState()` and `restoreState(data)`, optional: the contributor's settled state at a frame
+  boundary as plain JSON in a shape of its own carrying its own format version, and the same data
+  taken back (Saving and restoring). A contributor without them makes its world unsaveable.
 
 Four sources implement it:
 
@@ -337,14 +340,14 @@ description the meaning. Rendered channel values are strings whose form the chan
 states; the LED display renders as one string of brightness digits.
 
 Bulk channels. A channel whose natural rendering runs past a line (the Arcade screen: 160 by 120
-pixels at 4 bits each, 9600 bytes a frame) renders as a content hash instead: FNV-1a 64-bit over
-the channel's bytes (for a screen, the framebuffer followed by the palette), as 16 lowercase hex
-digits, so every host renders the same value and a changed frame costs the trace one short line.
-The bytes themselves are a file beside the scenario under the bulk-value rule of Recording and
-replay: a run flag writes a frame's bytes on request, and a failed expectation on a bulk channel
-writes the frame it failed at. A check finer than the whole channel is a probe: a module the
-platform supplies, staged as an attachment under a role with its probe list as config, so it
-composes as any module does. Each probe is one declared channel (`probe.pixel 10,20` reads a
+pixels at 4 bits each, 9600 bytes a frame) renders as a content hash instead: FNV-1a 64-bit over the
+channel's bytes (for a screen, the framebuffer followed by the palette), as 16 lowercase hex digits,
+so every host renders the same value and a changed frame costs the trace one short line. The bytes
+themselves are a bulk value the driver hands the shell under the bulk-value rule of Recording and
+replay, on request through a run option and for the frame a bulk-channel expectation fails at; a
+shell with files keeps them beside the scenario. A check finer than the whole channel is a probe: a
+module the platform supplies, staged as an attachment under a role with its probe list as config, so
+it composes as any module does. Each probe is one declared channel (`probe.pixel 10,20` reads a
 color index, `probe.region 0,0,16,16` reads that region's hash), so the surface stays small and
 fixed and an expectation stays one line. A probe has no kinds of its own and reads the board's
 screen through a seam the board exposes for probes, purely and deterministically; that seam is the
@@ -400,6 +403,14 @@ A scenario is a file in the project, or the same declarations made from the proj
 - Optionally, the clock: the clock delta of each frame in milliseconds, one entry per frame, which
   a recording carries (Recording and replay) and a written scenario omits for the nominal period
   throughout.
+- Optionally, the frames to save at: the run produces the world's saved state at each, and the
+  shell decides where it goes, a file beside the scenario for a shell with files (Saving and
+  restoring).
+- Optionally, a save to start from, named by where the shell finds it or carried whole: the run
+  restores it and continues. Frames stay absolute, so `frames` must exceed the save's frame, an
+  input due at or before it is rejected, and windows read as the tail of the run that made the save.
+  The scenario carries no staging; the save's surface digest fixes it, and a staging that no longer
+  matches is refused before the first frame.
 - Optionally, a versions pin: the pxt-core, target and pinned dependency versions the scenario
   holds for. A shell refuses to run a pinned scenario at any other version, which is what a
   comparison of traces across hosts needs. The versions a run actually ran under are recorded in
@@ -416,9 +427,10 @@ topology as a list of ids or of `{ "id", "profile", "map" }` entries where a boa
 carries parameters the medium reads); `"inputs"` (`{ "kind", "at", "value" }` entries);
 `"expectations"` (`{ "channel", "value", "window" }` level entries and `{ "event", "value", "window"
 }` arrival entries, `window` as `{ "from", "to" }`, `"not": true` for a negated form); `"watch"` (an
-array of composed names); `"framePeriod"`; `"clock"` (an array of `frames` integers); and
-`"versions"`, the pin. A field a scenario does not need is omitted; `frames` is the one required
-field.
+array of composed names); `"framePeriod"`; `"clock"` (an array of `frames` integers); `"saves"` (an
+array of frame indices); `"from"` (the path of a save file relative to the scenario, or the save
+itself as an object); and `"versions"`, the pin. A field a scenario does not need is omitted;
+`frames` is the one required field.
 
 A counter program on one micro:bit, `counter.scenario.json` beside its `pxt.json`, with a light
 level held from the first frame, two clicks, and three expectations:
@@ -465,18 +477,20 @@ A scenario in static TypeScript. Any file the project compiles may declare scena
 and a build of the project compiles unless told to ignore tests, never a dependency's; or a program
 file, where a declaration costs a hardware build nothing and the live simulator ignores it, and
 which is the only place blocks reach. Each `harness.scenario(name, fields, declare)` call names a
-scenario, gives the fields the file would carry outside its inputs and expectations, and declares
-those through the handle it passes. The library sends the declaration over the `harness` channel as
-it sends a contributor's; the driver runs the program to its first frame boundary, takes every
-scenario declared, and runs each as if it were `<name>.scenario.json` beside the test file, the
-trace landing there under that name. The declared form is data, not behavior: the handle takes
-values only, a declaration after the first frame boundary is refused with a stable code, and a shell
-writes any declared scenario out as its file on request, so the two forms are one scenario in two
-syntaxes and a tool that reads files reads both. A scenario's name is its file's basename or its
-declared name, and names are unique across the project whichever form they take: a declared
-`counter` beside a `counter.scenario.json`, or two declarations of one name, is a collision refused
-before any run, as roles and keys are. Scenario calls are `shim=TD_NOOP` like the rest of the
-library and reach no hardware build. The counter scenario, declared:
+scenario, gives the fields the file would carry outside its list-like ones (`seed`, `frames`,
+`framePeriod`, `from` as a path, `versions`), and declares those, inputs, expectations, the watch
+list and the frames to save at, through the handle it passes, each call repeatable so a loop can
+declare many. The library sends the declaration over the `harness` channel as it sends a
+contributor's; the driver runs the program to its first frame boundary, takes every scenario
+declared, and runs each as if it were `<name>.scenario.json` beside the test file, the trace landing
+there under that name. The declared form is data, not behavior: the handle takes values only, a
+declaration after the first frame boundary is refused with a stable code, and a shell writes any
+declared scenario out as its file on request, so the two forms are one scenario in two syntaxes and
+a tool that reads files reads both. A scenario's name is its file's basename or its declared name,
+and names are unique across the project whichever form they take: a declared `counter` beside a
+`counter.scenario.json`, or two declarations of one name, is a collision refused before any run, as
+roles and keys are. Scenario calls are `shim=TD_NOOP` like the rest of the library and reach no
+hardware build. The counter scenario, declared:
 
 ```ts
 harness.scenario("counter", { seed: 7, frames: 120 }, t => {
@@ -487,6 +501,7 @@ harness.scenario("counter", { seed: 7, frames: 120 }, t => {
     t.expectChannel("display", "0000000000000000000000000", 100, 119)
     t.expectNoEvent("serial", "error", 0, 119)
     t.watch(["display", "display.show", "serial"])
+    t.save(40)
 })
 ```
 
@@ -518,24 +533,26 @@ as the display's one-digit brightness is.
 
 ## Trace format
 
-The trace is a JSON Lines file, `<name>.trace.jsonl` beside the scenario: one JSON record per line,
-a header record first and then one record per frame in frame order. Every record is serialized
-canonically, so one trace is one byte sequence: no whitespace outside strings, keys in the order
-given here, state keys in composed order, strings escaped as JSON requires, and every number in its
-shortest round-trip JSON form. Within a surface record the keys follow the order the Contributors
-section lists the fields, `name` and `contributor` first, and an optional field that is absent is
-omitted, never written as `null`.
+The trace is JSON Lines text, one JSON record per line, a header record first and then one record
+per frame in frame order; a shell with files keeps it as `<name>.trace.jsonl` beside the scenario.
+Every record is serialized canonically, so one trace is one byte sequence: no whitespace outside
+strings, keys in the order given here, state keys in composed order, strings escaped as JSON
+requires, and every number in its shortest round-trip JSON form. Within a surface record the keys
+follow the order the Contributors section lists the fields, `name` and `contributor` first, and an
+optional field that is absent is omitted, never written as `null`.
 
-- The header record: `{"scenario": name, "seed": n, "framePeriod": ms, "versions": {...},
-  "surface": {...}}`. `versions` holds `pxt-core`, `target` and then each pinned dependency by name,
-  each a version string, the dependencies in ascending order of name. `surface` is the composed
-  surface: `"contributors"`, an array in composed order of `{ "id", "provider", "docs" }` records,
-  and `"inputs"`, `"channels"`, `"events"`, `"quantities"` and `"params"`, each an array in
-  composed order of the declared entry records with the composed name as `name` and the declaring
-  contributor's id as `contributor`, an input record of a driven kind carrying `drivenBy`, so a
-  trace describes itself without its scenario. The surface digest is FNV-1a
-  64-bit over the canonical bytes of the `surface` object, 16 lowercase hex digits; a host that
-  caches or compares surfaces uses it, and every host computes the same one.
+- The header record: `{"scenario": name, "seed": n, "framePeriod": ms, "from": {...}, "versions":
+  {...}, "surface": {...}}`. `from` is present for a run that started from a save and holds the
+  save's name and frame; a frame record then starts at the frame after it and the first record holds
+  every channel, as frame 0's does. `versions` holds `pxt-core`, `target` and then each pinned
+  dependency by name, each a version string, the dependencies in ascending order of name. `surface`
+  is the composed surface: `"contributors"`, an array in composed order of `{ "id", "provider",
+  "docs" }` records, and `"inputs"`, `"channels"`, `"events"`, `"quantities"` and `"params"`, each
+  an array in composed order of the declared entry records with the composed name as `name` and the
+  declaring contributor's id as `contributor`, an input record of a driven kind carrying `drivenBy`,
+  so a trace describes itself without its scenario. The surface digest is FNV-1a 64-bit over the
+  canonical bytes of the `surface` object, 16 lowercase hex digits; a host that caches or compares
+  surfaces uses it, and every host computes the same one.
 - A frame record: `{"frame": n, "state": {name: value, ...}, "events": [[name, value], ...]}`.
   `state` holds the channels that changed since the last frame, in composed order, every value a
   rendered string and `null` for a channel rendered absent; the first frame record holds every
@@ -592,10 +609,18 @@ shells are thin:
   hosting this shell takes the bundle URLs and each attachment's core URL from the `projstaging`
   read reply (Scenarios).
 
-Every shell offers two operations over a staging and its compiled programs: run a scenario, and
+Every shell offers three operations over a staging and its compiled programs: run a scenario;
 surface, which runs each program to its first frame boundary, returns the composed surface as the
-trace header carries it, and stops. The surface operation is how an editor tab learns what a
-scenario may name without running one.
+trace header carries it, and stops; and save, which runs to a given frame and produces the world's
+saved state (Saving and restoring), or takes one and runs on from it. The surface operation is how
+an editor tab learns what a scenario may name without running one; the save operation is how a tab
+saves on a button press, through the coordinator, and how a shell resumes a run.
+
+The driver produces and consumes serialized state, never storage: a scenario in, and a trace, a
+save, a bulk value or a recording out, each a byte sequence, JSON text or raw bytes, handed to the
+shell that asked. Every shell maps those bytes to its own storage, files beside the scenario for the
+command line, messages for the worker, and finds scenarios, resolves `from` paths and names files on
+its own side of that line. Nothing in the driver opens a file.
 
 A contributor reachable from one shell and not another is a defect. The run options a project
 implies (board definition, parts, function arguments, dependencies, stored state) are assembled by
@@ -762,8 +787,9 @@ BabbleSim):
   channel reporting it in whole dBm whichever way it was arrived at.
 - A loss model, for the ether or per link: none, a Bernoulli rate, or Gilbert-Elliott (a good and
   a bad state, two transition probabilities, a loss rate in each). The ether draws from a random
-  stream of its own, derived from the run seed and the medium's id, so one seed gives one drop
-  pattern and changing a loss parameter never changes the random numbers a program draws.
+  stream of its own, handed to it by the driver and derived from the run seed and the medium's id,
+  so one seed gives one drop pattern and changing a loss parameter never changes the random
+  numbers a program draws; any medium that wants entropy asks the driver for a stream by name.
 - Delay in whole frames, with optional jitter and duplication; reordering arises only when delay
   varies.
 - A drop event per link, `ether.drop <a>-<b>`, emitted for every frame the matrix, the loss model,
@@ -787,7 +813,7 @@ recorded audio, whose recorder-host seam hands back a clip.
 
 - A recording is the run seed, the clock delta of each frame, the inputs at frame grain as
   `(kind, at, value)`, and the project and version record of the scenario. A captured clip or
-  other bulk value is a file beside the scenario.
+  other bulk value is a bulk value the shell keeps, beside the scenario where it has files.
 - Replay of the same program advances the virtual host by the recorded deltas, seeds `host.rng()`
   with the recorded seed, applies the inputs at their frames, and reproduces the run exactly: the
   same random numbers in the same order, the same timer firings, the same trace.
@@ -799,10 +825,11 @@ recorded audio, whose recorder-host seam hands back a clip.
 The live simulator takes a seeded random source with the seed chosen at run start and logged, and
 logs its frame deltas, so a run a user saw replays exactly. The recorder is the live driver's: it
 subscribes to the inputs the view applies (the same primitives the headless protocol reaches over
-its input message), stamps each with the frame it landed in, and writes the scenario.
+its input message), stamps each with the frame it landed in, and produces the scenario for the
+editor to keep.
 
 A six-frame recording of a user pressing and releasing A while the light changed, as the recorder
-writes it:
+produces it:
 
 ```json
 {
@@ -823,8 +850,55 @@ committed beside it as the golden, so the first check a replay makes is byte ide
 the user saw. The fifth frame took 33 milliseconds live, and the replay advances the host by 33
 there too; replayed against a changed program, `clock` is dropped and every frame is 16.
 
+## Saving and restoring
+
+A world's state can be saved at a frame boundary and restored into a fresh driver, so a long
+session resumes after a reload, a run forks at a frame, and a tab rewinds without replaying from
+zero. The frame boundary is the one safe point: every contributor's state has settled, every medium
+has propagated, and every inbox is empty by construction.
+
+- A save is one JSON value, serialized canonically: the driver's own state (the frame index, the
+  inputs still due, the position of every random stream it handed out, the surface digest), every
+  contributor's `saveState()` in composed order, each board's runtime saved form (its heap, fibers,
+  scheduler and board state, taken by the runtime's own mechanism), the compiled program of each
+  board, and the versions record the trace header carries.
+- The runtime's saved form carries the compiled program it was taken under, and a restore runs
+  that program on the restoring runtime, so a save taken under one target version resumes under a
+  newer one; the project's source may have moved on, and a restore resumes the program that was
+  running.
+- Every saved form carries a format version of its own, independent of any release number and
+  bumped only when its shape changes: the driver's, the runtime's, each platform medium's and each
+  extension's. A layer restores every version it has ever written; migration lives in
+  `restoreState`, where old data arrives with its version. The versions record is recorded and
+  never refused on; a restore is refused only by a layer that cannot read a format version it is
+  handed, with a stable code naming the layer and the version, or by a surface digest that does
+  not match the staging it is restored into.
+- A contributor saves the minimum, since its saved shape is public from its first release:
+  positions and states, the progress of anything moving, and anything in flight that has not yet
+  reached a channel; nothing derived, which the next propagate step recomputes, and nothing a view
+  owns. A contributor without `saveState` makes its world unsaveable, refused with a stable code
+  naming the contributor rather than saved wrong.
+- A save is the driver's operation, never the program's: a shell asks for it, a scenario's
+  `saves` field asks for it at given frames, and a tab asks for it through the coordinator; the
+  driver performs it at the next frame boundary. No program can request one, and the `harness`
+  library has no call for it; `saveState` is the driver's call into each contributor during a
+  save, as `readState` is during a frame.
+- Serialization and storage are separate layers. The driver's save operation produces a save and its
+  restore consumes one; the driver reads and writes no storage. Where a save rests is the shell's
+  choice: `pxt simtest` and `mkc test` write a save the `saves` field asks for as
+  `<name>.<frame>.save.json` beside the scenario and resolve a `from` path relative to the scenario
+  before handing the driver the save; the worker shell has no files, so it returns a save as a
+  message and takes one the same way, as a JSON string or the parsed object, and a tab keeps saves
+  in browser storage and hands them back with no file in between. A file and a string in memory are
+  the same save.
+- Two saves of one scenario at one frame are byte-identical, and a run restored at frame N
+  continues to the same trace from N as a run that never stopped.
+
 ## Conformance
 
+- A save at frame N of the fixture world restores into a fresh driver and continues to a trace
+  byte-identical from N to the unbroken run's; two saves at one frame are byte-identical; a save
+  from each released format of every platform layer restores and continues the same way.
 - A fixture contributor (one channel, one kind, one event kind) runs through the driver alone, and
   again as two attachments of one module under two roles, proving composed names and order.
 - Same seed, same inputs, same frames give byte-identical traces in a worker and in Node.
@@ -877,4 +951,6 @@ What exists and what does not, section by section. A change that lands a piece e
   medium, link matrix or propagation model.
 - Recording and replay: not started. The live simulator runs on the default host (`Date.now`,
   `Math.random`) with no seed and no frame log.
+- Saving and restoring: not started. No contributor saves state, the driver has no saved form, and
+  the runtime's saved form is designed apart from this document.
 - Conformance: none of the checks exists.

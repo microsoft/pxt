@@ -77,8 +77,8 @@ Code inside the compiled program as a contributor.
   sent on the `harness` channel from start-up code, inputs received on `harness.<key>`, state and
   events posted on `harness` once per frame from a loop at the frame period the library reads from
   the simulator host; the scenario API, `harness.scenario(name, fields, declare)` with a handle
-  taking inputs, expectations and a watch list as values; a hardware build of a program depending
-  on it carries none of it.
+  taking inputs, expectations, a watch list and save frames as values; a hardware build of a program
+  depending on it carries none of it.
 - `pxt`: the driver's side of the protocol over the runtime's existing seam, `Runtime.messagePosted`
   collecting what the program sends and `board.receiveMessage` delivering what the driver posts,
   both DOM-free and the same seam the live simulator puts a window behind; the program run to its
@@ -97,8 +97,9 @@ Code inside the compiled program as a contributor.
   without the registration; the counter scenario declared from a `test.ts` and again from
   `main.ts` produces a trace byte-identical to the file form's, a build that ignores tests drops
   the first and keeps the second, a scenario call after the first frame boundary is refused, a
-  declared name equal to a scenario file's basename is refused before any run, and `pxt simtest`
-  given one name runs that scenario alone.
+  declared name equal to a scenario file's basename is refused before any run, `pxt simtest`
+  given one name runs that scenario alone, and a declared `t.save(40)` is written out as
+  `"saves": [40]` in the scenario's file form.
 - Status lines: Contributors (program contributors); Scenarios (the static TypeScript form).
 
 ## Phase 4: the worker shell and the Node caller
@@ -226,6 +227,35 @@ The screen as a channel.
   screen expectation leaves the frame's bytes beside the scenario; the screen's rendered value is
   16 characters on every frame of a run with a moving sprite.
 - Status lines: Composition, values, state and events (bulk channels).
+
+## Phase 10: saving and restoring a world
+
+A world's state saved at a frame boundary and restored into a fresh driver.
+
+- `pxt`: `saveState` and `restoreState` on the contributor shape; the driver's saved form (frame
+  index, pending inputs, stream positions, surface digest) with its format version; the save
+  assembling the driver's form, every contributor's in composed order, each board's runtime saved
+  form with its compiled program, and the versions record; restore into a fresh driver with refusal
+  by a layer that cannot read a format version or by a digest mismatch; the platform media's
+  `saveState` and `restoreState` (the ether's link matrix, loss-model state and delay queue; the
+  bus's roles, identities and announces; the spatial world's positions and path progress); the save
+  operation on every shell (run to a frame and write, or restore and run on), the scenario's `saves`
+  field writing `<name>.<frame>.save.json` beside the scenario, and the coordinator's save for a
+  tab; the corpus of saves from each released format as a conformance fixture.
+- `pxt-microbit`: the board's runtime saved form, taken by the runtime's own mechanism, which is
+  designed apart from this plan and lands with it or before.
+- Depends on: phases 7 and 8; the runtime's saved form.
+- Lands when: a save at frame N of the fixture world restores and continues to a trace
+  byte-identical from N to the unbroken run's; two saves at one frame are byte-identical; a
+  fixture medium without `saveState` makes a save refused by its name; a save written by the
+  previous format of the driver's form restores under the current one; a save embedding a program
+  compiled by an older target version resumes under the current one; a scenario with `saves: [50]`
+  leaves `<name>.50.save.json` beside it and the same run with no `saves` field leaves a
+  byte-identical trace; a scenario with `from` naming that file and the original's inputs from
+  frame 51 produces the unbroken run's trace from frame 51; the worker shell given the same save
+  as a JSON string restores it and produces the same trace; an input due at frame 50 under `from`
+  is rejected.
+- Status lines: Saving and restoring; Conformance (the saved-state checks).
 
 ## After the phases
 

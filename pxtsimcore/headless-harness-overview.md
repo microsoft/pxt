@@ -103,7 +103,9 @@ every frame.
 The live simulator can run with a seeded random source and log how long each frame took. Then a
 session is a recording: the seed, each frame's clock delta, and the user's inputs with their
 frames, replayable headlessly as a scenario. A bug seen in the editor becomes a test with no
-retyping.
+retyping. A world's state can also be saved at a frame and restored later, every contributor
+saving its own, so a long session resumes after a reload and a tab rewinds without replaying from
+the start; a save made under an older version still loads.
 
 ## What to read next
 
