@@ -146,7 +146,7 @@ namespace pxt.cpp {
         let disabledDeps = ""
         const packages: Map<ExtensionPackage> = {};
         const runtimePackages: Map<boolean> = {};
-        const packagePaths: Map<string[]> = {};
+        const packagePaths: Map<string[]> = Object.create(null);
         for (const path of Object.keys(files)) {
             const match = /^pxt_modules\/([^/]+)\/pxt\.json$/.exec(path);
             if (!match) continue;
