@@ -370,7 +370,8 @@ carries both.
 
 ## Scenarios
 
-A scenario is a file beside the project. It declares:
+A scenario is a file in the project, or the same declarations made from the project's test code
+(below). It declares:
 
 - The seed every random choice in the run draws from (`host.rng()` and the media's own streams),
   the virtual host's default seed when omitted.
@@ -458,6 +459,40 @@ URLs of the headless bundles; a write replaces the entries the writer owns; a su
 delivers a change notification whenever the file changes. An extension that edits topology writes
 the media and attachments it owns; a reader takes the whole file and learns which extension
 declared an entry from the entry's own `module` and `kind`.
+
+A scenario in static TypeScript. Any file the project compiles may declare scenarios through the
+`harness` library instead of writing the file: a test file, which `pxt.json` lists as `testFiles`
+and a build of the project compiles unless told to ignore tests, never a dependency's; or a program
+file, where a declaration costs a hardware build nothing and the live simulator ignores it, and
+which is the only place blocks reach. Each `harness.scenario(name, fields, declare)` call names a
+scenario, gives the fields the file would carry outside its inputs and expectations, and declares
+those through the handle it passes. The library sends the declaration over the `harness` channel as
+it sends a contributor's; the driver runs the program to its first frame boundary, takes every
+scenario declared, and runs each as if it were `<name>.scenario.json` beside the test file, the
+trace landing there under that name. The declared form is data, not behavior: the handle takes
+values only, a declaration after the first frame boundary is refused with a stable code, and a shell
+writes any declared scenario out as its file on request, so the two forms are one scenario in two
+syntaxes and a tool that reads files reads both. A scenario's name is its file's basename or its
+declared name, and names are unique across the project whichever form they take: a declared
+`counter` beside a `counter.scenario.json`, or two declarations of one name, is a collision refused
+before any run, as roles and keys are. Scenario calls are `shim=TD_NOOP` like the rest of the
+library and reach no hardware build. The counter scenario, declared:
+
+```ts
+harness.scenario("counter", { seed: 7, frames: 120 }, t => {
+    t.input("light-level", 0, 180)
+    t.input("button-a", 10, "click")
+    t.input("button-a", 40, "click")
+    t.expectEvent("display.show", "2", 40, 60)
+    t.expectChannel("display", "0000000000000000000000000", 100, 119)
+    t.expectNoEvent("serial", "error", 0, 119)
+    t.watch(["display", "display.show", "serial"])
+})
+```
+
+Running it produces the trace the file form produces, byte for byte. Declared from a program file
+the form is reachable from blocks, so a test of a program can be authored in the editor the program
+was.
 
 The expectation semantics are defined here, once, and pxt's evaluator implements them. A consumer
 that carries scenarios in a shape of its own implements the same semantics and checks against
@@ -548,6 +583,8 @@ shells are thin:
   fetches the two headless bundles from the target's release beside the compiler it already
   fetches, compiles the project as `mkc build` does, and runs every scenario the project holds. A
   target's release therefore ships `pxtsimcore.js` and its `simcore.js` beside `pxtworker.js`.
+- Either command runs every scenario by default and one or more by name when names are given,
+  `mkc test counter`, the name being the scenario's name in either form.
 - A Node caller drives the driver programmatically with the same inputs; the two commands above
   are thin front ends over it.
 - A browser worker loads `pxtsimcore.js` and `simcore.js`, installs the virtual host and the silent
@@ -823,7 +860,8 @@ What exists and what does not, section by section. A change that lands a piece e
 - Composition, values, state and events: not started. There is no composed surface, no dispatch
   table and no trace record; a program's serial output reaches `simtest` through the serial
   message alone.
-- Scenarios: not started. `pxt simtest` takes programs, and `@serial` is the only expectation. No
+- Scenarios: not started. `pxt simtest` takes programs, and `@serial` is the only expectation; no
+  scenario API exists in static TypeScript. No
   `staging.json` and no `projstaging` family exist, and no request family lets a simulator
   extension read or write project files.
 - The scenario file and the trace format: not started. `simtest` reads no scenario file and

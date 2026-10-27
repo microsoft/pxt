@@ -36,7 +36,9 @@ due, and the expectations. An expectation either says a channel shows a value fo
 window, or an event with a value arrives at some frame in a window; each has a negated form. There
 are no tolerances; a contributor that wants fuzzy matching declares a coarser channel. The scenario
 may also describe the staging, which boards and attached modules and media the world has, and may
-pin the versions it was written against.
+pin the versions it was written against. The same scenario can be declared in static TypeScript
+from any file the project compiles, a test file or the program itself, and from the program it is
+reachable from blocks; it runs identically either way.
 
 **Trace.** One JSON Lines file per run: a header, then one record per frame holding the channels
 that changed and the events that fired. Values are strings, rendered by the contributor that owns

@@ -76,11 +76,15 @@ Code inside the compiled program as a contributor.
   `shim=TD_NOOP` functions with simulator-only bodies over `control.simmessages`: the declaration
   sent on the `harness` channel from start-up code, inputs received on `harness.<key>`, state and
   events posted on `harness` once per frame from a loop at the frame period the library reads from
-  the simulator host; a hardware build of a program depending on it carries none of it.
+  the simulator host; the scenario API, `harness.scenario(name, fields, declare)` with a handle
+  taking inputs, expectations and a watch list as values; a hardware build of a program depending
+  on it carries none of it.
 - `pxt`: the driver's side of the protocol; the program run to its first frame boundary and the
   surface fixed from the staging and the declarations before frame 0; the key as outer name; a
   late declaration and a key collision each refused with a stable code, the first registration
-  standing; the composed surface in `simtest` resolved from the
+  standing; scenarios declared from test code taken at the first frame boundary and run as files
+  beside the test file, a declaration after that boundary refused, and a shell writing a declared
+  scenario out as its file on request; the composed surface in `simtest` resolved from the
   declarations the programs publish.
 - Depends on: phase 2.
 - Lands when: a test program registering a contributor with one channel and one kind runs under a
@@ -88,8 +92,12 @@ Code inside the compiled program as a contributor.
   state read with no round trip; two programs registering the same key produce the refusal, and so
   does a declaration sent after frame 0; a scenario with a non-default `framePeriod` reads the
   program's posts once per frame; the test program's hardware build is byte-identical with and
-  without the registration.
-- Status lines: Contributors (program contributors).
+  without the registration; the counter scenario declared from a `test.ts` and again from
+  `main.ts` produces a trace byte-identical to the file form's, a build that ignores tests drops
+  the first and keeps the second, a scenario call after the first frame boundary is refused, a
+  declared name equal to a scenario file's basename is refused before any run, and `pxt simtest`
+  given one name runs that scenario alone.
+- Status lines: Contributors (program contributors); Scenarios (the static TypeScript form).
 
 ## Phase 4: the worker shell and the Node caller
 
