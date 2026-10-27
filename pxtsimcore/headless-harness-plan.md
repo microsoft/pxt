@@ -79,13 +79,15 @@ Code inside the compiled program as a contributor.
   the simulator host; the scenario API, `harness.scenario(name, fields, declare)` with a handle
   taking inputs, expectations and a watch list as values; a hardware build of a program depending
   on it carries none of it.
-- `pxt`: the driver's side of the protocol; the program run to its first frame boundary and the
-  surface fixed from the staging and the declarations before frame 0; the key as outer name; a
-  late declaration and a key collision each refused with a stable code, the first registration
-  standing; scenarios declared from test code taken at the first frame boundary and run as files
-  beside the test file, a declaration after that boundary refused, and a shell writing a declared
-  scenario out as its file on request; the composed surface in `simtest` resolved from the
-  declarations the programs publish.
+- `pxt`: the driver's side of the protocol over the runtime's existing seam, `Runtime.messagePosted`
+  collecting what the program sends and `board.receiveMessage` delivering what the driver posts,
+  both DOM-free and the same seam the live simulator puts a window behind; the program run to its
+  first frame boundary and the surface fixed from the staging and the declarations before frame 0;
+  the key as outer name; a late declaration and a key collision each refused with a stable code, the
+  first registration standing; scenarios declared from test code taken at the first frame boundary
+  and run as files beside the test file, a declaration after that boundary refused, and a shell
+  writing a declared scenario out as its file on request; the composed surface in `simtest` resolved
+  from the declarations the programs publish.
 - Depends on: phase 2.
 - Lands when: a test program registering a contributor with one channel and one kind runs under a
   scenario addressing `<key>.<name>`, its input applied before the frame's handlers run and its
