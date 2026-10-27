@@ -47,7 +47,9 @@ check fails.
 **World.** One board is the default, but a scenario can stage several, each with its own project,
 joined by media. The radio ether is a medium with a per-link matrix, loss models and delay, all
 driven from the run seed so a flaky network is reproducible. A jacdac bus and a display shield are
-media too. Attach and detach are inputs of a medium, so a test can unplug a module mid-run, or
+media too, and an extension can ship a medium of its own, a physical world with obstacles, light
+and sound that feeds the ether and the boards' sensors, as a DOM-free core the harness runs
+headless. Attach and detach are inputs of a medium, so a test can unplug a module mid-run, or
 stage one unplugged and plug it in at a chosen frame to check that the program notices a device
 arriving, the way a real one would.
 

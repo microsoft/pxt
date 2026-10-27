@@ -115,16 +115,19 @@ One driver under three shells.
 The world level: media as contributors, attachments as staging, modules over a medium.
 
 - `pxt`: the `core` entry of the simulator extension configuration and its loading into the core
-  context, `pxsim.harness.defineModule(kind, factory)` pairing each factory with the script being
-  loaded and the attachment's `kind` selecting one; the medium contributor shape with attach and
-  detach as input kinds and the staging's initial topology; the jacdac bus and the display shield
-  as the first media; `staging.json` beside `pxt.json` as the default a scenario's staging
-  replaces section by section; the `projstaging` request family (read with bundle and core URLs,
-  write of the entries the writer owns, subscribe with change notifications) behind its
-  registration flag; a detach rendering a module's channels absent without moving the surface; the
-  simulator coordinator routing extension traffic by topology with link and unlink calls, in place
-  of broadcasting a channel to every extension frame; the live run and a scenario both starting
-  from `staging.json`.
+  context, `pxsim.harness.defineModule(kind, factory)` and `defineMedium(kind, factory)` pairing
+  each factory with the script being loaded and the entry's `kind` selecting one; the medium
+  contributor shape with its propagate step, its declared quantities and params, attach and detach
+  as input kinds, the staging's initial topology and the parameters a board's attachment carries; a
+  map validated against declared quantities and board kinds, `params` against declared params, and
+  the driven marking on a board kind a map targets, with a scenario scripting it rejected; media
+  propagating in staging order; the jacdac bus and the display shield as the first platform media;
+  `staging.json` beside `pxt.json` as the default a scenario's staging replaces section by section;
+  the `projstaging` request family (read with bundle and core URLs, write of the entries the writer
+  owns, subscribe with change notifications) behind its registration flag; a detach rendering a
+  module's channels absent without moving the surface; the simulator coordinator routing extension
+  traffic by topology with link and unlink calls, in place of broadcasting a channel to every
+  extension frame; the live run and a scenario both starting from `staging.json`.
 - `pxt-microbit`: the board attaching to a bus.
 - Depends on: phase 2; phase 4 for the live coordinator work.
 - Lands when: the spec's fixture contributor, shipped as the `core` script of a test extension
@@ -136,7 +139,10 @@ The world level: media as contributors, attachments as staging, modules over a m
   identity in two runs; a role equal to the outer segment of a board name is refused at staging; a
   `projstaging` write from one frame reaches a subscriber in another, and the subscriber's next
   surface operation shows the new role; the read reply's core URL resolves to the test extension's
-  script.
+  script; a medium the test extension defines, listed before the bus, applies a value to a kind of
+  the bus in its propagate step and the bus reads it the same frame; the surface marks a board
+  kind that medium's map targets as driven by it, a scenario scripting that kind is rejected by
+  composed name, and a map naming an undeclared quantity is refused before the first frame.
 - Status lines: Media and topology (the media framework, the bus and the shield); Scenarios
   (`staging.json`, `projstaging`).
 
@@ -149,13 +155,16 @@ Several boards in lockstep, and radio frames carried by a medium.
   per world; the scenario's boards with their projects; the radio ether as a medium delivering
   frames at frame boundaries in stable order with a link matrix (`ether.link <a>-<b>`) and a
   per-link strength scripted through `ether.strength <a>-<b>` or defaulted.
-- `pxt-common-packages`: the radio's core posting frames to the ether when one is present, the
-  broadcast `radiopacket` message staying for the live simulator.
+- `pxt-common-packages`: the radio's core attaching to the medium that implements the `radio`
+  contract when one is staged, the broadcast `radiopacket` message staying for the live simulator.
+- `pxt`: the `radio` contract declared with its required names, the ether as the platform's
+  implementation of it.
 - Depends on: phases 4 and 5.
 - Lands when: two boards exchanging frames over the ether receive each other's frame at the same
   frame offset whichever board id is lower; cutting a link at a frame stops delivery from that
   frame; a variant of the spec's three-board example with scripted link strengths and no spatial
-  medium runs green.
+  medium runs green; the same variant runs green over a test extension's medium implementing the
+  `radio` contract, with the platform ether not staged.
 - Status lines: Worlds with several simulators; Media and topology (the ether's delivery).
 
 ## Phase 7: the radio ether's model surface and the spatial world
@@ -164,13 +173,17 @@ Controlled nondeterminism.
 
 - `pxt`: the loss models (Bernoulli, Gilbert-Elliott) on a random stream derived from the run seed
   and the medium's id; delay in whole frames with jitter and duplication; the drop event per link
-  with its cause; the collision switch; the spatial world as a medium with placement and path kinds
-  and position channels; strength from distance by log-distance path loss with seeded shadowing
-  and the reception curve.
+  with its cause; the collision switch; the ether reading each board's radio profile from its
+  attachment; the platform's spatial world as a medium of positions alone, with placement and path
+  kinds and position channels; strength from distance by log-distance path loss with seeded
+  shadowing and the reception curve, read from the platform's world when no other feeds the ether.
+- `pxt-microbit`: the board's radio profile declared for the ether.
 - Depends on: phase 6.
 - Lands when: every frame a loss model removes is matched by one drop event on its link and a bare
   matrix emits none; changing a loss parameter leaves the random numbers a program draws unchanged;
-  the three-board example runs with strengths derived from positions.
+  the three-board example runs with strengths derived from positions; the same example with a test
+  extension's world listed before the ether runs with the strengths that world applies, and a level
+  that world applies through a board's attachment map is read by the program on the next frame.
 - Status lines: Media and topology (complete).
 
 ## Phase 8: recording and replay

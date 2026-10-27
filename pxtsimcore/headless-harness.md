@@ -53,30 +53,32 @@ Four sources implement it:
   declaration when it registers, drains its inbox at the start of each
   frame so an input due at frame N is applied before frame N's handlers run, and posts its state
   and events at the end of each frame so the driver reads them without a round trip.
-- A medium: a world-level contributor that connects boards and modules (below).
+- A medium: a world-level contributor that connects boards and modules, or models the space they
+  share (below). The platform supplies the media a target's own cores speak to; an extension ships
+  a medium of its own the way it ships a module.
 
 How a program contributor registers. The contract is a set of messages over the program-message
 channel, so a program in any language can speak it; the `harness` library in pxt-common-packages
 (`libs/harness`, depending on `core`, a `harness` namespace with no blocks) is the wrapper a program
 normally uses, and an extension that contributes depends on it. Its functions are `shim=TD_NOOP`
 with simulator-only bodies, so a program contributor compiles to nothing on hardware and the posting
-loop runs only in the simulator. The program sends its declaration on the `harness` channel from its
-start-up code: a JSON object with `key`, `provider`, `docs` and the `inputs`, `channels` and
-`events` lists of entries in the shape above, names bare. The driver runs the program to its first
-frame boundary, collects the declarations, and fixes the composed surface before frame 0 is
-dispatched; a declaration arriving later and one whose key is already registered or taken by another
-outer name are each refused with a stable code naming the key, the first registration standing and
-the program running on without a contributor. Inputs arrive on the `harness.<key>` channel, one
-message per input, `{ "kind", "value" }` with the kind bare and the value as the scenario wrote it;
-the driver posts every input due at frame N before frame N's handlers run, in scenario order, and
-the program applies each through the contributor's own seam, its handler receiving the scalar. The
-program posts on the `harness` channel once per frame, from a loop the library runs at the frame
-period it reads from the simulator host, `{ "key", "state", "events" }` with `state` an object of
-bare channel names
-to rendered strings and `events` the `[name, value]` pairs emitted since the last post, in emission
-order; the driver stamps the post with the frame it arrives in, prefixes the key, and reads it in
-its post-step with no round trip. A program that declares and never posts renders its channels
-absent.
+loop runs only in the simulator. The library and the program's own contributor code compile under
+pxt's static TypeScript subset, so they use only what that subset offers. The program sends its
+declaration on the `harness` channel from its start-up code: a JSON object with `key`, `provider`,
+`docs` and the `inputs`, `channels` and `events` lists of entries in the shape above, names bare.
+The driver runs the program to its first frame boundary, collects the declarations, and fixes the
+composed surface before frame 0 is dispatched; a declaration arriving later and one whose key is
+already registered or taken by another outer name are each refused with a stable code naming the
+key, the first registration standing and the program running on without a contributor. Inputs arrive
+on the `harness.<key>` channel, one message per input, `{ "kind", "value" }` with the kind bare and
+the value as the scenario wrote it; the driver posts every input due at frame N before frame N's
+handlers run, in scenario order, and the program applies each through the contributor's own seam,
+its handler receiving the scalar. The program posts on the `harness` channel once per frame, from a
+loop the library runs at the frame period it reads from the simulator host, `{ "key", "state",
+"events" }` with `state` an object of bare channel names to rendered strings and `events` the
+`[name, value]` pairs emitted since the last post, in emission order; the driver stamps the post
+with the frame it arrives in, prefixes the key, and reads it in its post-step with no round trip. A
+program that declares and never posts renders its channels absent.
 
 A step counter in a micro:bit program, from an extension whose repository is `example/pxt-steps`:
 
@@ -105,23 +107,35 @@ the wire, the program sends the declaration once, the driver sends `{ "kind": "g
 on `harness.steps` at frame 0, and the program sends `{ "key": "steps", "state": { "count": "1" },
 "events": [] }` on `harness` each frame, with `[["reached", "3"]]` in the frame the goal is met.
 
-How a module is found. A simulator extension is declared in the target's `approvedRepoLib` under
-its `owner/repo` with a `simx` entry naming its iframe page; the entry has a `core` field, the path
-within the repository of a DOM-free script. The driver loads the script into the same context as the
-target's core bundle, as `pxtsimcore.js` and `simcore.js` are loaded, and as it loads the script
-calls `pxsim.harness.defineModule(kind, factory)` once per kind of module the extension stands for
-(a slider, a button, a servo), `factory` taking an attachment's config and the driver's `emit` and
+How a module is found. A simulator extension is declared in the target's `approvedRepoLib` under its
+`owner/repo` with a `simx` entry naming its iframe page; the entry has a `core` field, the path
+within the repository of a DOM-free script. The script is plain JavaScript with the full standard
+library, never static TypeScript: the driver loads it into the same context as the target's core
+bundle, as `pxtsimcore.js` and `simcore.js` are loaded, and as it loads the script calls
+`pxsim.harness.defineModule(kind, factory)` once per kind of module the extension stands for (a
+slider, a button, a servo), `factory` taking an attachment's config and the driver's `emit` and
 returning a contributor; the driver pairs each call with the script it is loading, so the script
 names no repository. An extension with no `core` field is the iframe-only case. Nothing registers at
 test time: an attachment, from the project's staging file or the scenario's staging, names the
 extension as its `module` by `owner/repo` and the kind as `kind`, omitted when the core defines one
 kind, and the driver builds one contributor per attachment from that kind's factory, under the
-attachment's role, with the `owner/repo` as its `provider`. How the module exchanges frames with the
-board is the contract of the medium it is attached over (Media and topology). In
-the live simulator the extension's page builds the same core source into itself, calls the factory
-directly and renders the contributor's state, so the contributor is the model in the headless run
-and in the frame alike; `core.js` is the entry that wraps the factory in the `defineModule` call for
-the driver's context, where `pxsim` exists, and the page needs no `pxsim`. How the page observes the
+attachment's role, with the `owner/repo` as its `provider`. A core script defines a medium the same
+way, `pxsim.harness.defineMedium(kind, factory)`, the factory taking the medium's params and the
+driver's `emit` and returning a contributor that also carries `propagate(apply)`, the step a medium
+runs after the boards: `apply(id, name, value)` delivers a value to an attached board under a
+quantity its attachment map names, or to a medium listed after this one under one of that medium's
+own kinds, and delivers nothing for a quantity the map leaves out. A medium declares two lists a
+module does not: `quantities()`, entries `{ name, description, values, docs? }` for each quantity
+its propagate step applies to a board, and `params()`, entries of the same shape for each field its
+staging `params` accepts, so a staging editor or a tool can validate and write a staging for a
+medium it has never seen; a map key must be a declared quantity and a map value one of the board's
+own kinds. A staging's media entry names the extension as its `module` by `owner/repo` and the kind
+as `kind`, and omits `module` for a medium the platform supplies. How the module exchanges frames
+with the board is the contract of the medium it is attached over (Media and topology). In the live
+simulator the extension's page builds the same core source into itself, calls the factory directly
+and renders the contributor's state, so the contributor is the model in the headless run and in the
+frame alike; `core.js` is the entry that wraps the factory in the `defineModule` call for the
+driver's context, where `pxsim` exists, and the page needs no `pxsim`. How the page observes the
 core is the extension's business, and the core knows nothing of the page.
 
 A slider whose repository is `example/pxt-slider`. The target's `approvedRepoLib` entry:
@@ -165,6 +179,77 @@ A scenario staging it on the one board over a bus, and moving it at frame 10:
   ]
 }
 ```
+
+A medium from an extension `example/pxt-lamps`: a world of lamps at fixed positions, each board
+reading a light level that falls off with distance from every lamp. Its `built/core.js`:
+
+```js
+pxsim.harness.defineMedium("lamps", (params, emit) => {
+    const lamps = params.lamps;
+    const boards = params.boards;
+    const level = id => {
+        let sum = 0;
+        for (const lamp of lamps) {
+            const dx = lamp.x - boards[id].x, dy = lamp.y - boards[id].y;
+            sum += lamp.lumens / (1 + dx * dx + dy * dy);
+        }
+        return Math.min(255, Math.round(sum));
+    };
+    return {
+        inputKinds: () => lamps.map(l => ({ name: "lamp " + l.id + ".lumens",
+            description: "how bright the lamp is", class: "level",
+            values: { range: [0, 100000] } })),
+        stateChannels: () => Object.keys(boards).map(id => ({ name: "light " + id,
+            description: "the light level the world gives the board",
+            rendering: "0 to 255" })),
+        eventKinds: () => [],
+        quantities: () => [{ name: "light", description: "light falling on a board",
+            values: { range: [0, 255] } }],
+        params: () => [
+            { name: "lamps", description: "the lamps: id, x, y, lumens each",
+              values: { encoding: "array of { id, x, y, lumens }" } },
+            { name: "boards", description: "each attached board's x and y by id",
+              values: { encoding: "object of id to { x, y }" } }],
+        apply: (kind, value) => {
+            lamps.find(l => "lamp " + l.id + ".lumens" === kind).lumens = value;
+        },
+        readState: () => Object.fromEntries(
+            Object.keys(boards).map(id => ["light " + id, "" + level(id)])),
+        propagate: apply => {
+            for (const id of Object.keys(boards)) apply(id, "light", level(id));
+        },
+    };
+});
+```
+
+A scenario staging it on one board, mapping its light quantity to the board's own light-level kind,
+and dimming the lamp at frame 20:
+
+```json
+{
+  "frames": 40,
+  "staging": {
+    "media": [
+      { "id": "world", "kind": "lamps", "module": "example/pxt-lamps",
+        "params": { "lamps": [{ "id": "1", "x": 0, "y": 10, "lumens": 20000 }],
+                    "boards": { "board": { "x": 0, "y": 0 } } },
+        "attached": [{ "id": "board", "map": { "light": "light-level" } }] }
+    ]
+  },
+  "inputs": [{ "kind": "world.lamp 1.lumens", "at": 20, "value": 2000 }],
+  "expectations": [
+    { "channel": "world.light board", "value": "198", "window": { "from": 0, "to": 19 } },
+    { "channel": "world.light board", "value": "20", "window": { "from": 21, "to": 39 } }
+  ]
+}
+```
+
+The world's `propagate` applies the level to the board under the quantity `light`, which the
+attachment maps to `light-level`, so the program reads 198 from frame 1 and 20 from frame 21; a
+board whose map named no `light` would read nothing from this world. The world knows no sensor and
+no target, only the quantity and the id. With this staging the board's `light-level` is a driven
+kind: the surface marks it as driven by `world`, and a scenario that scripts it is rejected, because
+the world would overwrite the input on the next frame.
 
 Rules every contributor obeys:
 
@@ -212,15 +297,21 @@ The driver composes a world's contributors into one declared surface and one dis
   input or an expectation says which it names.
 
 - Validation. A scenario's kinds are checked against the composed surface for its staging and each
-  input's value against its kind's `values`; a rejection lists the composed names.
+  input's value against its kind's `values`; a rejection lists the composed names. A board kind
+  that a staged medium's attachment map targets is driven: the surface carries the medium's id on
+  it as `drivenBy`, and a scenario that scripts a driven kind is rejected, since the medium would
+  overwrite the input on the next frame. A staging whose map names an undeclared quantity or a
+  kind the board does not declare, or whose `params` carry a field the medium does not declare, is
+  refused before the first frame.
 - Dispatch, per frame: route the inputs due this frame to their contributors; the contributors'
   pre-step; the runtime's frame; the contributors' post-step folds the posts received during the
   frame into state; the driver reads every contributor's `readState` once and merges in composed
   order, and collects the events emitted during the frame in emission order. In a world of several
   simulators every board
-  takes its frame first and every medium propagates after, so a radio frame sent on frame N
-  reaches its receivers on frame N+1 whichever board sent it; delivery latency never depends on
-  board order.
+  takes its frame first and every medium propagates after, in the order the staging lists the
+  media, so a radio frame sent on frame N reaches its receivers on frame N+1 whichever board sent
+  it, delivery latency never depends on board order, and a medium listed before another can feed
+  it within the frame. The composed surface keeps its order by id whatever the staging's order.
 
 The surface of a micro:bit with the slider of the Contributors section under the role `slider 1`,
 the `steps` program contributor and one bus, in composed order (the board's own entries
@@ -314,18 +405,19 @@ A scenario is a file beside the project. It declares:
   the trace header whether or not the scenario pins them.
 
 The file is JSON, `<name>.scenario.json`, anywhere in the project: beside `pxt.json` or in any
-folder of it, an extension's own folder included, and the trace and any bulk-value files land
-beside it. A shell finds every `*.scenario.json` the project holds. Its fields are those
-declarations: `"seed"`; `"frames"`; `"staging"` with `"boards"` (`{ "id", "project" }` entries,
-`project` a path relative to the file, the array omitted for the one-board case), `"attachments"`
-(`{ "board", "role", "module", "kind", "config" }` entries) and `"media"` (`{ "id", "kind",
-"params", "attached" }` entries, `attached` the initial topology); `"inputs"` (`{ "kind", "at",
-"value" }`
-entries); `"expectations"` (`{ "channel", "value", "window" }` level entries and `{ "event",
-"value", "window" }` arrival entries, `window` as `{ "from", "to" }`, `"not": true` for a negated
-form); `"watch"` (an array of composed names); `"framePeriod"`; `"clock"` (an array of `frames`
-integers); and `"versions"`, the pin. A field a scenario does not need is omitted; `frames` is the
-one required field.
+folder of it, an extension's own folder included, and the trace and any bulk-value files land beside
+it. A shell finds every `*.scenario.json` the project holds. Its fields are those declarations:
+`"seed"`; `"frames"`; `"staging"` with `"boards"` (`{ "id", "project" }` entries, `project` a path
+relative to the file, the array omitted for the one-board case), `"attachments"` (`{ "board",
+"role", "module", "kind", "config" }` entries) and `"media"` (`{ "id", "kind", "module", "params",
+"attached" }` entries, `module` only for a medium an extension ships, `attached` the initial
+topology as a list of ids or of `{ "id", "profile", "map" }` entries where a board's attachment
+carries parameters the medium reads); `"inputs"` (`{ "kind", "at", "value" }` entries);
+`"expectations"` (`{ "channel", "value", "window" }` level entries and `{ "event", "value", "window"
+}` arrival entries, `window` as `{ "from", "to" }`, `"not": true` for a negated form); `"watch"` (an
+array of composed names); `"framePeriod"`; `"clock"` (an array of `frames` integers); and
+`"versions"`, the pin. A field a scenario does not need is omitted; `frames` is the one required
+field.
 
 A counter program on one micro:bit, `counter.scenario.json` beside its `pxt.json`, with a light
 level held from the first frame, two clicks, and three expectations:
@@ -403,9 +495,10 @@ omitted, never written as `null`.
   "surface": {...}}`. `versions` holds `pxt-core`, `target` and then each pinned dependency by name,
   each a version string, the dependencies in ascending order of name. `surface` is the composed
   surface: `"contributors"`, an array in composed order of `{ "id", "provider", "docs" }` records,
-  and `"inputs"`, `"channels"` and `"events"`, each an array in composed order of the declared
-  entry records with the composed name as `name` and the declaring contributor's id as
-  `contributor`, so a trace describes itself without its scenario. The surface digest is FNV-1a
+  and `"inputs"`, `"channels"`, `"events"`, `"quantities"` and `"params"`, each an array in
+  composed order of the declared entry records with the composed name as `name` and the declaring
+  contributor's id as `contributor`, an input record of a driven kind carrying `drivenBy`, so a
+  trace describes itself without its scenario. The surface digest is FNV-1a
   64-bit over the canonical bytes of the `surface` object, 16 lowercase hex digits; a host that
   caches or compares surfaces uses it, and every host computes the same one.
 - A frame record: `{"frame": n, "state": {name: value, ...}, "events": [[name, value], ...]}`.
@@ -526,10 +619,15 @@ because there are several, and the media are not, because they belong to the wor
 
 ## Media and topology
 
-A medium is a contributor at the world level that connects boards and modules. A board or module
-attaches to one or more typed media; which media exist is a platform supply; attach and detach are
-host-invoked operations; a group or address within a medium is isolated from other instances of
-that medium.
+A medium is a contributor at the world level that connects boards and modules, or models the space
+they share. A board or module attaches to one or more typed media; the platform supplies the media a
+target's own cores speak to, the radio ether, the jacdac bus, the display shield and a spatial world
+of positions alone, and an extension ships any other as a core; attach and detach are host-invoked
+operations; a group or address within a medium is isolated from other instances of that medium. A
+medium reads nothing about a board but the parameters its attachment carries: the ether reads a
+radio profile the target declares (transmit power levels in dBm, receiver sensitivity, band), and a
+world that drives sensors reads a map from the quantities it models to the board's own input kinds,
+light to a micro:bit's light-level kind, so no medium names a target or a sensor.
 
 - Media are explicit instances with ids. Two jacdac buses are two media; a shield is one; a radio
   group is a parameter of the ether.
@@ -538,8 +636,29 @@ that medium.
   `ether.strength <a>-<b>` input kind, or derived from the two boards' positions by a deterministic
   propagation model quantized to whole dBm. The ether's channels report per-link strength either
   way.
-- The spatial world owns positions. Its input kinds place a board or module or move it along a
-  path; its channels report positions as compound values.
+- The platform's spatial world owns positions and nothing else. Its input kinds place a board or
+  module or move it along a path; its channels report positions as compound values; it is what the
+  ether's default propagation reads when no richer world is staged.
+- A richer world is a medium an extension ships: obstacles that move, surfaces with states,
+  sources of light, sound and heat, an acoustic layer with echo, whatever its physics models, all
+  inside one DOM-free core the driver runs headless and the coordinator runs live. Its layers are
+  its internal structure; the harness sees one contributor whose kinds and channels name the
+  things it models (`world.obstacle door.open`, `world.surface floor.wet`, `world.sound board 2`).
+- Media feed one another through their declared kinds and nothing else. A world listed before the
+  ether applies the per-link strength it computes through `ether.strength <a>-<b>` each frame, and
+  applies the levels it computes to each board through the kinds its attachment map names; the
+  board reads them on frame N+1 as it reads a radio frame. The ether never asks a world for
+  anything; it reads what was applied to it.
+- Medium contracts. The seam between a target's core and a medium is a named contract, and the
+  platform ships one implementation of each: `radio` (frames in from a board's radio core,
+  deliveries out to boards, each stamped with a strength), `jacdac` (module and board frames on a
+  bus) and `shield` (one board's screen). An extension's medium either implements a contract, in
+  which case the board's core attaches to it and the platform's medium of that contract is not
+  staged, or stands alone and feeds. A board attaches to at most one medium per contract. The
+  `radio` contract also fixes the names every implementation declares, `link <a>-<b>` and
+  `strength <a>-<b>` as kinds and channels and `drop <a>-<b>` as an event, so a scenario and a
+  telemetry view written against them run on the platform's ether and on an extension's radio
+  alike; an implementation adds whatever else it models.
 - The jacdac bus carries module frames among the boards and modules attached to it. An attach
   presents the module to the board's device stack exactly as a real device appearing on the bus
   would, announce included, under a device identity derived from the run seed and the module's
