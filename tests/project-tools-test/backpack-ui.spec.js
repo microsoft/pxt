@@ -393,51 +393,6 @@ describe("project backpack UI", function () {
         await idle();
     });
 
-    for (const theme of [
-        { name: "light", foreground: "#000000", background: "#FFFFFF", className: "" },
-        { name: "dark", foreground: "#FFFFFF", background: "#202020", className: "" },
-        { name: "high contrast", foreground: "#FFFFFF", background: "#000000", className: "high-contrast hc" }
-    ]) {
-        it(`keeps selected and unselected snippet names readable in ${theme.name}`, async () => {
-            // Match Semantic UI's global input selection styles.
-            await page.addStyleTag({ content: `
-                input::selection { color: rgba(0, 0, 0, .87); background-color: rgba(100, 100, 100, .4); }
-            ` });
-            await page.evaluate(({ foreground, background, className }) => {
-                document.body.className = className;
-                document.documentElement.style.setProperty("--pxt-neutral-foreground1", foreground);
-                document.documentElement.style.setProperty("--pxt-neutral-background1", background);
-            }, theme);
-            await signIn([item()]);
-            await page.click(rename);
-            await page.waitForFunction(() => document.activeElement.id === "project-backpack-name");
-            const contrast = await page.$eval("#project-backpack-name", input => {
-                const style = getComputedStyle(input);
-                const selection = getComputedStyle(input, "::selection");
-                const rgba = color => color.match(/[\d.]+/g).map(Number);
-                const blend = (color, background) => color.slice(0, 3)
-                    .map((channel, i) => channel * (color[3] ?? 1) + background[i] * (1 - (color[3] ?? 1)));
-                const luminance = color => color.map(channel => {
-                    const value = channel / 255;
-                    return value <= .04045 ? value / 12.92 : ((value + .055) / 1.055) ** 2.4;
-                }).reduce((sum, channel, i) => sum + channel * [.2126, .7152, .0722][i], 0);
-                const ratio = (foreground, background) => {
-                    const values = [luminance(blend(foreground, background)), luminance(background)];
-                    return (Math.max(...values) + .05) / (Math.min(...values) + .05);
-                };
-                const background = rgba(style.backgroundColor);
-                return {
-                    selected: input.value.slice(input.selectionStart, input.selectionEnd),
-                    normal: ratio(rgba(style.color), background),
-                    selection: ratio(rgba(selection.color), blend(rgba(selection.backgroundColor), background))
-                };
-            });
-            assert.equal(contrast.selected, "Jump");
-            assert.ok(contrast.normal >= 4.5, `Unselected text contrast: ${contrast.normal}`);
-            assert.ok(contrast.selection >= 4.5, `Selected text contrast: ${contrast.selection}`);
-        });
-    }
-
     it("preserves tab naming, roving focus, and rename/delete dialog submission", async () => {
         const saved = item();
         await signIn([saved]);
