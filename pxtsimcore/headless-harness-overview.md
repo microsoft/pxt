@@ -8,10 +8,10 @@ to read.
 
 A MakeCode program is tested by running it in the simulator with no screen attached, feeding it
 inputs at chosen moments, and checking what it did. The harness is the machinery that makes that
-repeatable: the same program, the same inputs and the same seed give the same result, byte for
-byte, whether the test runs from the command line, from Node or inside a browser worker. A test is
-a project plus a scenario file in the project, and running the test produces a trace file
-that records everything the program showed and did, frame by frame.
+repeatable: the same program, the same inputs and the same seed give the same result, byte for byte,
+whether the test runs from the command line, from Node or inside a browser worker. A test is a
+project plus a scenario in the project, and running the test produces a trace file that records
+everything the program showed and did, frame by frame.
 
 The unit of time is the simulator frame. Inputs are due at a frame, expectations hold over a range
 of frames, and every line of the trace is one frame.
@@ -27,9 +27,9 @@ bus that connects boards together. One shape serves all four.
 
 **Composed surface.** Before a run starts, the harness gathers every contributor's lists into one
 flat, ordered surface: this is everything the scenario may name. Names are plain for the board
-(`button-a`, `display`) and prefixed by the owner for everything else (`slider 1.position`,
-`steps.count`, `ether.link board 1-board 3`). The surface is fixed for the run, and it is written
-into the trace header, so a trace explains itself.
+(`button-a`, `display`) and prefixed by the contributor's id, its role, key or medium id, for
+everything else (`slider 1.position`, `steps.count`, `ether.link board 1-board 3`). The surface is
+fixed for the run, and it is written into the trace header, so a trace explains itself.
 
 **Scenario.** A small JSON file: how many frames to run, a seed, the inputs with the frame each is
 due, and the expectations. An expectation either says a channel shows a value for every frame of a
@@ -57,20 +57,20 @@ arriving, the way a real one would.
 
 ## How a run goes
 
-The driver loads the headless simulator bundles, builds the world from the staging, and starts the
-program. During start-up, code in the program that wants to be a contributor registers itself over
-the program-message channel, declaring its lists. The driver then fixes the composed surface,
-checks the scenario against it, and begins stepping frames. Each frame it delivers the inputs due,
-lets the simulator run the frame, reads every contributor's state once, collects the events, and
-writes the frame record. After the last frame it evaluates the expectations and reports verdicts.
-With several boards, every board steps before any medium delivers, so a radio frame sent on frame
-N always arrives on frame N+1.
+The shell loads the headless simulator bundles; the driver builds the world from the staging and
+starts the program. During start-up, code in the program that wants to be a contributor registers
+itself over the program-message channel, declaring its lists. The driver then fixes the composed
+surface, checks the scenario against it, and begins stepping frames. Each frame it delivers the
+inputs due, lets the simulator run the frame, reads every contributor's state once, collects the
+events, and writes the frame record. After the last frame it evaluates the expectations and reports
+verdicts. With several boards, every board steps before any medium delivers, so a radio frame sent
+on frame N always arrives on frame N+1.
 
-Everything in that paragraph lives in one shared driver in core. The shells around it are thin:
-`pxt simtest` for a target developer, `mkc test` for a project author with nothing but a project
-folder, a Node caller under both, and a browser worker. Beside running a
-scenario, every shell can also answer "what is the surface for this staging" without running one,
-which is what an editor tab needs to offer completion.
+Everything in that paragraph lives in one shared driver in core. The shells around it are thin: `pxt
+simtest` for a target developer, `mkc test` for a project author with nothing but a project folder,
+a Node caller under both, and a browser worker. Beside running a scenario, every shell can also
+answer "what is the surface for this staging" without running one, which is what an editor tab needs
+to offer completion, and can save the world at a frame and run on from a save.
 
 ## Two ways an extension joins in
 
@@ -78,7 +78,7 @@ An extension that ships a simulator page can also ship a core: a DOM-free script
 or more module kinds, each a factory returning a contributor. A user attaches a module to the board
 under a role they name, and the module's inputs and channels appear in the surface under that role.
 In the live editor the extension's own page builds in the same core and draws its state, so the
-model is one piece of code with two hosts.
+model is one piece of code with two homes.
 
 An extension whose simulation is really the program's own logic registers from inside the program
 instead: a few lines at start-up declare a key and the lists, and from then on the driver posts

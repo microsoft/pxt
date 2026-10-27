@@ -1,13 +1,13 @@
 # The headless test harness
 
-The design of the test harness the headless layer builds toward, above `pxt simtest`.
-`headless-harness-overview.md` beside this file is the short tour to read first, `README.md`
-describes the layer as it stands, the Status section at the end of this file says which parts of
-the harness exist, and `headless-harness-plan.md` is the order the rest lands in. A test is a
-project plus a scenario, and it runs from the command line, from Node and in a browser worker over
-the same driver, producing the same trace. The unit of time is the frame (`FRAME_MS` on the virtual
-host): a scripted input is due at a frame, an
-expectation holds over a window of frames, and every record in the trace is indexed by frame.
+The design of the test harness the headless layer builds toward, above `pxt simtest`. `headless-
+harness-overview.md` beside this file is the short tour to read first, `README.md` describes the
+layer as it stands, the Status section at the end of this file says which parts of the harness
+exist, and `headless-harness-plan.md` is the order the rest lands in. A test is a project plus a
+scenario, and it runs from the command line, from Node and in a browser worker over the same driver,
+producing the same trace. The unit of time is the frame (`FRAME_MS` on the virtual host): a scripted
+input is due at a frame, an expectation holds over a window of frames, and every record in the trace
+is indexed by frame.
 
 ## Contributors
 
@@ -18,7 +18,8 @@ One shape serves every source:
   a module an extension attaches (the role as the user spelled it); a key for a program
   contributor; a medium's id.
 - `provider`: who declares it, for attribution: the target for the board, the extension's
-  `owner/repo` for a module or a program contributor, the platform for a medium.
+  `owner/repo` for a module or a program contributor, the platform for a medium it supplies and the
+  extension's `owner/repo` for one an extension ships.
 - `docs`: optional markdown about the contributor as a whole: what it is and how its kinds,
   channels and events relate in time and to each other, the guidance a scenario author, a person
   or a tool, reads before scripting it.
@@ -46,11 +47,12 @@ One shape serves every source:
 Four sources implement it:
 
 - The board: `apply` is a typed input through the core primitives (`{ kind: "click", button: 1 }`
-  and its kin), `readState` is the headless board view's snapshot rendered per channel, and the
+  and its kin), `readState` is the headless board view's state rendered per channel, and the
   view's change signal carries its events.
-- A module: a simulator extension's DOM-free core, attached to a board over a medium. An extension
-  whose simulator exists only as an iframe page has no headless form and contributes nothing to a
-  headless run; it ships a core to be testable.
+- A module: a simulator extension's DOM-free core, attached to a board over a medium, or a module
+  the platform supplies, attached to the board directly. An extension whose simulator exists only as
+  an iframe page has no headless form and contributes nothing to a headless run; it ships a core to
+  be testable.
 - A program contributor: code inside the compiled program that registers over the program-message
   channel under a key of its own, a short name the extension chooses. It publishes its
   declaration when it registers, drains its inbox at the start of each
@@ -62,26 +64,26 @@ Four sources implement it:
 
 How a program contributor registers. The contract is a set of messages over the program-message
 channel, so a program in any language can speak it; the `harness` library in pxt-common-packages
-(`libs/harness`, depending on `core`, a `harness` namespace with no blocks) is the wrapper a program
-normally uses, and an extension that contributes depends on it. Its functions are `shim=TD_NOOP`
-with simulator-only bodies, so a program contributor compiles to nothing on hardware and the posting
-loop runs only in the simulator. The library and the program's own contributor code compile under
-pxt's static TypeScript subset, so they use only what that subset offers. The program sends its
-declaration on the `harness` channel from its start-up code: a JSON object with `key`, `provider`,
-`docs` and the `inputs`, `channels` and `events` lists of entries in the shape above, names bare.
-The driver runs the program to its first frame boundary, collects the declarations, and fixes the
-composed surface before frame 0 is dispatched; a declaration arriving later and one whose key is
-already registered or taken by another outer name are each refused with a stable code naming the
-key, the first registration standing and the program running on without a contributor. Inputs arrive
-on the `harness.<key>` channel, one message per input, `{ "kind", "value" }` with the kind bare and
-the value as the scenario wrote it; the driver posts every input due at frame N before frame N's
-handlers run, in scenario order, and the program applies each through the contributor's own seam,
-its handler receiving the scalar. The program posts on the `harness` channel once per frame, from a
-loop the library runs at the frame period it reads from the simulator host, `{ "key", "state",
-"events" }` with `state` an object of bare channel names to rendered strings and `events` the
-`[name, value]` pairs emitted since the last post, in emission order; the driver stamps the post
-with the frame it arrives in, prefixes the key, and reads it in its post-step with no round trip. A
-program that declares and never posts renders its channels absent.
+(`libs/harness`, depending on `core`, a `harness` namespace whose only blocks are the scenario
+calls) is the wrapper a program normally uses, and an extension that contributes depends on it. Its
+functions are `shim=TD_NOOP` with simulator-only bodies, so a program contributor compiles to
+nothing on hardware and the posting loop runs only in the simulator. The library and the program's
+own contributor code compile under pxt's static TypeScript subset, so they use only what that subset
+offers. The program sends its declaration on the `harness` channel from its start-up code: a JSON
+object with `key`, `provider`, `docs` and the `inputs`, `channels` and `events` lists of entries in
+the shape above, names bare. The driver runs the program to its first frame boundary, collects the
+declarations, and fixes the composed surface before frame 0 is dispatched; a declaration arriving
+later and one whose key is already registered or taken by another outer name are each refused with a
+stable code naming the key, the first registration standing and the program running on without a
+contributor. Inputs arrive on the `harness.<key>` channel, one message per input, `{ "kind", "value"
+}` with the kind bare and the value as the scenario wrote it; the driver posts every input due at
+frame N before frame N's handlers run, in scenario order, and the program applies each through the
+contributor's own seam, its handler receiving the scalar. The program posts on the `harness` channel
+once per frame, from a loop the library runs at the frame period it reads from the simulator host,
+`{ "key", "state", "events" }` with `state` an object of bare channel names to rendered strings and
+`events` the `[name, value]` pairs emitted since the last post, in emission order; the driver stamps
+the post with the frame it arrives in, prefixes the key, and reads it in its post-step with no round
+trip. A program that declares and never posts renders its channels absent.
 
 A step counter in a micro:bit program, from an extension whose repository is `example/pxt-steps`:
 
@@ -124,9 +126,9 @@ extension as its `module` by `owner/repo` and the kind as `kind`, omitted when t
 kind, and the driver builds one contributor per attachment from that kind's factory, under the
 attachment's role, with the `owner/repo` as its `provider`. A core script defines a medium the same
 way, `pxsim.harness.defineMedium(kind, factory)`, the factory taking the medium's params and the
-driver's `emit` and returning a contributor that also carries `propagate(apply)`, the step a medium
-runs after the boards: `apply(id, name, value)` delivers a value to an attached board under a
-quantity its attachment map names, or to a medium listed after this one under one of that medium's
+driver's `emit` and returning a contributor that also carries `propagate(deliver)`, the step a
+medium runs after the boards: `deliver(id, name, value)` delivers a value to an attached board under
+a quantity its attachment map names, or to a medium listed after this one under one of that medium's
 own kinds, and delivers nothing for a quantity the map leaves out. A medium declares two lists a
 module does not: `quantities()`, entries `{ name, description, values, docs? }` for each quantity
 its propagate step applies to a board, and `params()`, entries of the same shape for each field its
@@ -144,7 +146,7 @@ core is the extension's business, and the core knows nothing of the page.
 A slider whose repository is `example/pxt-slider`. The target's `approvedRepoLib` entry:
 
 ```json
-"example/pxt-slider": { "simx": { "index": "index.html", "core": "built/core.js" } }
+{ "example/pxt-slider": { "simx": { "index": "index.html", "core": "built/core.js" } } }
 ```
 
 Its `built/core.js`:
@@ -218,8 +220,8 @@ pxsim.harness.defineMedium("lamps", (params, emit) => {
         },
         readState: () => Object.fromEntries(
             Object.keys(boards).map(id => ["light " + id, "" + level(id)])),
-        propagate: apply => {
-            for (const id of Object.keys(boards)) apply(id, "light", level(id));
+        propagate: deliver => {
+            for (const id of Object.keys(boards)) deliver(id, "light", level(id));
         },
     };
 });
@@ -261,8 +263,8 @@ Rules every contributor obeys:
   reconstructs another contributor's state or events from the outside, and no event is derived
   from a state diff.
 - Reads are pure. `readState` changes nothing.
-- Deterministic. Same seed, same scripted inputs, same frame count give the same state and
-  events, byte for byte. Entropy only through `host.rng()`.
+- Deterministic. Same seed, same scripted inputs, same frame count give the same state and events,
+  byte for byte. Entropy only through `host.rng()` or a stream the driver hands out by name.
 - Headless. A contributor runs with no DOM, in a worker and in Node alike.
 
 ## Composition
@@ -276,16 +278,15 @@ The driver composes a world's contributors into one declared surface and one dis
 - Names. A contributor's own names are plain (`button-a`, `light-level`, `display`). Every
   contributor but the board has its id as the outer name of its kinds, channels and events: a
   module's composed name is `<role>.<name>` (`slider 1.position`, `arm servo.angle`), a program
-  contributor's is `<key>.<name>` (`game.score`), and a medium's is `<id>.<name>`
-  (`ether.link board 1-board 3`, `bus 1.attached`). The board's names are bare; it is the one
-  contributor of the default world. In a world of several simulators the board id is the outer
-  name of everything on that board (`board 2.display`, `board 3.slider 1.position`), omitted when
-  there is one. A composed name is matched whole against the declared surface and never split on
-  its separator, so a role may contain any character the editor lets the user type; the one split
-  is of the board's own names, on their first `.`, for the collision check below. The extension
-  that
-  declares a contributor is its `provider`, for attribution, and is never part of a name: two
-  instances of one extension are told apart by role, and a role reads as the user spelled it.
+  contributor's is `<key>.<name>` (`game.score`), and a medium's is `<id>.<name>` (`ether.link board
+  1-board 3`, `bus 1.attached`). The board's names are bare; it is the one contributor every world
+  has. In a world of several simulators the board id is the outer name of everything on that board
+  (`board 2.display`, `board 3.slider 1.position`), omitted when there is one. A composed name is
+  matched whole against the declared surface and never split on its separator, so a role may contain
+  any character the editor lets the user type; the one split is of the board's own names, on their
+  first `.`, for the collision check below. The extension that declares a contributor is its
+  `provider`, for attribution, and is never part of a name: two instances of one extension are told
+  apart by role, and a role reads as the user spelled it.
 - Collisions are refused at staging, before the first frame, with a stable code that names the
   colliding outer name, never merged silently: a role, key or medium id already taken by another
   contributor's outer name, or equal to one of the board's own names or to the outer segment of
@@ -298,7 +299,6 @@ The driver composes a world's contributors into one declared surface and one dis
 - An input kind, a channel and an event kind may share a composed name (`slider 1.position` is a
   kind and a channel; `bus 1.attached` is the list of roles on the bus and the arrival of one); an
   input or an expectation says which it names.
-
 - Validation. A scenario's kinds are checked against the composed surface for its staging and each
   input's value against its kind's `values`; a rejection lists the composed names. A board kind
   that a staged medium's attachment map targets is driven: the surface carries the medium's id on
@@ -306,15 +306,14 @@ The driver composes a world's contributors into one declared surface and one dis
   overwrite the input on the next frame. A staging whose map names an undeclared quantity or a
   kind the board does not declare, or whose `params` carry a field the medium does not declare, is
   refused before the first frame.
-- Dispatch, per frame: route the inputs due this frame to their contributors; the contributors'
-  pre-step; the runtime's frame; the contributors' post-step folds the posts received during the
-  frame into state; the driver reads every contributor's `readState` once and merges in composed
-  order, and collects the events emitted during the frame in emission order. In a world of several
-  simulators every board
-  takes its frame first and every medium propagates after, in the order the staging lists the
-  media, so a radio frame sent on frame N reaches its receivers on frame N+1 whichever board sent
-  it, delivery latency never depends on board order, and a medium listed before another can feed
-  it within the frame. The composed surface keeps its order by id whatever the staging's order.
+- Dispatch, per frame: route the inputs due this frame to their contributors; the contributors' pre-
+  step; the runtime's frame; the contributors' post-step folds the posts received during the frame
+  into state; the driver reads every contributor's `readState` once and merges in composed order,
+  and collects the events emitted during the frame in emission order. Every board takes its frame
+  first and every medium propagates after, in the order the staging lists the media, so a radio
+  frame sent on frame N reaches its receivers on frame N+1 whichever board sent it, delivery latency
+  never depends on board order, and a medium listed before another can feed it within the frame. The
+  composed surface keeps its order by id whatever the staging's order.
 
 The surface of a micro:bit with the slider of the Contributors section under the role `slider 1`,
 the `steps` program contributor and one bus, in composed order (the board's own entries
@@ -342,16 +341,17 @@ states; the LED display renders as one string of brightness digits.
 Bulk channels. A channel whose natural rendering runs past a line (the Arcade screen: 160 by 120
 pixels at 4 bits each, 9600 bytes a frame) renders as a content hash instead: FNV-1a 64-bit over the
 channel's bytes (for a screen, the framebuffer followed by the palette), as 16 lowercase hex digits,
-so every host renders the same value and a changed frame costs the trace one short line. The bytes
-themselves are a bulk value the driver hands the shell under the bulk-value rule of Recording and
-replay, on request through a run option and for the frame a bulk-channel expectation fails at; a
-shell with files keeps them beside the scenario. A check finer than the whole channel is a probe: a
-module the platform supplies, staged as an attachment under a role with its probe list as config, so
-it composes as any module does. Each probe is one declared channel (`probe.pixel 10,20` reads a
-color index, `probe.region 0,0,16,16` reads that region's hash), so the surface stays small and
-fixed and an expectation stays one line. A probe has no kinds of its own and reads the board's
-screen through a seam the board exposes for probes, purely and deterministically; that seam is the
-one place a contributor reads state it does not hold.
+so every shell renders the same value and a changed frame costs the trace one short line. The bytes
+themselves are a bulk value the driver hands the shell under the serialized-state rule of Shells
+over one driver, on request through a run option and for the frame a bulk-channel expectation fails
+at; a shell with files keeps them beside the scenario. A check finer than the whole channel is a
+probe: a module the platform supplies, staged as an attachment under a role with its probe list as
+config and no `module`, attached to the board directly, so it composes as any module does. Each
+probe is one declared channel (`probe.pixel 10,20` reads a color index, `probe.region 0,0,16,16`
+reads that region's hash), so the surface stays small and fixed and an expectation stays one line. A
+probe has no kinds of its own and reads the board's screen through a seam the board exposes for
+probes, purely and deterministically; that seam is the one place a contributor reads state it does
+not hold.
 
 ## State and events
 
@@ -373,8 +373,8 @@ carries both.
 
 ## Scenarios
 
-A scenario is a file in the project, or the same declarations made from the project's test code
-(below). It declares:
+A scenario is a file in the project, or the same declarations made from static TypeScript the
+project compiles (below). It declares:
 
 - The seed every random choice in the run draws from (`host.rng()` and the media's own streams),
   the virtual host's default seed when omitted.
@@ -409,28 +409,30 @@ A scenario is a file in the project, or the same declarations made from the proj
 - Optionally, a save to start from, named by where the shell finds it or carried whole: the run
   restores it and continues. Frames stay absolute, so `frames` must exceed the save's frame, an
   input due at or before it is rejected, and windows read as the tail of the run that made the save.
-  The scenario carries no staging; the save's surface digest fixes it, and a staging that no longer
-  matches is refused before the first frame.
-- Optionally, a versions pin: the pxt-core, target and pinned dependency versions the scenario
-  holds for. A shell refuses to run a pinned scenario at any other version, which is what a
-  comparison of traces across hosts needs. The versions a run actually ran under are recorded in
-  the trace header whether or not the scenario pins them.
+  The scenario carries no staging; the world is rebuilt from the staging the save carries, and a
+  rebuilt world whose surface digest differs from the save's is refused before the first frame.
+- Optionally, a versions pin: the pxt-core, target and pinned dependency versions the scenario holds
+  for. A shell refuses to run a pinned scenario at any other version, which is what a comparison of
+  traces across shells needs. The versions a run actually ran under are recorded in the trace header
+  whether or not the scenario pins them.
 
 The file is JSON, `<name>.scenario.json`, anywhere in the project: beside `pxt.json` or in any
-folder of it, an extension's own folder included, and the trace and any bulk-value files land beside
-it. A shell finds every `*.scenario.json` the project holds. Its fields are those declarations:
-`"seed"`; `"frames"`; `"staging"` with `"boards"` (`{ "id", "project" }` entries, `project` a path
-relative to the file, the array omitted for the one-board case), `"attachments"` (`{ "board",
-"role", "module", "kind", "config" }` entries) and `"media"` (`{ "id", "kind", "module", "params",
-"attached" }` entries, `module` only for a medium an extension ships, `attached` the initial
-topology as a list of ids or of `{ "id", "profile", "map" }` entries where a board's attachment
-carries parameters the medium reads); `"inputs"` (`{ "kind", "at", "value" }` entries);
-`"expectations"` (`{ "channel", "value", "window" }` level entries and `{ "event", "value", "window"
-}` arrival entries, `window` as `{ "from", "to" }`, `"not": true` for a negated form); `"watch"` (an
-array of composed names); `"framePeriod"`; `"clock"` (an array of `frames` integers); `"saves"` (an
-array of frame indices); `"from"` (the path of a save file relative to the scenario, or the save
-itself as an object); and `"versions"`, the pin. A field a scenario does not need is omitted;
-`frames` is the one required field.
+folder of it, a simulator extension's project folder included (a dependency's own files are not the
+project's), and the trace and any bulk-value files land beside it. A shell finds every
+`*.scenario.json` the project holds. Its fields are those declarations: `"seed"`; `"frames"`;
+`"staging"` with `"boards"` (`{ "id", "project" }` entries, `project` a path relative to the file,
+the array omitted for the one-board case), `"attachments"` (`{ "board", "role", "module", "kind",
+"config" }` entries) and `"media"` (`{ "id", "kind", "module", "params", "attached" }` entries,
+`module` only for a medium an extension ships, `attached` the initial topology as a list of ids or
+of `{ "id", "profile", "map" }` entries, `profile` the name of one of the radio profiles the board's
+target declares and `map` the quantity-to-kind map, a bare id standing for the target's default
+profile and an empty map); `"inputs"` (`{ "kind", "at", "value" }` entries); `"expectations"` (`{
+"channel", "value", "window" }` level entries and `{ "event", "value", "window" }` arrival entries,
+`window` as `{ "from", "to" }`, `"not": true` for a negated form); `"watch"` (an array of composed
+names); `"framePeriod"`; `"clock"` (an array of `frames` integers); `"saves"` (an array of frame
+indices); `"from"` (the path of a save file relative to the scenario, or the save itself as an
+object); and `"versions"`, the pin. A field a scenario does not need is omitted; `frames` is the one
+required field.
 
 A counter program on one micro:bit, `counter.scenario.json` beside its `pxt.json`, with a light
 level held from the first frame, two clicks, and three expectations:
@@ -461,16 +463,15 @@ The channel expectation's value is the rendered string the trace shows, here the
 digits of a blank display. The shell writes `counter.trace.jsonl` beside the scenario; a committed
 trace is the golden the next run is compared against, and a flag rewrites it.
 
-The project's staging file is `staging.json` beside `pxt.json`, holding one `staging` object in
-the scenario's shape, and it is project state: the live simulator starts from it, a scenario
-without a `staging` runs on it, and it travels with the project. Extensions reach it through a
-request family of its own, `projstaging`, gated by a registration flag of its own as every other
-project access a simulator extension has is: a read
-returns the file with, for each attachment, the URL of its module's core script and, once, the
-URLs of the headless bundles; a write replaces the entries the writer owns; a subscription
-delivers a change notification whenever the file changes. An extension that edits topology writes
-the media and attachments it owns; a reader takes the whole file and learns which extension
-declared an entry from the entry's own `module` and `kind`.
+The project's staging file is `staging.json` beside `pxt.json`, holding one `staging` object in the
+scenario's shape, and it is project state: the live simulator starts from it, a scenario without a
+`staging` runs on it, and it travels with the project. Extensions reach it through a request family
+of its own, `projstaging`, gated by a registration flag of its own, as every project access a
+simulator extension has is: a read returns the file with, for each attachment, the URL of its
+module's core script and, once, the URLs of the headless bundles; a write replaces the entries the
+writer owns; a subscription delivers a change notification whenever the file changes. An extension
+that edits topology writes the media and attachments it owns; a reader takes the whole file and
+learns which extension declared an entry from the entry's own `module` and `kind`.
 
 A scenario in static TypeScript. Any file the project compiles may declare scenarios through the
 `harness` library instead of writing the file: a test file, which `pxt.json` lists as `testFiles`
@@ -478,19 +479,20 @@ and a build of the project compiles unless told to ignore tests, never a depende
 file, where a declaration costs a hardware build nothing and the live simulator ignores it, and
 which is the only place blocks reach. Each `harness.scenario(name, fields, declare)` call names a
 scenario, gives the fields the file would carry outside its list-like ones (`seed`, `frames`,
-`framePeriod`, `from` as a path, `versions`), and declares those, inputs, expectations, the watch
-list and the frames to save at, through the handle it passes, each call repeatable so a loop can
-declare many. The library sends the declaration over the `harness` channel as it sends a
-contributor's; the driver runs the program to its first frame boundary, takes every scenario
-declared, and runs each as if it were `<name>.scenario.json` beside the test file, the trace landing
-there under that name. The declared form is data, not behavior: the handle takes values only, a
-declaration after the first frame boundary is refused with a stable code, and a shell writes any
-declared scenario out as its file on request, so the two forms are one scenario in two syntaxes and
-a tool that reads files reads both. A scenario's name is its file's basename or its declared name,
-and names are unique across the project whichever form they take: a declared `counter` beside a
-`counter.scenario.json`, or two declarations of one name, is a collision refused before any run, as
-roles and keys are. Scenario calls are `shim=TD_NOOP` like the rest of the library and reach no
-hardware build. The counter scenario, declared:
+`framePeriod`, `staging`, `clock`, `from` as a path, `versions`), and declares inputs, expectations,
+the watch list and the frames to save at through the handle it passes, `input`, `expectChannel`,
+`expectEvent`, `expectNoChannel`, `expectNoEvent`, `watch` and `save`, each call repeatable so a
+loop can declare many. The library sends the declaration over the `harness` channel as it sends a
+contributor's; the driver runs the program to its first frame boundary and takes every scenario
+declared; the shell runs each as it would a `<name>.scenario.json` beside the declaring file and
+keeps the trace there under that name. The declared form is data, not behavior: the handle takes
+values only, a declaration after the first frame boundary is refused with a stable code, and a shell
+writes any declared scenario out as its file on request, so the two forms are one scenario in two
+syntaxes and a tool that reads files reads both. A scenario's name is its file's basename or its
+declared name, and names are unique across the project whichever form they take: a declared
+`counter` beside a `counter.scenario.json`, or two declarations of one name, is a collision refused
+before any run, as roles and keys are. Scenario calls are `shim=TD_NOOP` like the rest of the
+library and reach no hardware build. The counter scenario, declared in place of its file:
 
 ```ts
 harness.scenario("counter", { seed: 7, frames: 120 }, t => {
@@ -515,21 +517,20 @@ this evaluator: the same scenario yields the same verdicts.
 
 ## The trace
 
-The trace is the complete observation record: per frame, the state deltas in composed order and
-the events in emission order. It is the test's artifact and the replay oracle; a report (verdicts
-first, then the change log over watched entries) is a view over it. The
-`@serial` golden is a projection of the trace's serial events and stays as a smoke oracle.
+The trace is the complete observation record: per frame, the state deltas in composed order and the
+events in emission order. It is the test's artifact and the replay oracle; a report (verdicts first,
+then the change log over watched entries) is a view over it. The `@serial` golden is a projection of
+the trace's serial events and stays as a smoke oracle.
 
-Two runs of one test produce the same trace when both run the same pxt-core, the same target
-version and the same pinned dependencies, and so the same compiled JavaScript and the same two
-headless bundles (`pxtsimcore.js` and the target's `simcore.js`). A test records those versions,
-and a comparison across hosts is valid only at equal versions. Program contributors are compiled
-into the program and identical across hosts by construction; the board contributor is the target's
-core bundle in every host; a module has its core in every host. One caveat: transcendental math
+Two runs of one test produce the same trace when both run the same pxt-core, the same target version
+and the same pinned dependencies, and so the same compiled JavaScript and the same two headless
+bundles (`pxtsimcore.js` and the target's `simcore.js`). A test records those versions, and a
+comparison across shells is valid only at equal versions. Program contributors are compiled into the
+program and identical across shells by construction; the board contributor is the target's core
+bundle in every shell; a module has its core in every shell. One caveat: transcendental math
 (`Math.sin` and its kin) is not bit-identical across JavaScript engines, so identity holds across
-hosts on one
-engine, and across engines only for traces whose rendered values are quantized past the last bit,
-as the display's one-digit brightness is.
+shells on one engine, and across engines only for traces whose rendered values are quantized past
+the last bit, as the display's one-digit brightness is.
 
 ## Trace format
 
@@ -543,16 +544,17 @@ optional field that is absent is omitted, never written as `null`.
 
 - The header record: `{"scenario": name, "seed": n, "framePeriod": ms, "from": {...}, "versions":
   {...}, "surface": {...}}`. `from` is present for a run that started from a save and holds the
-  save's name and frame; a frame record then starts at the frame after it and the first record holds
-  every channel, as frame 0's does. `versions` holds `pxt-core`, `target` and then each pinned
-  dependency by name, each a version string, the dependencies in ascending order of name. `surface`
-  is the composed surface: `"contributors"`, an array in composed order of `{ "id", "provider",
-  "docs" }` records, and `"inputs"`, `"channels"`, `"events"`, `"quantities"` and `"params"`, each
-  an array in composed order of the declared entry records with the composed name as `name` and the
-  declaring contributor's id as `contributor`, an input record of a driven kind carrying `drivenBy`,
-  so a trace describes itself without its scenario. The surface digest is FNV-1a 64-bit over the
-  canonical bytes of the `surface` object, 16 lowercase hex digits; a host that caches or compares
-  surfaces uses it, and every host computes the same one.
+  save's frame and surface digest; a frame record then starts at the frame after it and the first
+  record holds every channel, as frame 0's does. `versions` holds `pxt-core`, `target` and then each
+  pinned dependency by name, each a version string, the dependencies in ascending order of name.
+  `surface` is the composed surface: `"contributors"`, an array in composed order of `{ "id",
+  "provider", "docs" }` records, and `"inputs"`, `"channels"`, `"events"`, `"quantities"` and
+  `"params"`, each an array in composed order of the declared entry records with the composed name
+  as `name` and the declaring contributor's id as `contributor`, an input record of a driven kind
+  carrying `drivenBy`, a quantity or param record named like any other (`world.light`) while an
+  attachment map keys quantities bare, so a trace describes itself without its scenario. The surface
+  digest is FNV-1a 64-bit over the canonical bytes of the `surface` object, 16 lowercase hex digits;
+  a shell or tool that caches or compares surfaces uses it, and every one computes the same one.
 - A frame record: `{"frame": n, "state": {name: value, ...}, "events": [[name, value], ...]}`.
   `state` holds the channels that changed since the last frame, in composed order, every value a
   rendered string and `null` for a channel rendered absent; the first frame record holds every
@@ -560,10 +562,10 @@ optional field that is absent is omitted, never written as `null`.
   order, every value a string. A frame with no change and no event is still a record, with an
   empty object and an empty array, so the frame count is the line count less one.
 - Serial output is the `serial` events, and the `@serial` golden is the sequence of their values.
-- Byte identity, wherever this document claims it, is identity of this file.
+- Byte identity, wherever this spec claims it, is identity of the trace file.
 
-The trace of the counter scenario of the Scenarios section, abridged to the header with two of the
-board's entries and to frames 0, 1, 10 and 40, each record one line in the file:
+The trace of the counter scenario of the Scenarios section, abridged to the header with one of the
+board's entries per list and to frames 0, 1, 10 and 40, each record one line in the file:
 
 ```json
 {"scenario":"counter","seed":7,"framePeriod":16,"versions":{"pxt-core":"9.2.1","target":"6.0.14"},
@@ -573,7 +575,8 @@ board's entries and to frames 0, 1, 10 and 40, each record one line in the file:
   "channels":[{"name":"display","contributor":"board","description":"the LED display",
    "rendering":"25 brightness digits 0-9, row-major"}],
   "events":[{"name":"display.show","contributor":"board","description":"text the board shows",
-   "values":{"encoding":"the text"}}]}}
+   "values":{"encoding":"the text"}}],
+  "quantities":[],"params":[]}}
 {"frame":0,"state":{"display":"0000000000000000000000000","pin 0":"0"},"events":[]}
 {"frame":1,"state":{},"events":[]}
 {"frame":10,"state":{"display":"0900099000090000900009990"},"events":[["display.show","1"]]}
@@ -602,8 +605,9 @@ shells are thin:
   target's release therefore ships `pxtsimcore.js` and its `simcore.js` beside `pxtworker.js`.
 - Either command runs every scenario by default and one or more by name when names are given,
   `mkc test counter`, the name being the scenario's name in either form.
-- A Node caller drives the driver programmatically with the same inputs; the two commands above
-  are thin front ends over it.
+- A Node caller drives the driver programmatically with the same inputs; the two commands above are
+  thin front ends over it, so the shells are three: the command line, the Node caller and the
+  worker.
 - A browser worker loads `pxtsimcore.js` and `simcore.js`, installs the virtual host and the silent
   audio host, and runs the same driver; results come back as worker messages. A simulator extension
   hosting this shell takes the bundle URLs and each attachment's core URL from the `projstaging`
@@ -623,18 +627,17 @@ command line, messages for the worker, and finds scenarios, resolves `from` path
 its own side of that line. Nothing in the driver opens a file.
 
 A contributor reachable from one shell and not another is a defect. The run options a project
-implies (board definition, parts, function arguments, dependencies, stored state) are assembled by
-one function in pxt that the command line and the editor both call; two hosts given different
-options do not produce the same trace.
+implies (board definition, parts, function arguments, dependencies, the simulator's stored settings)
+are assembled by one function in pxt that the command line and the editor both call; two shells
+given different options do not produce the same trace.
 
 ## Worlds with several simulators
 
 The world is the unit of a test; one simulator is the degenerate case.
 
-- N runtimes in lockstep on one virtual clock, each advanced one frame at a time in a fixed order
-  by board id. A runtime is a global per context, so a multi-simulator world is one Node `vm`
-  context, or one worker, per board, with an orchestrator that advances each host's virtual clock
-  in turn.
+- N runtimes in lockstep on one virtual clock, each advanced one frame at a time in a fixed order by
+  board id. A runtime is a global per context, so a multi-simulator world is one Node `vm` context,
+  or one worker, per board, with the driver advancing each context's virtual clock in turn.
 - Names gain the board id as an outer name, as Composition states.
 - The trace is per world and carries every board's record.
 - The project is one project deployed to several boards (the radio case) or a set of projects,
@@ -657,10 +660,10 @@ display or serial events, unchanged. One project runs on all three boards:
       { "id": "board 3", "project": "." }
     ],
     "media": [
-      { "id": "ether", "kind": "radio", "params": { "group": 7, "loss": "none" },
-        "attached": ["board 1", "board 2", "board 3"] },
       { "id": "space", "kind": "spatial",
         "params": { "positions": { "board 1": "0,0", "board 2": "40,40", "board 3": "0,40" } },
+        "attached": ["board 1", "board 2", "board 3"] },
+      { "id": "ether", "kind": "radio", "params": { "group": 7, "loss": "none" },
         "attached": ["board 1", "board 2", "board 3"] }
     ]
   },
@@ -676,31 +679,33 @@ display or serial events, unchanged. One project runs on all three boards:
 ```
 
 Board 3 moves from `0,40` to `0,2` over 200 frames, so the strength board 1 reads climbs and board
-2's does not; the `near` line is each board's own report. Every board's name is prefixed by its id
-because there are several, and the media are not, because they belong to the world.
+2's does not; the `near` line is each board's own report. The spatial world is listed before the
+ether so the strengths it computes reach it. Every board's name is prefixed by its id because there
+are several, and the media are not, because they belong to the world.
 
 ## Media and topology
 
 A medium is a contributor at the world level that connects boards and modules, or models the space
 they share. A board or module attaches to one or more typed media; the platform supplies the media a
 target's own cores speak to, the radio ether, the jacdac bus, the display shield and a spatial world
-of positions alone, and an extension ships any other as a core; attach and detach are host-invoked
-operations; a group or address within a medium is isolated from other instances of that medium. A
-medium reads nothing about a board but the parameters its attachment carries: the ether reads a
-radio profile the target declares (transmit power levels in dBm, receiver sensitivity, band), and a
-world that drives sensors reads a map from the quantities it models to the board's own input kinds,
-light to a micro:bit's light-level kind, so no medium names a target or a sensor.
+of positions alone, and an extension ships any other as a core; attach and detach are input kinds of
+the medium; a group or address within a medium is isolated from other instances of that medium. A
+medium reads nothing about a board but the parameters its attachment carries: the ether reads the
+radio profile the attachment names, one of those the target declares (transmit power levels in dBm,
+receiver sensitivity, band), and a world that drives sensors reads a map from the quantities it
+models to the board's own input kinds, light to a micro:bit's light-level kind, so no medium names a
+target or a sensor.
 
 - Media are explicit instances with ids. Two jacdac buses are two media; a shield is one; a radio
   group is a parameter of the ether.
 - The radio ether delivers frames between the boards attached to it at frame boundaries in stable
   order and stamps each delivery with a signal strength: scripted per link through the ether's
-  `ether.strength <a>-<b>` input kind, or derived from the two boards' positions by a deterministic
-  propagation model quantized to whole dBm. The ether's channels report per-link strength either
-  way.
+  `ether.strength <a>-<b>` input kind, by a scenario or by a world listed before the ether that
+  computes it from positions. The ether's channels report per-link strength whichever applied it.
 - The platform's spatial world owns positions and nothing else. Its input kinds place a board or
-  module or move it along a path; its channels report positions as compound values; it is what the
-  ether's default propagation reads when no richer world is staged.
+  module or move it along a path; its channels report positions as compound values; listed before
+  the ether, it applies the per-link strength its propagation model computes, log-distance path loss
+  with seeded shadowing quantized to whole dBm, when no richer world is staged.
 - A richer world is a medium an extension ships: obstacles that move, surfaces with states,
   sources of light, sound and heat, an acoustic layer with echo, whatever its physics models, all
   inside one DOM-free core the driver runs headless and the coordinator runs live. Its layers are
@@ -796,8 +801,8 @@ BabbleSim):
   a collision or the reception curve removes, with the cause as the value.
 - Collisions as a switch: two boards transmitting in the same frame, both within range of a
   receiver, both lose the frame at that receiver.
-- Strength from distance: log-distance path loss with seeded shadowing gives a per-link strength
-  from positions, and a reception curve turns strength into loss.
+- Strength from distance belongs to the world that holds positions, the platform's spatial world or
+  an extension's; the ether's reception curve turns the strength applied to it into loss.
 
 Model parameters are staging data of the medium and input kinds of it, so a scenario can degrade a
 link mid-run.
@@ -805,14 +810,14 @@ link mid-run.
 ## Recording and replay
 
 A run is recorded at the grain of the host seams, not as a call-ordered log of nondeterministic
-calls, so a recording replays against a changed program as well as against the one it was made
-from. The core reaches every source of nondeterminism through a seam: `host.clock()` and
-`host.timers()`, `host.rng()`, and inputs through `apply`. A live-captured sensor is an input like
-any other: the microphone level, the accelerometer fed from device motion, the light level, and
-recorded audio, whose recorder-host seam hands back a clip.
+calls, so a recording replays against a changed program as well as against the one it was made from.
+The core reaches every source of nondeterminism through a seam: `host.clock()` and `host.timers()`,
+`host.rng()` and the streams the driver hands out, and inputs through `apply`. A live-captured
+sensor is an input like any other: the microphone level, the accelerometer fed from device motion,
+the light level, and recorded audio, whose recorder-host seam hands back a clip.
 
 - A recording is the run seed, the clock delta of each frame, the inputs at frame grain as
-  `(kind, at, value)`, and the project and version record of the scenario. A captured clip or
+  `(kind, at, value)`, the staging, and the versions record of the scenario. A captured clip or
   other bulk value is a bulk value the shell keeps, beside the scenario where it has files.
 - Replay of the same program advances the virtual host by the recorded deltas, seeds `host.rng()`
   with the recorded seed, applies the inputs at their frames, and reproduces the run exactly: the
@@ -823,7 +828,7 @@ recorded audio, whose recorder-host seam hands back a clip.
   that polls the sound level three times in a frame reads the frame's recorded level three times.
 
 The live simulator takes a seeded random source with the seed chosen at run start and logged, and
-logs its frame deltas, so a run a user saw replays exactly. The recorder is the live driver's: it
+logs its frame deltas, so a run a user saw replays exactly. The recorder is the live simulator's: it
 subscribes to the inputs the view applies (the same primitives the headless protocol reaches over
 its input message), stamps each with the frame it landed in, and produces the scenario for the
 editor to keep.
@@ -858,10 +863,10 @@ zero. The frame boundary is the one safe point: every contributor's state has se
 has propagated, and every inbox is empty by construction.
 
 - A save is one JSON value, serialized canonically: the driver's own state (the frame index, the
-  inputs still due, the position of every random stream it handed out, the surface digest), every
-  contributor's `saveState()` in composed order, each board's runtime saved form (its heap, fibers,
-  scheduler and board state, taken by the runtime's own mechanism), the compiled program of each
-  board, and the versions record the trace header carries.
+  inputs still due, the position of every random stream it handed out, the staging the world was
+  built from, the surface digest), every contributor's `saveState()` in composed order, each board's
+  runtime saved form (its heap, fibers, scheduler and board state, taken by the runtime's own
+  mechanism), the compiled program of each board, and the versions record the trace header carries.
 - The runtime's saved form carries the compiled program it was taken under, and a restore runs
   that program on the restoring runtime, so a save taken under one target version resumes under a
   newer one; the project's source may have moved on, and a restore resumes the program that was
@@ -896,9 +901,6 @@ has propagated, and every inbox is empty by construction.
 
 ## Conformance
 
-- A save at frame N of the fixture world restores into a fresh driver and continues to a trace
-  byte-identical from N to the unbroken run's; two saves at one frame are byte-identical; a save
-  from each released format of every platform layer restores and continues the same way.
 - A fixture contributor (one channel, one kind, one event kind) runs through the driver alone, and
   again as two attachments of one module under two roles, proving composed names and order.
 - Same seed, same inputs, same frames give byte-identical traces in a worker and in Node.
@@ -914,10 +916,13 @@ has propagated, and every inbox is empty by construction.
 - A trace parses record by record, its header record's surface equals the composed surface
   declared for its staging, and re-serializing the parsed records reproduces the file byte for
   byte.
+- A save at frame N of the fixture world restores into a fresh driver and continues to a trace
+  byte-identical from N to the unbroken run's; two saves at one frame are byte-identical; a save
+  from each released format of every platform layer restores and continues the same way.
 
 ## Status
 
-What exists and what does not, section by section. A change that lands a piece edits its line.
+What exists and what does not, piece by piece. A change that lands a piece edits its line.
 
 - Foundations in place: the virtual host (seeded random source, frame queue, `advance` and
   `runUntil`), the silent audio host, the view-less runtime (`pxsim.initHeadlessRuntime`;
@@ -935,15 +940,14 @@ What exists and what does not, section by section. A change that lands a piece e
   table and no trace record; a program's serial output reaches `simtest` through the serial
   message alone.
 - Scenarios: not started. `pxt simtest` takes programs, and `@serial` is the only expectation; no
-  scenario API exists in static TypeScript. No
-  `staging.json` and no `projstaging` family exist, and no request family lets a simulator
-  extension read or write project files.
+  scenario API exists in static TypeScript. No `staging.json` and no `projstaging` family exist, and
+  no request family lets a simulator extension read or write project files.
 - The scenario file and the trace format: not started. `simtest` reads no scenario file and
   writes no trace.
 - The trace and the shells: not started. `simtest` is the one shell, and the only headless driver
   is `runHeadlessAsync` in `cli/simtest.ts`, which runs one runtime in one `vm` context and only
   in a target checkout. No target release ships the headless bundles, and the MakeCode CLI has no
-  test command. No shell offers the surface operation.
+  test command. No shell offers the surface or the save operation.
 - Worlds with several simulators: not started.
 - Media and topology: not started. The radio simulator (pxt-common-packages
   `libs/radio/sim/core/`) posts each packet as a broadcast `radiopacket` message with a fixed
@@ -952,5 +956,5 @@ What exists and what does not, section by section. A change that lands a piece e
 - Recording and replay: not started. The live simulator runs on the default host (`Date.now`,
   `Math.random`) with no seed and no frame log.
 - Saving and restoring: not started. No contributor saves state, the driver has no saved form, and
-  the runtime's saved form is designed apart from this document.
+  the runtime's saved form is designed apart from this spec.
 - Conformance: none of the checks exists.

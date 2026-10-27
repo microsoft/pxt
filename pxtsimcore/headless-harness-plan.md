@@ -23,16 +23,16 @@ The harness core with no real board: the contributor interface, composition, per
 the trace, the scenario file and its evaluator, exercised through a fixture contributor alone.
 
 - `pxt`: a `harness/` folder in `pxtsimcore/` with the contributor interface and its structured
-  entries (class, values, rendering, bulk, docs), the composed surface with provider and
-  contributor on every record, its digest, and its validation (names matched whole, values against
-  each kind's `values`, collisions refused at staging by outer name), the surface operation (run
-  to the first frame boundary, return the surface, stop), the per-frame dispatch over the virtual
-  host (route, pre-step, frame, post-step, one `readState` per contributor, events in emission
-  order), the canonical JSON Lines trace writer and reader, the scenario file reader (seed, frames,
-  frame period, staging, inputs, expectations in both forms with negation, watch, versions pin),
-  the evaluator, and the report (verdicts, then the watched change log). The fixture contributor
-  of the spec's Conformance section (one channel, one kind, one event kind) lives in
-  `tests/simcore-test/` and runs through `gulp testsimcore`.
+  entries (class, values, rendering, bulk, docs), the composed surface with the declaring
+  contributor on every entry record and the provider on every contributor record, its digest, and
+  its validation (names matched whole, values against each kind's `values`, collisions refused at
+  staging by outer name), the surface operation (run to the first frame boundary, return the
+  surface, stop), the per-frame dispatch over the virtual host (route, pre-step, frame, post-step,
+  one `readState` per contributor, events in emission order), the canonical JSON Lines trace writer
+  and reader, the scenario file reader (seed, frames, frame period, staging, inputs, expectations in
+  both forms with negation, watch, versions pin), the evaluator, and the report (verdicts, then the
+  watched change log). The fixture contributor of the spec's Conformance section (one channel, one
+  kind, one event kind) lives in `tests/simcore-test/` and runs through `gulp testsimcore`.
 - Depends on: nothing beyond the virtual host.
 - Lands when: the fixture runs alone and as two attachments under two roles, staged through a
   test-only in-process `defineModule` since no `core` loading exists yet, with the composed names
@@ -51,7 +51,7 @@ The first real contributor and the first shell.
 - `pxt-microbit`: the typed input primitives of `sim/README.md` as `sim/core/` code, one function
   per input applying to `DalBoardState` and queuing the matching events, called by the pointer
   handlers in `sim/visuals/` so a scripted input takes the path a real one takes; the headless
-  board view whose `updateView` snapshot renders the board's channels (display as 25 brightness
+  board view whose `updateView` state renders the board's channels (display as 25 brightness
   digits, pins, servo angles, neopixels) and whose change signal carries the board's events
   (`serial`, `display.show`, `speaker.play`); the board contributor declaring kinds, channels and
   events as structured entries with descriptions, renderings and docs, and `apply` over the
@@ -84,10 +84,10 @@ Code inside the compiled program as a contributor.
   both DOM-free and the same seam the live simulator puts a window behind; the program run to its
   first frame boundary and the surface fixed from the staging and the declarations before frame 0;
   the key as outer name; a late declaration and a key collision each refused with a stable code, the
-  first registration standing; scenarios declared from test code taken at the first frame boundary
-  and run as files beside the test file, a declaration after that boundary refused, and a shell
-  writing a declared scenario out as its file on request; the composed surface in `simtest` resolved
-  from the declarations the programs publish.
+  first registration standing; scenarios declared from any compiled file taken at the first frame
+  boundary and run as a shell runs files beside the declaring file, a declaration after that
+  boundary refused, and a shell writing a declared scenario out as its file on request; the composed
+  surface in `simtest` resolved from the declarations the programs publish.
 - Depends on: phase 2.
 - Lands when: a test program registering a contributor with one channel and one kind runs under a
   scenario addressing `<key>.<name>`, its input applied before the frame's handlers run and its
@@ -142,18 +142,18 @@ The world level: media as contributors, attachments as staging, modules over a m
 - `pxt-microbit`: the board attaching to a bus.
 - Depends on: phase 2; phase 4 for the live coordinator work.
 - Lands when: the spec's fixture contributor, shipped as the `core` script of a test extension
-  defining two kinds, is staged under
-  two roles with one kind each over the bus and contributes under `<role>.<name>`; unplugging one
-  at a frame renders its channels absent and emits the bus's detached event; a third, staged
-  unattached, starts absent, and an attach at frame N renders it present from N+1, emits the
-  attached event, and is seen by a program handler on the board on N+1 under the same device
-  identity in two runs; a role equal to the outer segment of a board name is refused at staging; a
-  `projstaging` write from one frame reaches a subscriber in another, and the subscriber's next
-  surface operation shows the new role; the read reply's core URL resolves to the test extension's
-  script; a medium the test extension defines, listed before the bus, applies a value to a kind of
-  the bus in its propagate step and the bus reads it the same frame; the surface marks a board
-  kind that medium's map targets as driven by it, a scenario scripting that kind is rejected by
-  composed name, and a map naming an undeclared quantity is refused before the first frame.
+  defining two kinds, is staged under two roles with one kind each over the bus and contributes
+  under `<role>.<name>`; unplugging one at a frame renders its channels absent and emits the bus's
+  detached event; a third, staged unattached, starts absent, and an attach at frame N renders it
+  present from N+1, emits the attached event, and is seen by a program handler on the board on N+1
+  under the same device identity in two runs; a role equal to the outer segment of a board name is
+  refused at staging; a `projstaging` write from one frame reaches a subscriber in another, and the
+  subscriber's next surface operation shows the new role; the read reply's core URL resolves to the
+  test extension's script; a medium the test extension defines, listed before the bus, applies a
+  value to a kind of the bus in its propagate step and the bus reads it the same frame; the surface
+  marks a board kind that medium's map targets as driven by it, a scenario scripting that kind is
+  rejected by composed name, and a map naming an undeclared quantity is refused before the first
+  frame.
 - Status lines: Media and topology (the media framework, the bus and the shield); Scenarios
   (`staging.json`, `projstaging`).
 
@@ -161,13 +161,14 @@ The world level: media as contributors, attachments as staging, modules over a m
 
 Several boards in lockstep, and radio frames carried by a medium.
 
-- `pxt`: an orchestrator advancing one runtime per `vm` context or worker a frame at a time by
+- `pxt`: the driver advancing one runtime per `vm` context or worker a frame at a time by
   board id, with every medium propagating after every board; the board id as outer name; one trace
   per world; the scenario's boards with their projects; the radio ether as a medium delivering
   frames at frame boundaries in stable order with a link matrix (`ether.link <a>-<b>`) and a
   per-link strength scripted through `ether.strength <a>-<b>` or defaulted.
 - `pxt-common-packages`: the radio's core attaching to the medium that implements the `radio`
-  contract when one is staged, the broadcast `radiopacket` message staying for the live simulator.
+  contract when one is staged, the broadcast `radiopacket` message staying for a live run with no
+  radio medium staged.
 - `pxt`: the `radio` contract declared with its required names, the ether as the platform's
   implementation of it.
 - Depends on: phases 4 and 5.
@@ -186,8 +187,9 @@ Controlled nondeterminism.
   and the medium's id; delay in whole frames with jitter and duplication; the drop event per link
   with its cause; the collision switch; the ether reading each board's radio profile from its
   attachment; the platform's spatial world as a medium of positions alone, with placement and path
-  kinds and position channels; strength from distance by log-distance path loss with seeded
-  shadowing and the reception curve, read from the platform's world when no other feeds the ether.
+  kinds and position channels, applying strength from distance by log-distance path loss with seeded
+  shadowing through the ether's strength kind when no richer world is staged; the ether's reception
+  curve.
 - `pxt-microbit`: the board's radio profile declared for the ether.
 - Depends on: phase 6.
 - Lands when: every frame a loss model removes is matched by one drop event on its link and a bare
@@ -201,10 +203,10 @@ Controlled nondeterminism.
 
 A run as a portable artifact.
 
-- `pxt`: the recording (seed, per-frame clock deltas, inputs at frame grain, project and version
+- `pxt`: the recording (seed, per-frame clock deltas, inputs at frame grain, staging, versions
   record); replay of the same program by the recorded deltas; replay of a changed program at the
   nominal period; the live simulator seeded at run start with the seed logged and the frame deltas
-  logged; the recorder in the live driver stamping the inputs the view applies with their frame.
+  logged; the recorder in the live simulator stamping the inputs the view applies with their frame.
 - `pxt-microbit`: the live-capture sensors (microphone level, device-motion acceleration, light
   level, the recorder host's clip) reading scenario values through `apply` in a headless run.
 - Depends on: phase 2; phase 5 for recording a live run's topology.
@@ -233,10 +235,10 @@ The screen as a channel.
 A world's state saved at a frame boundary and restored into a fresh driver.
 
 - `pxt`: `saveState` and `restoreState` on the contributor shape; the driver's saved form (frame
-  index, pending inputs, stream positions, surface digest) with its format version; the save
-  assembling the driver's form, every contributor's in composed order, each board's runtime saved
-  form with its compiled program, and the versions record; restore into a fresh driver with refusal
-  by a layer that cannot read a format version or by a digest mismatch; the platform media's
+  index, pending inputs, stream positions, the staging, surface digest) with its format version; the
+  save assembling the driver's form, every contributor's in composed order, each board's runtime
+  saved form with its compiled program, and the versions record; restore into a fresh driver with
+  refusal by a layer that cannot read a format version or by a digest mismatch; the platform media's
   `saveState` and `restoreState` (the ether's link matrix, loss-model state and delay queue; the
   bus's roles, identities and announces; the spatial world's positions and path progress); the save
   operation on every shell (run to a frame and write, or restore and run on), the scenario's `saves`
@@ -260,8 +262,8 @@ A world's state saved at a frame boundary and restored into a fresh driver.
 ## After the phases
 
 When every phase has landed, the Status section of `headless-harness.md` says so on every line,
-every open Ledger entry below has been resolved or moved to the Open items of `README.md`, and
-this file is removed together with the pointers to it in `README.md` and the overview; the spec
+every open Ledger entry below has been resolved or moved to the Open items of `README.md`, and this
+file is removed together with the pointers to it in `README.md`, the overview and the spec; the spec
 stays as the design of record.
 
 ## How agents work this plan
@@ -282,8 +284,9 @@ named by the title of its kickoff.
 
 Before touching a phase (the planner):
 
-1. Read, in full and in this order: `README.md` beside this file, `headless-harness.md`, this
-   plan, and `.github/instructions/simulator.instructions.md`. Then read the code the phase names.
+1. Read, in full and in this order: `headless-harness-overview.md` and `README.md` beside this file,
+   `headless-harness.md`, this plan, and `.github/instructions/simulator.instructions.md`. Then read
+   the code the phase names.
 2. Check the Status section against the code. Where they disagree, the code is the fact: correct
    the Status line first, as a documentation-only slice of the planner's own that needs no
    kickoff, before planning on it.
@@ -309,7 +312,7 @@ Dispatching a slice (the planner and the developer):
 
 While implementing (the coder):
 
-- Read the four files of step 1 in full, then the files the kickoff names, before editing.
+- Read the five files of step 1 in full, then the files the kickoff names, before editing.
 - Judge the code against the spec, not against this plan's wording. The plan summarizes; the spec
   rules. Where the two disagree, the spec wins; report the disagreement, and the planner corrects
   the plan in the same slice.
