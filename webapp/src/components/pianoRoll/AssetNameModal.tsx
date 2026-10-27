@@ -1,7 +1,8 @@
 import { Input } from "../../../../react-common/components/controls/Input";
 import { Modal, ModalAction } from "../../../../react-common/components/controls/Modal";
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { isNameTaken } from "../../assets";
+import { AssetEditorContext } from "../AssetEditorContext";
 
 interface AssetNameModalProps {
     assetName: string;
@@ -16,6 +17,7 @@ export const AssetNameModal = (props: AssetNameModalProps) => {
         onClose
     } = props;
 
+    const project = useContext(AssetEditorContext);
     const [editName, setEditName] = useState(assetName);
     const [nameError, setNameError] = useState<string>();
 
@@ -33,7 +35,7 @@ export const AssetNameModal = (props: AssetNameModalProps) => {
         if (!pxt.validateAssetName(trimmedName)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
-        else if (isNameTaken(trimmedName) && trimmedName !== assetName) {
+        else if (isNameTaken(trimmedName, project) && trimmedName !== assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
         }
 

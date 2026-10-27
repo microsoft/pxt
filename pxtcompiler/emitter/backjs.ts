@@ -53,6 +53,21 @@ namespace ts.pxtc {
         "pxsim.pxtrt.stlocRef": "",
     }
 
+    const disallowedShimNamespaces: string[] = [
+        "protocol",
+        "accessibility",
+        "localization",
+        "instructions",
+        "U",
+        "util",
+        "visuals",
+        "Embed",
+        "AudioContextManager",
+        "svg",
+        "visuals",
+        "codal",
+    ];
+
     function shortCallsPrefix(m: pxt.Map<string>) {
         let r = ""
         for (let k of Object.keys(m)) {
@@ -80,6 +95,9 @@ namespace ts.pxtc {
             if (shortNsCalls.hasOwnProperty(pref))
                 return shortNsCalls[pref] + r.slice(idx)
         }
+        const namespace = shimName.slice(0, shimName.indexOf("."));
+        if (namespace && disallowedShimNamespaces.indexOf(namespace) >= 0)
+            return undefined;
         return r
     }
 
@@ -554,12 +572,26 @@ function ${id}(s) {
                 text = `${args[0]}${name}(${args.slice(1).join(", ")})`
             else if (name[0] == "=")
                 text = `(${args[0]})${name.slice(1)} = (${args[1]})`
-            else if (U.startsWith(name, "new "))
-                text = `new ${shimToJs(name.slice(4))}(${args.join(", ")})`
+            else if (U.startsWith(name, "new ")) {
+                const shim = shimToJs(name.slice(4));
+                if (shim) {
+                    text = `new ${shim}(${args.join(", ")})`
+                }
+                else {
+                    text = `pxtrt.panic(1001)`;
+                }
+            }
             else if (U.lookup(jsOpMap, name))
                 text = args.length == 2 ? `(${args[0]} ${U.lookup(jsOpMap, name)} ${args[1]})` : `(${U.lookup(jsOpMap, name)} ${args[0]})`;
-            else
-                text = `${shimToJs(name)}(${args.join(", ")})`
+            else {
+                const shim = shimToJs(name);
+                if (shim) {
+                    text = `${shim}(${args.join(", ")})`
+                }
+                else {
+                    text = `pxtrt.panic(1002)`;
+                }
+            }
 
             if (topExpr.callingConvention == ir.CallingConvention.Plain) {
                 write(`r0 = ${text};`)
