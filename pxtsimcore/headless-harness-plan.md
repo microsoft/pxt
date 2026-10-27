@@ -208,8 +208,8 @@ The screen as a channel.
 
 When every phase has landed, the Status section of `headless-harness.md` says so on every line,
 every open Ledger entry below has been resolved or moved to the Open items of `README.md`, and
-this file is removed together with the pointers to it in `README.md`, the overview and
-`simulator.instructions.md`; the spec stays as the design of record.
+this file is removed together with the pointers to it in `README.md` and the overview; the spec
+stays as the design of record.
 
 ## How agents work this plan
 
