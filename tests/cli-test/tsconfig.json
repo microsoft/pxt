@@ -25,6 +25,7 @@
     "files": [
         "clirunner.ts",
         "bump.ts",
+        "../../cli/commandparser.ts",
         "../../cli/localrepos.ts",
         "../../cli/nodeutil.ts"
     ]

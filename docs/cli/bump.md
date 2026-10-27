@@ -8,6 +8,9 @@ Bumps the version number of the extension.
 pxt bump [--update] [--upload] [--version <major|minor|patch|semver>] [--pr] [--nopr]
 ```
 
+Direct bumps respect Git's configured push remote and refspecs. The commit and release tags
+are pushed atomically, so a rejected commit cannot publish its tag.
+
 ## Options
 
 ### --update

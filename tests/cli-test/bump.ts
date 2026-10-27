@@ -6,6 +6,7 @@ import * as path from "path";
 import * as ts from "typescript";
 import * as vm from "vm";
 import * as nodeutil from "../../cli/nodeutil";
+import * as commandParser from "../../cli/commandparser";
 
 const rimraf: { sync(directory: string): void } = require("rimraf");
 
@@ -22,29 +23,55 @@ interface BumpOptions {
     missingCredentials?: boolean;
     failBump?: boolean;
     failPush?: boolean;
+    pushGit?: (...args: string[]) => Promise<void>;
 }
 
 const sourceFile = ts.createSourceFile("cli.ts", fs.readFileSync(path.resolve("cli", "cli.ts"), "utf8"),
     ts.ScriptTarget.Latest, true);
-const declaration = sourceFile.statements.find((statement): statement is ts.FunctionDeclaration =>
-    ts.isFunctionDeclaration(statement) && statement.name?.text === "bumpAsync");
-if (!declaration) throw new Error("Cannot find bumpAsync");
 // Load the real command without initializing unrelated CLI services.
-const bumpScript = new vm.Script(ts.transpileModule(declaration.getText(sourceFile), {
+function commandScript(name: string): vm.Script {
+    const declaration = sourceFile.statements.find((statement): statement is ts.FunctionDeclaration =>
+        ts.isFunctionDeclaration(statement) && statement.name?.text === name);
+    if (!declaration) throw new Error(`Cannot find ${name}`);
+    return new vm.Script(ts.transpileModule(declaration.getText(sourceFile), {
+        compilerOptions: { target: ts.ScriptTarget.ES2017, module: ts.ModuleKind.CommonJS }
+    }).outputText + `\n${name};`);
+}
+
+const bumpScript = commandScript("bumpAsync");
+const staticpkgScript = commandScript("staticpkgAsync");
+let staticpkgRegistration: ts.CallExpression;
+const findStaticpkgRegistration = (node: ts.Node): void => {
+    if (ts.isCallExpression(node) && node.expression.getText(sourceFile) === "p.defineCommand") {
+        const definition = node.arguments[0];
+        if (definition && ts.isObjectLiteralExpression(definition) && definition.properties.some(property =>
+            ts.isPropertyAssignment(property) && ts.isIdentifier(property.name) && property.name.text === "name"
+            && ts.isStringLiteral(property.initializer) && property.initializer.text === "staticpkg")) {
+            staticpkgRegistration = node;
+        }
+    }
+    ts.forEachChild(node, findStaticpkgRegistration);
+};
+findStaticpkgRegistration(sourceFile);
+if (!staticpkgRegistration) throw new Error("Cannot find staticpkg command registration");
+const staticpkgRegistrationScript = new vm.Script(ts.transpileModule(staticpkgRegistration.getText(sourceFile), {
     compilerOptions: { target: ts.ScriptTarget.ES2017 }
-}).outputText + "\nbumpAsync;");
+}).outputText);
 
 function bumpCommand(options: BumpOptions) {
     const calls: string[] = [];
     const warnings: string[] = [];
+    const pushes: string[][] = [];
     const bump = async (version: string, tag = true): Promise<string> => {
         calls.push(tag ? "bump:tagged" : "bump:untagged");
         if (options.failBump) throw new Error("Bump commit failed");
         return "1.0.1";
     };
-    const publish = async (tags = true): Promise<void> => {
-        calls.push(tags ? "push:tags" : "push:no-tags");
+    const publish = async (args: string[]): Promise<void> => {
+        pushes.push(args);
+        calls.push(args.includes("--follow-tags") ? "push:tags" : "push:no-tags");
         if (options.failPush) throw new Error("Bump push failed");
+        if (options.pushGit) await options.pushGit(...args);
     };
     const color = (value: string) => value;
     const command: (parsed: { flags: BumpFlags }) => Promise<void> = bumpScript.runInNewContext({
@@ -63,13 +90,15 @@ function bumpCommand(options: BumpOptions) {
             timestamp: () => "test",
             needsGitCleanAsync: async () => { calls.push("clean"); },
             runGitAsync: async (...args: string[]) => {
-                if (args[0] === "push") await publish(args.includes("--follow-tags"));
+                if (args[0] === "push") await publish(args);
                 else calls.push(`git:${args.join(" ")}`);
             },
             runNpmAsync: async () => { await bump("patch"); },
             npmVersionBumpAsync: bump,
             createBranchAsync: async () => { calls.push("branch"); },
-            gitPushAsync: publish,
+            gitPushAsync: async (tags = true) => publish([
+                "push", "--atomic", tags ? "--follow-tags" : "--no-follow-tags", "origin", "HEAD"
+            ]),
             createPullRequestAsync: async (request: { base: string; head: string }) => {
                 chai.expect(request.base).equals("master");
                 chai.expect(request.head).equals("test-user/pxt-bump-test");
@@ -90,7 +119,25 @@ function bumpCommand(options: BumpOptions) {
         bumpPxtCoreDepAsync: async () => { calls.push("update"); },
         uploadTaggedTargetAsync: async () => { calls.push("upload"); }
     });
-    return { run: (flags: BumpFlags = {}) => command({ flags }), calls, warnings };
+    return { run: (flags: BumpFlags = {}) => command({ flags }), calls, warnings, pushes };
+}
+
+function staticpkgCommand(options: BumpOptions) {
+    const bump = bumpCommand(options);
+    const calls: string[] = [];
+    const command: (parsed: commandParser.ParsedCommand) => Promise<void> = staticpkgScript.runInNewContext({
+        exports: {},
+        process: { env: {} },
+        forceCloudBuild: false,
+        pxt: { log: () => { } },
+        rimrafAsync: async () => { calls.push("clear"); },
+        bumpAsync: async (parsed?: { flags: BumpFlags }) => bump.run(parsed?.flags),
+        internalBuildTargetAsync: async () => { calls.push("build"); },
+        internalStaticPkgAsync: async () => { calls.push("package"); }
+    });
+    const parser = new commandParser.CommandParser();
+    staticpkgRegistrationScript.runInNewContext({ p: parser, staticpkgAsync: command });
+    return { run: (...args: string[]) => parser.parseCommand(["staticpkg", ...args]), bump, calls };
 }
 
 async function expectRejected(promise: Promise<unknown>, message: string): Promise<void> {
@@ -120,6 +167,7 @@ for (const kind of ["target", "extension"] as const) {
             await command.run();
             chai.expect(command.calls).includes("pr");
             chai.expect(command.calls.filter(call => call.startsWith("push:"))).deep.equals(["push:no-tags"]);
+            chai.expect(command.pushes).deep.equals([["push", "--atomic", "--no-follow-tags", "origin", "HEAD"]]);
         });
 
         it("honors --pr on an unprotected branch", async () => {
@@ -137,11 +185,12 @@ for (const kind of ["target", "extension"] as const) {
             chai.expect(command.calls.filter(call => call.startsWith("push:"))).deep.equals(["push:tags"]);
         });
 
-        it("pushes a direct bump only once", async () => {
+        it("pushes a direct bump atomically without overriding Git's configured destination", async () => {
             const command = bumpCommand({ kind, protection: false });
             await command.run();
             chai.expect(command.calls).not.includes("pr");
             chai.expect(command.calls.filter(call => call.startsWith("push:"))).deep.equals(["push:tags"]);
+            chai.expect(command.pushes).deep.equals([["push", "--atomic", "--follow-tags"]]);
         });
 
         it("does not push after the local bump commit fails", async () => {
@@ -178,6 +227,43 @@ describe("target dependency bump", () => {
         chai.expect(command.calls).deep.equals([
             "git:pull", "update", "push:no-tags", "bump:tagged", "push:tags"
         ]);
+        chai.expect(command.pushes).deep.equals([
+            ["push", "--atomic", "--no-follow-tags"],
+            ["push", "--atomic", "--follow-tags"]
+        ]);
+    });
+});
+
+describe("staticpkg bump options", () => {
+    it("accepts and forwards --nopr to bump without GitHub API credentials", async () => {
+        const command = staticpkgCommand({ kind: "target", missingCredentials: true });
+        await command.run("--bump", "--nopr");
+        chai.expect(command.bump.calls).includes("bump:tagged");
+        chai.expect(command.bump.calls).not.includes("pr");
+        chai.expect(command.bump.pushes).deep.equals([["push", "--atomic", "--follow-tags"]]);
+        chai.expect(command.calls).deep.equals(["clear", "build", "package"]);
+    });
+
+    it("keeps the safe default when --nopr is not supplied", async () => {
+        const command = staticpkgCommand({ kind: "target", missingCredentials: true });
+        await expectRejected(command.run("--bump"), "Unable to prepare a bump pull request");
+        chai.expect(command.bump.calls).deep.equals([]);
+        chai.expect(command.calls).deep.equals(["clear"]);
+    });
+
+    it("still uses a tag-free PR for protected branches by default", async () => {
+        const command = staticpkgCommand({ kind: "target", protection: true });
+        await command.run("--bump");
+        chai.expect(command.bump.calls).includes("pr");
+        chai.expect(command.bump.calls).includes("bump:untagged");
+        chai.expect(command.calls).deep.equals(["clear", "build", "package"]);
+    });
+
+    it("does not bump when --nopr is supplied without --bump", async () => {
+        const command = staticpkgCommand({ kind: "target", missingCredentials: true });
+        await command.run("--nopr");
+        chai.expect(command.bump.calls).deep.equals([]);
+        chai.expect(command.calls).deep.equals(["clear", "build", "package"]);
     });
 });
 
@@ -272,4 +358,21 @@ describe("bump Git pushes", function () {
         chai.expect(git(remote, "rev-parse", "refs/heads/pxt-bump-test")).equals(git(working, "rev-parse", "HEAD"));
         chai.expect(git(remote, "tag", "--list")).equals("");
     });
+
+    for (const kind of ["target", "extension"] as const) {
+        it(`honors a configured push remote and refspec for a direct ${kind} bump`, async () => {
+            const destination = path.join(temporaryDirectory, "publishing");
+            git(temporaryDirectory, "init", "--bare", "--initial-branch=release", destination);
+            git(working, "remote", "add", "publishing", destination);
+            git(working, "config", "branch.main.pushRemote", "publishing");
+            git(working, "config", "remote.publishing.push", "HEAD:refs/heads/release");
+            const command = bumpCommand({ kind, protection: false, pushGit: nodeutil.runGitAsync });
+            await command.run();
+            const commit = git(working, "rev-parse", "HEAD");
+            chai.expect(git(temporaryDirectory, "--git-dir", destination, "rev-parse", "refs/heads/release")).equals(commit);
+            chai.expect(git(temporaryDirectory, "--git-dir", destination, "rev-parse", "v1.0.1^{}")).equals(commit);
+            chai.expect(git(remote, "rev-parse", "refs/heads/main")).equals(initialCommit);
+            chai.expect(git(remote, "tag", "--list")).equals("");
+        });
+    }
 });

@@ -758,7 +758,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => justBumpPkgAsync(bumpType))
-                .then(() => nodeutil.gitPushAsync())
+                .then(() => nodeutil.runGitAsync("push", "--atomic", "--follow-tags"))
         }
     }
     else if (fs.existsSync("pxtarget.json"))
@@ -789,9 +789,9 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
             console.log("Bumping via direct push.");
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
-                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.gitPushAsync(false)) : Promise.resolve())
+                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push", "--atomic", "--no-follow-tags")) : Promise.resolve())
                 .then(() => nodeutil.runNpmAsync("version", bumpType))
-                .then(() => nodeutil.gitPushAsync())
+                .then(() => nodeutil.runGitAsync("push", "--atomic", "--follow-tags"))
                 .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
         }
     else {
@@ -5260,7 +5260,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     await rimrafAsync(builtPackaged, {});
 
     if (bump) {
-        await bumpAsync();
+        await bumpAsync(parsed);
     }
 
     if (locs) {
@@ -7472,6 +7472,9 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             },
             bump: {
                 description: "bump version number prior to package"
+            },
+            nopr: {
+                description: "With --bump, force a direct bump rather than a pull request"
             },
             cloudbuild: {
                 description: "(deprecated) forces build to happen in the cloud",

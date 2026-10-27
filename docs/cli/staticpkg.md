@@ -5,7 +5,7 @@
 Packages the target into static HTML pages
 
 ```
-pxt staticpkg [--route route] [--githubpages] [--output output] [--locs-src locs-src]
+pxt staticpkg [--route route] [--githubpages] [--output output] [--locs-src locs-src] [--bump] [--nopr]
 ```
 
 ## Description
@@ -59,7 +59,20 @@ Generate a web site compatible with GitHub pages.
 
 ### bump (option)
 
-Bump version number generating pages.
+Bump the version number before generating pages. Protected branches or an unknown branch
+protection status default to a pull request.
+
+### nopr (optional)
+
+With `--bump`, explicitly use a direct push instead of a pull request. This allows
+SSH-authenticated checkouts without a GitHub credential-helper token to request a direct bump:
+
+```
+pxt staticpkg --bump --nopr
+```
+
+Git's push authorization and branch protection rules still apply. Without `--bump`,
+`--nopr` does not change the version.
 
 ## Deploying PXT with static files
 
