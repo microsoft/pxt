@@ -11,7 +11,7 @@ namespace ts.pxtc {
     export const NATIVE_TYPE_THUMB = "thumb";
     export const NATIVE_TYPE_VM = "vm";
 
-    export function emptyExtInfo(compileService: pxt.TargetCompileService = pxt.appTarget.compileService): ExtensionInfo {
+    export function emptyExtInfo(compileService: pxt.TargetCompileService): ExtensionInfo {
         let cs = compileService
         if (!cs) cs = {} as any
         const pio = !!cs.platformioIni;
