@@ -63,7 +63,8 @@ With several boards, every board steps before any medium delivers, so a radio fr
 N always arrives on frame N+1.
 
 Everything in that paragraph lives in one shared driver in core. The shells around it are thin:
-`pxt simtest` on the command line, a Node caller, and a browser worker. Beside running a
+`pxt simtest` for a target developer, `mkc test` for a project author with nothing but a project
+folder, a Node caller under both, and a browser worker. Beside running a
 scenario, every shell can also answer "what is the surface for this staging" without running one,
 which is what an editor tab needs to offer completion.
 

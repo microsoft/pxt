@@ -11,7 +11,7 @@ below depends on the gap.
 
 Repositories: `pxt` (core and the command line), `pxt-microbit` (the board contributor, the first
 target), `pxt-common-packages` (the program-message channel and the radio), `pxt-arcade` (the
-screen). A phase names which it touches.
+screen), `pxt-mkc` (the MakeCode CLI's test command). A phase names which it touches.
 
 Required reading before any work on a phase: "How agents work this plan", at the end of this file
 above the Ledger. It binds every agent that reads, dispatches or implements from this file, and a
@@ -98,11 +98,16 @@ One driver under three shells.
 - `pxt`: a browser worker that loads `pxtsimcore.js` and a target's `simcore.js`, installs the
   virtual host and the silent audio host, runs the driver and returns results as messages; a Node
   caller taking the same inputs programmatically; both assembling run options through the one
-  shared function.
+  shared function; `pxt simtest` rebuilt as a front end over the Node caller that also runs in a
+  project folder over the bundles the installed target package ships; a target release publishing
+  `pxtsimcore.js` and its `simcore.js` beside `pxtworker.js`.
+- `pxt-mkc`: `mkc test`, fetching the two bundles from the target's release into the cache beside
+  the compiler, compiling the project, and running every scenario in it over the Node caller.
 - Depends on: phase 2.
-- Lands when: same seed, same inputs, same frames give byte-identical traces in the worker and in
-  Node; a contributor reachable from one shell is reachable from the others; the surface operation
-  answers from both.
+- Lands when: same seed, same inputs, same frames give byte-identical traces in the worker, in
+  Node, from `pxt simtest` in a project folder and from `mkc test` against a released target; a
+  contributor reachable from one shell is reachable from the others; the surface operation
+  answers from every shell.
 - Status lines: the trace and the shells (all three).
 
 ## Phase 5: media, topology and modules

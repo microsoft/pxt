@@ -446,10 +446,17 @@ shells are thin:
 
 - `pxt simtest` takes a project directory with its scenario files, found throughout the project
   (the `--base` form with single `.ts` files stays as a convenience for smoke tests), compiles the
-  project, runs each scenario and reports verdicts and the trace. It resolves the composed surface
-  in Node: the board's kinds from the target's core bundle, a program contributor's from the
-  declaration it publishes, a module's from the attachments the staging declares.
-- A Node caller drives the driver programmatically with the same inputs.
+  project, runs each scenario and reports verdicts and the trace. It runs in a target checkout,
+  over the bundles the checkout builds, and in a project folder with the target's package
+  installed, over the bundles the package ships. It resolves the composed surface in Node: the
+  board's kinds from the target's core bundle, a program contributor's from the declaration it
+  publishes, a module's from the attachments the staging declares.
+- `mkc test` is the same command for a project author with no target checkout: the MakeCode CLI
+  fetches the two headless bundles from the target's release beside the compiler it already
+  fetches, compiles the project as `mkc build` does, and runs every scenario the project holds. A
+  target's release therefore ships `pxtsimcore.js` and its `simcore.js` beside `pxtworker.js`.
+- A Node caller drives the driver programmatically with the same inputs; the two commands above
+  are thin front ends over it.
 - A browser worker loads `pxtsimcore.js` and `simcore.js`, installs the virtual host and the silent
   audio host, and runs the same driver; results come back as worker messages. A simulator extension
   hosting this shell takes the bundle URLs and each attachment's core URL from the `projstaging`
@@ -703,8 +710,9 @@ What exists and what does not, section by section. A change that lands a piece e
 - The scenario file and the trace format: not started. `simtest` reads no scenario file and
   writes no trace.
 - The trace and the shells: not started. `simtest` is the one shell, and the only headless driver
-  is `runHeadlessAsync` in `cli/simtest.ts`, which runs one runtime in one `vm` context. No shell
-  offers the surface operation.
+  is `runHeadlessAsync` in `cli/simtest.ts`, which runs one runtime in one `vm` context and only
+  in a target checkout. No target release ships the headless bundles, and the MakeCode CLI has no
+  test command. No shell offers the surface operation.
 - Worlds with several simulators: not started.
 - Media and topology: not started. The radio simulator (pxt-common-packages
   `libs/radio/sim/core/`) posts each packet as a broadcast `radiopacket` message with a fixed
