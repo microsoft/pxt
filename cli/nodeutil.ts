@@ -243,7 +243,7 @@ export async function getGitHubOwnerAndRepoAsync(): Promise<{ owner: string; rep
     if (!remoteUrl) {
         Util.userError("No remote origin URL found");
     }
-    const match = remoteUrl.match(/github\.com[:\/](.+?)\/(.+?)(\.git)?$/);
+    const match = remoteUrl.replace(/\/+$/, "").match(/github\.com[:\/](.+?)\/(.+?)(\.git)?$/);
     if (!match) {
         Util.userError("Invalid remote origin URL: " + remoteUrl);
     }
