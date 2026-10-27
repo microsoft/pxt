@@ -2020,6 +2020,7 @@ export class ProjectView
             await this.loadBlocklyAsync();
             const tutorialBlocks = await tutorial.getUsedBlocksAsync(t.tutorialCode, t.tutorial, t.language, skipTutorialInfoCache);
             let editorState: pxt.editor.EditorState = {
+                hasCategories: tutorial.shouldShowTutorialCategories(t.metadata)
             }
 
             if (tutorialBlocks?.usedBlocks && Object.keys(tutorialBlocks.usedBlocks).length > 0) {
@@ -2027,10 +2028,6 @@ export class ProjectView
                     blocks: tutorialBlocks.usedBlocks,
                     defaultState: pxt.editor.FilterState.Hidden
                 };
-                editorState.hasCategories = !(
-                    header.tutorial.metadata &&
-                    (header.tutorial.metadata.flyoutOnly || header.tutorial.metadata.unifiedToolbox)
-                );
             }
             this.setState({ editorState: editorState });
             this.editor.filterToolbox(true);
@@ -2042,7 +2039,8 @@ export class ProjectView
         catch (e) {
             // Failed to decompile
             pxt.tickEvent('tutorial.faileddecompile', { tutorial: t.tutorial });
-            this.setState({ editorState: { filters: undefined } });
+            this.setState({ editorState: { filters: undefined, hasCategories: true } });
+            this.editor.filterToolbox(true);
             core.warningNotification(lf("Could not filter tutorial blocks, displaying full toolbox."))
         }
         finally {
@@ -5841,6 +5839,7 @@ export class ProjectView
         const hideToolbox = inTutorial && tutorialOptions.metadata?.hideToolbox;
         // flyoutOnly has become a de facto css class for styling tutorials (especially minecraft HOC), so keep it if hideToolbox is true, even if flyoutOnly is false.
         const flyoutOnly = this.state.editorState?.hasCategories === false || (inTutorial && (tutorialOptions.metadata?.flyoutOnly || hideToolbox));
+        const hideBlocklyCategories = !tutorial.shouldShowTutorialCategories(tutorialOptions?.metadata, this.state.editorState?.hasCategories);
         const { hideEditorToolbar, transparentEditorToolbar } = targetTheme;
         const hideMenuBar = targetTheme.hideMenuBar || hideTutorialIteration || (isTabTutorial && pxt.appTarget.appTheme.embeddedTutorial) || pxt.shell.isTimeMachineEmbed();
         const isHeadless = simOpts && simOpts.headless;
@@ -5892,6 +5891,7 @@ export class ProjectView
             logoWide ? "logo-wide" : "",
             isHeadless ? "headless" : "",
             flyoutOnly ? "flyoutOnly" : "",
+            hideBlocklyCategories ? "hideBlocklyCategories" : "",
             hideToolbox ? "hideToolbox" : "",
             hideTutorialIteration ? "hideIteration" : "",
             this.editor != this.blocksEditor ? "editorlang-text" : "",

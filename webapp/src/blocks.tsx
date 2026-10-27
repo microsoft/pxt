@@ -82,6 +82,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     currentFlyoutKey: string;
 
     private ignoreFlyoutPreviousNode = false;
+    private pendingResize = false;
     private flyoutNavigatorInitialized = false;
     private keyboardControlsInitialized = false;
 
@@ -931,6 +932,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         let shouldRestartSim = false;
 
         this.editor.addChangeListener((ev: Blockly.Events.Abstract) => {
+            this.onBlockDrag(ev);
             Blockly.Events.disableOrphans(ev);
 
             const ignoredChanges = [
@@ -1074,9 +1076,22 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const blocklyDiv = this.getBlocksEditorDiv();
         // Position blocklyDiv over blocklyArea.
         if (blocklyDiv && this.editor) {
+            // A pinned flyout's scrollbars can shift the workspace origin underneath a drag.
+            if (!this.editor.options.hasCategories && this.editor.isDragging()) {
+                this.pendingResize = true;
+                return;
+            }
+            this.pendingResize = false;
             Blockly.svgResize(this.editor);
             this.resizeToolbox();
             this.resizeFieldEditorView();
+        }
+    }
+
+    private onBlockDrag(event: Blockly.Events.Abstract): void {
+        if (this.pendingResize && event.type === Blockly.Events.BLOCK_DRAG
+            && (event as Blockly.Events.BlockDrag).isStart === false) {
+            this.resize();
         }
     }
 
@@ -1970,7 +1985,6 @@ export class Editor extends toolboxeditor.ToolboxEditor {
 
             const refreshBlockly = () => {
                 this.delayLoadXml = this.getCurrentSource();
-                this.editor = undefined;
                 this.prepareBlockly(hasCategories);
                 this.domUpdate();
                 this.editor.scrollCenter();
@@ -2552,7 +2566,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 .filter(shadow => !shadow.innerHTML)
                 .forEach((shadow, i) => {
                     let type = shadow.getAttribute('type');
-                    if (type === block.type) return;
+                    if (type === block.type || type === block.attributes.blockId) return;
                     const builtin = snippets.allBuiltinBlocks()[type];
                     const info = this.blockInfo.blocksById[type];
 

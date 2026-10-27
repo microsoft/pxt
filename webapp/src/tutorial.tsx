@@ -30,6 +30,11 @@ interface ITutorialBlocks {
     validateBlocks: pxt.Map<pxt.Map<string[]>>;
 }
 
+export function shouldShowTutorialCategories(metadata?: pxt.tutorial.TutorialMetadata, hasCategories?: boolean): boolean {
+    if (hasCategories !== undefined) return hasCategories;
+    return !(metadata?.flyoutOnly || metadata?.unifiedToolbox);
+}
+
 /**
  * We'll run this step when we first start the tutorial to figure out what blocks are used so we can
  * filter the toolbox.
