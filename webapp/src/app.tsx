@@ -2990,6 +2990,8 @@ export class ProjectView
             tutorialOptions: undefined,
             editorState: undefined,
             debugging: undefined,
+            sideDocsPinned: false,
+            sideDocsCollapsed: true,
             header: undefined,
             currFile: undefined,
             fileState: undefined
