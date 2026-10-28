@@ -152,7 +152,8 @@ import {
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
-import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE, FieldInstanceDropdown, OPEN_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
+import { MenuItem } from "blockly";
+import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE, FieldInstanceDropdown, NO_INSTANCE_OPTION_VALUE, OPEN_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
 import type { FieldCustomDropdownOptions } from "../../pxtblocks/fields/field_utils";
 import { getFixedInstanceDropdownOptions } from "../../pxtblocks/fields/symbolDropdownOptions";
 
@@ -6112,35 +6113,47 @@ describe("fixed-instance dropdown options", () => {
     }
 
     it("appends a separator and one trailing create entry, with the reserved value, when only the create entry is offered", () => {
-        const options = getInstanceDropdownOptions(instances, undefined, "create");
+        const options = getInstanceDropdownOptions(instances, undefined, "create", "empty");
         chai.expect(options.slice(0, instances.length)).deep.equals(instances);
         chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", CREATE_INSTANCE_OPTION_VALUE]);
     });
 
     it("appends a separator and one trailing edit entry, with the reserved value, when only the edit entry is offered", () => {
-        const options = getInstanceDropdownOptions(instances, "edit", undefined);
+        const options = getInstanceDropdownOptions(instances, "edit", undefined, "empty");
         chai.expect(options.slice(0, instances.length)).deep.equals(instances);
         chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", OPEN_INSTANCE_OPTION_VALUE]);
     });
 
     it("places the edit entry before the create entry, after one separator, when both are offered", () => {
-        const options = getInstanceDropdownOptions(instances, "edit", "create");
+        const options = getInstanceDropdownOptions(instances, "edit", "create", "empty");
         chai.expect(options.slice(0, instances.length)).deep.equals(instances);
         chai.expect(values(options)).deep.equals(["ns.a", "ns.b", "separator", OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
     });
 
     it("lists the instances alone, with no separator, when neither entry is offered", () => {
-        chai.expect(getInstanceDropdownOptions(instances, undefined, undefined)).deep.equals(instances);
-        chai.expect(getInstanceDropdownOptions([], undefined, undefined)).deep.equals([]);
+        chai.expect(getInstanceDropdownOptions(instances, undefined, undefined, "empty")).deep.equals(instances);
     });
 
     it("lists the command entries alone, with no separator, when there are no instances", () => {
-        chai.expect(values(getInstanceDropdownOptions([], undefined, "create"))).deep.equals([CREATE_INSTANCE_OPTION_VALUE]);
-        chai.expect(values(getInstanceDropdownOptions([], "edit", "create"))).deep.equals([OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
+        chai.expect(values(getInstanceDropdownOptions([], undefined, "create", "empty"))).deep.equals([CREATE_INSTANCE_OPTION_VALUE]);
+        chai.expect(values(getInstanceDropdownOptions([], "edit", "create", "empty"))).deep.equals([OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
+    });
+
+    it("lists one entry, with the reserved value, when there are no instances and neither entry is offered", () => {
+        chai.expect(values(getInstanceDropdownOptions([], undefined, undefined, "empty"))).deep.equals([NO_INSTANCE_OPTION_VALUE]);
+    });
+
+    it("never lists the entry saying there are no instances beside an instance or a command entry", () => {
+        for (const listed of [instances, []])
+            for (const editText of ["edit", undefined])
+                for (const createText of ["create", undefined]) {
+                    if (!listed.length && editText === undefined && createText === undefined) continue;
+                    chai.expect(values(getInstanceDropdownOptions(listed, editText, createText, "empty"))).to.not.include(NO_INSTANCE_OPTION_VALUE);
+                }
     });
 
     it("never changes the list it was given", () => {
-        getInstanceDropdownOptions(instances, "edit", "create");
+        getInstanceDropdownOptions(instances, "edit", "create", "empty");
         chai.expect(instances.length).equals(2);
     });
 
@@ -6205,6 +6218,37 @@ describe("fixed-instance dropdown options", () => {
         });
         chai.expect(opened).to.include("ns.new");
         chai.expect(opened).to.not.include("ns.old");
+    });
+
+    it("holds the entry saying there are no instances when the type has none and neither entry is offered", () => {
+        chai.expect(instanceField({ data: [], getBlocksInfo: () => thingBlocksInfo([]) }).getValue()).equals(NO_INSTANCE_OPTION_VALUE);
+    });
+
+    // a `FieldInstanceDropdown` whose dropdown a test can pick an entry of
+    class PickableInstanceField extends FieldInstanceDropdown {
+        pick(value: string) {
+            this.onItemSelected_(undefined, new MenuItem("", value));
+        }
+    }
+
+    it("keeps the field's value and asks the editor nothing when the entry saying there are no instances is picked", () => {
+        let blocksInfo = thingBlocksInfo([instanceSymbol("a", "ns.Thing")]);
+        const field = new PickableInstanceField("", { type: "ns.Thing", blocksInfo: undefined, getBlocksInfo: () => blocksInfo });
+        chai.expect(field.getValue()).equals("ns.a");
+        blocksInfo = thingBlocksInfo([]);
+        chai.expect(values(field.getOptions(false))).deep.equals([NO_INSTANCE_OPTION_VALUE]);
+        const asked: string[] = [];
+        const { createInstance, openInstance } = pxt.react;
+        pxt.react.createInstance = typeQName => asked.push(typeQName);
+        pxt.react.openInstance = instanceQName => asked.push(instanceQName);
+        try {
+            field.pick(NO_INSTANCE_OPTION_VALUE);
+        } finally {
+            pxt.react.createInstance = createInstance;
+            pxt.react.openInstance = openInstance;
+        }
+        chai.expect(field.getValue()).equals("ns.a");
+        chai.expect(asked).deep.equals([]);
     });
 
     it("lists the options captured when the field was built while the live API info is undefined", () => {
