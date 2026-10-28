@@ -227,6 +227,10 @@ a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync
 - `gulp testsimcore` (`tests/simcore-test`) loads `built/pxtsimcore.js` alone into such a
   context, runs programs through `runHeadlessAsync` on the TypeScript fixture
   `tests/simcore-test/fixtures/toybundle.ts`, and drives a virtual host directly.
+- The harness above `simtest` (contributors, scenarios, the trace, worlds of several simulators,
+  media, recording and replay) is outlined in `headless-harness-overview.md` beside this file for
+  a first read, designed in full in `headless-harness.md`, whose Status section says which parts
+  exist, and sequenced in `headless-harness-plan.md`.
 
 ## Open items
 
