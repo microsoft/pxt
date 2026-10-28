@@ -177,6 +177,54 @@ describe("responsive project-tools launcher", function () {
         await page.waitForSelector(`${panel} .project-tools-pin`, { visible: true });
     };
 
+    for (const { width, rtl } of [{ width: 1366, rtl: false }, { width: 1024, rtl: true }, { width: 390, rtl: false }]) {
+        it(`tracks the workspace top rather than the tutorial flag at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
+            await openTool(docs, width);
+            if (rtl) {
+                await page.$eval("style", (element, text) => element.textContent = text, rtlcss.process(css));
+                await page.evaluate(() => window.setRtl(true));
+            }
+            await page.$eval("#root", element => element.classList.add("tabTutorial"));
+            const menuHeight = (width <= 991 ? 3.5 : 4) * 16;
+            const compact = width < 1200;
+            for (const bannerVisible of [false, true]) {
+                await page.$eval("#root", (element, visible) => {
+                    element.classList.toggle("notificationBannerVisible", visible);
+                }, bannerVisible);
+                for (const offset of [0, 160, 240, 0]) {
+                    await page.$eval("#root", (element, offset) => {
+                        if (offset) element.style.setProperty("--editor-offset", `${offset}px`);
+                        else element.style.removeProperty("--editor-offset");
+                    }, offset);
+                    const workspaceTop = menuHeight + (bannerVisible ? 32 : 0) + offset;
+                    const bounds = await page.evaluate(() => ({
+                        launcher: document.getElementById("project-tools-launcher").getBoundingClientRect().top,
+                        panel: document.getElementById("project-tools-panel").getBoundingClientRect().top,
+                        bottom: document.getElementById("project-tools-panel").getBoundingClientRect().bottom
+                    }));
+                    assert.equal(bounds.launcher, workspaceTop + (compact ? 8 : 16));
+                    assert.equal(bounds.panel, workspaceTop + (compact ? 76 : 16));
+                    assert(bounds.bottom <= 900);
+                }
+            }
+        });
+    }
+
+    it("updates height-resize accessibility bounds when a top tutorial changes height", async () => {
+        await openTool(docs, 1366);
+        const handle = ".project-tools-resize-height";
+        await page.focus(handle);
+        await page.keyboard.press("Home");
+        const height = await page.$eval(panel, element => element.getBoundingClientRect().height);
+        const maximum = await page.$eval(handle, element => Number(element.getAttribute("aria-valuemax")));
+        await page.$eval("#root", element => element.style.setProperty("--editor-offset", "160px"));
+        await page.waitForFunction(expected => {
+            const maximum = Number(document.querySelector(".project-tools-resize-height").getAttribute("aria-valuemax"));
+            return Math.abs(maximum - expected) < 1;
+        }, { timeout: 3000 }, maximum - 160);
+        assert.equal(await page.$eval(panel, element => element.getBoundingClientRect().height), height);
+    });
+
     it("keeps the unpinned backpack open during modal focus and resumes dismissal afterward", async () => {
         await openTool(backpack);
         await page.evaluate(() => window.setBackpackModalOpen(true));
