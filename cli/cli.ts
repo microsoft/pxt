@@ -2686,7 +2686,6 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     await buildWebStringsAsync();
     if (!options.quick) await internalGenDocsAsync(false, true)
-    if (pxt.appTarget.cacheusedblocksdirs && !options.quick) cfg.tutorialInfo = await internalCacheUsedBlocksAsync();
 
     await forEachBundledPkgAsync(async (pkg, dirname) => {
         pxt.log(`building bundled ${dirname}`);
@@ -2822,6 +2821,11 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
         res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
     })
+
+    // reload the app target with the bundled packages before caching tutorial used blocks
+    pxt.setAppTarget(cfg)
+    pxt.reloadAppTargetVariant()
+    if (pxt.appTarget.cacheusedblocksdirs && !options.quick) cfg.tutorialInfo = await internalCacheUsedBlocksAsync();
 
     // Trim redundant API info from packages
     const coreInfo = builtInfo[corepkg];
