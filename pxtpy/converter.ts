@@ -536,8 +536,11 @@ namespace pxt.py {
         }
     }
 
+    let inDisabledStmt = false;
+
     // next free error 9576
     function error(astNode: py.AST | null | undefined, code: number, msg: string) {
+        if (inDisabledStmt) return;
         diagnostics.push(mkDiag(astNode, pxtc.DiagnosticCategory.Error, code, msg))
         //const pos = position(astNode ? astNode.startPos || 0 : 0, mod.source)
         //currErrs += U.lf("{0} near {1}{2}", msg, mod.tsFilename.replace(/\.ts/, ".py"), pos) + "\n"
@@ -2794,7 +2797,28 @@ namespace pxt.py {
 
         let cmts: string[] = (e._comments || []).map(c => c.value)
 
-        let r = f(e)
+        const prevDisabled = inDisabledStmt;
+        if (e._disabled) {
+            inDisabledStmt = true;
+        }
+
+        let r = f(e);
+
+        if (e._disabled) {
+            inDisabledStmt = prevDisabled;
+            const text = B.flattenNode([r]).output.trim();
+            if (text) {
+                const lines = text.split("\n").map(l => {
+                    const trimmed = l.trim();
+                    if (trimmed.startsWith("//")) {
+                        return B.mkStmt(B.mkText(l));
+                    }
+                    return B.mkStmt(B.mkText("// " + l));
+                });
+                r = B.mkGroup(lines);
+            }
+        }
+
         if (cmts.length) {
             r = B.mkGroup(cmts.map(c => B.mkStmt(B.H.mkComment(c))).concat(r))
         }
@@ -2897,6 +2921,60 @@ namespace pxt.py {
         diagnostics = []
         numUnifies = 0
         lastAST = undefined
+        inDisabledStmt = false
+    }
+
+    function isConvertibleStmt(s: py.Stmt): boolean {
+        if (!s) return false;
+        if (s.kind === "ExprStmt") {
+            const val = (s as py.ExprStmt).value;
+            return !!(val && val.kind === "Call");
+        }
+        return s.kind === "Assign" || s.kind === "AugAssign";
+    }
+
+    function preprocessDisabledComments(stmts: py.Stmt[], filename: string): py.Stmt[] {
+        let result: py.Stmt[] = [];
+        for (let s of stmts) {
+            if ((s as any).body && Array.isArray((s as any).body)) {
+                (s as any).body = preprocessDisabledComments((s as any).body, filename);
+            }
+            if ((s as any).orelse && Array.isArray((s as any).orelse)) {
+                (s as any).orelse = preprocessDisabledComments((s as any).orelse, filename);
+            }
+            if (s._comments && s._comments.length) {
+                let pendingComments: Token[] = [];
+                for (let c of s._comments) {
+                    let trimmed = (c.value || "").trim();
+                    let disabledStmt: py.Stmt | undefined;
+                    if (/[\.\(\)=]/.test(trimmed)) {
+                        try {
+                            let cTokens = pxt.py.lex(trimmed + "\n");
+                            let cRes = pxt.py.parse(trimmed + "\n", filename, cTokens);
+                            if (cRes.diagnostics.length === 0 && cRes.stmts && cRes.stmts.length === 1 && isConvertibleStmt(cRes.stmts[0])) {
+                                disabledStmt = cRes.stmts[0];
+                            }
+                        } catch (e) {}
+                    }
+                    if (disabledStmt) {
+                        disabledStmt._disabled = true;
+                        if (pendingComments.length) {
+                            disabledStmt._comments = pendingComments;
+                            pendingComments = [];
+                        }
+                        result.push(disabledStmt);
+                    } else {
+                        pendingComments.push(c);
+                    }
+                }
+                s._comments = pendingComments;
+            }
+            if (s.kind === "Pass" && (!s._comments || s._comments.length === 0) && s._synthetic) {
+                continue;
+            }
+            result.push(s);
+        }
+        return result;
     }
 
     export interface Py2TsRes {
@@ -2950,9 +3028,11 @@ namespace pxt.py {
 
                 U.pushRange(diagnostics, res.diagnostics)
 
+                let stmts = preprocessDisabledComments(res.stmts, sn);
+
                 modules.push({
                     kind: "Module",
-                    body: res.stmts,
+                    body: stmts,
                     blockDepth: 0,
                     name: modname,
                     source: src,

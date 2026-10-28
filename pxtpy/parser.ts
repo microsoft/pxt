@@ -1588,6 +1588,7 @@ namespace pxt.py {
             if (currComments.length) {
                 let p = mkAST("Pass") as Pass
                 p._comments = currComments
+                p._synthetic = true
                 currComments = []
                 res.push(p)
             }
