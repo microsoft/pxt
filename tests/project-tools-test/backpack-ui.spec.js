@@ -5,6 +5,7 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const less = require("less");
+const { PNG } = require("pngjs");
 const { launchTestBrowser } = require("./browser");
 const { source, bundleSource } = require("./source");
 
@@ -357,6 +358,56 @@ describe("project backpack UI", function () {
             assert.deepStrictEqual(pageErrors, [], "Unexpected browser error or unhandled rejection");
         } finally { await page.close(); }
     });
+
+    for (const contrastClass of ["hc", "high-contrast"]) {
+        it(`keeps the search border continuous at all four corners in ${contrastClass}`, async () => {
+            await signIn([item()]);
+            await page.$eval(".project-backpack-search", element => {
+                element.style.setProperty("--tools-surface", "black");
+                element.style.setProperty("--tools-foreground", "white");
+                element.style.setProperty("--tools-border", "white");
+                element.style.setProperty("--pxt-neutral-stencil1", "white");
+                document.activeElement?.blur();
+            });
+            const group = await page.$(".project-backpack-search .common-input-group");
+            assert.equal(await group.evaluate(element => getComputedStyle(element).borderTopColor), "rgb(255, 255, 255)");
+            assert.equal(await group.evaluate(element => getComputedStyle(element).borderTopWidth), "1px");
+            const normal = PNG.sync.read(Buffer.from(await group.screenshot()));
+            await page.$eval("#root", (element, className) => element.classList.add(className), contrastClass);
+            const contrast = PNG.sync.read(Buffer.from(await group.screenshot()));
+            assert.equal(contrast.width, normal.width);
+            assert.equal(contrast.height, normal.height);
+            for (const [left, top] of [
+                [0, 0], [normal.width - 8, 0], [0, normal.height - 8], [normal.width - 8, normal.height - 8]
+            ]) {
+                let borderPixels = 0;
+                for (let y = top; y < top + 8; y++) {
+                    for (let x = left; x < left + 8; x++) {
+                        const pixel = (y * normal.width + x) * 4;
+                        if (normal.data[pixel] < 192 || normal.data[pixel + 1] < 192 || normal.data[pixel + 2] < 192) continue;
+                        ++borderPixels;
+                        for (let channel = 0; channel < 3; channel++) {
+                            assert(contrast.data[pixel + channel] >= normal.data[pixel + channel] - 20,
+                                `Search border was covered at (${x}, ${y})`);
+                        }
+                    }
+                }
+                assert(borderPixels > 0, "Expected visible border pixels in every corner");
+            }
+            await page.focus(searchBox);
+            const focus = await page.$eval(".project-backpack-search .common-input-group", element => ({
+                radius: getComputedStyle(element).borderRadius,
+                inputRadius: getComputedStyle(element.querySelector("input")).borderRadius,
+                focusRadius: getComputedStyle(element, "::after").borderRadius,
+                focusWidth: getComputedStyle(element, "::after").borderTopWidth,
+                active: element.querySelector("input") === document.activeElement
+            }));
+            assert.equal(focus.inputRadius, focus.radius);
+            assert.equal(focus.focusRadius, focus.radius);
+            assert.equal(focus.focusWidth, "2px");
+            assert.equal(focus.active, true);
+        });
+    }
 
     it("retains action-button geometry, shared keyboard activation, and disabled styling", async () => {
         await signIn([item()]);

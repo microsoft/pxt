@@ -851,7 +851,7 @@ function cliTestTask() {
         .pipe(concat("runner.js"))
         .pipe(gulp.dest(`${outDir}/tests/cli-test`));
     const runTests = () => exec(`${getMochaExecutable()} ${outDir}/tests/cli-test/runner.js --reporter dot`, true);
-    return gulp.series([buildTs, buildRunner, runTests]);
+    return gulp.series([backendutils, buildTs, buildRunner, runTests]);
 }
 
 function getMochaExecutable() {

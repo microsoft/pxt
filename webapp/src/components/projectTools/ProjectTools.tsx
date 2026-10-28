@@ -36,7 +36,8 @@ export interface ProjectToolsProps {
 
 export function ProjectTools(props: ProjectToolsProps): JSX.Element {
     const whiteboardEnabled = isWhiteboardEnabled();
-    const backpackEnabled = isBackpackEnabled();
+    const tutorial = props.tutorial || !!props.header.tutorial;
+    const backpackEnabled = isBackpackEnabled() && !tutorial;
     const tabNames: ProjectToolTab[] = ["docs"];
     if (whiteboardEnabled) {
         tabNames.push("whiteboard");
@@ -498,7 +499,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
                             <ProjectBackpack
                                 headerId={props.header.id}
                                 active={props.expanded && tab === "backpack"}
-                                tutorial={props.tutorial || !!props.header.tutorial}
+                                tutorial={tutorial}
                                 openRequest={backpackRequest}
                                 renderHeader={renderHeader}
                                 onSignIn={props.onSignIn}
