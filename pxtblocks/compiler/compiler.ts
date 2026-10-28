@@ -98,13 +98,21 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
                     append(stmtsMain, compileWorkspaceComment(comment).children);
                 });
             }
-            if (b.type == ts.pxtc.ON_START_TYPE)
-                append(stmtsMain, compileStatementBlock(e, b));
-            else {
-                const compiled = pxt.blocks.mkBlock(compileStatementBlock(e, b));
-                if (compiled.type == pxt.blocks.NT.Block)
-                    append(stmtsMain, compiled.children);
-                else stmtsMain.push(compiled)
+            if (b.type == ts.pxtc.ON_START_TYPE) {
+                if (b.isEnabled()) {
+                    append(stmtsMain, compileStatementBlock(e, b));
+                } else {
+                    append(stmtsMain, commentOutJsNodes(compileStatementBlock(e, b)));
+                }
+            } else {
+                if (b.isEnabled()) {
+                    const compiled = pxt.blocks.mkBlock(compileStatementBlock(e, b));
+                    if (compiled.type == pxt.blocks.NT.Block) {
+                        append(stmtsMain, compiled.children);
+                    } else stmtsMain.push(compiled);
+                } else {
+                    append(stmtsMain, commentOutJsNodes(compileStatementBlock(e, b)));
+                }
             }
         });
 
@@ -172,7 +180,9 @@ function compileWorkspace(e: Environment, w: Blockly.Workspace, blockInfo: pxtc.
             }
         });
 
-        const leftoverVars = e.allVariables.filter(v => !v.alreadyDeclared).map(v => mkVariableDeclaration(v, blockInfo));
+        const leftoverVars = e.allVariables
+            .filter(v => !v.alreadyDeclared && v.firstReference && v.firstReference.isEnabled())
+            .map(v => mkVariableDeclaration(v, blockInfo));
 
         e.allVariables.filter(v => v.alreadyDeclared === BlockDeclarationType.Implicit && !v.isAssigned).forEach(v => {
             const t = getConcreteType(v.type);
@@ -502,17 +512,33 @@ export function compileExpression(e: Environment, b: Blockly.Block, comments: st
     return expr;
 }
 
+function commentOutJsNodes(nodes: pxt.blocks.JsNode[]): pxt.blocks.JsNode[] {
+    const text = pxt.blocks.flattenNode(nodes).output.trim();
+    if (!text) return [];
+    return text.split("\n").map(line => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("//")) {
+            return pxt.blocks.mkStmt(pxt.blocks.mkText(line));
+        }
+        return pxt.blocks.mkStmt(pxt.blocks.mkText("// " + line));
+    });
+}
+
 function compileStatements(e: Environment, b: Blockly.Block): pxt.blocks.JsNode {
     let stmts: pxt.blocks.JsNode[] = [];
     let firstBlock = b;
 
     while (b) {
-        if (b.isEnabled()) append(stmts, compileStatementBlock(e, b));
+        if (b.isEnabled()) {
+            append(stmts, compileStatementBlock(e, b));
+        } else {
+            append(stmts, commentOutJsNodes(compileStatementBlock(e, b)));
+        }
         b = b.getNextBlock();
     }
 
     if (firstBlock && e.blockDeclarations[firstBlock.id]) {
-        e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared).forEach(varInfo => {
+        e.blockDeclarations[firstBlock.id].filter(v => !v.alreadyDeclared && v.firstReference && v.firstReference.isEnabled()).forEach(varInfo => {
             stmts.unshift(mkVariableDeclaration(varInfo, e.blocksInfo));
             varInfo.alreadyDeclared = BlockDeclarationType.Implicit;
         });
@@ -671,7 +697,7 @@ function compileVariableGet(e: Environment, b: Blockly.Block): pxt.blocks.JsNode
     if (!binding) // trying to compile a disabled block with a bogus variable
         return pxt.blocks.mkText(name);
 
-    if (!binding.firstReference) binding.firstReference = b;
+    if (!binding.firstReference && b.isEnabled()) binding.firstReference = b;
 
     pxt.U.assert(binding != null && binding.type != null);
     return pxt.blocks.mkText(binding.escapedName);
@@ -699,10 +725,14 @@ function compileSet(e: Environment, b: Blockly.Block, comments: string[]): pxt.b
 
     let bindString = binding.escapedName + " = ";
 
-    binding.isAssigned = true;
+    if (b.isEnabled()) {
+        binding.isAssigned = true;
+    }
 
     if (isDef) {
-        binding.alreadyDeclared = BlockDeclarationType.Assigned;
+        if (b.isEnabled()) {
+            binding.alreadyDeclared = BlockDeclarationType.Assigned;
+        }
         const declaredType = getConcreteType(binding.type);
 
         bindString = `let ${binding.escapedName} = `;
@@ -714,7 +744,7 @@ function compileSet(e: Environment, b: Blockly.Block, comments: string[]): pxt.b
             }
         }
     }
-    else if (!binding.firstReference) {
+    else if (!binding.firstReference && b.isEnabled()) {
         binding.firstReference = b;
     }
 

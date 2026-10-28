@@ -284,6 +284,7 @@ export function decompileAsync(fileName: string, blockInfo?: ts.pxtc.BlocksInfo,
         .then(opts => {
             opts.ast = true;
             opts.testMode = true;
+            opts.preprocessDisabledBlocks = true;
             opts.alwaysDecompileOnStart = pxt.appTarget.runtime && pxt.appTarget.runtime.onStartUnDeletable;
             return decompileCoreAsync(opts, fileName)
         })
@@ -319,6 +320,7 @@ export function decompileBlocksSnippetAsync(code: string, blockInfo?: ts.pxtc.Bl
                 opts.sourceFiles.push(pxt.MAIN_BLOCKS);
             }
             opts.ast = true;
+            opts.preprocessDisabledBlocks = true;
             return decompileCoreAsync(opts, pxt.MAIN_TS)
         });
 }
