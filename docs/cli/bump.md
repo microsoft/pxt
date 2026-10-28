@@ -11,6 +11,10 @@ pxt bump [--update] [--upload] [--version <major|minor|patch|semver>] [--pr] [--
 Direct bumps respect Git's configured push remote and refspecs. The commit and release tags
 are pushed atomically, so a rejected commit cannot publish its tag.
 
+Protected branches, and branches whose protection status cannot be determined, default to a
+pull request. If the required GitHub credentials or origin details are unavailable, the command
+fails before bumping. Use `--nopr` to override protection detection and force a direct push.
+
 ## Options
 
 ### --update
