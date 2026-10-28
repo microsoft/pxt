@@ -18,10 +18,11 @@ describe("project-tools state on project unload", () => {
         for (const collapsed of [false, true]) {
             it(`clears the pin and collapses tools on returning home (pinned=${pinned}, collapsed=${collapsed})`, async () => {
                 const exports = {};
-                new Function("exports", "pxt", "cmds", "workspace", code)(exports,
+                new Function("exports", "pxt", "cmds", "workspace", "simulator", code)(exports,
                     { BrowserUtils: { changeHash: () => {} } },
                     { disconnectAsync: () => Promise.resolve() },
-                    { syncAsync: () => Promise.resolve() });
+                    { syncAsync: () => Promise.resolve() },
+                    { closeSimxProject: () => {}, setFullscreen: () => {} });
                 const view = new exports.ProjectView();
                 view.state = {
                     home: false,

@@ -3126,8 +3126,7 @@ export class ProjectView
     unloadProjectAsync(home?: boolean) {
         simulator.closeSimxProject();
         this.stopSimulator(true); // don't keep simulator around
-        simulator.driver?.setFullscreen(false);
-        simulator.postSimxEditorFullscreen(false);
+        simulator.setFullscreen(false);
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync(home);
@@ -4052,8 +4051,7 @@ export class ProjectView
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
-        simulator.driver?.setFullscreen(enabled);
-        simulator.postSimxEditorFullscreen(enabled);
+        simulator.setFullscreen(enabled);
         this.setState({ fullscreen: enabled });
     }
 

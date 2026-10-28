@@ -430,8 +430,13 @@ export function postSimxEditorSimulatorCommand(command: SimxEditorSimulatorComma
     simxEditorHost?.simulatorCommand(command);
 }
 
-/** Tells every ready simulator extension editor tab whether the editor is in fullscreen-simulator mode. */
-export function postSimxEditorFullscreen(enabled: boolean) {
+/**
+ * Records whether the editor is in fullscreen-simulator mode: tells the
+ * simulator driver, which passes the mode to every simulator extension frame,
+ * and every ready simulator extension editor tab.
+ */
+export function setFullscreen(enabled: boolean) {
+    driver?.setFullscreen(enabled);
     simxEditorHost?.fullscreenChanged(enabled);
 }
 
