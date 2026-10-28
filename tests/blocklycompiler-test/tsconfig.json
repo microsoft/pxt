@@ -5,6 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "module": "commonjs",
+        "jsx": "react-jsx",
         "outDir": "../built/",
         "rootDir": "../..",
         "newLine": "LF",

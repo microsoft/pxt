@@ -17,6 +17,7 @@ export type TilesetDropdownOption = [ImageJSON, string, pxt.Tile];
 const PREVIEW_SIDE_LENGTH = 32;
 
 export class FieldTileset extends FieldImages implements FieldCustom {
+    public readonly isBackpackAsset = true;
     // private member of FieldDropdown
     protected selectedOption_: TilesetDropdownOption;
 
@@ -323,6 +324,8 @@ export class FieldTileset extends FieldImages implements FieldCustom {
         if (asset?.isProjectTile) {
             return getAssetSaveState(asset)
         }
+        // Save the gallery tile's full ID so Backpack can find its extension.
+        if (_doFullSerialization && asset) return asset.id;
         return super.saveState(_doFullSerialization);
     }
 

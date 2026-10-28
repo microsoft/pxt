@@ -150,11 +150,15 @@ function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp:
     }
 
     let hash = JSON.stringify(fn);
-    if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
+    const cached = cachedBlocks[id];
+    const ownsDefinition = !!cached && Blockly.Blocks[id] === cached.block;
+    if (ownsDefinition && cached.hash === hash) {
         return true;
     }
 
-    if (Blockly.Blocks[fn.attributes.blockId]) {
+    // Workspace reloads can refresh metadata for a definition we already own.
+    const sameSymbol = ownsDefinition && !!fn.qName && cached.fn.qName === fn.qName;
+    if (Blockly.Blocks[id] && !sameSymbol) {
         pxt.error("duplicate block definition: " + id);
         return false;
     }
