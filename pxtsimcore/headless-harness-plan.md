@@ -243,8 +243,8 @@ A world's state saved at a frame boundary and restored into a fresh driver.
 - `pxt`: `saveState` and `restoreState` on the contributor shape; the driver's saved form (frame
   index, pending inputs, stream positions, the staging, surface digest) with its format version; the
   save assembling the driver's form, every contributor's in composed order, each board's runtime
-  saved form with its compiled program, and the versions record; restore into a fresh driver with
-  refusal by a layer that cannot read a format version or by a digest mismatch; the platform media's
+  saved form as an opaque item, and the versions record; restore into a fresh driver with refusal by
+  a layer that cannot read a format version or by a digest mismatch; the platform media's
   `saveState` and `restoreState` (the ether's link matrix, loss-model state and delay queue; the
   bus's roles, identities and announces; the spatial world's positions and path progress); the save
   operation on every shell (run to a frame and write, or restore and run on), the scenario's `saves`
@@ -253,16 +253,14 @@ A world's state saved at a frame boundary and restored into a fresh driver.
 - `pxt-microbit`: the board's runtime saved form, taken by the runtime's own mechanism, which is
   designed apart from this plan and lands with it or before.
 - Depends on: phases 7 and 8; the runtime's saved form.
-- Lands when: a save at frame N of the fixture world restores and continues to a trace
-  byte-identical from N to the unbroken run's; two saves at one frame are byte-identical; a
-  fixture medium without `saveState` makes a save refused by its name; a save written by the
-  previous format of the driver's form restores under the current one; a save embedding a program
-  compiled by an older target version resumes under the current one; a scenario with `saves: [50]`
-  leaves `<name>.50.save.json` beside it and the same run with no `saves` field leaves a
-  byte-identical trace; a scenario with `from` naming that file and the original's inputs from
-  frame 51 produces the unbroken run's trace from frame 51; the worker shell given the same save
-  as a JSON string restores it and produces the same trace; an input due at frame 50 under `from`
-  is rejected.
+- Lands when: a save at frame N of the fixture world restores and continues to a trace byte-
+  identical from N to the unbroken run's; two saves at one frame are byte-identical; a fixture
+  medium without `saveState` makes a save refused by its name; a save written by the previous format
+  of the driver's form restores under the current one; a scenario with `saves: [50]` leaves
+  `<name>.50.save.json` beside it and the same run with no `saves` field leaves a byte-identical
+  trace; a scenario with `from` naming that file and the original's inputs from frame 51 produces
+  the unbroken run's trace from frame 51; the worker shell given the same save as a JSON string
+  restores it and produces the same trace; an input due at frame 50 under `from` is rejected.
 - Status lines: Saving and restoring; Conformance (the saved-state checks).
 
 ## After the phases
