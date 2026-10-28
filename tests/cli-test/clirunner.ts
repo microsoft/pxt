@@ -13,6 +13,9 @@ import * as localrepos from "../../cli/localrepos";
 // the cli modules read pxtlib from the global scope, as they do in pxt.js
 (global as any).pxt = pxt;
 
+import * as nodeutil from "../../cli/nodeutil";
+import "./bump";
+
 function extensionTestTarget(): pxt.TargetBundle {
     return {
         id: "extension-test",
@@ -643,6 +646,45 @@ function expectUserError(f: () => any) {
     chai.expect(err, "expected an error").to.exist;
     chai.expect(err.isUserError).equals(true);
 }
+
+describe("GitHub origin URLs", () => {
+    const configKeys = ["GIT_CONFIG_COUNT", "GIT_CONFIG_KEY_0", "GIT_CONFIG_VALUE_0"];
+    let previousConfig: Record<string, string | undefined>;
+
+    beforeEach(() => {
+        previousConfig = {};
+        for (const key of configKeys) previousConfig[key] = process.env[key];
+        process.env.GIT_CONFIG_COUNT = "1";
+        process.env.GIT_CONFIG_KEY_0 = "remote.origin.url";
+    });
+
+    afterEach(() => {
+        for (const key of configKeys) {
+            if (previousConfig[key] === undefined) delete process.env[key];
+            else process.env[key] = previousConfig[key];
+        }
+    });
+
+    for (const remote of [
+        "https://github.com/microsoft/pxt-maker",
+        "https://github.com/microsoft/pxt-maker/",
+        "https://github.com/microsoft/pxt-maker///",
+        "https://github.com/microsoft/pxt-maker.git",
+        "https://github.com/microsoft/pxt-maker.git/",
+        "git@github.com:microsoft/pxt-maker.git",
+        "git@github.com:microsoft/pxt-maker.git/",
+        "ssh://git@github.com/microsoft/pxt-maker.git",
+        "ssh://git@github.com/microsoft/pxt-maker.git/"
+    ]) {
+        it(`parses ${remote}`, async () => {
+            process.env.GIT_CONFIG_VALUE_0 = remote;
+            chai.expect(await nodeutil.getGitHubOwnerAndRepoAsync()).deep.equals({
+                owner: "microsoft",
+                repo: "pxt-maker"
+            });
+        });
+    }
+});
 
 describe("local repos config", () => {
     it("reads pxtlocal.json, resolving directories against the target directory", () => {
