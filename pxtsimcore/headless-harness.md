@@ -386,15 +386,36 @@ project compiles (below). It declares:
   scenario's staging replaces each of `boards`, `attachments` and `media` it names, whole, and
   takes the others from the file.
 - Inputs: `(kind, at, value)` entries, `at` a frame index, `kind` a composed name.
-- Expectations, in two forms over a window of frames `{ from, to }`. The level form names a
-  channel and a rendered value and holds when the channel shows the value on every frame of the
-  window, the channel reconstructed frame by frame from the deltas, a channel absent from a frame
-  holding what it last showed; a window the run does not reach is not satisfied; the point form is
-  `{ from: n, to: n }`. The arrival form names an event kind and a value and holds when an event
-  of that kind with that value is emitted on some frame of the window. Each form has a negated
-  counterpart: the channel never shows the value on any frame of the window, or no such event is
-  emitted in it. No expectation carries a range or a tolerance; a contributor that wants a
-  tolerant check declares a quantized channel.
+- Expectations, in two forms over a window of frames `{ from, to }`. The level form names a channel
+  and a rendered value and holds when the channel shows the value on every frame of the window, the
+  channel reconstructed frame by frame from the deltas, a channel absent from a frame holding what
+  it last showed; a window the run does not reach is not satisfied; the point form is `{ from: n,
+  to: n }`. The arrival form names an event kind and a value and holds when an event of that kind
+  with that value is emitted on some frame of the window. Each form has a negated counterpart: the
+  channel never shows the value on any frame of the window, or no such event is  emitted in it. No
+  expectation carries a range or a tolerance; a contributor that wants a tolerant check declares a
+  quantized channel.
+- Anchored windows. A window may be given relative to an anchor instead of to frame 0: an input,
+  the frame it is due, or an event, the first frame one of that kind arrives, with that value when
+  a value is given and from a floor frame onward when `from` is given on the anchor. The window
+  begins at the anchor's frame and runs through `within` frames after it inclusive, so `within: 0`
+  is the point form at the anchor, or to the run's end when no bound is given. Each form keeps its
+  meaning over the resolved window, so an arrival form anchored on a click says the display shows
+  the digit at some frame from the click on, and a level form anchored on a serial line says the
+  channel holds from that line to the end; the anchoring event itself does not count toward an
+  arrival form of its own kind and value. An anchored window the run does not reach in full is not
+  satisfied, as an absolute one is not. An anchor that never occurs leaves the expectation
+  unsatisfied in every form, negated included, since the author assumed the anchor would; this is
+  the opposite of a logic's vacuous truth and is chosen. An input anchor that names no scripted
+  input, and a negative `within`, are refused before the run. An anchor is one input or one event;
+  nothing anchors on another expectation, and anchors do not nest. Anchors resolve to absolute
+  frames from the trace, which the report shows beside the verdict, so the evaluator, the trace and
+  the golden are those of absolute windows, and absolute windows remain for recordings and for
+  tests of timing itself.
+- The vocabulary ends there. Absolute windows, anchored windows and the four forms over them are
+  the whole of what a scenario can expect, and no field compares values, composes expectations or
+  conditions one on another. A check that needs more is a program over the trace (Shells over one
+  driver), never a richer scenario.
 - A watch list: the channels and event kinds a report renders. Unwatched contributors still settle
   and still drive the world; their entries stay in the trace and leave the report. An entry an
   expectation names is rendered whether or not the list names it. With no watch list the report
@@ -428,11 +449,12 @@ of `{ "id", "profile", "map" }` entries, `profile` the name of one of the radio 
 target declares and `map` the quantity-to-kind map, a bare id standing for the target's default
 profile and an empty map); `"inputs"` (`{ "kind", "at", "value" }` entries); `"expectations"` (`{
 "channel", "value", "window" }` level entries and `{ "event", "value", "window" }` arrival entries,
-`window` as `{ "from", "to" }`, `"not": true` for a negated form); `"watch"` (an array of composed
-names); `"framePeriod"`; `"clock"` (an array of `frames` integers); `"saves"` (an array of frame
-indices); `"from"` (the path of a save file relative to the scenario, or the save itself as an
-object); and `"versions"`, the pin. A field a scenario does not need is omitted; `frames` is the one
-required field.
+`window` as `{ "from", "to" }` or anchored as `{ "after": { "input", "at" } }` or `{ "after": {
+"event", "value", "from" } }`, `value` and `from` optional, with an optional `"within"`, `"not":
+true` for a negated form); `"watch"` (an array of composed names); `"framePeriod"`; `"clock"` (an
+array of `frames` integers); `"saves"` (an array of frame indices); `"from"` (the path of a save
+file relative to the scenario, or the save itself as an object); and `"versions"`, the pin. A field
+a scenario does not need is omitted; `frames` is the one required field.
 
 A counter program on one micro:bit, `counter.scenario.json` beside its `pxt.json`, with a light
 level held from the first frame, two clicks, and three expectations:
@@ -463,6 +485,31 @@ The channel expectation's value is the rendered string the trace shows, here the
 digits of a blank display. The shell writes `counter.trace.jsonl` beside the scenario; a committed
 trace is the golden the next run is compared against, and a flag rewrites it.
 
+The same test with anchored windows, so it no longer assumes how fast the program answers:
+
+```json
+{
+  "frames": 120,
+  "inputs": [
+    { "kind": "button-a", "at": 10, "value": "click" },
+    { "kind": "button-a", "at": 40, "value": "click" }
+  ],
+  "expectations": [
+    { "event": "display.show", "value": "2",
+      "window": { "after": { "input": "button-a", "at": 40 }, "within": 30 } },
+    { "channel": "display", "value": "0000000000000000000000000",
+      "window": { "after": { "event": "display.show", "value": "2" }, "within": 60 }, "not": true },
+    { "event": "serial", "value": "ready",
+      "window": { "after": { "event": "serial", "value": "started" } } }
+  ]
+}
+```
+
+The first expectation reads "after the second click, within 30 frames, the display shows 2"; the
+second, "for 60 frames after it shows 2, the display is never blank"; the third, "once `started` is
+printed, `ready` is printed before the run ends". If `started` is never printed the third fails,
+because its anchor never occurred, rather than passing for want of a window.
+
 The project's staging file is `staging.json` beside `pxt.json`, holding one `staging` object in the
 scenario's shape, and it is project state: the live simulator starts from it, a scenario without a
 `staging` runs on it, and it travels with the project. Extensions reach it through a request family
@@ -481,18 +528,19 @@ which is the only place blocks reach. Each `harness.scenario(name, fields, decla
 scenario, gives the fields the file would carry outside its list-like ones (`seed`, `frames`,
 `framePeriod`, `staging`, `clock`, `from` as a path, `versions`), and declares inputs, expectations,
 the watch list and the frames to save at through the handle it passes, `input`, `expectChannel`,
-`expectEvent`, `expectNoChannel`, `expectNoEvent`, `watch` and `save`, each call repeatable so a
-loop can declare many. The library sends the declaration over the `harness` channel as it sends a
-contributor's; the driver runs the program to its first frame boundary and takes every scenario
-declared; the shell runs each as it would a `<name>.scenario.json` beside the declaring file and
-keeps the trace there under that name. The declared form is data, not behavior: the handle takes
-values only, a declaration after the first frame boundary is refused with a stable code, and a shell
-writes any declared scenario out as its file on request, so the two forms are one scenario in two
-syntaxes and a tool that reads files reads both. A scenario's name is its file's basename or its
-declared name, and names are unique across the project whichever form they take: a declared
-`counter` beside a `counter.scenario.json`, or two declarations of one name, is a collision refused
-before any run, as roles and keys are. Scenario calls are `shim=TD_NOOP` like the rest of the
-library and reach no hardware build. The counter scenario, declared in place of its file:
+`expectEvent`, `expectNoChannel`, `expectNoEvent`, `watch` and `save`, an expectation's window given
+as `from, to` or as an anchor object, each call repeatable so a loop can declare many. The library
+sends the declaration over the `harness` channel as it sends a contributor's; the driver runs the
+program to its first frame boundary and takes every scenario declared; the shell runs each as it
+would a `<name>.scenario.json` beside the declaring file and keeps the trace there under that name.
+The declared form is data, not behavior: the handle takes values only, a declaration after the first
+frame boundary is refused with a stable code, and a shell writes any declared scenario out as its
+file on request, so the two forms are one scenario in two syntaxes and a tool that reads files reads
+both. A scenario's name is its file's basename or its declared name, and names are unique across the
+project whichever form they take: a declared `counter` beside a `counter.scenario.json`, or two
+declarations of one name, is a collision refused before any run, as roles and keys are. Scenario
+calls are `shim=TD_NOOP` like the rest of the library and reach no hardware build. The counter
+scenario, declared in place of its file:
 
 ```ts
 harness.scenario("counter", { seed: 7, frames: 120 }, t => {
@@ -624,7 +672,11 @@ The driver produces and consumes serialized state, never storage: a scenario in,
 save, a bulk value or a recording out, each a byte sequence, JSON text or raw bytes, handed to the
 shell that asked. Every shell maps those bytes to its own storage, files beside the scenario for the
 command line, messages for the worker, and finds scenarios, resolves `from` paths and names files on
-its own side of that line. Nothing in the driver opens a file.
+its own side of that line. Nothing in the driver opens a file. The trace reader is a library every
+shell and any tool can use, so a check richer than the scenario's expectations, a sequence of events
+in order, a value that must climb, a property across boards, is TypeScript over the trace, run after
+the run with the trace as its only input, and `pxt simtest` runs such a check beside a scenario; the
+run and the trace are unchanged by it.
 
 A contributor reachable from one shell and not another is a defect. The run options a project
 implies (board definition, parts, function arguments, dependencies, the simulator's stored settings)

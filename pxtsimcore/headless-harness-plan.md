@@ -29,18 +29,24 @@ the trace, the scenario file and its evaluator, exercised through a fixture cont
   staging by outer name), the surface operation (run to the first frame boundary, return the
   surface, stop), the per-frame dispatch over the virtual host (route, pre-step, frame, post-step,
   one `readState` per contributor, events in emission order), the canonical JSON Lines trace writer
-  and reader, the scenario file reader (seed, frames, frame period, staging, inputs, expectations in
-  both forms with negation, watch, versions pin), the evaluator, and the report (verdicts, then the
-  watched change log). The fixture contributor of the spec's Conformance section (one channel, one
-  kind, one event kind) lives in `tests/simcore-test/` and runs through `gulp testsimcore`.
+  and reader, the reader exported as a library a check over the trace imports, the scenario file
+  reader (seed, frames, frame period, staging, inputs, expectations in both forms with negation,
+  watch, versions pin), the evaluator, and the report (verdicts, then the watched change log). The
+  fixture contributor of the spec's Conformance section (one channel, one kind, one event kind)
+  lives in `tests/simcore-test/` and runs through `gulp testsimcore`.
 - Depends on: nothing beyond the virtual host.
-- Lands when: the fixture runs alone and as two attachments under two roles, staged through a
-  test-only in-process `defineModule` since no `core` loading exists yet, with the composed names
-  and order the spec gives; the evaluator holds a point window, a negated level and a negated
-  arrival; a watch list changes the report and leaves the trace byte-identical; a trace parses and
-  re-serializes byte for byte; the fixture's event appears once, in emission order; the surface
-  operation returns the header's surface for the two-attachment staging and the same digest twice;
-  an input whose value is outside its kind's `values` is rejected by composed name.
+- Lands when: the fixture runs alone and as two attachments under two roles, staged through a test-
+  only in-process `defineModule` since no `core` loading exists yet, with the composed names and
+  order the spec gives; the evaluator holds a point window, a negated level, a negated arrival, an
+  arrival anchored on an input within a bound inclusive of its last frame, a level anchored on an
+  event to the run's end, an event anchor with a floor skipping an earlier arrival, an anchoring
+  event not counting toward an arrival of its own kind and value, an anchored window the run cuts
+  short unsatisfied, an anchor that never occurs leaving a negated form unsatisfied, and an input
+  anchor naming no scripted input refused before the run; a watch list changes the report and leaves
+  the trace byte-identical; a trace parses and re-serializes byte for byte; the fixture's event
+  appears once, in emission order; the surface operation returns the header's surface for the two-
+  attachment staging and the same digest twice; an input whose value is outside its kind's `values`
+  is rejected by composed name.
 - Status lines: Composition, values, state and events; Scenarios; the scenario file and the trace
   format; the trace and the shells (the driver exists, `simtest` not yet over it).
 
@@ -56,11 +62,11 @@ The first real contributor and the first shell.
   (`serial`, `display.show`, `speaker.play`); the board contributor declaring kinds, channels and
   events as structured entries with descriptions, renderings and docs, and `apply` over the
   primitives.
-- `pxt`: `pxt simtest` takes a project directory, finds every `*.scenario.json` in it, compiles
-  the project, runs each scenario through the driver, writes the trace beside the scenario,
-  compares it to a committed trace, and reports verdicts; a `--surface` form prints the surface
-  operation's result; the `--base` form stays for smoke tests. The run options a project implies
-  are assembled by the one function the editor also calls.
+- `pxt`: `pxt simtest` takes a project directory, finds every `*.scenario.json` in it, compiles the
+  project, runs each scenario through the driver and any check over the trace beside it, writes the
+  trace beside the scenario, compares it to a committed trace, and reports verdicts; a `--surface`
+  form prints the surface operation's result; the `--base` form stays for smoke tests. The run
+  options a project implies are assembled by the one function the editor also calls.
 - Depends on: phase 1.
 - Lands when: the worked example of the spec's Scenarios section runs green from the command
   line, from a scenario beside `pxt.json` and from the same scenario moved into a subfolder; two
