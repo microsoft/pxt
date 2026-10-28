@@ -136,11 +136,10 @@ staging `params` accepts, so a staging editor or a tool can validate and write a
 medium it has never seen; a map key must be a declared quantity and a map value one of the board's
 own kinds. A staging's media entry names the extension as its `module` by `owner/repo` and the kind
 as `kind`, and omits `module` for a medium the platform supplies. How the module exchanges frames
-with the board is the contract of the medium it is attached over (Media and topology). In the live
-simulator the extension's page builds the same core source into itself, calls the factory directly
-and renders the contributor's state, so the contributor is the model in the headless run and in the
-frame alike; `core.js` is the entry that wraps the factory in the `defineModule` call for the
-driver's context, where `pxsim` exists, and the page needs no `pxsim`. How the page observes the
+with the board is the contract of the medium it is attached over (Media and topology). The same core
+can serve the extension's live page, which may build the source in and call the factory directly, so
+one model serves the headless run and the frame; `core.js` is only the entry that wraps the factory
+in the `defineModule` call for the driver's context, where `pxsim` exists. How the page uses the
 core is the extension's business, and the core knows nothing of the page.
 
 A slider whose repository is `example/pxt-slider`. The target's `approvedRepoLib` entry:
@@ -367,9 +366,8 @@ carries both.
   value. Several events of one kind in one frame are all kept. Trace format gives the bytes.
 - Board event kinds: `serial`, one event per line; `display.show`, the text the board scrolls or
   prints; `speaker.play`, the sound's name. The display's pixels stay a channel.
-- The headless board view pushes on change (its `updateView` is the change signal, flushed at most
-  once per scheduler step), and the board contributor turns that signal into events and state
-  deltas.
+- The board contributor turns its target's change signal into events and state deltas; how the
+  target produces that signal is the target's.
 
 ## Scenarios
 
@@ -648,9 +646,9 @@ shells are thin:
   board's kinds from the target's core bundle, a program contributor's from the declaration it
   publishes, a module's from the attachments the staging declares.
 - `mkc test` is the same command for a project author with no target checkout: the MakeCode CLI
-  fetches the two headless bundles from the target's release beside the compiler it already
-  fetches, compiles the project as `mkc build` does, and runs every scenario the project holds. A
-  target's release therefore ships `pxtsimcore.js` and its `simcore.js` beside `pxtworker.js`.
+  obtains the two headless bundles from the target's release, compiles the project, and runs every
+  scenario the project holds. A target's release therefore ships `pxtsimcore.js` and its
+  `simcore.js` beside `pxtworker.js`.
 - Either command runs every scenario by default and one or more by name when names are given,
   `mkc test counter`, the name being the scenario's name in either form.
 - A Node caller drives the driver programmatically with the same inputs; the two commands above are
@@ -780,9 +778,9 @@ target or a sensor.
   alike; an implementation adds whatever else it models.
 - The jacdac bus carries module frames among the boards and modules attached to it. An attach
   presents the module to the board's device stack exactly as a real device appearing on the bus
-  would, announce included, under a device identity derived from the run seed and the module's
-  role, so the same scenario always sees the same device; a detach is the reverse, the device
-  going quiet and the stack timing it out as it would a real one.
+  would, announce included, under a device identity derived from the run seed and the module's role,
+  so the same scenario always sees the same device; a detach is the reverse, the device going quiet
+  as an unplugged one does.
 - The display shield is a medium that takes exactly one board. Its headless core is the screen
   buffer; its visual host is the simulator extension frame.
 - Topology is staging data. The staging declares the initial attachments with each medium's
@@ -917,24 +915,21 @@ has propagated, and every inbox is empty by construction.
 - A save is one JSON value, serialized canonically: the driver's own state (the frame index, the
   inputs still due, the position of every random stream it handed out, the staging the world was
   built from, the surface digest), every contributor's `saveState()` in composed order, each board's
-  runtime saved form (its heap, fibers, scheduler and board state, taken by the runtime's own
-  mechanism), the compiled program of each board, and the versions record the trace header carries.
-- The runtime's saved form carries the compiled program it was taken under, and a restore runs
-  that program on the restoring runtime, so a save taken under one target version resumes under a
-  newer one; the project's source may have moved on, and a restore resumes the program that was
-  running.
-- Every saved form carries a format version of its own, independent of any release number and
-  bumped only when its shape changes: the driver's, the runtime's, each platform medium's and each
-  extension's. A layer restores every version it has ever written; migration lives in
-  `restoreState`, where old data arrives with its version. The versions record is recorded and
-  never refused on; a restore is refused only by a layer that cannot read a format version it is
-  handed, with a stable code naming the layer and the version, or by a surface digest that does
-  not match the staging it is restored into.
-- A contributor saves the minimum, since its saved shape is public from its first release:
-  positions and states, the progress of anything moving, and anything in flight that has not yet
-  reached a channel; nothing derived, which the next propagate step recomputes, and nothing a view
-  owns. A contributor without `saveState` makes its world unsaveable, refused with a stable code
-  naming the contributor rather than saved wrong.
+  runtime saved form, taken and read by the runtime's own mechanism and opaque to the driver, and
+  the versions record the trace header carries.
+- Every saved form carries a format version of its own, independent of any release number and bumped
+  only when its shape changes: the driver's, each platform medium's and each extension's. A layer
+  restores every version it has ever written; migration lives in `restoreState`, where old data
+  arrives with its version. The versions record is recorded and never refused on; a restore is
+  refused only by a layer that cannot read a format version it is handed, with a stable code naming
+  the layer and the version, or by a surface digest that does not match the staging it is restored
+  into.
+- A contributor's saved shape is public from its first release, so the less it holds the less there
+  is to carry forward. What a save needs is positions and states, the progress of anything moving,
+  and anything in flight that has not yet reached a channel; a derived value, which the next
+  propagate step recomputes, and anything a view owns are not state of the world. A contributor
+  without `saveState` makes its world unsaveable, refused with a stable code naming the contributor
+  rather than saved wrong.
 - A save is the driver's operation, never the program's: a shell asks for it, a scenario's
   `saves` field asks for it at given frames, and a tab asks for it through the coordinator; the
   driver performs it at the next frame boundary. No program can request one, and the `harness`
