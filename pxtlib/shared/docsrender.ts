@@ -1,7 +1,7 @@
-/// <reference path='../localtypings/pxtarget.d.ts' />
-/// <reference path='../localtypings/dompurify.d.ts' />
-/// <reference path="commonutil.ts"/>
-/// <reference path="./logger.ts" />
+/// <reference path='../../localtypings/pxtarget.d.ts' />
+/// <reference path='../../localtypings/dompurify.d.ts' />
+/// <reference path="../commonutil.ts"/>
+/// <reference path="../logger.ts" />
 
 namespace pxt.docs {
     // eslint-disable-next-line no-var

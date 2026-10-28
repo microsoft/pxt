@@ -1011,7 +1011,7 @@ namespace ts.pxtc {
                 }
             }
 
-            hexfile.setupFor(optstarget, extinfo || emptyExtInfo(), res);
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo(pxt.appTarget.compileService), res);
             hexfile.setupInlineAssembly(opts);
         }
 
