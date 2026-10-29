@@ -69,6 +69,22 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                     attachPlaceholderIf(e, b, "BOOL", pBoolean.type);
                     break;
 
+                case "logic_ternary": {
+                    attachPlaceholderIf(e, b, "IF", pBoolean.type);
+                    attachPlaceholderIf(e, b, "THEN");
+                    attachPlaceholderIf(e, b, "ELSE");
+                    let thenBlock = getInputTargetBlock(e, b, "THEN");
+                    let elseBlock = getInputTargetBlock(e, b, "ELSE");
+                    if (thenBlock && elseBlock) {
+                        try {
+                            union(returnType(e, thenBlock), returnType(e, elseBlock));
+                        } catch (err) {
+                            // TypeScript will report type mismatch
+                        }
+                    }
+                    break;
+                }
+
                 case "controls_if":
                     for (let i = 0; i <= (b as IfBlock).elseifCount_; ++i)
                         attachPlaceholderIf(e, b, "IF" + i, pBoolean.type);
@@ -403,6 +419,13 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
         return tp || mkPoint(null, true);
     }
     else if (check === "T") {
+        if (b.type === "logic_ternary") {
+            const target = getInputTargetBlock(e, b, "THEN") || getInputTargetBlock(e, b, "ELSE");
+            if (target) {
+                return returnType(e, target);
+            }
+            return mkPoint(null);
+        }
         const func = e.stdCallTable[b.type];
         const isArrayGet = b.type === "lists_index_get";
         if (isArrayGet || func && func.comp.thisParameter) {

@@ -904,6 +904,8 @@ ${output}</xml>`;
                         return getBinaryExpression(n as ts.BinaryExpression);
                     case SK.PrefixUnaryExpression:
                         return getPrefixUnaryExpression(n as ts.PrefixUnaryExpression);
+                    case SK.ConditionalExpression:
+                        return getConditionalExpressionBlock(n as ts.ConditionalExpression);
                     case SK.PropertyAccessExpression:
                         return getPropertyAccessExpression(n as ts.PropertyAccessExpression);
                     case SK.ArrayLiteralExpression:
@@ -1175,6 +1177,16 @@ ${output}</xml>`;
                     break;
             }
             return undefined;
+        }
+
+        function getConditionalExpressionBlock(n: ts.ConditionalExpression): ExpressionNode {
+            const r = mkExpr("logic_ternary", n);
+            r.fields = [];
+            const condition = getConditionalInput("IF", n.condition);
+            const whenTrue = getValue("THEN", n.whenTrue);
+            const whenFalse = getValue("ELSE", n.whenFalse);
+            r.inputs = [condition, whenTrue, whenFalse];
+            return r;
         }
 
         function getPropertyAccessExpression(n: ts.PropertyAccessExpression, asField = false, blockId?: string): OutputNode {
@@ -3454,6 +3466,12 @@ ${output}</xml>`;
                 return checkTaggedTemplateExpression(n as ts.TaggedTemplateExpression, env);
             case SK.AsExpression:
                 return checkAsExpression(n as ts.AsExpression);
+            case SK.ConditionalExpression: {
+                const condExpr = n as ts.ConditionalExpression;
+                return checkExpression(condExpr.condition, env) ||
+                    checkExpression(condExpr.whenTrue, env) ||
+                    checkExpression(condExpr.whenFalse, env);
+            }
 
         }
         return Util.lf("Unsupported syntax kind for output expression block: {0}", SK[n.kind]);
@@ -3774,6 +3792,7 @@ ${output}</xml>`;
                 const attrs = env.attrs(callInfo);
                 return callInfo.isExpression && !attrs.forceStatement && !attrs.handlerStatement;
             }
+            case SK.ConditionalExpression:
             case SK.Identifier:
             case SK.ParenthesizedExpression:
             case SK.NumericLiteral:
