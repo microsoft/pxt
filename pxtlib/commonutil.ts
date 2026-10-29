@@ -430,6 +430,9 @@ namespace ts.pxtc.Util {
             let parts = k.split(".")
             for (let i = 0; i < parts.length; ++i) {
                 let part = parts[i]
+                if (part === "__proto__" || part === "constructor" || part === "prototype")
+                    Util.userError("Invalid configuration key: " + k);
+
                 if (i == parts.length - 1)
                     ptr[part] = v[k]
                 else {
