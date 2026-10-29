@@ -54,7 +54,7 @@ const options = { timeoutMs: 5000, settleMs: 300 };
 
 /** Creates a vm context with no browser globals and loads pxtsimcore.js alone into it. */
 function createCoreContext() {
-    const context = vm.createContext({ console, setTimeout, clearTimeout, setInterval, clearInterval, performance, TextEncoder, TextDecoder, URL, URLSearchParams });
+    const context = vm.createContext({ console, setTimeout, clearTimeout, setInterval, clearInterval, performance, btoa, atob, TextEncoder, TextDecoder, URL, URLSearchParams });
     vm.runInContext(fs.readFileSync(core, "utf8"), context, { filename: core });
     return context;
 }

@@ -28,8 +28,9 @@ export interface HeadlessRunOptions {
 
 /**
  * Runs compiled simulator JS in a fresh vm context whose only globals besides the JavaScript
- * built-ins are `console`, `performance`, `TextEncoder`, `TextDecoder`, `URL`, `URLSearchParams`
- * and the timer functions, so that any use of the DOM by the loaded simulator code fails the run.
+ * built-ins are `console`, `performance`, `btoa`, `atob`, `TextEncoder`, `TextDecoder`, `URL`,
+ * `URLSearchParams` and the timer functions, so that any use of the DOM by the loaded simulator
+ * code fails the run.
  *
  * The runtime runs on a virtual host made in the context with `pxsim.host.createVirtualHost`: its
  * clock, timers, frames and random numbers come from that host, seeded with `options.seed`, so the
@@ -71,6 +72,8 @@ export async function runHeadlessAsync(js: string, bundles: string[], options: H
             clearInterval(timer);
         },
         performance,
+        btoa,
+        atob,
         TextEncoder,
         TextDecoder,
         URL,
