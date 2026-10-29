@@ -1,15 +1,7 @@
 namespace pxsim.AudioContextManager {
-    export interface SoundOscilloscopeData {
-        data: Float32Array;
-        fft: Uint8Array;
-    }
-
-    export interface SoundSnapshotData {
-        frequency: number;
-        volume: number;
-    }
-
-    export type SoundPreviewCallback = (data: SoundOscilloscopeData | SoundSnapshotData) => void;
+    export type SoundOscilloscopeData = audiohost.SoundOscilloscopeData;
+    export type SoundSnapshotData = audiohost.SoundSnapshotData;
+    export type SoundPreviewCallback = audiohost.SoundPreviewCallback;
 
     let _context: AudioContext;
 
@@ -26,8 +18,6 @@ namespace pxsim.AudioContextManager {
     export function isAudioElementActive() {
         return AudioToneSource.isActive();
     }
-
-    export let soundEventCallback: (ev: "playinstructions" | "muteallchannels", data?: Uint8Array) => void;
 
     function context(): AudioContext {
         if (!_context) {
@@ -96,10 +86,8 @@ namespace pxsim.AudioContextManager {
         return AudioToneSource.getFrequency();
     }
 
-    let instrStopId = 1
     export function muteAllChannels() {
-        soundEventCallback?.("muteallchannels");
-        instrStopId++;
+        audiohost.notifySoundEvent("muteallchannels");
 
         stopTone();
 
@@ -111,13 +99,7 @@ namespace pxsim.AudioContextManager {
     }
 
     export function queuePlayInstructions(when: number, b: RefBuffer) {
-        const prevStop = instrStopId
-        U.delay(when)
-            .then(() => {
-                if (prevStop != instrStopId)
-                    return Promise.resolve()
-                return playInstructionsAsync(b.data)
-            });
+        audiohost.queuePlayInstructions(when, b.data);
     }
 
     export function tone(frequency: number, gain: number) {
@@ -185,7 +167,7 @@ namespace pxsim.AudioContextManager {
     }
 
     export async function playInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean, onPull?: SoundPreviewCallback) {
-        soundEventCallback?.("playinstructions", instructions);
+        audiohost.notifySoundEvent("playinstructions", instructions);
 
         const channel = new PlayInstructionsSource(context(), destination);
 
@@ -334,15 +316,8 @@ namespace pxsim.AudioContextManager {
 
     export function queuePlayInstructionsAtSpatialAudioPlayer(id: number, when: number, b: RefBuffer) {
         const player = SpatialAudioPlayer.getPlayerById(id);
-        if (player) {
-            const prevStop = instrStopId
-            U.delay(when)
-                .then(() => {
-                    if (prevStop != instrStopId)
-                        return Promise.resolve()
-                    return player.playInstructionsAsync(b.data)
-                });
-        }
+        if (player)
+            audiohost.queuePlay(when, () => player.playInstructionsAsync(b.data));
     }
 
     export function setListenerPosition(x: number, y: number, z: number) {

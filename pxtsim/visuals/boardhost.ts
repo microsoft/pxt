@@ -12,6 +12,11 @@ namespace pxsim.visuals {
         boardDef: BoardDefinition,
         partsList: string[],
         partDefs: Map<PartDefinition>,
+        /**
+         * Part view constructors keyed by simulation behavior name; addPart builds the view of each
+         * part instance that declares a simulationBehavior with the matching entry.
+         */
+        builtinVisuals: Map<() => any>,
         fnArgs: any,
         forceBreadboardLayout?: boolean,
         forceBreadboardRender?: boolean,
@@ -126,8 +131,6 @@ namespace pxsim.visuals {
                 if (opts.maxHeight)
                     svg.hydrate(this.view, { height: opts.maxHeight });
             }
-
-            this.state.updateSubscribers.push(() => this.updateState());
         }
 
         public highlightBoardPin(pinNm: string) {
@@ -200,7 +203,8 @@ namespace pxsim.visuals {
             })
         }
 
-        private updateState() {
+        /** Calls updateState on every part view. Call it from the owning view's updateView. */
+        public updateState() {
             this.parts.forEach(c => c.updateState());
         }
 
@@ -240,7 +244,7 @@ namespace pxsim.visuals {
             if (partInst.simulationBehavior) {
                 //TODO: seperate simulation behavior from builtin visual
                 let builtinBehavior = partInst.simulationBehavior;
-                let cnstr = this.state.builtinVisuals[builtinBehavior];
+                let cnstr = this.opts.builtinVisuals[builtinBehavior];
                 let stateFn = this.state.builtinParts[builtinBehavior];
                 part = cnstr();
                 part.init(this.state.bus, stateFn, this.view, partInst.params);
@@ -283,7 +287,7 @@ namespace pxsim.visuals {
             return this.wireFactory.addWire(inst.start, inst.end, inst.color);
         }
 
-        public addAll(allocRes: AllocatorResult) {
+        public addAll(allocRes: AllocatorResult<IBoardPart<any>, Wire>) {
             allocRes.partsAndWires.forEach(pAndWs => {
                 const wires = pAndWs.wires;
                 const wiresOk = wires && wires.every(w => this.wireFactory.checkWire(w.start, w.end));

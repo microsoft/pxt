@@ -68,7 +68,7 @@ namespace ts.pxtc.Util {
         }
     }
 
-    // Localization functions. Please port any modifications over to pxtsim/localization.ts
+    // Localization functions. Please port any modifications over to pxtsimcore/localization.ts
     let _localizeLang: string = "en";
     let _localizeStrings: pxt.Map<string> = {};
     let _translationsCache: pxt.Map<pxt.Map<string>> = {};

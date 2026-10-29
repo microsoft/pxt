@@ -5,7 +5,7 @@
         "noImplicitReturns": true,
         "noImplicitThis": true,
         "declaration": true,
-        "outFile": "../built/pxtsim.js",
+        "outFile": "../built/pxtsimdom.js",
         "newLine": "LF",
         "sourceMap": false,
         "moduleResolution": "node",
@@ -18,5 +18,11 @@
         ],
         "incremental": true,
         "skipLibCheck": true
-    }
+    },
+    "files": [
+        "../built/pxtsimcore.d.ts"
+    ],
+    "include": [
+        "**/*.ts"
+    ]
 }

@@ -1365,7 +1365,7 @@ namespace pxt.BrowserUtils {
         }
     }
 
-    // Keep these helpers unified with pxtsim/runtime.ts
+    // Keep these helpers unified with pxtsim/domutils.ts
     export function containsClass(el: SVGElement | HTMLElement, classes: string) {
         return splitClasses(classes).every(cls => containsSingleClass(el, cls));
 
