@@ -935,6 +935,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             this.onBlockDrag(ev);
             Blockly.Events.disableOrphans(ev);
 
+            if (ev.type === Blockly.Events.VIEWPORT_CHANGE && !this.editor.getToolbox()) {
+                const viewport = ev as Blockly.Events.ViewportChange;
+                if (viewport.scale !== viewport.oldScale) this.parent.forceUpdate();
+            }
+
             const ignoredChanges = [
                 Blockly.Events.UI,
                 Blockly.Events.SELECTED,
