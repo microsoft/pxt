@@ -668,6 +668,110 @@ describe("blockly compiler", function () {
     });
 
     describe("compiling functions", () => {
+        describe("inferring array parameter elements", () => {
+            const element = `<block type="lists_index_get">
+                <value name="LIST"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
+                <value name="INDEX"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            </block>`;
+            const log = `<block type="console_log"><value name="text">${element}</value>`;
+            const setPosition = `<block type="spritesetpos">
+                <value name="sprite">${element}</value>
+                <value name="x"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                <value name="y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>`;
+            const setValue = `<block type="StatusBarSprite_blockCombine_set">
+                <field name="property">StatusBarSprite.value@set</field>
+                <value name="statusbar">${element}</value>
+                <value name="value"><shadow type="math_number"><field name="NUM">1</field></shadow></value>`;
+
+            async function testArrayParameterAsync(body: string, expected: string): Promise<void> {
+                const info = await getBlocksInfoAsync();
+                const workspace = new Blockly.Workspace();
+                try {
+                    pxtblockly.domToWorkspaceNoEvents(Blockly.utils.xml.textToDom(`
+                        <xml xmlns="https://developers.google.com/blockly/xml">
+                            <variables><variable id="sprite">sprite</variable><variable id="value">value</variable></variables>
+                            <block type="function_definition">
+                                <mutation name="test" functionid="test">
+                                    <arg name="list" id="list-parameter" type="Array"/>
+                                </mutation>
+                                <field name="function_name">test</field>
+                                <value name="list-parameter">
+                                    <shadow type="argument_reporter_array"><field name="VALUE">list</field></shadow>
+                                </value>
+                                <statement name="STACK">${body}</statement>
+                            </block>
+                        </xml>`), workspace);
+                    const result = await pxtblockly.compileAsync(workspace, info);
+                    chai.expect(result.diagnostics.length).to.equal(0);
+                    chai.expect(result.source.trim().replace(/\s+/g, " ")).to.equal(expected.trim().replace(/\s+/g, " "));
+
+                    const host = await BlocklyCompilerTestHost.createTestHostAsync();
+                    const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
+                    options.fileSystem[pxt.MAIN_TS] = result.source;
+                    const compiled = pxtc.compile(options);
+                    chai.expect(compiled.diagnostics.length).to.equal(0);
+                    chai.expect(compiled.success).to.equal(true);
+                }
+                finally {
+                    workspace.dispose();
+                }
+            }
+
+            it("should preserve Sprite assignments after an unconstrained read and a for-of loop", async () => {
+                await testArrayParameterAsync(`
+                    ${log}
+                        <next><block type="controls_for_of">
+                            <field name="VAR" id="value">value</field>
+                            <value name="LIST"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
+                            <next><block type="spritesetpos">
+                                <value name="sprite"><block type="variables_get"><field name="VAR" id="sprite">sprite</field></block></value>
+                                <value name="x"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                                <value name="y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                                <next><block type="variables_set">
+                                    <field name="VAR" id="sprite">sprite</field>
+                                    <value name="VALUE">${element}</value>
+                                </block></next>
+                            </block></next>
+                        </block></next>
+                    </block>`, `
+                    let sprite: Sprite = null
+                    function test (list: Sprite[]) {
+                        console.log("" + (list[0]))
+                        for (let value of list) {
+                        }
+                        sprite.setPosition(0, 0)
+                        sprite = list[0]
+                    }`);
+            });
+
+            it("should fall back to any[] for unresolved nested array elements", async () => {
+                await testArrayParameterAsync(`
+                    ${log}
+                        <next><block type="array_reverse"><value name="list">${element}</value></block></next>
+                    </block>`, `
+                    function test (list: any[]) {
+                        console.log("" + (list[0]))
+                        list[0].reverse()
+                    }`);
+            });
+
+            for (const subclassFirst of [false, true]) {
+                it(`should retain subclass receiver constraints with the ${subclassFirst ? "subclass" : "base"} method first`, async () => {
+                    const first = subclassFirst ? setValue : setPosition;
+                    const second = subclassFirst ? setPosition : setValue;
+                    const positionSource = "list[0].setPosition(0, 0)";
+                    const valueSource = "list[0].value = 1";
+                    await testArrayParameterAsync(`
+                        ${log}<next>${first}<next>${second}</block></next></block></next></block>`, `
+                        function test (list: StatusBarSprite[]) {
+                            console.log("" + (list[0]))
+                            ${subclassFirst ? valueSource : positionSource}
+                            ${subclassFirst ? positionSource : valueSource}
+                        }`);
+                });
+            }
+        });
+
         it("should handle name collisions", (done: () => void) => {
             blockTestAsync("functions_names").then(done, done);
         });
