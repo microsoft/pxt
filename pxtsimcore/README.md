@@ -140,6 +140,8 @@ Web Audio and iframes. Consumers keep loading one composed `built/pxtsim.js`.
 - A target implements: a board state class; `pxsim.initCurrentRuntime`, which sets
   `runtime.board` and `runtime.boardView`; a view class implementing `RuntimeBoardView`; and, to
   run headless, `pxsim.initHeadlessRuntime`, which sets the board with no view.
+- A view that tilts the accelerometer by pointer constructs `visuals.AccelerometerTiltInput`
+  with the board's `AccelerometerState` and calls `attach` with the board element.
 - `BoardHost` wiring: the view's `initAsync` builds a `visuals.BoardHost` from
   `visuals.mkBoardView(...)` and `visuals.BoardHostOpts`, passing the board state as `state` and
   its own `builtinVisuals`. `BoardHost.addPart` builds each part that declares a
@@ -200,7 +202,58 @@ in core; only the iframe handling needs the DOM.
   copy both pairs into the target's `built/`.
 - A consumer loads `pxtsim.js` and the target's `sim.js` (the browser simulator), or
   `pxtsimcore.js` and `simcore.js` (headless, DOM-free); never both pairs, since `pxtsim.js`
-  already contains core.
+  already contains core. A target that ships `simcore.js` is never loaded headless through
+  `sim.js`: its view code may use the DOM at load, and only the DOM-free pair runs without one.
+
+## Porting a target
+
+The steps a target follows to ship a DOM-free bundle, in the order pxt-microbit took them;
+pxt-microbit's `sim/README.md` describes the result.
+
+1. Classify every member of the board class and every top-level statement of the simulator by
+   what it reaches: state, shims and runtime calls are DOM-free and go to `core/`; anything that
+   reads `document`, `window`, `navigator`, a canvas, an SVG, `requestAnimationFrame` or an audio
+   context goes to `visuals/`. A member that mixes the two is split: the state and the decision
+   stay in core, the drawing moves to the view.
+2. Write the four pieces of the split. A state class extending `CoreBoard` holds every state
+   member, the key and button handling, `initAsync` (run options, id, whatever the run message
+   configures) and `kill`. A `boardaccess.ts` declares the board class the shims name, `board()`
+   and `boardView()`. A `headless.ts` sets `pxsim.initHeadlessRuntime` to a function that
+   constructs the board with no view, when nothing has set it. A view class implementing
+   `RuntimeBoardView` owns the drawing, the DOM event handlers and `screenshotAsync`, and
+   `pxsim.initCurrentRuntime` is set, when nothing has set it, to a function that constructs the
+   state and the view and assigns `runtime.board` and `runtime.boardView`.
+3. Core never calls the view. Where the old board drew in response to a state change, the state
+   class keeps the state and calls `runtime.queueDisplayUpdate()`; the view's `updateView` reads
+   the state and redraws what changed.
+4. Core reads time through `host.clock()`, timers through `host.timers()`, randomness through
+   `host.rng()` and audio through `audiohost`. A `Date.now`, a global timer or a
+   `requestAnimationFrame` in core is a port error.
+5. A shim that needs the DOM (a text input, a media recorder, a file picker) becomes a host
+   interface in core with an unsupported default, set through a setter, with the shim written
+   over the interface. The view bundle sets the DOM host when it loads, and that host's
+   `isSupported` checks for the API it needs, so the shim reports unsupported wherever the DOM is
+   absent.
+6. `tsconfig.core.json` compiles `core/**/*.ts` and the pxt-common-packages `sim/core/` files
+   the target uses, against `pxtsimcore.d.ts` and `pxtsimcore-globals.d.ts`, with `lib` set to
+   the ECMAScript library alone, to `simcore.js` and its `.d.ts` at the path the sim folder's form
+   requires. `tsconfig.json` compiles `visuals/**/*.ts` and the common-packages view files the
+   target uses, against `pxtsim.d.ts` and the core `.d.ts`, with the `dom` libs, and lists the
+   core bundle in `prepend`. A sim consumed as an npm package lists each common-packages file by
+   the path the target resolves.
+7. A file that reads another file's members while the bundle loads pins that file ahead of it
+   with `/// <reference path>`: the board class pins the state class, `headless.ts` pins
+   `boardaccess.ts`, and a view file that extends or calls another at load pins it the same way.
+8. Every function a compiled program can call is defined in `simcore.js`. Before the split, list
+   every `shim=` the target's and pxt-common-packages' libraries declare that the simulator
+   defines; after it, check each against the core bundle's `.d.ts`. A shim missing from core
+   faults the program at the call in a headless run.
+9. `pxt buildtarget` builds both bundles; `sim.js` begins with the bytes of `simcore.js`, and
+   `tsconfig.core.json` compiling without `dom` is the DOM-free check. The browser simulator is
+   walked by hand for every input the view translates: keys, pointer, gamepad, tilt, the system
+   keyboard, screenshots, theme messages and any multiplayer role.
+10. `tests/sim/` holds programs with `// @serial:` expectations that `pxt simtest` runs on the
+    DOM-free pair, one per behavior the port touched, and the target's CI runs the folder.
 
 ## Running programs headless
 
@@ -208,12 +261,13 @@ in core; only the iframe handling needs the DOM.
 a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync`).
 
 - Flags: `--base <dir>` is the project each test compiles on top of (default: the current
-  directory); it must have exactly one `.ts` file, which the test replaces. `--sim <file>` is the
-  target bundle (default `built/sim.js`, or `built/simcore.js` with `--core`). `--core` runs on
-  `pxtsimcore.js` and `built/simcore.js` instead of `pxtsim.js` and `built/sim.js`, and stops
-  with a message when the target has no core bundle. `--timeout <ms>` bounds each run in real time
-  (default 5000). `--settle <ms>` is the
-  virtual time a program runs after its top-level code finishes (default 300).
+  directory); it must have exactly one `.ts` file, which the test replaces. The bundles are the
+  DOM-free pair, `pxtsimcore.js` and `built/simcore.js`, when the target has built `simcore.js`,
+  and the full pair, `pxtsim.js` and `built/sim.js`, otherwise. `--core` requires the DOM-free
+  pair and stops with a message when the target has not built one. `--sim <file>` names the
+  target bundle explicitly. `--timeout <ms>` bounds each run in real time (default 5000).
+  `--settle <ms>` is the virtual time a program runs after its top-level code finishes
+  (default 300).
 - A directory argument runs every `.ts` file in it, in name order.
 - Each run installs a virtual host and the silent audio host before constructing the `Runtime`,
   sets `pxsim.initCurrentRuntime` to `pxsim.initHeadlessRuntime`, steps the host until the top-level
@@ -234,8 +288,6 @@ a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync
 
 ## Open items
 
-- pxt-common-packages' browser-events input state (`libs/browser-events/sim/`: keyboard and
-  mouse) is view code; it has no DOM-free state in `sim/core/`.
 - pxt-common-packages' mqtt, wifi and text-to-speech simulators (`libs/mqtt/sim/net.ts`,
   `libs/wifi---esp32/sim/wifisockets.ts`, `libs/text-to-speech/sim/tts.ts`) are view code only.
 - pxt-microbit keeps its own accelerometer, edge connector, thermometer and music simulators in
@@ -244,9 +296,3 @@ a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync
   `host.timers()`.
 - The coordinator has no tests through a fake `SimFrameHost`; its tests go through
   `SimulatorDriver` and a fake DOM.
-- pxt-arcade's simulator has not been brought onto this split. pxt-common-packages calls two
-  board methods that only an arcade board defines, through an `any` cast: `updateStats` (screen
-  stats, view-only) and `handleKeyEvent` (multiplayer key input, state). A board view that tilts
-  the accelerometer constructs `visuals.AccelerometerTiltInput` with the board's
-  `AccelerometerState` and calls `attach` with the board element; pxt-arcade's simulator is a
-  caller.

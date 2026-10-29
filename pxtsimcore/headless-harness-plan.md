@@ -65,13 +65,17 @@ The first real contributor and the first shell.
 - `pxt`: `pxt simtest` takes a project directory, finds every `*.scenario.json` in it, compiles the
   project, runs each scenario through the driver and any check over the trace beside it, writes the
   trace beside the scenario, compares it to a committed trace, and reports verdicts; a `--surface`
-  form prints the surface operation's result; the `--base` form stays for smoke tests. The run
+  form prints the surface operation's result; the `--base` form stays for smoke tests; a
+  board contributor's `framePeriod`, when it declares one, is the nominal period of a scenario that
+  states none. The run
   options a project implies are assembled by the one function the editor also calls.
 - Depends on: phase 1.
 - Lands when: the worked example of the spec's Scenarios section runs green from the command
   line, from a scenario beside `pxt.json` and from the same scenario moved into a subfolder; two
   runs of one scenario produce byte-identical traces; `@serial` tests keep passing as a projection
-  of the trace; `--surface` prints the board's entries with their renderings.
+  of the trace; `--surface` prints the board's entries with their renderings; a scenario stating no
+  `framePeriod` over a board that declares one runs at the declared period, and the trace header
+  carries it.
 - Status lines: Contributors (the board); the trace and the shells (`simtest` over the driver).
 
 ## Phase 3: program contributors
@@ -169,8 +173,9 @@ Several boards in lockstep, and radio frames carried by a medium.
 
 - `pxt`: the driver advancing one runtime per `vm` context or worker a frame at a time by
   board id, with every medium propagating after every board; the board id as outer name; one trace
-  per world; the scenario's boards with their projects; the radio ether as a medium delivering
-  frames at frame boundaries in stable order with a link matrix (`ether.link <a>-<b>`) and a
+  per world; the world's period from the scenario, else the smallest period its boards declare;
+  the scenario's boards with their projects; the radio ether as a medium delivering frames at
+  frame boundaries in stable order with a link matrix (`ether.link <a>-<b>`) and a
   per-link strength scripted through `ether.strength <a>-<b>` or defaulted.
 - `pxt-common-packages`: the radio's core attaching to the medium that implements the `radio`
   contract when one is staged, the broadcast `radiopacket` message staying for a live run with no
@@ -182,7 +187,8 @@ Several boards in lockstep, and radio frames carried by a medium.
   frame offset whichever board id is lower; cutting a link at a frame stops delivery from that
   frame; a variant of the spec's three-board example with scripted link strengths and no spatial
   medium runs green; the same variant runs green over a test extension's medium implementing the
-  `radio` contract, with the platform ether not staged.
+  `radio` contract, with the platform ether not staged; two boards declaring different periods
+  under a scenario stating none run at the smaller one, and the trace header carries it.
 - Status lines: Worlds with several simulators; Media and topology (the ether's delivery).
 
 ## Phase 7: the radio ether's model surface and the spatial world
@@ -228,9 +234,8 @@ The screen as a channel.
 - `pxt`: hash rendering for a channel declared bulk (FNV-1a 64-bit, 16 hex digits); the run flag
   and the failed-expectation dump of a frame's bytes beside the scenario; the probe module staged
   as an attachment with its probe list as config, one channel per probe.
-- `pxt-arcade`: the screen as a bulk channel, framebuffer then palette, once pxt-arcade's
-  simulator is on the DOM-free split (an open item of `README.md`).
-- Depends on: phase 5 for the probe as an attachment; the pxt-arcade split for the screen.
+- `pxt-arcade`: the screen as a bulk channel, framebuffer then palette.
+- Depends on: phase 5 for the probe as an attachment.
 - Lands when: a scenario pins a region of the screen by hash and a pixel by color index; a failed
   screen expectation leaves the frame's bytes beside the scenario; the screen's rendered value is
   16 characters on every frame of a run with a moving sprite.
