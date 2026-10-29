@@ -205,6 +205,56 @@ in core; only the iframe handling needs the DOM.
   already contains core. A target that ships `simcore.js` is never loaded headless through
   `sim.js`: its view code may use the DOM at load, and only the DOM-free pair runs without one.
 
+## Porting a target
+
+The steps a target follows to ship a DOM-free bundle, in the order pxt-microbit took them;
+pxt-microbit's `sim/README.md` describes the result.
+
+1. Classify every member of the board class and every top-level statement of the simulator by
+   what it reaches: state, shims and runtime calls are DOM-free and go to `core/`; anything that
+   reads `document`, `window`, `navigator`, a canvas, an SVG, `requestAnimationFrame` or an audio
+   context goes to `visuals/`. A member that mixes the two is split: the state and the decision
+   stay in core, the drawing moves to the view.
+2. Write the four pieces of the split. A state class extending `CoreBoard` holds every state
+   member, the key and button handling, `initAsync` (run options, id, whatever the run message
+   configures) and `kill`. A `boardaccess.ts` declares the board class the shims name, `board()`
+   and `boardView()`. A `headless.ts` sets `pxsim.initHeadlessRuntime` to a function that
+   constructs the board with no view, when nothing has set it. A view class implementing
+   `RuntimeBoardView` owns the drawing, the DOM event handlers and `screenshotAsync`, and
+   `pxsim.initCurrentRuntime` is set, when nothing has set it, to a function that constructs the
+   state and the view and assigns `runtime.board` and `runtime.boardView`.
+3. Core never calls the view. Where the old board drew in response to a state change, the state
+   class keeps the state and calls `runtime.queueDisplayUpdate()`; the view's `updateView` reads
+   the state and redraws what changed.
+4. Core reads time through `host.clock()`, timers through `host.timers()`, randomness through
+   `host.rng()` and audio through `audiohost`. A `Date.now`, a global timer or a
+   `requestAnimationFrame` in core is a port error.
+5. A shim that needs the DOM (a text input, a media recorder, a file picker) becomes a host
+   interface in core with an unsupported default, set through a setter, with the shim written
+   over the interface. The view bundle sets the DOM host when it loads, and that host's
+   `isSupported` checks for the API it needs, so the shim reports unsupported wherever the DOM is
+   absent.
+6. `tsconfig.core.json` compiles `core/**/*.ts` and the pxt-common-packages `sim/core/` files
+   the target uses, against `pxtsimcore.d.ts` and `pxtsimcore-globals.d.ts`, with `lib` set to
+   the ECMAScript library alone, to `simcore.js` and its `.d.ts` at the path the sim folder's form
+   requires. `tsconfig.json` compiles `visuals/**/*.ts` and the common-packages view files the
+   target uses, against `pxtsim.d.ts` and the core `.d.ts`, with the `dom` libs, and lists the
+   core bundle in `prepend`. A sim consumed as an npm package lists each common-packages file by
+   the path the target resolves.
+7. A file that reads another file's members while the bundle loads pins that file ahead of it
+   with `/// <reference path>`: the board class pins the state class, `headless.ts` pins
+   `boardaccess.ts`, and a view file that extends or calls another at load pins it the same way.
+8. Every function a compiled program can call is defined in `simcore.js`. Before the split, list
+   every `shim=` the target's and pxt-common-packages' libraries declare that the simulator
+   defines; after it, check each against the core bundle's `.d.ts`. A shim missing from core
+   faults the program at the call in a headless run.
+9. `pxt buildtarget` builds both bundles; `sim.js` begins with the bytes of `simcore.js`, and
+   `tsconfig.core.json` compiling without `dom` is the DOM-free check. The browser simulator is
+   walked by hand for every input the view translates: keys, pointer, gamepad, tilt, the system
+   keyboard, screenshots, theme messages and any multiplayer role.
+10. `tests/sim/` holds programs with `// @serial:` expectations that `pxt simtest` runs on the
+    DOM-free pair, one per behavior the port touched, and the target's CI runs the folder.
+
 ## Running programs headless
 
 `pxt simtest [file|dir ...]` compiles each test program on top of a base project and runs it in
