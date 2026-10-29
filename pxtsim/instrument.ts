@@ -1,0 +1,74 @@
+namespace pxsim {
+
+// Functions in targets live in namespaces and come in two forms
+
+// 1. a shim that has both C++ and JavaScript counterparts, where the JavaScript is
+//   present in pxsim namespace of the target. An example is basic.showString, which
+//   shows up in the JavaScript as pxsim.basic.showString("foo", 150). That is, the
+//   JavaScript namespace syntax is preserved. The code below deals with this case;
+//.  It is called from pxtsim/runtime.
+
+// 2. a plain STS function, such as basic.showNumber, is flattened (no namespace) such as
+//    basic_showNumber__P2382_mk(s). this is handled in backjs.ts
+
+type UnknownFunction = (...args: any[]) => any;
+type NamespaceObject = Record<string, any>;
+
+/**
+ * Dynamically resolves a string path to an object on the global scope.
+ */
+function getNamespaceObject(module: NamespaceObject, pathString: string): [NamespaceObject | undefined, string | undefined, UnknownFunction | undefined] {
+  const parts = pathString.split('.');
+
+  let currentContext = module
+
+  let i = 0;
+  const funIndex = parts.length - 1;
+  for (const part of parts) {
+    if (i === funIndex) {
+      break;
+    }
+    if (currentContext && part in currentContext) {
+      currentContext = currentContext[part];
+      i = i + 1;
+    } else {
+      return [undefined, undefined, undefined]
+    }
+  }
+
+  return [currentContext as NamespaceObject, parts[funIndex], currentContext[parts[funIndex]] as UnknownFunction];
+}
+
+/**
+ * Instruments specified functions inside a string-resolved namespace.
+ */
+export function instrumentFunctions(functionList: string[]): void {
+  const pxsimModule = window['pxsim'] as NamespaceObject;
+  functionList.forEach((declName: string) => {
+
+    const [funModule, funName, originalFunc] = getNamespaceObject(pxsimModule, declName);
+
+    if (funModule && funName && originalFunc && typeof originalFunc === 'function') {
+      // Cast to UnknownFunction to safely intercept arguments and maintain context
+      const typedOriginalFunc = originalFunc as UnknownFunction;
+
+      funModule[funName] = function (this: unknown, ...args: unknown[]): unknown {
+
+        // Structure the strongly-typed message payload
+        const messagePayload = {
+          type: 'output' as const,
+          function: declName,
+          args
+        } as pxsim.SimulatorOutputMessage;
+
+        Runtime.postMessage(messagePayload);
+
+        // Execute original logic keeping context and arguments intact
+        return typedOriginalFunc.apply(this, args);
+      };
+    }
+  });
+}
+
+
+}
