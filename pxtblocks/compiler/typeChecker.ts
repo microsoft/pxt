@@ -416,7 +416,7 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
             }
 
             if (parentInput.connection && parentInput.connection.targetBlock()) {
-                const parentType = returnType(e, parentInput.connection.targetBlock());
+                const parentType = find(returnType(e, parentInput.connection.targetBlock()));
                 if (parentType.childType) {
                     return parentType.childType;
                 }
@@ -545,7 +545,7 @@ function genericLink(parent: Point, child: Point) {
     if (p.childType) {
         union(p.childType, c);
     }
-    else if (!p.type) {
+    else if (!p.type || p.type === "Array") {
         p.childType = c;
     }
 

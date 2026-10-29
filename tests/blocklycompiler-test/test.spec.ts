@@ -212,7 +212,7 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
         }, err => fail('Could not get compile options'))
 }
 
-async function blockTestAsync(name: string) {
+async function blockTestAsync(name: string, verify?: (result: pxtblockly.BlockCompilationResult) => Promise<void>) {
     let blocksFile: string;
     let tsFile: string;
     const blocklyOptions: Blockly.BlocklyOptions = {
@@ -285,6 +285,7 @@ async function blockTestAsync(name: string) {
     }
 
     chai.expect(compiledTs).to.equal(baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
+    if (verify) await verify(res);
 }
 
 describe("blockly compiler", function () {
@@ -738,6 +739,26 @@ describe("blockly compiler", function () {
         it("should perform type inference on array arguments", (done: () => void) => {
             blockTestAsync("array_parameter_type_inference").then(done, done);
         })
+
+        it("should infer array parameter elements used by a method after an unconstrained read", async () => {
+            await blockTestAsync("array_parameter_element_inference", async result => {
+                chai.expect(result.diagnostics.length).to.equal(0);
+
+                const host = await BlocklyCompilerTestHost.createTestHostAsync();
+                const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
+                options.fileSystem[pxt.MAIN_TS] = result.source;
+                const python = pxtc.service.performOperation("pydecompile", {
+                    options,
+                    fileName: pxt.MAIN_TS
+                }) as pxtc.transpile.TranspileResult;
+
+                chai.expect(python.diagnostics.length).to.equal(0);
+                chai.expect(python.success).to.equal(true);
+                chai.expect(python.outfiles[pxt.MAIN_PY]).to.contain("List[Sprite]");
+                chai.expect(python.outfiles[pxt.MAIN_PY]).to.contain(".set_position(");
+                chai.expect(python.outfiles[pxt.MAIN_PY]).not.to.contain(".setPosition(");
+            });
+        });
     });
 
     describe("compiling special blocks", () => {
