@@ -418,10 +418,11 @@ namespace pxt.cpp {
                 return
 
             // parse the enum case, with lots of optional stuff (?)
-            let mm = /^\s*(\w+)\s*(=\s*(.*?))?,?\s*$/.exec(lnNC)
+            const enumLine = lnNC.trim().replace(/,$/, "").trim()
+            let mm = /^(\w+)(?:\s*=(.*))?$/.exec(enumLine)
             if (mm) {
                 let nm = mm[1]
-                let v = mm[3]
+                let v = mm[2] && mm[2].trim()
                 let opt = ""
                 if (v) {
                     // user-supplied value
@@ -459,16 +460,19 @@ namespace pxt.cpp {
 
         function parseArg(parsedAttrs: pxtc.CommentAttrs, s: string) {
             s = s.trim()
-            let m = /(.*)=\s*(-?\w+)$/.exec(s)
+            const equals = s.lastIndexOf("=")
+            const m = equals < 0 ? null : /^\s*(-?\w+)$/.exec(s.slice(equals + 1))
             let defl = ""
             let qm = ""
             if (m) {
-                defl = m[2]
+                defl = m[1]
                 qm = "?"
-                s = m[1].trim()
+                s = s.slice(0, equals).trim()
             }
-            m = /^(.*?)(\w+)$/.exec(s)
-            if (!m) {
+            let nameStart = s.length
+            while (nameStart > 0 && /\w/.test(s.charAt(nameStart - 1)))
+                --nameStart
+            if (nameStart == s.length || /[\r\n\u2028\u2029]/.test(s.slice(0, nameStart))) {
                 err("invalid argument: " + s)
                 return {
                     name: "???",
@@ -476,7 +480,7 @@ namespace pxt.cpp {
                 }
             }
 
-            let argName = m[2]
+            let argName = s.slice(nameStart)
 
             if (parsedAttrs.paramDefl[argName]) {
                 defl = parsedAttrs.paramDefl[argName]
@@ -495,7 +499,7 @@ namespace pxt.cpp {
 
             return {
                 name: argName + qm,
-                type: m[1]
+                type: s.slice(0, nameStart)
             }
         }
 
@@ -509,11 +513,27 @@ namespace pxt.cpp {
             let indexedInstanceAttrs: pxtc.CommentAttrs
             let indexedInstanceIdx = -1
 
-            // replace #if 0 .... #endif with newlines
-            src = src.replace(/^(\s*#\s*if\s+(\w+)\s*$)([^]*?)(^\s*#\s*(elif|else|endif)\s*$)/mg,
-                (f, _if, arg, middle, _endif) =>
-                    hash_if_options.indexOf(arg) >= 0 && !cpp_options[arg] ?
-                        _if + middle.replace(/[^\n]/g, "") + _endif : f)
+            // Match directives one line at a time so unterminated blocks cannot rescan the source.
+            const lines = src.split(/\r?\n/)
+            let ifStart = -1
+            let ifArg = ""
+            lines.forEach((ln, i) => {
+                const directive = /^#\s*(?:if\s+(\w+)|(elif|else|endif))$/.exec(ln.trim())
+                if (!directive)
+                    return
+                if (ifStart < 0) {
+                    if (directive[1]) {
+                        ifStart = i
+                        ifArg = directive[1]
+                    }
+                } else if (directive[2]) {
+                    if (hash_if_options.indexOf(ifArg) >= 0 && !cpp_options[ifArg]) {
+                        for (let j = ifStart + 1; j < i; ++j)
+                            lines[j] = ""
+                    }
+                    ifStart = -1
+                }
+            })
 
             // special handling of C++ namespace that ends with Methods (e.g. FooMethods)
             // such a namespace will be converted into a TypeScript interface
@@ -606,10 +626,14 @@ namespace pxt.cpp {
                     case "String":
                         return "S"
 
-                    default:
+                    default: {
                         if (U.lookup(knownEnums, tp))
                             return "I"
-                        return "_" + tp.replace(/[\*_]+$/, "");
+                        let typeEnd = tp.length
+                        while (typeEnd > 0 && /[\*_]/.test(tp.charAt(typeEnd - 1)))
+                            --typeEnd
+                        return "_" + tp.slice(0, typeEnd);
+                    }
                 }
             }
 
@@ -705,7 +729,7 @@ namespace pxt.cpp {
             enumsDTS.setNs("")
             shimsDTS.setNs("")
 
-            src.split(/\r?\n/).forEach(ln => {
+            lines.forEach(ln => {
                 ++lineNo
 
                 // remove comments (NC = no comments)
