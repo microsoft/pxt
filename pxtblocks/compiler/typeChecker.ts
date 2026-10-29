@@ -296,17 +296,17 @@ function union(p1: Point, p2: Point) {
 function unionParam(e: Environment, b: Blockly.Block, n: string, p: Point, isInstance = false) {
     attachPlaceholderIf(e, b, n);
     try {
-        const target = returnType(e, getInputTargetBlock(e, b, n));
-        if (isInstance && target.type && p.type) {
+        const point = returnType(e, getInputTargetBlock(e, b, n));
+        if (isInstance && point.type && p.type) {
             const apis = e.blocksInfo.apis.byQName;
-            if (apis[p.type]?.extendsTypes?.indexOf(target.type) >= 0) {
-                target.type = p.type;
+            if (apis[point.type]?.extendsTypes?.indexOf(p.type) >= 0) {
+                return;
             }
-            else if (apis[target.type]?.extendsTypes?.indexOf(p.type) >= 0) {
-                p.type = target.type;
+            if (apis[p.type]?.extendsTypes?.indexOf(point.type) >= 0) {
+                point.type = p.type;
             }
         }
-        union(target, p);
+        union(point, p);
     } catch (e) {
         // TypeScript should catch this error and bubble it up
     }
