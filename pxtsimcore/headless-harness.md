@@ -43,6 +43,9 @@ One shape serves every source:
 - `saveState()` and `restoreState(data)`, optional: the contributor's settled state at a frame
   boundary as plain JSON in a shape of its own carrying its own format version, and the same data
   taken back (Saving and restoring). A contributor without them makes its world unsaveable.
+- `framePeriod`, optional and read on the board alone: the period in milliseconds the board's own
+  engine steps on, the nominal frame period of a scenario that states none. A board that declares
+  none runs at `FRAME_MS`.
 
 Four sources implement it:
 
@@ -418,7 +421,8 @@ project compiles (below). It declares:
   and still drive the world; their entries stay in the trace and leave the report. An entry an
   expectation names is rendered whether or not the list names it. With no watch list the report
   renders everything.
-- The nominal frame period, `FRAME_MS` when omitted.
+- The nominal frame period. When omitted, the board's declared `framePeriod`, and `FRAME_MS` when
+  the board declares none.
 - Optionally, the clock: the clock delta of each frame in milliseconds, one entry per frame, which
   a recording carries (Recording and replay) and a written scenario omits for the nominal period
   throughout.
@@ -687,7 +691,10 @@ The world is the unit of a test; one simulator is the degenerate case.
 
 - N runtimes in lockstep on one virtual clock, each advanced one frame at a time in a fixed order by
   board id. A runtime is a global per context, so a multi-simulator world is one Node `vm` context,
-  or one worker, per board, with the driver advancing each context's virtual clock in turn.
+  or one worker, per board, with the driver advancing each context's virtual clock in turn. The
+  world has one frame period: the scenario's when it states one, else the smallest period any of
+  its boards declares, else `FRAME_MS`. Every board's own engine steps on its own timers inside
+  that period; the period sets when inputs land, when media propagate and when state is read.
 - Names gain the board id as an outer name, as Composition states.
 - The trace is per world and carries every board's record.
 - The project is one project deployed to several boards (the radio case) or a set of projects,
