@@ -109,7 +109,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                         }
                         else {
                             try {
-                                union(p1, tr[0]);
+                                unionWithInheritance(e, p1, tr[0]);
                             } catch (e) {
                                 // TypeScript should catch this error and bubble it up
                             }
@@ -189,7 +189,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                                     for (let j = 0; j < check.length; j++) {
                                         try {
                                             let t = check[j];
-                                            unionParam(e, b, p.definitionName, ground(t), isInstance);
+                                            unionParam(e, b, p.definitionName, ground(t));
                                             break;
                                         }
                                         catch (e) {
@@ -232,7 +232,8 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
             const gen = getInputTargetBlock(e, b, genericArgs[0].name);
             if (gen) {
                 const arg = returnType(e, gen);
-                const arrayType = arg.type ? ground(returnType(e, gen).type + "[]") : ground(null);
+                // Keep the array tied to its element as the element's type is refined.
+                const arrayType = mkPoint(null, true);
                 genericLink(arrayType, arg);
                 unionParam(e, b, name, arrayType);
                 return true;
@@ -292,21 +293,26 @@ function union(p1: Point, p2: Point) {
     p2.type = t;
 }
 
+function unionWithInheritance(e: Environment, p1: Point, p2: Point) {
+    const first = find(p1);
+    const second = find(p2);
+    if (first.type && second.type) {
+        const apis = e.blocksInfo.apis.byQName;
+        if (apis[first.type]?.extendsTypes?.indexOf(second.type) >= 0) {
+            second.type = first.type;
+        }
+        else if (apis[second.type]?.extendsTypes?.indexOf(first.type) >= 0) {
+            first.type = second.type;
+        }
+    }
+    union(first, second);
+}
+
 // Unify the *return* type of the parameter [n] of block [b] with point [p].
-function unionParam(e: Environment, b: Blockly.Block, n: string, p: Point, isInstance = false) {
+function unionParam(e: Environment, b: Blockly.Block, n: string, p: Point) {
     attachPlaceholderIf(e, b, n);
     try {
-        const point = returnType(e, getInputTargetBlock(e, b, n));
-        if (isInstance && point.type && p.type) {
-            const apis = e.blocksInfo.apis.byQName;
-            if (apis[point.type]?.extendsTypes?.indexOf(p.type) >= 0) {
-                return;
-            }
-            if (apis[p.type]?.extendsTypes?.indexOf(point.type) >= 0) {
-                point.type = p.type;
-            }
-        }
-        union(point, p);
+        unionWithInheritance(e, returnType(e, getInputTargetBlock(e, b, n)), p);
     } catch (e) {
         // TypeScript should catch this error and bubble it up
     }

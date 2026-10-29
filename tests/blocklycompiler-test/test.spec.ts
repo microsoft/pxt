@@ -682,14 +682,17 @@ describe("blockly compiler", function () {
                 <field name="property">StatusBarSprite.value@set</field>
                 <value name="statusbar">${element}</value>
                 <value name="value"><shadow type="math_number"><field name="NUM">1</field></shadow></value>`;
+            const push = `<block type="array_push">
+                <value name="list"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
+                <value name="value">${element}</value>`;
 
-            async function testArrayParameterAsync(body: string, expected: string): Promise<void> {
+            async function testArrayParameterAsync(body: string, expected: string, extraBlocks = ""): Promise<void> {
                 const info = await getBlocksInfoAsync();
                 const workspace = new Blockly.Workspace();
                 try {
                     pxtblockly.domToWorkspaceNoEvents(Blockly.utils.xml.textToDom(`
                         <xml xmlns="https://developers.google.com/blockly/xml">
-                            <variables><variable id="sprite">sprite</variable><variable id="value">value</variable></variables>
+                            <variables><variable id="sprite">sprite</variable><variable id="value">value</variable><variable id="statusbar">statusbar</variable></variables>
                             <block type="function_definition">
                                 <mutation name="test" functionid="test">
                                     <arg name="list" id="list-parameter" type="Array"/>
@@ -700,6 +703,7 @@ describe("blockly compiler", function () {
                                 </value>
                                 <statement name="STACK">${body}</statement>
                             </block>
+                            ${extraBlocks}
                         </xml>`), workspace);
                     const result = await pxtblockly.compileAsync(workspace, info);
                     chai.expect(result.diagnostics.length).to.equal(0);
@@ -768,6 +772,85 @@ describe("blockly compiler", function () {
                             ${subclassFirst ? valueSource : positionSource}
                             ${subclassFirst ? positionSource : valueSource}
                         }`);
+                });
+            }
+
+            for (const subclassFirst of [false, true]) {
+                it(`should retain subclass argument constraints with the ${subclassFirst ? "subclass" : "base"} call first`, async () => {
+                    const call = (name: string, type: string) => `<block type="function_call">
+                        <mutation name="${name}" functionid="${name}">
+                            <arg name="value" id="${name}-argument" type="${type}"/>
+                        </mutation>
+                        <value name="${name}-argument">${element}</value>`;
+                    const definition = (name: string, type: string) => `<block type="function_definition">
+                        <mutation name="${name}" functionid="${name}">
+                            <arg name="value" id="${name}-argument" type="${type}"/>
+                        </mutation>
+                        <field name="function_name">${name}</field>
+                        <value name="${name}-argument">
+                            <shadow type="argument_reporter_custom">
+                                <mutation typename="${type}"/>
+                                <field name="VALUE">value</field>
+                            </shadow>
+                        </value>
+                    </block>`;
+                    const base = call("takeSprite", "Sprite");
+                    const subclass = call("takeStatusBar", "StatusBarSprite");
+                    await testArrayParameterAsync(`
+                        ${log}<next>${subclassFirst ? subclass : base}
+                            <next>${subclassFirst ? base : subclass}</block></next>
+                        </block></next></block>`, `
+                        function takeSprite (value: Sprite) {
+                        }
+                        function test (list: StatusBarSprite[]) {
+                            console.log("" + (list[0]))
+                            ${subclassFirst ? "takeStatusBar" : "takeSprite"}(list[0])
+                            ${subclassFirst ? "takeSprite" : "takeStatusBar"}(list[0])
+                        }
+                        function takeStatusBar (value: StatusBarSprite) {
+                        }`, definition("takeSprite", "Sprite") + definition("takeStatusBar", "StatusBarSprite"));
+                });
+
+                it(`should preserve child refinements with push ${subclassFirst ? "after" : "before"} the subclass constraint`, async () => {
+                    await testArrayParameterAsync(`
+                        ${log}<next>${setPosition}
+                            <next>${subclassFirst ? setValue : push}
+                                <next>${subclassFirst ? push : setValue}</block></next>
+                            </block></next>
+                        </block></next></block>`, `
+                        function test (list: StatusBarSprite[]) {
+                            console.log("" + (list[0]))
+                            list[0].setPosition(0, 0)
+                            ${subclassFirst ? "list[0].value = 1" : "list.push(list[0])"}
+                            ${subclassFirst ? "list.push(list[0])" : "list[0].value = 1"}
+                        }`);
+                });
+
+                it(`should retain subclass assignments with the ${subclassFirst ? "assignment" : "base method"} first`, async () => {
+                    const assignment = `<block type="variables_set">
+                        <field name="VAR" id="statusbar">statusbar</field>
+                        <value name="VALUE">${element}</value>`;
+                    await testArrayParameterAsync(`
+                        ${log}<next>${subclassFirst ? assignment : setPosition}
+                            <next>${subclassFirst ? setPosition : assignment}</block></next>
+                        </block></next></block>`, `
+                        function test (list: StatusBarSprite[]) {
+                            console.log("" + (list[0]))
+                            ${subclassFirst ? "statusbar = list[0]" : "list[0].setPosition(0, 0)"}
+                            ${subclassFirst ? "list[0].setPosition(0, 0)" : "statusbar = list[0]"}
+                        }
+                        let statusbar: StatusBarSprite = null
+                        statusbar = statusbars.create(20, 4, 0)`, `
+                        <block type="pxt-on-start"><statement name="HANDLER">
+                            <block type="variables_set">
+                                <field name="VAR" id="statusbar">statusbar</field>
+                                <value name="VALUE"><block type="statusbars_create">
+                                    <value name="width"><shadow type="math_number"><field name="NUM">20</field></shadow></value>
+                                    <value name="height"><shadow type="math_number"><field name="NUM">4</field></shadow></value>
+                                    <value name="kind"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                                </block></value>
+                            </block>
+                        </statement></block>`);
                 });
             }
         });
