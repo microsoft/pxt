@@ -628,11 +628,23 @@ declare namespace pxt {
         markdown?: string;
     }
 
-    interface PxtJsonOption {
+    interface PxtJsonOptionBase {
         label: string;
         property: string;
-        type: "checkbox" | "input";
     }
+
+    interface PxtJsonCheckboxOption extends PxtJsonOptionBase {
+        type: "checkbox";
+    }
+
+    interface PxtJsonInputOption extends PxtJsonOptionBase {
+        type: "input";
+        placeholder?: string;
+        maxLength?: number;
+        filter?: string;
+    }
+
+    type PxtJsonOption = PxtJsonCheckboxOption | PxtJsonInputOption;
 
     interface AssetConfig {
         [index: string /*pxt.AssetType*/]: (boolean | { label?: string; iconClass?: string });

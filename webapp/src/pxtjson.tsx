@@ -295,9 +295,12 @@ export class Editor extends srceditor.Editor {
                                 id={option.property}
                                 label={pxt.Util.rlf(`{id:setting}${option.label}`)}
                                 ariaLabel={option.label}
+                                placeholder={option.placeholder ? pxt.Util.rlf(`{id:setting}${option.placeholder}`) : undefined}
                                 initialValue={(c as any)?.[option.property] || ""}
                                 onChange={value => this.applyPropertyInput(option, value)}
                                 autoComplete={false}
+                                maxLength={option.maxLength}
+                                filter={option.filter}
                             />
                         ) : undefined
                     )}

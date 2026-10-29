@@ -24,6 +24,7 @@ export interface InputProps extends ControlProps {
     preserveValueOnBlur?: boolean;
     options?: pxt.Map<string>;
     filter?: string;
+    maxLength?: number;
 
     validator?: (value: string, prevValue: string) => string;
     onChange?: (newValue: string) => void;
@@ -74,11 +75,12 @@ export const Input = (props: InputProps) => {
         preserveValueOnBlur = true,
         options,
         validator,
+        maxLength,
     } = props;
 
     const [value, setValue] = React.useState(initialValue || "");
     const [expanded, setExpanded] = React.useState(false);
-    const [filter] = React.useState(props.filter ? new RegExp(props.filter) : undefined);
+    const [filter] = React.useState(props.filter ? new RegExp(props.filter, "g") : undefined);
     const optionValues = React.useMemo(() => (options ? Object.values(options) : []), [options]);
 
     let container: HTMLDivElement;
@@ -244,6 +246,7 @@ export const Input = (props: InputProps) => {
                     autoCorrect={autoComplete ? "" : "off"}
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
+                    maxLength={maxLength}
                     disabled={disabled}
                     ref={handleInputRef} />
                 {icon && (onIconClick
