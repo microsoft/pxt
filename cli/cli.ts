@@ -4630,8 +4630,8 @@ function simtestFiles(args: string[]): string[] {
 async function simtestAsync(parsed: commandParser.ParsedCommand) {
     const targetDir = process.cwd();
     const base = path.resolve(parsed.flags["base"] as string || ".");
-    // by default run against the full simulator, so every API is available; --core uses the DOM-free bundles
-    const core = !!parsed.flags["core"];
+    // the DOM-free pair when the target has built one or --core asks for it, the full pair otherwise
+    const core = !!parsed.flags["core"] || (!parsed.flags["sim"] && fs.existsSync(path.join("built", "simcore.js")));
     const simBundle = path.resolve(parsed.flags["sim"] as string || path.join("built", core ? "simcore.js" : "sim.js"));
     const coreBundle = path.join(nodeutil.pxtCoreDir, "built", core ? "pxtsimcore.js" : "pxtsim.js");
     const timeoutMs = (parsed.flags["timeout"] as number) || 5000;
@@ -4641,7 +4641,7 @@ async function simtestAsync(parsed: commandParser.ParsedCommand) {
         U.userError(`simulator bundle not found: ${coreBundle}`);
     if (!fs.existsSync(simBundle)) {
         if (core && !parsed.flags["sim"])
-            U.userError(`DOM-free simulator bundle not found: ${simBundle}; the target has no sim/tsconfig.core.json, or has not been built with 'pxt buildtarget'. 'pxt simtest' without --core runs against the full simulator bundle.`);
+            U.userError(`DOM-free simulator bundle not found: ${simBundle}; the target has no sim/tsconfig.core.json, or has not been built with 'pxt buildtarget'. 'pxt simtest' without --core runs against the full simulator bundle when the target has no DOM-free one.`);
         U.userError(`simulator bundle not found: ${simBundle}`);
     }
     if (!fs.existsSync(path.join(base, pxt.CONFIG_NAME)))
@@ -7779,12 +7779,12 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 type: "string"
             },
             sim: {
-                description: "the target's simulator bundle (default: built/sim.js, or with --core built/simcore.js, which 'pxt buildtarget' emits from sim/tsconfig.core.json)",
+                description: "the target's simulator bundle (default: built/simcore.js when 'pxt buildtarget' has emitted it from sim/tsconfig.core.json, else built/sim.js)",
                 argument: "file",
                 type: "string"
             },
             core: {
-                description: "run against only the DOM-free simulator bundles: pxtsimcore.js and the target's built/simcore.js, which 'pxt buildtarget' emits from sim/tsconfig.core.json"
+                description: "require the DOM-free simulator bundles, pxtsimcore.js and the target's built/simcore.js, and stop when the target has not built one"
             },
             timeout: {
                 description: "real milliseconds a run may take, settling included (default: 5000)",

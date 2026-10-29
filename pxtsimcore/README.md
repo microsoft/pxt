@@ -200,7 +200,8 @@ in core; only the iframe handling needs the DOM.
   copy both pairs into the target's `built/`.
 - A consumer loads `pxtsim.js` and the target's `sim.js` (the browser simulator), or
   `pxtsimcore.js` and `simcore.js` (headless, DOM-free); never both pairs, since `pxtsim.js`
-  already contains core.
+  already contains core. A target that ships `simcore.js` is never loaded headless through
+  `sim.js`: its view code may use the DOM at load, and only the DOM-free pair runs without one.
 
 ## Running programs headless
 
@@ -208,12 +209,13 @@ in core; only the iframe handling needs the DOM.
 a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync`).
 
 - Flags: `--base <dir>` is the project each test compiles on top of (default: the current
-  directory); it must have exactly one `.ts` file, which the test replaces. `--sim <file>` is the
-  target bundle (default `built/sim.js`, or `built/simcore.js` with `--core`). `--core` runs on
-  `pxtsimcore.js` and `built/simcore.js` instead of `pxtsim.js` and `built/sim.js`, and stops
-  with a message when the target has no core bundle. `--timeout <ms>` bounds each run in real time
-  (default 5000). `--settle <ms>` is the
-  virtual time a program runs after its top-level code finishes (default 300).
+  directory); it must have exactly one `.ts` file, which the test replaces. The bundles are the
+  DOM-free pair, `pxtsimcore.js` and `built/simcore.js`, when the target has built `simcore.js`,
+  and the full pair, `pxtsim.js` and `built/sim.js`, otherwise. `--core` requires the DOM-free
+  pair and stops with a message when the target has not built one. `--sim <file>` names the
+  target bundle explicitly. `--timeout <ms>` bounds each run in real time (default 5000).
+  `--settle <ms>` is the virtual time a program runs after its top-level code finishes
+  (default 300).
 - A directory argument runs every `.ts` file in it, in name order.
 - Each run installs a virtual host and the silent audio host before constructing the `Runtime`,
   sets `pxsim.initCurrentRuntime` to `pxsim.initHeadlessRuntime`, steps the host until the top-level
