@@ -189,7 +189,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                                     for (let j = 0; j < check.length; j++) {
                                         try {
                                             let t = check[j];
-                                            unionParam(e, b, p.definitionName, ground(t));
+                                            unionParam(e, b, p.definitionName, ground(t), isInstance);
                                             break;
                                         }
                                         catch (e) {
@@ -293,10 +293,20 @@ function union(p1: Point, p2: Point) {
 }
 
 // Unify the *return* type of the parameter [n] of block [b] with point [p].
-function unionParam(e: Environment, b: Blockly.Block, n: string, p: Point) {
+function unionParam(e: Environment, b: Blockly.Block, n: string, p: Point, isInstance = false) {
     attachPlaceholderIf(e, b, n);
     try {
-        union(returnType(e, getInputTargetBlock(e, b, n)), p);
+        const target = returnType(e, getInputTargetBlock(e, b, n));
+        if (isInstance && target.type && p.type) {
+            const apis = e.blocksInfo.apis.byQName;
+            if (apis[p.type]?.extendsTypes?.indexOf(target.type) >= 0) {
+                target.type = p.type;
+            }
+            else if (apis[target.type]?.extendsTypes?.indexOf(p.type) >= 0) {
+                p.type = target.type;
+            }
+        }
+        union(target, p);
     } catch (e) {
         // TypeScript should catch this error and bubble it up
     }
@@ -418,7 +428,7 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
             if (parentInput.connection && parentInput.connection.targetBlock()) {
                 const parentType = find(returnType(e, parentInput.connection.targetBlock()));
                 if (parentType.childType) {
-                    return parentType.childType;
+                    return find(parentType.childType);
                 }
                 const p = isArrayType(parentType.type) && parentType.type !== "Array" ? mkPoint(parentType.type.substr(0, parentType.type.length - 2)) : mkPoint(null);
                 genericLink(parentType, p);
@@ -579,7 +589,7 @@ export function getConcreteType(point: Point, found: Point[] = []) {
 
             if (t.childType) {
                 const child = getConcreteType(t.childType, found);
-                if (child.type) {
+                if (child.type && child.type !== "Array") {
                     t.type = child.type + "[]";
                     return t;
                 }

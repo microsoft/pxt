@@ -1,0 +1,57 @@
+<xml xmlns="https://developers.google.com/blockly/xml">
+    <block type="function_definition">
+        <mutation name="useStatusBars" functionid="use-status-bars">
+            <arg name="list" id="list-parameter" type="Array"/>
+        </mutation>
+        <field name="function_name">useStatusBars</field>
+        <value name="list-parameter">
+            <shadow type="argument_reporter_array"><field name="VALUE">list</field></shadow>
+        </value>
+        <statement name="STACK">
+            <block type="console_log">
+                <value name="text">
+                    <block type="lists_index_get">
+                        <value name="LIST"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
+                        <value name="INDEX"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                    </block>
+                </value>
+                <next>
+                    <block type="spritesetpos">
+                        <value name="sprite">
+                            <block type="lists_index_get">
+                                <value name="LIST"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
+                                <value name="INDEX"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                            </block>
+                        </value>
+                        <value name="x"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                        <value name="y"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                        <next>
+                            <block type="StatusBarSprite_blockCombine_set">
+                                <field name="property">StatusBarSprite.value@set</field>
+                                <value name="statusbar">
+                                    <block type="lists_index_get">
+                                        <value name="LIST"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
+                                        <value name="INDEX"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                                    </block>
+                                </value>
+                                <value name="value"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                                <next>
+                                    <block type="spritesetpos">
+                                        <value name="sprite">
+                                            <block type="lists_index_get">
+                                                <value name="LIST"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
+                                                <value name="INDEX"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                                            </block>
+                                        </value>
+                                        <value name="x"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                                        <value name="y"><shadow type="math_number"><field name="NUM">1</field></shadow></value>
+                                    </block>
+                                </next>
+                            </block>
+                        </next>
+                    </block>
+                </next>
+            </block>
+        </statement>
+    </block>
+</xml>

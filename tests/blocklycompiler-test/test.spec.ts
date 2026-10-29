@@ -759,6 +759,20 @@ describe("blockly compiler", function () {
                 chai.expect(python.outfiles[pxt.MAIN_PY]).not.to.contain(".setPosition(");
             });
         });
+
+        for (const name of ["array_parameter_element_assignment", "array_parameter_nested_inference", "array_parameter_subclass_inference"]) {
+            it(`should compile ${name}`, async () => {
+                await blockTestAsync(name, async result => {
+                    chai.expect(result.diagnostics.length).to.equal(0);
+                    const host = await BlocklyCompilerTestHost.createTestHostAsync();
+                    const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
+                    options.fileSystem[pxt.MAIN_TS] = result.source;
+                    const compiled = pxtc.compile(options);
+                    chai.expect(compiled.diagnostics).to.deep.equal([]);
+                    chai.expect(compiled.success).to.equal(true);
+                });
+            });
+        }
     });
 
     describe("compiling special blocks", () => {
