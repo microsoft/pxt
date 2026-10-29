@@ -140,6 +140,8 @@ Web Audio and iframes. Consumers keep loading one composed `built/pxtsim.js`.
 - A target implements: a board state class; `pxsim.initCurrentRuntime`, which sets
   `runtime.board` and `runtime.boardView`; a view class implementing `RuntimeBoardView`; and, to
   run headless, `pxsim.initHeadlessRuntime`, which sets the board with no view.
+- A view that tilts the accelerometer by pointer constructs `visuals.AccelerometerTiltInput`
+  with the board's `AccelerometerState` and calls `attach` with the board element.
 - `BoardHost` wiring: the view's `initAsync` builds a `visuals.BoardHost` from
   `visuals.mkBoardView(...)` and `visuals.BoardHostOpts`, passing the board state as `state` and
   its own `builtinVisuals`. `BoardHost.addPart` builds each part that declares a
@@ -236,8 +238,6 @@ a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync
 
 ## Open items
 
-- pxt-common-packages' browser-events input state (`libs/browser-events/sim/`: keyboard and
-  mouse) is view code; it has no DOM-free state in `sim/core/`.
 - pxt-common-packages' mqtt, wifi and text-to-speech simulators (`libs/mqtt/sim/net.ts`,
   `libs/wifi---esp32/sim/wifisockets.ts`, `libs/text-to-speech/sim/tts.ts`) are view code only.
 - pxt-microbit keeps its own accelerometer, edge connector, thermometer and music simulators in
@@ -246,9 +246,3 @@ a Node `vm` context with no browser globals (`cli/simtest.ts`, `runHeadlessAsync
   `host.timers()`.
 - The coordinator has no tests through a fake `SimFrameHost`; its tests go through
   `SimulatorDriver` and a fake DOM.
-- pxt-arcade's simulator has not been brought onto this split. pxt-common-packages calls two
-  board methods that only an arcade board defines, through an `any` cast: `updateStats` (screen
-  stats, view-only) and `handleKeyEvent` (multiplayer key input, state). A board view that tilts
-  the accelerometer constructs `visuals.AccelerometerTiltInput` with the board's
-  `AccelerometerState` and calls `attach` with the board element; pxt-arcade's simulator is a
-  caller.

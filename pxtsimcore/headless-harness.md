@@ -973,9 +973,9 @@ What exists and what does not, piece by piece. A change that lands a piece edits
 
 - Foundations in place: the virtual host (seeded random source, frame queue, `advance` and
   `runUntil`), the silent audio host, the view-less runtime (`pxsim.initHeadlessRuntime`;
-  pxt-microbit's `initHeadlessDalBoard`), `pxt simtest` with the `@serial` golden and the `--core`
-  run, and the two headless bundles (`pxtsimcore.js` and a target's `simcore.js`; pxt-microbit
-  ships one).
+  pxt-microbit's `initHeadlessDalBoard`, pxt-arcade's `initHeadlessArcadeBoard`), `pxt simtest`
+  with the `@serial` golden, and the two headless bundles (`pxtsimcore.js` and a target's
+  `simcore.js`; pxt-microbit and pxt-arcade ship one).
 - Contributors: no contributor interface exists in core. The board's typed input primitives and
   the headless board view with its snapshot are a proposal in pxt-microbit's `sim/README.md`, not
   code. The program-message channel exists (`control.simmessages`, pxt-common-packages

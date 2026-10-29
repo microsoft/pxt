@@ -228,9 +228,8 @@ The screen as a channel.
 - `pxt`: hash rendering for a channel declared bulk (FNV-1a 64-bit, 16 hex digits); the run flag
   and the failed-expectation dump of a frame's bytes beside the scenario; the probe module staged
   as an attachment with its probe list as config, one channel per probe.
-- `pxt-arcade`: the screen as a bulk channel, framebuffer then palette, once pxt-arcade's
-  simulator is on the DOM-free split (an open item of `README.md`).
-- Depends on: phase 5 for the probe as an attachment; the pxt-arcade split for the screen.
+- `pxt-arcade`: the screen as a bulk channel, framebuffer then palette.
+- Depends on: phase 5 for the probe as an attachment.
 - Lands when: a scenario pins a region of the screen by hash and a pixel by color index; a failed
   screen expectation leaves the frame's bytes beside the scenario; the screen's rendered value is
   16 characters on every frame of a run with a moving sprite.
