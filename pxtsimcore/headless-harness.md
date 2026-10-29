@@ -798,7 +798,9 @@ target or a sensor.
   traffic by topology instead of broadcasting a channel to every extension frame, and exposes link
   and unlink calls. The editor's live topology is both user-driven UI state and project state: the
   project's `staging.json` is the default, written through `projstaging` by the extension whose tab
-  edits a medium, and a test or an API call overrides it for a run.
+  edits a medium, and a test or an API call overrides it for a run. A project with no
+  `staging.json` links every extension frame to every other, so an extension that stages nothing
+  receives every channel it subscribes to.
 
 A button module plugged into a bus at frame 30 and pulled at frame 70, the program showing text on
 each change and the module's own channel read while it is present:
