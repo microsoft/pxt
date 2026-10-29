@@ -305,11 +305,31 @@ export class EditorPackage {
         let cfgFile = this.files[pxt.CONFIG_NAME]
         if (cfgFile) {
             try {
-                let cfg = <pxt.PackageConfig>JSON.parse(cfgFile.content)
+                let currentContent = cfgFile.content;
+                const monacoEditor = typeof window !== "undefined" && (window as any).monaco?.editor;
+                const pxtJsonModel = monacoEditor?.getModels?.()?.find((m: any) => m.uri?.toString() === "pkg:" + pxt.CONFIG_NAME);
+                if (pxtJsonModel) {
+                    try {
+                        JSON.parse(pxtJsonModel.getValue());
+                        currentContent = pxtJsonModel.getValue();
+                    } catch {
+                        // Monaco content is not valid JSON yet, fallback to cfgFile.content
+                    }
+                }
+
+                let cfg = <pxt.PackageConfig>JSON.parse(currentContent);
                 update(cfg);
-                return cfgFile.setContentAsync(pxt.Package.stringifyConfig(cfg))
-                    .then(() => this.ksPkg.loadConfig())
-            } catch (e) { }
+                const newContent = pxt.Package.stringifyConfig(cfg);
+
+                if (pxtJsonModel && pxtJsonModel.getValue() !== newContent) {
+                    pxtJsonModel.setValue(newContent);
+                }
+
+                return cfgFile.setContentAsync(newContent, true)
+                    .then(() => this.ksPkg.loadConfig());
+            } catch (e) {
+                // Pass
+            }
         }
 
         return null;
