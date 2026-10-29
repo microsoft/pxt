@@ -500,10 +500,10 @@ export const ShareInfo = (props: ShareInfoProps) => {
                                         url={shareData?.url}
                                         type='facebook'
                                         heading={lf("Share on Facebook")} />
-                                    <SocialButton className="square-button twitter"
+                                    <SocialButton className="square-button x"
                                         url={shareData?.url}
-                                        type='twitter'
-                                        heading={lf("Share on Twitter")} />
+                                        type='x'
+                                        heading={lf("Share on X")} />
                                     <SocialButton className="square-button google-classroom"
                                         url={shareData?.url}
                                         type='google-classroom'

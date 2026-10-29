@@ -5,7 +5,7 @@ import { classList } from "../util";
 interface SocialButtonProps {
     className?: string;
     url?: string;
-    type?: "facebook" | "twitter" | "discourse" | "google-classroom" | "microsoft-teams" | "whatsapp";
+    type?: "facebook" | "x" | "discourse" | "google-classroom" | "microsoft-teams" | "whatsapp";
     heading?: string;
 }
 
@@ -21,7 +21,7 @@ export const SocialButton = (props: SocialButtonProps) => {
             socialUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
             break;
         }
-        case "twitter": {
+        case "x": {
             let twitterText = lf("Check out what I made!");
             if (socialOptions.twitterHandle && socialOptions.orgTwitterHandle) {
                 twitterText = lf("Check out what I made with @{0} and @{1}!", socialOptions.twitterHandle, socialOptions.orgTwitterHandle);
@@ -30,7 +30,7 @@ export const SocialButton = (props: SocialButtonProps) => {
             } else if (socialOptions.orgTwitterHandle) {
                 twitterText = lf("Check out what I made with @{0}!", socialOptions.orgTwitterHandle);
             }
-            socialUrl = `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}` +
+            socialUrl = `https://x.com/intent/tweet?url=${encodeURIComponent(url)}` +
                 `&text=${encodeURIComponent(twitterText)}` +
                 (socialOptions.hashtags ? `&hashtags=${encodeURIComponent(socialOptions.hashtags)}` : '') +
                 (socialOptions.related ? `&related=${encodeURIComponent(socialOptions.related)}` : '');
@@ -61,7 +61,6 @@ export const SocialButton = (props: SocialButtonProps) => {
     switch (type) {
         // Icon buttons
         case "facebook":
-        case "twitter":
         case "discourse":
         case "whatsapp":
             return (
@@ -71,6 +70,24 @@ export const SocialButton = (props: SocialButtonProps) => {
                     title={heading}
                     href={socialUrl}
                     leftIcon={`icon ${type}`}
+                    heading={heading}
+                    onClick={handleClick}
+                />
+            );
+
+        // X logo, per the X brand toolkit (https://about.x.com/en/who-we-are/brand-toolkit)
+        case "x":
+            return (
+                <LinkButton
+                    className={classList(classes, "social-icon")}
+                    ariaLabel={heading || "X"}
+                    title={heading}
+                    href={socialUrl}
+                    label={
+                        <svg className="social-x-logo" viewBox="0 0 24 24" aria-hidden={true} focusable="false">
+                            <path fill="currentColor" d="M18.901 1.153h3.68l-8.04 9.19L24 22.846h-7.406l-5.8-7.584-6.638 7.584H.474l8.6-9.83L0 1.154h7.594l5.243 6.932ZM17.61 20.644h2.039L6.486 3.24H4.298Z" />
+                        </svg>
+                    }
                     heading={heading}
                     onClick={handleClick}
                 />
