@@ -1227,6 +1227,12 @@ namespace ts.pxtc.Util {
                     setLocalizedStrings(translations);
                 }
 
+                // Tutorial Tool has no API surface, so avoid delaying its startup
+                // with an unused API catalog request.
+                if (opts.translationKind === ts.pxtc.Util.TranslationsKind.TutorialTool) {
+                    return;
+                }
+
                 // Download api translations
                 return ts.pxtc.Util.downloadTranslationsAsync(
                     targetId, baseUrl, code, liveUpdateStrings,

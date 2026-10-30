@@ -42,7 +42,7 @@ export function addLocaleToUrl(
     const requested = getLocaleRequest(hostUrl);
     if (requested.language) {
         url.searchParams.set(requested.parameter!, requested.language);
-    } else if (resolvedLanguage && !/^en(?:-us)?$/i.test(resolvedLanguage)) {
+    } else if (resolvedLanguage && (requestedParameter || !/^en(?:-us)?$/i.test(resolvedLanguage))) {
         url.searchParams.set(requestedParameter || "lang", resolvedLanguage);
     }
     return url.toString();
