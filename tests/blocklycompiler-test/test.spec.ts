@@ -685,8 +685,23 @@ describe("blockly compiler", function () {
             const push = `<block type="array_push">
                 <value name="list"><block type="argument_reporter_array"><field name="VALUE">list</field></block></value>
                 <value name="value">${element}</value>`;
+            const createStatusBar = `<block type="statusbars_create">
+                <value name="width"><shadow type="math_number"><field name="NUM">20</field></shadow></value>
+                <value name="height"><shadow type="math_number"><field name="NUM">4</field></shadow></value>
+                <value name="kind"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+            </block>`;
+            const arrayOf = (item: string) => `<block type="lists_create_with">
+                <mutation items="1"/>
+                <value name="ADD0">${item}</value>
+            </block>`;
+            const callTest = (argument: string) => `<block type="function_call">
+                <mutation name="test" functionid="test">
+                    <arg name="list" id="list-parameter" type="Array"/>
+                </mutation>
+                <value name="list-parameter">${argument}</value>
+            </block>`;
 
-            async function testArrayParameterAsync(body: string, expected: string, extraBlocks = ""): Promise<void> {
+            async function testArrayParameterAsync(body: string, expected: string, extraBlocks = "", expectedDiagnosticCodes: number[] = []): Promise<void> {
                 const info = await getBlocksInfoAsync();
                 const workspace = new Blockly.Workspace();
                 try {
@@ -713,8 +728,8 @@ describe("blockly compiler", function () {
                     const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
                     options.fileSystem[pxt.MAIN_TS] = result.source;
                     const compiled = pxtc.compile(options);
-                    chai.expect(compiled.diagnostics.length).to.equal(0);
-                    chai.expect(compiled.success).to.equal(true);
+                    chai.expect(compiled.diagnostics.map(diagnostic => diagnostic.code)).to.deep.equal(expectedDiagnosticCodes);
+                    chai.expect(compiled.success).to.equal(expectedDiagnosticCodes.length === 0);
                 }
                 finally {
                     workspace.dispose();
@@ -757,6 +772,52 @@ describe("blockly compiler", function () {
                         console.log("" + (list[0]))
                         list[0].reverse()
                     }`);
+            });
+
+            for (const withPush of [false, true]) {
+                it(`should infer Sprite[] from base-only ${withPush ? "and generic " : ""}operations even when passed status bars`, async () => {
+                    await testArrayParameterAsync(`
+                        ${log}<next>${setPosition}
+                            ${withPush ? `<next>${push}</block></next>` : ""}
+                        </block></next></block>`, `
+                        function test (list: Sprite[]) {
+                            console.log("" + (list[0]))
+                            list[0].setPosition(0, 0)
+                            ${withPush ? "list.push(list[0])" : ""}
+                        }
+                        test([statusbars.create(20, 4, 0)])`, `
+                        <block type="pxt-on-start"><statement name="HANDLER">
+                            ${callTest(arrayOf(createStatusBar))}
+                        </statement></block>`);
+                });
+            }
+
+            it("should reject plain sprites passed to an array function that assigns to a status-bar variable", async () => {
+                const plainSprite = `<block type="lists_index_get">
+                    <value name="LIST"><block type="test_all_sprites"/></value>
+                    <value name="INDEX"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
+                </block>`;
+                await testArrayParameterAsync(`
+                    ${log}<next><block type="variables_set">
+                        <field name="VAR" id="statusbar">statusbar</field>
+                        <value name="VALUE">${element}</value>
+                        <next>${setPosition}</block></next>
+                    </block></next></block>`, `
+                    function test (list: StatusBarSprite[]) {
+                        console.log("" + (list[0]))
+                        statusbar = list[0]
+                        list[0].setPosition(0, 0)
+                    }
+                    let statusbar: StatusBarSprite = null
+                    statusbar = statusbars.create(20, 4, 0)
+                    test([testTypes.allSprites()[0]])`, `
+                    <block type="pxt-on-start"><statement name="HANDLER">
+                        <block type="variables_set">
+                            <field name="VAR" id="statusbar">statusbar</field>
+                            <value name="VALUE">${createStatusBar}</value>
+                            <next>${callTest(arrayOf(plainSprite))}</next>
+                        </block>
+                    </statement></block>`, [2345]);
             });
 
             for (const subclassFirst of [false, true]) {
@@ -844,11 +905,7 @@ describe("blockly compiler", function () {
                         <block type="pxt-on-start"><statement name="HANDLER">
                             <block type="variables_set">
                                 <field name="VAR" id="statusbar">statusbar</field>
-                                <value name="VALUE"><block type="statusbars_create">
-                                    <value name="width"><shadow type="math_number"><field name="NUM">20</field></shadow></value>
-                                    <value name="height"><shadow type="math_number"><field name="NUM">4</field></shadow></value>
-                                    <value name="kind"><shadow type="math_number"><field name="NUM">0</field></shadow></value>
-                                </block></value>
+                                <value name="VALUE">${createStatusBar}</value>
                             </block>
                         </statement></block>`);
                 });
