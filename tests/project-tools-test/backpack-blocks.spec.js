@@ -90,7 +90,7 @@ describe("Backpack native clipboard serialization", function () {
         } finally { await page.close(); }
     });
 
-    it("uses the native copy state and keeps nested bodies without following siblings", async () => {
+    it("uses native stack-copy state and keeps bodies and following blocks without their parent", async () => {
         const result = await page.evaluate(async () => {
             const parent = append(sourceWorkspace, container(container({ ...statement, next: { block: statement } })));
             const block = parent.getInputTargetBlock("BODY");
@@ -99,7 +99,7 @@ describe("Backpack native clipboard serialization", function () {
             await flush();
             const before = JSON.stringify(Blockly.serialization.workspaces.save(sourceWorkspace));
             const payload = JSON.parse(backpack.captureBackpackBlock(block).code);
-            const sameState = JSON.stringify(payload.blocks[0]) === JSON.stringify(block.toCopyData().blockState);
+            const sameState = JSON.stringify(payload.blocks[0]) === JSON.stringify(block.toCopyData(true).blockState);
             const root = backpack.pasteBackpackBlock(JSON.stringify(payload), destination);
             await flush();
             return {
@@ -108,7 +108,121 @@ describe("Backpack native clipboard serialization", function () {
                 unchanged: before === JSON.stringify(Blockly.serialization.workspaces.save(sourceWorkspace))
             };
         });
-        assert.deepStrictEqual(result, { version: 1, sameState: true, count: 3, parent: false, next: false, unchanged: true });
+        assert.deepStrictEqual(result, { version: 1, sameState: true, count: 4, parent: false, next: true, unchanged: true });
+    });
+
+    it("captures single statements and reporters as code", async () => {
+        const result = await page.evaluate(async () => {
+            const blocks = [
+                append(sourceWorkspace, statement),
+                append(sourceWorkspace, { type: "math_number", fields: { NUM: 7 } })
+            ];
+            await flush();
+            const before = JSON.stringify(Blockly.serialization.workspaces.save(sourceWorkspace));
+            const captures = blocks.map(block => {
+                const eligible = backpack.isBackpackBlock(block);
+                const kind = backpack.getBackpackCaptureKind(block);
+                const code = backpack.captureBackpackBlock(block).code;
+                const pasted = backpack.pasteBackpackBlock(code, destination, undefined, kind);
+                return { eligible, kind, type: pasted.type, count: pasted.getDescendants(false).length };
+            });
+            await flush();
+            return { captures, unchanged: before === JSON.stringify(Blockly.serialization.workspaces.save(sourceWorkspace)) };
+        });
+        assert.deepStrictEqual(result, {
+            captures: [
+                { eligible: true, kind: "code", type: "backpack_test_statement", count: 1 },
+                { eligible: true, kind: "code", type: "math_number", count: 1 }
+            ],
+            unchanged: true
+        });
+    });
+
+    it("includes function dependencies and search text from the selected stack's tail", async () => {
+        const result = await page.evaluate(async () => {
+            Blockly.Blocks.backpack_labeled_statement = { init() {
+                this.appendDummyInput().appendField(new Blockly.FieldTextInput("tail text"), "TEXT");
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+            } };
+            const definition = defineFunction(sourceWorkspace, "helper", "helper-id");
+            const beforeSelection = append(sourceWorkspace, statement);
+            const selected = append(sourceWorkspace, statement);
+            const call = callFunction(sourceWorkspace, definition);
+            const tail = append(sourceWorkspace, { type: "backpack_labeled_statement" });
+            beforeSelection.nextConnection.connect(selected.previousConnection);
+            selected.nextConnection.connect(call.previousConnection);
+            call.nextConnection.connect(tail.previousConnection);
+            defineFunction(destination, "helper", "existing-helper");
+            await flush();
+            const before = JSON.stringify(Blockly.serialization.workspaces.save(sourceWorkspace));
+            const capture = backpack.captureBackpackBlock(selected);
+            const payload = JSON.parse(capture.code);
+            const pasted = backpack.pasteBackpackBlock(capture.code, destination);
+            await flush();
+            return {
+                roots: payload.blocks.map(block => block.type),
+                selectedType: pasted.type,
+                nextType: pasted.getNextBlock().type,
+                calledFunction: pasted.getNextBlock().getName(),
+                tail: pasted.getNextBlock().getNextBlock().getFieldValue("TEXT"),
+                searchable: capture.blockText.includes("tail text"),
+                types: backpack.getBackpackBlockTypes(capture.code),
+                unchanged: before === JSON.stringify(Blockly.serialization.workspaces.save(sourceWorkspace))
+            };
+        });
+        assert.deepStrictEqual(result.roots, ["function_definition", "backpack_test_statement"]);
+        assert.equal(result.selectedType, "backpack_test_statement");
+        assert.equal(result.nextType, "function_call");
+        assert.equal(result.calledFunction, "helper2");
+        assert.equal(result.tail, "tail text");
+        assert(result.searchable && result.unchanged);
+        assert(result.types.includes("backpack_labeled_statement"));
+    });
+
+    it("keeps ordinary clipboard copy limited to the selected block unless a stack is requested", async () => {
+        const result = await page.evaluate(() => {
+            const headless = new Blockly.Workspace();
+            try {
+                const first = append(headless, statement);
+                first.nextConnection.connect(append(headless, statement).previousConnection);
+                return {
+                    ordinary: !!backpack.copyBlock(first).blockState.next,
+                    stack: !!backpack.copyBlock(first, true).blockState.next
+                };
+            } finally { headless.dispose(); }
+        });
+        assert.deepStrictEqual(result, { ordinary: false, stack: true });
+    });
+
+    it("still excludes immovable, readonly, and ordinary shadow blocks", async () => {
+        const result = await page.evaluate(() => {
+            const block = append(sourceWorkspace, statement);
+            block.setMovable(false);
+            const immovable = backpack.isBackpackBlock(block);
+            block.setMovable(true);
+            block.setShadow(true);
+            const shadow = backpack.isBackpackBlock(block);
+            block.setShadow(false);
+            sourceWorkspace.options.readOnly = true;
+            const readOnly = backpack.isBackpackBlock(block);
+            sourceWorkspace.options.readOnly = false;
+            return { immovable, shadow, readOnly };
+        });
+        assert.deepStrictEqual(result, { immovable: false, shadow: false, readOnly: false });
+    });
+
+    it("does not allow following statements on supporting function definitions", async () => {
+        const rejected = await page.evaluate(() => {
+            try {
+                backpack.parseBackpackCode(JSON.stringify({ version: 1, blocks: [
+                    { type: "function_definition", extraState: { name: "helper" }, next: { block: statement } },
+                    statement
+                ] }));
+                return false;
+            } catch { return true; }
+        });
+        assert(rejected);
     });
 
     it("preserves mutations and resolves variables through the native clipboard paster", async () => {
@@ -278,13 +392,18 @@ describe("Backpack native clipboard serialization", function () {
                 this.setOutput(true);
             } };
             const asset = append(sourceWorkspace, { type: "asset_field_test" });
+            const standaloneKind = backpack.getBackpackCaptureKind(asset);
             asset.setShadow(true);
             asset.setMovable(false);
             const acceptedShadow = backpack.isBackpackBlock(asset);
+            const shadowKind = backpack.getBackpackCaptureKind(asset);
             asset.setEditable(false);
-            return { loop: backpack.isBackpackBlock(loop), acceptedShadow, readOnly: backpack.isBackpackBlock(asset) };
+            return { loop: backpack.isBackpackBlock(loop), acceptedShadow, standaloneKind, shadowKind,
+                readOnly: backpack.isBackpackBlock(asset) };
         });
-        assert.deepStrictEqual(result, { loop: true, acceptedShadow: true, readOnly: false });
+        assert.deepStrictEqual(result, {
+            loop: true, acceptedShadow: true, standaloneKind: "asset", shadowKind: "asset", readOnly: false
+        });
     });
 
     it("rejects oversized data before pasting and rolls back failed native loads", async () => {
