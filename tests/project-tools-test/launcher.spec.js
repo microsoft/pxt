@@ -2,6 +2,7 @@
 
 const assert = require("assert");
 const fs = require("fs");
+const path = require("path");
 const { launchTestBrowser } = require("./browser");
 const less = require("less");
 const rtlcss = require("rtlcss");
@@ -42,8 +43,12 @@ describe("responsive project-tools launcher", function () {
             "webapp/src/components/projectTools/ProjectToolsHeader.tsx",
             "webapp/src/components/projectTools/ProjectToolsResizeHandle.tsx",
             "webapp/src/components/projectTools/useProjectToolsResize.ts",
-            "webapp/src/components/projectTools/useProjectToolsDismiss.ts"
-        ], "projectToolsComponents");
+            "webapp/src/components/projectTools/useProjectToolsDismiss.ts",
+            "pxtblocks/backpackDrag.ts",
+            "pxtblocks/backpack.ts"
+        ], "projectToolsComponents", {
+            react: "window.React", "react-dom": "window.ReactDOM", blockly: "window.Blockly"
+        });
         const styles = await less.render(fs.readFileSync("theme/project-tools.less", "utf8"), {
             modifyVars: themeVariables
         });
@@ -59,11 +64,17 @@ describe("responsive project-tools launcher", function () {
         await page.addStyleTag({ content: css });
         await page.addScriptTag({ path: require.resolve("react/umd/react.development.js") });
         await page.addScriptTag({ path: require.resolve("react-dom/umd/react-dom.development.js") });
+        const blocklyDirectory = path.dirname(require.resolve("blockly"));
+        for (const file of ["blockly_compressed.js", "msg/en.js"]) {
+            await page.addScriptTag({ path: path.join(blocklyDirectory, file) });
+        }
         await page.evaluate(() => {
             window.lf = text => text;
             window.pxt = {
                 appTarget: { appTheme: { whiteboard: true, backpack: true }, runtime: { palette: ["#000", "#fff"] } },
                 BREAKPOINT_TABLET: 991,
+                U: { userError: message => { throw new Error(message); } },
+                reportException: error => { throw error; },
                 BrowserUtils: { isTabletSize: () => window.innerWidth <= 991 },
                 Util: { isUserLanguageRtl: () => false }
             };
@@ -121,6 +132,7 @@ describe("responsive project-tools launcher", function () {
                 const [tutorial, setTutorial] = React.useState(false);
                 const [headerTutorial, setHeaderTutorial] = React.useState(false);
                 const [, update] = React.useReducer(value => value + 1, 0);
+                window.rerenderTools = update;
                 window.setToolsFlags = flags => { Object.assign(pxt.appTarget.appTheme, flags); update(); };
                 pxt.Util.isUserLanguageRtl = () => rtl;
                 window.setRtl = setRtl;
@@ -136,7 +148,7 @@ describe("responsive project-tools launcher", function () {
                 };
                 return React.createElement(exports.ProjectTools, {
                     header: { id: "test-project", tutorial: headerTutorial ? { tutorial: "/test-tutorial" } : undefined },
-                    tutorial, expanded, onExpandedChange: setExpanded,
+                    tutorial, expanded, onExpandedChange: value => setExpanded(value),
                     pinned, onPinnedChange: setPinned,
                     docsUrl: request ? "/reference" : undefined, docsRequest: request,
                     onOpenReference: window.openHelp, onSignIn: () => {}
@@ -152,6 +164,8 @@ describe("responsive project-tools launcher", function () {
             await page.evaluate(() => {
                 const root = document.getElementById("root");
                 if (window.ReactDOM && root) ReactDOM.unmountComponentAtNode(root);
+                window.disposeBackpackDrag?.();
+                window.testWorkspace?.dispose();
             });
         } finally { await page.close(); }
     });
@@ -181,6 +195,191 @@ describe("responsive project-tools launcher", function () {
         await page.waitForFunction(() => !document.getElementById("project-tools-panel").hidden);
         await page.waitForSelector(`${panel} .project-tools-pin`, { visible: true });
     };
+
+    const createWorkspace = async () => page.evaluate(async () => {
+        const host = document.createElement("div");
+        host.id = "test-workspace";
+        host.style.cssText = "position:absolute;left:20px;top:300px;width:650px;height:420px";
+        document.body.appendChild(host);
+        Blockly.Blocks.backpack_dismiss_statement = { init() {
+            this.appendDummyInput().appendField("save this block");
+            this.setPreviousStatement(true);
+            this.setNextStatement(true);
+        } };
+        window.testWorkspace = Blockly.inject(host, { scrollbars: false, sounds: false });
+        window.testBlock = Blockly.serialization.blocks.append({ type: "backpack_dismiss_statement" }, testWorkspace);
+        testBlock.moveTo(new Blockly.utils.Coordinate(80, 60));
+        await Blockly.renderManagement.finishQueuedRenders();
+        window.backpackCaptures = [];
+        window.disposeBackpackDrag = projectToolsComponents.registerBackpackWorkspace(testWorkspace, {
+            isEnabled: () => !document.getElementById("project-tools-panel").hidden
+                && document.getElementById("project-tools-panel").dataset.activeTab === "backpack",
+            save: block => backpackCaptures.push(JSON.parse(projectToolsComponents.captureBackpackBlock(block).code)),
+            open: () => {},
+            hoverClass: "test-backpack-hover",
+            dragTargets: [{ getElement: () => document.getElementById("project-tools-backpack") }]
+        });
+        window.workspaceBefore = JSON.stringify(Blockly.serialization.workspaces.save(testWorkspace));
+    });
+
+    const blockPosition = async () => page.evaluate(() => {
+        projectToolsComponents.refreshBackpackDragTargets(testWorkspace);
+        const rect = testBlock.getSvgRoot().getBoundingClientRect();
+        return { x: rect.left + 20, y: rect.top + 15 };
+    });
+
+    for (const width of [1366, 1024]) {
+        it(`keeps the unpinned Backpack open for a native workspace-to-panel drop at ${width}px`, async () => {
+            await createWorkspace();
+            await openTool(backpack, width);
+            const start = await blockPosition();
+            const end = await page.$eval("#project-tools-backpack", element => {
+                const rect = element.getBoundingClientRect();
+                return { x: rect.left + 100, y: rect.top + rect.height / 2 };
+            });
+            await page.mouse.move(start.x, start.y);
+            await page.mouse.down();
+            assert.equal(await page.$eval(panel, element => element.hidden), false);
+            await page.mouse.move(end.x, end.y, { steps: 15 });
+            assert.equal(await page.evaluate(() => testWorkspace.isDragging()), true);
+            assert.equal(await page.$eval(panel, element => element.hidden), false);
+            await page.mouse.up();
+            await page.waitForFunction(() => backpackCaptures.length === 1 && !testWorkspace.isDragging());
+            assert.deepStrictEqual(await page.evaluate(() => ({
+                open: !document.getElementById("project-tools-panel").hidden,
+                types: backpackCaptures[0].blocks.map(block => block.type),
+                unchanged: workspaceBefore === JSON.stringify(Blockly.serialization.workspaces.save(testWorkspace))
+            })), { open: true, types: ["backpack_dismiss_statement"], unchanged: true });
+            assert.equal(await page.$eval(`${panel} .project-tools-pin`, element => element.getAttribute("aria-pressed")), "false");
+            await page.click("#outside");
+            assert.equal(await page.$eval(panel, element => element.hidden), true);
+        });
+    }
+
+    it("keeps the unpinned Backpack open during a native touch drag and drop", async () => {
+        await createWorkspace();
+        await openTool(backpack, 1366);
+        const start = await blockPosition();
+        const end = await page.$eval("#project-tools-backpack", element => {
+            const rect = element.getBoundingClientRect();
+            return { x: rect.left + 100, y: rect.top + rect.height / 2 };
+        });
+        const client = await page.createCDPSession();
+        try {
+            await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [start] });
+            for (let step = 1; step <= 5; step++) {
+                await client.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{
+                    x: start.x + (end.x - start.x) * step / 5,
+                    y: start.y + (end.y - start.y) * step / 5
+                }] });
+            }
+            assert.equal(await page.$eval(panel, element => element.hidden), false);
+            await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+            await page.waitForFunction(() => backpackCaptures.length === 1 && !testWorkspace.isDragging());
+            assert.equal(await page.$eval(panel, element => element.hidden), false);
+        } finally { await client.detach(); }
+    });
+
+    it("still dismisses Backpack for a block click that does not become a drag", async () => {
+        await createWorkspace();
+        await openTool(backpack, 1366);
+        const start = await blockPosition();
+        await page.mouse.move(start.x, start.y);
+        await page.mouse.down();
+        assert.equal(await page.$eval(panel, element => element.hidden), false);
+        await page.mouse.up();
+        assert.equal(await page.$eval(panel, element => element.hidden), true);
+        assert.equal(await page.evaluate(() => Blockly.getSelected()?.id === testBlock.id), true);
+        assert.equal(await page.evaluate(() => backpackCaptures.length), 0);
+    });
+
+    it("does not lose a pending block click when the parent replaces its callbacks", async () => {
+        await createWorkspace();
+        await openTool(backpack, 1366);
+        const start = await blockPosition();
+        await page.mouse.move(start.x, start.y);
+        await page.mouse.down();
+        await page.evaluate(() => {
+            window.rerenderTools();
+            return new Promise(resolve => requestAnimationFrame(resolve));
+        });
+        await page.mouse.up();
+        assert.equal(await page.$eval(panel, element => element.hidden), true);
+    });
+
+    it("clears a cancelled touch press and resumes normal keyboard dismissal", async () => {
+        await createWorkspace();
+        await openTool(backpack, 1366);
+        const start = await blockPosition();
+        const client = await page.createCDPSession();
+        try {
+            await client.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [start] });
+            await client.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+            assert.equal(await page.$eval(panel, element => element.hidden), true);
+        } finally { await client.detach(); }
+        await page.click(backpack);
+        await page.click("#test-backpack-signin");
+        await page.keyboard.press("Tab");
+        await focusIs("outside");
+        assert.equal(await page.$eval(panel, element => element.hidden), true);
+    });
+
+    it("still dismisses an unpinned Backpack when focus enters an outside iframe", async () => {
+        await openTool(backpack, 1366);
+        await page.evaluate(() => {
+            const frame = document.createElement("iframe");
+            frame.id = "outside-frame";
+            frame.style.cssText = "position:absolute;left:20px;top:300px";
+            frame.srcdoc = '<button id="outside-frame-button">Outside frame</button>';
+            document.body.appendChild(frame);
+        });
+        const frame = await (await page.$("#outside-frame")).contentFrame();
+        await frame.waitForSelector("#outside-frame-button");
+        await frame.click("#outside-frame-button");
+        await page.waitForFunction(() => document.getElementById("project-tools-panel").hidden);
+    });
+
+    for (const tool of [docs, whiteboard]) {
+        it(`does not defer outside block clicks for ${tool}`, async () => {
+            await createWorkspace();
+            await openTool(tool, 1366);
+            const start = await blockPosition();
+            await page.mouse.move(start.x, start.y);
+            await page.mouse.down();
+            assert.equal(await page.$eval(panel, element => element.hidden), true);
+            await page.mouse.up();
+        });
+    }
+
+    it("still dismisses Backpack immediately for workspace-background and right-click interactions", async () => {
+        await createWorkspace();
+        await openTool(backpack, 1366);
+        await page.mouse.move(600, 650);
+        await page.mouse.down();
+        assert.equal(await page.$eval(panel, element => element.hidden), true);
+        await page.mouse.up();
+        await page.click(backpack);
+        const start = await blockPosition();
+        await page.mouse.move(start.x, start.y);
+        await page.mouse.down({ button: "right" });
+        assert.equal(await page.$eval(panel, element => element.hidden), true);
+        await page.mouse.up({ button: "right" });
+    });
+
+    it("preserves keyboard dismissal after a completed block drag", async () => {
+        await createWorkspace();
+        await openTool(backpack, 1366);
+        const start = await blockPosition();
+        await page.mouse.move(start.x, start.y);
+        await page.mouse.down();
+        await page.mouse.move(start.x + 120, start.y + 60, { steps: 5 });
+        await page.mouse.up();
+        assert.equal(await page.$eval(panel, element => element.hidden), false);
+        await page.click("#test-backpack-signin");
+        await page.keyboard.press("Tab");
+        await focusIs("outside");
+        assert.equal(await page.$eval(panel, element => element.hidden), true);
+    });
 
     for (const { width, rtl } of [{ width: 1366, rtl: false }, { width: 1024, rtl: true }, { width: 390, rtl: false }]) {
         it(`tracks the workspace top rather than the tutorial flag at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
