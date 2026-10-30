@@ -165,8 +165,10 @@ export function getVariableFieldLocalizationInfo(
     if (sourceBlock.type === "variables_set") {
         const valueBlock = sourceBlock.getInputTargetBlock("VALUE");
         const fn = valueBlock && blockInfo.blocksById[valueBlock.type];
-        defaultName = fn && pxt.blocks.blockSetVariableName(fn);
-        allowNumericSuffix = true;
+        if (fn?.attributes.blockSetVariableLocalizable) {
+            defaultName = pxt.blocks.blockSetVariableName(fn);
+            allowNumericSuffix = true;
+        }
     }
     else if (sourceBlock.type === "variables_get") {
         const parent = sourceBlock.getParent();
@@ -177,8 +179,10 @@ export function getVariableFieldLocalizationInfo(
                 const comp = pxt.blocks.compileInfo(fn);
                 const params = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
                 const param = params.filter(p => p.definitionName === input.name)[0];
-                defaultName = param && pxt.blocks.variableDefaultName(param.defaultValue, param.shadowBlockId);
-                allowNumericSuffix = !!defaultName;
+                if (param && pxt.blocks.isVariableNameLocalizable(param)) {
+                    defaultName = pxt.blocks.variableDefaultName(param.defaultValue, param.shadowBlockId);
+                    allowNumericSuffix = !!defaultName;
+                }
             }
         }
     }
@@ -190,7 +194,7 @@ export function getVariableFieldLocalizationInfo(
 
     if (allowNumericSuffix && rawName.indexOf(defaultName) === 0) {
         const suffix = rawName.slice(defaultName.length);
-        if (/^[2-9][0-9]*$/.test(suffix)) {
+        if (/^(?:[2-9]|[1-9][0-9]+)$/.test(suffix)) {
             return { localizationKey: pxt.blocks.variableNameLocalizationKey(defaultName), suffix };
         }
     }
