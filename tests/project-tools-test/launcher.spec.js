@@ -4,6 +4,7 @@ const assert = require("assert");
 const fs = require("fs");
 const path = require("path");
 const { launchTestBrowser } = require("./browser");
+const { PNG } = require("pngjs");
 const less = require("less");
 const rtlcss = require("rtlcss");
 const ts = require("typescript");
@@ -31,7 +32,7 @@ describe("responsive project-tools launcher", function () {
     const themeVariables = {
         mainMenuHeight: "4rem", mobileMenuHeight: "3.5rem", editorToolsCollapsedHeight: "4.7rem",
         editorToolsHeight: "10rem", editorToolsCollapsedMobileHeight: "3.4rem",
-        sidedocZIndex: "50", largestTabletScreen: "991px", bannerHeight: "2rem",
+        largestTabletScreen: "991px", bannerHeight: "2rem",
         sideBarWidth: "22rem", sideBarWidthLarge: "28rem", sideBarWidthSmall: "18rem",
         largestMobileScreen: "767px", largeMonitorBreakpoint: "1200px"
     };
@@ -49,8 +50,18 @@ describe("responsive project-tools launcher", function () {
         ], "projectToolsComponents", {
             react: "window.React", "react-dom": "window.ReactDOM", blockly: "window.Blockly"
         });
-        const styles = await less.render(fs.readFileSync("theme/project-tools.less", "utf8"), {
-            modifyVars: themeVariables
+        const styles = await less.render(
+            fs.readFileSync("theme/themes/pxt/globals/zindex.variables", "utf8") + "\n"
+                + fs.readFileSync("theme/blockly-core.less", "utf8") + "\n"
+                + fs.readFileSync("theme/project-tools.less", "utf8"), {
+            modifyVars: themeVariables,
+            paths: [
+                path.resolve("theme", "foo", "bar"),
+                path.resolve("theme"),
+                path.resolve("react-common/styles"),
+                path.dirname(require.resolve("semantic-ui-less/semantic.less")),
+                path.resolve("node_modules/@fortawesome")
+            ]
         });
         css = `* { box-sizing: border-box; } ${styles.css}`;
         browser = await launchTestBrowser();
@@ -199,17 +210,20 @@ describe("responsive project-tools launcher", function () {
     const createWorkspace = async () => page.evaluate(async () => {
         const host = document.createElement("div");
         host.id = "test-workspace";
-        host.style.cssText = "position:absolute;left:20px;top:300px;width:650px;height:420px";
+        host.style.cssText = "position:absolute;left:20px;top:64px;width:calc(100vw - 40px);height:calc(100vh - 64px)";
         document.body.appendChild(host);
         Blockly.Blocks.backpack_dismiss_statement = { init() {
             this.appendDummyInput().appendField("save this block");
+            this.appendStatementInput("BODY");
             this.setPreviousStatement(true);
             this.setNextStatement(true);
+            this.setColour("#008040");
         } };
         window.testWorkspace = Blockly.inject(host, { scrollbars: false, sounds: false });
         window.testBlock = Blockly.serialization.blocks.append({ type: "backpack_dismiss_statement" }, testWorkspace);
         testBlock.moveTo(new Blockly.utils.Coordinate(80, 60));
         await Blockly.renderManagement.finishQueuedRenders();
+        if (!projectToolsComponents.isBackpackBlock(testBlock)) throw new Error("The drag fixture must be a supported Backpack container");
         window.backpackCaptures = [];
         window.disposeBackpackDrag = projectToolsComponents.registerBackpackWorkspace(testWorkspace, {
             isEnabled: () => !document.getElementById("project-tools-panel").hidden
@@ -223,10 +237,38 @@ describe("responsive project-tools launcher", function () {
     });
 
     const blockPosition = async () => page.evaluate(() => {
+        Blockly.svgResize(testWorkspace);
         projectToolsComponents.refreshBackpackDragTargets(testWorkspace);
         const rect = testBlock.getSvgRoot().getBoundingClientRect();
         return { x: rect.left + 20, y: rect.top + 15 };
     });
+
+    const assertBlockOverBackpack = async () => {
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+        const point = await page.evaluate(() => {
+            const path = testBlock.getSvgRoot().querySelector(".blocklyPath");
+            const local = new DOMPoint(4, 20);
+            const screen = local.matrixTransform(path.getScreenCTM());
+            const x = Math.floor(screen.x);
+            const y = Math.floor(screen.y);
+            const panel = document.getElementById("project-tools-panel").getBoundingClientRect();
+            return {
+                x, y,
+                insideBlock: path.isPointInFill(local),
+                inside: x > panel.left && x < panel.right && y > panel.top && y < panel.bottom,
+                dropTargetActive: document.getElementById("project-tools-backpack").classList.contains("test-backpack-hover")
+            };
+        });
+        assert.equal(point.insideBlock, true, "The sampled pixel must be inside the block header");
+        assert.equal(point.inside, true, "The sampled block pixel must overlap Backpack");
+        const image = PNG.sync.read(Buffer.from(await page.screenshot({
+            clip: { x: point.x, y: point.y, width: 1, height: 1 }
+        })));
+        const [red, green, blue] = image.data;
+        assert.ok(green > red + 40 && green > blue + 20,
+            `The green dragged block must paint above Backpack, not behind it (${red}, ${green}, ${blue})`);
+        assert.equal(point.dropTargetActive, true, "Backpack must remain the active Blockly drop target");
+    };
 
     for (const width of [1366, 1024]) {
         it(`keeps the unpinned Backpack open for a native workspace-to-panel drop at ${width}px`, async () => {
@@ -243,6 +285,7 @@ describe("responsive project-tools launcher", function () {
             await page.mouse.move(end.x, end.y, { steps: 15 });
             assert.equal(await page.evaluate(() => testWorkspace.isDragging()), true);
             assert.equal(await page.$eval(panel, element => element.hidden), false);
+            await assertBlockOverBackpack();
             await page.mouse.up();
             await page.waitForFunction(() => backpackCaptures.length === 1 && !testWorkspace.isDragging());
             assert.deepStrictEqual(await page.evaluate(() => ({
@@ -274,6 +317,7 @@ describe("responsive project-tools launcher", function () {
                 }] });
             }
             assert.equal(await page.$eval(panel, element => element.hidden), false);
+            await assertBlockOverBackpack();
             await client.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
             await page.waitForFunction(() => backpackCaptures.length === 1 && !testWorkspace.isDragging());
             assert.equal(await page.$eval(panel, element => element.hidden), false);
