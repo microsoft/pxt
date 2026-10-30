@@ -159,10 +159,12 @@ export function emptyCompileResult(): pxtc.CompileResult {
 
 /**
  * Compiles the open project from the files the editor holds now, after
- * building the project's assets into its asset files, and returns the result.
- * Sets no diagnostics and leaves the output package and the editor as they
- * are. Rejects if the project's compile options cannot be built, as when
- * pxt.json does not list a file the compile generates.
+ * building the project's assets into its asset files, and returns the result,
+ * its `usedSymbols` mapping the qualified name of each symbol the program uses
+ * to that symbol's API info, or to null where the editor holds none. Sets no
+ * diagnostics and leaves the output package and the editor as they are.
+ * Rejects if the project's compile options cannot be built, as when pxt.json
+ * does not list a file the compile generates.
  */
 export function compileProjectAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
@@ -190,6 +192,14 @@ export function compileProjectAsync(options: CompileOptions = {}): Promise<pxtc.
             return opts;
         })
         .then(compileCoreAsync)
+        .then(resp => ensureApisInfoAsync()
+            .then(() => {
+                if (!resp.usedSymbols || !cachedApis) return resp
+                for (let k of Object.keys(resp.usedSymbols)) {
+                    resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
+                }
+                return resp
+            }))
 }
 
 export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
@@ -225,14 +235,7 @@ ${resp.outfiles[pxtc.BINARY_JS]}`;
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics("compile", resp.diagnostics)
 
-            return ensureApisInfoAsync()
-                .then(() => {
-                    if (!resp.usedSymbols || !cachedApis) return resp
-                    for (let k of Object.keys(resp.usedSymbols)) {
-                        resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
-                    }
-                    return resp
-                })
+            return resp
         })
         .catch(catchUserErrorAndSetDiags(noOpAsync))
 }
