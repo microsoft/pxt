@@ -79,11 +79,11 @@ export function useProjectToolsResize(
         observer.observe(panel.current);
         window.addEventListener("resize", updateSizeRanges);
 
-        // A banner can move the top edge without resizing a manually sized panel.
+        // A banner or top tutorial can move the top edge without resizing a manually sized panel.
         const layoutRoot = panel.current.closest("#root");
         const mutations = new MutationObserver(updateSizeRanges);
         if (layoutRoot) {
-            mutations.observe(layoutRoot, { attributes: true, attributeFilter: ["class"] });
+            mutations.observe(layoutRoot, { attributes: true, attributeFilter: ["class", "style"] });
         }
 
         return () => {

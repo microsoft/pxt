@@ -2988,6 +2988,8 @@ export class ProjectView
             tutorialOptions: undefined,
             editorState: undefined,
             debugging: undefined,
+            sideDocsPinned: false,
+            sideDocsCollapsed: true,
             header: undefined,
             currFile: undefined,
             fileState: undefined
@@ -5853,6 +5855,9 @@ export class ProjectView
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const editorOffset = ((inTutorialExpanded || isTabTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
+        const rootStyle: React.CSSProperties & { "--editor-offset": string } = {
+            "--editor-offset": editorOffset?.top ?? "0px"
+        };
         const invertedTheme = targetTheme.invertedMenu && targetTheme.invertedMonaco;
         const isMultiplayerSupported = targetTheme.multiplayer;
         const isMultiplayerGame = this.state.isMultiplayerGame;
@@ -5918,7 +5923,7 @@ export class ProjectView
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasIdentity = pxt.auth.hasIdentity();
         return (
-            <div id='root' className={rootClasses}>
+            <div id='root' className={rootClasses} style={rootStyle}>
                 {this.state.extensionsVisible &&
                     <extensionsBrowser.ExtensionsBrowser
                         hideExtensions={this.hidePackageDialog}

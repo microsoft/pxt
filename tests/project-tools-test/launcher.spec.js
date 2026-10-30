@@ -118,10 +118,14 @@ describe("responsive project-tools launcher", function () {
                 const [pinned, setPinned] = React.useState(false);
                 const [request, setRequest] = React.useState(0);
                 const [rtl, setRtl] = React.useState(false);
+                const [tutorial, setTutorial] = React.useState(false);
+                const [headerTutorial, setHeaderTutorial] = React.useState(false);
                 const [, update] = React.useReducer(value => value + 1, 0);
                 window.setToolsFlags = flags => { Object.assign(pxt.appTarget.appTheme, flags); update(); };
                 pxt.Util.isUserLanguageRtl = () => rtl;
                 window.setRtl = setRtl;
+                window.setTutorial = setTutorial;
+                window.setHeaderTutorial = setHeaderTutorial;
                 window.openHelp = () => {
                     setRequest(value => value + 1);
                     setExpanded(true);
@@ -131,7 +135,8 @@ describe("responsive project-tools launcher", function () {
                     window.openHelp();
                 };
                 return React.createElement(exports.ProjectTools, {
-                    header: { id: "test-project" }, expanded, onExpandedChange: setExpanded,
+                    header: { id: "test-project", tutorial: headerTutorial ? { tutorial: "/test-tutorial" } : undefined },
+                    tutorial, expanded, onExpandedChange: setExpanded,
                     pinned, onPinnedChange: setPinned,
                     docsUrl: request ? "/reference" : undefined, docsRequest: request,
                     onOpenReference: window.openHelp, onSignIn: () => {}
@@ -176,6 +181,122 @@ describe("responsive project-tools launcher", function () {
         await page.waitForFunction(() => !document.getElementById("project-tools-panel").hidden);
         await page.waitForSelector(`${panel} .project-tools-pin`, { visible: true });
     };
+
+    for (const { width, rtl } of [{ width: 1366, rtl: false }, { width: 1024, rtl: true }, { width: 390, rtl: false }]) {
+        it(`tracks the workspace top rather than the tutorial flag at ${width}px in ${rtl ? "RTL" : "LTR"}`, async () => {
+            await openTool(docs, width);
+            if (rtl) {
+                await page.$eval("style", (element, text) => element.textContent = text, rtlcss.process(css));
+                await page.evaluate(() => window.setRtl(true));
+            }
+            await page.$eval("#root", element => element.classList.add("tabTutorial"));
+            await page.evaluate(() => window.setTutorial(true));
+            const menuHeight = (width <= 991 ? 3.5 : 4) * 16;
+            const compact = width < 1200;
+            for (const bannerVisible of [false, true]) {
+                await page.$eval("#root", (element, visible) => {
+                    element.classList.toggle("notificationBannerVisible", visible);
+                }, bannerVisible);
+                for (const offset of [0, 160, 240, 0]) {
+                    await page.$eval("#root", (element, offset) => {
+                        if (offset) element.style.setProperty("--editor-offset", `${offset}px`);
+                        else element.style.removeProperty("--editor-offset");
+                    }, offset);
+                    const workspaceTop = menuHeight + (bannerVisible ? 32 : 0) + offset;
+                    const bounds = await page.evaluate(() => ({
+                        launcher: document.getElementById("project-tools-launcher").getBoundingClientRect().top,
+                        panel: document.getElementById("project-tools-panel").getBoundingClientRect().top,
+                        bottom: document.getElementById("project-tools-panel").getBoundingClientRect().bottom
+                    }));
+                    assert.equal(bounds.launcher, workspaceTop + (compact ? 8 : 16));
+                    assert.equal(bounds.panel, workspaceTop + (compact ? 76 : 16));
+                    assert(bounds.bottom <= 900);
+                }
+            }
+        });
+    }
+
+    it("updates height-resize accessibility bounds when a top tutorial changes height", async () => {
+        await openTool(docs, 1366);
+        await page.evaluate(() => window.setTutorial(true));
+        const handle = ".project-tools-resize-height";
+        await page.focus(handle);
+        await page.keyboard.press("Home");
+        const height = await page.$eval(panel, element => element.getBoundingClientRect().height);
+        const maximum = await page.$eval(handle, element => Number(element.getAttribute("aria-valuemax")));
+        await page.$eval("#root", element => element.style.setProperty("--editor-offset", "160px"));
+        await page.waitForFunction(expected => {
+            const maximum = Number(document.querySelector(".project-tools-resize-height").getAttribute("aria-valuemax"));
+            return Math.abs(maximum - expected) < 1;
+        }, { timeout: 3000 }, maximum - 160);
+        assert.equal(await page.$eval(panel, element => element.getBoundingClientRect().height), height);
+    });
+
+    for (const source of ["prop", "header"]) {
+        it(`hides Backpack during a ${source} tutorial even when assets are enabled`, async () => {
+            await page.setViewport({ width: 1366, height: 900 });
+            await optionsAre(false);
+            await page.evaluate(source => {
+                window.setToolsFlags({ assetEditor: true });
+                if (source === "prop") window.setTutorial(true);
+                else window.setHeaderTutorial(true);
+            }, source);
+            assert.equal(await page.$(backpack), null);
+            assert.equal(await page.$("#project-tools-backpack"), null);
+            assert.equal(await page.$("#test-backpack-signin"), null);
+            assert.deepEqual(await page.$$eval("#project-tools-options button", elements => elements.map(element => element.id)),
+                ["project-tools-tab-docs", "project-tools-tab-whiteboard"]);
+            assert.equal(await page.$eval(".project-tools", element => element.style.getPropertyValue("--tools-tab-count")), "2");
+            await page.focus(more);
+            await page.keyboard.press("Tab");
+            await focusIs("project-tools-tab-docs");
+            await page.keyboard.press("Tab");
+            await focusIs("project-tools-tab-whiteboard");
+            await page.keyboard.press("Tab");
+            await focusIs("outside");
+            await page.evaluate(() => {
+                window.requestBackpackOpen("test-project", true);
+                window.requestBackpackOpen("test-project", false);
+            });
+            assert.equal(await page.$eval(panel, element => element.hidden), true);
+            assert.equal(await page.$("#project-tools-backpack"), null);
+        });
+    }
+
+    it("falls back to Documentation on tutorial entry and restores Backpack afterward", async () => {
+        await openTool(backpack, 1366);
+        await page.evaluate(() => window.setTutorial(true));
+        assert.equal(await page.$(backpack), null);
+        assert.equal(await page.$("#project-tools-backpack"), null);
+        assert.equal(await page.$eval(panel, element => element.dataset.activeTab), "docs");
+        await focusIs("project-tools-tab-docs");
+        await page.click(more);
+        await optionsAre(true);
+        await page.evaluate(() => window.setTutorial(false));
+        await page.waitForSelector(backpack);
+        await page.focus("#outside");
+        await page.evaluate(() => window.requestBackpackOpen("test-project", false));
+        await page.waitForSelector("#test-backpack-signin", { visible: true });
+        assert.equal(await page.$eval(panel, element => element.dataset.activeTab), "backpack");
+        await focusIs("outside");
+    });
+
+    it("keeps Documentation usable when no optional tools are available during a tutorial", async () => {
+        await page.evaluate(() => {
+            window.setToolsFlags({ whiteboard: false, assetEditor: false });
+            window.setTutorial(true);
+        });
+        await showOptions();
+        assert.deepEqual(await page.$$eval("#project-tools-options button", elements => elements.map(element => element.id)),
+            ["project-tools-tab-docs"]);
+        assert.equal(await page.$eval(".project-tools", element => element.style.getPropertyValue("--tools-tab-count")), "1");
+        await page.focus(more);
+        await page.keyboard.press("ArrowDown");
+        await focusIs("project-tools-tab-docs");
+        await page.keyboard.press("Enter");
+        assert.equal(await page.$eval(panel, element => element.hidden), false);
+        assert.equal(await page.$eval(`${panel} .project-tools-title`, element => element.textContent), "Documentation");
+    });
 
     it("keeps the unpinned backpack open during modal focus and resumes dismissal afterward", async () => {
         await openTool(backpack);

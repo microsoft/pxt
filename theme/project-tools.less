@@ -51,7 +51,7 @@
     position: fixed;
     width: var(--tools-bubble-size);
     inset-inline-end: 1rem;
-    top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
+    top: calc(var(--tools-menu-height) + var(--tools-banner-height) + var(--editor-offset, 0px) + 1rem);
     // Keep bubble labels above the panel.
     z-index: (@sidedocZIndex + 1);
 }
@@ -137,7 +137,7 @@
 
 .project-tools-panel {
     --tools-pointer-offset: calc(var(--tools-bubble-size) * (var(--tools-tab-index) + 1.5) + var(--tools-bubble-gap) * (var(--tools-tab-index) + 1));
-    --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 1rem);
+    --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + var(--editor-offset, 0px) + 1rem);
     --tools-panel-bottom: calc(@editorToolsCollapsedHeight + 1rem);
     --tools-available-width: calc(100vw - 6rem);
     --tools-default-width: @sideBarWidth;
@@ -460,7 +460,7 @@
     &[dir="rtl"] { --tools-slide-x: -1; }
 
     .project-tools-launcher {
-        top: calc(var(--tools-menu-height) + var(--tools-banner-height) + .5rem);
+        top: calc(var(--tools-menu-height) + var(--tools-banner-height) + var(--editor-offset, 0px) + .5rem);
         inset-inline-end: .5rem;
     }
     .project-tools-bubbles {
@@ -483,7 +483,7 @@
     }
     .project-tools-panel {
         --tools-pointer-offset: calc(var(--tools-bubble-size) * (var(--tools-tab-count) - var(--tools-tab-index) + .5) + var(--tools-bubble-gap) * (var(--tools-tab-count) - var(--tools-tab-index)));
-        --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + 4.75rem);
+        --tools-panel-top: calc(var(--tools-menu-height) + var(--tools-banner-height) + var(--editor-offset, 0px) + 4.75rem);
         --tools-available-width: calc(100vw - 1rem);
         // Include the outer gutter in the default width.
         --tools-launcher-space: .5rem;
