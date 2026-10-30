@@ -10,6 +10,11 @@
         Blockly SVG
 *******************************/
 
+// Lift only the transparent drag surface above Project Tools and its bubbles.
+.injectionDiv > .blocklyBlockDragSurface {
+    z-index: (@sidedocZIndex + 2);
+}
+
 svg.blocklySvg {
     background-color: var(--pxt-target-background1) !important;
     color: var(--pxt-target-foreground1) !important;
