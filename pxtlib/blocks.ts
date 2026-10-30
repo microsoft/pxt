@@ -95,6 +95,55 @@ namespace pxt.blocks {
         return qName ? `${qName}|param|${actualName}|defl` : undefined;
     }
 
+    export function variableNameLocalizationKey(name: string) {
+        return name ? `{id:var}${name}` : undefined;
+    }
+
+    export function variableDefaultName(defaultValue: string, shadowBlockId: string) {
+        if (!defaultValue || shadowBlockId !== "variables_get") return undefined;
+
+        if (defaultValue.charAt(0) === "\"") {
+            try {
+                const parsed = JSON.parse(defaultValue);
+                return typeof parsed === "string" ? parsed : undefined;
+            }
+            catch (e) {
+                return undefined;
+            }
+        }
+
+        return defaultValue;
+    }
+
+    export function blockSetVariableName(fn: pxtc.SymbolInfo) {
+        if (fn.attributes.blockSetVariable === undefined || !fn.retType) return undefined;
+
+        const rawName = fn.attributes.blockSetVariable;
+        return !rawName || isReservedWord(rawName) ? fn.retType.toLowerCase() : rawName;
+    }
+
+    export function isVariableNameLocalizable(param: BlockParameter) {
+        const value = param.fieldOptions?.localizeVariable;
+        return value === "true";
+    }
+
+    export function defaultVariableNames(fn: pxtc.SymbolInfo) {
+        const result: string[] = [];
+        const blockSetName = blockSetVariableName(fn);
+        if (blockSetName && fn.attributes.blockSetVariableLocalizable) result.push(blockSetName);
+
+        if (fn.attributes.block) {
+            const comp = compileInfo(fn);
+            const params = comp.thisParameter ? [comp.thisParameter, ...comp.parameters] : comp.parameters;
+            for (const param of params) {
+                const name = variableDefaultName(param.defaultValue, param.shadowBlockId);
+                if (name && isVariableNameLocalizable(param) && result.indexOf(name) < 0) result.push(name);
+            }
+        }
+
+        return result;
+    }
+
     export function parameterDefaultToLocalizationString(defaultValue: string, type?: string) {
         if (!defaultValue) return undefined;
         if (type === "string" && defaultValue.charAt(0) !== "\"") return defaultValue;

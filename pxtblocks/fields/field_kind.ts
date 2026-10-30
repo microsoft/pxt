@@ -128,11 +128,12 @@ function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction
         if (sourceBlock?.workspace && !sourceBlock.isInFlyout) {
             const options = sourceBlock.workspace.getVariableMap().getVariablesOfType(kindType(opts.name));
             options.forEach(model => {
-                res.push([model.getName(), model.getName()]);
+                const name = model.getName();
+                res.push([getInitialMemberDisplayName(opts, name), name]);
             });
         } else {
             // Can't create variables from within the flyout, so we just have to fake it
-            opts.initialMembers.forEach((e) => res.push([e, e]) );
+            opts.initialMembers.forEach((e) => res.push([getInitialMemberDisplayName(opts, e), e]) );
         }
 
 
@@ -143,6 +144,13 @@ function createMenuGenerator(opts: pxtc.KindInfo): Blockly.MenuGeneratorFunction
 
         return res;
     }
+}
+
+function getInitialMemberDisplayName(opts: pxtc.KindInfo, name: string) {
+    const displayNames = opts.initialMemberDisplayNames;
+    return displayNames && Object.prototype.hasOwnProperty.call(displayNames, name)
+        ? displayNames[name]
+        : name;
 }
 
 type PromptFunction<U extends pxtc.KindInfo> = (ws: Blockly.Workspace, opts: U, message: string, cb: (newValue: string) => void) => void;
