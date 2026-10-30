@@ -990,15 +990,24 @@ namespace ts.pxtc.service {
             return res
         },
         decompile: v => {
+            if (v.options && v.options.fileSystem && v.options.fileSystem[v.fileName]) {
+                v.options.fileSystem[v.fileName] = pxtc.decompiler.preprocessDisabledBlocks(v.options.fileSystem[v.fileName]);
+            }
             host.setOpts(v.options)
             return decompile(service.getProgram(), v.options, v.fileName, false);
         },
         pydecompile: v => {
+            if (v.options && v.options.fileSystem && v.options.fileSystem[v.fileName]) {
+                v.options.fileSystem[v.fileName] = pxtc.decompiler.preprocessDisabledBlocks(v.options.fileSystem[v.fileName]);
+            }
             host.setOpts(v.options)
             return transpile.tsToPy(service.getProgram(), v.fileName);
 
         },
         decompileSnippets: v => {
+            if (v.options && v.options.sourceTexts) {
+                v.options.sourceTexts = v.options.sourceTexts.map(t => pxtc.decompiler.preprocessDisabledBlocks(t));
+            }
             host.setOpts(v.options)
             return decompileSnippets(service.getProgram(), v.options, false);
         },

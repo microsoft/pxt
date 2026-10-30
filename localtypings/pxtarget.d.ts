@@ -1178,6 +1178,7 @@ declare namespace ts.pxtc {
         trace?: boolean;
         justMyCode?: boolean;
         computeUsedSymbols?: boolean;
+        preprocessDisabledBlocks?: boolean;
         computeUsedParts?: boolean;
         name?: string;
         apisInfo?: ApisInfo;
