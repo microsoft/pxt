@@ -898,6 +898,14 @@ describe("simulator themes", () => {
     });
 });
 
+describe("sliding window admission", () => {
+    it("admits an event over the limit after the window with the default delay", async () => {
+        const admission = new pxt.Util.SlidingWindowAdmission(1, 5);
+        await admission.admitAsync("folder");
+        await admission.admitAsync("folder");
+    });
+});
+
 describe("projfs guard", () => {
     it("accepts relative names", () => {
         for (const name of ["notes.txt", "data/level1.json", "a..b.txt", ".hidden", "a\\b.txt"])

@@ -1040,13 +1040,14 @@ namespace ts.pxtc.Util {
          * @param windowMs the sliding window, in milliseconds
          * @param now returns the current time in milliseconds on a clock that never
          * goes back; defaults to `monotonicNow`
-         * @param delay returns a promise that resolves after the given number of milliseconds
+         * @param delay returns a promise that resolves after the given number of milliseconds;
+         * defaults to `pxt.Util.delay`
          */
         constructor(
             readonly limit: number,
             readonly windowMs: number,
             protected readonly now: () => number = monotonicNow,
-            protected readonly delay: (ms: number) => Promise<void> = ms => delay(ms)
+            protected readonly delay: (ms: number) => Promise<void> = ms => pxt.Util.delay(ms)
         ) {
         }
 
