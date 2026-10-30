@@ -75,7 +75,7 @@ export const SocialButton = (props: SocialButtonProps) => {
                 />
             );
 
-        // X logo, per the X brand toolkit (https://about.x.com/en/brand-toolkit)
+        // X logo
         case "x":
             return (
                 <LinkButton
