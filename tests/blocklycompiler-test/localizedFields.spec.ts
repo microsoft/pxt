@@ -17,11 +17,13 @@ describe("localized identifier display fields", () => {
         field.setValue(variable.getId());
 
         chai.expect((field as any).getDisplayText_()).to.equal("myTile");
+        chai.expect(field.getAriaValue()).to.equal("Variable 'myTile'");
 
         pxtblockly.setVariableFieldLocalizeFunction((_field, model) =>
             model.getName() === "myTile" ? "minFlise" : undefined);
 
         chai.expect((field as any).getDisplayText_()).to.equal("minFlise");
+        chai.expect(field.getAriaValue()).to.equal("minFlise");
         chai.expect(field.getText()).to.equal("myTile");
         chai.expect(field.getValue()).to.equal("variable-id");
 
@@ -43,6 +45,16 @@ describe("localized identifier display fields", () => {
             option !== Blockly.FieldDropdown.SEPARATOR && option[1] === "variable-id")[0] as Blockly.MenuOption;
         chai.expect(option[0]).to.equal("minFlise");
         chai.expect(option[1]).to.equal("variable-id");
+
+        let rerenders = 0;
+        (field as any).forceRerender = () => rerenders++;
+        (field as any).onWorkspaceChange({
+            type: Blockly.Events.BLOCK_MOVE,
+            blockId: "moved-block",
+            oldParentId: block.id,
+            newParentId: undefined
+        } as Blockly.Events.BlockMove);
+        chai.expect(rerenders).to.equal(1);
 
         workspace.getVariableMap().renameVariable(variable, "renamedTile");
         field.refreshVariableName();
@@ -75,6 +87,23 @@ describe("localized identifier display fields", () => {
             suffix: "2"
         });
 
+        const generatedTenth = { getName: () => "myTile10" } as Blockly.IVariableModel<Blockly.IVariableState>;
+        chai.expect(pxtblockly.getVariableFieldLocalizationInfo(generatedField, generatedTenth, blockInfo)).to.deep.equal({
+            localizationKey: "{id:var}myTile",
+            suffix: "10"
+        });
+
+        const unlocalizedFactory = testSymbol("sprites.createUnlocalized", "create sprite", "Sprite", `
+            //% blockSetVariable="myTile"
+        `);
+        const unlocalizedBlockInfo = testBlocksInfo([unlocalizedFactory]);
+        const unlocalizedSet = {
+            type: "variables_set",
+            getInputTargetBlock: () => ({ type: unlocalizedFactory.attributes.blockId })
+        } as unknown as Blockly.Block;
+        const unlocalizedField = { getSourceBlock: () => unlocalizedSet } as pxtblockly.FieldVariable;
+        chai.expect(pxtblockly.getVariableFieldLocalizationInfo(unlocalizedField, variable, unlocalizedBlockInfo)).to.equal(undefined);
+
         const userGet = {
             type: "variables_get",
             getParent: (): any => null
@@ -106,6 +135,18 @@ describe("localized identifier display fields", () => {
             localizationKey: "{id:var}otherSprite",
             suffix: "2"
         });
+
+        const unlocalizedNested = testSymbol("sprites.overlapsUnlocalized", "overlaps $other=variables_get", "boolean", `
+            //% other.defl=otherSprite
+        `);
+        unlocalizedNested.parameters = [{ name: "other", description: "", type: "Sprite", properties: [], default: "otherSprite" }];
+        const unlocalizedNestedInfo = testBlocksInfo([unlocalizedNested]);
+        const unlocalizedParent = {
+            type: unlocalizedNested.attributes.blockId,
+            inputList: [{ name: "other", connection: { targetBlock: () => sourceGet } }]
+        } as unknown as Blockly.Block;
+        (sourceGet as any).getParent = () => unlocalizedParent;
+        chai.expect(pxtblockly.getVariableFieldLocalizationInfo(nestedField, nestedVariable, unlocalizedNestedInfo)).to.equal(undefined);
     });
 
     it("uses localized SpriteKind labels with raw stored values and leaves custom kinds unchanged", () => {
@@ -125,6 +166,7 @@ describe("localized identifier display fields", () => {
         };
         const workspace = new Blockly.Workspace();
         workspace.getVariableMap().createVariable("CustomKind", "KIND_SpriteKind", "custom-kind-id");
+        workspace.getVariableMap().createVariable("toString", "KIND_SpriteKind", "prototype-kind-id");
         Blockly.Blocks["spritekind_field_test"] = { init() { } };
         const block = workspace.newBlock("spritekind_field_test");
         const field = new pxtblockly.FieldKind(opts);
@@ -140,6 +182,7 @@ describe("localized identifier display fields", () => {
             chai.expect(xmlField.textContent).to.equal(raw);
         }
         chai.expect(options.some(option => option[0] === "CustomKind" && option[1] === "CustomKind")).to.equal(true);
+        chai.expect(options.some(option => option[0] === "toString" && option[1] === "toString")).to.equal(true);
         workspace.dispose();
     });
 });

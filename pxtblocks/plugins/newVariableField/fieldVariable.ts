@@ -45,6 +45,11 @@ export class FieldVariable extends Blockly.FieldVariable {
         this.menuGenerator_ = FieldVariable.dropdownCreate;
     }
 
+    override init(): void {
+        super.init();
+        this.sourceBlock_?.workspace.addChangeListener(this.onWorkspaceChange);
+    }
+
     protected override getDisplayText_(): string {
         const variable = this.getVariable();
         if (variable && localizeFunction) {
@@ -54,6 +59,28 @@ export class FieldVariable extends Blockly.FieldVariable {
 
         return super.getDisplayText_();
     }
+
+    override getAriaValue(): string {
+        const variable = this.getVariable();
+        if (variable && localizeFunction) {
+            const localized = localizeFunction(this, variable);
+            if (localized) return localized;
+        }
+
+        return super.getAriaValue();
+    }
+
+    private onWorkspaceChange = (event: Blockly.Events.Abstract) => {
+        if (event.type !== Blockly.Events.BLOCK_MOVE) return;
+
+        const sourceBlock = this.getSourceBlock();
+        const moved = event as Blockly.Events.BlockMove;
+        if (sourceBlock && (moved.blockId === sourceBlock.id
+            || moved.oldParentId === sourceBlock.id
+            || moved.newParentId === sourceBlock.id)) {
+            this.forceRerender();
+        }
+    };
 
     protected override onItemSelected_(menu: Blockly.Menu, menuItem: Blockly.MenuItem) {
         if (this.sourceBlock_ && !this.sourceBlock_.isDeadOrDying()) {
@@ -163,6 +190,7 @@ export class FieldVariable extends Blockly.FieldVariable {
     }
 
     override dispose() {
+        this.sourceBlock_?.workspace.removeChangeListener(this.onWorkspaceChange);
         super.dispose();
         if (this.svgRootBinding) {
             Blockly.browserEvents.unbind(this.svgRootBinding);
