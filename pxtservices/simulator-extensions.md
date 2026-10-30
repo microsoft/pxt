@@ -221,7 +221,7 @@ Every request compiles the project, as the editor holds it when the compile star
 
 ### Ordering
 
-The editor answers the requests of the extensions of one repository in the order they arrive, and compiles for one request at a time, whichever extension sent it: a request that arrives while a compile runs waits for it and then compiles again. At most `PROJPROGRAM_RATE_LIMIT` (5) compiles for one repository start within `PROJPROGRAM_RATE_WINDOW_MS` (10 seconds), both defined in `webapp/src/projprogramHost.ts`; later ones wait, with the requests behind them, until the window allows them. A request applies to the project open when it arrived, once that project has loaded.
+The editor answers the requests of the extensions of one repository in the order they arrive, and compiles for one request at a time, whichever extension sent it: a request that arrives while a compile runs waits its turn and then compiles again. At most `PROJPROGRAM_RATE_LIMIT` (5) compiles for one repository are admitted within any `PROJPROGRAM_RATE_WINDOW_MS` (10 seconds), both defined in `webapp/src/projprogramHost.ts`; later ones wait, with the requests behind them, until the window admits them. An admitted compile then waits for the compiles before it to finish, so it may start after its window. A request applies to the project open when it arrived, once that project has loaded.
 
 ### Error codes
 

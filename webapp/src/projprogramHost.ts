@@ -21,8 +21,8 @@ import {
 
 /**
  * The most compiles for the frames of one GitHub repository's simulator
- * extensions that start within {@link PROJPROGRAM_RATE_WINDOW_MS}; later ones
- * wait for the window to allow them.
+ * extensions admitted within any {@link PROJPROGRAM_RATE_WINDOW_MS}; later ones
+ * wait for the window to admit them.
  */
 export const PROJPROGRAM_RATE_LIMIT = 5;
 
@@ -87,10 +87,12 @@ const COMPILE_LANE = "compile";
  * are answered in the order they arrive; a request whose key names no
  * repository is refused with `UNREGISTERED` at once. One compile runs at a
  * time, whichever repository asked for it, and each request gets a compile of
- * its own, started once the compile before it has finished. A repository's
- * compiles beyond {@link PROJPROGRAM_RATE_LIMIT} within
- * {@link PROJPROGRAM_RATE_WINDOW_MS} wait, with the requests behind them,
- * until the window allows them.
+ * its own, started once the compiles before it have finished. At most
+ * {@link PROJPROGRAM_RATE_LIMIT} compiles for one repository are admitted
+ * within any {@link PROJPROGRAM_RATE_WINDOW_MS}; later ones wait, with the
+ * requests behind them, until the window admits them. An admitted compile
+ * then waits for the compiles before it to finish, so it may start after its
+ * window.
  *
  * A request applies to the project open when it arrives, once that project
  * has loaded. If that project fails to load, or has closed by the time its
