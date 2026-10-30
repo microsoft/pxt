@@ -160,7 +160,7 @@ pre {
     border: unset;
 }
 
-#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simulator .editor-sidebar {
+#blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor, #simulator .editor-sidebar {
     bottom: @editorToolsCollapsedHeight;
 }
 
@@ -170,6 +170,7 @@ pre {
 .hideEditorToolbar #serialEditor,
 .hideEditorToolbar #githubEditor,
 .hideEditorToolbar #assetEditor,
+.hideEditorToolbar #simxEditor,
 .hideEditorToolbar #simulator .editor-sidebar {
     bottom: 0rem !important;
 }
@@ -581,6 +582,50 @@ div.simframe.simHidden {
 #editordropdown .menu > .item.selected:after {
     content: '✔';
     float: right;
+}
+
+/* A simulator extension editor tab's SVG icon: a mask over the item's text
+   color, in the box Semantic UI gives a font icon (i.icon) in the same slots:
+   1.18em (@iconWidth) by 1em, with the menu item's icon margin and opacity.
+   The vertical-align lowers it from the text's baseline to where a font
+   icon's glyph box sits; flex rows ignore it. */
+.simx-editor-icon {
+    display: inline-block;
+    width: 1.18em;
+    height: 1em;
+    vertical-align: -0.125em;
+    background-color: currentColor;
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+}
+.ui.menu .item > .simx-editor-icon {
+    opacity: 0.9;
+    margin: 0 0.35714286em 0 0;
+}
+.ui.menu .active.item > .simx-editor-icon {
+    opacity: 1;
+}
+@media only screen and (max-width: @largestTabletScreen) {
+    .ui.menu .item > .simx-editor-icon {
+        margin: 0;
+    }
+}
+
+/* A simulator extension editor tab fills the editor area */
+#simxEditor .simx-editor,
+#simxEditor .simx-editor-frame {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+#simxEditor .simx-editor-frame {
+    border: 0;
 }
 
 .main:not(.hc) #editordropdown {
@@ -1718,6 +1763,19 @@ p.ui.font.small {
     div.simframe:not(:first-child) {
         display: unset;
     }
+    // A frame registered hideInFullscreen is hidden but stays mounted. While the
+    // container carries has-simx-hide-fullscreen, the main frame takes the full
+    // width as an only child does. These rules must follow the :not(:first-child)
+    // rule, which has the same specificity.
+    div.simframe.simx-hide-fullscreen {
+        display: none !important;
+    }
+    #simulators.has-simx-hide-fullscreen div.simframe:first-child {
+        width: 100%;
+    }
+    #simulators.has-simx-hide-fullscreen div.simframe:first-child > iframe {
+        max-width: 100%;
+    }
 }
 
 .sandbox .simPanel .simtoolbar {
@@ -2235,7 +2293,7 @@ p.ui.font.small {
         margin: 0;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor {
         bottom: @editorToolsCollapsedMobileHeight;
     }
 
@@ -2567,7 +2625,7 @@ div.simframe.ui.embed {
         display: inherit;
     }
 
-    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #editortools, #msg {
+    #blocksArea, #monacoEditor, #pxtJsonEditor, #serialEditor, #assetEditor, #simxEditor, #editortools, #msg {
         bottom: 1.5rem !important;
     }
 }

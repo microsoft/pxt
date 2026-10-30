@@ -289,7 +289,6 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
 
     private addProjectFile() {
         const mainPkg = pkg.mainEditorPkg();
-        const validRx = /^[\w][\/\w\-\.]*$/;
         core.promptAsync({
             header: lf("Add new file?"),
             hasCloseIcon: true,
@@ -297,7 +296,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
                 if (!v)
                     return lf("filename is empty.");
                 v = v.trim();
-                if (!validRx.test(v))
+                if (!pxt.isValidProjectFileName(v))
                     return lf("Don't use spaces or special characters.");
                 return undefined;
             },
@@ -360,7 +359,7 @@ export class FileList extends data.Component<ISettingsProps, FileListState> {
             if (!name)
                 return Promise.resolve()
 
-            if (!validRx.test(name)) {
+            if (!pxt.isValidProjectFileName(name)) {
                 core.warningNotification(lf("Invalid file name"))
                 return Promise.resolve()
             }

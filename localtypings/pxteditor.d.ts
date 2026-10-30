@@ -730,6 +730,8 @@ declare namespace pxt.editor {
         hasRedo(): boolean;
         zoomIn(): void;
         zoomOut(): void;
+        /** Whether the editor toolbar shows undo, redo and zoom for this editor. */
+        hasEditorToolbarEditingControls(): boolean;
         resize(): void;
         setScale(scale: number): void;
         focusWorkspace(): void;
@@ -925,6 +927,18 @@ declare namespace pxt.editor {
 
     export type BuiltInHelp = "keyboardControls";
 
+    /** A simulator extension's editor tab, as the editor toggle offers it. */
+    export interface SimxEditorInfo {
+        /** The extension's key in the target's simulator extension registrations, e.g. `owner/repo`. */
+        key: string;
+        /** The tab's name and accessible name. */
+        label: string;
+        /** The class names of a font icon shown before the label; undefined if the icon is an SVG, or there is none. */
+        icon?: string;
+        /** The URL of an SVG shown before the label, drawn in the label's color; undefined if the icon is a font icon, or there is none. */
+        iconUrl?: string;
+    }
+
     export interface IProjectView {
         state: IAppState;
         setState(st: IAppState): void;
@@ -935,6 +949,12 @@ declare namespace pxt.editor {
         openJavaScript(giveFocusOnLoading?: boolean): void;
         openPython(giveFocusOnLoading?: boolean): void;
         openAssets(): void;
+        /**
+         * Shows the editor tab of the simulator extension registered under `key`,
+         * creating its frame if needed.
+         * @returns false, showing nothing, if the editor offers no such tab for the open project here
+         */
+        openSimxEditor(key: string): boolean;
         openSettings(): void;
         openSimView(): void;
         openSimSerial(): void;
@@ -1078,6 +1098,19 @@ declare namespace pxt.editor {
         isTextSourceCodeEditorActive(): boolean;
         isPythonActive(): boolean;
         isAssetsActive(): boolean;
+        /** Returns true if the editor tab of the simulator extension registered under `key` is the active editor. */
+        isSimxEditorActive(key: string): boolean;
+        /**
+         * Returns the simulator extension editor tabs the editor offers for the open project, in registration
+         * order; none in a view whose editor toggle lists no tabs, such as an embedded, read-only, tutorial
+         * or debugging view.
+         */
+        getSimxEditors(): SimxEditorInfo[];
+        /**
+         * Returns the key of the simulator extension editor tab shown last in the open
+         * project's session, unless a text language was shown since; undefined if none was.
+         */
+        getLastSimxEditor(): string | undefined;
 
         editor: IEditor;
 

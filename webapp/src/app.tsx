@@ -60,6 +60,11 @@ import * as blocks from "./blocks"
 import * as gitjson from "./gitjson"
 import * as serialindicator from "./serialindicator"
 import * as assetEditor from "./components/assetEditor/editor";
+import * as simxEditor from "./simxEditor";
+import { getSimxEditorMarkerName } from "./simxEditorHost";
+import { getProjfsFolder, isDeclaredInProjectFolder } from "./projfsHost";
+import { SIMXEDITOR_MESSAGE_TYPE } from "../../pxtservices/simxeditor";
+import { showsSimxEditorTabs } from "./editorToggleLayout";
 import * as draganddrop from "./draganddrop";
 import * as notification from "./notification";
 import * as electron from "./electron";
@@ -151,6 +156,7 @@ export class ProjectView
     blocksEditor: blocks.Editor;
     gitjsonEditor: gitjson.Editor;
     assetEditor: assetEditor.AssetEditor;
+    simxEditor: simxEditor.SimxEditor;
     allEditors: srceditor.Editor[] = [];
     settings: EditorSettings;
     scriptSearch: scriptsearch.ScriptSearch;
@@ -642,6 +648,13 @@ export class ProjectView
     }
 
     saveCurrentSourceAsync(): Promise<void> {
+        // While a forced write to the shown file is reloading the editor, the
+        // buffer predates the file's content: wait out the reload, then save what
+        // the editor shows if the same file is still open.
+        const file = this.editorFile;
+        const reload = file.editorReloadAsync();
+        if (reload)
+            return reload.then(() => file === this.editorFile ? this.saveCurrentSourceAsync() : undefined);
         let txt = this.editor.getCurrentSource()
         if (txt != this.editorFile.content)
             simulator.setDirty();
@@ -671,6 +684,35 @@ export class ProjectView
     isAssetsActive(): boolean {
         return !this.state.embedSimView && this.editor == this.assetEditor
             && this.editorFile && this.editorFile.name == pxt.ASSETS_FILE;
+    }
+
+    isSimxEditorActive(key: string): boolean {
+        return !this.state.embedSimView && this.editor == this.simxEditor
+            && !!this.editorFile && this.editorFile.name == getSimxEditorMarkerName(key);
+    }
+
+    /** Returns true if the editor tab of a simulator extension, whichever it is, is the active editor. */
+    private isAnySimxEditorActive(): boolean {
+        return !this.state.embedSimView && this.editor == this.simxEditor;
+    }
+
+    getSimxEditors(): pxt.editor.SimxEditorInfo[] {
+        const targetTheme = pxt.appTarget.appTheme;
+        const shown = showsSimxEditorTabs({
+            sandbox: pxt.shell.isSandboxMode(),
+            readOnly: pxt.shell.isReadOnly(),
+            tutorial: !!this.state.tutorialOptions?.tutorial,
+            debugging: !!this.state.debugging,
+            hideMenuBar: !!targetTheme.hideMenuBar,
+            blocksOnly: !!targetTheme.blocksOnly,
+        });
+        if (!shown) return [];
+        return simulator.getProjectSimxEditorRegistrations()
+            .map(({ key, label, icon, iconUrl }) => ({ key, label, icon, iconUrl }));
+    }
+
+    getLastSimxEditor(): string | undefined {
+        return simulator.simxEditorHost?.getLastShownKey();
     }
 
     isTextSourceCodeEditorActive() {
@@ -833,6 +875,73 @@ export class ProjectView
             mainEditorPkg.setFile(pxt.ASSETS_FILE, "\n", true);
         }
         this.saveFileAsync().then(() => this.setFile(pkg.mainEditorPkg().lookupFile(`this/${pxt.ASSETS_FILE}`)));
+    }
+
+    // A simulator extension's editor tab is selected by a virtual, session-only
+    // marker file, created the first time the tab is opened in the session.
+    openSimxEditor(key: string): boolean {
+        const mainEditorPkg = pkg.mainEditorPkg();
+        if (!mainEditorPkg?.header) return false;
+        if (!this.getSimxEditors().some(r => r.key === key)) return false;
+        if (this.isSimxEditorActive(key)) {
+            simulator.simxEditorHost?.focus();
+            return true;
+        }
+        const name = getSimxEditorMarkerName(key);
+        if (!mainEditorPkg.lookupFile("this/" + name)) {
+            mainEditorPkg.setFile(name, "\n", true);
+        }
+        this.setFile(mainEditorPkg.lookupFile("this/" + name));
+        return true;
+    }
+
+    /**
+     * Returns the key of the simulator extension whose editor tab creates the
+     * instances of the fixed-instance type `typeQName` and is offered here, or
+     * undefined if there is none. The type's declaring package is read from the
+     * API info the blocks were built from.
+     */
+    getSimxInstanceCreator(typeQName: string): string | undefined {
+        const declaringPackage = pxtblockly.cachedBlockInfo?.apis.byQName[typeQName]?.pkg;
+        const key = simulator.getProjectSimxInstanceCreator(typeQName, declaringPackage);
+        return key && this.getSimxEditors().some(r => r.key === key) ? key : undefined;
+    }
+
+    /**
+     * Shows the editor tab that creates the instances of the fixed-instance type
+     * `typeQName` and asks it to create one, once it is ready; does nothing if no
+     * offered tab creates them.
+     */
+    createSimxInstance(typeQName: string) {
+        const key = this.getSimxInstanceCreator(typeQName);
+        if (!key || !this.openSimxEditor(key)) return;
+        simulator.simxEditorHost?.requestAction(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "action", action: "create", qName: typeQName });
+    }
+
+    /**
+     * Returns the key of the simulator extension whose editor tab opens the
+     * fixed instance `instanceQName` and is offered here, or undefined if there
+     * is none: the tab that creates the instances of the instance's type, when
+     * a file of the open project in that extension's folder declares the
+     * instance. The instance is read from the API info the blocks were built from.
+     */
+    getSimxInstanceOpener(instanceQName: string): string | undefined {
+        const instance = pxtblockly.cachedBlockInfo?.apis.byQName[instanceQName];
+        if (!instance) return undefined;
+        const key = this.getSimxInstanceCreator(instance.retType);
+        const folder = key && getProjfsFolder(key);
+        return folder && isDeclaredInProjectFolder(instance, folder) ? key : undefined;
+    }
+
+    /**
+     * Shows the editor tab that opens the fixed instance `instanceQName` and
+     * asks it to open the instance, once it is ready; does nothing if no
+     * offered tab opens it.
+     */
+    openSimxInstance(instanceQName: string) {
+        const key = this.getSimxInstanceOpener(instanceQName);
+        if (!key || !this.openSimxEditor(key)) return;
+        simulator.simxEditorHost?.requestAction(key, { type: SIMXEDITOR_MESSAGE_TYPE, event: "action", action: "open", qName: instanceQName });
     }
 
     openSettings() {
@@ -1067,11 +1176,22 @@ export class ProjectView
     _slowTypeCheck = 0;
 
     private typecheckDebouncer = new pxtc.Util.AdaptiveDebouncer(() => {
-        if (this.editor.isIncomplete()) return;
+        this.typecheckProjectAsync(true);
+    })
+
+    /**
+     * Saves the open file, typechecks the project and shows the result: the
+     * editor's diagnostics, the package errors and the target's compiled-project
+     * notification. Does nothing while the editor is incomplete.
+     * @param autoRun when true, also auto-runs the simulator if auto-run is on
+     * and the project has no errors
+     */
+    private typecheckProjectAsync(autoRun: boolean): Promise<void> {
+        if (this.editor.isIncomplete()) return Promise.resolve();
         const start = Util.now();
         this.saveFileAsync(); // don't wait for saving to backend store to finish before typechecking
         const state = this.editor.snapshotState()
-        compiler.typecheckAsync()
+        return compiler.typecheckAsync()
             .then(cr => {
                 const end = Util.now();
                 // if typecheck is slow (>10s)
@@ -1084,7 +1204,7 @@ export class ProjectView
                 pxt.tickEvent("typecheck.complete", { editor: this.getPreferredEditor() });
                 this.editor.setDiagnostics(this.editorFile, state);
                 data.invalidate("open-pkg-meta:" + pkg.mainEditorPkg().getPkgId());
-                if (this.state.autoRun) {
+                if (autoRun) {
                     const output = pkg.mainEditorPkg().outputPkg.files["output.txt"];
                     if (output && !output.numDiagnosticsOverride
                         && this.state.autoRun) {
@@ -1098,7 +1218,7 @@ export class ProjectView
                     pxt.commands.notifyProjectCompiled(this.state.header.id, cr);
                 }
             });
-    })
+    }
 
     private typecheck() {
         this.typecheckDebouncer.trigger()
@@ -1122,6 +1242,7 @@ export class ProjectView
         this.blocksEditor = new blocks.Editor(this);
         this.gitjsonEditor = new gitjson.Editor(this);
         this.assetEditor = new assetEditor.AssetEditor(this);
+        this.simxEditor = new simxEditor.SimxEditor(this);
         backpack.setBackpackAssetEditor({
             headerId: () => this.state.header?.id,
             canEdit: () => !!this.state.header && !this.state.header.temporary
@@ -1153,7 +1274,7 @@ export class ProjectView
                 this.editorChangeHandler();
             }
         }
-        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.textEditor]
+        this.allEditors = [this.pxtJsonEditor, this.gitjsonEditor, this.blocksEditor, this.serialEditor, this.assetEditor, this.simxEditor, this.textEditor]
         this.allEditors.forEach(e => e.changeCallback = changeHandler)
         this.editor = this.allEditors[this.allEditors.length - 1]
     }
@@ -1238,7 +1359,17 @@ export class ProjectView
             setState: (k, v) => {
                 pkg.mainEditorPkg().setSimState(k, v)
             },
-            editor: this.state.header ? this.state.header.editor : ''
+            editor: this.state.header ? this.state.header.editor : '',
+            projfsEditor: {
+                isOpenFile: name => !!this.editorFile && this.editorFile === pkg.mainEditorPkg().files[name],
+                isTextEditor: () => this.isTextEditor(),
+                isBlocksEditor: () => this.isBlocksEditor(),
+                overrideTypescriptFile: text => this.overrideTypescriptFile(text),
+                overrideBlocksFile: text => this.overrideBlocksFile(text),
+                setSimulatorDirty: () => simulator.setDirty(),
+                typecheckNow: () => this.typecheckNow(),
+            },
+            openSimxEditor: key => this.openSimxEditor(key),
         });
 
         // we now have editors prepared
@@ -1300,11 +1431,18 @@ export class ProjectView
         }
 
         let simRunning = false;
+        // Returning to Blocks from the serial console or a simulator extension's
+        // editor tab keeps the workspace as it was and leaves the simulator as it is.
+        const returningToBlocksFromSessionOnlyFile = !this.state.debugging
+            && !!this.editorFile && pxt.isSessionOnlyFile(this.editorFile.name)
+            && (editorOverride || this.pickEditorFor(this.state.currFile as pkg.File)) == this.blocksEditor;
         this.updatingEditorFile = true;
         return core.showLoadingAsync("updateeditorfile", lf("loading editor..."), Promise.resolve())
             .then(() => {
                 simRunning = this.state.simState != SimState.Stopped;
-                if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
+                if (returningToBlocksFromSessionOnlyFile) {
+                    this.preserveUndoStack = true;
+                } else if (!this.state.currFile.virtual && !this.state.debugging) { // switching to serial should not reset the sim
                     this.stopSimulator();
                     if (simRunning || this.state.autoRun) {
                         simulator.setPending();
@@ -1332,8 +1470,12 @@ export class ProjectView
             })
             .then(() => {
                 this.saveFileAsync(); // make sure state is up to date
-                if (this.editor == this.textEditor || this.editor == this.blocksEditor)
+                if (!returningToBlocksFromSessionOnlyFile && (this.editor == this.textEditor || this.editor == this.blocksEditor))
                     this.typecheck();
+                // Showing a text language ends the editor toggle's memory of the
+                // simulator extension editor tab shown last.
+                if (this.isJavaScriptActive() || this.isPythonActive())
+                    simulator.simxEditorHost?.forgetLastShown();
 
                 if (this.state.editorPosition) {
                     this.editor.setViewState(this.state.editorPosition);
@@ -1363,11 +1505,22 @@ export class ProjectView
                 this.forceUpdate();
             })
             .then(() => {
+                // Refreshes the block diagnostics once the Blocks reload that
+                // domUpdate starts has finished, without auto-running the simulator.
+                if (returningToBlocksFromSessionOnlyFile) {
+                    Promise.resolve(this.blocksEditor.loadingXmlPromise).then(() => {
+                        if (this.editor == this.blocksEditor && !this.editor.isIncomplete())
+                            this.typecheckProjectAsync(false);
+                        else
+                            pxt.debug(`sim: skipping diagnostics refresh on return, blocks not shown or still loading`);
+                    });
+                    return;
+                }
                 // if auto-run is not enable, restart the sim
                 // otherwise, autorun will launch it again
                 if (!this.state.currFile.virtual && simRunning && !this.state.autoRun)
                     this.startSimulator();
-                else
+                else if (this.editor !== this.simxEditor)
                     this.typecheck(); // trigger at least 1 auto-run in non-code editors
             });
     }
@@ -1784,6 +1937,7 @@ export class ProjectView
     private async internalLoadHeaderAsync(h: pxt.workspace.Header, editorState?: pxt.editor.EditorState): Promise<void> {
         pxt.debug(`loading ${h.id} (pxt v${h.targetVersion})`);
         await this.editorMountComplete.promise;
+        simulator.closeSimxProject();
         this.stopSimulator(true);
         if (pxt.appTarget.simulator && pxt.appTarget.simulator.aspectRatio) {
             simulator.driver.preload(pxt.appTarget.simulator.aspectRatio);
@@ -2970,7 +3124,9 @@ export class ProjectView
     }
 
     unloadProjectAsync(home?: boolean) {
+        simulator.closeSimxProject();
         this.stopSimulator(true); // don't keep simulator around
+        simulator.setFullscreen(false);
         this.showKeymap(false); // close keymap if open
         cmds.disconnectAsync(); // turn off any kind of logging
         if (this.editor) this.editor.unloadFileAsync(home);
@@ -3895,6 +4051,7 @@ export class ProjectView
         } else {
             document.removeEventListener('keydown', this.closeOnEscape);
         }
+        simulator.setFullscreen(enabled);
         this.setState({ fullscreen: enabled });
     }
 
@@ -4012,6 +4169,7 @@ export class ProjectView
             || this.debugOptionsChanged()) {
             this.startSimulator();
         } else {
+            simulator.postSimxEditorSimulatorCommand("restart");
             simulator.driver.restart(); // fast restart
         }
         if (!isDebug) {
@@ -4051,7 +4209,11 @@ export class ProjectView
         }
 
         if (simulator.driver && (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded)) {
+            simulator.postSimxEditorSimulatorCommand("stop");
             simulator.stop(unload);
+        } else if (unload && simulator.driver?.hasFrames()) {
+            // frames created while unloaded, such as a simulator extension's for its editor tab
+            simulator.stop(true);
         }
 
         const autoRun = this.state.autoRun && !clickTrigger; // if user pressed stop, don't restart
@@ -4165,7 +4327,9 @@ export class ProjectView
 
             simulator.stop(false, true);
 
-            const autoRun = this.autoRunOnStart() && this.isBlocksEditor() && (this.state.autoRun || !!opts.clickTrigger);
+            const autoRun = this.autoRunOnStart()
+                && (this.isBlocksEditor() || this.isAnySimxEditorActive())
+                && (this.state.autoRun || !!opts.clickTrigger);
 
             const state = this.editor.snapshotState()
             return this.setStateAsync({ simState: SimState.Starting, autoRun: autoRun })
@@ -4191,6 +4355,7 @@ export class ProjectView
 
                             const hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
                             if (!pxt.react.isFieldEditorViewVisible?.()) {
+                                simulator.postSimxEditorSimulatorCommand("start");
                                 simulator.run(pkg.mainPkg, opts.debug, resp, {
                                     mute: this.state.mute === pxt.editor.MuteState.Muted,
                                     highContrast: hc,
@@ -4706,8 +4871,9 @@ export class ProjectView
             return Promise.resolve();
 
         //Save the name in the target MainPackage as well
-        pkg.mainPkg.config.name = name;
-        pkg.mainPkg.config.description = description !== undefined ? description : pkg.mainPkg.config.description;
+        const mainPkg = pkg.mainPkg;
+        mainPkg.config.name = name;
+        mainPkg.config.description = description !== undefined ? description : mainPkg.config.description;
 
         pxt.debug('saving project name to ' + name);
         let f = pkg.mainEditorPkg().lookupFile("this/" + pxt.CONFIG_NAME);
@@ -4715,6 +4881,8 @@ export class ProjectView
         config.name = name;
         config.description = description !== undefined ? description : config.description;
         return f.setContentAsync(pxt.Package.stringifyConfig(config))
+            // reloading the config lets the main package's config load listeners hear the rename
+            .then(() => mainPkg.loadConfig())
             .then(() => {
                 if (this.state.header)
                     this.setState({
@@ -5918,7 +6086,7 @@ export class ProjectView
         const isRTL = pxt.Util.isUserLanguageRtl();
         const showRightChevron = (this.state.collapseEditorTools || isRTL) && !(this.state.collapseEditorTools && isRTL); // Collapsed XOR RTL
         // don't show in sandbox or is blocks editor or previous editor is blocks or assets editor
-        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive()
+        const showFileList = !sandbox && !inTutorial && !this.isAssetsActive() && this.editor !== this.simxEditor
             && !(isBlocks
                 || (pkg.mainPkg && pkg.mainPkg.config && (pkg.mainPkg.config.preferredEditor == pxt.BLOCKS_PROJECT_NAME)));
         const hasIdentity = pxt.auth.hasIdentity();
@@ -6644,6 +6812,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     parseLocalToken();
     hash = parseHash();
     blocklyFieldView.init();
+
+    pxt.react.canCreateInstance = typeQName => !!theEditor?.getSimxInstanceCreator(typeQName);
+    pxt.react.createInstance = typeQName => theEditor?.createSimxInstance(typeQName);
+    pxt.react.canOpenInstance = instanceQName => !!theEditor?.getSimxInstanceOpener(instanceQName);
+    pxt.react.openInstance = instanceQName => theEditor?.openSimxInstance(instanceQName);
 
     pxt.react.getTilemapProject = () => {
         const epkg = pkg.mainEditorPkg();

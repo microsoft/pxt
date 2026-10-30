@@ -1,0 +1,10 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+    <variables></variables>
+    <block type="pxt-on-start" id="onStartBlock" x="20" y="20">
+      <statement name="HANDLER">
+        <block type="things_use" id="useThingBlock">
+          <field name="thing">@createinstance@</field>
+        </block>
+      </statement>
+    </block>
+  </xml>

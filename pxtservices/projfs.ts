@@ -1,0 +1,538 @@
+/**
+ * The project-file ("projfs") messages a simulator extension exchanges with the
+ * editor, and a client that wraps them in promises. The editor serves them only
+ * to simulator extensions registered with `allowFileWrite`.
+ *
+ * A simulator extension sees and changes only its own folder in the project:
+ * the folder of its GitHub repository, `owner/repo`, which the editor derives
+ * from the key of the requesting frame. Every registration of one repository
+ * shares the folder, whatever subfolder its key names (a key `owner/repo/sub`
+ * uses `owner/repo` too), along with the folder's size limit, rate limit and
+ * queue. Requests and replies name files relative to that folder. Within the
+ * folder, only the files pxt.json lists are visible; writes list their file.
+ * Requests are posted to the editor window; the editor replies to each
+ * request once, to the requesting frame only, with the request's `id`, and
+ * replies to one frame's requests in the order it sent them, except that a
+ * subscribe request is answered without waiting for the requests before it.
+ * Change notifications carry no `id` and go to the frames that subscribed. A
+ * frame holds at most one subscription, which lasts until the project it was
+ * made in closes or reloads.
+ *
+ * Writes and deletes come in two classes. By default a change is an artifact:
+ * saved with the project, and the text editor showing a written file shows the
+ * new content, but a running simulator is left alone. A change flagged `dirty`
+ * is treated as a user edit: the editor showing the file shows the new
+ * content, the project is typechecked, and the simulator reruns if it runs
+ * automatically, just as after the user types.
+ *
+ * This module has no dependencies; a simulator extension can import or copy it
+ * as-is.
+ */
+
+/** The `type` of every projfs request and reply. */
+export const PROJFS_MESSAGE_TYPE = "projfs";
+
+/**
+ * Returns the key the editor created this simulator extension's frame for,
+ * e.g. `owner/repo`, which the editor passes in the frame URL's `channel`
+ * parameter. The key is the channel the extension's simulator messages
+ * carry; use it to filter those messages or to show which extension is
+ * running. Projfs requests and replies never include it; a file the
+ * extension names `notes.txt` appears in the project as
+ * `<owner>/<repo>/notes.txt`, in the folder of the key's repository.
+ * @param channel the key, for an extension that knows it; returned as-is
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the key, or undefined if neither `channel` nor the URL provides one
+ */
+export function getSimxChannel(channel?: string, search?: string): string | undefined {
+    if (channel) return channel;
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("channel") || undefined;
+}
+
+/**
+ * Returns the origin of the editor hosting this simulator extension's frame,
+ * e.g. `https://arcade.makecode.com`, which the editor passes in the frame
+ * URL's `parentOrigin` parameter. Post requests to it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the origin, or undefined if the URL provides none
+ */
+export function getParentOrigin(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("parentOrigin") || undefined;
+}
+
+/**
+ * Returns the id of the MakeCode target hosting this simulator extension's
+ * frame, e.g. `microbit` or `arcade`, which the editor passes in the frame
+ * URL's `target` parameter. Use it to adapt what the extension shows to the
+ * target it runs in. The value is informational: it grants nothing, and
+ * projfs requests and replies never include it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the target id, or undefined if the URL provides none
+ */
+export function getTargetId(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("target") || undefined;
+}
+
+/**
+ * Returns the editor's id for the project this simulator extension's frame
+ * serves, an opaque string the editor passes in the frame URL's `project`
+ * parameter. Use it to keep state that belongs to one project, such as a
+ * session, apart from other projects' state. The value is informational: it
+ * grants nothing and selects nothing, since projfs requests always reach the
+ * project open in the editor, and projfs requests and replies never include it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the project id, or undefined if the URL provides none
+ */
+export function getProjectId(search?: string): string | undefined {
+    const query = search !== undefined ? search : window.location.search;
+    return new URLSearchParams(query).get("project") || undefined;
+}
+
+/**
+ * Returns the level of the simulator-extension APIs the editor hosting this
+ * frame serves, which the editor passes in the frame URL's `apiLevel`
+ * parameter. Level 1 is the `projfs`, `projassets`, `projprogram` and
+ * `simxeditor` messages and the registration fields; each later level adds to
+ * or alters them. Read it at startup to learn whether the editor answers a
+ * request before sending it.
+ * @param search the frame URL's query string; defaults to `window.location.search`
+ * @returns the level; 0, the level of an editor older than level 1, if the URL
+ * provides none or one that is not a non-negative integer
+ */
+export function getSimxApiLevel(search?: string): number {
+    const query = search !== undefined ? search : window.location.search;
+    const value = new URLSearchParams(query).get("apiLevel");
+    return value !== null && /^[0-9]+$/.test(value) ? Number(value) : 0;
+}
+
+/**
+ * Why a request failed. Clients branch on the code; the message that
+ * accompanies it is for people.
+ */
+export type ProjfsErrorCode =
+    /**
+     * Reads: the extension's folder has no file of that name that pxt.json
+     * lists; a stored file pxt.json does not list is reported the same as a
+     * missing one. Deletes: the folder neither stores nor lists the file.
+     */
+    | "NOT_FOUND"
+    /**
+     * The write would take the extension's folder over its size limit, which
+     * counts the UTF-8 bytes of each file's content and of its name relative
+     * to the folder, or over the number of files it may store; or its content
+     * alone is larger than the folder may hold. Nothing was written. A write
+     * that leaves the folder no larger than it was is accepted even while the
+     * folder is over its size limit.
+     */
+    | "QUOTA_EXCEEDED"
+    /**
+     * The name is not a relative path, has an empty, `.` or `..` segment, or
+     * ends in `.simxeditor`, a suffix the editor reserves. A write also
+     * refuses a name that does not start with a letter, digit or underscore,
+     * uses a character other than letters, digits, `_`, `-`, `.` and `/`, is
+     * longer than the editor allows, in characters or in segments, or whose
+     * last segment is `pxt.json` or ends in `.jres`, in any letter case.
+     */
+    | "INVALID_NAME"
+    /**
+     * The extension's folder already had as many requests waiting for
+     * replies as the editor holds for one folder; the request was not
+     * applied.
+     */
+    | "RATE_LIMITED"
+    /** The request is malformed. */
+    | "INVALID_REQUEST"
+    /**
+     * No project was open when the request arrived, or the project open then
+     * failed to load or has since closed (as when it is replaced while
+     * loading); the request was not applied, and a later request may succeed.
+     */
+    | "PROJECT_CLOSED"
+    /**
+     * The requesting frame is not a simulator extension the editor serves,
+     * for instance because the open project does not use the extension; the
+     * request was not applied.
+     */
+    | "UNREGISTERED"
+    /**
+     * The simulator extension's registration does not set `allowFileWrite`;
+     * the request was not applied.
+     */
+    | "PERMISSION_DENIED"
+    /**
+     * The editor met an error applying the request. A write or delete may be
+     * partly applied; repeating it completes it. Also raised by the client
+     * when the request cannot be posted, as when it holds a value that cannot
+     * be cloned; the request was not sent.
+     */
+    | "FAILED"
+    /**
+     * The client was disposed, as when its frame is torn down, before the
+     * editor replied, and the request may or may not have been applied; or
+     * the request was made after the client was disposed, and was not sent
+     * (raised by the client).
+     */
+    | "DISPOSED";
+
+interface ProjfsMessage {
+    type: "projfs";
+    /** Chosen by the requester; the reply carries the same `id`. */
+    id: string;
+}
+
+/** Lists the files in the extension's folder that pxt.json lists. The reply is a {@link ProjfsFilesReply}. */
+export interface ProjfsListRequest extends ProjfsMessage {
+    subtype: "list";
+}
+
+/** Reads a file in the extension's folder that pxt.json lists. The reply is a {@link ProjfsContentReply}. */
+export interface ProjfsReadRequest extends ProjfsMessage {
+    subtype: "read";
+    /** The name relative to the extension's folder, e.g. `notes.txt` or `data/level1.json`. */
+    name: string;
+}
+
+/**
+ * Creates or replaces a file in the extension's folder and lists it in pxt.json.
+ * The reply is a {@link ProjfsAckReply}.
+ */
+export interface ProjfsWriteRequest extends ProjfsMessage {
+    subtype: "write";
+    /** The name relative to the extension's folder, e.g. `notes.txt` or `data/level1.json`. */
+    name: string;
+    /** Text, or binary data as a `data:<mime type>;base64,` URI. */
+    content: string;
+    /** If present, the write is a user edit rather than an artifact; see {@link ProjfsMutationOptions.dirty}. */
+    dirty?: true;
+}
+
+/**
+ * Deletes a file from the extension's folder and removes it from pxt.json.
+ * The reply is a {@link ProjfsAckReply}.
+ */
+export interface ProjfsDeleteRequest extends ProjfsMessage {
+    subtype: "delete";
+    /** The name relative to the extension's folder. */
+    name: string;
+    /** If present, the delete is a user edit rather than an artifact; see {@link ProjfsMutationOptions.dirty}. */
+    dirty?: true;
+}
+
+/**
+ * Subscribes the requesting frame to {@link ProjfsNotification}s of changes
+ * to the extension's folder. The reply is a {@link ProjfsSubscribeAckReply}.
+ * The editor answers it without queueing it behind the folder's other
+ * requests, and does not count it against the folder's limits. A frame
+ * holds at most one subscription: subscribing again from the same frame is
+ * acknowledged and changes nothing. Each frame of an extension subscribes
+ * for itself. A subscription ends, without notice, when the project open
+ * when it was made closes or reloads.
+ */
+export interface ProjfsSubscribeRequest extends ProjfsMessage {
+    subtype: "subscribe";
+}
+
+export type ProjfsRequest = ProjfsListRequest | ProjfsReadRequest | ProjfsWriteRequest | ProjfsDeleteRequest | ProjfsSubscribeRequest;
+
+export interface ProjfsFileInfo {
+    /** The name relative to the extension's folder. */
+    name: string;
+    /** Size of the stored content in UTF-8 bytes; a `data:` URI counts at its encoded length. */
+    size: number;
+}
+
+export interface ProjfsFilesReply extends ProjfsMessage {
+    subtype: "files";
+    files: ProjfsFileInfo[];
+}
+
+export interface ProjfsContentReply extends ProjfsMessage {
+    subtype: "content";
+    /** The name the request gave, relative to the extension's folder. */
+    name: string;
+    content: string;
+}
+
+export interface ProjfsAckReply extends ProjfsMessage {
+    subtype: "ack";
+    /** The name the request gave, relative to the extension's folder; `read` and `delete` accept it. */
+    name: string;
+}
+
+/** Acknowledges a {@link ProjfsSubscribeRequest}. */
+export interface ProjfsSubscribeAckReply extends ProjfsMessage {
+    subtype: "ack";
+}
+
+export interface ProjfsErrorReply extends Omit<ProjfsMessage, "id"> {
+    /** The request's `id`; undefined if the request carried no string `id`. */
+    id: string | undefined;
+    subtype: "error";
+    code: ProjfsErrorCode;
+    message: string;
+}
+
+export type ProjfsReply = ProjfsFilesReply | ProjfsContentReply | ProjfsAckReply | ProjfsSubscribeAckReply | ProjfsErrorReply;
+
+/**
+ * Tells a subscribed extension which files in its folder changed: their
+ * content, whether they exist, or whether pxt.json lists them. Several
+ * changes in quick succession lead to one notification. The extension's
+ * own writes and deletes are reported too.
+ */
+export interface ProjfsNotification {
+    type: "projfs";
+    subtype: "changed";
+    /**
+     * The names, relative to the extension's folder, of the files that
+     * changed since the last notification, or since the subscription, each
+     * once, in the order they first changed.
+     */
+    names: string[];
+}
+
+/** A refused or unanswered request. */
+export class ProjfsError extends Error {
+    constructor(public readonly code: ProjfsErrorCode, message: string) {
+        super(message);
+        this.name = "ProjfsError";
+        // keeps instanceof working when compiled to ES5
+        Object.setPrototypeOf(this, ProjfsError.prototype);
+    }
+}
+
+/** The window a {@link ProjfsClient} posts requests to. */
+export interface ProjfsTargetWindow {
+    postMessage(message: any, targetOrigin: string): void;
+}
+
+/** The window a {@link ProjfsClient} receives replies and notifications on. */
+export interface ProjfsListenerWindow {
+    addEventListener(type: "message", listener: (ev: MessageEvent) => void): void;
+    removeEventListener(type: "message", listener: (ev: MessageEvent) => void): void;
+}
+
+export interface ProjfsClientOptions {
+    /** The editor window; defaults to `window.parent`. Messages from any other window are ignored. */
+    target?: ProjfsTargetWindow;
+    /** The window replies and notifications arrive on; defaults to `window`. */
+    listener?: ProjfsListenerWindow;
+    /**
+     * The origin requests may be delivered to; defaults to the frame URL's
+     * `parentOrigin` parameter (see {@link getParentOrigin}), else `"*"`.
+     * Unless it is `"*"`, replies and notifications are accepted only from this origin.
+     */
+    targetOrigin?: string;
+    /** The frame URL's query string the default {@link targetOrigin} is read from; defaults to `window.location.search`. */
+    search?: string;
+    /** How long, in milliseconds, a request waits for its reply before {@link onSlowReply} hears of it; defaults to 10 seconds. */
+    slowReplyMs?: number;
+    /**
+     * Called once for each request still waiting for its reply after
+     * {@link slowReplyMs}. The request keeps waiting, and a reply that comes
+     * later settles it as usual.
+     */
+    onSlowReply?: (request: ProjfsRequest) => void;
+}
+
+/** How a {@link ProjfsClient} write or delete changes the project. */
+export interface ProjfsMutationOptions {
+    /**
+     * If true, the change dirties the project as a user edit would: the editor
+     * showing the file shows the new content, the project is typechecked, and
+     * the simulator reruns if it runs automatically. Several dirty changes in
+     * quick succession lead to one rerun. Blocks the change defines reach the
+     * toolbox the next time the toolbox loads, as after the user types them.
+     *
+     * If false or absent, the change is an artifact: it is saved with the
+     * project, and the text editor showing a written file shows the new
+     * content, but a running simulator keeps its code until the project next
+     * runs.
+     *
+     * Either way, writing the file the text editor shows replaces any change
+     * not yet saved from it and resets its undo history and cursor.
+     */
+    dirty?: boolean;
+}
+
+interface PendingRequest {
+    resolve: (reply: ProjfsReply) => void;
+    reject: (error: ProjfsError) => void;
+    // fires the slow-reply notice; undefined when no one listens for it
+    timer: ReturnType<typeof setTimeout> | undefined;
+}
+
+type DistributiveOmit<T, K extends keyof any> = T extends any ? Omit<T, K> : never;
+
+const DEFAULT_SLOW_REPLY_MS = 10000;
+
+/** Returns the `dirty` field a request carries for `options`: present only for a dirty change. */
+function dirtyField(options: ProjfsMutationOptions | undefined): { dirty?: true } {
+    return options?.dirty ? { dirty: true } : {};
+}
+
+/**
+ * Reads and writes project files from a simulator extension, and hears when
+ * they change. Each method resolves with the editor's reply, or rejects with
+ * a {@link ProjfsError} carrying the editor's error code.
+ *
+ * A request waits for its reply however long that takes; a reply slower than
+ * {@link ProjfsClientOptions.slowReplyMs} is reported to
+ * {@link ProjfsClientOptions.onSlowReply} and never fails the request. Only
+ * {@link dispose} ends the wait, failing the request with `DISPOSED`. A
+ * request that cannot be posted fails at once with `FAILED`, and a request
+ * made after {@link dispose} fails at once with `DISPOSED`.
+ */
+export class ProjfsClient {
+    protected readonly target: ProjfsTargetWindow;
+    protected readonly listener: ProjfsListenerWindow;
+    /** The origin requests are posted to; unless it is `"*"`, replies and notifications are accepted only from this origin. */
+    protected readonly targetOrigin: string;
+    protected readonly slowReplyMs: number;
+    protected readonly onSlowReply: ((request: ProjfsRequest) => void) | undefined;
+    protected readonly idPrefix = Math.random().toString(36).slice(2);
+    protected nextId = 0;
+    protected pending: { [id: string]: PendingRequest } = {};
+    protected disposed = false;
+    // called on each change notification, each once, once the subscription is acknowledged
+    protected changeListeners: ((names: string[]) => void)[] = [];
+    // settles once the frame's subscription request is acknowledged or refused; undefined until
+    // subscribe is first called, and again after a refusal or dispose
+    protected subscription: Promise<void> | undefined;
+
+    constructor(options: ProjfsClientOptions = {}) {
+        this.target = options.target || window.parent;
+        this.listener = options.listener || window;
+        this.targetOrigin = options.targetOrigin ?? getParentOrigin(options.search) ?? "*";
+        this.slowReplyMs = options.slowReplyMs ?? DEFAULT_SLOW_REPLY_MS;
+        this.onSlowReply = options.onSlowReply;
+        this.listener.addEventListener("message", this.onMessage);
+    }
+
+    /** Lists the files in this extension's folder that pxt.json lists, by names relative to the folder. */
+    async list(): Promise<ProjfsFileInfo[]> {
+        const reply = await this.requestAsync({ subtype: "list" }, "files") as ProjfsFilesReply;
+        return reply.files;
+    }
+
+    /**
+     * Reads a file in this extension's folder that pxt.json lists.
+     * @param name the name relative to the extension's folder
+     */
+    async read(name: string): Promise<string> {
+        const reply = await this.requestAsync({ subtype: "read", name }, "content") as ProjfsContentReply;
+        return reply.content;
+    }
+
+    /**
+     * Creates or replaces a file in this extension's folder.
+     * @param name the name relative to the extension's folder
+     * @param content text, or binary data as a `data:<mime type>;base64,` URI
+     * @param options whether the write is a user edit or an artifact (the default)
+     * @returns `name`, which `read` and `delete` accept
+     */
+    async write(name: string, content: string, options?: ProjfsMutationOptions): Promise<string> {
+        const reply = await this.requestAsync({ subtype: "write", name, content, ...dirtyField(options) }, "ack") as ProjfsAckReply;
+        return reply.name;
+    }
+
+    /**
+     * Deletes a file from this extension's folder.
+     * @param name the name relative to the extension's folder
+     * @param options whether the delete is a user edit or an artifact (the default)
+     * @returns `name`
+     */
+    async delete(name: string, options?: ProjfsMutationOptions): Promise<string> {
+        const reply = await this.requestAsync({ subtype: "delete", name, ...dirtyField(options) }, "ack") as ProjfsAckReply;
+        return reply.name;
+    }
+
+    /**
+     * Subscribes this frame to change notifications, and calls `onChange` on
+     * each one once the editor has acknowledged the subscription, with the
+     * names, relative to the extension's folder, of the files that changed.
+     * List or read the files again from `onChange` to see the change.
+     *
+     * The frame's first call sends the subscription request; later calls
+     * send none, and add their `onChange` once the first call's request is
+     * acknowledged. A function passed more than once is called once per
+     * notification. If the editor refuses the request, the call rejects, and
+     * the next call sends a new request.
+     * @param onChange called with the names of the files that changed
+     */
+    async subscribe(onChange: (names: string[]) => void): Promise<void> {
+        if (!this.subscription) {
+            const subscription = this.requestAsync({ subtype: "subscribe" }, "ack").then(() => { });
+            this.subscription = subscription;
+            subscription.catch(() => {
+                if (this.subscription === subscription) this.subscription = undefined;
+            });
+        }
+        await this.subscription;
+        if (this.changeListeners.indexOf(onChange) < 0) this.changeListeners.push(onChange);
+    }
+
+    /**
+     * Stops listening for replies and notifications, and fails every pending
+     * request with `DISPOSED`; the editor may or may not have applied it.
+     * Later requests, subscribe calls included, fail with `DISPOSED` without
+     * being sent.
+     */
+    dispose() {
+        this.disposed = true;
+        this.listener.removeEventListener("message", this.onMessage);
+        this.changeListeners = [];
+        this.subscription = undefined;
+        for (const id of Object.keys(this.pending)) {
+            this.settle(id)?.reject(new ProjfsError("DISPOSED", "The client was disposed before the editor replied; the request may or may not have been applied."));
+        }
+    }
+
+    protected requestAsync(body: DistributiveOmit<ProjfsRequest, "type" | "id">, expected: ProjfsReply["subtype"]): Promise<ProjfsReply> {
+        const id = `${this.idPrefix}-${this.nextId++}`;
+        const request = { ...body, type: PROJFS_MESSAGE_TYPE, id } as ProjfsRequest;
+        return new Promise<ProjfsReply>((resolve, reject) => {
+            if (this.disposed) {
+                reject(new ProjfsError("DISPOSED", "The client was disposed; the request was not sent."));
+                return;
+            }
+            const onSlowReply = this.onSlowReply;
+            const timer = onSlowReply && setTimeout(() => onSlowReply(request), this.slowReplyMs);
+            this.pending[id] = { resolve, reject, timer };
+            try {
+                this.target.postMessage(request, this.targetOrigin);
+            } catch (e) {
+                this.settle(id);
+                reject(new ProjfsError("FAILED", `The request could not be posted; it was not sent: ${(e as Error)?.message || e}`));
+            }
+        }).then(reply => {
+            if (reply.subtype === "error") throw new ProjfsError(reply.code, reply.message);
+            if (reply.subtype !== expected) throw new ProjfsError("FAILED", `Unexpected ${reply.subtype} reply to a ${body.subtype} request.`);
+            return reply;
+        });
+    }
+
+    protected onMessage = (ev: MessageEvent) => {
+        if (ev.source !== this.target) return;
+        if (this.targetOrigin !== "*" && ev.origin !== this.targetOrigin) return;
+        const message = ev.data as ProjfsReply | ProjfsNotification;
+        if (message?.type !== PROJFS_MESSAGE_TYPE) return;
+        if (message.subtype === "changed") {
+            this.changeListeners.forEach(listener => listener(message.names));
+            return;
+        }
+        if (typeof message.id !== "string") return;
+        this.settle(message.id)?.resolve(message);
+    }
+
+    protected settle(id: string): PendingRequest | undefined {
+        const request = this.pending[id];
+        if (!request) return undefined;
+        delete this.pending[id];
+        clearTimeout(request.timer);
+        return request;
+    }
+}

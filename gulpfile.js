@@ -837,7 +837,7 @@ function testTask(testFolder, testFile, additionalFiles) {
 function pxtEditorTestTask() {
     const buildTs = () => compileTsProject("tests/pxt-editor-test", "built", true);
     const browserifyTs = () => exec('node node_modules/browserify/bin/cmd built/tests/pxt-editor-test/editorrunner.js -o built/tests/pxt-editor-test/bundled.js --debug');
-    const buildRunner = () => gulp.src(["built/pxtlib.js", "built/tests/pxt-editor-test/bundled.js"]).pipe(concat("runner.js")).pipe(gulp.dest("built/tests/pxt-editor-test/"));
+    const buildRunner = () => gulp.src(["built/pxtlib.js", "built/pxtsim.js", "built/tests/pxt-editor-test/bundled.js"]).pipe(concat("runner.js")).pipe(gulp.dest("built/tests/pxt-editor-test/"));
     const runTests = () => exec(`${getMochaExecutable()} built/tests/pxt-editor-test/runner.js --reporter dot`, true)
     return gulp.series([buildTs, browserifyTs, buildRunner, runTests]);
 }

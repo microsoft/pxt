@@ -9,6 +9,23 @@ import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Milestones } from "./constants";
 import * as simulatorTheme from "./simulatorTheme";
 import * as simulatorThemePreference from "./simulatorThemePreference";
+import * as pkg from "./package";
+import * as compiler from "./compiler";
+import { applyUserEdit, ProjfsEditor, ProjfsHost, ProjfsProject, writeProjectFileAsync } from "./projfsHost";
+import { createProjassetsConfig, ProjassetsConfig, ProjassetsHost } from "./projassetsHost";
+import { ProjprogramCompileOutcome, ProjprogramHost } from "./projprogramHost";
+import {
+    answerSimxEditorRequest,
+    findSimxInstanceCreator,
+    getDependencyRepository,
+    getProjectSimxEditors,
+    getSimxEditorRegistrations,
+    isSimxInProject,
+    SimxEditorHost,
+    SimxEditorRegistration,
+} from "./simxEditorHost";
+import { OpenProjectTracker } from "./simxRequests";
+import { SimxEditorSimulatorCommand, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 
 
 
@@ -23,16 +40,31 @@ interface SimulatorConfig {
     setState(key: string, value: any): void;
     onMuteButtonStateChange(state: pxt.editor.MuteState): void;
     editor: string;
+    // the editor entry points that simulator extension changes flagged dirty pass through
+    projfsEditor: ProjfsEditor;
+    // shows the editor tab of the simulator extension registered under the key; returns false,
+    // showing nothing, if the editor offers no such tab here
+    openSimxEditor(key: string): boolean;
 }
 
 export const FAST_TRACE_INTERVAL = 100;
 export const SLOW_TRACE_INTERVAL = 500;
 
 export let driver: pxsim.SimulatorDriver;
+// the editor tab frames of simulator extensions; undefined until the simulator is initialized
+export let simxEditorHost: SimxEditorHost;
 let config: SimulatorConfig;
 let lastCompileResult: pxtc.CompileResult;
 let previewSimulatorTheme: pxt.SimulatorTheme | undefined;
 let displayedModals: pxt.Map<boolean> = {};
+// the editor package of the open project, as simulator extensions read it
+const openProject = new OpenProjectTracker<pkg.EditorPackage>(() => {
+    const epkg = pkg.mainEditorPkg();
+    return epkg.header ? epkg : undefined;
+});
+const projfsHost = new ProjfsHost(getProjfsProject);
+const projassetsHost = new ProjassetsHost(getOpenAssetProject, () => pxt.react.getTilemapProject(), getAssetConfig);
+const projprogramHost = new ProjprogramHost(() => openProject.get(), compileSimulatorProgramAsync);
 export let simTranslations: pxt.Map<string>;
 
 export function setTranslations(translations: pxt.Map<string>) {
@@ -235,6 +267,7 @@ export async function initAsync(cfg: SimulatorConfig) {
             if (config) config.highlightStatement(null)
         },
         onStateChanged: function (state) {
+            simxEditorHost?.simulatorStateChanged(pxsim.SimulatorState[state] as SimxEditorSimulatorState);
             if (state === pxsim.SimulatorState.Stopped) {
                 postSimEditorEvent("stopped");
             } else if (state === pxsim.SimulatorState.Running) {
@@ -297,6 +330,25 @@ export async function initAsync(cfg: SimulatorConfig) {
             postSimEditorEvent("toplevelfinished");
         },
         onMuteButtonStateChange: cfg.onMuteButtonStateChange,
+        onProjfsMessage: (key, msg, reply, frame) => {
+            projfsHost.handleMessageAsync(key, msg, reply, frame);
+        },
+        onProjassetsMessage: (key, msg, reply, frame) => {
+            projassetsHost.handleMessageAsync(key, msg, reply, frame);
+        },
+        onProjprogramMessage: (key, msg, reply) => {
+            projprogramHost.handleMessageAsync(key, msg, reply);
+        },
+        onSimxEditorMessage: (key, msg, reply) => {
+            reply(answerSimxEditorRequest(key, msg, k => cfg.openSimxEditor(k)) as pxsim.SimulatorMessage);
+        },
+        onSimxFrameLoad: (key, frame) => {
+            simxEditorHost?.simulatorFrameLoaded(key, frame);
+        },
+        isSimxInProject: key => isSimxInProject(key, getProjectDependencies()),
+        onFramesUnloaded: () => {
+            simxEditorHost?.ensureSimulatorFrames();
+        },
         stoppedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.stoppedClass,
         invalidatedClass: pxt.appTarget.simulator && pxt.appTarget.simulator.invalidatedClass,
         nestedEditorSim,
@@ -304,10 +356,164 @@ export async function initAsync(cfg: SimulatorConfig) {
         mpRole,
         messageSimulators: pxt.appTarget?.simulator?.messageSimulators,
         simulatorExtensions,
-        userLanguage: pxt.Util.userLanguage()
+        userLanguage: pxt.Util.userLanguage(),
+        targetId: pxt.appTarget.id,
+        getProjectId: () => pkg.mainEditorPkg().header?.id
     };
     driver = new pxsim.SimulatorDriver(document.getElementById('simulators'), options);
     config = cfg
+    simxEditorHost = new SimxEditorHost({
+        createFrame: () => document.createElement("iframe"),
+        createLoader: label => {
+            const loader = document.createElement("div");
+            loader.className = "ui active text loader";
+            loader.textContent = lf("Loading {0}...", label);
+            return loader;
+        },
+        framePermissions: grants => pxsim.simulatorFramePermissions(grants),
+        startSimulatorExtension: key => driver.startSimulatorExtension(key),
+        addTabFrame: (key, frame) => driver.addEditorTabFrame(key, frame),
+        removeTabFrame: frame => driver.removeEditorTabFrame(frame),
+        getSimulatorState: () => pxsim.SimulatorState[driver.state] as SimxEditorSimulatorState,
+        createChannel: () => new MessageChannel(),
+    });
+    window.addEventListener("message", ev => simxEditorHost.handleMessage(ev), false);
+}
+
+/**
+ * Returns the editor tabs of simulator extensions the editor offers for the open
+ * project, in registration order: those of registrations that declare and enable
+ * a tab, whose extension the project includes.
+ */
+export function getProjectSimxEditorRegistrations(): SimxEditorRegistration[] {
+    if (!driver || !pkg.mainPkg) return [];
+    const registrations = getSimxEditorRegistrations(driver.options.simulatorExtensions);
+    if (!registrations.length) return [];
+    return getProjectSimxEditors(registrations, getProjectDependencies());
+}
+
+/** Returns the version specs of every package the open project has loaded, without resolving any package. */
+function getProjectDependencies(): string[] {
+    const deps = pkg.mainPkg?.deps || {};
+    return Object.keys(deps).map(id => deps[id]?._verspec);
+}
+
+// the ignored claims on types, by registration key and type, logged since the open project loaded
+const loggedSimxClaims = new Set<string>();
+
+/**
+ * Returns the key of the simulator extension whose editor tab creates the
+ * instances of the fixed-instance type `typeQName`, among those whose tabs the
+ * editor offers the open project, or undefined if none does. Only a
+ * registration of the GitHub repository of the type's declaring package may
+ * create them, and the first such in registration order does; every other
+ * registration naming the type in its `creates` is logged once per project load.
+ * @param declaringPackage the id of the package that declares the type, as the type's `pkg` gives it; undefined for the project's own code
+ */
+export function getProjectSimxInstanceCreator(typeQName: string, declaringPackage: string | undefined): string | undefined {
+    const registrations = getProjectSimxEditorRegistrations();
+    const spec = declaringPackage ? pkg.mainPkg?.deps[declaringPackage]?._verspec : undefined;
+    const { creator, ignored } = findSimxInstanceCreator(registrations, typeQName, getDependencyRepository(spec));
+    for (const { key, reason } of ignored) {
+        const claim = `${key} ${typeQName}`;
+        if (loggedSimxClaims.has(claim)) continue;
+        loggedSimxClaims.add(claim);
+        pxt.warn(reason === "OTHER_REPOSITORY"
+            ? `simulator extension ${key}: ignoring its claim to create ${typeQName}, which no package of its repository declares`
+            : `simulator extension ${key}: ignoring its claim to create ${typeQName}, which an earlier registration creates`);
+    }
+    return creator?.key;
+}
+
+/** Tells every ready simulator extension editor tab that the editor is giving the simulator `command`. */
+export function postSimxEditorSimulatorCommand(command: SimxEditorSimulatorCommand) {
+    simxEditorHost?.simulatorCommand(command);
+}
+
+/**
+ * Records whether the editor is in fullscreen-simulator mode: tells the
+ * simulator driver, which passes the mode to every simulator extension frame,
+ * and every ready simulator extension editor tab.
+ */
+export function setFullscreen(enabled: boolean) {
+    driver?.setFullscreen(enabled);
+    simxEditorHost?.fullscreenChanged(enabled);
+}
+
+/**
+ * Closes the open project to simulator extensions: removes every editor tab
+ * frame, with the actions held for the tabs, forgets the ignored `creates`
+ * claims logged for the project, refuses the project-file, project-asset and
+ * compiled-program requests still waiting for the project, compiled-program
+ * requests whose compile is running included, with `PROJECT_CLOSED`, and ends
+ * every project-file and project-asset subscription. Call before the simulator
+ * unloads, as the project closes or another load begins.
+ */
+export function closeSimxProject() {
+    simxEditorHost?.close();
+    loggedSimxClaims.clear();
+    openProject.close();
+    projfsHost.close();
+    projassetsHost.close();
+}
+
+/**
+ * Returns the open project as the asset host waits on it, or undefined if none
+ * is open: its editor package.
+ */
+function getOpenAssetProject(): pkg.EditorPackage | undefined {
+    return openProject.get();
+}
+
+/** Returns the configuration of the open project as the asset host reads and watches it. */
+function getAssetConfig(): ProjassetsConfig {
+    return createProjassetsConfig(pkg.mainPkg, {
+        get: () => simulatorThemePreference.getEffectiveSimulatorThemePreference()?.theme,
+        addChangeListener: simulatorThemePreference.addSimulatorThemePreferenceListener,
+        removeChangeListener: simulatorThemePreference.removeSimulatorThemePreferenceListener,
+    });
+}
+
+// the project getProjfsProject last returned, with the editor package it stands for
+let projfsProject: { epkg: pkg.EditorPackage, project: ProjfsProject } | undefined;
+
+/**
+ * Returns the open project as simulator extensions read and write it, or undefined
+ * if no project is open; the same object while the project stays open.
+ */
+function getProjfsProject(): ProjfsProject | undefined {
+    const epkg = openProject.get();
+    if (!epkg) return undefined;
+    if (projfsProject?.epkg !== epkg)
+        projfsProject = { epkg, project: createProjfsProject(epkg) };
+    return projfsProject.project;
+}
+
+/**
+ * Returns the project of `epkg` as simulator extensions read and write it.
+ * Changes are saved like other programmatic file writes and never reload the
+ * project. By default they leave a running simulator alone; a change flagged
+ * dirty then passes through the editor's user-edit pipeline, which reruns the
+ * simulator as a user edit does.
+ */
+function createProjfsProject(epkg: pkg.EditorPackage): ProjfsProject {
+    return {
+        loadedAsync: () => epkg.loadedAsync(),
+        getFiles: () => epkg.getAllFiles(),
+        writeFileAsync: (name, content) => writeProjectFileAsync(epkg, config?.projfsEditor, name, content),
+        deleteFileAsync: async name => {
+            await epkg.removeFileAsync(name);
+            await epkg.saveFilesAsync();
+        },
+        setListedAsync: async (name, listed) => {
+            await epkg.setFileListedAsync(name, listed);
+        },
+        markDirty: (name, content) => {
+            if (config?.projfsEditor) applyUserEdit(config.projfsEditor, name, content);
+        },
+        addChangeListener: listener => epkg.addFileChangeListener(listener),
+        removeChangeListener: listener => epkg.removeFileChangeListener(listener),
+    };
 }
 
 function postSimEditorEvent(subtype: string, exception?: string) {
@@ -348,8 +554,23 @@ export interface RunOptions {
     autoRun?: boolean;
 }
 
-export function run(pkg: pxt.MainPackage, debug: boolean,
-    res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
+/** The program a simulator run executes: its JavaScript and the options the editor passes the driver with it. */
+export interface SimulatorProgram {
+    /** The program's JavaScript, the compile result's simulator output. */
+    code: string;
+    /** The options `driver.run` receives with `code`. */
+    options: pxsim.SimulatorRunOptions;
+}
+
+/**
+ * Returns the program a simulator run of `res`, the compile result of the
+ * project whose main package is `pkg`, executes, with the run options the
+ * editor passes the driver for it. Reads the editor's simulator theme
+ * preference, the theme being previewed and the simulator translations, and
+ * changes nothing.
+ */
+export function buildSimulatorProgram(pkg: pxt.MainPackage, debug: boolean,
+    res: pxtc.CompileResult, options: RunOptions, trace: boolean): SimulatorProgram {
     const boardDefinition = pxt.appTarget.simulator.boardDefinition;
     const {
         js,
@@ -358,7 +579,6 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         usedBuiltinParts,
         allParts
     } = pxtc.buildSimJsInfo(res);
-    lastCompileResult = res;
     const { mute, highContrast, light, clickTrigger, storedState, autoRun } = options;
     const isIpcRenderer = pxt.BrowserUtils.isIpcRenderer() || undefined;
     const dependencies: pxt.Map<string> = {}
@@ -366,13 +586,6 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         dependencies[dep.id] = dep.version()
 
     const playerNumber = allParts && allParts.indexOf("multiplayer") >= 0 ? 1 : undefined;
-    if (playerNumber) {
-        const root = document.getElementById("root");
-        for (let i = 1; i <= 4; i++) {
-            const cssVar = `--multiplayer-presence-icon-${i}`;
-            root?.style?.removeProperty(cssVar);
-        }
-    }
 
     const deviceTheme = pxt.appTarget.appTheme.matchWebUSBDeviceInSim && pxt.packetio.isConnected()
         ? pxt.packetio.deviceVariant()
@@ -409,11 +622,45 @@ export function run(pkg: pxt.MainPackage, debug: boolean,
         activePlayer: playerNumber,
         theme: theme,
     }
+    return { code: js, options: opts };
+}
+
+export function run(pkg: pxt.MainPackage, debug: boolean,
+    res: pxtc.CompileResult, options: RunOptions, trace: boolean) {
+    const { code: js, options: opts } = buildSimulatorProgram(pkg, debug, res, options, trace);
+    lastCompileResult = res;
+
+    if (opts.activePlayer) {
+        const root = document.getElementById("root");
+        for (let i = 1; i <= 4; i++) {
+            const cssVar = `--multiplayer-presence-icon-${i}`;
+            root?.style?.removeProperty(cssVar);
+        }
+    }
+
     //if (pxt.options.debug)
     //    pxt.debug(JSON.stringify(opts, null, 2))
     postSimEditorEvent("started");
 
     driver.run(js, opts);
+}
+
+/**
+ * Compiles the open project as the editor holds it now and returns the
+ * program a plain simulator run of it executes: no debugging, no tracing,
+ * sound on, normal contrast, the project's stored simulator state. Sets
+ * no diagnostics, and touches neither the editor nor the simulator.
+ * @returns the program, or the compile result if the compile produced no simulator JavaScript
+ */
+async function compileSimulatorProgramAsync(): Promise<ProjprogramCompileOutcome> {
+    const res = await compiler.compileProjectAsync();
+    if (!res.outfiles[pxtc.BINARY_JS]) return { failed: res };
+    return buildSimulatorProgram(pkg.mainPkg, false, res, {
+        mute: false,
+        highContrast: false,
+        light: false,
+        storedState: pkg.mainEditorPkg().getSimState(),
+    }, false);
 }
 
 export function mute(mute: boolean) {
