@@ -938,6 +938,7 @@ describe("simulator driver simulator extension editor tabs", () => {
         const container = {
             getElementsByTagName: () => frames,
             appendChild: (wrapper: FakeElement) => frames.push(wrapper.firstElementChild),
+            classList: new FakeElement("div").classList,
         } as unknown as HTMLElement;
         const driver = new pxsim.SimulatorDriver(container, {
             simUrl: SIM_URL,
@@ -1643,11 +1644,15 @@ describe("simulator driver hide-in-fullscreen classes", () => {
     const FRAME_CLASS = "simx-hide-fullscreen";
     const CONTAINER_CLASS = "has-simx-hide-fullscreen";
     const HIDDEN_CHANNEL = "someorg/pxt-strip";
+    const OTHER_HIDDEN_CHANNEL = "someorg/pxt-overlay";
     const SHOWN_CHANNEL = "someorg/pxt-ext";
+    const TRANSIENT_SHOWN_CHANNEL = "someorg/pxt-transient";
 
     let container: FakeElement;
     let mainFrame: FakeElement;
     let driver: pxsim.SimulatorDriver;
+    // the removals the host's exit animation holds, each applied when called
+    let removals: (() => void)[];
 
     function hasClass(el: FakeElement, cls: string): boolean {
         return pxsim.U.containsClass(el as unknown as HTMLElement, cls);
@@ -1668,13 +1673,21 @@ describe("simulator driver hide-in-fullscreen classes", () => {
         mainFrame = wrapper.appendChild(new FakeElement("iframe"));
         mainFrame.id = "sim-frame-1";
         mainFrame.dataset = { origin: SIM_ORIGIN, runid: "" };
-        const simx = (hideInFullscreen?: boolean) => ({ index: "index.html", aspectRatio: 1, permanent: true, hideInFullscreen });
+        // the main frame's state icon and loader, which a change of the driver's state updates
+        wrapper.appendChild(new FakeElement("div"));
+        wrapper.appendChild(new FakeElement("div"));
+        const simx = (hideInFullscreen?: boolean, permanent = true) => ({ index: "index.html", aspectRatio: 1, permanent, hideInFullscreen });
+        removals = [];
         driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
             simUrl: SIM_URL,
             simulatorExtensions: {
                 [HIDDEN_CHANNEL]: simx(true),
+                [OTHER_HIDDEN_CHANNEL]: simx(true),
                 [SHOWN_CHANNEL]: simx(),
+                [TRANSIENT_SHOWN_CHANNEL]: simx(false, false),
             },
+            removeElement: el => removals.push(() => pxsim.U.remove(el)),
+            hideElement: () => { },
         });
         // installs the driver's listener on the editor's window; the main frame already exists
         driver.preload(1);
@@ -1690,6 +1703,49 @@ describe("simulator driver hide-in-fullscreen classes", () => {
         const wrapper = spawn(SHOWN_CHANNEL);
         chai.expect(hasClass(wrapper, FRAME_CLASS)).equals(false);
         chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
+    });
+
+    it("unmarks the container when a shown extension frame spawns beside a hidden one", () => {
+        spawn(HIDDEN_CHANNEL);
+        spawn(SHOWN_CHANNEL);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
+    });
+
+    it("leaves the container unmarked when a hidden extension frame spawns beside a shown one", () => {
+        spawn(SHOWN_CHANNEL);
+        const wrapper = spawn(HIDDEN_CHANNEL);
+        chai.expect(hasClass(wrapper, FRAME_CLASS)).equals(true);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
+    });
+
+    it("marks the container while every extension frame is hidden in fullscreen", () => {
+        spawn(HIDDEN_CHANNEL);
+        spawn(OTHER_HIDDEN_CHANNEL);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(true);
+    });
+
+    it("keeps the container marked from the moment frame cleanup starts removing the shown extension frame beside a hidden one", () => {
+        driver.run("");
+        spawn(HIDDEN_CHANNEL);
+        const transient = spawn(TRANSIENT_SHOWN_CHANNEL);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
+        driver.stop();
+        (driver as any).cleanupFrames();
+        chai.expect(transient.parentElement).equals(container);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(true);
+        spawn(OTHER_HIDDEN_CHANNEL);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(true);
+        removals.forEach(remove => remove());
+        chai.expect(transient.parentElement).equals(undefined);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(true);
+    });
+
+    it("marks the container when hiding the simulator removes the shown extension frame beside a hidden one", () => {
+        spawn(HIDDEN_CHANNEL);
+        spawn(TRANSIENT_SHOWN_CHANNEL);
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(false);
+        driver.hide();
+        chai.expect(hasClass(container, CONTAINER_CLASS)).equals(true);
     });
 
     it("clears the container class on unload", () => {

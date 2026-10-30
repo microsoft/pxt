@@ -1763,9 +1763,10 @@ p.ui.font.small {
     div.simframe:not(:first-child) {
         display: unset;
     }
-    // A frame registered hideInFullscreen is hidden but stays mounted, and the
-    // main frame takes the full width as an only child does. These rules must
-    // follow the :not(:first-child) rule, which has the same specificity.
+    // A frame registered hideInFullscreen is hidden but stays mounted. While the
+    // container carries has-simx-hide-fullscreen, the main frame takes the full
+    // width as an only child does. These rules must follow the :not(:first-child)
+    // rule, which has the same specificity.
     div.simframe.simx-hide-fullscreen {
         display: none !important;
     }

@@ -371,9 +371,14 @@ namespace pxsim {
     const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
     const PERMANENT = "permanent"
+    // set on a frame whose wrapper has been handed to options.removeElement,
+    // which may remove it later, until unhide brings the wrapper back
+    const FRAME_DATA_REMOVING = "removing"
     // The wrapper class of a simulator extension frame hidden in
-    // fullscreen-simulator mode, and the container class present while one
-    // is spawned; theme/common.less styles both under .fullscreensim.
+    // fullscreen-simulator mode, and the container class present while the
+    // container keeps at least one extension frame, not counting frames being
+    // removed, and every one it keeps is hidden in that mode;
+    // theme/common.less styles both under .fullscreensim.
     const HIDE_IN_FULLSCREEN = "simx-hide-fullscreen"
     const HAS_HIDE_IN_FULLSCREEN = "has-simx-hide-fullscreen"
 
@@ -845,18 +850,32 @@ namespace pxsim {
             pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(channel))
             if (permanent)
                 messageFrame.dataset[PERMANENT] = "true";
-            // The hidden frame stays mounted, so its messaging continues; the container
-            // class lets the main frame take the full width beside it.
-            if (hideInFullscreen) {
+            // The hidden frame stays mounted, so its messaging continues.
+            if (hideInFullscreen)
                 pxsim.U.addClass(wrapper, HIDE_IN_FULLSCREEN);
-                pxsim.U.addClass(this.container, HAS_HIDE_IN_FULLSCREEN);
-            }
+            this.updateHideInFullscreenContainerClass();
             messageFrame.addEventListener("load", () => {
                 if (this.fullscreen && messageFrame.contentWindow)
                     this.postMessageCore(messageFrame, this.fullscreenMessage());
             });
             this.startFrame(messageFrame);
             return messageFrame;
+        }
+
+        /**
+         * Adds the `has-simx-hide-fullscreen` class to the simulator container when
+         * it holds at least one simulator extension frame not being removed and
+         * every such frame is hidden in fullscreen-simulator mode, so the main frame
+         * takes the full width in that mode, and removes the class otherwise.
+         */
+        private updateHideInFullscreenContainerClass() {
+            const wrappers = this.simFrames(true)
+                .filter(frame => !!frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] && !frame.dataset[FRAME_DATA_REMOVING])
+                .map(frame => frame.parentElement);
+            if (wrappers.length && wrappers.every(wrapper => pxsim.U.containsClass(wrapper, HIDE_IN_FULLSCREEN)))
+                pxsim.U.addClass(this.container, HAS_HIDE_IN_FULLSCREEN);
+            else
+                pxsim.U.removeClass(this.container, HAS_HIDE_IN_FULLSCREEN);
         }
 
         protected deferredMessages: [HTMLIFrameElement, SimulatorMessage][];
@@ -1119,10 +1138,14 @@ namespace pxsim {
                 .forEach(frame => {
                     if (this.state == SimulatorState.Stopped
                         || frame.dataset['runid'] != this.runId) {
-                        if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+                        if (this.options.removeElement) {
+                            frame.dataset[FRAME_DATA_REMOVING] = "true";
+                            this.options.removeElement(frame.parentElement);
+                        }
                         else frame.parentElement.remove();
                     }
                 });
+            this.updateHideInFullscreenContainerClass();
         }
 
         public hide(completeHandler?: () => void) {
@@ -1133,9 +1156,12 @@ namespace pxsim {
             frames.forEach(frame => {
                 if (frame.dataset[PERMANENT] && this.options.hideElement)
                     this.options.hideElement(frame.parentElement, completeHandler);
-                else
+                else {
+                    frame.dataset[FRAME_DATA_REMOVING] = "true";
                     this.options.removeElement(frame.parentElement, completeHandler);
+                }
             });
+            this.updateHideInFullscreenContainerClass();
             // Execute the complete handler if there are no frames in sim view
             if (frames.length == 0 && completeHandler) {
                 completeHandler();
@@ -1147,8 +1173,10 @@ namespace pxsim {
 
             const frames = this.simFrames();
             frames.forEach(frame => {
+                delete frame.dataset[FRAME_DATA_REMOVING];
                 this.options.unhideElement(frame.parentElement);
             });
+            this.updateHideInFullscreenContainerClass();
         }
 
         public setRunOptions(opts: SimulatorRunOptions = {}) {

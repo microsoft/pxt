@@ -91,7 +91,7 @@ An extension has two ways to handle fullscreen-simulator mode, in which the simu
 
 The editor posts `{ type: "fullscreen", enabled }` to every simulator frame when the editor enters or leaves fullscreen-simulator mode, where `enabled` is `true` while the simulator fills the editor. A simulator extension frame whose page finishes loading while the mode is on receives the message once loaded, so a frame that appears during fullscreen knows it. Until a frame receives a `fullscreen` message, the editor is not in fullscreen-simulator mode.
 
-A frame registered with `hideInFullscreen` is hidden while the mode is on, and the main simulator takes the full width beside it. It stays loaded, receives every message, `fullscreen` included, and may keep posting.
+A frame registered with `hideInFullscreen` is hidden while the mode is on, and the main simulator takes the full width when every simulator extension frame beside it is hidden. The hidden frame stays loaded, receives every message, `fullscreen` included, and may keep posting.
 
 ## Talking to the editor
 
