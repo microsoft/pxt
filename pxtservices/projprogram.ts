@@ -201,6 +201,7 @@ export interface ProjprogramClientOptions {
     /**
      * The origin requests may be delivered to; defaults to the frame URL's
      * `parentOrigin` parameter, else `"*"`.
+     * Unless it is `"*"`, replies are accepted only from this origin.
      */
     targetOrigin?: string;
     /** The frame URL's query string the default {@link targetOrigin} is read from; defaults to `window.location.search`. */
@@ -242,6 +243,7 @@ const DEFAULT_SLOW_REPLY_MS = 10000;
 export class ProjprogramClient {
     protected readonly target: ProjprogramTargetWindow;
     protected readonly listener: ProjprogramListenerWindow;
+    /** The origin requests are posted to; unless it is `"*"`, replies are accepted only from this origin. */
     protected readonly targetOrigin: string;
     protected readonly slowReplyMs: number;
     protected readonly onSlowReply: ((request: ProjprogramRequest) => void) | undefined;
@@ -307,6 +309,7 @@ export class ProjprogramClient {
 
     protected onMessage = (ev: MessageEvent) => {
         if (ev.source !== this.target) return;
+        if (this.targetOrigin !== "*" && ev.origin !== this.targetOrigin) return;
         const message = ev.data as ProjprogramReply;
         if (message?.type !== PROJPROGRAM_MESSAGE_TYPE) return;
         if (typeof message.id !== "string") return;

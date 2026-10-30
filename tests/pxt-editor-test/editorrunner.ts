@@ -2613,7 +2613,7 @@ describe("projfs project writes", () => {
  * none or an empty one.
  */
 function expectParentOriginReader(read: (search?: string) => string | undefined) {
-    chai.expect(read("?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo")).equals("https://arcade.makecode.com");
+    chai.expect(read("?parentOrigin=https%3A%2F%2Feditor.example&channel=owner%2Frepo")).equals("https://editor.example");
     chai.expect(read("?channel=owner%2Frepo")).equals(undefined);
     chai.expect(read("?parentOrigin=")).equals(undefined);
 }
@@ -2625,7 +2625,7 @@ function expectParentOriginReader(read: (search?: string) => string | undefined)
  */
 function expectApiLevelReader(read: (search?: string) => number) {
     const level = pxsim.SIMX_API_LEVEL;
-    chai.expect(read(`?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo&apiLevel=${level}`)).equals(level);
+    chai.expect(read(`?parentOrigin=https%3A%2F%2Feditor.example&channel=owner%2Frepo&apiLevel=${level}`)).equals(level);
     chai.expect(read(`?apiLevel=${level + 1}`)).equals(level + 1);
     chai.expect(read("?apiLevel=0")).equals(0);
     chai.expect(read("?channel=owner%2Frepo")).equals(0);
@@ -2634,6 +2634,9 @@ function expectApiLevelReader(read: (search?: string) => number) {
         chai.expect(read("?apiLevel=" + encodeURIComponent(malformed)), malformed).equals(0);
     }
 }
+
+// the origin the fake editor's messages come from in the client suites
+const EDITOR_ORIGIN = "https://editor.example";
 
 describe("projfs client", () => {
     class FakeParent {
@@ -2657,8 +2660,8 @@ describe("projfs client", () => {
             this.listeners = this.listeners.filter(l => l !== listener);
         }
 
-        deliver(source: unknown, data: unknown) {
-            this.listeners.forEach(l => l({ source, data } as MessageEvent));
+        deliver(source: unknown, data: unknown, origin = EDITOR_ORIGIN) {
+            this.listeners.forEach(l => l({ source, data, origin } as MessageEvent));
         }
     }
 
@@ -2671,8 +2674,8 @@ describe("projfs client", () => {
         return parent.requests[parent.requests.length - 1];
     }
 
-    function replyTo(request: ProjfsRequest, body: object, source: unknown = parent) {
-        self.deliver(source, { type: "projfs", id: request.id, ...body });
+    function replyTo(request: ProjfsRequest, body: object, source: unknown = parent, origin = EDITOR_ORIGIN) {
+        self.deliver(source, { type: "projfs", id: request.id, ...body }, origin);
     }
 
     beforeEach(() => {
@@ -2928,16 +2931,31 @@ describe("projfs client", () => {
 
     it("posts requests to the editor's origin from the frame URL by default, or to the origin it is given", async () => {
         client.dispose();
-        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com&channel=owner%2Frepo" });
+        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example&channel=owner%2Frepo" });
         const listed = client.list();
         replyTo(lastRequest(), { subtype: "files", files: [] });
         await listed;
         client.dispose();
-        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com", targetOrigin: "https://other.example" });
+        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example", targetOrigin: "https://other.example" });
         const again = client.list();
-        replyTo(lastRequest(), { subtype: "files", files: [] });
+        replyTo(lastRequest(), { subtype: "files", files: [] }, parent, "https://other.example");
         await again;
-        chai.expect(parent.origins).deep.equals(["https://arcade.makecode.com", "https://other.example"]);
+        chai.expect(parent.origins).deep.equals(["https://editor.example", "https://other.example"]);
+    });
+
+    it("ignores replies from another origin while it posts to the editor's origin", async () => {
+        client.dispose();
+        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
+        const read = client.read("main.ts");
+        replyTo(lastRequest(), { subtype: "content", name: "main.ts", content: "forged" }, parent, "https://elsewhere.example");
+        replyTo(lastRequest(), { subtype: "content", name: "main.ts", content: "real" });
+        chai.expect(await read).equals("real");
+    });
+
+    it("accepts replies from any origin while it posts to any origin", async () => {
+        const read = client.read("main.ts");
+        replyTo(lastRequest(), { subtype: "content", name: "main.ts", content: "real" }, parent, "https://elsewhere.example");
+        chai.expect(await read).equals("real");
     });
 
     /** Connects the client to a host serving `owner/repo`; returns the project's stored files. */
@@ -4336,8 +4354,8 @@ describe("projassets client", () => {
             this.listeners = this.listeners.filter(l => l !== listener);
         }
 
-        deliver(source: unknown, data: unknown) {
-            this.listeners.forEach(l => l({ source, data } as MessageEvent));
+        deliver(source: unknown, data: unknown, origin = EDITOR_ORIGIN) {
+            this.listeners.forEach(l => l({ source, data, origin } as MessageEvent));
         }
     }
 
@@ -4355,8 +4373,8 @@ describe("projassets client", () => {
         return parent.requests[parent.requests.length - 1];
     }
 
-    function replyTo(request: ProjassetsRequest, body: object, source: unknown = parent) {
-        self.deliver(source, { type: "projassets", id: request.id, ...body });
+    function replyTo(request: ProjassetsRequest, body: object, source: unknown = parent, origin = EDITOR_ORIGIN) {
+        self.deliver(source, { type: "projassets", id: request.id, ...body }, origin);
     }
 
     beforeEach(() => {
@@ -4559,16 +4577,31 @@ describe("projassets client", () => {
 
     it("posts requests to the editor's origin from the frame URL by default, or to the origin it is given", async () => {
         client.dispose();
-        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com" });
+        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
         const listed = client.list("image");
         replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE });
         await listed;
         client.dispose();
-        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com", targetOrigin: "https://other.example" });
+        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example", targetOrigin: "https://other.example" });
         const again = client.list("image");
-        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE });
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [], name: NAME, palette: PALETTE }, parent, "https://other.example");
         await again;
-        chai.expect(parent.origins).deep.equals(["https://arcade.makecode.com", "https://other.example"]);
+        chai.expect(parent.origins).deep.equals(["https://editor.example", "https://other.example"]);
+    });
+
+    it("ignores replies from another origin while it posts to the editor's origin", async () => {
+        client.dispose();
+        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
+        const listed = client.list("image");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [{ ...IMAGE, id: "forged" }], name: NAME, palette: PALETTE }, parent, "https://elsewhere.example");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], name: NAME, palette: PALETTE });
+        chai.expect((await listed).assets).deep.equals([IMAGE]);
+    });
+
+    it("accepts replies from any origin while it posts to any origin", async () => {
+        const listed = client.list("image");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], name: NAME, palette: PALETTE }, parent, "https://elsewhere.example");
+        chai.expect((await listed).assets).deep.equals([IMAGE]);
     });
 
     it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
@@ -4935,8 +4968,8 @@ describe("projprogram client", () => {
             this.listeners = this.listeners.filter(l => l !== listener);
         }
 
-        deliver(source: unknown, data: unknown) {
-            this.listeners.forEach(l => l({ source, data } as MessageEvent));
+        deliver(source: unknown, data: unknown, origin = EDITOR_ORIGIN) {
+            this.listeners.forEach(l => l({ source, data, origin } as MessageEvent));
         }
     }
 
@@ -4950,8 +4983,8 @@ describe("projprogram client", () => {
         return parent.requests[parent.requests.length - 1];
     }
 
-    function replyTo(request: ProjprogramRequest, body: object, source: unknown = parent) {
-        self.deliver(source, { type: "projprogram", id: request.id, ...body });
+    function replyTo(request: ProjprogramRequest, body: object, source: unknown = parent, origin = EDITOR_ORIGIN) {
+        self.deliver(source, { type: "projprogram", id: request.id, ...body }, origin);
     }
 
     beforeEach(() => {
@@ -5066,16 +5099,31 @@ describe("projprogram client", () => {
 
     it("posts requests to the editor's origin from the frame URL by default, or to the origin it is given", async () => {
         client.dispose();
-        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com" });
+        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
         const compiled = client.compile();
         replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
         await compiled;
         client.dispose();
-        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Farcade.makecode.com", targetOrigin: "https://other.example" });
+        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example", targetOrigin: "https://other.example" });
         const again = client.compile();
-        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM }, parent, "https://other.example");
         await again;
-        chai.expect(parent.origins).deep.equals(["https://arcade.makecode.com", "https://other.example"]);
+        chai.expect(parent.origins).deep.equals(["https://editor.example", "https://other.example"]);
+    });
+
+    it("ignores replies from another origin while it posts to the editor's origin", async () => {
+        client.dispose();
+        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "program", code: "forged", options: {} }, parent, "https://elsewhere.example");
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        chai.expect(await compiled).deep.equals(PROGRAM);
+    });
+
+    it("accepts replies from any origin while it posts to any origin", async () => {
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM }, parent, "https://elsewhere.example");
+        chai.expect(await compiled).deep.equals(PROGRAM);
     });
 
     it("reads the editor's API level from the frame URL, or 0 when it is absent or malformed", () => {
@@ -5805,7 +5853,7 @@ describe("pxt.github local repositories", () => {
     });
 
     it("does not consult a server that is not on localhost", async () => {
-        serveAt("https://arcade.makecode.com/");
+        serveAt("https://editor.example/");
         await pxt.github.initLocalReposAsync();
         chai.expect(requests).deep.equals([]);
         chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(false);

@@ -107,7 +107,7 @@ A refused request is answered with `{ type, id, subtype: "error", code, message 
 
 A frame should accept a reply, an event or a port only from `window.parent`, and only when the event's origin is the `parentOrigin` its URL carries.
 
-`pxtservices/projfs.ts`, `pxtservices/projassets.ts`, `pxtservices/projprogram.ts` and `pxtservices/simxeditor.ts` define each API's messages. The first three also define promise-based clients, `ProjfsClient`, `ProjassetsClient` and `ProjprogramClient`, which post to the parent at `parentOrigin`, match replies by `id`, and raise `DISPOSED` for a request pending when the client is disposed or made after it. The four files have no dependencies and can be copied into an extension.
+`pxtservices/projfs.ts`, `pxtservices/projassets.ts`, `pxtservices/projprogram.ts` and `pxtservices/simxeditor.ts` define each API's messages. The first three also define promise-based clients, `ProjfsClient`, `ProjassetsClient` and `ProjprogramClient`, which post to the parent at `parentOrigin`, accept replies and events only from the parent at that origin, match replies by `id`, and raise `DISPOSED` for a request pending when the client is disposed or made after it. The four files have no dependencies and can be copied into an extension.
 
 ### API level
 

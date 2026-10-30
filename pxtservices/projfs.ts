@@ -323,6 +323,7 @@ export interface ProjfsClientOptions {
     /**
      * The origin requests may be delivered to; defaults to the frame URL's
      * `parentOrigin` parameter (see {@link getParentOrigin}), else `"*"`.
+     * Unless it is `"*"`, replies and notifications are accepted only from this origin.
      */
     targetOrigin?: string;
     /** The frame URL's query string the default {@link targetOrigin} is read from; defaults to `window.location.search`. */
@@ -388,6 +389,7 @@ function dirtyField(options: ProjfsMutationOptions | undefined): { dirty?: true 
 export class ProjfsClient {
     protected readonly target: ProjfsTargetWindow;
     protected readonly listener: ProjfsListenerWindow;
+    /** The origin requests are posted to; unless it is `"*"`, replies and notifications are accepted only from this origin. */
     protected readonly targetOrigin: string;
     protected readonly slowReplyMs: number;
     protected readonly onSlowReply: ((request: ProjfsRequest) => void) | undefined;
@@ -515,6 +517,7 @@ export class ProjfsClient {
 
     protected onMessage = (ev: MessageEvent) => {
         if (ev.source !== this.target) return;
+        if (this.targetOrigin !== "*" && ev.origin !== this.targetOrigin) return;
         const message = ev.data as ProjfsReply | ProjfsNotification;
         if (message?.type !== PROJFS_MESSAGE_TYPE) return;
         if (message.subtype === "changed") {
