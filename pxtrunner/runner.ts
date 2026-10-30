@@ -691,6 +691,8 @@ export function startRenderServer() {
 
         const options = (msg.options || {}) as BlocksRenderOptions;
         options.splitSvg = false; // don't split when requesting rendered images
+        options.reuseWorkspace = true; // creating a Blockly workspace per job is slow
+        const svgOnly = !!msg.options?.svgOnly;
         pxt.tickEvent("renderer.job")
         const isXml = /^\s*<xml/.test(msg.code);
 
@@ -709,7 +711,7 @@ export function startRenderServer() {
 
             let res: BlockSvg;
             try {
-                res = await blocklyToSvgAsync(blocksSvg, 0, 0, width, height);
+                res = await blocklyToSvgAsync(blocksSvg, 0, 0, width, height, undefined, svgOnly);
             } catch (e) {
                 pxt.reportException(e);
                 throw e;
@@ -718,7 +720,7 @@ export function startRenderServer() {
             // try to render to png
             let png: string;
             try {
-                png = res
+                png = res && !svgOnly
                     ? await pxt.BrowserUtils.encodeToPngAsync(res.xml, { width, height })
                     : undefined;
             } catch (e) {
@@ -1299,12 +1301,32 @@ function getApiInfo(program: ts.Program, opts: pxtc.CompileOptions) {
     return apiCache[key];
 }
 
+// Blocks info per package for compileBlocksAsync. The blocks XML being rendered
+// does not change the APIs of the package, so compiling the package once is
+// enough; only requests with assets (which add APIs) skip this cache.
+const blocksInfoCache: pxt.Map<{ apis: pxtc.ApisInfo, blocksInfo: pxtc.BlocksInfo }> = {};
+
 export function compileBlocksAsync(code: string, options?: BlocksRenderOptions): Promise<DecompileResult> {
     const { assets } = options || {};
 
     const packageid = options && options.packageId ? "pub:" + options.packageId :
         options && options.package ? "docs:" + options.package
             : null;
+    const cacheKey = assets ? undefined : packageid || "";
+    const cached = cacheKey !== undefined && blocksInfoCache[cacheKey];
+    if (cached) {
+        return loadPackageAsync(packageid, "")
+            .then(() => {
+                // other renders may have injected a different set of blocks in the meantime
+                if (pxtblockly.cachedBlockInfo !== cached.blocksInfo)
+                    initializeAndInject(cached.blocksInfo);
+                return <DecompileResult>{
+                    package: mainPkg,
+                    blocksSvg: render(code, options),
+                    apiInfo: cached.apis
+                };
+            });
+    }
     return loadPackageAsync(packageid, "")
         .then(() => getCompileOptionsAsync(pxt.appTarget.compile ? pxt.appTarget.compile.hasHex : false))
         .then(opts => {
@@ -1323,6 +1345,8 @@ export function compileBlocksAsync(code: string, options?: BlocksRenderOptions):
                 .then(() => {
                     const blocksInfo = pxtc.getBlocksInfo(apis);
                     initializeAndInject(blocksInfo);
+                    if (cacheKey !== undefined)
+                        blocksInfoCache[cacheKey] = { apis, blocksInfo };
 
                     const tilemapJres = assets?.[pxt.TILEMAP_JRES];
                     const assetsJres = assets?.[pxt.IMAGES_JRES];

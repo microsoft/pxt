@@ -375,7 +375,22 @@ export function cleanUpBlocklySvg(svg: SVGElement, sourceSvg: SVGElement): SVGEl
     return svg;
 }
 
-export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number): Promise<BlockSvg> {
+// the stylesheets embedded in every rendered svg; fetched once per page instead of per render
+let cssCache: pxt.Map<Promise<string>>;
+function loadCssAsync(href: string): Promise<string> {
+    if (!cssCache) cssCache = {};
+    if (!cssCache[href]) {
+        cssCache[href] = pxt.BrowserUtils.loadAjaxAsync(href)
+            .catch(e => {
+                delete cssCache[href];
+                throw e;
+            });
+    }
+    return cssCache[href];
+}
+
+// skipDataUri: leave BlockSvg.xml (the base64 data uri) undefined, for callers that only use the svg
+export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, width: number, height: number, scale?: number, skipDataUri?: boolean): Promise<BlockSvg> {
     if (!sg.childNodes[0])
         return undefined;
 
@@ -400,8 +415,8 @@ export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, wi
     const semanticCssHref = semanticCssLink?.href;
 
     const customCss = await Promise.all([
-        customCssHref ? pxt.BrowserUtils.loadAjaxAsync(customCssHref) : Promise.resolve(""),
-        semanticCssHref ? pxt.BrowserUtils.loadAjaxAsync(semanticCssHref) : Promise.resolve("")
+        customCssHref ? loadCssAsync(customCssHref) : Promise.resolve(""),
+        semanticCssHref ? loadCssAsync(semanticCssHref) : Promise.resolve("")
     ]);
 
     const blocklySvg = pxt.Util.toArray(document.head.querySelectorAll("style"))
@@ -413,7 +428,9 @@ export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, wi
     customCss.unshift(rendererStyle?.innerText || "");
     // CSS may contain <, > which need to be stored in CDATA section
     const cssString = (blocklySvg ? blocklySvg.innerText : "") + '\n\n' + customCss.map(el => el + '\n\n');
-    cssLink.appendChild(xsg.createCDATASection(cssString));
+    // The css is spliced into the serialized svg below instead of being added to xsg here:
+    // the document would parse the whole stylesheet (semantic.css included) on every render.
+    cssLink.appendChild(xsg.createCDATASection(CSS_PLACEHOLDER));
     xsg.documentElement.insertBefore(cssLink, xsg.documentElement.firstElementChild);
 
     const disabledPattern = sg.style.getPropertyValue(DISABLED_PATTERN_PROP);
@@ -424,19 +441,26 @@ export async function blocklyToSvgAsync(sg: SVGElement, x: number, y: number, wi
     await expandImagesAsync(xsg);
     await convertIconsToPngAsync(xsg);
 
+    const xml = new XMLSerializer().serializeToString(xsg)
+        .replace(`<![CDATA[${CSS_PLACEHOLDER}]]>`, () => `<![CDATA[${cssString}]]>`);
+
     return <BlockSvg>{
         width: renderWidth,
         height: renderHeight,
-        svg: serializeNode(xsg).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
-        xml: documentToSvg(xsg),
+        svg: serializeSvgString(xml).replace('<style xmlns="http://www.w3.org/1999/xhtml">', '<style>'),
+        xml: skipDataUri ? undefined : svgXmlToDataUri(xml),
         css: cssString
     };
 }
 
+const CSS_PLACEHOLDER = "pxt-blocks-css";
+
 export function documentToSvg(xsg: Node): string {
-    const xml = new XMLSerializer().serializeToString(xsg);
-    const data = "data:image/svg+xml;base64," + ts.pxtc.encodeBase64(unescape(encodeURIComponent(xml)));
-    return data;
+    return svgXmlToDataUri(new XMLSerializer().serializeToString(xsg));
+}
+
+function svgXmlToDataUri(xml: string): string {
+    return "data:image/svg+xml;base64," + ts.pxtc.encodeBase64(unescape(encodeURIComponent(xml)));
 }
 
 let imageXLinkCache: pxt.Map<string>;

@@ -253,6 +253,8 @@ namespace pxsim {
             packageId?: string;
             package?: string;
             snippetMode?: boolean;
+            // only send back the svg: no png and no data uri (uri stays undefined)
+            svgOnly?: boolean;
         }
     }
 
