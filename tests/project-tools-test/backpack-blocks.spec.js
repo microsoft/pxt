@@ -392,13 +392,18 @@ describe("Backpack native clipboard serialization", function () {
                 this.setOutput(true);
             } };
             const asset = append(sourceWorkspace, { type: "asset_field_test" });
+            const standaloneKind = backpack.getBackpackCaptureKind(asset);
             asset.setShadow(true);
             asset.setMovable(false);
             const acceptedShadow = backpack.isBackpackBlock(asset);
+            const shadowKind = backpack.getBackpackCaptureKind(asset);
             asset.setEditable(false);
-            return { loop: backpack.isBackpackBlock(loop), acceptedShadow, readOnly: backpack.isBackpackBlock(asset) };
+            return { loop: backpack.isBackpackBlock(loop), acceptedShadow, standaloneKind, shadowKind,
+                readOnly: backpack.isBackpackBlock(asset) };
         });
-        assert.deepStrictEqual(result, { loop: true, acceptedShadow: true, readOnly: false });
+        assert.deepStrictEqual(result, {
+            loop: true, acceptedShadow: true, standaloneKind: "asset", shadowKind: "asset", readOnly: false
+        });
     });
 
     it("rejects oversized data before pasting and rolls back failed native loads", async () => {
