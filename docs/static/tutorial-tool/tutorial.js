@@ -299,7 +299,7 @@ function loadIframe(selected) {
         for (var _a = 0, _b = target.endpoints; _a < _b.length; _a++) {
             var endpoint = _b[_a];
             if (!selected || selected === target.name + "-" + endpoint.name) {
-                iframe.setAttribute("src", endpoint.url);
+                iframe.setAttribute("src", withLocale(endpoint.url));
                 selectedEndpoint = target.name + "-" + endpoint.name;
                 selectedId = target.id;
                 selectedTarget = target;
@@ -309,4 +309,20 @@ function loadIframe(selected) {
     }
     // Load first target
     loadIframe(null);
+}
+// The legacy tool does not load the PXT localization runtime, so mirror only
+// explicit language requests when it embeds an editor. The editor keeps its
+// own saved-language and target-default fallback otherwise.
+function withLocale(endpoint) {
+    var url = new URL(endpoint, window.location.href);
+    if (url.searchParams.has("lang") || url.searchParams.has("forcelang"))
+        return url.toString();
+    var hostUrl = new URL(window.location.href);
+    var hostParams = hostUrl.searchParams;
+    var hashParams = new URLSearchParams(hostUrl.hash.slice(1));
+    var forcedLanguage = hostParams.get("forcelang") || hashParams.get("forcelang");
+    var requestedLanguage = forcedLanguage || hostParams.get("lang") || hashParams.get("lang");
+    if (requestedLanguage)
+        url.searchParams.set(forcedLanguage ? "forcelang" : "lang", requestedLanguage);
+    return url.toString();
 }

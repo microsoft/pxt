@@ -1197,6 +1197,7 @@ namespace ts.pxtc.Util {
         baseUrl: string;
         code: string;
         force?: boolean;
+        translationKind?: TranslationsKind;
     }
 
     export function updateLocalizationAsync(opts: LocalizationUpdateOptions): Promise<void> {
@@ -1218,12 +1219,18 @@ namespace ts.pxtc.Util {
 
         const liveUpdateStrings = pxt.Util.liveLocalizationEnabled()
         return downloadTranslationsAsync(targetId, baseUrl, code, liveUpdateStrings,
-            ts.pxtc.Util.TranslationsKind.Editor)
+            opts.translationKind || ts.pxtc.Util.TranslationsKind.Editor)
             .then((translations) => {
                 if (translations) {
                     setUserLanguage(code);
                     pxt.analytics?.addDefaultProperties({ lang: code }); //set the new language in analytics.
                     setLocalizedStrings(translations);
+                }
+
+                // Tutorial Tool has no API surface, so avoid delaying its startup
+                // with an unused API catalog request.
+                if (opts.translationKind === ts.pxtc.Util.TranslationsKind.TutorialTool) {
+                    return;
                 }
 
                 // Download api translations
@@ -1243,7 +1250,8 @@ namespace ts.pxtc.Util {
         Editor,
         Sim,
         Apis,
-        SkillMap
+        SkillMap,
+        TutorialTool
     }
 
     export function downloadTranslationsAsync(targetId: string, baseUrl: string, code: string, live: boolean, translationKind?: TranslationsKind): Promise<pxt.Map<string>> {
@@ -1276,6 +1284,13 @@ namespace ts.pxtc.Util {
                     { staticName: "strings.json", path: "strings.json" },
                     { staticName: "target-strings.json", path: targetId + "/target-strings.json" },
                     { staticName: "skillmap-strings.json", path: "/skillmap-strings.json" },
+                ];
+                break;
+            case TranslationsKind.TutorialTool:
+                stringFiles = [
+                    { staticName: "strings.json", path: "strings.json" },
+                    { staticName: "target-strings.json", path: targetId + "/target-strings.json" },
+                    { staticName: "tutorialtool-strings.json", path: "/tutorialtool-strings.json" },
                 ];
                 break;
         }

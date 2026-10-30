@@ -332,7 +332,7 @@ function loadIframe(selected: string) {
     for (const target of targets) {
         for (const endpoint of target.endpoints) {
             if (!selected || selected === `${target.name}-${endpoint.name}`) {
-                iframe.setAttribute("src", endpoint.url);
+                iframe.setAttribute("src", withLocale(endpoint.url));
                 selectedEndpoint = `${target.name}-${endpoint.name}`;
                 selectedId = target.id;
                 selectedTarget = target;
@@ -343,4 +343,21 @@ function loadIframe(selected: string) {
 
     // Load first target
     loadIframe(null);
+}
+
+// The legacy tool does not load the PXT localization runtime, so mirror its
+// language selection inputs when it embeds an editor.
+function withLocale(endpoint: string): string {
+    const url = new URL(endpoint, window.location.href);
+    if (url.searchParams.has("lang") || url.searchParams.has("forcelang")) return url.toString();
+
+    const hostUrl = new URL(window.location.href);
+    const hostParams = hostUrl.searchParams;
+    const hashParams = new URLSearchParams(hostUrl.hash.slice(1));
+    const forcedLanguage = hostParams.get("forcelang") || hashParams.get("forcelang");
+    const requestedLanguage = forcedLanguage || hostParams.get("lang") || hashParams.get("lang");
+    if (requestedLanguage) {
+        url.searchParams.set(forcedLanguage ? "forcelang" : "lang", requestedLanguage);
+    }
+    return url.toString();
 }
