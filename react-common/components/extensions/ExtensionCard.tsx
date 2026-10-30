@@ -38,10 +38,13 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
     }
 
     const id = pxt.Util.guidGen();
-    const cardLabel = installed ? lf("Installed") : label;
+    const cardLabel = installed
+        ? <><i className="fas fa-cog" aria-hidden={true} /> {lf("Installed")}</>
+        : label;
+    const cardLabelText = installed ? lf("Installed") : label;
     const cardLabelClass = installed ? classList("installed", labelClass) : labelClass;
     const descriptionId = id + "-description";
-    const statusId = cardLabel ? id + "-status" : undefined;
+    const statusId = cardLabelText ? id + "-status" : undefined;
 
     return <>
         <Card
@@ -63,7 +66,7 @@ export const ExtensionCard = <U,>(props: ExtensionCardProps<U>) => {
                             {description}
                         </div>
                     </div>
-                    {cardLabel && <div id={statusId} className="sr-only">{cardLabel}</div>}
+                    {cardLabelText && <div id={statusId} className="sr-only">{cardLabelText}</div>}
                     {(showDisclaimer || learnMoreUrl) &&
                         <div className="common-extension-card-extra-content">
                             {showDisclaimer && lf("User-provided extension, not endorsed by Microsoft.")}

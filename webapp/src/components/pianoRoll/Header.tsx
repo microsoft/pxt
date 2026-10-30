@@ -1,6 +1,10 @@
+import { useState } from "react";
 import { Checkbox } from "../../../../react-common/components/controls/Checkbox";
 import { Dropdown, DropdownItem } from "../../../../react-common/components/controls/Dropdown";
-import { Song, lf, isDrumInstrument, NOTE_RANGES, SNAP_OPTIONS } from "./types";
+import { DropdownModal } from "../../../../react-common/components/controls/DropdownModal";
+import { MenuDropdown, MenuItem } from "../../../../react-common/components/controls/MenuDropdown";
+import { AssetNameModal } from "./AssetNameModal";
+import { Song, lf, isDrumInstrument, NOTE_RANGES, SNAP_OPTIONS, TIME_SIGNATURES } from "./types";
 
 interface Props {
     song: Song;
@@ -8,6 +12,10 @@ interface Props {
     velocityEditorVisible: boolean;
     snapTicks: number;
     showSnapControls: boolean;
+    showTimeSignature: boolean;
+    selectedTimeSignature: string;
+    showAssetName: boolean;
+    assetName?: string;
 
     onTrackSelected(trackId: number): void;
     onTrackCreated(): void;
@@ -16,6 +24,8 @@ interface Props {
     onOctavesChanged(minOctave: number, maxOctave: number): void;
     onVelocityEditorToggle(): void;
     onSnapChanged(snapTicks: number): void;
+    onTimeSignatureChanged: (newTimeSignature: string) => void;
+    onAssetNameChanged: (newAssetName: string) => void;
 }
 
 export const Header = (props: Props) => {
@@ -25,14 +35,32 @@ export const Header = (props: Props) => {
         velocityEditorVisible,
         snapTicks,
         showSnapControls,
+        showTimeSignature,
+        selectedTimeSignature,
+        showAssetName,
+        assetName,
+        onAssetNameChanged,
         onVelocityEditorToggle,
         onTrackSelected,
         onInstrumentSelected,
         onTrackCreated,
         onTrackDeleted,
         onOctavesChanged,
-        onSnapChanged
+        onSnapChanged,
+        onTimeSignatureChanged
     } = props;
+
+    const [modal, setModal] = useState<
+        "change-octave-range" |
+        "change-snap" |
+        "change-time-signature" |
+        "change-asset-name" |
+        undefined
+    >();
+
+    const closeModal = () => {
+        setModal(undefined);
+    };
 
     const onTrackDropdownChange = (id: string) => {
         if (id === "new-track") {
@@ -109,9 +137,108 @@ export const Header = (props: Props) => {
         id: option.id
     }));
 
+    const overflowMenuItems: MenuItem[] = [];
+
+    overflowMenuItems.push(
+        {
+            role: "menuitemcheckbox",
+            label: lf("Velocity Editor"),
+            isChecked: velocityEditorVisible,
+            onChange: () => onVelocityEditorToggle(),
+            id: "show-velocity-editor"
+        }
+    );
+
+    if (!isDrum) {
+        overflowMenuItems.push(
+            {
+                role: "menuitem",
+                title: lf("Octave Range…"),
+                label: lf("Octave Range…"),
+                id: "change-octave-range",
+                onClick: () => setModal("change-octave-range")
+            }
+        );
+    }
+
+    if (showSnapControls) {
+        overflowMenuItems.push(
+            {
+                role: "menuitem",
+                label: lf("Snap…"),
+                title: lf("Snap…"),
+                id: "change-snap",
+                onClick: () => setModal("change-snap")
+            }
+        );
+    }
+
+    if (showTimeSignature) {
+        overflowMenuItems.push(
+            {
+                role: "menuitem",
+                label: lf("Time Signature…"),
+                title: lf("Time Signature…"),
+                id: "change-time-signature",
+                onClick: () => setModal("change-time-signature")
+            }
+        );
+    }
+
+    if (showAssetName) {
+        overflowMenuItems.push(
+            {
+                role: "menuitem",
+                label: lf("Asset Name…"),
+                title: lf("Asset Name…"),
+                id: "change-asset-name",
+                onClick: () => setModal("change-asset-name")
+            }
+        );
+    }
+
+    const timeSignatures: DropdownItem[] = TIME_SIGNATURES.map(ts => ({
+        label: ts.name,
+        title: ts.name,
+        id: ts.id
+    }));
 
     return (
         <div className="header">
+            { modal === "change-octave-range" &&
+                <DropdownModal
+                    id="change-octave-range"
+                    items={rangeOptions}
+                    selectedId={selectedRangeId}
+                    onItemSelected={handleRangeDropdownChange}
+                    onClose={closeModal}
+                />
+            }
+            { modal === "change-snap" &&
+                <DropdownModal
+                    id="change-snap"
+                    items={snapOptions}
+                    selectedId={snapTicksToId(snapTicks)}
+                    onItemSelected={(id) => onSnapChanged(snapIdToTicks(id))}
+                    onClose={closeModal}
+                />
+            }
+            { modal === "change-time-signature" &&
+                <DropdownModal
+                    id="change-time-signature"
+                    items={timeSignatures}
+                    selectedId={selectedTimeSignature}
+                    onItemSelected={onTimeSignatureChanged}
+                    onClose={closeModal}
+                />
+            }
+            { modal === "change-asset-name" &&
+                <AssetNameModal
+                    assetName={assetName}
+                    onAssetNameChanged={onAssetNameChanged}
+                    onClose={closeModal}
+                />
+            }
             <Dropdown
                 id="track-select"
                 items={trackDropdownOptions}
@@ -131,8 +258,8 @@ export const Header = (props: Props) => {
                 onItemSelected={onInstrumentDropdownChange}
             />
             {!isDrum &&
-                <div className="octave-controls">
-                    <div className="music-editor-label">
+                <div className="octave-controls mobile-hidden">
+                    <div className="music-editor-label tablet-hidden">
                         {lf("Range:")}
                     </div>
                     <Dropdown
@@ -144,6 +271,7 @@ export const Header = (props: Props) => {
                 </div>
             }
             <Checkbox
+                className="mobile-hidden velocity-editor-toggle"
                 id="velocity-editor-toggle"
                 label={lf("Show Velocity Editor")}
                 isChecked={velocityEditorVisible}
@@ -152,17 +280,26 @@ export const Header = (props: Props) => {
             <div className="spacer" />
             {showSnapControls &&
                 <>
-                    <div className="music-editor-label">
+                    <div className="music-editor-label mobile-hidden">
                         {lf("Snap:")}
                     </div>
                     <Dropdown
                         id="snap-select"
+                        className="mobile-hidden"
                         items={snapOptions}
                         selectedId={snapTicksToId(snapTicks)}
                         onItemSelected={(id) => onSnapChanged(snapIdToTicks(id))}
                     />
                 </>
             }
+
+            <MenuDropdown
+                className="mobile-only"
+                id="overflow-menu"
+                items={overflowMenuItems}
+                icon="fas fa-ellipsis-v"
+                title={lf("More Options")}
+            />
         </div>
     );
 }

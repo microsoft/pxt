@@ -60,6 +60,18 @@ class Sprite {
     }
 }
 
+namespace testTypes {
+    //% blockId=test_all_sprites block="all sprites"
+    export function allSprites(): Sprite[] {
+        return [];
+    }
+
+    //% blockId=test_undefined_value block="undefined"
+    export function undefinedValue(): undefined {
+        return undefined;
+    }
+}
+
 //% blockNamespace="statusbars"
 //% blockGap=8
 class StatusBarSprite extends Sprite {

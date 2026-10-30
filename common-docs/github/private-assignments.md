@@ -12,7 +12,7 @@ This collaboration method is quite similar to the way professional developers us
 #### Public repositories
 
 Using **public** repositories simplifies a lot the configuration phase for the assignments.
-If it is acceptable for the code to be publically available on [GitHub](https://github.com), 
+If it is acceptable for the code to be publicly available on [GitHub](https://github.com), 
 we recommend using the [public assignments](/github/public-assignments).
 
 ### ~

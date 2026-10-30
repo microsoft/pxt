@@ -87,7 +87,7 @@ Block | blocks used, search, collapse, expand, delete, format, screenshot,help, 
 Editor tools| Rename, download, save, undo, zoomIn, zoomOut, startStopSimulator, restart, trace, toggleCollapse
 Menu | Javascript tab, Blocks tab, open, add package, reset, report abuse, gettingstarted, about, high contrast etc
 Typescript | keep text, discard text, toolbox click, item click, item drag
-Projects | new porject, rename, import, import url, tutorials
+Projects | new project, rename, import, import url, tutorials
 Simulator | Start, stop, restart, fullscreen, screen, mute, make, screenshot
 Hex files | import success\failure,
 Share | publish, facebook, twitter

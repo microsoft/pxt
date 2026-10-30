@@ -1,5 +1,21 @@
 # Microsoft MakeCode Blog
 
+## [A Decade of Making and Coding](/blog/10th-anniversary)
+
+September 25th, 2026 by [Jaqster](https://github.com/jaqster)
+
+Happy 10th Birthday Microsoft MakeCode! This month, we're celebrating this 10-year milestone to reflect on the impact MakeCode has made, to thank the community and partners who made it possible...
+
+**[Continue reading this blog post](/blog/10th-anniversary)**
+
+## [MakeCode Arcade August 2026 Update](/blog/arcade/update-aug-2026)
+
+August 31st, 2026 by [Jaqster](https://github.com/jaqster)
+
+Two updates in one year?! Well, what was supposed to be a simple default theme change turned into  a full version update!
+
+**[Continue reading this blog post](/blog/arcade/update-aug-2026)**
+
 ## [MakeCode for the micro:bit 2026 – Accessible Blocks are here!](/blog/microbit/2026-release)
 
 July 13, 2026 by [Jaqster](https://github.com/jaqster)
@@ -361,7 +377,7 @@ Ringing in the New Year with a New Release! The MakeCode team is very happy and 
 
 December 19th, 2019 by [Pelikhan](https://github.com/pelikhan)
 
-The latest episode of our GitHub intergration - streamlining the hosting of code
+The latest episode of our GitHub integration - streamlining the hosting of code
 in GitHub inside of MakeCode!
 **[Continue reading this blog post](/blog/makecode-with-github)**
 

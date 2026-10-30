@@ -1,0 +1,441 @@
+/// <reference path="../../built/pxtcompiler.d.ts"/>
+
+import * as chai from "chai";
+
+/**
+ * Expectations over the ARM Thumb assembly listing produced for each case
+ * program in tests/thumb-test/cases.
+ *
+ * A case file named <name>.ts is checked by the entry keyed "<name>.ts" in
+ * `asmChecks` below. A case with no entry fails, so that adding a program
+ * without an expectation is not silently a no-op.
+ */
+
+export type AsmCheck = (asm: string, res: pxtc.CompileResult) => void;
+
+// --- helpers -------------------------------------------------------------
+
+/** True when `name` appears as a label definition, e.g. "_main___P1:". */
+export function hasLabel(asm: string, name: string): boolean {
+    return new RegExp("^\\s*" + escapeRegExp(name) + ":", "m").test(asm);
+}
+
+/** True when `name` appears anywhere in the listing as a whole token. */
+export function mentions(asm: string, name: string): boolean {
+    return new RegExp("(^|[^A-Za-z0-9_])" + escapeRegExp(name) + "([^A-Za-z0-9_]|$)").test(asm);
+}
+
+/** Number of matches of a global regex in the listing. */
+export function countMatches(asm: string, re: RegExp): number {
+    const g = re.global ? re : new RegExp(re.source, re.flags + "g");
+    const m = asm.match(g);
+    return m ? m.length : 0;
+}
+
+/**
+ * Bytes of code generated for the program, from the size stats header that
+ * target.switches.size adds to the listing. This excludes the fixed runtime
+ * image, so it tracks codegen rather than the size of the hex template.
+ */
+export function codeSize(asm: string): number {
+    const m = /^; generated code sizes \(bytes\): (\d+)/m.exec(asm);
+    chai.assert(!!m, "no code size stats in listing (is target.switches.size set?)");
+    return parseInt(m[1], 10);
+}
+
+/** Bytes of the emitted Intel hex text. */
+export function hexSize(res: pxtc.CompileResult): number {
+    const hex = res.outfiles[pxtc.BINARY_HEX];
+    chai.assert(!!hex, "no " + pxtc.BINARY_HEX + " in compile result");
+    return hex.length;
+}
+
+/** Fails if any of `names` occurs in the listing. */
+export function assertAbsent(asm: string, names: string[]) {
+    for (const n of names)
+        chai.assert(!mentions(asm, n), "listing unexpectedly mentions " + n);
+}
+
+/** Fails if `re` matches the listing. */
+export function assertNoMatch(asm: string, re: RegExp, what: string) {
+    const n = countMatches(asm, re);
+    chai.assert(n === 0, "listing unexpectedly contains " + n + " " + what);
+}
+
+/** Fails unless `re` matches the listing at least `min` times. */
+export function assertAtLeast(asm: string, re: RegExp, min: number, what: string) {
+    const n = countMatches(asm, re);
+    chai.assert(n >= min, "expected at least " + min + " " + what + ", found " + n);
+}
+
+/** Fails unless `re` matches the listing at most `max` times. */
+export function assertAtMost(asm: string, re: RegExp, max: number, what: string) {
+    const n = countMatches(asm, re);
+    chai.assert(n <= max, "expected at most " + max + " " + what + ", found " + n);
+}
+
+/**
+ * Listing up to _code_end: the program's own code, without the appended
+ * runtime helper text (whose bodies make their own C++ fallback calls).
+ */
+export function userCode(asm: string): string {
+    const i = asm.search(/^_code_end:/m);
+    chai.assert(i >= 0, "no _code_end marker in listing");
+    return asm.substr(0, i);
+}
+
+/**
+ * Fails unless `actual` is within `pct` percent of `expected`. Bands are wide
+ * on purpose: they catch silent large regressions in either direction without
+ * turning every codegen tweak into a test edit.
+ */
+export function assertWithin(actual: number, expected: number, pct: number, what: string) {
+    const lo = Math.floor(expected * (1 - pct / 100));
+    const hi = Math.ceil(expected * (1 + pct / 100));
+    chai.assert(actual >= lo && actual <= hi,
+        what + " is " + actual + ", outside the band " + lo + ".." + hi +
+        " (baseline " + expected + ", +/-" + pct + "%)");
+}
+
+function escapeRegExp(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// --- per-case expectations -----------------------------------------------
+//
+// The *baseline cases pin the emitted codegen in both directions: which
+// helpers the listing must contain and which it must not. Where an opt-out
+// compile switch exists, a `variantChecks` entry below compiles the same case
+// with the switch set and pins the codegen it restores; a mismatch in either
+// half is the signal. Helper and label names here are a naming contract with
+// the codegen -- renaming an emitted label means updating these patterns in
+// the same change.
+
+export const asmChecks: pxt.Map<AsmCheck> = {
+
+    "defaultparameters.ts": (asm, res) => {
+        chai.assert(hexSize(res) > 0, "empty default parameter hex output");
+        checkDefaultParameters(asm);
+        chai.assert(/DpProbe_exact__P\d+_iface:\s+b DpProbe_exact__P\d+_nochk/.test(asm),
+            "exact interface entry must reach the common default prologue");
+    },
+
+    "loopcapture.ts": (asm, res) => {
+        chai.assert(hexSize(res) > 0, "empty loop capture hex output");
+        const code = userCode(asm);
+        const functionBody = (name: string): string => {
+            const match = new RegExp("^" + name + "__P\\d+:([\\s\\S]*?)^" + name + "__P\\d+_end:", "m").exec(code);
+            chai.assert(!!match, "missing function " + name);
+            return match[1];
+        };
+        const allocations = (body: string): number => countMatches(body, /bl pxtrt::mklocRef/g);
+        const classic = functionBody("captureFor");
+        const top = /^\.fortop\.(\d+):/m.exec(classic);
+        chai.assert(!!top, "missing classic for header");
+        const cont = classic.indexOf(".cont." + top[1] + ":");
+        const end = classic.indexOf(".brk." + top[1] + ":");
+        chai.assert(cont > top.index && end > cont, "incorrect classic for label order");
+        chai.assert.equal(allocations(classic.slice(0, top.index)), 2,
+            "initializer box and first iteration box");
+        chai.assert.equal(allocations(classic.slice(top.index, cont)), 0,
+            "body closures must share the condition's box");
+        const backEdge = classic.slice(cont, end);
+        chai.assert.equal(allocations(backEdge), 1, "new box on the continue/increment path");
+        chai.assert(new RegExp("\\bb \\.cont\\." + top[1] + "\\b").test(classic),
+            "explicit continue must reach the renewal path");
+        chai.assert(new RegExp("\\bb \\.fortop\\." + top[1] + "\\b").test(backEdge),
+            "increment must return to the condition");
+        chai.assert(/bl pxtrt::mklocRef[\s\S]*?push \{r0\}; tmpstore[\s\S]*?bl pxtrt::ldlocRef[\s\S]*?bl pxtrt::stlocRef[\s\S]*?pop \{r0\} ; tmpref[\s\S]*?str r0, \[sp, locals@\d+\][\s\S]*?bl _numops_adds/.test(backEdge),
+            "root and populate the new box before replacing the local and incrementing");
+
+        const forOf = functionBody("captureForOf");
+        const elementLoop = /^\.fortop\.\d+:([\s\S]*?)^\.cont\.\d+:/m.exec(forOf);
+        chai.assert(!!elementLoop, "missing for-of loop");
+        chai.assert.equal(allocations(forOf), 2, "for-of declaration and per-element boxes");
+        chai.assert.equal(allocations(elementLoop[1]), 1, "fresh for-of box inside the loop");
+        chai.assert(/beq \.brk\.\d+[\s\S]*?bl pxtrt::mklocRef[\s\S]*?bl Array_::getAt[\s\S]*?bl pxtrt::stlocRef[\s\S]*?bl pxt::mkAction/.test(elementLoop[1]),
+            "initialize the fresh box after the length check and before capturing it");
+        chai.assert.equal(allocations(functionBody("plainLoop")), 0, "uncaptured loops need no boxes");
+        chai.assert.equal(allocations(functionBody("constCapture")), 0, "immutable for-of captures need no boxes");
+
+        const hoisted = functionBody("captureHoisted");
+        const hoistedBody = /^\.fortop\.\d+:([\s\S]*?)^\.cont\.\d+:/m.exec(hoisted);
+        chai.assert(!!hoistedBody, "missing hoisted capture loop");
+        chai.assert.equal(countMatches(hoisted, /bl pxt::mkAction/g), 1, "one hoisted action allocation site");
+        chai.assert(/beq \.brk\.\d+[\s\S]*?bl pxt::mkAction[\s\S]*?bl pxtrt::stclo[\s\S]*?bl Array_::push/.test(hoistedBody[1]),
+            "instantiate the hoisted function inside each iteration, before its first use");
+    },
+
+    "boolbaseline.ts": (asm) => {
+        // Boolean condition lowering emits thumb fast paths for the boolean
+        // conversion runtime calls.
+        for (const helper of ["_numops_toBool", "_numops_toBoolDecr",
+            "_pxt_fromBool", "_pxt_boolean_bang"])
+            chai.assert(hasLabel(asm, helper), "no " + helper + " helper in listing");
+
+        const code = userCode(asm);
+
+        // Every condition site narrows through the fast path; nothing in the
+        // program still calls the C++ entry point directly.
+        assertAtLeast(code, /bl _numops_toBoolDecr/g, 8, "calls to _numops_toBoolDecr");
+        assertNoMatch(code, /bl numops::toBoolDecr/g, "calls to numops::toBoolDecr");
+
+        // `&&` / `||` in condition position short-circuit to a raw 0/1 instead
+        // of building a tagged boolean. numops::toBool is only reached from
+        // that boxed path, so neither entry point is called at all.
+        assertNoMatch(code, /bl (numops::toBool|_numops_toBool)\b/g,
+            "calls to a toBool entry point");
+
+        // `!` in condition position is raw-in / raw-out, so its result is no
+        // longer re-tagged. The one remaining fromBool is the single `!` this
+        // case uses in value position (an argument), which must still box.
+        assertAtLeast(code, /bl _pxt_boolean_bang/g, 5, "calls to _pxt_boolean_bang");
+        assertAtMost(code, /bl (pxt::fromBool|_pxt_fromBool)\b/g, 1,
+            "calls to a fromBool entry point");
+
+        // No index-signature store in this program, so the map-set fast path
+        // must not be emitted (it is demand-driven).
+        assertAbsent(asm, ["_pxt_map_set_by_string"]);
+    },
+
+    "ifacebaseline.ts": (asm) => {
+        const code = userCode(asm);
+
+        // Shared iface-call thunks. The case dispatches one getter and one
+        // method through the same iface index often enough to clear the
+        // per-(index, numargs, getset) threshold, so both buckets get a thunk
+        // and every counted call site branches to one.
+        assertAtLeast(asm, /^\s*\S*ifacecall\d+_\S*_i\d+\S*:/gm, 2,
+            "interface call thunk definitions");
+        assertAtLeast(code, /bl \S*ifacecall\d+_\S*_i\d+\S*/g, 10,
+            "calls to an interface call thunk");
+
+        // Object-literal stores of one repeated key collapse onto a per-field
+        // helper, so the generic pxtrt::mapSet no longer appears at any store
+        // site -- only inside the helper body, which lives past _code_end.
+        assertAtLeast(asm, /^\s*\S*mapset_i\d+\S*:/gm, 1,
+            "object-literal store helper definitions (mapset_i)");
+        assertAtLeast(code, /bl \S*mapset_i\d+\S*/g, 4,
+            "calls to an object-literal store helper");
+        assertNoMatch(code, /bl pxtrt::mapSet\b/g, "inline generic pxtrt::mapSet calls");
+
+        // Vtable wrapper-skip: the two `scale` implementations are reached
+        // only through iface entries whose call sites all pass a full arg
+        // list, so their iface table slots point at _iface (b _nochk).
+        assertAtLeast(asm, /^\s*\S*_iface:/gm, 2, "_iface: proc labels");
+
+        // Typed string index-signature stores go through the thumb fast path
+        // instead of pxtrt::mapSetGeneric.
+        chai.assert(hasLabel(asm, "_pxt_map_set_by_string"),
+            "no _pxt_map_set_by_string helper in listing");
+        assertAtLeast(code, /bl _pxt_map_set_by_string/g, 2,
+            "calls to _pxt_map_set_by_string");
+        assertNoMatch(code, /bl pxtrt::mapSetGeneric/g, "generic map store calls");
+
+        // The program still reaches the generic map runtime for the paths that
+        // are not specialized (reads, key lookup, and the helper bodies).
+        assertAtLeast(asm, /bl pxtrt::(mapGet|mapSet|lookupMapKey)/g, 4,
+            "generic map runtime calls");
+
+        // Checked-field-load helpers do NOT fire on this case: every `.size`
+        // read here has an interface-typed receiver, so it lowers to iface
+        // dispatch rather than a checked FieldAccess. Pinned at zero so that a
+        // change making those reads direct field loads shows up here.
+        assertNoMatch(asm, /ldfldchk_/g, "checked-field-load helpers (ldfldchk_)");
+    },
+
+    "fieldbaseline.ts": (asm) => {
+        const code = userCode(asm);
+
+        // qzTally sits above the count gate, so its six checked reads collapse
+        // onto one ldfldchk_ helper: the validate+load sequence moves into the
+        // helper body and every read site becomes a bl to it.
+        assertAtLeast(asm, /^\s*\S*ldfldchk_\S*qzTally\S*:/gm, 1,
+            "checked-field-load helper definitions for qzTally");
+        assertAtLeast(code, /bl \S*ldfldchk_\S*qzTally\S*/g, 6,
+            "calls to the qzTally checked-field-load helper");
+        assertNoMatch(code, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g,
+            "inline checked loads of qzTally");
+
+        // qzSpare sits below the gate and keeps its inline checked loads.
+        assertNoMatch(asm, /ldfldchk_\S*qzSpare/g,
+            "checked-field-load helpers for qzSpare");
+        assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #8\]/g, 4,
+            "inline checked loads of qzSpare");
+    },
+
+    "sizebaseline.ts": (asm, res) => {
+        chai.assert(hexSize(res) > 0, "empty hex output");
+        // Baseline measured on this fixture; see assertWithin on why the band
+        // is wide.
+        assertWithin(codeSize(asm), 5592, 15, "generated code size");
+    },
+};
+
+// --- switch variants -----------------------------------------------------
+
+function checkDefaultParameters(asm: string) {
+    const code = userCode(asm);
+    const procedure = (name: string): string => {
+        const match = new RegExp("^" + name + "__P\\d+_pre:([\\s\\S]*?); endfun", "m").exec(code);
+        chai.assert(!!match, "missing procedure " + name);
+        return match[1];
+    };
+    for (const name of ["DpProbe_padded", "DpProbe_exact", "DpProbe_capture", "DpCtor_constructor"]) {
+        const body = procedure(name);
+        // Tagged undefined is 0, so the omitted-argument guard is an inline
+        // compare against zero. A runtime call here is a regression.
+        assertNoMatch(body, /bl pxt::eqq_bool/g, name + " runtime call in the undefined guard");
+        chai.assert.equal(countMatches(body, /bne \.defaultarg_/g), 1, name + " inline undefined guard");
+        chai.assert(/_nochk:[\s\S]*?cmp r0, #0\s+bne \.defaultarg_/.test(body),
+            name + " must guard the default with an inline compare in the shared body");
+    }
+    chai.assert(/_args:[\s\S]*?bl _expand_args_2_\d+[\s\S]*?bl DpProbe_padded__P\d+_nochk/.test(procedure("DpProbe_padded")),
+        "short dynamic calls must pad arguments then reach the default prologue");
+    chai.assert(/bl pxtrt::ldlocRef\s+cmp r0, #0\s+bne \.defaultarg_[\s\S]*?movs r1, #23[\s\S]*?bl pxtrt::stlocRef[\s\S]*?bl pxt::mkAction/.test(procedure("DpProbe_capture")),
+        "default must update the rooted parameter box before creating its closure");
+    chai.assert(/cmp r0, #0\s+bne \.defaultarg_[\s\S]*?movs r0, #27\s+str r0, \[sp, args@1\][\s\S]*?str r1, \[r0, #4\]/.test(procedure("DpCtor_constructor")),
+        "constructor default must precede the parameter-property store");
+    assertNoMatch(procedure("dpPlain"), /defaultarg|bl pxt::eqq_bool/g, "default guards in a plain function");
+    assertNoMatch(code, /^dpShim__P\d+:/gm, "emitted TypeScript body for a native shim");
+}
+
+/**
+ * A case compiled a second time with extra compile switches and checked
+ * against different expectations -- the opt-out half of the differential
+ * pair described above asmChecks.
+ */
+export interface VariantCheck {
+    /** Case file in tests/thumb-test/cases. */
+    caseFile: string;
+    /** Merged over the case's normal switches. */
+    switches: pxtc.CompileSwitches;
+    /** Names the variant in the test title; keep it short. */
+    label: string;
+    check: AsmCheck;
+}
+
+export const variantChecks: VariantCheck[] = [
+
+    {
+        caseFile: "defaultparameters.ts",
+        switches: { noIfaceSpec: true },
+        label: "noIfaceSpec",
+        check: (asm) => {
+            checkDefaultParameters(asm);
+            assertNoMatch(asm, /^DpProbe_exact__P\d+_iface:/gm, "exact interface entry without specialization");
+        },
+    },
+
+    {
+        caseFile: "defaultparameters.ts",
+        switches: { slowMethods: true },
+        label: "slowMethods",
+        check: checkDefaultParameters,
+    },
+
+    {
+        caseFile: "ifacebaseline.ts",
+        switches: { noIfaceSpec: true },
+        label: "noIfaceSpec",
+        check: (asm) => {
+            // The program does reach the generic interface/map runtime entries.
+            assertAtLeast(asm, /bl pxtrt::(mapGet|mapSet|lookupMapKey)/g, 4,
+                "generic map runtime calls");
+
+            // Every object-literal store is an inline generic mapSet again,
+            // rather than a call to a per-field helper.
+            assertAtLeast(userCode(asm), /bl pxtrt::mapSet\b/g, 4,
+                "inline generic pxtrt::mapSet calls");
+
+            // Specializations introduced by interface dispatch specialization.
+            // Absent here: every access goes through the generic runtime path,
+            // and no unreferenced helper text is emitted.
+            assertAbsent(asm, [
+                "_pxt_map_set_by_string",
+            ]);
+            assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
+            assertNoMatch(asm, /ifacecall\d+_.*_i\d+/g, "interface call thunks");
+            assertNoMatch(asm, /mapset_i/g, "specialized map-store thunks (mapset_i)");
+            assertNoMatch(asm, /^\s*\S*_iface:/gm, "_iface: proc labels");
+        },
+    },
+
+    {
+        caseFile: "fieldbaseline.ts",
+        switches: { noIfaceSpec: true },
+        label: "noIfaceSpec",
+        check: (asm) => {
+            // Both fields keep their inline checked loads (validate + load at
+            // the field's offset), and no helper of any kind is emitted.
+            assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #4\]/g, 6,
+                "inline checked loads of qzTally");
+            assertAtLeast(asm, /bl _inst_QzCell\S*_validate\S*\n\s*ldr r0, \[r0, #8\]/g, 4,
+                "inline checked loads of qzSpare");
+            assertNoMatch(asm, /ldfldchk_/g, "checked-field-load thunks (ldfldchk_)");
+        },
+    },
+
+    {
+        caseFile: "boolbaseline.ts",
+        switches: { noBoolLower: true },
+        label: "noBoolLower",
+        check: (asm) => {
+            // Conditions are materialized as tagged values and narrowed by a
+            // call into the runtime at each test site.
+            assertAtLeast(asm, /bl numops::toBoolDecr/g, 12, "calls to numops::toBoolDecr");
+
+            // The thumb fast paths are neither emitted nor called.
+            assertAbsent(asm, [
+                "_numops_toBool",
+                "_numops_toBoolDecr",
+                "_pxt_fromBool",
+                "_pxt_boolean_bang",
+            ]);
+        },
+    },
+];
+
+// --- external case programs ----------------------------------------------
+
+/**
+ * Semantic case programs that live outside tests/thumb-test/cases. These are
+ * lang-test0 files that the compile-test suite executes on the JS backend;
+ * compiling them here proves the same source also survives the native emitter
+ * and the thumb assembler, and makes them available as an on-device payload.
+ *
+ * Keys are paths relative to the repository root. The runner prepends the
+ * lang-test0 prelude, which supplies assert() and msg().
+ *
+ * The expectations are deliberately light. These programs assert language
+ * semantics rather than codegen shape, so the check here is only that the
+ * emitter produced real code for them.
+ */
+export const externalCases: pxt.Map<AsmCheck> = {
+
+    "tests/compile-test/lang-test0/59defaultinitializers.ts": (asm, res) => {
+        chai.assert(codeSize(asm) > 0, "no default initializer code generated");
+        chai.assert(hexSize(res) > 0, "no default initializer hex generated");
+    },
+
+    "tests/compile-test/lang-test0/58loopcapture.ts": (asm, res) => {
+        chai.assert(codeSize(asm) > 0, "no loop capture code generated");
+        chai.assert(hexSize(res) > 0, "no loop capture hex generated");
+    },
+
+    "tests/compile-test/lang-test0/54conditiontruthiness.ts": (asm) => {
+        chai.assert(codeSize(asm) > 0, "no code generated");
+    },
+
+    "tests/compile-test/lang-test0/55conditionlowering.ts": (asm) => {
+        chai.assert(codeSize(asm) > 0, "no code generated");
+    },
+
+    "tests/compile-test/lang-test0/56ifacedispatch.ts": (asm) => {
+        chai.assert(codeSize(asm) > 0, "no code generated");
+    },
+
+    "tests/compile-test/lang-test0/57defaultparamdispatch.ts": (asm) => {
+        chai.assert(codeSize(asm) > 0, "no code generated");
+    },
+};

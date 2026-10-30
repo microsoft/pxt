@@ -399,6 +399,11 @@ div.simframe > iframe {
     width: 0 !important;
 }
 
+// A permanent simulator extension frame hidden while the simulator is collapsed.
+div.simframe.simHidden {
+    display: none !important;
+}
+
 /* Menu */
 // The classname .menubar is also used by monaco. This rule just negates the clashing
 // values
@@ -950,6 +955,19 @@ Avatar
     border-style: solid;
     display: block;
     width: 0;
+}
+
+.common-menu-dropdown-pane li.common-menu-dropdown-item.common-button.github-menuitem {
+    padding: 8px 18px;
+
+    .avatar img {
+        position: relative;
+        left: -0.25em;
+        width: 1.5em;
+        height: 1.5em;
+        border-radius: 1.5em;
+        margin-right: 0.45em;
+    }
 }
 
 /* Json editor */
@@ -1750,10 +1768,10 @@ p.ui.font.small {
 
 #root.headless.transparentEditorTools {
     #editortools {
+        position: absolute;
         left: auto;
         height: 5.7rem;
         margin-right: 1rem;
-        bottom: var(--extra-mobile-sim-padding);
     }
 
     #editortools #downloadArea,

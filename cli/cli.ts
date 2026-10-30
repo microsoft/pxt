@@ -21,6 +21,7 @@ import Cloud = pxt.Cloud;
 import Map = pxt.Map;
 
 import * as server from './server';
+import * as localrepos from './localrepos';
 import * as build from './buildengine';
 import * as commandParser from './commandparser';
 import * as hid from './hid';
@@ -714,10 +715,15 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
         }
     } catch (e) {
         console.warn(chalk.yellow("Unable to determine branch protection status."), e.message);
+        pr = true;
     }
 
     if (nopr) {
         pr = false;
+    }
+
+    if (pr && (!currBranchName || !token || !user || !owner || !repo)) {
+        U.userError("Unable to prepare a bump pull request. Check GitHub credentials and the origin URL, or explicitly use --nopr for a direct push.");
     }
 
     if (fs.existsSync(pxt.CONFIG_NAME)) {
@@ -733,7 +739,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => justBumpPkgAsync(bumpType, false)) // don't tag when creating a PR
-                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.gitPushAsync(false).then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] bump version to ${version}`,
                     body:   "__Do not edit the PR title.__\n" +
@@ -752,8 +758,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
                 .then(() => justBumpPkgAsync(bumpType))
-                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
-                .then(() => nodeutil.runGitAsync("push"))
+                .then(() => nodeutil.runGitAsync("push", "--atomic", "--follow-tags"))
         }
     }
     else if (fs.existsSync("pxtarget.json"))
@@ -766,7 +771,7 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
                 .then(() => nodeutil.createBranchAsync(newBranchName))
                 .then(() => bumpPxt ? bumpPxtCoreDepAsync() : Promise.resolve())
                 .then(() => nodeutil.npmVersionBumpAsync(bumpType, false)) // don't tag when creating a PR
-                .then((version) => nodeutil.gitPushAsync().then(() => version))
+                .then((version) => nodeutil.gitPushAsync(false).then(() => version))
                 .then((version) => nodeutil.createPullRequestAsync({
                     title: `[pxt-cli] bump version to ${version}`,
                     body:   "__Do not edit the PR title.__\n" +
@@ -784,10 +789,9 @@ async function bumpAsync(parsed?: commandParser.ParsedCommand) {
             console.log("Bumping via direct push.");
             return Promise.resolve()
                 .then(() => nodeutil.runGitAsync("pull"))
-                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push")) : Promise.resolve())
+                .then(() => bumpPxt ? bumpPxtCoreDepAsync().then(() => nodeutil.runGitAsync("push", "--atomic", "--no-follow-tags")) : Promise.resolve())
                 .then(() => nodeutil.runNpmAsync("version", bumpType))
-                .then(() => nodeutil.runGitAsync("push", "--follow-tags"))
-                .then(() => nodeutil.runGitAsync("push"))
+                .then(() => nodeutil.runGitAsync("push", "--atomic", "--follow-tags"))
                 .then(() => upload ? uploadTaggedTargetAsync() : Promise.resolve())
         }
     else {
@@ -1994,6 +1998,15 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (theme.title) targetStrings[theme.title] = theme.title;
     if (theme.name) targetStrings[theme.name] = theme.name;
     if (theme.description) targetStrings[theme.description] = theme.description;
+    for (const preset of cfg.simulator?.themePresets ?? []) {
+        targetStrings[`{id:simulator-theme-name}${preset.name}`] = preset.name;
+    }
+    for (const layout of cfg.simulator?.themeLayouts ?? []) {
+        targetStrings[`{id:simulator-layout-name}${layout.name}`] = layout.name;
+        for (const field of layout.colorFields ?? []) {
+            targetStrings[`{id:simulator-theme-field}${field.label}`] = field.label;
+        }
+    }
     if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
         const heroBannerCard = theme.homeScreenHero;
         if (heroBannerCard.title) targetStrings[heroBannerCard.title] = heroBannerCard.title;
@@ -2089,8 +2102,8 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                         const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
                         tocmd += `  * [${card.name || card.title}](${url})
 `;
-                        if (card.tags)
-                            card.tags.forEach(tag => targetStrings[tag] = tag);
+                        for (const term of (card.tags || []).concat(card.searchTerms || []))
+                            targetStrings[term] = term;
                     }))
             });
 
@@ -2520,6 +2533,7 @@ function updateColorThemes(cfg: pxt.TargetBundle) {
             id: themeData.id,
             name: themeData.name,
             weight: themeData.weight,
+            defaultSimulatorTheme: themeData.defaultSimulatorTheme,
             monacoBaseTheme: themeData.monacoBaseTheme,
             colors: themeData.colors
         };
@@ -2675,7 +2689,6 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
     await buildWebStringsAsync();
     if (!options.quick) await internalGenDocsAsync(false, true)
-    if (pxt.appTarget.cacheusedblocksdirs && !options.quick) cfg.tutorialInfo = await internalCacheUsedBlocksAsync();
 
     await forEachBundledPkgAsync(async (pkg, dirname) => {
         pxt.log(`building bundled ${dirname}`);
@@ -2811,6 +2824,11 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
 
         res[pxt.CONFIG_NAME] = pxt.Package.stringifyConfig(config);
     })
+
+    // reload the app target with the bundled packages before caching tutorial used blocks
+    pxt.setAppTarget(cfg)
+    pxt.reloadAppTargetVariant()
+    if (pxt.appTarget.cacheusedblocksdirs && !options.quick) cfg.tutorialInfo = await internalCacheUsedBlocksAsync();
 
     // Trim redundant API info from packages
     const coreInfo = builtInfo[corepkg];
@@ -3116,6 +3134,9 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
         saveConfig()
     }
     let localToken = globalConfig.localToken;
+    // --local-repo directories resolve against the directory serve was started from,
+    // which differs from the target root when serve moves into a target found below
+    const invocationDir = process.cwd();
     if (!fs.existsSync("pxtarget.json")) {
         //Specifically when the target is being used as a library
         let targetDepLoc = nodeutil.targetDir
@@ -3133,6 +3154,8 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             }
         }
     }
+    const targetDir = process.cwd();
+    const localRepos = localrepos.loadLocalRepos(targetDir, (parsed.flags["localRepo"] as string[]) || [], invocationDir);
     return (justServe ? Promise.resolve() : buildAndWatchTargetAsync(includeSourceMaps, rebundle))
         .then(() => server.serveAsync({
             autoStart: !globalConfig.noAutoStart,
@@ -3146,6 +3169,7 @@ export function serveAsync(parsed: commandParser.ParsedCommand) {
             noauth: parsed.flags["noauth"] as boolean || false,
             backport: parsed.flags["backport"] as number || 0,
             https: parsed.flags["https"] as boolean || false,
+            localRepos,
         }))
 }
 
@@ -5240,7 +5264,7 @@ export async function staticpkgAsync(parsed: commandParser.ParsedCommand) {
     await rimrafAsync(builtPackaged, {});
 
     if (bump) {
-        await bumpAsync();
+        await bumpAsync(parsed);
     }
 
     if (locs) {
@@ -7329,7 +7353,7 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             update: { description: "(package only) Updates pxt-core reference to the latest release" },
             upload: { description: "(package only) Upload after bumping" },
             pr: { description: "Bump via pull request rather than direct push" },
-            nopr: { description: "Bump via direct push rather than pull request (overrides --pr)" },
+            nopr: { description: "Force a direct bump (overrides --pr and protection detection)" },
             version: {
                 description: "Which part of the version to bump, or a complete version number to assign. Defaults to 'patch'",
                 argument: "version",
@@ -7453,6 +7477,9 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
             bump: {
                 description: "bump version number prior to package"
             },
+            nopr: {
+                description: "With --bump, force a direct bump rather than a pull request"
+            },
             cloudbuild: {
                 description: "(deprecated) forces build to happen in the cloud",
                 aliases: ["cloud", "cloud-build", "cb"]
@@ -7558,7 +7585,13 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
                 argument: "backport",
                 type: "number",
             },
-            https: { description: "use https protocol instead of http"}
+            https: { description: "use https protocol instead of http"},
+            localRepo: {
+                description: "serve a GitHub repository from a local directory, as owner/repo=dir; repeatable, and applied over the entries of pxtlocal.json",
+                aliases: ["local-repo"],
+                argument: "repo",
+                repeatable: true
+            }
         }
     }, serveAsync);
 

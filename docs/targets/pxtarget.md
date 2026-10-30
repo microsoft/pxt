@@ -286,7 +286,7 @@ PXT expects to find the C/C++ sources on github.
 
 ### ``uploadDocs`` and ``uploadApiStringsBranchRx``
 
-The ``uploadDocs`` flag determins if the API strings and docs have to be uploaded
+The ``uploadDocs`` flag determines if the API strings and docs have to be uploaded
 to crowdin when a build occurs on master or release branches.
 
 The ``uploadApiStringsBranchRx`` flag provide a custom regex

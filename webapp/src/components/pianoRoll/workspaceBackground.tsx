@@ -12,9 +12,9 @@ function createWorkspaceBackground(
     return `
 <svg xmlns="http://www.w3.org/2000/svg" width="${tickWidth * ticksPerBeat}" height="${octaveHeight}">
     <defs>
-        <pattern id="grid" width="${tickWidth}" height="${octaveHeight / 12}" patternUnits="userSpaceOnUse">
+        <pattern id="grid" width="${tickWidth * 2}" height="${octaveHeight / 12}" patternUnits="userSpaceOnUse">
             <rect width="1" height="${octaveHeight / 12}" fill="${borderColor}" />
-            <rect width="${tickWidth}" height="1" fill="${borderColor}" />
+            <rect width="${tickWidth * 2}" height="1" fill="${borderColor}" />
         </pattern>
         <pattern id="grid2" width="${tickWidth * ticksPerBeat}" height="${octaveHeight / 12}" patternUnits="userSpaceOnUse">
             <rect width="2" height="${octaveHeight / 12}" fill="${borderColor}" />

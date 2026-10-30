@@ -389,7 +389,7 @@ export const TeachingBubble = (props: TeachingBubbleProps) => {
                 <p aria-live="polite">{targetContent.description}</p>
                 <div className={`teaching-bubble-navigation ${!hasSteps ? "no-steps" : ""}`}>
                     {hasSteps && <div className={classList("teaching-bubble-steps", forceHideSteps && "hidden")} aria-live="polite">
-                        {stepNumber} of {totalSteps}
+                        {lf("{0} of {1}", stepNumber, totalSteps)}
                     </div>}
                     <div className="teaching-bubble-navigation-buttons">
                         {hasPrevious && <Button

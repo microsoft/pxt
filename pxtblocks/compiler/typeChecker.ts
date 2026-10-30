@@ -353,7 +353,7 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
         return find(b.p);
     }
 
-    if (b.type == "variables_get")
+    if (b.type == "variables_get" || b.type == "variables_get_reporter")
         return find(lookup(e, b, b.getField("VAR").getText()).type);
 
     if (b.type == "function_call_output")  {
@@ -493,14 +493,18 @@ function getReturnTypeOfFunctionCall(e: Environment, call: Blockly.Block) {
 // Basic type unification routine; easy, because there's no structural types.
 // FIXME: Generics are not supported
 function unify(t1: string, t2: string) {
-    if (t1 == null || t1 === "Array" && isArrayType(t2))
+    if (t1 == null || isNullishType(t1) || t1 === "Array" && isArrayType(t2))
         return t2;
-    else if (t2 == null || t2 === "Array" && isArrayType(t1))
+    else if (t2 == null || isNullishType(t2) || t2 === "Array" && isArrayType(t1))
         return t1;
     else if (t1 == t2)
         return t1;
     else
         throw new Error("cannot mix " + t1 + " with " + t2);
+}
+
+function isNullishType(type: string) {
+    return type === "null" || type === "undefined";
 }
 
 function isArrayType(type: string) {

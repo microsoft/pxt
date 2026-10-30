@@ -16,7 +16,7 @@ If you want to help with translating the MakeCode project, please sign in to Cro
 
 #### Sign up to translate
 
-For a quick explaination of how to sign up and join a MakeCode translation team, watch this
+For a quick explanation of how to sign up and join a MakeCode translation team, watch this
 short video:
 
 https://youtu.be/4PqWq50e8C4
@@ -31,6 +31,16 @@ When you translate, you have the **[role](/translate/roles)** of a _translator_ 
 
 If you're more comfortable translating while actually using and seeing the strings in the editor, you can add your translations with the **[in context translation](/translate/in-context)** feature. This lets you do much of the translation work outside of the Crowdin website.
 
+### ~ hint
+
+#### MakeCode localization overview
+
+Get started translating MakeCode right away! To quickly get up to speed, watch this comprehensive overview video of the MakeCode localization process:
+
+https://youtu.be/hJweibY7tgE
+
+### ~
+
 ## Translation topics
 
 Although they are linked in the [Get started](#get-started) section above, you can further familiarize yourself with the translation activities by reviewing these topics:
@@ -41,6 +51,16 @@ Although they are linked in the [Get started](#get-started) section above, you c
 4. [Translating markdown](/translate/markdown)
 5. [Translator roles](/translate/roles)
 6. [In context translation](/translate/in-context)
+
+### ~tip
+
+#### MakeCode Crowdin project style guide
+
+The MakeCode Crowdin project style guide is a good place to learn how to handle translation of MakeCode's special markdown elements, metadata, code examples, and strings for blocks. Read it at:
+
+**[MakeCode Crowdin Style Guide](/translate/style-guide)**
+
+### ~
 
 ### Quick reference info
 

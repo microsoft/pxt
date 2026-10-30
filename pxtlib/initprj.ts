@@ -4,7 +4,10 @@ namespace pxt.template {
         "target": "ES5",
         "noImplicitAny": true,
         "outDir": "built",
-        "rootDir": "."
+        "rootDir": ".",
+        "ignoreDeprecations": "6.0",
+        "strictPropertyInitialization": false,
+        "strictNullChecks": false
     },
     "exclude": ["pxt_modules/**/*test.ts"]
 }

@@ -262,6 +262,28 @@ declare namespace pxt {
         order?: number;     // Sort order
     }
 
+    interface SimulatorTheme extends Map<string> {
+        layout: string;
+    }
+
+    interface SimulatorThemePreset {
+        id: string;
+        name: string;
+        theme: SimulatorTheme;
+    }
+
+    interface SimulatorThemeColorField {
+        property: string;
+        label: string;
+        defaultValue: string;
+    }
+
+    interface SimulatorThemeLayout {
+        id: string;
+        name: string;
+        colorFields?: SimulatorThemeColorField[]; // replaces the standard color fields for this layout
+    }
+
     interface AppSimulator {
         autoRun?: boolean; // enable autoRun in regular mode, not light mode
         autoRunLight?: boolean; // force autorun in light mode
@@ -286,6 +308,8 @@ declare namespace pxt {
         invalidatedClass?: string; // CSS class to be applied to the sim iFrame when it needs to be updated (defaults to sepia filter)
         stoppedClass?: string; // CSS class to be applied to the sim iFrame when it isn't running (defaults to grayscale filter)
         keymap?: boolean; // when non-empty and autoRun is disabled, this code is run upon simulator first start
+        themePresets?: SimulatorThemePreset[]; // customizable simulator themes offered by the editor
+        themeLayouts?: SimulatorThemeLayout[]; // additional simulator layouts offered by the theme editor; Default is always included
 
         // a map of allowed simulator channel to URL to handle specific control messages
         // DEPRECATED. Use `simx` in targetconfig.json approvedRepoLib instead.
@@ -368,6 +392,9 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
+        projectTools?: boolean; // Enable the Project tools documentation bubbles
+        whiteboard?: boolean; // Enable private project whiteboards (requires a runtime palette)
+        backpack?: boolean; // Enable Backpack; local-only when sign-in is unavailable
         homeScreenHero?: string | CodeCard; // home screen hero image or codecard
         homeScreenHeroGallery?: string; // path to markdown file containing the gallery to display on homescreen
         sideDoc?: string; // deprecated
@@ -604,7 +631,7 @@ declare namespace pxt {
     interface PxtJsonOption {
         label: string;
         property: string;
-        type: "checkbox";
+        type: "checkbox" | "input";
     }
 
     interface AssetConfig {
@@ -641,6 +668,7 @@ declare namespace pxt {
         id: string; // Unique identifier
         name: string; // Human-readable name
         weight?: number; // Lower weights appear first in theme list, no value = go to end
+        defaultSimulatorTheme?: string | Partial<SimulatorTheme>; // Simulator preset id or partial inline theme used by Default
         overrideCss?: string; // Special css to apply for the theme
         monacoBaseTheme?: string; // Theme for monaco editor, see https://code.visualstudio.com/docs/getstarted/themes
         colors: { [key: string]: string }; // Values for theme variables
@@ -776,6 +804,8 @@ declare namespace ts.pxtc {
         rawELF?: boolean;
         multiVariant?: boolean;
         size?: boolean;
+        noIfaceSpec?: boolean; // disable interface dispatch specializations
+        noBoolLower?: boolean; // disable boolean condition lowering optimizations
     }
 
     interface CompileTarget {
@@ -1186,6 +1216,7 @@ declare namespace ts.pxtc {
         usedBuiltinParts?: string[];
         allParts?: string[];
         breakpoints?: number[];
+        theme?: string | pxt.Map<string>;
     }
 
     interface UpgradePolicy {

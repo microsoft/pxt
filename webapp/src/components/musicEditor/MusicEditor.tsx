@@ -1,4 +1,5 @@
 import * as React from "react";
+import { SongModel, useModelValue } from "./AssetModel";
 import { EditControls } from "./EditControls";
 import { CursorState, handleKeyboardEvent } from "./keyboardNavigation";
 import { isPlaying, updatePlaybackSongAsync, stopPlayback, startPlaybackAsync } from "./playback";
@@ -8,12 +9,9 @@ import { GridResolution, TrackSelector } from "./TrackSelector";
 import { addNoteToTrack, changeSongLength, editNoteEventLength, fillDrums, findPreviousNoteEvent, findNoteEventAtPosition, findSelectedRange, noteToRow, removeNoteFromTrack, rowToNote, selectNoteEventsInRange, unselectAllNotes, applySelection as applySelectionMove, deleteSelectedNotes, applySelection, removeNoteAtRowFromTrack, isBassClefNote, doesSongUseBassClef, findNoteEventsOverlappingRange } from "./utils";
 
 export interface MusicEditorProps {
-    asset: pxt.Song;
-    onSongChanged?: (newValue: pxt.assets.music.Song) => void;
-    savedUndoStack?: pxt.assets.music.Song[];
+    model: SongModel;
     onAssetNameChanged: (newName: string) => void;
     onDoneClicked: () => void;
-    editRef: number;
     hideDoneButton?: boolean;
 }
 
@@ -30,19 +28,18 @@ interface DragState {
 }
 
 export const MusicEditor = (props: MusicEditorProps) => {
-    const { asset, onSongChanged, savedUndoStack, onAssetNameChanged, editRef, onDoneClicked, hideDoneButton} = props;
+    const { model, onAssetNameChanged, onDoneClicked, hideDoneButton } = props;
+    const { value, hasUndo, hasRedo } = useModelValue(model);
+    const currentSong = value.song;
+
     const [selectedTrack, setSelectedTrack] = React.useState(0);
     const [gridResolution, setGridResolution] = React.useState<GridResolution>("1/8");
-    const [currentSong, setCurrentSong] = React.useState(asset.song);
     const [eraserActive, setEraserActive] = React.useState(false);
     const [hideTracksActive, setHideTracksActive] = React.useState(false);
-    const [undoStack, setUndoStack] = React.useState(savedUndoStack || []);
-    const [redoStack, setRedoStack] = React.useState<pxt.assets.music.Song[]>([]);
-    const [editingId, setEditingId] = React.useState(editRef);
     const [selection, setSelection] = React.useState<WorkspaceSelectionState | undefined>();
     const [cursor, setCursor] = React.useState<CursorState>();
     const [cursorVisible, setCursorVisible] = React.useState(false);
-    const [bassClefVisible, setBassClefVisible] = React.useState(doesSongUseBassClef(asset.song));
+    const [bassClefVisible, setBassClefVisible] = React.useState(doesSongUseBassClef(currentSong));
 
     React.useEffect(() => {
         return () => {
@@ -115,11 +112,6 @@ export const MusicEditor = (props: MusicEditorProps) => {
         }
     }, [selection, hideTracksActive, currentSong])
 
-    if (editingId !== editRef) {
-        setEditingId(editRef);
-        setCurrentSong(asset.song);
-    }
-
     const dragState = React.useRef<DragState>()
 
     const gridTicks = eraserActive ? 1 : gridResolutionToTicks(gridResolution, currentSong.ticksPerBeat);
@@ -129,14 +121,19 @@ export const MusicEditor = (props: MusicEditorProps) => {
         if (isPlaying()) {
             updatePlaybackSongAsync(newSong);
         }
-        let newUndoStack = undoStack.slice()
-        if (pushUndo) {
-            newUndoStack.push(pxt.assets.music.cloneSong(selection?.originalSong || dragState.current?.original || currentSong));
-            setUndoStack(newUndoStack);
-            setRedoStack([]);
-        }
-        setCurrentSong(newSong);
-        if (onSongChanged) onSongChanged(newSong);
+
+        const currentValue = model.getCurrentValue();
+        model.updateValue(
+            {
+                ...currentValue,
+                song: newSong
+            },
+            {
+                preserveUndo: true,
+                pushUndo
+            }
+        );
+
         if (dragState.current) {
             dragState.current.editing = newSong;
         }
@@ -544,19 +541,11 @@ export const MusicEditor = (props: MusicEditorProps) => {
     }
 
     const undo = () => {
-        if (!undoStack.length) return;
-        setRedoStack(redoStack.concat([currentSong]));
-        const toRestore = undoStack.pop();
-        setUndoStack(undoStack.slice());
-        updateSong(toRestore, false);
+        model.undo();
     }
 
     const redo = () => {
-        if (!redoStack.length) return;
-        setUndoStack(undoStack.concat([currentSong]));
-        const toRestore = redoStack.pop();
-        setRedoStack(redoStack.slice());
-        updateSong(toRestore, false);
+        model.redo();
     }
 
     const onEraserClick = () => {
@@ -653,10 +642,10 @@ export const MusicEditor = (props: MusicEditorProps) => {
             onRedoClick={redo}
             showBassClef={bassClefVisible}
             onBassClefCheckboxClick={setBassClefVisible}
-            hasUndo={!!undoStack.length}
-            hasRedo={!!redoStack.length} />
+            hasUndo={hasUndo}
+            hasRedo={hasRedo} />
         <EditControls
-            assetName={asset.meta.displayName}
+            assetName={value.meta.displayName}
             onAssetNameChanged={onAssetNameChanged}
             onDoneClicked={onDoneClicked}
             hideDoneButton={hideDoneButton}/>

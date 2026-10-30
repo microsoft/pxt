@@ -5,7 +5,8 @@ export interface CardProps extends ContainerProps {
     onClick?: () => void;
     tabIndex?: number;
     ariaLabelledBy?: string;
-    label?: string;
+    ariaPressed?: boolean;
+    label?: React.ReactNode;
     labelClass?: string;
 }
 
@@ -17,6 +18,7 @@ export const Card = (props: CardProps) => {
         children,
         ariaDescribedBy,
         ariaLabelledBy,
+        ariaPressed,
         ariaHidden,
         ariaLabel,
         onClick,
@@ -38,6 +40,7 @@ export const Card = (props: CardProps) => {
                         tabIndex={tabIndex}
                         aria-describedby={ariaDescribedBy}
                         aria-labelledby={ariaLabelledBy}
+                        aria-pressed={ariaPressed}
                         onClick={onClick}
                     />
                 }

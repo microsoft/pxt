@@ -9,6 +9,12 @@ namespace ts.pxtc {
 import pxtc = ts.pxtc
 
 namespace ts.pxtc.Util {
+    export function contains(str: string, contains: string) {
+        if (str.length < contains.length) return false
+        if (contains.length == 0) return true
+        return str.indexOf(contains) > -1
+    }
+
     export function assert(cond: boolean, msg = "Assertion failed") {
         if (!cond) {
             debugger
@@ -336,3 +342,158 @@ namespace ts.pxtc.Util {
 }
 
 const lf = ts.pxtc.Util.lf;
+
+namespace ts.pxtc {
+    /**
+     * atob replacement
+     * @param s
+     */
+    export let decodeBase64 = function (s: string) { return atob(s); }
+    /**
+     * bota replacement
+     * @param s
+     */
+    export let encodeBase64 = function (s: string) { return btoa(s); }
+}
+
+namespace ts.pxtc.Util {
+
+    export function iterMap<T>(m: pxt.Map<T>, f: (k: string, v: T) => void) {
+        Object.keys(m).forEach(k => f(k, m[k]))
+    }
+
+    export function values<T>(m: pxt.Map<T>) {
+        return Object.keys(m || {}).map(k => m[k])
+    }
+
+    export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
+        if (src)
+            for (let i = 0; i < src.length; ++i)
+                trg.push(src[i])
+    }
+
+    // TS gets lost in type inference when this is passed an array
+    export function concatArrayLike<T>(arrays: ArrayLike<ArrayLike<T>>): T[] {
+        return concat(arrays as any)
+    }
+
+    export function concat<T>(arrays: T[][]): T[] {
+        let r: T[] = []
+        for (let i = 0; i < arrays.length; ++i) {
+            pushRange(r, arrays[i])
+        }
+        return r
+    }
+
+    function isKV(v: any) {
+        return !!v && typeof v === "object" && !Array.isArray(v)
+    }
+
+    export function jsonMergeFrom(trg: any, src: any) {
+        if (!src) return;
+        Object.keys(src).forEach(k => {
+            if (isKV(trg[k]) && isKV(src[k]))
+                jsonMergeFrom(trg[k], src[k]);
+            else trg[k] = clone(src[k]);
+        });
+    }
+
+    export function jsonCopyFrom<T>(trg: T, src: T) {
+        let v = clone(src)
+        for (let k of Object.keys(src)) {
+            (trg as any)[k] = (v as any)[k]
+        }
+    }
+
+    // { a: { b: 1 }, c: 2} => { "a.b": 1, c: 2 }
+    export function jsonFlatten(v: any) {
+        let res: pxt.Map<any> = {}
+        let loop = (pref: string, v: any) => {
+            if (v !== null && typeof v == "object") {
+                assert(!Array.isArray(v))
+                if (pref) pref += "."
+                for (let k of Object.keys(v)) {
+                    loop(pref + k, v[k])
+                }
+            } else {
+                res[pref] = v
+            }
+        }
+        loop("", v)
+        return res
+    }
+
+    export function jsonUnFlatten(v: pxt.Map<any>) {
+        let res: any = {}
+        for (let k of Object.keys(v)) {
+            let ptr = res
+            let parts = k.split(".")
+            for (let i = 0; i < parts.length; ++i) {
+                let part = parts[i]
+                if (part === "__proto__" || part === "constructor" || part === "prototype")
+                    Util.userError("Invalid configuration key: " + k);
+
+                if (i == parts.length - 1)
+                    ptr[part] = v[k]
+                else {
+                    if (typeof ptr[part] != "object") ptr[part] = {}
+                    ptr = ptr[part]
+                }
+            }
+        }
+        return res
+    }
+
+    export function strcmp(a: string, b: string) {
+        if (a == b) return 0;
+        if (a < b) return -1;
+        else return 1;
+    }
+
+    export function endsWith(str: string, suffix: string) {
+        if (str.length < suffix.length) return false
+        if (suffix.length == 0) return true
+        return str.slice(-suffix.length) == suffix
+    }
+
+    export function startsWith(str: string, prefix: string) {
+        if (str.length < prefix.length) return false
+        if (prefix.length == 0) return true
+        return str.slice(0, prefix.length) == prefix
+    }
+
+    export function toUTF8(str: string, cesu8?: boolean) {
+        let res = "";
+        if (!str) return res;
+        for (let i = 0; i < str.length; ++i) {
+            let code = str.charCodeAt(i);
+            if (code <= 0x7f) res += str.charAt(i);
+            else if (code <= 0x7ff) {
+                res += String.fromCharCode(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
+            } else {
+                if (!cesu8 && 0xd800 <= code && code <= 0xdbff) {
+                    let next = str.charCodeAt(++i);
+                    if (!isNaN(next))
+                        code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
+                }
+
+                if (code <= 0xffff)
+                    res += String.fromCharCode(0xe0 | (code >> 12), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+                else
+                    res += String.fromCharCode(0xf0 | (code >> 18), 0x80 | ((code >> 12) & 0x3f), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
+            }
+
+        }
+        return res;
+    }
+
+
+    export function toUTF8Array(s: string) {
+        return (new TextEncoder()).encode(s);
+    }
+}
+
+namespace pxt {
+    export import U = pxtc.Util;
+    export import Util = pxtc.Util;
+}

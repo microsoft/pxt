@@ -7,6 +7,7 @@ import * as pxtblockly from "../../pxtblocks";
 import U = pxt.Util;
 import { postHostMessageAsync, shouldPostHostMessages } from "../../pxteditor";
 import { Measurements } from "./constants";
+import { projectMayDeclareBlocks } from "./cachedApiInfo";
 
 function setDiagnostics(operation: "compile" | "decompile" | "typecheck", diagnostics: pxtc.KsDiagnostic[], sourceMap?: pxtc.SourceInterval[]) {
     let mainPkg = pkg.mainEditorPkg();
@@ -635,7 +636,7 @@ interface BundledPackage {
 }
 
 interface UsedPackageInfo {
-    dirname: string,
+    packageId: string,
     info: pxt.PackageApiInfo
 }
 
@@ -645,21 +646,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     const corePkg = bundled[corePkgName];
     if (!corePkg) return null;
 
-    // If the project has a TypeScript file beside one of the generated files, it could export blocks so we can't use the cache
-    const files = project.getAllFiles();
-    const generatedFiles = [
-        pxt.MAIN_TS,
-        pxt.TUTORIAL_CODE_START,
-        pxt.TUTORIAL_CODE_STOP,
-        pxt.TILEMAP_CODE,
-        pxt.IMAGES_CODE
-    ];
-
-    if (Object.keys(files).some(
-        filename => generatedFiles.indexOf(filename) === -1
-            && filename.indexOf("/") === -1
-            && pxt.Util.endsWith(filename, ".ts")
-    )) {
+    if (projectMayDeclareBlocks(Object.keys(project.getAllFiles()))) {
         return null;
     }
 
@@ -678,7 +665,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
     const usedPackages = project.pkgAndDeps();
     const externalPackages: pkg.EditorPackage[] = [];
     const usedPackageInfo: UsedPackageInfo[] = [{
-        dirname: corePkgName,
+        packageId: pxt.appTarget.corepkg,
         info: corePkg
     }];
 
@@ -689,7 +676,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
         for (const bundle of bundledPackages) {
             if (bundle.config.name === getPackageKey(dep)) {
                 usedPackageInfo.push({
-                    dirname: bundle.dirname,
+                    packageId: dep.getPkgId(),
                     info: bundled[bundle.dirname]
                 });
                 foundIt = true;
@@ -721,7 +708,7 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
             else {
                 pxt.debug(`Fetched cached API info for ${getPackageKey(dep)}`);
                 usedPackageInfo.push({
-                    dirname: dep.getPkgId(),
+                    packageId: dep.getPkgId(),
                     info: entry
                 });
             }
@@ -734,13 +721,13 @@ async function getCachedApiInfoAsync(project: pkg.EditorPackage, bundled: pxt.Ma
 
     for (const used of usedPackageInfo) {
         if (!used) continue;
-        let { info, dirname } = used;
+        let { info, packageId } = used;
 
         const byQName = U.cloneApis(info.apis.byQName);
 
-        // reinclude the pkg the api originates from, which is trimmed during compression
+        // Restore the runtime package ID, which is trimmed during compression.
         for (const api of Object.keys(byQName)) {
-            byQName[api].pkg = dirname;
+            byQName[api].pkg = packageId;
 
             // We had a bug where we were caching the translated language code and it broke translations.
             // make sure we clear it on any old cached entries from before the bug was fixed

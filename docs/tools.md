@@ -15,7 +15,7 @@ Create a checklist of rules to evaluate student projects. Use AI prompts to get 
 
 ![A screenshot of the GitHub Explorer page](/static/tools/github-explorer.png)
 
-Browse all your GitHub projects accross all MakeCode editors in a single place.
+Browse all your GitHub projects across all MakeCode editors in a single place.
 
 ## [Playground](/playground)
 

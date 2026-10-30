@@ -315,14 +315,14 @@ export class EditorPackage {
         return null;
     }
 
-    async updateDepAsync(pkgid: string): Promise<void> {
+    async updateDepAsync(pkgid: string, targetTag?: string): Promise<void> {
         let p = this.ksPkg.resolveDep(pkgid);
         if (!p || p.verProtocol() != "github") return Promise.resolve();
         let parsed = pxt.github.parseRepoId(p.verArgument())
         if (!parsed) return
 
         const packagesConfig = await pxt.packagesConfigAsync()
-        const tag = await pxt.github.latestVersionAsync(parsed.slug, packagesConfig, true /* use proxy */)
+        const tag = targetTag || await pxt.github.latestVersionAsync(parsed.slug, packagesConfig, true /* use proxy */)
         // since all repoes in a mono-repo are tied to the same version number,
         // we'll update them all to this tag at once.
         const ghids = Util.values(this.ksPkg.dependencies())
@@ -965,7 +965,7 @@ data.mountVirtualApi("pkg-git-pr", {
         const ghid = f.getPkgId() == "this" && header && header.githubId;
         if (!ghid) return Promise.resolve(missing);
         const parsed = pxt.github.parseRepoId(ghid);
-        if (!parsed || !parsed.tag || parsed.tag == "master") return Promise.resolve(missing);
+        if (!parsed || !parsed.tag || parsed.tag == "master" || parsed.tag == "main") return Promise.resolve(missing);
         return pxt.github.findPRNumberforBranchAsync(parsed.fullName, parsed.tag)
             .catch(e => missing);
     },

@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+        "target": "es2017",
+        "noImplicitAny": true,
+        "noImplicitReturns": true,
+        "declaration": true,
+        "outDir": "../../built/tests/cli-test",
+        "newLine": "LF",
+        "module": "commonjs",
+        "rootDir": "../..",
+        "lib": [
+            "dom",
+            "dom.iterable",
+            "es2017",
+            "ES2018.Promise"
+        ],
+        "types": [
+            "chai",
+            "mocha",
+            "node"
+        ],
+        "sourceMap": false,
+        "skipLibCheck": true
+    },
+    "files": [
+        "clirunner.ts",
+        "bump.ts",
+        "../../cli/commandparser.ts",
+        "../../cli/localrepos.ts",
+        "../../cli/nodeutil.ts"
+    ]
+}

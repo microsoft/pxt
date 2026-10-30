@@ -8,7 +8,7 @@ export interface InputProps extends ControlProps {
     inputClassName?: string;
     groupClassName?: string;
     initialValue?: string;
-    label?: string;
+    label?: string | JSX.Element;
     title?: string;
     placeholder?: string;
     icon?: string;

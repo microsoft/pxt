@@ -52,7 +52,7 @@ The tree views use standard navigation. The user must be able to use the ``Right
 
 ### Drop down menu
 
-Dropdown menues are located at the top right hand-corner of the view. A menu must be opened when the focus is given to it's parent button and must be close if the user press ``Tab``, ``Shift + Tab`` or ``Escape``. When the menu is open, navigation through the options of the dropdown menu are with the ``Up`` and ``Down`` arrow keys. The navigation must not loop.
+Dropdown menus are located at the top right hand-corner of the view. A menu must be opened when the focus is given to it's parent button and must be close if the user press ``Tab``, ``Shift + Tab`` or ``Escape``. When the menu is open, navigation through the options of the dropdown menu are with the ``Up`` and ``Down`` arrow keys. The navigation must not loop.
 
 ![](/static/images/accessibility/accessibility-dropdown.gif)
 
@@ -96,7 +96,7 @@ Every interactive component must be announced during navigation:
 * Input (also, mentions the current value)
 * Search result (at least tells the total number of results)
 
-The way components are described is different from a one screen reader to another. Verify that all of them provide enough information to understand the purpose of the interactive component, its content, and its state (especially when disabled). Although it is assumend that the user already knows how to interact with a slider, a dropdown menu, or other component, verify that any additional usage information is provided by the screen reader.
+The way components are described is different from a one screen reader to another. Verify that all of them provide enough information to understand the purpose of the interactive component, its content, and its state (especially when disabled). Although it is assumed that the user already knows how to interact with a slider, a dropdown menu, or other component, verify that any additional usage information is provided by the screen reader.
 
 ## Testing high contrast
 

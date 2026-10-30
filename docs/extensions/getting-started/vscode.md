@@ -60,7 +60,7 @@ For a quick introduction on creating extensions, try the [simple extension](/ext
 
 ## Step 5: Testing
 
-In order to test your extension, you need to create a new project, and manually add a reference back to the extensin you've been developing.
+In order to test your extension, you need to create a new project, and manually add a reference back to the extension you've been developing.
 
 * Open the local editor and create a new project. For example, you might call it *Just Look At It*.
 * Open the project settings by clicking the gear (Gear -> ``Project Settings``)
@@ -80,6 +80,20 @@ In order to test your extension, you need to create a new project, and manually 
 
 * Reload the editor and the new blocks you developed in `pxt-banana` will be loaded into the project "Just Look At It."
 
+### Testing with the GitHub URL
+
+To test your extension the way users will add it, from its GitHub URL in the **Extensions** dialog, serve your target locally and point `pxt serve` at your checkout with a `pxtlocal.json` file at the root of the target checkout:
+
+```json
+{
+    "localRepos": {
+        "YOUR_GITHUB_USER/pxt-banana": "../pxt-banana"
+    }
+}
+```
+
+Restart `pxt serve`, open the URL it prints (or start it with `--noauth` to open the editor at any local URL), and add your extension from the **Extensions** dialog by pasting its GitHub URL. The editor loads your local files, and a reload picks up your changes, even before you push. See [pxt serve](/cli/serve) for the details.
+
 ## Step 4: Publishing your extension
 
 When you're happy with the first version of your extension, commit the changes and
@@ -90,7 +104,7 @@ git commit -a -m "Amazing flying bananas"
 pxt bump
 ```
 
-The `pxt bump` will make sure there are no uncommited changes, bump the version number,
+The `pxt bump` will make sure there are no uncommitted changes, bump the version number,
 create a git tag, and push everything to github.
 
 In the editor, paste the full URL to your repo after selecting `Settings -> Extensions`. Your extension should show up.

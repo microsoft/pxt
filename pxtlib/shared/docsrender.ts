@@ -1,7 +1,7 @@
-/// <reference path='../localtypings/pxtarget.d.ts' />
-/// <reference path='../localtypings/dompurify.d.ts' />
-/// <reference path="commonutil.ts"/>
-/// <reference path="./logger.ts" />
+/// <reference path='../../localtypings/pxtarget.d.ts' />
+/// <reference path='../../localtypings/dompurify.d.ts' />
+/// <reference path="../commonutil.ts"/>
+/// <reference path="../logger.ts" />
 
 namespace pxt.docs {
     // eslint-disable-next-line no-var
@@ -186,9 +186,21 @@ namespace pxt.docs {
     }
 
     export let requireDOMSanitizer = () => {
-        if (typeof DOMPurify !== "undefined") return DOMPurify.sanitize;
-        if (typeof require === "undefined") return undefined;
-        return (require("dompurify") as typeof DOMPurify).sanitize;
+        let dpSanitize = typeof DOMPurify !== "undefined" ? DOMPurify.sanitize : undefined;
+
+        if (!dpSanitize) {
+            if (typeof require === "undefined") {
+                return undefined;
+            }
+            dpSanitize = (require("dompurify") as typeof DOMPurify).sanitize;
+        }
+
+        if (dpSanitize) {
+            // allow target attribute on anchor tags
+            return (html: string) => dpSanitize!(html, { ADD_ATTR: ["target"] });
+        }
+
+        return undefined;
     }
 
     export interface RenderData {
@@ -910,13 +922,23 @@ ${opts.repo.name.replace(/^pxt-/, '')}=github:${opts.repo.fullName}#${opts.repo.
         em: 1,
     }
 
+    /** Keeps metadata and token-only HTML out of the translation catalog. */
+    function isNonTranslatable(text: string): boolean {
+        if (text.startsWith("IE=edge,") || text.startsWith("width=device-width"))
+            return true;
+
+        // Remove URLs, template placeholders, and spacing entities to look for prose.
+        const prose = text.replace(/(?:https?:\/\/|\/)[\w@\/.]+|@[-\w]+@|\{[^{}]+\}|&nbsp;/g, "");
+        return !/[a-zA-Z]/.test(prose);
+    }
+
     export function translate(html: string, locale: Map<string>): { text: string; missing: Map<string> } {
         const missing: Map<string> = {}
 
         function translateOne(toTranslate: string): string {
             let spm = /^(\s*)([^]*?)(\s*)$/.exec(toTranslate)
             let text = spm[2].replace(/\s+/g, " ");
-            if (text == "" || /^((IE=edge,.*|width=device-width.*|(https?:\/\/|\/)[\w@\/\.]+|@[\-\w]+@|\{[^\{\}]+\}|[^a-zA-Z]*|(&nbsp;)+)\s*)+$/.test(text))
+            if (isNonTranslatable(text))
                 return null;
             let v = U.lookup(locale, text)
             if (v)

@@ -1,19 +1,98 @@
 /// <reference path="../../localtypings/pxteditor.d.ts"/>
 
-/* eslint-disable import/no-unassigned-import mocha-no-side-effect-code */
-import "mocha";
+/* eslint-disable mocha-no-side-effect-code */
 import * as chai from "chai";
 import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
+import {
+    addSimulatorThemeToFiles,
+    getProjectSimulatorThemePreference,
+    getSimulatorThemePresetId,
+    removeSimulatorThemeFromFiles,
+    resolveSimulatorTheme,
+    serializeProjectSimulatorThemePreference,
+} from "../../webapp/src/simulatorTheme";
+import {
+    copySimulatorTheme,
+    getSimulatorThemeForLayout,
+    getSimulatorThemePreferenceForColorThemeChange,
+    isImplicitSimulatorThemePreference,
+} from "../../react-common/components/theming/simulatorThemeDefaults";
+import { resetEditorThemesAsync } from "../../react-common/components/theming/themeReset";
+import { projectToolsPinnedOnLoad, shouldShowProjectTools } from "../../webapp/src/projectToolsState";
+import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, ProjectNotesSaveQueue, validateProjectNotes } from "../../webapp/src/projectNotes";
+import {
+    filterHomeSearchCards,
+    getAvailableHomeSearchFilters,
+    getHomeSearchFilterOptionCounts,
+} from "../../webapp/src/homeSearchFilters";
+import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
 
 pxt.appTarget = {
     versions: {
         target: "1"
+    },
+    appTheme: {
+        defaultLocale: "en"
     }
 } as any
 
 const differ = new dmp.diff_match_patch();
+
+describe("gallery code cards", () => {
+    it("parses comma-separated tags and search terms as arrays", () => {
+        const markdownCards = pxt.gallery.parseCodeCards(`
+* name: Tagged project
+* tags: Community Games, User Input, Sprites
+* searchTerms: platformer, jumping, side scroller
+`);
+        const jsonCards = pxt.gallery.parseCodeCards(JSON.stringify({
+            name: "Legacy tagged project",
+            tags: "Community Games, User Input, Sprites",
+            searchTerms: "platformer, jumping, side scroller"
+        }));
+        chai.expect(markdownCards[0].tags).deep.equals(["Community Games", "User Input", "Sprites"]);
+        chai.expect(markdownCards[0].searchTerms).deep.equals(["platformer", "jumping", "side scroller"]);
+        chai.expect(jsonCards[0].tags).deep.equals(["Community Games", "User Input", "Sprites"]);
+        chai.expect(jsonCards[0].searchTerms).deep.equals(["platformer", "jumping", "side scroller"]);
+    });
+});
+
+describe("cached api info", () => {
+    it("uses the cache when the project only has generated TypeScript files", () => {
+        chai.expect(projectMayDeclareBlocks([
+            pxt.CONFIG_NAME,
+            pxt.MAIN_BLOCKS,
+            pxt.MAIN_TS,
+            pxt.TUTORIAL_CODE_START,
+            pxt.TUTORIAL_CODE_STOP,
+            pxt.TILEMAP_CODE,
+            pxt.IMAGES_CODE,
+            "README.md"
+        ])).equals(false);
+    });
+
+    it("uses the cache when the only other TypeScript files are under pxt_modules", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "pxt_modules/lib/lib.ts"])).equals(false);
+    });
+
+    it("uses the cache when files in folders are not TypeScript", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "assets/data.json", "docs/notes.md"])).equals(false);
+    });
+
+    it("skips the cache when the project has a top-level TypeScript file", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "custom.ts"])).equals(true);
+    });
+
+    it("skips the cache when the project has a TypeScript file in a folder", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "lib/blocks.ts"])).equals(true);
+    });
+
+    it("skips the cache when a folder file shares a generated file's name", () => {
+        chai.expect(projectMayDeclareBlocks([pxt.MAIN_TS, "lib/" + pxt.MAIN_TS])).equals(true);
+    });
+});
 
 function diffText(a: string, b: string) {
     return pxt.diff.computePatch(a, b);
@@ -24,6 +103,670 @@ function patchText(patch: unknown, a: string) {
 }
 
 const filename = "main.ts";
+
+describe("project-tools pin defaults", () => {
+    it("uses classic side docs instead of project tools in read-only editors", () => {
+        chai.expect(shouldShowProjectTools(true, true, false, false, false, true)).equals(true);
+        chai.expect(shouldShowProjectTools(true, true, false, false, true, true)).equals(false);
+    });
+
+    it("auto-pins initial documentation but preserves explicit pin and unpin choices on reload", () => {
+        const header = { id: "same" } as pxt.workspace.Header;
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "new", true, false)).equals(true);
+        chai.expect(projectToolsPinnedOnLoad({ home: false }, "new", true, true)).equals(true);
+        chai.expect(projectToolsPinnedOnLoad({ home: true }, "new", false, false)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned: false }, "same", true, false)).equals(false);
+        chai.expect(projectToolsPinnedOnLoad({ header, sideDocsPinned: true }, "same", true, false)).equals(true);
+    });
+});
+
+describe("private project notes", () => {
+    const notesWithBoard = (content: Partial<pxt.workspace.WhiteboardContent> = {}): pxt.workspace.ProjectNotes => ({
+        whiteboards: [{ id: "whiteboard-1", name: "Whiteboard 1", text: "", ...content }],
+        activeWhiteboardId: "whiteboard-1"
+    });
+
+    it("round-trips an odd-height image and rejects corrupt or oversized images", () => {
+        const bitmap = new pxt.sprite.Bitmap(3, 5);
+        bitmap.set(2, 4, 12);
+        const encoded = pxt.sprite.base64EncodeBitmap(bitmap.data());
+        chai.expect(decodeWhiteboard(encoded).equals(bitmap)).equals(true);
+        chai.expect(() => decodeWhiteboard(encoded.slice(0, -8))).throws();
+        chai.expect(() => decodeWhiteboard("A".repeat(45004))).throws("Invalid whiteboard image");
+        chai.expect(() => decodeWhiteboard(pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(257, 1).data()))).throws();
+    });
+
+    it("validates immutable note content and rejects unsafe palettes, oversized text and invalid schemas", () => {
+        const image = pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(3, 5).data());
+        const original = notesWithBoard({ text: "x".repeat(MAX_PROJECT_NOTE_LENGTH), image, palette: new Array<string>(16).fill("#AbCdEf") });
+        Object.freeze(original.whiteboards[0].palette);
+        Object.freeze(original.whiteboards[0]);
+        Object.freeze(original.whiteboards);
+        chai.expect(validateProjectNotes(Object.freeze(original))).deep.equals(original);
+        const second = { id: "second", name: "Other", text: "" };
+        for (const invalid of [
+            { text: "x".repeat(MAX_PROJECT_NOTE_LENGTH + 1) },
+            { image: "invalid" },
+            { palette: ["#fff"] },
+            { palette: new Array<string>(16).fill("url(https://example.com)") },
+        ]) {
+            chai.expect(() => validateProjectNotes({ ...original, whiteboards: [original.whiteboards[0], { ...second, ...invalid }] })).throws();
+        }
+        chai.expect(() => validateProjectNotes({ text: "" } as unknown as pxt.workspace.ProjectNotes)).throws();
+    });
+
+    it("persists a selected saved snapshot after an older local save settles", async () => {
+        const queue = new ProjectNotesSaveQueue();
+        const writes: string[] = [];
+        let release = () => {};
+        const pending = new Promise<void>(resolve => release = resolve);
+        const localSave = queue.enqueue(async () => {
+            await pending;
+            writes.push("local");
+        });
+        const selectedSave = queue.enqueue(async () => {
+            writes.push("saved");
+        });
+
+        await Promise.resolve();
+        chai.expect(writes).deep.equals([]);
+        release();
+        await Promise.all([localSave, selectedSave]);
+        chai.expect(writes).deep.equals(["local", "saved"]);
+    });
+});
+
+const simulatorTheme: pxt.SimulatorTheme = {
+    "background-color": "#111111",
+    "button-stroke": "#222222",
+    "text-color": "#333333",
+    "button-fill": "#444444",
+    "dpad-fill": "#555555",
+    "joystick-handle-stroke": "#666666",
+    layout: "default",
+};
+
+describe("home search filters", () => {
+    it("normalizes canonical filter metadata and drops unknown IDs", () => {
+        const lineCard = pxt.gallery.parseCodeCards(`
+* name: Filtered activity
+* activityType: video, resource, movie
+* language: blocks, js, typescript
+* difficulty: beginner, expert, beginer
+* duration: 30-minutes
+* targetAge: 9-12, 13-18, teenager
+`)[0];
+        const jsonCard = pxt.gallery.parseCodeCards(JSON.stringify({
+            name: "JSON activity",
+            activityType: "project",
+            language: ["py", "py", "python"],
+            difficulty: "intermediate",
+            duration: ["15-minutes", "short"],
+            targetAge: ["adult", "adult"],
+        }))[0];
+
+        chai.expect(lineCard.activityType).deep.equals(["video", "resource"]);
+        chai.expect(lineCard.language).deep.equals(["blocks", "js"]);
+        chai.expect(lineCard.difficulty).deep.equals(["beginner", "expert"]);
+        chai.expect(lineCard.duration).deep.equals(["30-minutes"]);
+        chai.expect(lineCard.targetAge).deep.equals(["9-12", "13-18"]);
+        chai.expect(jsonCard.activityType).deep.equals(["project"]);
+        chai.expect(jsonCard.language).deep.equals(["py"]);
+        chai.expect(jsonCard.difficulty).deep.equals(["intermediate"]);
+        chai.expect(jsonCard.duration).deep.equals(["15-minutes"]);
+        chai.expect(jsonCard.targetAge).deep.equals(["adult"]);
+    });
+
+    it("uses explicit activity type and language values instead of inferred values", () => {
+        const card: pxt.CodeCard = {
+            name: "JavaScript video",
+            cardType: "tutorial",
+            editor: "blocks",
+            activityType: "video",
+            language: "js",
+        };
+        const filters = getAvailableHomeSearchFilters([card]);
+        const byId = pxt.Util.toDictionary(filters, filter => filter.id);
+
+        chai.expect(byId.activityType.options.map(option => option.id)).deep.equals(["video"]);
+        chai.expect(byId.language.options.map(option => option.id)).deep.equals(["js"]);
+        chai.expect(filterHomeSearchCards([card], {
+            activityType: ["tutorial"],
+            language: ["blocks"],
+        })).deep.equals([]);
+        chai.expect(filterHomeSearchCards([card], {
+            activityType: ["video"],
+            language: ["js"],
+        })).deep.equals([card]);
+    });
+
+    it("only exposes filter options represented by searchable cards", () => {
+        const filters = getAvailableHomeSearchFilters([
+            {
+                name: "Blocks tutorial",
+                cardType: "tutorial",
+                editor: "blocks",
+                difficulty: ["beginner"],
+                otherActions: [{ url: "/tutorial", cardType: "tutorial", editor: "py" }],
+            },
+            {
+                name: "Skillmap",
+                cardType: "link",
+                url: "https://example.com/--skillmap#intro",
+            },
+        ]);
+        const byId = pxt.Util.toDictionary(filters, filter => filter.id);
+
+        chai.expect(byId.activityType.options.map(option => option.id)).deep.equals(["tutorial", "skillmap"]);
+        chai.expect(byId.language.options.map(option => option.id)).deep.equals(["blocks", "py"]);
+        chai.expect(byId.difficulty.options.map(option => option.id)).deep.equals(["beginner"]);
+        chai.expect(byId.duration).equals(undefined);
+        chai.expect(byId.targetAge).equals(undefined);
+        chai.expect(byId.activityType.options.some(option => option.id === "extension")).equals(false);
+    });
+
+    it("does not infer a language from the card type", () => {
+        const unspecifiedTutorial: pxt.CodeCard = {
+            name: "Unspecified tutorial",
+            cardType: "tutorial",
+        };
+        const pythonTutorial: pxt.CodeCard = {
+            name: "Python tutorial",
+            cardType: "tutorial",
+            editor: "py",
+        };
+        const javascriptExample: pxt.CodeCard = {
+            name: "JavaScript example",
+            cardType: "example",
+            editor: "js",
+        };
+        const filters = getAvailableHomeSearchFilters([
+            unspecifiedTutorial,
+            pythonTutorial,
+            javascriptExample,
+        ]);
+        const byId = pxt.Util.toDictionary(filters, filter => filter.id);
+
+        chai.expect(byId.language.options.map(option => option.id)).deep.equals(["js", "py"]);
+        chai.expect(filterHomeSearchCards([unspecifiedTutorial], { language: ["blocks"] })).deep.equals([]);
+        chai.expect(filterHomeSearchCards([pythonTutorial], { language: ["py"] })).deep.equals([pythonTutorial]);
+    });
+
+    it("matches any selected value within a filter and every selected filter", () => {
+        const cards: pxt.CodeCard[] = [
+            { name: "Beginner blocks", cardType: "tutorial", editor: "blocks", difficulty: "beginner", targetAge: ["9-12"] },
+            { name: "Beginner Python", cardType: "tutorial", editor: "py", difficulty: "beginner", targetAge: ["13-18"] },
+            { name: "Expert Python", cardType: "tutorial", editor: "py", difficulty: "expert", targetAge: ["9-12"] },
+        ];
+        const matches = filterHomeSearchCards(cards, {
+            language: ["blocks", "py"],
+            difficulty: ["beginner"],
+            targetAge: ["9-12"],
+        });
+
+        chai.expect(matches.map(card => card.name)).deep.equals(["Beginner blocks"]);
+    });
+
+    it("counts each option against the query candidates and other active filters", () => {
+        const queryMatches: pxt.CodeCard[] = [
+            { name: "Beginner blocks", cardType: "tutorial", editor: "blocks", difficulty: "beginner", targetAge: ["9-12"] },
+            { name: "Beginner Python", cardType: "tutorial", editor: "py", difficulty: "beginner", targetAge: ["13-18"] },
+            { name: "Expert Python", cardType: "tutorial", editor: "py", difficulty: "expert", targetAge: ["9-12"] },
+        ];
+        const counts = getHomeSearchFilterOptionCounts(queryMatches, {
+            language: ["blocks", "py"],
+            difficulty: ["beginner"],
+            targetAge: ["9-12"],
+        });
+
+        chai.expect(counts.language.blocks).equals(1);
+        chai.expect(counts.language.py).equals(0);
+        chai.expect(counts.difficulty.beginner).equals(1);
+        chai.expect(counts.difficulty.expert).equals(1);
+        chai.expect(counts.targetAge["9-12"]).equals(1);
+        chai.expect(counts.targetAge["13-18"]).equals(1);
+    });
+});
+
+describe("simulator themes", () => {
+    const defaultSimulatorTheme = simulatorTheme;
+    const purpleSimulatorTheme = { ...simulatorTheme, "background-color": "#660066" };
+    const redSimulatorTheme = { ...simulatorTheme, "background-color": "#660000" };
+    const tealSimulatorTheme = { ...simulatorTheme };
+    const retroSimulatorTheme = { ...simulatorTheme, "background-color": "#FCF7E4", layout: "retro" };
+    const presets: pxt.SimulatorThemePreset[] = [
+        {
+            id: "default",
+            name: "Default",
+            theme: defaultSimulatorTheme,
+        },
+        {
+            id: "purple",
+            name: "Purple",
+            theme: purpleSimulatorTheme,
+        },
+        {
+            id: "red",
+            name: "Red",
+            theme: redSimulatorTheme,
+        },
+        {
+            id: "teal",
+            name: "Teal",
+            theme: tealSimulatorTheme,
+        },
+        {
+            id: "retro",
+            name: "Retro",
+            theme: retroSimulatorTheme,
+        },
+    ];
+    const lightTheme = { id: "light", name: "Light", colors: {} };
+    const darkTheme = { id: "dark", name: "Dark", colors: {} };
+    const tokyoNightTheme = {
+        id: "tokyo-night",
+        name: "Tokyo Night",
+        defaultSimulatorTheme: "purple",
+        colors: {},
+    };
+    const inlineSimulatorTheme = {
+        id: "inline",
+        name: "Inline",
+        defaultSimulatorTheme: {
+            "background-color": "#123456",
+            layout: "inline",
+        },
+        colors: {},
+    };
+
+    it("loads shared and target translations for skillmaps", async () => {
+        const requestedUrls: string[] = [];
+        const originalHttpGetJsonAsync = pxt.Util.httpGetJsonAsync;
+        pxt.Util.httpGetJsonAsync = <T>(url: string) => {
+            requestedUrls.push(url);
+            return Promise.resolve({} as T);
+        };
+
+        try {
+            await pxt.Util.downloadTranslationsAsync(
+                "arcade",
+                "https://example.com/",
+                "fr",
+                false,
+                ts.pxtc.Util.TranslationsKind.SkillMap
+            );
+        } finally {
+            pxt.Util.httpGetJsonAsync = originalHttpGetJsonAsync;
+        }
+
+        chai.expect(requestedUrls).to.include.members([
+            "https://example.com/locales/fr/strings.json",
+            "https://example.com/locales/fr/target-strings.json",
+            "https://example.com/locales/fr/skillmap-strings.json",
+        ]);
+    });
+
+    it("initializes an empty cloud-synced simulator theme map", () => {
+        chai.expect(pxt.auth.DEFAULT_USER_PREFERENCES().simulatorThemes).deep.equals({});
+    });
+
+    describe("reset editor-wide themes", () => {
+        const target = {
+            appTheme: { defaultColorTheme: lightTheme.id },
+            colorThemeMap: { light: lightTheme, dark: darkTheme },
+            simulator: { themePresets: presets },
+        } as Pick<pxt.TargetBundle, "appTheme" | "colorThemeMap" | "simulator">;
+
+        it("saves the configured editor default then clears the simulator preference", async () => {
+            const calls: string[] = [];
+            const result = await resetEditorThemesAsync(target, async theme => {
+                chai.expect(theme).equals(lightTheme);
+                calls.push("editor");
+            }, async () => { calls.push("simulator"); });
+
+            chai.expect(calls).deep.equals(["editor", "simulator"]);
+            chai.expect(result).deep.equals({ presetId: "default", theme: defaultSimulatorTheme });
+        });
+
+        it("uses the default editor theme's simulator colors and layout", async () => {
+            const configuredTarget = {
+                ...target,
+                appTheme: { ...target.appTheme, defaultColorTheme: inlineSimulatorTheme.id },
+                colorThemeMap: { ...target.colorThemeMap, inline: inlineSimulatorTheme },
+            };
+            const result = await resetEditorThemesAsync(configuredTarget, async () => {}, async () => {});
+            chai.expect(result?.theme).deep.equals({
+                ...defaultSimulatorTheme,
+                "background-color": "#123456",
+                layout: "inline",
+            });
+        });
+
+        it("preserves project themes instead of replacing them with the editor default", async () => {
+            const projectTheme = Object.freeze({ ...retroSimulatorTheme });
+            const projectConfig = Object.freeze({ name: "themed project", theme: projectTheme });
+            const before = JSON.stringify(projectConfig);
+            const result = await resetEditorThemesAsync(target, async () => {}, async () => {});
+
+            chai.expect(JSON.stringify(projectConfig)).equals(before);
+            chai.expect(resolveSimulatorTheme(projectConfig.theme, undefined, result?.theme, false))
+                .equals(projectTheme);
+        });
+
+        it("resets editor preferences even on targets without simulator themes", async () => {
+            let simulatorCleared = false;
+            const result = await resetEditorThemesAsync({ ...target, simulator: undefined }, async theme => {
+                chai.expect(theme).equals(lightTheme);
+            }, async () => { simulatorCleared = true; });
+            chai.expect(result).equals(undefined);
+            chai.expect(simulatorCleared).equals(true);
+        });
+
+        it("does not change preferences if the default editor theme is unavailable", async () => {
+            let changed = false;
+            let failed = false;
+            try {
+                await resetEditorThemesAsync({ ...target, colorThemeMap: {} },
+                    async () => { changed = true; }, async () => { changed = true; });
+            } catch {
+                failed = true;
+            }
+            chai.expect(failed).equals(true);
+            chai.expect(changed).equals(false);
+        });
+
+        it("propagates persistence errors so the confirmation can offer retry", async () => {
+            const error = new Error("Unable to save preferences");
+            let caught: unknown;
+            try {
+                await resetEditorThemesAsync(target, async () => {}, async () => { throw error; });
+            } catch (err) {
+                caught = err;
+            }
+            chai.expect(caught).equals(error);
+        });
+    });
+
+    it("uses the user theme only when project and device themes are absent", () => {
+        chai.expect(resolveSimulatorTheme(undefined, undefined, simulatorTheme, false)).equals(simulatorTheme);
+        chai.expect(resolveSimulatorTheme("project", undefined, simulatorTheme, false)).equals("project");
+        chai.expect(resolveSimulatorTheme(undefined, "device", simulatorTheme, false)).equals("device");
+    });
+
+    it("lets multiplayer override all other simulator themes", () => {
+        chai.expect(resolveSimulatorTheme("project", "device", simulatorTheme, true)).equals(undefined);
+    });
+
+    it("adds a simulator theme to a copied share config", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", theme: "project" }),
+            [pxt.MAIN_TS]: "",
+        };
+        const sharedFiles = addSimulatorThemeToFiles(files, simulatorTheme);
+
+        chai.expect(JSON.parse(sharedFiles[pxt.CONFIG_NAME]).theme).deep.equals(simulatorTheme);
+        chai.expect(JSON.parse(files[pxt.CONFIG_NAME]).theme).equals("project");
+    });
+
+    it("matches project themes to built-in presets", () => {
+        chai.expect(getSimulatorThemePresetId("DEFAULT", presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme }, presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, layout: "retro" }, presets)).equals("default");
+        chai.expect(getSimulatorThemePresetId({ ...simulatorTheme, "button-fill": "#666666" }, presets)).equals(undefined);
+        chai.expect(pxt.auth.simulatorThemeColorsEqual(simulatorTheme, { ...simulatorTheme, layout: "retro" })).equals(true);
+    });
+
+    it("resolves string project themes to their canonical presets", () => {
+        chai.expect(getProjectSimulatorThemePreference("RETRO", presets, defaultSimulatorTheme))
+            .deep.equals({ presetId: "retro", theme: retroSimulatorTheme });
+    });
+
+    it("preserves unknown string project themes as custom layouts", () => {
+        chai.expect(getProjectSimulatorThemePreference("target-layout", presets, defaultSimulatorTheme))
+            .deep.equals({
+                presetId: "custom",
+                theme: { ...defaultSimulatorTheme, layout: "target-layout" },
+            });
+    });
+
+    it("rejects malformed project theme overrides", () => {
+        chai.expect(getProjectSimulatorThemePreference({
+            "background-color": "invalid",
+        }, presets, defaultSimulatorTheme)).equals(undefined);
+    });
+
+    it("serializes canonical project themes by preset ID", () => {
+        chai.expect(serializeProjectSimulatorThemePreference({
+            presetId: "teal",
+            theme: tealSimulatorTheme,
+        }, presets)).equals("teal");
+    });
+
+    it("serializes independently customized layouts as full themes", () => {
+        const preference = {
+            presetId: "red",
+            theme: { ...redSimulatorTheme, layout: "retro" },
+        };
+        chai.expect(serializeProjectSimulatorThemePreference(preference, presets))
+            .deep.equals(preference.theme);
+    });
+
+    it("requires a layout in persisted themes", () => {
+        const themeWithoutLayout = { ...simulatorTheme } as Partial<pxt.SimulatorTheme>;
+        delete themeWithoutLayout.layout;
+
+        chai.expect(pxt.auth.isValidSimulatorTheme(simulatorTheme)).equals(true);
+        chai.expect(pxt.auth.isValidSimulatorTheme(themeWithoutLayout)).equals(false);
+    });
+
+    it("accepts sparse themes with target-defined colors", () => {
+        chai.expect(pxt.auth.isValidSimulatorTheme({
+            "background-color": "#123456",
+            "screen-border": "#ABCDEF",
+            layout: "target-layout",
+        })).equals(true);
+    });
+
+    it("rejects malformed simulator theme preferences", () => {
+        const invalidColors = ["", "#12345", "#1234567", "123456", "not-a-color"];
+        for (const color of invalidColors) {
+            chai.expect(pxt.auth.isValidSimulatorTheme({
+                ...simulatorTheme,
+                "background-color": color,
+            }), color).equals(false);
+        }
+
+        chai.expect(pxt.auth.isValidSimulatorThemePreference({
+            presetId: "default",
+            theme: simulatorTheme,
+        })).equals(true);
+        chai.expect(pxt.auth.isValidSimulatorThemePreference({
+            presetId: "",
+            theme: simulatorTheme,
+        })).equals(false);
+    });
+
+    it("uses a color theme's simulator default when no preference is set", () => {
+        const result = getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        );
+
+        chai.expect(result).deep.equals({ presetId: "default", theme: purpleSimulatorTheme });
+    });
+
+    it("merges an inline color theme simulator default over Default", () => {
+        const result = getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            inlineSimulatorTheme,
+            presets
+        );
+
+        chai.expect(result).deep.equals({
+            presetId: "default",
+            theme: {
+                ...defaultSimulatorTheme,
+                "background-color": "#123456",
+                layout: "inline",
+            },
+        });
+    });
+
+    it("moves between color theme simulator defaults", () => {
+        const defaultPreference = { presetId: "default", theme: defaultSimulatorTheme };
+        const purplePreference = getSimulatorThemePreferenceForColorThemeChange(
+            defaultPreference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        );
+        const restoredPreference = getSimulatorThemePreferenceForColorThemeChange(
+            purplePreference,
+            tokyoNightTheme,
+            lightTheme,
+            presets
+        );
+
+        chai.expect(purplePreference).deep.equals({ presetId: "default", theme: purpleSimulatorTheme });
+        chai.expect(restoredPreference).deep.equals(defaultPreference);
+    });
+
+    it("uses the theme's layout while moving between color theme simulator defaults", () => {
+        const preference = { presetId: "default", theme: { ...defaultSimulatorTheme, layout: "retro" } };
+
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            preference,
+            lightTheme,
+            tokyoNightTheme,
+            presets
+        )).deep.equals({ presetId: "default", theme: purpleSimulatorTheme });
+    });
+
+    it("preserves user-selected simulator themes when the color theme changes", () => {
+        const preferences = [
+            { presetId: "red", theme: redSimulatorTheme },
+            { presetId: "purple", theme: purpleSimulatorTheme },
+            { presetId: "teal", theme: tealSimulatorTheme },
+            { presetId: "custom", theme: { ...simulatorTheme } },
+        ];
+
+        for (const preference of preferences) {
+            chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+                preference,
+                lightTheme,
+                tokyoNightTheme,
+                presets
+            )).equals(preference);
+        }
+    });
+
+    it("does not create a simulator preference between unpinned color themes", () => {
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            undefined,
+            lightTheme,
+            darkTheme,
+            presets
+        )).equals(undefined);
+    });
+
+    it("keeps the existing default between unpinned color themes", () => {
+        const defaultPreference = { presetId: "default", theme: defaultSimulatorTheme };
+
+        chai.expect(getSimulatorThemePreferenceForColorThemeChange(
+            defaultPreference,
+            lightTheme,
+            darkTheme,
+            presets
+        )).equals(defaultPreference);
+    });
+
+    it("only treats the Default preset on the Default layout as implicit", () => {
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "default",
+            theme: purpleSimulatorTheme,
+        }, presets)).equals(true);
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "custom",
+            theme: defaultSimulatorTheme,
+        }, presets)).equals(false);
+        chai.expect(isImplicitSimulatorThemePreference({
+            presetId: "default",
+            theme: { ...defaultSimulatorTheme, layout: "retro" },
+        }, presets)).equals(false);
+    });
+
+    it("changes layout without changing custom colors", () => {
+        const customTheme = { ...simulatorTheme, "background-color": "#ABCDEF" };
+
+        chai.expect(getSimulatorThemeForLayout(customTheme, "retro"))
+            .deep.equals({ ...customTheme, layout: "retro" });
+    });
+
+    it("fills missing colors declared by a layout", () => {
+        const borderField: pxt.SimulatorThemeColorField = {
+            property: "screen-border",
+            label: "Screen border",
+            defaultValue: "#ABCDEF",
+        };
+        chai.expect(getSimulatorThemeForLayout(simulatorTheme, "retro", [borderField]))
+            .deep.equals({ ...simulatorTheme, layout: "retro", "screen-border": "#ABCDEF" });
+        chai.expect(getSimulatorThemeForLayout({
+            ...simulatorTheme,
+            "screen-border": "#123456",
+        }, "retro", [borderField])).deep.equals({
+            ...simulatorTheme,
+            layout: "retro",
+            "screen-border": "#123456",
+        });
+    });
+
+    it("selects the default layout without changing its colors", () => {
+        chai.expect(getSimulatorThemeForLayout(retroSimulatorTheme, "default"))
+            .deep.equals({ ...retroSimulatorTheme, layout: "default" });
+    });
+
+    it("preserves colors for a target-specific layout without a preset", () => {
+        chai.expect(getSimulatorThemeForLayout(simulatorTheme, "target-layout"))
+            .deep.equals({ ...simulatorTheme, layout: "target-layout" });
+    });
+
+    it("copies target-defined colors and ignores reserved or malformed properties", () => {
+        const themeWithMalformedProperty = {
+            ...simulatorTheme,
+            "screen-border": "#ABCDEF",
+            skin: "#123456",
+            extra: "ignored",
+        } as pxt.SimulatorTheme;
+        chai.expect(copySimulatorTheme(themeWithMalformedProperty)).deep.equals({
+            ...simulatorTheme,
+            "screen-border": "#ABCDEF",
+        });
+    });
+
+    it("removes a simulator theme from an editable shared-project copy", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", theme: simulatorTheme }),
+            [pxt.MAIN_TS]: "",
+        };
+        const importedFiles = removeSimulatorThemeFromFiles(files);
+
+        chai.expect(JSON.parse(importedFiles[pxt.CONFIG_NAME]).theme).equals(undefined);
+        chai.expect(JSON.parse(files[pxt.CONFIG_NAME]).theme).deep.equals(simulatorTheme);
+        chai.expect(importedFiles).not.equals(files);
+    });
+
+    it("leaves shared-project files without a simulator theme unchanged", () => {
+        const files: pxt.workspace.ScriptText = {
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test" }),
+            [pxt.MAIN_TS]: "",
+        };
+
+        chai.expect(removeSimulatorThemeFromFiles(files)).equals(files);
+    });
+});
 
 const versions = [
     "Here is some text",
@@ -346,6 +1089,39 @@ describe("updateHistory", () => {
         }
     });
 
+    it("should preserve extension event diffs when collapsing", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        const afterConfig = JSON.parse(beforeText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        afterConfig.dependencies["test-extension"] = "github:test/test-extension#v2.0.0";
+        let prevText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.CONFIG_NAME]: JSON.stringify(afterConfig, null, 4)
+        };
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        };
+        pxteditor.history.pushExtensionEventOnHistory(prevText, beforeText, 1, event, diffText);
+
+        const period = ONE_HOUR * 7;
+        for (let i = 2; i < testVersions.length; i++) {
+            const nextText = { ...testVersions[i] };
+            pxteditor.history.updateHistory(prevText, nextText, i * period, [], diffText, patchText);
+            prevText = nextText;
+        }
+
+        const history = pxteditor.history.parseHistoryFile(prevText[pxt.HISTORY_FILE]);
+        const eventEntries = history.entries.filter(entry => entry.event?.extensionName === "test-extension");
+        chai.expect(eventEntries).to.have.length(2);
+
+        const before = getTextAtTime(prevText, history, eventEntries[0].timestamp, patchText);
+        const after = getTextAtTime(prevText, history, eventEntries[1].timestamp, patchText);
+        const restoredBeforeConfig = JSON.parse(before.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        const restoredAfterConfig = JSON.parse(after.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        chai.expect(restoredBeforeConfig.dependencies["test-extension"]).to.equal(undefined);
+        chai.expect(restoredAfterConfig.dependencies["test-extension"]).to.equal("github:test/test-extension#v2.0.0");
+    });
+
     it("should restore to the version on the timestamp", () => {
         const project = { ...testProject };
         const history = JSON.parse(project[pxt.HISTORY_FILE]) as HistoryFile;
@@ -466,6 +1242,146 @@ describe("collapseHistory", () => {
     });
 });
 
+describe("pushSnapshotOnHistory", () => {
+    it("should preserve snapshot event metadata", () => {
+        const text = { ...testProject };
+        delete text[pxt.HISTORY_FILE];
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-removed",
+            phase: "before",
+            extensionName: "test-extension"
+        };
+        const snapshotText = {
+            ...text,
+            [pxt.MAIN_BLOCKS]: "before extension change"
+        };
+
+        pxteditor.history.pushSnapshotOnHistory(text, 100, event, snapshotText);
+        pxteditor.history.pushSnapshotOnHistory(text, 100, {
+            ...event,
+            phase: "after"
+        });
+
+        const history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots).to.have.length(2);
+        chai.expect(history.snapshots[0].event).to.deep.equal(event);
+        chai.expect(history.snapshots[0].text[pxt.HISTORY_FILE]).to.equal(undefined);
+        chai.expect(history.snapshots[0].text[pxt.MAIN_BLOCKS]).to.equal("before extension change");
+        chai.expect(history.snapshots[1].timestamp).to.equal(101);
+        chai.expect(history.snapshots[1].event.phase).to.equal("after");
+    });
+});
+
+describe("pushExtensionEventOnHistory", () => {
+    it("should store extension changes as a pxt.json diff with before and after markers", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        const afterConfig = JSON.parse(beforeText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        afterConfig.dependencies["test-extension"] = "github:test/test-extension#v2.0.0";
+        const afterText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.CONFIG_NAME]: JSON.stringify(afterConfig, null, 4)
+        };
+        const event: pxteditor.history.SnapshotEvent = {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        };
+
+        pxteditor.history.updateHistory(beforeText, afterText, 99, [], diffText, patchText);
+        pxteditor.history.pushExtensionEventOnHistory(afterText, beforeText, 100, event, diffText);
+
+        const history = pxteditor.history.parseHistoryFile(afterText[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots).to.have.length(1);
+        chai.expect(history.snapshots[0].event).to.equal(undefined);
+        chai.expect(history.entries).to.have.length(2);
+        chai.expect(history.entries[0].event.phase).to.equal("before");
+        chai.expect(history.entries[0].changes).to.have.length(0);
+        chai.expect(history.entries[1].event.phase).to.equal("after");
+        chai.expect(history.entries[1].changes).to.have.length(1);
+        chai.expect(history.entries[1].changes[0].filename).to.equal(pxt.CONFIG_NAME);
+
+        const after = pxteditor.history.getTextAtTime(afterText, history, history.entries[1].timestamp, patchText);
+        const before = pxteditor.history.getTextAtTime(afterText, history, history.entries[0].timestamp, patchText);
+        chai.expect(after.files[pxt.CONFIG_NAME]).to.equal(afterText[pxt.CONFIG_NAME]);
+        chai.expect(before.files[pxt.CONFIG_NAME]).to.equal(beforeText[pxt.CONFIG_NAME]);
+
+        const nextText: pxt.workspace.ScriptText = {
+            ...afterText,
+            [pxt.MAIN_TS]: "changed after extension event"
+        };
+        pxteditor.history.updateHistory(afterText, nextText, 200, [], diffText, patchText);
+        const nextHistory = pxteditor.history.parseHistoryFile(nextText[pxt.HISTORY_FILE]);
+        const timestamps = nextHistory.entries.map(entry => entry.timestamp);
+        chai.expect(new Set(timestamps).size).to.equal(timestamps.length);
+    });
+
+    it("should preserve timed snapshots that predate the extension change", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        pxteditor.history.pushSnapshotOnHistory(beforeText, 50);
+        const afterConfig = JSON.parse(beforeText[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+        afterConfig.dependencies["test-extension"] = "github:test/test-extension#v2.0.0";
+        const afterText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.CONFIG_NAME]: JSON.stringify(afterConfig, null, 4)
+        };
+
+        pxteditor.history.updateHistory(beforeText, afterText, 99, [], diffText, patchText);
+        pxteditor.history.pushExtensionEventOnHistory(afterText, beforeText, 100, {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        }, diffText);
+
+        const history = pxteditor.history.parseHistoryFile(afterText[pxt.HISTORY_FILE]);
+        chai.expect(history.snapshots).to.have.length(1);
+        chai.expect(history.snapshots[0].timestamp).to.equal(50);
+        chai.expect(history.entries.filter(entry => entry.event)).to.have.length(2);
+    });
+
+    it("should preserve automatic history when pxt.json did not change", () => {
+        const beforeText: pxt.workspace.ScriptText = { ...testVersions[0] };
+        const afterText: pxt.workspace.ScriptText = {
+            ...beforeText,
+            [pxt.MAIN_TS]: "non-extension change"
+        };
+        pxteditor.history.updateHistory(beforeText, afterText, 99, [], diffText, patchText);
+        const automaticHistory = afterText[pxt.HISTORY_FILE];
+
+        pxteditor.history.pushExtensionEventOnHistory(afterText, beforeText, 100, {
+            type: "extension-updated",
+            extensionName: "test-extension"
+        }, diffText);
+
+        chai.expect(afterText[pxt.HISTORY_FILE]).to.equal(automaticHistory);
+    });
+});
+
+describe("updateShareHistory", () => {
+    it("should preserve the type of shared versions", () => {
+        const text = { ...testVersions[0] };
+        pxteditor.history.updateShareHistory(text, 100, [{
+            id: "snapshot-id",
+            type: "snapshot"
+        }]);
+        pxteditor.history.updateShareHistory(text, 200, [{
+            id: "snapshot-id",
+            type: "snapshot"
+        }, {
+            id: "permalink-id",
+            type: "permalink"
+        }]);
+
+        const history = pxteditor.history.parseHistoryFile(text[pxt.HISTORY_FILE]);
+        chai.expect(history.shares).to.deep.equal([{
+            id: "snapshot-id",
+            type: "snapshot",
+            timestamp: 100
+        }, {
+            id: "permalink-id",
+            type: "permalink",
+            timestamp: 200
+        }]);
+    });
+});
+
 
 describe("pxt.github.normalizeTutorialPath", () => {
     const testPath = "Mojang/EducationContent/computing/unit-2/lesson-1";
@@ -490,6 +1406,148 @@ describe("pxt.github.normalizeTutorialPath", () => {
     it("should parse actual links to markdown files in github", () => {
         const url = "https://github.com/Mojang/EducationContent/blob/master/computing/unit-2/lesson-1.md";
         chai.expect(pxt.github.normalizeTutorialPath(url)).equals(testPath);
+    });
+});
+
+describe("pxt.github local repositories", () => {
+    const monoConfig = JSON.stringify({ name: "ext", description: "Nested extension", dependencies: {}, files: ["main.ts"] });
+    const serverFiles: pxt.Map<any> = {
+        "localrepos": { repos: ["owner/mono"] },
+        "gh/owner/mono": { name: "mono", description: "Monorepo root" },
+        "gh/owner/mono/refs": { refs: {} },
+        "gh/owner/mono/ext/text": { "pxt.json": monoConfig, "main.ts": "namespace ext {}" },
+    };
+    let requests: string[];
+    let refuseWithoutToken: boolean;
+    let saved: { isNodeJS: boolean, localToken: string, localRequestAsync: any, packagesConfigAsync: any };
+
+    class SilentLogger extends pxt.ConsoleLogger {
+        log() { }
+        error() { }
+    }
+
+    function serveAt(href: string) {
+        (global as any).window = { location: { href } };
+    }
+
+    before(() => {
+        saved = {
+            isNodeJS: pxt.Util.isNodeJS,
+            localToken: pxt.Cloud.localToken,
+            localRequestAsync: pxt.Cloud.localRequestAsync,
+            packagesConfigAsync: pxt.packagesConfigAsync
+        };
+        pxt.setLogger(new SilentLogger());
+        pxt.Util.isNodeJS = false;
+        pxt.Cloud.localToken = "local-token";
+        (pxt.Cloud as any).localRequestAsync = (path: string) => {
+            requests.push(path);
+            if (refuseWithoutToken && !pxt.Cloud.localToken)
+                return Promise.resolve({ statusCode: 403, headers: {}, buffer: undefined, json: undefined, text: "Error 403" });
+            const json = serverFiles[path];
+            return Promise.resolve(json
+                ? { statusCode: 200, headers: {}, buffer: undefined, json, text: JSON.stringify(json) }
+                : { statusCode: 404, headers: {}, buffer: undefined, json: undefined, text: `${path}: missing on disk` });
+        };
+        (pxt as any).packagesConfigAsync = () => Promise.resolve({});
+    });
+
+    beforeEach(() => {
+        requests = [];
+        refuseWithoutToken = false;
+        pxt.Cloud.localToken = "local-token";
+    });
+
+    after(async () => {
+        serveAt("http://localhost:3232/");
+        serverFiles["localrepos"] = { repos: [] };
+        await pxt.github.initLocalReposAsync();
+        delete (global as any).window;
+        pxt.Util.isNodeJS = saved.isNodeJS;
+        pxt.Cloud.localToken = saved.localToken;
+        (pxt.Cloud as any).localRequestAsync = saved.localRequestAsync;
+        (pxt as any).packagesConfigAsync = saved.packagesConfigAsync;
+        pxt.setLogger(new pxt.ConsoleLogger());
+    });
+
+    it("does not consult a server that is not on localhost", async () => {
+        serveAt("https://arcade.makecode.com/");
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals([]);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(false);
+    });
+
+    it("lists the locally served repositories without a local token when the server allows it (pxt serve --noauth)", async () => {
+        serveAt("http://localhost:3232/");
+        pxt.Cloud.localToken = "";
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals(["localrepos"]);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(true);
+    });
+
+    it("resolves no repositories locally when the server refuses the listing", async () => {
+        serveAt("http://localhost:3232/");
+        pxt.Cloud.localToken = "";
+        refuseWithoutToken = true;
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals(["localrepos"]);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(false);
+    });
+
+    it("lists the locally served repositories from the local server", async () => {
+        serveAt("http://localhost:3232/");
+        await pxt.github.initLocalReposAsync();
+        chai.expect(requests).deep.equals(["localrepos"]);
+        chai.expect(pxt.github.isLocalRepo("github:Owner/Mono/ext#v1.0.0")).equals(true);
+        chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(true);
+        chai.expect(pxt.github.isLocalRepo("owner/other")).equals(false);
+    });
+
+    it("treats locally served repositories as approved", () => {
+        chai.expect(pxt.github.repoStatus(pxt.github.parseRepoId("owner/mono/ext"), {}))
+            .equals(pxt.github.GitRepoStatus.Approved);
+        chai.expect(pxt.github.repoStatus(pxt.github.parseRepoId("owner/other"), {}))
+            .equals(pxt.github.GitRepoStatus.Unknown);
+    });
+
+    it("reads repository metadata from the local server", async () => {
+        const repo = await pxt.github.repoAsync("owner/mono/ext", {});
+        chai.expect(requests).deep.equals(["gh/owner/mono"]);
+        chai.expect(repo.name).equals("mono-ext");
+        chai.expect(repo.fullName).equals("owner/mono/ext");
+        chai.expect(repo.status).equals(pxt.github.GitRepoStatus.Approved);
+    });
+
+    it("reports no versions and no refs", async () => {
+        chai.expect(await pxt.github.latestVersionAsync("owner/mono", {})).equals(undefined);
+        chai.expect(await pxt.github.listRefsAsync("owner/mono")).deep.equals([]);
+        chai.expect(requests).deep.equals(["gh/owner/mono/refs"]);
+    });
+
+    it("adds a locally served extension without a ref", async () => {
+        const res = await pxt.github.downloadLatestPackageAsync(pxt.github.parseRepoId("owner/mono/ext"));
+        chai.expect(res.version).equals("github:owner/mono/ext");
+        chai.expect(res.config.name).equals("ext");
+        chai.expect(requests).deep.equals(["gh/owner/mono/ext/text"]);
+    });
+
+    it("serves the working tree for any requested ref", async () => {
+        const pkg = await pxt.github.downloadPackageAsync("github:owner/mono/ext#v1.0.0", {});
+        chai.expect(pkg.files["main.ts"]).equals("namespace ext {}");
+        chai.expect(requests).deep.equals(["gh/owner/mono/ext/text"]);
+    });
+
+    it("fails with the local server's error when the package is missing", async () => {
+        let err: any;
+        try {
+            await pxt.github.downloadPackageAsync("github:owner/mono/nothere", {});
+        } catch (e) {
+            err = e;
+        }
+        chai.expect(err, "expected an error").to.exist;
+        chai.expect(err.message).equals("gh/owner/mono/nothere/text: missing on disk");
+        chai.expect(err.statusCode).equals(404);
+        chai.expect(requests).deep.equals(["gh/owner/mono/nothere/text"]);
     });
 });
 

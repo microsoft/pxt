@@ -90,7 +90,7 @@ export interface RenderBlocksRequestMessage extends SimulatorMessage {
 }
 ```
 
-* ``id``: The identifer of the snippet element. This is used to match the document element of the snippet with the rendered blocks returned later.
+* ``id``: The identifier of the snippet element. This is used to match the document element of the snippet with the rendered blocks returned later.
 * ``code``: The text of the code snippet to send, compile, and render. The snippet may be JavaScript or the Blockly XML payload.
 * ``packageId``: the identifier of a project shared in the editor (without the ``https://makecode.com/`` prefix)
 
@@ -113,7 +113,7 @@ export interface RenderBlocksResponseMessage extends SimulatorMessage {
 }
 ```
 
-* ``id``: The identifer of the snippet element. This is used to replace the document element of the snippet with the rendered blocks or to associate the rendered blocks if the snippet is to be retained in the document.
+* ``id``: The identifier of the snippet element. This is used to replace the document element of the snippet with the rendered blocks or to associate the rendered blocks if the snippet is to be retained in the document.
 * ``svg``: The SVG image element.
 * ``uri``: The data source of the blocks image.
 * ``width``: The width of the SVG blocks image.

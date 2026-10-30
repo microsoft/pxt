@@ -96,13 +96,13 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
         const name = header ? header.name : card.name;
 
         const ariaLabel = card.ariaLabel || card.title || card.shortName || name;
-        const ariaExpanded = !card.directOpen && card.selected !== undefined ? card.selected : undefined;
+        const ariaExpanded = card.role !== "checkbox" && !card.directOpen && card.selected !== undefined ? card.selected : undefined;
 
         const style = card.style || "card"
 
         const renderButton = (content: JSX.Element) => {
             return (<div className={`ui ${style} ${color} ${card.onClick ? "link" : ''} ${className ? className : ''}`}
-                role={card.role} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} aria-expanded={ariaExpanded} title={card.title}
+                role={card.role} aria-checked={card.role === "checkbox" ? card.selected : undefined} aria-selected={card.role === "option" ? "true" : undefined} aria-label={ariaLabel} aria-expanded={ariaExpanded} title={card.title}
                 onClick={clickHandler} tabIndex={card.onClick ? card.tabIndex || 0 : null} onKeyDown={keydownHandler}>{content}</div>)
         }
         const renderLink = (content: JSX.Element) => {
@@ -141,7 +141,7 @@ export class CodeCardView extends data.Component<CodeCardProps, CodeCardState> {
             {(card.shortName || name || descriptions) ?
                 <div className={`content ${this.props.tallCard? "tall" : ""}`}>
                     {card.shortName || name ? <div className="header">{card.shortName || name}
-                            <div className="tags">{card.tags?.join(" ")}</div>
+                            <div className="tags">{card.tags?.map(tag => pxt.Util.rlf(tag)).join(" ")}</div>
                         </div> : null}
                     {descriptions && descriptions.map((element, index) => {
                         return <div key={`line${index}`} className={`description tall ${card.icon || card.iconContent || card.imageUrl ? "" : "long"}`}>{renderMd(element)}</div>

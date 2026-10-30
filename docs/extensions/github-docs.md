@@ -231,7 +231,7 @@ The `my-extension-name` in the above snippet should match the name listed in the
 
 ## Step 5: Commit your changes and test
 
-Once you've commited your changes to master, you can test before pushing a release by creating a MakeCode project that points to a commit with your changes.
+Once you've committed your changes to master, you can test before pushing a release by creating a MakeCode project that points to a commit with your changes.
 
 1. In your github repo, copy the SHA hash for the commit that you want to test
 2. In MakeCode, create a new project
@@ -278,7 +278,7 @@ would become:
 }
 ```
 
-Once you've made these changes, switch back to `main.ts` and reload the page. Your project should now have the version of your extension from that commmit.
+Once you've made these changes, switch back to `main.ts` and reload the page. Your project should now have the version of your extension from that commit.
 
 ## Step 6: Create a release to push your changes
 
@@ -288,7 +288,7 @@ If you are working using the [makecode CLI](https://github.com/microsoft/pxt-mkc
 
 If you are working from within MakeCode, use the **Create Release** button that appears in the GitHub settings for your extension.
 
-Otherwise you can push a version manually by changing the version in `pxt.json` and pushin a new tag in your repo of the format `v0.0.0` (where `0.0.0` is replaced with the new version in `pxt.json`).
+Otherwise you can push a version manually by changing the version in `pxt.json` and push in a new tag in your repo of the format `v0.0.0` (where `0.0.0` is replaced with the new version in `pxt.json`).
 
 ## Localization
 

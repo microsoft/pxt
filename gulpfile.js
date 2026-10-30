@@ -735,16 +735,24 @@ const lint = lintWithEslint
 
 const testdecompiler = testTask("decompile-test", "decompilerunner.js");
 const testlang = testTask("compile-test", "compilerunner.js");
+const testthumb = testTask("thumb-test", "thumbrunner.js");
 const testhelpers = testTask("helpers-test", "helperrunner.js");
 const testerr = testTask("errors-test", "errorrunner.js");
 const testfmt = testTask("format-test", "formatrunner.js");
 const testembed = testTask("embed-test", "embedrunner.js");
+const testsimdriver = testTask("simdriver-test", "simdriverrunner.js");
 const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
+const testprojecttools = gulp.series(
+    pxtlib,
+    webapp,
+    () => exec(`${getMochaExecutable()} "tests/project-tools-test/*.spec.js" --reporter dot`, true)
+);
+const testcli = cliTestTask();
 
 const buildKarmaRunner = () => compileTsProject("tests/blocklycompiler-test", "built/", true);
 const browserifyKarma = () =>
@@ -773,10 +781,12 @@ const browserifyBlocksPrep = () =>
 const testAll = gulp.series(
     testdecompiler,
     testlang,
+    testthumb,
     testhelpers,
     testerr,
     testfmt,
     testembed,
+    testsimdriver,
     testpydecomp,
     testpycomp,
     testpytraces,
@@ -784,7 +794,9 @@ const testAll = gulp.series(
     testlanguageservice,
     karma,
     testSkillmap,
-    testpxteditor
+    testpxteditor,
+    testprojecttools,
+    testcli
 )
 
 function testTask(testFolder, testFile, additionalFiles) {
@@ -830,6 +842,17 @@ function pxtEditorTestTask() {
     return gulp.series([buildTs, browserifyTs, buildRunner, runTests]);
 }
 
+
+function cliTestTask() {
+    // cli modules are commonjs modules that read pxtlib from the global scope
+    const outDir = "built/tests/cli-test";
+    const buildTs = () => compileTsProject("tests/cli-test", outDir, true);
+    const buildRunner = () => gulp.src(["built/pxtlib.js", `${outDir}/tests/cli-test/clirunner.js`])
+        .pipe(concat("runner.js"))
+        .pipe(gulp.dest(`${outDir}/tests/cli-test`));
+    const runTests = () => exec(`${getMochaExecutable()} ${outDir}/tests/cli-test/runner.js --reporter dot`, true);
+    return gulp.series([backendutils, buildTs, buildRunner, runTests]);
+}
 
 function getMochaExecutable() {
     return isWin32 ? path.resolve("node_modules/.bin/mocha.cmd") : "./node_modules/.bin/mocha";
@@ -886,9 +909,11 @@ exports.updatestrings = updatestrings;
 exports.lint = lint
 exports.testdecompiler = testdecompiler;
 exports.testlang = testlang;
+exports.testthumb = testthumb;
 exports.testerr = testerr;
 exports.testfmt = testfmt;
 exports.testembed = testembed;
+exports.testsimdriver = testsimdriver;
 exports.testpydecomp = testpydecomp;
 exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
@@ -906,6 +931,8 @@ exports.tt = teacherTool;
 exports.icons = buildSVGIcons;
 exports.testhelpers = testhelpers;
 exports.testpxteditor = testpxteditor;
+exports.testprojecttools = testprojecttools;
+exports.testcli = testcli;
 exports.reactCommon = reactCommon;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),

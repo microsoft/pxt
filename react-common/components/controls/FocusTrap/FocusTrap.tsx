@@ -14,6 +14,7 @@ export interface FocusTrapProps extends ContainerProps {
     focusFirstItem?: boolean;
     tagName?: keyof JSX.IntrinsicElements;
     ariaLabelledby?: string;
+    ariaModal?: boolean;
 }
 
 export const FocusTrap = (props: FocusTrapProps) => {
@@ -40,7 +41,8 @@ const FocusTrapInner = (props: FocusTrapProps) => {
         role,
         ariaLabelledby,
         ariaLabel,
-        ariaHidden
+        ariaHidden,
+        ariaModal
     } = props;
 
     const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -222,6 +224,7 @@ const FocusTrapInner = (props: FocusTrapProps) => {
             "aria-labelledby": ariaLabelledby,
             "aria-label": ariaLabel,
             "aria-hidden": ariaHidden,
+            "aria-modal": ariaModal,
         },
         children
 

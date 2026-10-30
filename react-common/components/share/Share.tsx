@@ -24,10 +24,11 @@ export interface ShareProps {
     hasProjectBeenPersistentShared?: boolean;
     anonymousShareByDefault?: boolean;
     isMultiplayerGame?: boolean; // Arcade: Does the game being shared have multiplayer enabled?
+    simulatorTheme?: pxt.SimulatorTheme;
     kind?: "multiplayer" | "vscode" | "share"; // Arcade: Was the share dialog opened specifically for hosting a multiplayer game?
     setAnonymousSharePreference?: (anonymousByDefault: boolean) => void;
     simRecorder: SimRecorder;
-    publishAsync: (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean) => Promise<ShareData>;
+    publishAsync: (name: string, description?: string, screenshotUri?: string, forceAnonymous?: boolean, simulatorTheme?: pxt.SimulatorTheme) => Promise<ShareData>;
     onClose: () => void;
 }
 
@@ -43,6 +44,7 @@ export const Share = (props: ShareProps) => {
         anonymousShareByDefault,
         setAnonymousSharePreference,
         isMultiplayerGame,
+        simulatorTheme,
         kind,
         onClose
     } = props;
@@ -55,6 +57,7 @@ export const Share = (props: ShareProps) => {
             simRecorder={simRecorder}
             publishAsync={publishAsync}
             isMultiplayerGame={isMultiplayerGame}
+            simulatorTheme={simulatorTheme}
             kind={kind}
             hasProjectBeenPersistentShared={hasProjectBeenPersistentShared}
             anonymousShareByDefault={anonymousShareByDefault}

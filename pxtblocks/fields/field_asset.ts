@@ -31,6 +31,7 @@ const TOTAL_HEIGHT = Y_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 const TOTAL_WIDTH = X_PADDING * 2 + BG_PADDING * 2 + PREVIEW_WIDTH;
 
 export abstract class FieldAssetEditor<U extends FieldAssetEditorOptions, V extends ParsedFieldAssetEditorOptions> extends FieldBase<U> {
+    public readonly isBackpackAsset = true;
     protected asset: pxt.Asset;
     protected params: V;
 

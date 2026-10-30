@@ -55,7 +55,7 @@ If you run `npm i` afterwards (in either the target or pxt), you might need to r
 
 ## Build
 
-First, install [Node](https://nodejs.org/en/): minimum version 8.
+First, install [Node](https://nodejs.org/en/): minimum version 24.
 
 To build the PXT command line tools:
 
@@ -99,7 +99,6 @@ If you don't need to build the suite of associated webapps (skillmap, multiplaye
 gulp --no-webapps
 ```
 
-
 ### Icons
 
 There are a number of custom icons (to use in addition
@@ -118,7 +117,7 @@ svgo svgicons/myicon.svg
 
 When adding a CSS color or other style element that will be shared across editor targets (e.g. micro:bit, Arcade) and sub-applications (a.k.a. "CRAs", like skillmap, teachertool, etc.). Declare a CSS variable for it in `theme/themepacks.less`:
 
-1. Add the new variable to the `:root` pseudo-class. Choose a reasonable default value according to the guidlines in the file.
+1. Add the new variable to the `:root` pseudo-class. Choose a reasonable default value according to the guidelines in the file.
 2. Add the new variable to all theme classes defined in that file. At the time of this writing, only `theme-highcontrast` is defined. Choose a value that works well for the given theme.
 3. Add the new variable to the theme overrides for each target. This will be done in the target repo's `theme/themepacks.less` file (e.g. pxt-microbit, pxt-arcade).
 

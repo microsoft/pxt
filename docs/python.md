@@ -1,6 +1,6 @@
 # Python in MakeCode
 
-Our Python support is called **MakeCode Python**. As with TypeScript, the Python implementation is a subset of the full Python languange.
+Our Python support is called **MakeCode Python**. As with TypeScript, the Python implementation is a subset of the full Python language.
 
 The TypeScript implementation in MakeCode is called Static TypeScript (STS) and similarly, MakeCode Python is often referred to as Static Python (SPY).
 
@@ -33,7 +33,7 @@ Some of the common value types for variables are numeric, boolean, and string.
 ```python
 cards = 52
 finished = False
-month = "Febraury"
+month = "February"
 ```
 
 Expressions are formed using values of these types along with associated operators:
@@ -105,7 +105,7 @@ showArea(32)
 
 ### Code translation
 
-Python support in MakeCode works by converting SPY source code into Static Typscript (STS) and vice versa.
+Python support in MakeCode works by converting SPY source code into Static Typescript (STS) and vice versa.
 The translation is mostly 1:1 (that is for every statement of STS you usually get
 one statement of SPY and vice versa).
 The code generated in both directions is meant to be human readable.

@@ -6,7 +6,7 @@ These extended markdown elements remain in the documents when they're uploaded t
 
 ## Information pages
 
-Information pages are for reference, courses and lessons, projects, how to's, tips, FAQs, etc. These pages typcally contain mostly text with occasional images. There are portions of these pages that do not get translated.
+Information pages are for reference, courses and lessons, projects, how to's, tips, FAQs, etc. These pages typically contain mostly text with occasional images. There are portions of these pages that do not get translated.
 
 ### Code blocks
 
@@ -22,13 +22,13 @@ input.onButtonPressed(Button.A, () => {
 
 ### Code block highlights
 
-Code highlights help to ephasize text that represents a block in the editor Toolbox. They will highlight the text with a color background that matches the block's Toolbox category. In Crowdin, it might look like this:
+Code highlights help to emphasize text that represents a block in the editor Toolbox. They will highlight the text with a color background that matches the block's Toolbox category. In Crowdin, it might look like this:
 
 ```
 <0>||basic:show number||</0>
 ```
 
-The `<0>` and `<0/>` are mardown escape codes and you leave them as is, at the same place in the string. The `||` are delimiters for this highlight extension and those are left alone too. The portion of it to the left of the `:`, which is `basic`, is the blocks category and it stays untranslated. The rest of it, `show number` relates to the block text and it does get translated. Typically, this will translate to the same text as the blocks in the `jsdoc` files.
+The `<0>` and `<0/>` are markdown escape codes and you leave them as is, at the same place in the string. The `||` are delimiters for this highlight extension and those are left alone too. The portion of it to the left of the `:`, which is `basic`, is the blocks category and it stays untranslated. The rest of it, `show number` relates to the block text and it does get translated. Typically, this will translate to the same text as the blocks in the `jsdoc` files.
 
 ### Avatar sections
 

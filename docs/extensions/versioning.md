@@ -38,11 +38,11 @@ git push --tags
 
 ## Resolving incompatible versions
 
-If an extension version used by a project isn't current, errors might occur when the editor trys to load the project. Extension versions used by the project may be incompatible with the current editor. If errors occur in an extension when the editor trys to load a project, the user is prompted to have the edtior attempt an action to try and resolve them. These actions are:
+If an extension version used by a project isn't current, errors might occur when the editor tries to load the project. Extension versions used by the project may be incompatible with the current editor. If errors occur in an extension when the editor tries to load a project, the user is prompted to have the editor attempt an action to try and resolve them. These actions are:
 
-1. **Try to fix**: The extentions used by the project are upgraded to their current versions and the editor attempts to reload the project. If any errors are found again, the user is prompted to try a load action again but can only choose from options **2** or **3**.
+1. **Try to fix**: The extensions used by the project are upgraded to their current versions and the editor attempts to reload the project. If any errors are found again, the user is prompted to try a load action again but can only choose from options **2** or **3**.
 
-2. **Ignore errors and load**: The project and its extensions are loaded anyway. The user must resolve any incompatibilty problems with the project and extensions.
+2. **Ignore errors and load**: The project and its extensions are loaded anyway. The user must resolve any incompatibility problems with the project and extensions.
 
 3. **Go to the old editor**: This option only appears if the project was created in a previous version of the editor and if the editor is in a web browser. With this action, the project is loaded with an older editor version that matches the project version. This will restore the conditions of the editor environment that existed when the project was last saved.
 

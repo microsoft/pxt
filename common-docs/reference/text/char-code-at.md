@@ -6,7 +6,7 @@ Get the code for a character (letter, number, or symbol) from a place in a text 
 "".charCodeAt(0)
 ```
 
-Like the position of a character in the an alphabet, or the traditional order of characters in a language, characters are assigned a code in a character set when used with computers. If a character set used only the 5 characters of "ABCDE", then 'A', as the first character, would have a character code of `0` and 'D' would have a charcter code of `3`.
+Like the position of a character in the an alphabet, or the traditional order of characters in a language, characters are assigned a code in a character set when used with computers. If a character set used only the 5 characters of "ABCDE", then 'A', as the first character, would have a character code of `0` and 'D' would have a character code of `3`.
 
 You can find the code of a character in a text string by selecting it from it's position in a string.
 

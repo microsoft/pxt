@@ -21,7 +21,7 @@ Let's expand the `tropic` namespace and add some functions. If you're running a 
  */
 enum TropicalFruit {
     Banana = 0,
-    Pinapple = 1,
+    Pineapple = 1,
     Coconut = 2
 }
 
@@ -89,7 +89,7 @@ Make or copy a small picture and save it as an icon file in the `/docs/static/li
 
 ## Step 3: Include the block descriptions
 
-The namespace shows up as a toolbox category in the MakeCode editor. MakeCode uses metadata from the JsDoc in the namespace as attributes to determine the order in the toolbox where the category is placed, the catergory icon, and the category color. The metadata is added using `//%` with the `weight`, `icon`, and `color` attributes. Let's add these for `tropic`:
+The namespace shows up as a toolbox category in the MakeCode editor. MakeCode uses metadata from the JsDoc in the namespace as attributes to determine the order in the toolbox where the category is placed, the category icon, and the category color. The metadata is added using `//%` with the `weight`, `icon`, and `color` attributes. Let's add these for `tropic`:
 
 ```typescript-ignore
 /**
@@ -104,7 +104,7 @@ The attributes we've defined for our namespace mean:
 
 * **weight**: the relative order in which the category is placed in the Toolbox list (higher numbers movve the category up).
 * **icon**: a Unicode identifier for an icon from the [Font Awesome](http://fontawesome.io/icons) icon set.
-* **color**: the RGB color for the catergory item and blocks rendered from the namespace.
+* **color**: the RGB color for the category item and blocks rendered from the namespace.
 
 For the functions, we add the `blockId` and `block` attributes. This will make the block compiler create actual blocks for the functions. The functions will now show up as blocks under the `tropic` category in the toolbox too.
 
@@ -141,7 +141,7 @@ enum TropicalFruit {
     //% block=banana
     Banana = 0,
     //% block=pineapple
-    Pinapple = 1,
+    Pineapple = 1,
     //% block=coconut
     Coconut = 2
 }

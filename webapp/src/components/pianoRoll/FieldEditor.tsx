@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FieldEditorComponent } from "../../blocklyFieldView"
-import { FieldEditorParams, PianoRoll, PianoRollState } from "./PianoRoll"
+import { FieldEditorParams, PianoRoll, PianoRollModel } from "./PianoRoll"
+import { fromPXTSong, toPXTSong } from "./types";
 
 interface Props {
     handleRef: (e: FieldEditorComponent<any>) => void;
@@ -14,72 +15,64 @@ interface DoneCallback {
 export const PianoRollFieldEditor = (props: Props) => {
     const { handleRef, fieldEditorParams } = props;
 
-    const [asset, setAsset] = useState<pxt.Song>();
+    const model = useMemo(() => new PianoRollModel(), []);
+    const [initValue, setInitValue] = useState<pxt.Song>();
     const [onDoneClicked, setOnDoneClicked] = useState<DoneCallback>(undefined);
-    const [undoStack, setUndoStack] = useState<PianoRollState["undoStack"]>([]);
-    const [redoStack, setRedoStack] = useState<PianoRollState["redoStack"]>([]);
-    const [velocityEditorVisible, setVelocityEditorVisible] = useState<PianoRollState["velocityEditorVisible"]>(undefined);
-    const [selectedTrack, setSelectedTrack] = useState<PianoRollState["selectedTrackIndex"]>(undefined);
-
-    const resultRef = useRef<PianoRollState>();
 
     useEffect(() => {
         if (handleRef) {
+            let openedAsset = initValue;
             handleRef({
                 init: (value: pxt.Song, close: () => void) => {
-                    setAsset(value);
+                    openedAsset = value;
+
+                    const songValue = fromPXTSong(value.song);
+                    const name = value.meta?.displayName;
+
+                    model.updateValue({
+                        song: songValue,
+                        assetName: name,
+                        selectedTrackIndex: 0
+                    }, { preserveUndo: false });
+                    setInitValue(value);
                     setOnDoneClicked({ onDoneClicked: close });
                 },
                 getValue: () => {
-                    const result = {
-                        ...asset,
-                        song: resultRef.current?.asset
+                    if (!model) return openedAsset;
+                    const currentValue = model.getCurrentValue();
+                    const pxtSong = toPXTSong(currentValue.song);
+
+                    const result: pxt.Song = {
+                        ...openedAsset,
+                        song: pxtSong
                     };
 
-                    if (resultRef.current?.name) {
+                    if (openedAsset?.meta || currentValue.assetName) {
                         result.meta = {
-                            ...(asset.meta || result.meta || {}),
-                            displayName: resultRef.current.name
+                            ...(openedAsset?.meta || {}),
+                            displayName: currentValue.assetName
                         }
                     }
 
                     return result;
                 },
                 getPersistentData: () => {
-                    return {
-                        undoStack: resultRef.current?.undoStack,
-                        redoStack: resultRef.current?.redoStack,
-                        velocityEditorVisible: resultRef.current?.velocityEditorVisible,
-                        selectedTrack: resultRef.current?.selectedTrackIndex
-                    }
+                    return model?.getState();
                 },
                 restorePersistentData: (value: any) => {
-                    if (value) {
-                        setUndoStack(value.undoStack || []);
-                        setRedoStack(value.redoStack || []);
-                        setVelocityEditorVisible(value.velocityEditorVisible);
-                        setSelectedTrack(value.selectedTrack);
+                    if (value && model) {
+                        model.restoreState(value);
                     }
                 }
             })
         }
-    }, [handleRef, asset])
-
-    const onStateChange = useCallback((state: PianoRollState) => {
-        resultRef.current = state;
-    }, [])
+    }, [handleRef, model, initValue])
 
     return (
         <PianoRoll
-            asset={asset?.song}
-            undoStack={undoStack}
-            redoStack={redoStack}
-            onStateChanged={onStateChange}
-            selectedTrackIndex={selectedTrack}
-            velocityEditorVisible={velocityEditorVisible}
+            model={model}
             showEditControls={true}
             onDoneClicked={onDoneClicked?.onDoneClicked}
-            name={asset?.meta?.displayName}
             fieldEditorParams={fieldEditorParams}
         />
     )

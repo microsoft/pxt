@@ -178,6 +178,11 @@ namespace ts.pxtc {
             argsFmt: ["T", "T", "S", "T"],
             value: 0
         },
+        "pxtrt::mapSetByStringOnly": {
+            name: "_pxt_map_set_by_string",
+            argsFmt: ["T", "T", "S", "T"],
+            value: 0
+        },
     }
 
     let EK = ir.EK;
@@ -973,6 +978,7 @@ namespace ts.pxtc {
         let currUsingContext: PxtNode = null
         let needsUsingInfo = false
         let pendingFunctionDefinitions: FunctionDeclaration[] = []
+        const loopBlockFunctionDefinitions: pxt.Map<FunctionDeclaration[]> = {};
 
         currNodeWave++
 
@@ -1005,7 +1011,7 @@ namespace ts.pxtc {
                 }
             }
 
-            hexfile.setupFor(optstarget, extinfo || emptyExtInfo(), res);
+            hexfile.setupFor(optstarget, extinfo || emptyExtInfo(pxt.appTarget.compileService), res);
             hexfile.setupInlineAssembly(opts);
         }
 
@@ -1015,6 +1021,95 @@ namespace ts.pxtc {
         bin.breakpoints = opts.breakpoints;
         bin.name = opts.name;
         bin.target = opts.target;
+
+        function ifaceCallKindCounts(ifaceIndex: number, getset: string) {
+            const suffix = ":" + (getset || "call");
+            return Object.keys(bin.ifaceCallCounts)
+                .filter(k => U.startsWith(k, ifaceIndex + ":") && U.endsWith(k, suffix))
+                .map(k => ({
+                    numargs: parseInt(k.split(":")[1]),
+                    count: bin.ifaceCallCounts[k]
+                }));
+        }
+
+        // Decides whether `proc` (an iface-dispatched method) can safely skip the
+        // arg-shuffling _args wrapper and have its iface vtable entry point directly
+        // at _nochk. Safe iff every call site that targets this (ifaceIndex, getset)
+        // bucket passes at least `proc.args.length` arguments -- that's exactly the
+        // condition the wrapper would short-circuit on (`cmp r4, #numargs; bge _nochk`).
+        //
+        // Notes:
+        // - The counts are a per-(ifaceIndex, getset) projection, not per-proc. In a
+        //   polymorphic iface bucket each proc is evaluated independently; eligibility
+        //   ends up cascading to the proc with the largest args.length in the bucket.
+        // - toString is excluded because hexfile.ts:~841 wires toString's vtable
+        //   slot to `vtLabel()` (i.e. _args). The fixed-slot dispatch through that
+        //   vtable entry has no arg-count guarantees, so the wrapper is required.
+        //   Skipping it for a toString proc would dangle the _args reference.
+        //   Any future fixed-slot vtable consumer that uses vtLabel() must add a
+        //   matching exclusion here.
+        // - dynamicIfaceCalls disqualifies any ifaceIndex ever dispatched without a
+        //   known decl (line ~2503). Those callers don't go through the counted path.
+        // - The "no get calls in a non-get bucket" check is conservative: a "get"
+        //   syntax call has args.length == 1 which could under-feed a multi-arg call
+        //   target sharing the bucket.
+        function canUseExactIfaceWrapper(proc: ir.Procedure, ifaceIndex: number, getset: string) {
+            if (!isThumb() || !proc || !proc.info.usedAsIface || proc.args.length == 0)
+                return false;
+            if (proc.action && isToString(proc.action))
+                return false;
+            if (bin.dynamicIfaceCalls[ifaceIndex + ""])
+                return false;
+            if (!getset && ifaceCallKindCounts(ifaceIndex, "get").length)
+                return false;
+
+            const counts = ifaceCallKindCounts(ifaceIndex, getset);
+            return counts.every(c => c.numargs >= proc.args.length);
+        }
+
+        // Must run AFTER the final-pass emit(rootFunction) has populated
+        // bin.ifaceCallCounts and bin.dynamicIfaceCalls, and BEFORE
+        // hexfile.ts emits iface vtables (which read useExactIfaceWrapper to
+        // pick _iface vs _args per entry) and backbase.ts emits proc wrappers
+        // (which read useExactIfaceWrapper to decide whether to emit _iface).
+        function markExactIfaceWrappers() {
+            bin.procs.forEach(p => p.useExactIfaceWrapper = false);
+            if (!isThumb() || target.switches.noIfaceSpec)
+                return;
+
+            const eligible: pxt.Map<boolean> = {};
+            const seen: pxt.Map<boolean> = {};
+            const note = (proc: ir.Procedure, ifaceIndex: number, getset: string) => {
+                if (!proc || proc.args.length == 0)
+                    return;
+                const key = proc.seqNo + "";
+                seen[key] = true;
+                if (eligible[key] === undefined)
+                    eligible[key] = true;
+                if (!canUseExactIfaceWrapper(proc, ifaceIndex, getset))
+                    eligible[key] = false;
+            };
+
+            for (const info of bin.usedClassInfos) {
+                if (!info.itable)
+                    continue;
+                for (const entry of info.itable) {
+                    if (entry.proc)
+                        note(entry.proc, entry.idx, entry.proc.isGetter() ? "get" : "");
+                    if (entry.setProc)
+                        note(entry.setProc, entry.idx, "set");
+                }
+            }
+
+            for (const proc of bin.procs) {
+                const key = proc.seqNo + "";
+                proc.useExactIfaceWrapper = !!seen[key] && !!eligible[key];
+            }
+        }
+
+        function emitEscapedExpression(expr: Expression, reason: string) {
+            return emitExpr(expr);
+        }
 
         function reset() {
             bin.reset()
@@ -1111,7 +1206,13 @@ namespace ts.pxtc {
         reset();
         needsUsingInfo = false
         bin.finalPass = true
+        bin.ifaceCallCounts = {}
+        bin.mapSetByFieldIdCounts = {}
+        bin.checkedFieldAccessCounts = {}
+        bin.dynamicIfaceCalls = {}
+        bin.usesMapSetByStringOnly = false
         emit(rootFunction)
+        markExactIfaceWrappers()
 
         U.assert(usedWorkList.length == 0)
 
@@ -1840,7 +1941,7 @@ ${lbl}: .short 0xffff
             let coll = ir.shared(ir.rtcall("Array_::mk", []))
             for (let elt of node.elements) {
                 let mask = isRefCountedExpr(elt) ? (1 << 1) : 0
-                proc.emitExpr(ir.rtcall("Array_::push", [coll, emitExpr(elt)], mask))
+                proc.emitExpr(ir.rtcall("Array_::push", [coll, emitEscapedExpression(elt, "arrayElement")], mask))
             }
             if (node.elements.length > 0)
                 // Make sure there is at least one use of the array, so it doesn't get GC-ed away in the last push.
@@ -1881,8 +1982,11 @@ ${lbl}: .short 0xffff
                     if (isRefCountedExpr(p.initializer))
                         mask |= 1 << 2
                 }
+                const nativeFieldId = target.isNative ? getIfaceMemberId(keyName) : undefined;
+                if (nativeFieldId !== undefined)
+                    bin.mapSetByFieldIdCounts[nativeFieldId + ""] = (bin.mapSetByFieldIdCounts[nativeFieldId + ""] || 0) + 1;
                 const fieldId = target.isNative
-                    ? ir.numlit(getIfaceMemberId(keyName))
+                    ? ir.numlit(nativeFieldId)
                     : ir.ptrlit(null, JSON.stringify(keyName))
                 const args = [
                     expr,
@@ -1942,6 +2046,9 @@ ${lbl}: .short 0xffff
                         // Reading a shimmed property
                         return emitShim(fld, decl, [node.expression])
                     } else {
+                        if (idx.needsCheck && !target.switches.skipClassCheck) {
+                            bin.checkedFieldAccessCounts[checkedFieldAccessCountKey(idx)] = (bin.checkedFieldAccessCounts[checkedFieldAccessCountKey(idx)] || 0) + 1;
+                        }
                         return ir.op(EK.FieldAccess, [emitExpr(node.expression)], idx)
                     }
                 }
@@ -1994,7 +2101,17 @@ ${lbl}: .short 0xffff
             }
 
             if (!indexer && (t.flags & (TypeFlags.Any | TypeFlags.StructuredOrTypeVariable))) {
-                indexer = assign ? "pxtrt::mapSetGeneric" : "pxtrt::mapGetGeneric"
+                const hasIndexSignature = !!checker.getIndexTypeOfType(t, IndexKind.String) || !!checker.getIndexTypeOfType(t, IndexKind.Number);
+                // Native-only: mapSetByStringOnly resolves to the _pxt_map_set_by_string
+                // thumb helper. The JS backend has no such runtime entry, so the generic
+                // setter is the only valid choice there.
+                const mapOnlySet = !target.switches.noIfaceSpec && target.isNative
+                    && !!assign && !(t.flags & TypeFlags.Any) && hasIndexSignature;
+                if (mapOnlySet)
+                    bin.usesMapSetByStringOnly = true
+                indexer = assign
+                    ? (mapOnlySet ? "pxtrt::mapSetByStringOnly" : "pxtrt::mapSetGeneric")
+                    : "pxtrt::mapGetGeneric"
                 stringOk = true
             }
 
@@ -2248,10 +2365,14 @@ ${lbl}: .short 0xffff
                             }
                             args.push(irToNode(expr))
                         } else {
-                            if (!opts.unfetteredInitializers && !isNumericLiteral(prm.initializer)) {
-                                userError(9212, lf("only numbers, null, true and false supported as default arguments"))
+                            // Emitted functions apply their own defaults, including on
+                            // virtual/interface calls where the implementation may differ.
+                            // Shims and helpers may have no emitted parameter prologue.
+                            const needsCallerDefault = attrs.helper || attrs.shim;
+                            if (needsCallerDefault && !opts.unfetteredInitializers && !isNumericLiteral(prm.initializer)) {
+                                userError(9212, lf("only numbers, null, true and false supported as default arguments for shims and helpers"))
                             }
-                            args.push(prm.initializer)
+                            args.push(needsCallerDefault ? prm.initializer : irToNode(emitLit(undefined)))
                         }
                     } else {
                         userError(9213, lf("unsupported default argument (shouldn't happen)"))
@@ -2366,7 +2487,7 @@ ${lbl}: .short 0xffff
             }
 
             function emitPlain() {
-                let r = mkProcCall(decl, node, args.map((x) => emitExpr(x)))
+                let r = mkProcCall(decl, node, args.map(x => emitEscapedExpression(x, "callArgument")))
                 let pp = r.data as ir.ProcId
                 if (args[0] && pp.proc && pp.proc.classInfo)
                     pp.isThis = args[0].kind == SK.ThisKeyword
@@ -2397,7 +2518,7 @@ ${lbl}: .short 0xffff
                     baseCtor = p.ctor
                 if (!baseCtor && bin.finalPass)
                     throw userError(9280, lf("super() call requires an explicit constructor in base class"))
-                let ctorArgs = args.map((x) => emitExpr(x))
+                let ctorArgs = args.map((x) => emitEscapedExpression(x, "callArgument"))
                 ctorArgs.unshift(emitThis(funcExpr))
                 return mkProcCallCore(baseCtor, node, ctorArgs)
             }
@@ -2413,9 +2534,11 @@ ${lbl}: .short 0xffff
                     // TODO in VT accessor/field/method -> different
                     U.assert(funcExpr.kind == SK.PropertyAccessExpression);
                     const fieldName = (funcExpr as PropertyAccessExpression).name.text
+                    const ifaceIndex = getIfaceMemberId(fieldName, true);
+                    bin.dynamicIfaceCalls[ifaceIndex + ""] = true;
                     // completely dynamic dispatch
-                    return mkMethodCall(args.map((x) => emitExpr(x)), {
-                        ifaceIndex: getIfaceMemberId(fieldName, true),
+                    return mkMethodCall(args.map((x) => emitEscapedExpression(x, "callArgument")), {
+                        ifaceIndex,
                         callLocationIndex: markCallLocation(node),
                         noArgs
                     })
@@ -2441,7 +2564,7 @@ ${lbl}: .short 0xffff
                     }
 
                     U.assert(!bin.finalPass || info.virtualIndex != null, "!bin.finalPass || info.virtualIndex != null")
-                    return mkMethodCall(args.map((x) => emitExpr(x)), {
+                    return mkMethodCall(args.map((x) => emitEscapedExpression(x, "callArgument")), {
                         classInfo: info.parentClassInfo,
                         virtualIndex: info.virtualIndex,
                         noArgs,
@@ -2480,9 +2603,15 @@ ${lbl}: .short 0xffff
                     markFunctionUsed(decl)
                     return emitPlain();
                 } else if (needsVCall || target.switches.slowMethods || !forceMethod) {
-                    return mkMethodCall(args.map((x) => emitExpr(x)), {
-                        ifaceIndex: getIfaceMemberId(getName(decl), true),
-                        isSet: noArgs && args.length == 2,
+                    const ifaceIndex = getIfaceMemberId(getName(decl), true);
+                    const isSet = noArgs && args.length == 2;
+                    const callKind = isSet ? "set" : noArgs ? "get" : "call";
+                    const helperGetSet = callKind == "call" ? "" : callKind;
+                    const countKey = `${ifaceIndex}:${args.length}:${helperGetSet || "call"}`;
+                    bin.ifaceCallCounts[countKey] = (bin.ifaceCallCounts[countKey] || 0) + 1;
+                    return mkMethodCall(args.map((x) => emitEscapedExpression(x, "callArgument")), {
+                        ifaceIndex,
+                        isSet,
                         callLocationIndex: markCallLocation(node),
                         noArgs
                     })
@@ -2503,7 +2632,7 @@ ${lbl}: .short 0xffff
             args.unshift(funcExpr)
 
             U.assert(!noArgs)
-            return mkMethodCall(args.map(x => emitExpr(x)), {
+            return mkMethodCall(args.map(x => emitEscapedExpression(x, "callArgument")), {
                 virtualIndex: -1,
                 callLocationIndex: markCallLocation(node),
                 noArgs
@@ -2611,6 +2740,8 @@ ${lbl}: .short 0xffff
         }
 
         function getCtor(decl: ClassDeclaration) {
+            if (!decl.members)
+                return null;
             return decl.members.filter(m => m.kind == SK.Constructor)[0] as ConstructorDeclaration
         }
 
@@ -2662,7 +2793,7 @@ ${lbl}: .short 0xffff
                     // let sig = checker.getResolvedSignature(node)
                     // TODO: can we have overloeads?
                     addDefaultParametersAndTypeCheck(checker.getResolvedSignature(node), args, ctorAttrs)
-                    let compiled = args.map((x) => emitExpr(x))
+                    let compiled = args.map((x) => emitEscapedExpression(x, "callArgument"))
                     if (ctorAttrs.shim) {
                         // TODO need to deal with refMask and tagged ints here
                         // we drop 'obj' variable
@@ -3029,13 +3160,9 @@ ${lbl}: .short 0xffff
                 }
             }
 
-            const destructuredParameters: ParameterDeclaration[] = []
             const fieldAssignmentParameters: ParameterDeclaration[] = []
 
             proc.args = getParameters(node).map((p, i) => {
-                if (p.name.kind === SK.ObjectBindingPattern) {
-                    destructuredParameters.push(p)
-                }
                 if (node.kind == SK.Constructor && isCtorField(p)) {
                     fieldAssignmentParameters.push(p)
                 }
@@ -3055,7 +3182,33 @@ ${lbl}: .short 0xffff
                 }
             })
 
-            destructuredParameters.forEach(dp => emitVariableDeclaration(dp))
+            // Arity wrappers pad omitted arguments with undefined. Keep defaults in
+            // the shared body so direct, virtual, interface and action calls all run
+            // them, including native entries which can skip the arity wrapper.
+            const attrs = parseComments(node);
+            proc.args.forEach(l => {
+                const parameter = l.def as ParameterDeclaration;
+                // Simulator shim dummies must match the native caller-side behavior.
+                if (parameter.initializer && !attrs.shim && !attrs.helper) {
+                    const supplied = proc.mkLabel("defaultarg");
+                    if (isThumb()) {
+                        // Tagged undefined is 0, so the guard is a bare
+                        // compare against zero rather than a runtime call.
+                        proc.emitJmp(supplied, l.load(), ir.JmpMode.IfNotZero);
+                    } else {
+                        // The simulator holds real JS values; a raw zero test
+                        // would treat a supplied 0/false/null as omitted.
+                        proc.emitJmpZ(supplied, ir.rtcall("pxt::eqq_bool", [l.load(), emitLit(undefined)]));
+                    }
+                    proc.emitExpr(l.storeByRef(emitEscapedExpression(parameter.initializer, "initializer")));
+                    proc.emitLbl(supplied);
+                    proc.stackEmpty();
+                }
+                if (parameter.name.kind === SK.ObjectBindingPattern) {
+                    // Destructure the resolved argument, not the initializer again.
+                    emitVarOrParam(parameter, l.load(), typeOf(parameter));
+                }
+            })
 
             // for constructor(public foo:number) generate this.foo = foo;
             for (let p of fieldAssignmentParameters) {
@@ -3069,7 +3222,7 @@ ${lbl}: .short 0xffff
                 let idx = fieldIndexCore(proc.classInfo,
                     getFieldInfo(proc.classInfo, getName(f)), false)
                 let trg2 = ir.op(EK.FieldAccess, [emitLocalLoad(info.thisParameter)], idx)
-                proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(f.initializer)]))
+                proc.emitExpr(ir.op(EK.Store, [trg2, emitEscapedExpression(f.initializer, "initializer")]))
             }
 
             flushHoistedFunctionDefinitions()
@@ -3105,11 +3258,23 @@ ${lbl}: .short 0xffff
             if (info.capturedVars.length &&
                 info.usedBeforeDecl &&
                 node.kind == SK.FunctionDeclaration && !bin.finalPass) {
-                info.capturedVars.sort((a, b) => b.pos - a.pos)
-                const vinfo = getVarInfo(info.capturedVars[0])
-                if (!vinfo.functionsToDefine)
-                    vinfo.functionsToDefine = []
-                vinfo.functionsToDefine.push(node)
+                // Synthetic captures (such as thisParameter) are available before
+                // source declarations, but may not have a source position.
+                const capturePos = (capture: VarOrParam): number => capture.pos == null ? -1 : capture.pos;
+                info.capturedVars.sort((a, b) => capturePos(b) - capturePos(a))
+                const scope = node.parent;
+                if (scope.kind === SK.Block && inLoop(scope) && info.capturedVars.every(capture => capturePos(capture) < scope.pos)) {
+                    // All captures precede this loop block. Defining the function at
+                    // the last captured variable would hoist it out of the iteration.
+                    const id = getNodeId(scope);
+                    const definitions = loopBlockFunctionDefinitions[id] || (loopBlockFunctionDefinitions[id] = []);
+                    if (definitions.indexOf(node) < 0) definitions.push(node);
+                } else {
+                    const vinfo = getVarInfo(info.capturedVars[0])
+                    if (!vinfo.functionsToDefine)
+                        vinfo.functionsToDefine = []
+                    vinfo.functionsToDefine.push(node)
+                }
             }
 
             // nothing should be on work list in final pass - everything should be already marked as used
@@ -3317,8 +3482,12 @@ ${lbl}: .short 0xffff
                 isRef: true,
                 shimName: attrs.shim,
                 classInfo: info,
-                needsCheck
+                needsCheck,
             }
+        }
+
+        function checkedFieldAccessCountKey(info: FieldAccessInfo) {
+            return `${info.classInfo.id}:${info.name}:get`;
         }
 
         function fieldIndex(pacc: PropertyAccessExpression): FieldAccessInfo {
@@ -3352,7 +3521,7 @@ ${lbl}: .short 0xffff
                 if (decl && (isGlobal || isVar(decl) || isParameter(decl))) {
                     let l = lookupCell(decl)
                     recordUse(<VarOrParam>decl, true)
-                    proc.emitExpr(l.storeByRef(emitExpr(src)))
+                    proc.emitExpr(l.storeByRef(emitEscapedExpression(src, "assignment")))
                 } else {
                     unhandled(trg, lf("bad target identifier"), 9248)
                 }
@@ -3365,7 +3534,9 @@ ${lbl}: .short 0xffff
                         unhandled(trg, lf("setter not available"), 9253)
                     }
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
-                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment || isSlowField(decl))) {
+                } else if (decl && (decl.kind == SK.PropertySignature || decl.kind == SK.PropertyAssignment)) {
+                    proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
+                } else if (decl && isSlowField(decl)) {
                     proc.emitExpr(emitCallCore(trg, trg, [src], null, decl as FunctionLikeDeclaration))
                 } else {
                     for (; ;) {
@@ -3380,7 +3551,7 @@ ${lbl}: .short 0xffff
                             }
                         }
                         let trg2 = emitExpr(trg)
-                        proc.emitExpr(ir.op(EK.Store, [trg2, emitExpr(src)]))
+                        proc.emitExpr(ir.op(EK.Store, [trg2, emitEscapedExpression(src, "assignment")]))
                         break;
                     }
                 }
@@ -3801,7 +3972,7 @@ ${lbl}: .short 0xffff
             let convInfos: ir.ConvInfo[] = []
 
             let args2 = args.map((a, i) => {
-                let r = emitExpr(a)
+                let r = emitEscapedExpression(a, "runtimeCallArgument")
                 if (!needsNumberConversions())
                     return r
                 let f = fmt[i + 1]
@@ -4120,6 +4291,11 @@ ${lbl}: .short 0xffff
         function emitSpreadElementExpression(node: SpreadElement) { }
         function emitYieldExpression(node: YieldExpression) { }
         function emitBlock(node: Block) {
+            const definitions = bin.finalPass && loopBlockFunctionDefinitions[getNodeId(node)];
+            if (definitions) {
+                U.pushRange(pendingFunctionDefinitions, definitions);
+                flushHoistedFunctionDefinitions();
+            }
             node.statements.forEach(emit)
         }
         function checkForLetOrConst(declList: VariableDeclarationList): boolean {
@@ -4165,7 +4341,43 @@ ${lbl}: .short 0xffff
         function emitExpressionStatement(node: ExpressionStatement) {
             emitExprAsStmt(node.expression)
         }
-        function emitCondition(expr: Expression, inner: ir.Expr = null) {
+        function emitCondition(expr: Expression, inner: ir.Expr = null): ir.Expr {
+            // with `noBoolLower` flag, the generic paths below handle every condition
+            const boolLower = !target.switches.noBoolLower
+            // Lower `&&` / `||` used as a condition into short-circuiting jumps
+            // that yield 0/1 directly, instead of boxing the intermediate
+            // booleans and converting them back with a runtime helper.
+            if (boolLower && !inner && !isStackMachine() && expr.kind == SK.BinaryExpression) {
+                const binary = expr as BinaryExpression
+                const op = binary.operatorToken.kind
+                if (op == SK.AmpersandAmpersandToken || op == SK.BarBarToken) {
+                    const shortCircuitLabel = proc.mkLabel("lazycond")
+                    const doneLabel = proc.mkLabel("lazycondfin")
+                    if (op == SK.AmpersandAmpersandToken) {
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.left), ir.JmpMode.IfZero)
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.right), ir.JmpMode.IfZero)
+                        proc.emitJmp(doneLabel, ir.numlit(1), ir.JmpMode.Always)
+                        proc.emitLbl(shortCircuitLabel)
+                        proc.emitJmp(doneLabel, ir.numlit(0), ir.JmpMode.Always)
+                    } else {
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.left), ir.JmpMode.IfNotZero)
+                        proc.emitJmp(shortCircuitLabel, emitCondition(binary.right), ir.JmpMode.IfNotZero)
+                        proc.emitJmp(doneLabel, ir.numlit(0), ir.JmpMode.Always)
+                        proc.emitLbl(shortCircuitLabel)
+                        proc.emitJmp(doneLabel, ir.numlit(1), ir.JmpMode.Always)
+                    }
+                    proc.emitLbl(doneLabel)
+                    return captureJmpValue()
+                }
+            }
+            // Lower `!expr` used as a condition by negating the operand's
+            // condition directly, avoiding a boxed boolean just to invert it.
+            if (boolLower && !inner && !isStackMachine() && expr.kind == SK.PrefixUnaryExpression) {
+                const unary = expr as PrefixUnaryExpression
+                if (unary.operator == SK.ExclamationToken) {
+                    return ir.rtcall("Boolean_::bang", [emitCondition(unary.operand)])
+                }
+            }
             if (!inner && isThumb() && expr.kind == SK.BinaryExpression) {
                 let be = expr as BinaryExpression
                 let mapped = U.lookup(thumbCmpMap, simpleInstruction(be, be.operatorToken.kind))
@@ -4282,16 +4494,45 @@ ${lbl}: .short 0xffff
             proc.stackEmpty();
         }
 
+        function emitForIterationBindings(declList: VariableDeclarationList) {
+            // Only `let` loop headers create copied bindings. `const` and variables
+            // declared outside the loop retain their existing binding semantics.
+            if (!declList || !(declList.flags & NodeFlags.Let)) return;
+
+            const copyBinding = (decl: VarOrParam) => {
+                if (decl.name.kind === SK.ObjectBindingPattern || decl.name.kind === SK.ArrayBindingPattern) {
+                    (decl.name as BindingPattern).elements.forEach(element => {
+                        if (element.kind === SK.BindingElement) copyBinding(element as BindingElement);
+                    });
+                    return;
+                }
+                const loc = proc.localIndex(decl);
+                if (!loc || !loc.isByRefLocal()) return;
+
+                // Populate the new box before replacing the old cell. Closures already
+                // created keep the old box; sibling closures in this iteration share the new one.
+                const next = ir.shared(ir.rtcall("pxtrt::mklocRef", []));
+                proc.emitExpr(ir.rtcall("pxtrt::stlocRef", [next, loc.load()]));
+                proc.emitExpr(loc.storeDirect(next));
+                proc.stackEmpty();
+            };
+            declList.declarations.forEach(copyBinding);
+        }
+
         function emitForStatement(node: ForStatement) {
+            let declList: VariableDeclarationList;
             if (node.initializer && node.initializer.kind == SK.VariableDeclarationList) {
-                checkForLetOrConst(<VariableDeclarationList>node.initializer);
-                (<VariableDeclarationList>node.initializer).declarations.forEach(emit);
+                declList = node.initializer as VariableDeclarationList;
+                checkForLetOrConst(declList);
+                declList.declarations.forEach(emit);
             }
             else {
                 emitExprAsStmt(<Expression>node.initializer);
             }
             emitBrk(node)
             let l = getLabels(node)
+            // Initializer closures keep their own binding, separate from the first condition/body.
+            emitForIterationBindings(declList);
             proc.emitLblDirect(l.fortop);
             if (node.condition) {
                 emitBrk(node.condition);
@@ -4299,6 +4540,8 @@ ${lbl}: .short 0xffff
             }
             emit(node.statement)
             proc.emitLblDirect(l.cont);
+            // A continue must also create the next binding BEFORE evaluating the incrementor.
+            emitForIterationBindings(declList);
             emitExprAsStmt(node.incrementor);
             proc.emitJmp(l.fortop);
             proc.emitLblDirect(l.brk);
@@ -4370,6 +4613,11 @@ ${lbl}: .short 0xffff
 
             // c = a[i]
             if (iterVar) {
+                // A mutable captured for-of variable needs a fresh box for each element,
+                // rather than overwriting the box retained by closures from earlier elements.
+                if (iterVar.isByRefLocal()) {
+                    proc.emitExpr(iterVar.storeDirect(ir.rtcall("pxtrt::mklocRef", [])));
+                }
                 proc.emitExpr(iterVar.storeByRef(ir.rtcall(indexer, [collectionVar.loadCore(), toInt(intVarIter.loadCore())])))
                 emitBrk(node.initializer);
             }
@@ -4495,7 +4743,10 @@ ${lbl}: .short 0xffff
         function emitLabeledStatement(node: LabeledStatement) {
             let l = getLabels(node.statement)
             emit(node.statement)
-            proc.emitLblDirect(l.brk)
+            // Loops and switches define their own break target. Emitting it twice
+            // is tolerated by simjs but rejected by the native assembler.
+            if (!isIterationStatement(node.statement, false) && node.statement.kind !== SK.SwitchStatement)
+                proc.emitLblDirect(l.brk)
         }
 
         function emitThrowStatement(node: ThrowStatement) {
@@ -4670,7 +4921,10 @@ ${lbl}: .short 0xffff
                     }
                 }
                 typeCheckSubtoSup(node.initializer, node)
-                proc.emitExpr(loc.storeByRef(emitExpr(node.initializer)))
+                const initializerExpr = isGlobalVar(node)
+                    ? emitEscapedExpression(node.initializer, "initializer")
+                    : emitExpr(node.initializer);
+                proc.emitExpr(loc.storeByRef(initializerExpr))
                 currJres = null
                 proc.stackEmpty();
             } else if (inLoop(node)) {
@@ -4695,8 +4949,17 @@ ${lbl}: .short 0xffff
                 const info = getClassInfo(objType)
                 exres = ir.op(EK.FieldAccess, [objRef], fieldIndexCore(info, getFieldInfo(info, fieldName)))
             } else {
+                // Dynamic field access on a non-class-typed receiver (any, structural type,
+                // etc). The call site supplies exactly 1 arg (the receiver) but the target
+                // proc resolved via iface dispatch may be a method that expects more --
+                // the _args wrapper is what normally fills in the missing args. Flag this
+                // ifaceIndex so canUseExactIfaceWrapper disqualifies the wrapper-skip
+                // optimization for any proc reachable here. Mirrors the dynamic-method-call
+                // path above.
+                const ifaceIndex = getIfaceMemberId(fieldName, true);
+                bin.dynamicIfaceCalls[ifaceIndex + ""] = true;
                 exres = mkMethodCall([objRef], {
-                    ifaceIndex: getIfaceMemberId(fieldName, true),
+                    ifaceIndex,
                     callLocationIndex: markCallLocation(node),
                     noArgs: true
                 })
@@ -5106,6 +5369,11 @@ ${lbl}: .short 0xffff
         explicitlyUsedIfaceMembers: pxt.Map<boolean> = {};
         ifaceMemberMap: pxt.Map<number> = {};
         ifaceMembers: string[];
+        ifaceCallCounts: pxt.Map<number> = {};
+        mapSetByFieldIdCounts: pxt.Map<number> = {};
+        checkedFieldAccessCounts: pxt.Map<number> = {};
+        dynamicIfaceCalls: pxt.Map<boolean> = {};
+        usesMapSetByStringOnly = false;
         strings: pxt.Map<string> = {};
         hexlits: pxt.Map<string> = {};
         doubles: pxt.Map<string> = {};
