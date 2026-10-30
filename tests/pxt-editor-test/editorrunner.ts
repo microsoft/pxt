@@ -155,7 +155,7 @@ import {
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
 import { MenuItem } from "blockly";
-import { getInstanceDropdownOptions, CREATE_INSTANCE_OPTION_VALUE, FieldInstanceDropdown, NO_INSTANCE_OPTION_VALUE, OPEN_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
+import { getInstanceDropdownOptions, isReservedInstanceValue, CREATE_INSTANCE_OPTION_VALUE, FieldInstanceDropdown, NO_INSTANCE_OPTION_VALUE, OPEN_INSTANCE_OPTION_VALUE } from "../../pxtblocks/fields/field_instancedropdown";
 import type { FieldCustomDropdownOptions } from "../../pxtblocks/fields/field_utils";
 import { getFixedInstanceDropdownOptions } from "../../pxtblocks/fields/symbolDropdownOptions";
 
@@ -6303,6 +6303,13 @@ describe("fixed-instance dropdown options", () => {
     it("lists the command entries alone, with no separator, when there are no instances", () => {
         chai.expect(values(getInstanceDropdownOptions([], undefined, "create", "empty"))).deep.equals([CREATE_INSTANCE_OPTION_VALUE]);
         chai.expect(values(getInstanceDropdownOptions([], "edit", "create", "empty"))).deep.equals([OPEN_INSTANCE_OPTION_VALUE, CREATE_INSTANCE_OPTION_VALUE]);
+    });
+
+    it("tells the reserved values from instance values", () => {
+        for (const value of [CREATE_INSTANCE_OPTION_VALUE, OPEN_INSTANCE_OPTION_VALUE, NO_INSTANCE_OPTION_VALUE])
+            chai.expect(isReservedInstanceValue(value), value).equals(true);
+        for (const value of ["ns.a", "a", "", "@other@"])
+            chai.expect(isReservedInstanceValue(value), value).equals(false);
     });
 
     it("lists one entry, with the reserved value, when there are no instances and neither entry is offered", () => {

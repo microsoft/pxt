@@ -31,6 +31,16 @@ export const OPEN_INSTANCE_OPTION_VALUE = "@openinstance@";
 export const NO_INSTANCE_OPTION_VALUE = "@noinstance@";
 
 /**
+ * Returns true if `value` is one of the values the dropdown of a fixed-instance
+ * parameter gives its entries that are not instances:
+ * `CREATE_INSTANCE_OPTION_VALUE`, `OPEN_INSTANCE_OPTION_VALUE` or
+ * `NO_INSTANCE_OPTION_VALUE`.
+ */
+export function isReservedInstanceValue(value: string): boolean {
+    return value === CREATE_INSTANCE_OPTION_VALUE || value === OPEN_INSTANCE_OPTION_VALUE || value === NO_INSTANCE_OPTION_VALUE;
+}
+
+/**
  * Returns the options of the dropdown of a fixed-instance parameter: the
  * options of the type's instances, in their order, then, if `editText` or
  * `createText` is given, the entries given: one showing `editText` whose
@@ -63,8 +73,11 @@ export function getInstanceDropdownOptions(instances: Blockly.MenuOption[], edit
  * instance (`pxt.react.openInstance`), the second to create one
  * (`pxt.react.createInstance`). With no instances and neither entry offered,
  * it lists one entry saying the type has none yet, and picking it changes
- * nothing; that entry may be the field's value while the type has no
- * instances.
+ * nothing. The field's value is not always an instance: while the type has no
+ * instances, it starts as the value of the entry asking for a new instance or
+ * of the entry saying there are none, and keeps that value until an instance
+ * is picked. The blocks compiler reports a block whose field holds such a
+ * value and emits `null` in its place.
  *
  * Options: `data`, the options of the type's instances, listed while
  * `getBlocksInfo` is not given or returns undefined; `type`, the type's fully
@@ -125,10 +138,13 @@ function getInstanceLabel(instances: Blockly.MenuOption[], value: string): strin
     return undefined;
 }
 
-// The name of the type the entries asking for a new instance and saying the type
-// has none yet use: the type's `block` attribute, else its unqualified name in
-// lower case.
-function getTypeName(blocksInfo: pxtc.BlocksInfo | undefined, typeQName: string): string {
+/**
+ * Returns the name the dropdown of a fixed-instance parameter calls the type
+ * by: the type's `block` attribute, else its unqualified name in lower case.
+ * @param blocksInfo the API info that declares the type; undefined if none is available
+ * @param typeQName the type's fully qualified name
+ */
+export function getTypeName(blocksInfo: pxtc.BlocksInfo | undefined, typeQName: string): string {
     const block = blocksInfo?.apis.byQName[typeQName]?.attributes.block;
     return block || typeQName.slice(typeQName.lastIndexOf(".") + 1).toLowerCase();
 }
