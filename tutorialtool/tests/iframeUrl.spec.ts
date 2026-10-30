@@ -12,6 +12,12 @@ describe("Tutorial Tool iframe URLs", () => {
         expect(url.hash).to.equal("#hash");
     });
 
+    it("preserves an explicit English locale request", () => {
+        const url = new URL(addLocaleToUrl("https://arcade.makecode.com/", host, "en-US", "forcelang"));
+        expect(url.searchParams.get("forcelang")).to.equal("en-US");
+        expect(url.searchParams.has("lang")).to.equal(false);
+    });
+
     it("propagates the resolved locale with lang", () => {
         const url = new URL(addLocaleToUrl("https://arcade.makecode.com/", host, "fr"));
         expect(url.searchParams.get("lang")).to.equal("fr");

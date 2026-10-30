@@ -356,12 +356,8 @@ function withLocale(endpoint: string): string {
     const hashParams = new URLSearchParams(hostUrl.hash.slice(1));
     const forcedLanguage = hostParams.get("forcelang") || hashParams.get("forcelang");
     const requestedLanguage = forcedLanguage || hostParams.get("lang") || hashParams.get("lang");
-    const cookie = /PXT_LANG=(.*?)(?:;|$)/.exec(document.cookie);
     if (requestedLanguage) {
         url.searchParams.set(forcedLanguage ? "forcelang" : "lang", requestedLanguage);
-    } else {
-        const language = (cookie && cookie[1]) || (navigator as any).userLanguage || navigator.language;
-        if (language && !/^en(?:-us)?$/i.test(language)) url.searchParams.set("lang", language);
     }
     return url.toString();
 }

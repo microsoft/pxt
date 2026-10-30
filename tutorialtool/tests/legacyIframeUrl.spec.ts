@@ -2,13 +2,9 @@ import { expect } from "chai";
 import * as fs from "fs";
 import * as path from "path";
 import * as vm from "vm";
-import * as ts from "typescript";
 
-function loadLegacyWithLocale(hostUrl: string) {
-    const source = fs.readFileSync(path.resolve("docs/static/tutorial-tool/tutorial.ts"), "utf8");
-    const script = ts.transpileModule(source, {
-        compilerOptions: { target: ts.ScriptTarget.ES2017, module: ts.ModuleKind.None }
-    }).outputText;
+function loadLegacyWithLocale(hostUrl: string, language = "en") {
+    const script = fs.readFileSync(path.resolve("docs/static/tutorial-tool/tutorial.js"), "utf8");
 
     const element = {
         addEventListener: () => undefined,
@@ -36,7 +32,7 @@ function loadLegacyWithLocale(hostUrl: string) {
                 })
             }
         },
-        navigator: { language: "en" },
+        navigator: { language },
         setTimeout,
         window: {
             addEventListener: () => undefined,
@@ -77,5 +73,12 @@ describe("legacy Tutorial Tool iframe URLs", () => {
         expect(url.searchParams.get("lang")).to.equal("es-ES");
         expect(url.searchParams.get("foo")).to.equal("a b");
         expect(url.hash).to.equal("#pub:123");
+    });
+
+    it("does not override the editor fallback when the host has no explicit locale", () => {
+        const withLocale = loadLegacyWithLocale("https://makecode.com/tutorial-tool", "fr");
+        const url = new URL(withLocale("https://arcade.makecode.com/?controller=1"));
+        expect(url.searchParams.has("lang")).to.equal(false);
+        expect(url.searchParams.has("forcelang")).to.equal(false);
     });
 });
