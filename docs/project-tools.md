@@ -34,16 +34,17 @@ no sign-in prompt is shown. `appTheme.assetEditor` enables the **Code / Assets**
 toggle; otherwise only code snippets are shown. During tutorials it opens to
 **Assets** when available; code snippets cannot be saved or added during tutorials.
 
-In an editable Blocks project, use **Add to Backpack** on an event, loop, if block
-or function definition, or drag it onto Backpack. This copies its contents,
-referenced Blockly functions and assets—not following siblings or the originals.
+In an editable Blocks project, use **Add to Backpack** on any editable, movable
+block, or drag it onto Backpack. This copies the selected block, its inputs and
+all connected blocks below it, including referenced Blockly functions and assets.
+Blocks above the selection and the originals are not changed.
 Legacy procedure blocks are not supported; recreate them using Functions blocks.
 Standalone image, animation, tilemap and music blocks go to **Assets** instead of
 **Code**, based on their registered field editor, including extension-defined blocks.
-Statements and expressions with asset fields save the asset separately. If there
-is more than one field, choose which asset to save from the dialog. Cancelling
-saves nothing, and the source block is never changed. Containers such as events
-and loops still save their entire contents as **Code**, including any asset fields.
+Statements and expressions containing asset fields save their entire block or
+stack as **Code**, including those assets. Asset shadows can still be saved
+separately without detaching them from their parent. Cancelling a capture saves
+nothing, and the source block is never changed.
 Required extensions are installed with consent on Add, just as for code snippets.
 Blocks defined in the project's own TypeScript files cannot be saved to Backpack.
 Move that code into an extension, publish it, and add the extension to the project

@@ -376,7 +376,7 @@ export function backpackErrorMessage(code?: string): string {
     switch (code) {
         case "backpack_request_too_large":
         case "backpack_entry_too_large":
-            return lf("This snippet is too large. Save a smaller block container.");
+            return lf("This snippet is too large. Save fewer blocks.");
         case "backpack_preview_too_large":
             return lf("This snippet's preview is too large. Try saving without a preview.");
         case "backpack_quota_exceeded":

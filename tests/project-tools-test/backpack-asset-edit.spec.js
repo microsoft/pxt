@@ -276,7 +276,7 @@ describe("Backpack scratch native asset editing", function () {
             }
         });
         assert.equal(result.unchanged, true);
-        assert.equal(result.kind, "asset");
+        assert.equal(result.kind, "code");
         assert.equal(result.containerKind, "code");
         assert.deepStrictEqual(result.restored, [
             { pixel: 2, type: "extension_portrait", fields: ["ASSET"], name: "First image" },

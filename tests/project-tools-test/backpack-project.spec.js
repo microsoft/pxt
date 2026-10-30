@@ -278,6 +278,7 @@ describe("Backpack capture portability", () => {
         const captures = [
             [custom],
             [{ type: "container", inputs: { BODY: { block: custom } } }],
+            [{ type: "container", next: { block: custom } }],
             [
                 { type: "function_definition", extraState, inputs: { STACK: { block: custom } } },
                 { type: "container", inputs: { BODY: { block: { type: "function_call", extraState } } } }

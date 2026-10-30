@@ -18,7 +18,7 @@ export function visitBlockStates(
             throw new Error("Invalid serialized block.");
         }
         if (depth > MAX_BLOCK_DEPTH || seen.size >= MAX_BLOCK_COUNT) {
-            pxt.U.userError(lf("This snippet contains too many blocks or is nested too deeply. Try copying a smaller block container."));
+            pxt.U.userError(lf("This snippet contains too many blocks or is nested too deeply. Try copying fewer blocks."));
         }
 
         seen.add(state);
@@ -44,10 +44,10 @@ export function blockCopyData(blockState: BlockState): Blockly.clipboard.BlockCo
 }
 
 /** Copy a live block or a block in a headless asset editor. */
-export function copyBlock(block: Blockly.Block): Blockly.clipboard.BlockCopyData {
+export function copyBlock(block: Blockly.Block, addNextBlocks = false): Blockly.clipboard.BlockCopyData {
     const data = block instanceof Blockly.BlockSvg
-        ? block.toCopyData()
-        : blockCopyData(Blockly.serialization.blocks.save(block, { addNextBlocks: false, saveIds: false }));
+        ? block.toCopyData(addNextBlocks)
+        : blockCopyData(Blockly.serialization.blocks.save(block, { addNextBlocks, saveIds: false }));
     if (!data) throw new Error("The block could not be copied.");
 
     return data;

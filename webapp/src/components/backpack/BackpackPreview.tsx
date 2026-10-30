@@ -263,9 +263,6 @@ export async function backpackPreviewAsync(block: Blockly.BlockSvg): Promise<{
     const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
     try {
         const copy = source.cloneNode(true) as SVGGElement;
-        const next = block.getNextBlock()?.getSvgRoot();
-        const nextIndex = next ? Array.from(source.children).indexOf(next) : -1;
-        if (nextIndex >= 0) copy.children[nextIndex].remove();
         copy.removeAttribute("transform");
         svg.appendChild(copy);
         pxtblockly.cleanUpBlocklySvg(svg, block.workspace.getParentSvg());
