@@ -378,7 +378,7 @@ const APPLY_LANE = "apply";
  * until the window allows them. A request applies only to the project open
  * when it arrived, once that project has loaded; if that project fails to
  * load, or has closed by the time the request's turn comes, it is refused
- * with `PROJECT_CLOSED`, and a request that has begun applying completes in
+ * with `PROJECT_CLOSED`, and a request that has begun applying is applied in
  * the project it began in.
  *
  * A request is refused on arrival, without waiting its turn, with
@@ -388,7 +388,10 @@ const APPLY_LANE = "apply";
  * follows the replies to the requests before it.
  *
  * Writes and deletes are artifacts unless flagged `dirty`, in which case they
- * also pass through {@link ProjfsProject.markDirty} once applied.
+ * also pass through {@link ProjfsProject.markDirty} once applied, if their
+ * project is still open; a flagged change whose project closed while it was
+ * being applied stays applied in that project and is refused with
+ * `PROJECT_CLOSED`.
  *
  * A subscribe request subscribes the requesting frame to its folder's
  * changes. It is neither queued nor limited: it is answered once the project
@@ -552,7 +555,7 @@ export class ProjfsHost {
                 await project.writeFileAsync(name, content);
                 if (getListedFiles(files).indexOf(name) < 0)
                     await project.setListedAsync(name, true);
-                if (dirty) project.markDirty?.(name, content);
+                if (dirty) openProjectOrThrow(arrivedIn, () => this.getProject()).markDirty?.(name, content);
                 return { subtype: "ack", name: request.name };
             }
 
@@ -567,7 +570,7 @@ export class ProjfsHost {
                     await project.deleteFileAsync(name);
                 else
                     await project.setListedAsync(name, false);
-                if (dirty) project.markDirty?.(name, undefined);
+                if (dirty) openProjectOrThrow(arrivedIn, () => this.getProject()).markDirty?.(name, undefined);
                 return { subtype: "ack", name: request.name };
             }
 

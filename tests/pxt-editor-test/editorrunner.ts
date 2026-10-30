@@ -2249,6 +2249,42 @@ describe("projfs host", () => {
             chai.expect(project.files["owner/repo/a.ts"]).equals("x");
         });
 
+        it("refuses a flagged write whose project closed while it was saved, with the write saved in that project", async () => {
+            const first = project;
+            const release = first.holdWrites();
+            const replies: ProjfsReply[] = [];
+            const applying = post({ subtype: "write", name: "a.ts", content: "x", dirty: true }, replies);
+            await settle();
+            project = newProject();
+            release();
+            await applying;
+            chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(first.files["owner/repo/a.ts"]).equals("x");
+            chai.expect(first.dirtied).deep.equals([]);
+            chai.expect(project.calls).deep.equals([]);
+        });
+
+        it("refuses a flagged delete whose project closed while it was deleted, with the file deleted in that project", async () => {
+            const first = project;
+            let release!: () => void;
+            const gate = new Promise<void>(resolve => release = resolve);
+            const deleteFileAsync = first.deleteFileAsync.bind(first);
+            first.deleteFileAsync = async (name: string) => {
+                await gate;
+                await deleteFileAsync(name);
+            };
+            const replies: ProjfsReply[] = [];
+            const applying = post({ subtype: "delete", name: "listed.txt", dirty: true }, replies);
+            await settle();
+            project = newProject();
+            release();
+            await applying;
+            chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(first.files).not.to.have.property("owner/repo/listed.txt");
+            chai.expect(first.dirtied).deep.equals([]);
+            chai.expect(project.calls).deep.equals([]);
+        });
+
         it("applies flagged changes as artifacts where no editor takes user edits", async () => {
             const files: pxt.Map<string> = { [pxt.CONFIG_NAME]: JSON.stringify({ files: [] }) };
             const withoutEditor: ProjfsProject = {

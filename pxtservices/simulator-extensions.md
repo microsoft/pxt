@@ -170,7 +170,7 @@ Besides the [shared codes](#talking-to-the-editor):
 * `INVALID_NAME`: the name breaks the [name rules](#names).
 * `RATE_LIMITED`: the folder already had as many requests waiting for replies as the editor holds; the request was not applied.
 
-A `FAILED` write or delete may be partly applied; repeating it completes it. `PERMISSION_DENIED` means the registration does not set `allowFileWrite`.
+A `FAILED` write or delete may be partly applied; repeating it completes it. A write or delete with `dirty: true` refused with `PROJECT_CLOSED` may already be saved, as an artifact, in the project that closed. `PERMISSION_DENIED` means the registration does not set `allowFileWrite`.
 
 ## Project assets
 
