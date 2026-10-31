@@ -24,6 +24,7 @@ export function useProjectToolsDismiss(
         if (!expanded && !optionsOpen) return undefined;
 
         const onPointerDown = (event: PointerEvent): void => {
+            if (blockPointer.current && !event.isPrimary) return;
             blockPointer.current = undefined;
             if (root.current && !root.current.contains(event.target as Node)) {
                 if (keepOpenOnBlockDrag && event.button === 0 && event.isPrimary && event.target instanceof Element) {
