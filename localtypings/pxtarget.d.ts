@@ -201,6 +201,8 @@ declare namespace pxt {
         onStartGroup?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        foreverNamespace?: string; // default = loops
+        pauseNamespace?: string; // default = loops
         pauseUntilBlock?: BlockOptions;
         breakBlock?: boolean;
         continueBlock?: boolean;
