@@ -611,10 +611,20 @@ namespace ts.pxtc {
             const rt = pxt.appTarget.runtime;
             for (let b of blocks) {
                 const id = b.attributes.blockId;
-                if ((id === "forever" || id === "device_forever") && rt.foreverNamespace) {
-                    b.attributes.blockNamespace = rt.foreverNamespace;
-                } else if (id === "device_pause" && rt.pauseNamespace) {
-                    b.attributes.blockNamespace = rt.pauseNamespace;
+                if (id === "forever" || id === "device_forever") {
+                    if (rt.foreverNamespace)
+                        b.attributes.blockNamespace = rt.foreverNamespace;
+                    if (rt.foreverGroup)
+                        b.attributes.group = rt.foreverGroup;
+                    if (rt.foreverWeight !== undefined)
+                        b.attributes.weight = rt.foreverWeight;
+                } else if (id === "device_pause") {
+                    if (rt.pauseNamespace)
+                        b.attributes.blockNamespace = rt.pauseNamespace;
+                    if (rt.pauseGroup)
+                        b.attributes.group = rt.pauseGroup;
+                    if (rt.pauseWeight !== undefined)
+                        b.attributes.weight = rt.pauseWeight;
                 }
             }
         }
