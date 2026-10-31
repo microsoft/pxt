@@ -606,6 +606,29 @@ namespace ts.pxtc {
             }
         }
 
+        // Apply runtime target overrides for standard forever and pause blocks if specified
+        if (pxt.appTarget?.runtime) {
+            const rt = pxt.appTarget.runtime;
+            for (let b of blocks) {
+                const id = b.attributes.blockId;
+                if (id === "forever" || id === "device_forever") {
+                    if (rt.foreverNamespace)
+                        b.attributes.blockNamespace = rt.foreverNamespace;
+                    if (rt.foreverGroup)
+                        b.attributes.group = rt.foreverGroup;
+                    if (rt.foreverWeight !== undefined)
+                        b.attributes.weight = rt.foreverWeight;
+                } else if (id === "device_pause") {
+                    if (rt.pauseNamespace)
+                        b.attributes.blockNamespace = rt.pauseNamespace;
+                    if (rt.pauseGroup)
+                        b.attributes.group = rt.pauseGroup;
+                    if (rt.pauseWeight !== undefined)
+                        b.attributes.weight = rt.pauseWeight;
+                }
+            }
+        }
+
         if (categoryFilters)
             filterCategories(categoryFilters);
 
