@@ -229,7 +229,7 @@ namespace pxt.gallery {
         return !!cards?.length && normalizeCodeCards(cards);
     }
 
-    export function parseGalleryMardown(md: string): Gallery[] {
+    export function parseGalleryMarkdown(md: string): Gallery[] {
         if (!md) return [];
 
         // second level titles are categories
@@ -278,7 +278,7 @@ namespace pxt.gallery {
 
     export function loadGalleryAsync(name: string): Promise<Gallery[]> {
         return pxt.Cloud.markdownAsync(name)
-            .then(md => parseGalleryMardown(md))
+            .then(md => parseGalleryMarkdown(md))
     }
 
     export function codeCardsToMarkdown(cards: pxt.CodeCard[]) {
