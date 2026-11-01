@@ -257,7 +257,7 @@ interface Array<T> {
     _shiftStatement(): void;
 
     /** Remove the element at a certain index. */
-    //% help=arrays/remove-at-statement
+    //% help=arrays/remove-at
     //% shim=Array_::removeAt weight=14
     //% blockId="array_removeat_statement" block="%list| remove value at %index" blockNamespace="arrays"
     //% list.label="list to change" index.label="position within list"
