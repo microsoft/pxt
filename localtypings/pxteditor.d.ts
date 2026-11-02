@@ -85,6 +85,7 @@ declare namespace pxt.editor {
 
         | "toggletrace" // EditorMessageToggleTraceRequest
         | "showthemepicker"
+        | "showextensions"
         | "togglehighcontrast"
         | "sethighcontrast" // EditorMessageSetHighContrastRequest
         | "setsimulatortheme" // EditorMessageSetSimulatorThemeRequest

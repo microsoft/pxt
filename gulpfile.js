@@ -1,6 +1,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { execFileSync } = require("child_process");
 const { Transform, PassThrough } = require("stream");
 const { minify } = require("terser");
 
@@ -103,7 +104,22 @@ const pxtsim = () => compileTsProject("pxtsim");
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
-const backendutils = () => compileTsProject("backendutils")
+const backendutils = gulp.series(
+    () => compileTsProject("backendutils"),
+    () => {
+        const gitOptions = { cwd: __dirname, encoding: "utf8" };
+        const gitHash = execFileSync("git", ["rev-parse", "HEAD"], gitOptions).trim();
+        const gitStatus = execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], gitOptions).trim();
+        const version = { hash: gitHash, hasLocalChanges: !!gitStatus };
+        const header = `// Git commit: ${gitHash}\n`
+            + `// Local untracked files or uncommitted changes at build time: ${version.hasLocalChanges ? "yes" : "no"}\n`;
+
+        return gulp.src(["built/backendutils.js", "built/backendutils.d.ts"])
+            .pipe(replace(/"@PXT_BACKENDUTILS_VERSION@"/g, JSON.stringify(JSON.stringify(version))))
+            .pipe(prependHeader(header))
+            .pipe(gulp.dest("built"));
+    }
+);
 const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
