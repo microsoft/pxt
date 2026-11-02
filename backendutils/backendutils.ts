@@ -8,8 +8,8 @@ namespace pxt {
     }
 
     /**
-     * Returns the Git revision and local-change status captured at build time.
-     * @example pxt.backendutilsVersion() // { hash: "...", hasLocalChanges: false }
+     * The git revision information is injected into this function at build time.
+     * See backendutils in gulpfile.js
      */
     export function backendutilsVersion(): BackendutilsVersion {
         return JSON.parse("@PXT_BACKENDUTILS_VERSION@");
