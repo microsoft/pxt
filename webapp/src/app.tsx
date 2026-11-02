@@ -2753,8 +2753,10 @@ export class ProjectView
 
     openProjectByHeaderIdAsync(headerId: string) {
         const header = workspace.getHeader(headerId);
-        // keep the current editor state (e.g. toolbox filters set by the host via workspacesync)
-        return this.loadHeaderAsync(header, this.state.editorState);
+        // keep the current editor state (e.g. toolbox filters set by the host via workspacesync),
+        // but not a tutorial's: those filters belong to the tutorial and must not carry over
+        const editorState = this.state.tutorialOptions?.tutorial ? undefined : this.state.editorState;
+        return this.loadHeaderAsync(header, editorState);
     }
 
     initDragAndDrop() {
