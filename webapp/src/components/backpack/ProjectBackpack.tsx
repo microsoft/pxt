@@ -437,7 +437,7 @@ function BackpackContents(props: BackpackContentsProps): JSX.Element {
                                     : kind === "asset" ? lf("No saved assets.") : lf("No saved code.")}</p>
                                 <p>{kind === "asset"
                                     ? lf("Right-click or drag an image, animation, tilemap or music asset block into Backpack to save it here.")
-                                    : lf("Right-click or hold a block container and choose Add to Backpack, or drag blocks over the Backpack bubble, then drop them into the backpack.")}</p>
+                                    : lf("Right-click or hold a block and choose Add to Backpack, or drag a block or stack over the Backpack bubble, then drop it into the backpack.")}</p>
                             </div>
                         )}
                         {!!filteredItems.length && (
