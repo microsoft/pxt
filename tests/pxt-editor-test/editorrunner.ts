@@ -28,6 +28,7 @@ import {
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
+import { githubExtensionCardMetadata } from "../../webapp/src/extensionMetadata";
 
 pxt.appTarget = {
     versions: {
@@ -39,6 +40,108 @@ pxt.appTarget = {
 } as any
 
 const differ = new dmp.diff_match_patch();
+
+describe("extension card metadata", () => {
+    const slug = "microsoft/makecode-minecraft-music";
+    const config: pxt.PackageConfig = {
+        name: "makecode-minecraft-music", displayName: "Music",
+        description: "Play Minecraft music discs", icon: "icon.png",
+        dependencies: {}, files: ["src/music.ts"]
+    };
+    const repo: pxt.github.GitRepo = {
+        ...pxt.github.parseRepoId(slug),
+        name: config.name, displayName: config.displayName, description: config.description,
+        icon: config.icon, defaultBranch: "main", status: pxt.github.GitRepoStatus.Approved
+    };
+
+    it("keeps the Music image and public fields when it becomes installed", () => {
+        const recommended = githubExtensionCardMetadata(repo);
+        const installed = githubExtensionCardMetadata({ ...repo, tag: "v0.0.8" }, config);
+        chai.expect(installed).deep.equals(recommended);
+        chai.expect(installed.imageUrl).matches(/gh\/microsoft\/makecode-minecraft-music\/icon$/);
+        chai.expect(installed.imageUrl).not.equals("icon.png");
+        chai.expect(config.files).not.contains("icon.png");
+    });
+
+    it("uses package fields before repository fallbacks, including normalized package names", () => {
+        const metadata = githubExtensionCardMetadata({ ...repo, name: "repository-slug", description: "GitHub About" }, {
+            ...config, name: "pxt-friendly", displayName: "Friendly extension", description: "Package description"
+        });
+        chai.expect(metadata.name).equals("friendly");
+        chai.expect(metadata.displayName).equals("Friendly extension");
+        chai.expect(metadata.description).equals("Package description");
+        chai.expect(githubExtensionCardMetadata({ ...repo, description: "GitHub About" }, {
+            ...config, description: "  "
+        }).description).equals("GitHub About");
+    });
+
+    it("preserves explicit absolute and inline icons without treating relative paths as editor URLs", () => {
+        for (const icon of ["https://example.com/music.png", "//example.com/music.png", "data:image/png;base64,AA=="]) {
+            chai.expect(pxt.github.repoIconUrl(repo, icon)).equals(icon);
+        }
+        for (const icon of ["icon.png", "./icon.png", "images/custom icon.png", "/images/icon.png"]) {
+            chai.expect(pxt.github.repoIconUrl(repo, icon)).matches(/\/icon$/);
+        }
+        chai.expect(pxt.github.mkRepoIconUrl(repo)).matches(/\/icon$/);
+    });
+
+    it("retains icon approval rules and existing explicit installed-icon behavior", () => {
+        const unknown = { ...repo, status: pxt.github.GitRepoStatus.Unknown };
+        chai.expect(githubExtensionCardMetadata(unknown).imageUrl).equals(undefined);
+        chai.expect(pxt.github.repoIconUrl(unknown, "icon.png")).equals(undefined);
+        chai.expect(pxt.github.repoIconUrl(unknown, "https://example.com/installed.png")).equals("https://example.com/installed.png");
+    });
+
+    it("normalizes search and URL metadata to the same cards while preserving repository identity", async () => {
+        const originalHttp = pxt.Util.httpGetJsonAsync;
+        const originalProxy = pxt.Cloud.apiRequestWithCdnAsync;
+        const originalTarget = pxt.appTarget;
+        const originalForceProxy = pxt.github.forceProxy;
+        const packages: pxt.PackagesConfig = { approvedRepoLib: { [slug]: {} } };
+        let includePackageMetadata = true;
+        pxt.appTarget = { ...originalTarget, id: "minecraft", platformid: "minecraft" };
+        pxt.github.forceProxy = true;
+        pxt.Util.httpGetJsonAsync = <T>(url: string) => {
+            chai.expect(url).not.contains("cardmetadata");
+            return Promise.resolve({ items: [{
+                name: "repository-slug", full_name: slug, owner: { login: "microsoft" },
+                description: "GitHub About", default_branch: "main", updated_at: "2026-01-01",
+                packageMetadata: includePackageMetadata ? config : undefined
+            }] } as T);
+        };
+        pxt.Cloud.apiRequestWithCdnAsync = async options => {
+            chai.expect(options.url).equals(`gh/${slug}`);
+            return {
+                statusCode: 200, headers: {}, text: "",
+                json: { ...config, icon: includePackageMetadata ? config.icon : undefined, defaultBranch: "main" }
+            };
+        };
+        try {
+            const search = await pxt.github.searchAsync("music", packages);
+            const direct = await pxt.github.repoAsync(slug, packages);
+            chai.expect(search.length).equals(1);
+            chai.expect(search[0].slug).equals(slug);
+            chai.expect(search[0].fullName).equals(slug);
+            chai.expect(githubExtensionCardMetadata(search[0])).deep.equals(githubExtensionCardMetadata(direct));
+
+            includePackageMetadata = false;
+            const legacySearch = await pxt.github.searchAsync("music", packages);
+            const legacyDirect = await pxt.github.repoAsync(slug, packages);
+            chai.expect(legacySearch[0].name).equals("repository-slug");
+            chai.expect(legacySearch[0].description).equals("GitHub About");
+            chai.expect(legacySearch[0].displayName).equals(undefined);
+            chai.expect(legacyDirect.icon).equals(undefined);
+            chai.expect(githubExtensionCardMetadata(legacyDirect)).deep.equals(
+                githubExtensionCardMetadata({ ...legacyDirect, tag: "v0.0.8" }, config)
+            );
+        } finally {
+            pxt.Util.httpGetJsonAsync = originalHttp;
+            pxt.Cloud.apiRequestWithCdnAsync = originalProxy;
+            pxt.appTarget = originalTarget;
+            pxt.github.forceProxy = originalForceProxy;
+        }
+    });
+});
 
 describe("gallery code cards", () => {
     it("parses comma-separated tags and search terms as arrays", () => {
