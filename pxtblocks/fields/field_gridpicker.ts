@@ -118,7 +118,10 @@ export function getGridPickerGroups(
         const members = filterGridPickerOptions(visible, category.tags || [], optionTags)
             .filter(option => tab.materials || !claimed.has(option[1]));
         if (!members.length) continue;
-        if (variantOrder?.length) members.sort((first, second) => rank(first) - rank(second));
+        const order = new Map<string, number>((category.order || []).map((value, index) => [value, index]));
+        if (order.size || variantOrder?.length) members.sort((first, second) =>
+            (order.get(first[1]) ?? Number.MAX_SAFE_INTEGER) - (order.get(second[1]) ?? Number.MAX_SAFE_INTEGER)
+            || rank(first) - rank(second));
         members.forEach(option => claimed.add(option[1]));
         groups.push({ id: category.id, name: category.name, icon: category.icon, options: members });
     }
@@ -159,7 +162,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private blocksInfo_: pxtc.BlocksInfo;
     private catalogTab_: string;
     private catalogSearch_ = "";
-    private catalogFilter_ = "";
     private catalogExpanded_ = new Set<string>();
     private catalogFamilies_: pxt.Map<GridPickerGroup> = {};
     private catalogChildRowIds_: pxt.Map<string[]> = {};
@@ -326,7 +328,10 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         rowContent.id = `${this.sourceBlock_.id}:row-${row}`;
         if (this.catalog_) {
             rowContent.setAttribute("aria-level", parentFamily ? "2" : "1");
-            if (parentFamily) rowContent.classList.add("gridpicker-family-children");
+            if (parentFamily) {
+                rowContent.classList.add("gridpicker-family-children");
+                rowContent.dataset.family = parentFamily.id;
+            }
         }
 
         for (const option of options) {
@@ -860,38 +865,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         toolbar.appendChild(search);
         container.insertBefore(toolbar, this.scrollContainer);
 
-        const filters = document.createElement("div");
-        filters.className = "gridpicker-catalog-filters";
-        const createFilter = (label: string, entries: pxt.GridPickerCategory[], change: (value: string) => void): HTMLSelectElement => {
-            const wrapper = document.createElement("label");
-            const text = document.createElement("span");
-            text.textContent = label;
-            wrapper.appendChild(text);
-            const select = document.createElement("select");
-            select.setAttribute("aria-label", label);
-            const all = document.createElement("option");
-            all.value = "";
-            all.textContent = pxt.Util.lf("All");
-            select.appendChild(all);
-            for (const entry of entries) {
-                const option = document.createElement("option");
-                option.value = (entry.tags || []).join(" ");
-                option.textContent = pxt.Util.rlf(entry.name);
-                select.appendChild(option);
-            }
-            select.addEventListener("change", () => change(select.value));
-            wrapper.appendChild(select);
-            filters.appendChild(wrapper);
-            return select;
-        };
-        if (this.catalog_.filters?.length) {
-            const select = createFilter(pxt.Util.lf("Tags"), this.catalog_.filters, value => {
-                this.catalogFilter_ = value;
-                this.renderCatalog_();
-            });
-            select.value = this.catalogFilter_;
-        }
-        container.insertBefore(filters, this.scrollContainer);
         this.scrollContainer.id = `${container.id}:panel`;
         this.scrollContainer.setAttribute("role", "tabpanel");
         this.catalogContentHeight_ = undefined;
@@ -949,8 +922,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         });
         this.scrollContainer.setAttribute("aria-labelledby", `${this.catalogContainer_.id}:tab:${tab.id}`);
         this.catalogContainer_.querySelector(".gridpicker-catalog-title").textContent = pxt.Util.rlf(tab.name);
-        const options = filterGridPickerOptions(this.getOptions(), this.filter_, this.optionTags_);
-        const groups = getGridPickerGroups(options, this.catalog_, tab, this.catalogSearch_, this.catalogFilter_, this.optionTags_);
+        const groups = getGridPickerGroups(this.getOptions(), this.catalog_, tab, this.catalogSearch_, this.filter_, this.optionTags_);
         const entries: GridPickerEntry[] = [];
         this.catalogFamilies_ = {};
         const choices = new Set<string>();
@@ -1041,9 +1013,28 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         if (!this.catalog_) return super.getVerticalGridItemIndex(index, direction);
         const row = this.gridItems[index].parentElement;
         const adjacent = direction < 0 ? row.previousElementSibling : row.nextElementSibling;
+        const familyId = row.dataset.family;
+        if (familyId !== undefined && adjacent?.getAttribute("data-family") !== familyId) {
+            if (direction > 0) return index;
+            const parent = this.gridItems.findIndex(item => item.getAttribute("data-value") === `@family:${familyId}`);
+            return parent >= 0 ? parent : index;
+        }
+        if (direction > 0) {
+            const family = this.catalogFamilies_[this.gridItems[index].getAttribute("data-value")];
+            const firstChildRow = family && this.catalogChildRowIds_[family.id]?.[0];
+            if (firstChildRow) return this.gridItems.findIndex(item => item.parentElement.id === firstChildRow);
+        }
         if (!adjacent || !adjacent.children.length || !adjacent.classList.contains("blocklyGridPickerRow")) return index;
         const column = Array.prototype.indexOf.call(row.children, this.gridItems[index]) as number;
         return this.gridItems.indexOf(adjacent.children[Math.min(column, adjacent.children.length - 1)] as HTMLDivElement);
+    }
+
+    protected override getHorizontalGridItemIndex(index: number, direction: number): number {
+        if (!this.catalog_) return super.getHorizontalGridItemIndex(index, direction);
+        const familyId = this.gridItems[index].parentElement.dataset.family;
+        if (familyId === undefined) return super.getHorizontalGridItemIndex(index, direction);
+        const next = index + direction;
+        return this.gridItems[next]?.parentElement.dataset.family === familyId ? next : index;
     }
 
     private createSearchBar_(tableContainer: HTMLElement, scrollContainer: HTMLElement, options: (Object | string[])[]) {
@@ -1359,30 +1350,6 @@ Blockly.Css.register(`
 .gridpicker-catalog-toolbar input {
     width: 100%;
     padding: 6px 10px;
-}
-
-.gridpicker-catalog-filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-}
-
-.gridpicker-catalog-filters:empty,
-.gridpicker-catalog-filters label[hidden] {
-    display: none;
-}
-
-.gridpicker-catalog-filters label {
-    display: flex;
-    flex: 1 1 120px;
-    align-items: center;
-    gap: 6px;
-}
-
-.gridpicker-catalog-filters select {
-    flex: 1;
-    min-width: 0;
-    padding: 4px;
 }
 
 .blocklyGridPickerCatalog .blocklyGridPickerScroller {

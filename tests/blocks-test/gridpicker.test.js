@@ -116,6 +116,19 @@ assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), catalog, 
     { id: "swords", values: ["Item.CopperSword", "Item.IronSword"] },
     { id: "pickaxes", values: ["Item.CopperPickaxe"] }
 ]);
+const orderedCatalog = {
+    ...catalog,
+    families: [{ ...catalog.families[0], order: ["Item.IronSword", "Item.CopperSword"] }]
+};
+assert.deepStrictEqual(summarize(groups(options, orderedCatalog, catalog.tabs[0], "")), [
+    { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] },
+    { id: "other", values: ["Item.CopperPickaxe"] }
+]);
+assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), orderedCatalog, catalog.tabs[0], "")),
+    summarize(groups(options, orderedCatalog, catalog.tabs[0], "")));
+const partialOrder = { ...catalog, families: [{ ...catalog.families[0], order: ["Item.IronSword"] }] };
+assert.deepStrictEqual(summarize(groups(options, partialOrder, catalog.tabs[0], ""))[0],
+    { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] });
 const sizedCatalog = { ...catalog, tabs: catalog.tabs.concat(materialTab) };
 assert.strictEqual(context.exports.getGridPickerSizeRows(options, sizedCatalog, 4).length, 2);
 const swords = groups(options, catalog, catalog.tabs[0], "")[0];
@@ -153,24 +166,45 @@ context.window = dom.window;
 context.Image = dom.window.Image;
 context.pxsim = { U: { removeChildren: element => element.replaceChildren() } };
 context.pxt.Util.rlf = text => text;
+let rtl = false;
+context.pxt.Util.isUserLanguageRtl = () => rtl;
 context.pxt.BrowserUtils = {
-    addClass: (element, names) => names.split(" ").forEach(name => element.classList.add(name))
+    addClass: (element, names) => names.split(" ").forEach(name => element.classList.add(name)),
+    isMac: () => false
 };
 context.filterGridPickerOptions = context.exports.filterGridPickerOptions;
 context.Blockly = {
-    browserEvents: { bind: () => {}, conditionalBind: () => {} },
+    browserEvents: {
+        bind: (element, type, owner, handler) => {
+            const listener = handler.bind(owner);
+            element.addEventListener(type, listener);
+            return { element, type, listener };
+        },
+        unbind: binding => binding.element.removeEventListener(binding.type, binding.listener),
+        conditionalBind: () => {}
+    },
     WidgetDiv: { getDiv: () => dom.window.document.body }
 };
 const pickerFile = "pxtblocks/fields/field_gridpicker.ts";
 const pickerSource = ts.createSourceFile(pickerFile, fs.readFileSync(path.join(root, pickerFile), "utf8"), ts.ScriptTarget.Latest, true);
 const pickerClass = pickerSource.statements.find(node => ts.isClassDeclaration(node) && node.name.text === "FieldGridPicker");
-const methods = ["createWidget_", "populateTableContainer", "populateRow", "getGridRowBounds", "getVerticalGridItemIndex"];
+const baseFile = "pxtblocks/fields/field_dropdowngrid.ts";
+const baseSource = ts.createSourceFile(baseFile, fs.readFileSync(path.join(root, baseFile), "utf8"), ts.ScriptTarget.Latest, true);
+const baseClass = baseSource.statements.find(node => ts.isClassDeclaration(node) && node.name.text === "FieldDropdownGrid");
+const baseMethods = ["getGridRowBounds", "getVerticalGridItemIndex", "getHorizontalGridItemIndex", "setFocusedItem", "addKeyDownHandler"];
+const baseMethodText = baseClass.members.filter(node => ts.isMethodDeclaration(node) && baseMethods.includes(node.name.text))
+    .map(node => node.getText(baseSource));
+assert.strictEqual(baseMethodText.length, baseMethods.length);
+const methods = ["createWidget_", "populateTableContainer", "populateRow", "getGridRowBounds", "getVerticalGridItemIndex", "getHorizontalGridItemIndex", "createCatalog_", "renderCatalog_", "selectCatalogTab_"];
 const methodText = pickerClass.members.filter(node => ts.isMethodDeclaration(node) && methods.includes(node.name.text))
     .map(node => node.getText(pickerSource));
 assert.strictEqual(methodText.length, methods.length);
 const clickHandler = pickerClass.members.find(node => ts.isPropertyDeclaration(node) && node.name.text === "buttonClickAndClose_");
 assert(clickHandler);
-vm.runInContext(ts.transpileModule(`class PickerMethods { ${methodText.join("\n")} ${clickHandler.getText(pickerSource)} }\nexports.PickerMethods = PickerMethods;`, {
+vm.runInContext(ts.transpileModule(`class PickerBaseMethods { ${baseMethodText.join("\n")} }
+class PickerMethods extends PickerBaseMethods { ${methodText.join("\n")} ${clickHandler.getText(pickerSource)} }
+exports.PickerBaseMethods = PickerBaseMethods;
+exports.PickerMethods = PickerMethods;`, {
     compilerOptions: { target: ts.ScriptTarget.ES2017 }
 }).outputText, context);
 const picker = new context.exports.PickerMethods();
@@ -210,7 +244,11 @@ assert(treegrid.children[1].classList.contains("gridpicker-family-children-last"
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-selected"), "false");
 assert.strictEqual(treegrid.querySelector('[data-value="Item.CopperSword"]').getAttribute("aria-selected"), "true");
 assert.strictEqual(picker.getVerticalGridItemIndex(1, 1), 3);
-assert.strictEqual(picker.getVerticalGridItemIndex(3, 1), 4);
+assert.strictEqual(picker.getVerticalGridItemIndex(3, 1), 3);
+assert.strictEqual(picker.getVerticalGridItemIndex(2, -1), 0);
+assert.strictEqual(picker.getVerticalGridItemIndex(3, -1), 0);
+assert.strictEqual(picker.getHorizontalGridItemIndex(2, -1), 2);
+assert.strictEqual(picker.getHorizontalGridItemIndex(3, 1), 3);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(picker.getGridRowBounds(4))), { start: 4, end: 4 });
 assert.strictEqual(picker.getVerticalGridItemIndex(4, 1), 4);
 assert.strictEqual(picker.getVerticalGridItemIndex(4, -1), 2);
@@ -233,6 +271,62 @@ assert.deepStrictEqual(Array.from(picker.catalogExpanded_), ["swords"]);
 assert.strictEqual(picker.gridItems[picker.activeDescendantIndex].dataset.value, "Item.CopperSword");
 assert.strictEqual(treegrid.getAttribute("aria-activedescendant"), picker.gridItems[picker.activeDescendantIndex].id);
 assert.strictEqual(picker.getValue(), "Item.IronSword");
+const largeFamily = { ...swords, options: options.slice(0, 5) };
+const scopedEntries = [
+    { option: ["Pickaxes", "@family:pickaxes"], family: pickaxes },
+    { option: ["Swords", "@family:swords"], family: largeFamily },
+    { option: ["Other", "Item.Other"] }
+];
+picker.catalogFamilies_ = { "@family:swords": largeFamily, "@family:pickaxes": pickaxes };
+picker.populateTableContainer([], treegrid, treegrid,
+    context.exports.getGridPickerRows(scopedEntries, 2, picker.catalogExpanded_));
+context.exports.PickerBaseMethods.prototype.addKeyDownHandler.call(picker, treegrid);
+function assertArrow(code, from, expected) {
+    picker.activeDescendantIndex = from;
+    const event = new dom.window.KeyboardEvent("keydown", { code, key: code, bubbles: true, cancelable: true });
+    treegrid.dispatchEvent(event);
+    assert.strictEqual(picker.activeDescendantIndex, expected, `${rtl ? "RTL" : "LTR"} ${code} from ${from}`);
+    assert.strictEqual(treegrid.getAttribute("aria-activedescendant"), `block:${expected}`);
+    assert.strictEqual(event.defaultPrevented, true);
+    assert.strictEqual(picker.getValue(), "Item.IronSword");
+    assert.deepStrictEqual(Array.from(picker.catalogExpanded_), ["swords"]);
+}
+assertArrow("ArrowUp", 2, 1);
+assertArrow("ArrowUp", 3, 1);
+assertArrow("ArrowDown", 1, 2);
+assertArrow("ArrowDown", 4, 6);
+assertArrow("ArrowDown", 5, 6);
+assertArrow("ArrowDown", 6, 6);
+assertArrow("ArrowUp", 6, 4);
+assertArrow("ArrowLeft", 2, 2);
+assertArrow("ArrowRight", 6, 6);
+assertArrow("ArrowRight", 3, 4);
+assertArrow("ArrowLeft", 4, 3);
+assertArrow("ArrowLeft", 1, 0);
+context.Blockly.browserEvents.unbind(picker.keyDownBinding);
+rtl = true;
+context.exports.PickerBaseMethods.prototype.addKeyDownHandler.call(picker, treegrid);
+assertArrow("ArrowRight", 2, 2);
+assertArrow("ArrowLeft", 6, 6);
+assertArrow("ArrowLeft", 3, 4);
+assertArrow("ArrowRight", 4, 3);
+assertArrow("ArrowUp", 3, 1);
+context.Blockly.browserEvents.unbind(picker.keyDownBinding);
+rtl = false;
+const materialFamily = { ...largeFamily, id: "copper", name: "Copper" };
+picker.catalogFamilies_ = { "@family:copper": materialFamily };
+picker.catalogExpanded_ = new Set(["copper"]);
+picker.populateTableContainer([], treegrid, treegrid, context.exports.getGridPickerRows([
+    { option: ["Other", "Item.Other"] },
+    { option: ["Copper", "@family:copper"], family: materialFamily }
+], 2, picker.catalogExpanded_));
+assert.strictEqual(picker.getVerticalGridItemIndex(2, -1), 1);
+assert.strictEqual(picker.getHorizontalGridItemIndex(2, -1), 2);
+assert.strictEqual(picker.getVerticalGridItemIndex(6, 1), 6);
+assert.strictEqual(picker.getHorizontalGridItemIndex(6, 1), 6);
+picker.catalogExpanded_ = new Set(["swords"]);
+picker.catalogFamilies_ = { "@family:swords": swords, "@family:pickaxes": pickaxes };
+picker.renderCatalog_();
 picker.buttonClickAndClose_("@family:pickaxes");
 assert.deepStrictEqual(Array.from(picker.catalogExpanded_), ["pickaxes"]);
 assert.strictEqual(treegrid.children.length, 3);
@@ -247,6 +341,47 @@ const legacyGrid = dom.window.document.createElement("div");
 picker.createWidget_(legacyGrid);
 assert.strictEqual(legacyGrid.getAttribute("role"), "grid");
 assert.strictEqual(legacyGrid.querySelector('[role="row"]').hasAttribute("aria-level"), false);
+assert.strictEqual(picker.getHorizontalGridItemIndex(0, -1), 0);
+assert.strictEqual(picker.getHorizontalGridItemIndex(0, 1), 1);
+assert.strictEqual(picker.getHorizontalGridItemIndex(picker.gridItems.length - 1, 1), picker.gridItems.length - 1);
+assert.strictEqual(picker.getVerticalGridItemIndex(0, 1), 2);
+const constrained = new context.exports.PickerMethods();
+Object.assign(constrained, {
+    catalog_: {
+        name: "Riders",
+        tabs: [{ id: "undead", name: "Undead", tags: ["undead"] }, { id: "search", name: "All", flat: true }],
+        filters: [{ id: "mount", name: "Mounts", tags: ["mount"] }]
+    },
+    sourceBlock_: { ...picker.sourceBlock_, id: "constrained" },
+    scrollContainer: dom.window.document.createElement("div"),
+    catalogColumns_: 2,
+    catalogSearch_: "",
+    catalogExpanded_: new Set(),
+    filter_: "rider",
+    getOptions: () => options,
+    getValue: () => "MonsterMob.Zombie",
+    catalogIcon_: () => undefined,
+    positionCatalog_: () => {},
+    setupIntersectionObserver_: () => {},
+    shouldShowTooltips: () => false,
+    tooltipConfig_: { xOffset: 0, yOffset: 0 },
+    handleTabKey: () => {}
+});
+const constrainedContainer = dom.window.document.createElement("div");
+const constrainedTable = dom.window.document.createElement("div");
+constrained.scrollContainer.appendChild(constrainedTable);
+constrainedContainer.appendChild(constrained.scrollContainer);
+constrained.createCatalog_(constrainedContainer, constrainedTable);
+assert.strictEqual(constrainedContainer.querySelectorAll("select, .gridpicker-catalog-filters").length, 0);
+assert.strictEqual(constrainedContainer.textContent.includes("Tags"), false);
+assert.deepStrictEqual(Array.from(constrained.gridItems, item => item.dataset.value), ["MonsterMob.Zombie"]);
+constrained.selectCatalogTab_("search");
+assert.deepStrictEqual(Array.from(constrained.gridItems, item => item.dataset.value), ["MonsterMob.Zombie", "MonsterMob.Husk"]);
+constrained.catalogSearch_ = "copper";
+constrained.renderCatalog_();
+assert.strictEqual(constrained.gridItems.length, 0);
+assert(constrainedContainer.textContent.includes("No matching assets"));
+context.Blockly.browserEvents.unbind(constrained.tabKeyBind);
 assert.deepStrictEqual(options.map(option => option[1]), [
     "Item.CopperSword", "Item.IronSword", "Item.CopperPickaxe", "MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"
 ]);
@@ -254,4 +389,4 @@ assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[1], "miss
 assert.deepStrictEqual(options.map(option => option[1]), [
     "Item.CopperSword", "Item.IronSword", "Item.CopperPickaxe", "MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"
 ]);
-console.log("PASS: grid picker filters, groups, downward treegrid expansion, row navigation, and legacy values.");
+console.log("PASS: grid picker filters, groups, scoped LTR/RTL arrow navigation, accessible expansion, and legacy values.");

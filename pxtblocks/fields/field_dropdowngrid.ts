@@ -48,6 +48,10 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
         return next >= 0 && next < this.gridItems.length ? next : index;
     }
 
+    protected getHorizontalGridItemIndex(index: number, direction: number): number {
+        return Math.max(0, Math.min(index + direction, this.gridItems.length - 1));
+    }
+
     private setFocusedItem(gridItemContainer: HTMLElement, e: KeyboardEvent) {
         this.lastUserInputAction = 'keymove';
         this.setFocusedItem_(gridItemContainer);
@@ -109,14 +113,10 @@ export abstract class FieldDropdownGrid extends FieldDropdown {
                     this.activeDescendantIndex = this.getVerticalGridItemIndex(this.activeDescendantIndex, 1);
                     break;
                 case nextKey:
-                    if (this.activeDescendantIndex < this.gridItems.length - 1) {
-                        this.activeDescendantIndex++;
-                    }
+                    this.activeDescendantIndex = this.getHorizontalGridItemIndex(this.activeDescendantIndex, 1);
                     break;
                 case prevKey:
-                    if (this.activeDescendantIndex !== 0) {
-                        this.activeDescendantIndex--;
-                    }
+                    this.activeDescendantIndex = this.getHorizontalGridItemIndex(this.activeDescendantIndex, -1);
                     break;
                 case "Home": {
                     if (ctrlCmd) {

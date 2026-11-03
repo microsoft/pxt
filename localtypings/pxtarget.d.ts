@@ -190,6 +190,7 @@ declare namespace pxt {
         name: string;
         icon?: string;
         tags?: string[];
+        order?: string[];
         flat?: boolean;
         materials?: boolean;
     }

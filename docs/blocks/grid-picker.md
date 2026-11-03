@@ -121,6 +121,12 @@ species. Choices remain unique in the final All tab and in the result count.
 Family variants follow configured material order; material contents follow
 configured family order. Neither sort changes stored values or the legacy path.
 
+A family or material may specify `order`, an array of qualified option values,
+to override material-based sorting. Listed choices appear first in that order;
+unlisted choices remain available afterward. For example, Minecraft's Candles
+family lists the plain candle followed by the sixteen colored candles in native
+inventory order, independently of when those enum entries were added.
+
 The catalog picker uses a treegrid: family and material tiles are expandable
 cells, and their child choices occupy the rows immediately below their tile's
 row. Arrow keys navigate the visible rows; Enter or Space toggles a tile or
