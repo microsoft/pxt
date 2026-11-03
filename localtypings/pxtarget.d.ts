@@ -1251,7 +1251,7 @@ declare namespace ts.pxtc {
     }
 
     interface ProjectCompileData {
-        files: Map<string>;
+        files: {[index: string]: string};
         target: string;
         variant: string;
         versions: pxt.TargetVersions;

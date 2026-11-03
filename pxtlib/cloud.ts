@@ -1,9 +1,9 @@
 namespace pxt.cloud {
     export type DevBackendType = "default" | "prod" | "staging" | "localhost";
 
-    const DEV_BACKEND_PROD = "https://riknoll.staging.pxt.io";
-    const DEV_BACKEND_STAGING = "https://riknoll.staging.pxt.io";
-    const DEV_BACKEND_LOCALHOST = "https://riknoll.staging.pxt.io";
+    const DEV_BACKEND_PROD = "https://makecode.com";
+    const DEV_BACKEND_STAGING = "https://staging.pxt.io";
+    const DEV_BACKEND_LOCALHOST = "http://localhost:8080";
 
     type BackendUrls = typeof DEV_BACKEND_PROD | typeof DEV_BACKEND_STAGING | typeof DEV_BACKEND_LOCALHOST;
     export const DEV_BACKEND: BackendUrls = DEV_BACKEND_STAGING;

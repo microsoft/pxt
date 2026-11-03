@@ -1575,7 +1575,9 @@ namespace pxt {
             }
         }
 
-        extinfo.projectCompileData = JSON.stringify(data);
-        extinfo.projectCompileSha = pxt.U.sha256(extinfo.projectCompileData);
+        const dataString = JSON.stringify(data);
+
+        extinfo.projectCompileData = ts.pxtc.encodeBase64(U.toUTF8(dataString));
+        extinfo.projectCompileSha = pxt.U.sha256(dataString);
     }
 }
