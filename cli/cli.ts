@@ -2007,11 +2007,15 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
             targetStrings[`{id:simulator-theme-field}${field.label}`] = field.label;
         }
     }
-    for (const id of Object.keys(cfg.runtime?.gridPickerCatalogs || {})) {
-        const catalog = cfg.runtime.gridPickerCatalogs[id];
-        if (catalog.name) targetStrings[catalog.name] = catalog.name;
-        for (const entry of catalog.tabs.concat(catalog.families || [], catalog.materials || [], catalog.filters || [])) {
-            if (entry.name) targetStrings[entry.name] = entry.name;
+    for (const files of Object.values(cfg.bundledpkgs || {})) {
+        for (const file of Object.keys(files).filter(name => /\.jres$/i.test(name))) {
+            const resources = pxt.inflateJRes(JSON.parse(files[file]));
+            for (const id of Object.keys(resources)) {
+                const catalog = resources[id].gridPickerCatalog;
+                if (!catalog) continue;
+                const strings = pxt.getGridPickerCatalogStrings(id, catalog);
+                for (const key of Object.keys(strings)) targetStrings[strings[key]] = strings[key];
+            }
         }
     }
     if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
@@ -5218,6 +5222,7 @@ function buildCoreAsync(buildOpts: BuildCoreOptions): Promise<pxtc.CompileResult
                         locs: buildOpts.locs,
                         docs: buildOpts.docs,
                         pxtsnippet: pxtsnippet,
+                        jres: mainPkg.parseJRes(),
                     })
                     if (buildOpts.fileFilter) {
                         const filterRx = new RegExp(buildOpts.fileFilter, "i");

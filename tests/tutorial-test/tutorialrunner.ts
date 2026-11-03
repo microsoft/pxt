@@ -14,6 +14,29 @@ const baselineDir = path.join(process.cwd(), "tests", "tutorial-test", "baseline
 // Just needs to exist
 pxt.setAppTarget(util.testAppTarget);
 
+describe("library picker string extraction", () => {
+    it("extracts only the owning package's resource-qualified picker strings", () => {
+        const make = (namespace: string) => pxt.inflateJRes(JSON.parse(JSON.stringify({
+            "*": { namespace, mimeType: "application/x-makecode-grid-picker" },
+            icons: { gridPickerCatalog: {
+                name: "Images",
+                tabs: [{ id: "all", name: "All", flat: true }],
+                families: [{ id: "birds", name: "Birds", tags: ["bird"] }],
+                materials: [{ id: "wood", name: "Wood", tags: ["wood"] }],
+                filters: [{ id: "playable", name: "Playable", tags: ["playable"] }]
+            } }
+        })));
+        const alpha = make("alpha.pickers");
+        const beta = make("beta.pickers");
+        const files = ts.pxtc.genDocs("alpha", { byQName: {}, jres: { ...alpha, ...beta } }, { locs: true, jres: alpha });
+        const strings = JSON.parse(files["alpha-strings.json"]);
+        for (const name of ["Images", "All", "Birds", "Wood", "Playable"]) {
+            chai.expect(strings[`alpha.pickers.icons|gridPicker|${name}`]).equals(name);
+        }
+        chai.expect(Object.keys(strings).some(key => key.startsWith("beta."))).equals(false);
+    });
+});
+
 describe("tutorial test cases", () => {
     const filenames: string[] = [];
     for (const file of fs.readdirSync(casesDir)) {

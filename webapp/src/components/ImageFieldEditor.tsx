@@ -412,9 +412,8 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
 
     protected filterAssetsByTag(assets: pxt.Asset[]) {
         if (this.state.gallerySelectedTags.length > 0 && this.state.filterOpen) {
-            assets = assets.filter((asset) => {
-                return !!asset.meta.tags?.find(t => this.state.gallerySelectedTags.indexOf(t) >= 0);
-            })
+            const matches = pxt.sprite.compileTagFilter(this.state.gallerySelectedTags, true);
+            assets = assets.filter(asset => matches(asset.meta.tags));
         }
         return assets;
     }
@@ -444,37 +443,13 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         if (useTags) {
             assets.forEach(a => {
                 if (!a.meta.tags && this.state?.options) {
-                    a.meta.tags = this.blocksInfo?.apis.byQName[a.id]?.attributes.tags?.split(" ") || [];
+                    a.meta.tags = this.blocksInfo
+                        ? pxt.sprite.getSymbolTags(this.blocksInfo.apis, this.blocksInfo.apis.byQName[a.id])
+                        : [];
                 }})
 
-        // Keep tag filtering unified with pxtlib/spriteutils:filterItems
-            const tags = this.state.galleryFilter.split(" ")
-                .filter(el => !!el)
-                .map(el => el.toLowerCase());
-            const includeTags = tags
-                .filter(tag => tag.indexOf("!") !== 0);
-            const excludeTags = tags
-                .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
-                .map(tag => tag.substring(1));
-
-            assets = assets.filter(t => checkInclude(t, includeTags) && checkExclude(t, excludeTags))
-        }
-
-        function checkInclude(item: pxt.Asset, includeTags: string[]) {
-            const tags = item.meta.tags ? item.meta.tags : [];
-            return includeTags.every(filterTag => {
-                const optFilterTag = `?${filterTag}`;
-                return tags.some(tag =>
-                    tag === filterTag || tag === optFilterTag
-                )
-            });
-        }
-
-        function checkExclude(item: pxt.Asset, excludeTags: string[]) {
-            const tags = item.meta.tags ? item.meta.tags : [];
-            return excludeTags.every(filterTag =>
-                !tags.some(tag => tag === filterTag)
-            );
+            const matches = pxt.sprite.compileTagFilter(this.state.galleryFilter);
+            assets = assets.filter(asset => matches(asset.meta.tags));
         }
 
         if (isGallery) {

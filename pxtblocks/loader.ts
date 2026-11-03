@@ -1052,12 +1052,7 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
 }
 
 function getSymbolPickerTags(info: pxtc.BlocksInfo, symbol: pxtc.SymbolInfo): string[] {
-    const reference = symbol.attributes.jres;
-    const resource = reference && reference !== "true" ? reference : symbol.qName;
-    return Array.from(new Set([
-        ...(symbol.attributes.tags || "").split(/\s+/),
-        ...(info.apis.jres?.[resource]?.tags || [])
-    ].filter(tag => !!tag).map(tag => tag.toLowerCase())));
+    return pxt.sprite.getSymbolTags(info.apis, symbol).map(tag => tag.toLowerCase());
 }
 
 function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {

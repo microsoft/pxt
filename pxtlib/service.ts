@@ -684,8 +684,10 @@ namespace ts.pxtc {
     export async function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
 
-        if (lang == "en")
+        if (lang == "en") {
+            localizeGridPickerCatalogs(apis.jres, {});
             return Promise.resolve(cleanLocalizations(apis));
+        }
 
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
@@ -695,6 +697,7 @@ namespace ts.pxtc {
         const loc = await mainPkg.localizationStringsAsync(lang);
         if (apiLocalizationStrings)
             Util.jsonMergeFrom(loc, apiLocalizationStrings);
+        localizeGridPickerCatalogs(apis.jres, loc);
 
         const toLocalize = Util.values(apis.byQName).filter(fn => fn.attributes._translatedLanguageCode !== lang);
         await Util.promiseMapAll(toLocalize, async fn => {
@@ -846,6 +849,19 @@ namespace ts.pxtc {
         });
 
         return cleanLocalizations(apis);
+    }
+
+    function localizeGridPickerCatalogs(jres: pxt.Map<pxt.JRes>, translations: pxt.Map<string>): void {
+        for (const id of Object.keys(jres || {})) {
+            const catalog = jres[id].gridPickerCatalog;
+            if (!catalog) continue;
+            const strings = pxt.getGridPickerCatalogStrings(id, catalog);
+            for (const key of Object.keys(strings)) {
+                const translated = translations[key] || translations[strings[key]];
+                if (translated) setBlockTranslationCacheKey(key, translated);
+                else clearBlockTranslationCacheKey(key);
+            }
+        }
     }
 
     function syncParameterDefaults(fn: SymbolInfo) {

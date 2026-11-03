@@ -37,7 +37,7 @@ Keep the resource's existing icon/data properties when adding tags.
 ```typescript
 //% block="choose $mob"
 //% mob.fieldEditor="gridpicker"
-//% mob.fieldOptions.catalog=minecraftMobs
+//% mob.fieldOptions.catalog=minecraft.pickers.mobs
 //% mob.fieldOptions.filter=rider
 //% mob.fieldOptions.width=544 mob.fieldOptions.columns=8
 //% mob.defl=MonsterMob.Zombie
@@ -58,7 +58,7 @@ declaring another enum:
 //% block="choose mount $mob"
 //% mob.fieldEditor="gridpicker"
 //% mob.fieldOptions.enumNames="AnimalMob,MonsterMob"
-//% mob.fieldOptions.catalog=minecraftMobs
+//% mob.fieldOptions.catalog=minecraft.pickers.mobs
 //% mob.fieldOptions.filter=mount
 //% mob.defl=AnimalMob.Chicken
 export function chooseMount(mob: number): number {
@@ -70,34 +70,63 @@ Existing APIs do not need to change their enum types. When migrating an older
 extension, retain its old enum declarations and block IDs for saved projects.
 New selector blocks can use the standard enum sources and tag filters.
 
-## Target Catalogs
+## Library Catalogs
 
-Targets configure catalogs under `runtime.gridPickerCatalogs` in their target
-configuration. The catalog key is the field's `catalog` option.
+Libraries and extensions define catalogs in a JRES file listed in their
+`pxt.json` files array. No target configuration is required. The normal JRES
+namespace rules give each catalog a qualified resource ID; use that ID as the
+field's `catalog` option.
+
+For example, an extension can add `pickers.jres`:
 
 ```json
 {
-    "runtime": {
-        "gridPickerCatalogs": {
-            "gameImages": {
-                "name": "Images",
-                "tabs": [
-                    { "id": "characters", "name": "Characters", "tags": ["character"] },
-                    { "id": "terrain", "name": "Terrain", "tags": ["terrain"] },
-                    { "id": "search", "name": "All", "flat": true }
-                ],
-                "families": [
-                    { "id": "heroes", "name": "Heroes", "tags": ["hero"] },
-                    { "id": "enemies", "name": "Enemies", "tags": ["enemy"] }
-                ],
-                "filters": [
-                    { "id": "playable", "name": "Playable", "tags": ["playable"] }
-                ]
-            }
+    "*": {
+        "namespace": "myExtension.pickers",
+        "mimeType": "application/x-makecode-grid-picker"
+    },
+    "gameImages": {
+        "gridPickerCatalog": {
+            "name": "Images",
+            "tabs": [
+                { "id": "characters", "name": "Characters", "tags": ["character"] },
+                { "id": "terrain", "name": "Terrain", "tags": ["terrain"] },
+                { "id": "search", "name": "All", "flat": true }
+            ],
+            "families": [
+                { "id": "heroes", "name": "Heroes", "tags": ["hero"] },
+                { "id": "enemies", "name": "Enemies", "tags": ["enemy"] }
+            ],
+            "filters": [
+                { "id": "playable", "name": "Playable", "tags": ["playable"] }
+            ]
         }
     }
 }
 ```
+
+The field then uses `catalog=myExtension.pickers.gameImages`. Multiple installed
+packages can contribute independent catalogs; choose an extension-specific
+namespace to avoid resource-ID collisions. A catalog can be shared by multiple
+fields: source enums and each parent block's hard filter still determine which
+choices and tabs are available. Catalog resources are metadata, not image assets.
+
+Catalog `filters` entries describe named filter metadata. They do not add a
+user-pickable control; the parent block applies its constraint through
+`fieldOptions.filter`.
+
+### Localization
+
+The package localization generator extracts catalog, tab, family, material, and
+filter names into the owning package's strings file. Keys include the full
+resource ID, such as
+`myExtension.pickers.gameImages|gridPicker|Heroes`, so different extensions may
+translate the same source title independently. Include the translated strings
+files in `pxt.json` as for other extension translations.
+
+Bundled catalogs also contribute their source titles to target strings. Existing
+target-title translations remain a fallback, and missing translations use the
+original names. Localization never changes catalog IDs, tags, or stored choices.
 
 Every tab has search. Searching a grouped tab expands the matching results rather
 than concealing them inside collapsed families. The final tab should use
@@ -118,19 +147,15 @@ available under an expandable Other materials tile and in the flat All view.
 
 Material groups may overlap intentionally, such as Wood and a specific wood
 species. Choices remain unique in the final All tab and in the result count.
-Family variants follow configured material order; material contents follow
-configured family order. Neither sort changes stored values or the legacy path.
-
-A family or material may specify `order`, an array of qualified option values,
-to override material-based sorting. Listed choices appear first in that order;
-unlisted choices remain available afterward. For example, Minecraft's Candles
-family lists the plain candle followed by the sixteen colored candles in native
-inventory order, independently of when those enum entries were added.
+Choices within a family or material retain their source order. Catalogs define
+groups and titles, not explicit per-option ordering lists.
 
 The catalog picker uses a treegrid: family and material tiles are expandable
 cells, and their child choices occupy the rows immediately below their tile's
-row. Arrow keys navigate the visible rows; Enter or Space toggles a tile or
-chooses an asset. The picker reserves the largest single expanded group's height,
+row. Arrow keys stay within an expanded group's choices. Up from its first row
+returns to the parent tile without collapsing it; Down from that tile re-enters.
+Enter or Space toggles a tile or chooses an asset. Tab and Escape keep their
+normal behavior. The picker reserves the largest single expanded group's height,
 including child rows, across tabs and searches. Its opening anchor stays
 fixed while groups expand. The size is bounded by the editor pane; smaller tabs
 keep the same space and larger content scrolls instead of resizing the popup.
@@ -138,7 +163,7 @@ Pane resizes can update the reserved space, anchor, and number of columns.
 
 ## Arcade Example
 
-With the `gameImages` target catalog above and tagged fixed-instance images, this
+With the library catalog above and tagged fixed-instance images, this
 ordinary Arcade block can select existing gallery images:
 
 ```typescript
@@ -146,7 +171,7 @@ namespace gallerySelectors {
     //% block="spawn gallery character $picture"
     //% picture.fieldEditor="gridpicker"
     //% picture.fieldOptions.fixedInstances=true
-    //% picture.fieldOptions.catalog=gameImages
+    //% picture.fieldOptions.catalog=myExtension.pickers.gameImages
     //% picture.fieldOptions.filter="character playable"
     //% picture.fieldOptions.columns=6 picture.fieldOptions.width=420
     export function spawnCharacter(picture: Image): Sprite {

@@ -185,24 +185,6 @@ declare namespace pxt {
         defaultName?: string; // The default argument name to use in the function declaration for this type
     }
 
-    interface GridPickerCategory {
-        id: string;
-        name: string;
-        icon?: string;
-        tags?: string[];
-        order?: string[];
-        flat?: boolean;
-        materials?: boolean;
-    }
-
-    interface GridPickerCatalog {
-        name: string;
-        tabs: GridPickerCategory[];
-        families?: GridPickerCategory[];
-        materials?: GridPickerCategory[];
-        filters?: GridPickerCategory[];
-    }
-
     interface RuntimeOptions {
         mathBlocks?: boolean;
         textBlocks?: boolean;
@@ -235,7 +217,6 @@ declare namespace pxt {
         tilesetFieldEditorIdentity?: string; // The qualified name of the API used with the field_tileset field editor. Currently, only for pxt-arcade
         screenSize?: Size;
         bannedCategories?: string[]; // a list of categories to exclude blocks from
-        gridPickerCatalogs?: Map<GridPickerCatalog>;
     }
 
     interface AppSerial {

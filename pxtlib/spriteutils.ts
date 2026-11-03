@@ -432,33 +432,47 @@ namespace pxt.sprite {
         return out;
     }
 
-    export function filterItems(target: GalleryItem[], tags: string[]) {
-        // Keep this unified with ImageFieldEditor:filterAssets
-        tags = tags
-            .filter(el => !!el)
-            .map(el => el.toLowerCase());
+    export function parseTags(tags?: string | readonly string[]): string[] {
+        const values = typeof tags === "string" ? tags.split(/\s+/) : tags || [];
+        const seen = new Set<string>();
+        return values.filter(tag => !!tag).map(tag => tag.trim()).filter(tag => {
+            const key = tag.toLowerCase();
+            if (!tag || seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+    }
+
+    /** Compile a tag constraint; optional tags satisfy positive queries but not exclusions. */
+    export function compileTagFilter(filter?: string | readonly string[], matchAny = false): (tags?: readonly string[]) => boolean {
+        const tags = parseTags(filter).map(tag => tag.toLowerCase());
         const includeTags = tags
             .filter(tag => tag.indexOf("!") !== 0);
         const excludeTags = tags
             .filter(tag => tag.indexOf("!") === 0 && tag.length > 1)
             .map(tag => tag.substring(1));
 
-        return target.filter(el => checkInclude(el) && checkExclude(el));
+        return itemTags => {
+            const values = parseTags(itemTags).map(tag => tag.toLowerCase());
+            const matches = (tag: string) => values.indexOf(tag) >= 0 || values.indexOf(`?${tag}`) >= 0;
+            const included = !includeTags.length || (matchAny ? includeTags.some(matches) : includeTags.every(matches));
+            return included && excludeTags.every(tag => values.indexOf(tag) < 0);
+        };
+    }
 
-        function checkInclude(item: GalleryItem) {
-            return includeTags.every(filterTag => {
-                const optFilterTag = `?${filterTag}`;
-                return item.tags.some(tag =>
-                    tag === filterTag || tag === optFilterTag
-                )
-            });
-        }
+    export function getSymbolTags(apis: pxtc.ApisInfo, symbol?: pxtc.SymbolInfo): string[] {
+        if (!symbol) return [];
+        const reference = symbol.attributes.jres;
+        const resource = reference && reference !== "true" ? reference : symbol.qName;
+        return parseTags([
+            ...parseTags(symbol.attributes.tags),
+            ...parseTags(apis.jres?.[resource]?.tags)
+        ]);
+    }
 
-        function checkExclude(item: GalleryItem) {
-            return excludeTags.every(filterTag =>
-                !item.tags.some(tag => tag === filterTag)
-            );
-        }
+    export function filterItems(target: GalleryItem[], tags: string[]) {
+        const matches = compileTagFilter(tags);
+        return target.filter(item => matches(item.tags));
     }
 
     export function getGalleryItems(blocksInfo: pxtc.BlocksInfo, qName: string): GalleryItem[] {
@@ -468,9 +482,7 @@ namespace pxt.sprite {
         generateIcons(syms);
 
         return syms.map(sym => {
-            const splitTags = (sym.attributes.tags || "")
-                .split(" ")
-                .filter(el => !!el)
+            const splitTags = getSymbolTags(blocksInfo.apis, sym)
                 .map(tag => pxt.Util.startsWith(tag, "category-") ? tag : tag.toLowerCase());
 
             return {

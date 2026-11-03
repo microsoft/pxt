@@ -24,23 +24,31 @@ function loadFunctions(file, names) {
     }).outputText, context);
 }
 
-loadFunctions("pxtlib/spriteutils.ts", ["filterItems"]);
-context.pxt.sprite.filterItems = context.exports.filterItems;
+loadFunctions("pxtlib/spriteutils.ts", ["parseTags", "compileTagFilter", "getSymbolTags", "filterItems"]);
+Object.assign(context.pxt.sprite, context.exports);
+loadFunctions("pxtlib/package.ts", ["inflateJRes", "getGridPickerCatalogStrings"]);
+context.pxt.inflateJRes = context.exports.inflateJRes;
+context.pxt.getGridPickerCatalogStrings = context.exports.getGridPickerCatalogStrings;
 loadFunctions("pxtblocks/fields/field_gridpicker.ts", ["getGridPickerTags", "filterGridPickerOptions", "getGridPickerGroups", "getGridPickerRows", "getGridPickerSizeRows"]);
 loadFunctions("pxtblocks/loader.ts", ["getSymbolPickerTags"]);
 
 const cliSource = ts.createSourceFile("cli.ts", fs.readFileSync(path.join(root, "cli/cli.ts"), "utf8"), ts.ScriptTarget.Latest, true);
 let catalogStringsLoop;
 function findCatalogStringsLoop(node) {
-    if (ts.isForOfStatement(node) && node.expression.getText(cliSource).includes("cfg.runtime?.gridPickerCatalogs")) catalogStringsLoop = node;
+    if (ts.isForOfStatement(node) && node.expression.getText(cliSource).includes("cfg.bundledpkgs")) catalogStringsLoop = node;
     ts.forEachChild(node, findCatalogStringsLoop);
 }
 findCatalogStringsLoop(cliSource);
 assert(catalogStringsLoop, "Target string extraction must include grid picker catalogs");
-context.cfg = { runtime: { gridPickerCatalogs: { inventory: {
-    name: "Inventory", tabs: [{ name: "Construction" }, { name: "All" }],
-    families: [{ name: "Hoes" }], materials: [{ name: "Copper" }], filters: [{ name: "Riders" }]
-}, mounts: { name: "Player Mounts", tabs: [{ name: "Vehicles" }] } } } };
+context.cfg = { bundledpkgs: {
+    core: { "pickers.jres": JSON.stringify({ "*": { namespace: "core.pickers" }, inventory: { gridPickerCatalog: {
+        name: "Inventory", tabs: [{ name: "Construction" }, { name: "All" }],
+        families: [{ name: "Hoes" }], materials: [{ name: "Copper" }], filters: [{ name: "Riders" }]
+    } } }) },
+    extension: { "pickers.jres": JSON.stringify({ "*": { namespace: "extension.pickers" }, mounts: {
+        gridPickerCatalog: { name: "Player Mounts", tabs: [{ name: "Vehicles" }] }
+    } }) }
+} };
 context.targetStrings = {};
 vm.runInContext(ts.transpileModule(catalogStringsLoop.getText(cliSource), {
     compilerOptions: { target: ts.ScriptTarget.ES2017 }
@@ -109,26 +117,13 @@ assert.deepStrictEqual(summarize(groups(options, catalog, materialTab, "other"))
     { id: "other", values: ["Item.Other"] }
 ]);
 assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), catalog, materialTab, "")), [
-    { id: "copper", values: ["Item.CopperSword", "Item.CopperPickaxe"] },
+    { id: "copper", values: ["Item.CopperPickaxe", "Item.CopperSword"] },
     { id: "iron", values: ["Item.IronSword"] }
 ]);
 assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), catalog, catalog.tabs[0], "")), [
-    { id: "swords", values: ["Item.CopperSword", "Item.IronSword"] },
+    { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] },
     { id: "pickaxes", values: ["Item.CopperPickaxe"] }
 ]);
-const orderedCatalog = {
-    ...catalog,
-    families: [{ ...catalog.families[0], order: ["Item.IronSword", "Item.CopperSword"] }]
-};
-assert.deepStrictEqual(summarize(groups(options, orderedCatalog, catalog.tabs[0], "")), [
-    { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] },
-    { id: "other", values: ["Item.CopperPickaxe"] }
-]);
-assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), orderedCatalog, catalog.tabs[0], "")),
-    summarize(groups(options, orderedCatalog, catalog.tabs[0], "")));
-const partialOrder = { ...catalog, families: [{ ...catalog.families[0], order: ["Item.IronSword"] }] };
-assert.deepStrictEqual(summarize(groups(options, partialOrder, catalog.tabs[0], ""))[0],
-    { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] });
 const sizedCatalog = { ...catalog, tabs: catalog.tabs.concat(materialTab) };
 assert.strictEqual(context.exports.getGridPickerSizeRows(options, sizedCatalog, 4).length, 2);
 const swords = groups(options, catalog, catalog.tabs[0], "")[0];

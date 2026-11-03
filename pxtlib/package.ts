@@ -1506,11 +1506,38 @@ namespace pxt {
                 tilemapTile: v.tilemapTile,
                 displayName: v.displayName,
                 tileset: v.tileset,
-                tags: v.tags
+                tags: v.tags,
+                gridPickerCatalog: v.gridPickerCatalog
             }
         }
 
         return allres;
+    }
+
+    /** Localization keys are resource-qualified so independently installed packages can own catalogs. */
+    export function getGridPickerCatalogStrings(id: string, catalog: GridPickerCatalog): Map<string> {
+        const strings: Map<string> = {};
+        const names = [catalog.name, ...catalog.tabs.concat(catalog.families || [], catalog.materials || [], catalog.filters || [])
+            .map(entry => entry.name)];
+        for (const name of names) {
+            if (name) strings[`${id}|gridPicker|${name}`] = name;
+        }
+        return strings;
+    }
+
+    export function getGridPickerCatalog(jres: Map<JRes> | undefined, id: string): GridPickerCatalog | undefined {
+        const catalog = jres?.[id]?.gridPickerCatalog;
+        if (!catalog) return undefined;
+        const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`) || Util.rlf(source);
+        const categories = (entries?: GridPickerCategory[]) => entries?.map(entry => ({ ...entry, name: name(entry.name) }));
+        return {
+            ...catalog,
+            name: name(catalog.name),
+            tabs: categories(catalog.tabs),
+            families: categories(catalog.families),
+            materials: categories(catalog.materials),
+            filters: categories(catalog.filters)
+        };
     }
 
     export function allPkgFiles(cfg: PackageConfig) {
