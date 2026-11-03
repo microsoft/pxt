@@ -1245,6 +1245,16 @@ declare namespace ts.pxtc {
         appVariant?: string;
         outputPrefix?: string;
         disabledDeps?: string;
+
+        projectCompileSha?: string;
+        projectCompileData?: string;
+    }
+
+    interface ProjectCompileData {
+        files: Map<string>;
+        target: string;
+        variant: string;
+        versions: pxt.TargetVersions;
     }
 
     interface ExtensionTarget {

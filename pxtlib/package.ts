@@ -1200,6 +1200,7 @@ namespace pxt {
                 }
 
                 einfo.appVariant = variant;
+                injectProjectCompileData(einfo, this)
 
                 const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
 
@@ -1511,5 +1512,70 @@ namespace pxt {
 
     export function isPkgBeta(cfg: { description?: string; }): boolean {
         return cfg && /\bbeta\b/.test(cfg.description);
+    }
+
+    function injectProjectCompileData(extinfo: pxtc.ExtensionInfo, mainPkg: MainPackage) {
+        const data: pxtc.ProjectCompileData = {
+            files: {},
+            target: pxt.appTarget.id,
+            variant: extinfo.appVariant || pxt.appTargetVariant,
+            versions: pxt.appTarget.versions
+        };
+
+        for (const pkg of mainPkg.sortedDeps(true)) {
+            const prefix = pkg == mainPkg ? "" : "pxt_modules/" + pkg.id + "/";
+            const config = U.clone(pkg.config);
+            const resolveVersions = (deps: Map<string>): Map<string> => {
+                const result: Map<string> = {};
+                for (const id of Object.keys(deps || {})) {
+                    const dep = pkg.resolveDep(id);
+                    if (dep) result[id] = dep.version();
+                }
+                return result;
+            };
+            config.dependencies = resolveVersions(pkg.dependencies());
+            config.cppDependencies = resolveVersions(config.cppDependencies);
+            // testDependencies are merged into the main dependencies by pkg.dependencies(), so
+            // it's safe to delete them from the config object here
+            delete config.testDependencies;
+            if (pkg != mainPkg || pkg.ignoreTests) {
+                delete config.testFiles;
+            }
+            data.files[prefix + pxt.CONFIG_NAME] = JSON.stringify(config);
+            for (const fn of config.files.concat(config.testFiles || [])) {
+                const filename = prefix + fn;
+
+                const parts = filename.split("/");
+                const basename = parts[parts.length - 1];
+
+                // filter out all of the files that aren't used in the actual compilation
+                if (
+                    !(basename === "pxt.json" || basename === "dal.d.ts" || /\.(c|cpp|h|s|S)$/.test(basename))
+                ) {
+                    continue;
+                }
+
+                // also exclude any files with invalid path components
+                if (
+                    parts.some(part =>
+                        !part ||
+                        part === "." ||
+                        part === ".." ||
+                        part === "__proto__" ||
+                        part === "constructor" ||
+                        part === "prototype" ||
+                        !/^[a-zA-Z0-9_.-]+$/.test(part)
+                    )
+                ) {
+                    pxt.warn("Excluding invalid filename from compilation request: " + filename);
+                    continue;
+                }
+
+                data.files[filename] = pkg.readFile(fn);
+            }
+        }
+
+        extinfo.projectCompileData = JSON.stringify(data);
+        extinfo.projectCompileSha = pxt.U.sha256(extinfo.projectCompileData);
     }
 }
