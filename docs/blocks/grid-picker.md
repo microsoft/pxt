@@ -158,58 +158,9 @@ namespace gallerySelectors {
 Use the existing image variables' tags or JRES metadata; no parallel enum is
 needed. This opt-in setting does not replace Arcade's existing sprite editor.
 
-## Minecraft Metadata
-
-Run `npm run gridpicker` in the Minecraft target to refresh its category,
-family, material, and capability tags. The normal enum generator also refreshes
-this metadata after rebuilding JRES files. The tool preserves custom tags,
-existing numeric values, runtime mappings, and icon data.
-
-Block and item catalog buckets follow the Bedrock Edition lists in
-[Creative inventory](https://minecraft.wiki/w/Creative_inventory#Bedrock_Edition):
-Construction, Equipment, Items, and Nature. This is not the Java Edition tab
-layout. Beds, buckets, crafting/storage blocks, and redstone utilities belong to
-Items; cooked food and potions to Equipment; raw food, crops, dyes, and spawn eggs
-to Nature. Stable MakeCode aliases have explicit category mappings.
-
-Minecraft does not expose a separate Materials tab. Material tags and ordering
-remain available for sorting variants within families. All is the same flat,
-uncompressed list, visually separated at the far edge, not a category or tag.
-All always includes every choice allowed by the field and its hard filter,
-including technical entries absent from the creative inventory reference. Air,
-Fire, EndPortal, and StructureBlock remain All-only rather than being assigned
-guessed creative categories. Categories should be confirmed against the current
-Minecraft Education version before release.
-
-Rider and mount capability tags match the Riding extension's supported lists,
-including its experimental zombified-piglin rider. They are picker capabilities,
-not a guarantee that every rider/mount combination is supported by the game.
-
-Minecraft layout, pixel rendering, fonts, borders, and inventory icons live in
-the target. Core styling uses the target's existing semantic color variables,
-including High Contrast, and remains reusable by other targets.
-
 ## Focused Checks
 
 ```sh
 node tests/blocks-test/gridpicker.test.js
 node node_modules/typescript/bin/tsc -p pxtblocks --noEmit
 ```
-
-In the Minecraft target:
-
-```sh
-npm run gridpicker
-node tools/new_enum_generator/tests/content.test.js HEAD
-```
-
-The local Minecraft browser checks cover family expansion without committing a
-value, original enum-value selection and XML round trips, all 385 item choices
-in the flat All view, material-ordered variants, empty-result keyboard navigation, four
-tag-filtered riders, twenty combined-source mounts, the legacy no-catalog path,
-pane bounds at 1280/640/390/320px widths, and High Contrast foreground/background
-colors. The shipped Arcade and micro:bit editors are not modified by these checks.
-
-Review the Minecraft category assignments and inventory appearance with the
-Minecraft team before release. The Arcade block above is a target-configuration
-example; it is not enabled automatically in the shipped Arcade editor.
