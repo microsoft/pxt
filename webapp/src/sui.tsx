@@ -78,7 +78,6 @@ export interface DropdownProps extends UiProps {
     displayRight?: boolean;
     displayLeft?: boolean;
     dataTooltip?: string;
-    dataTooltipPosition?: string;
     closeOnItemClick?: boolean;
 }
 
@@ -328,7 +327,7 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
 
     renderCore() {
         const { disabled, title, role, icon, className, titleContent, children,
-            displayAbove, displayLeft, displayRight, dataTooltip, dataTooltipPosition, ariaHasPopup } = this.props;
+            displayAbove, displayLeft, displayRight, dataTooltip, ariaHasPopup } = this.props;
         const { open } = this.state;
 
         const hasPopup = ariaHasPopup ?? !disabled;
@@ -366,7 +365,6 @@ export class DropdownMenu extends UIElement<DropdownProps, DropdownState> {
                 id={this.props.id}
                 className={classes}
                 data-tooltip={dataTooltip}
-                data-position={dataTooltipPosition}
                 onMouseDown={this.handleMouseDown}
                 onClick={this.handleClick}
                 onKeyDown={this.handleKeyDown}
