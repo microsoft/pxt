@@ -699,7 +699,8 @@ export function startRenderServer() {
         const doWork = async () => {
             const result = isXml
                 ? await compileBlocksAsync(msg.code, options)
-                : await decompileSnippetAsync(msg.code, msg.options);
+                // without options, render() lays the blocks out with its defaults; keep those
+                : await decompileSnippetAsync(msg.code, msg.options ? options : { emPixels: 18, layout: pxt.editor.BlockLayout.Align, reuseWorkspace: true });
 
             const blocksSvg = result.blocksSvg as SVGSVGElement;
             if (!blocksSvg) {
@@ -1303,8 +1304,11 @@ function getApiInfo(program: ts.Program, opts: pxtc.CompileOptions) {
 
 // Blocks info per package for compileBlocksAsync. The blocks XML being rendered
 // does not change the APIs of the package, so compiling the package once is
-// enough; only requests with assets (which add APIs) skip this cache.
-const blocksInfoCache: pxt.Map<{ apis: pxtc.ApisInfo, blocksInfo: pxtc.BlocksInfo }> = {};
+// enough; only requests with assets (which add APIs) skip this cache. An entry
+// is only used in the locale it was built in: the docs renderer can switch the
+// locale (setEditorContextAsync), and the apis are localized in place, so a
+// switch rebuilds the entry instead of keeping one per locale.
+const blocksInfoCache: pxt.Map<{ locale: string, apis: pxtc.ApisInfo, blocksInfo: pxtc.BlocksInfo }> = {};
 
 export function compileBlocksAsync(code: string, options?: BlocksRenderOptions): Promise<DecompileResult> {
     const { assets } = options || {};
@@ -1313,8 +1317,9 @@ export function compileBlocksAsync(code: string, options?: BlocksRenderOptions):
         options && options.package ? "docs:" + options.package
             : null;
     const cacheKey = assets ? undefined : packageid || "";
+    const locale = pxt.Util.localeInfo();
     const cached = cacheKey !== undefined && blocksInfoCache[cacheKey];
-    if (cached) {
+    if (cached && cached.locale === locale) {
         return loadPackageAsync(packageid, "")
             .then(() => {
                 // other renders may have injected a different set of blocks in the meantime
@@ -1346,7 +1351,7 @@ export function compileBlocksAsync(code: string, options?: BlocksRenderOptions):
                     const blocksInfo = pxtc.getBlocksInfo(apis);
                     initializeAndInject(blocksInfo);
                     if (cacheKey !== undefined)
-                        blocksInfoCache[cacheKey] = { apis, blocksInfo };
+                        blocksInfoCache[cacheKey] = { locale, apis, blocksInfo };
 
                     const tilemapJres = assets?.[pxt.TILEMAP_JRES];
                     const assetsJres = assets?.[pxt.IMAGES_JRES];
