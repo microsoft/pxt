@@ -356,7 +356,7 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         // Add the ... menu
         const usbIcon = pxt.appTarget.appTheme.downloadDialogTheme?.deviceIcon || "usb";
         el.push(
-            <sui.DropdownMenu ref={getMenuRef()} key="downloadmenu" role="button" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} displayAbove={true} displayRight={displayRight} closeOnItemClick={true} onShow={
+            <sui.DropdownMenu ref={getMenuRef()} key="downloadmenu" role="button" icon={`${downloadButtonIcon} horizontal ${hwIconClasses}`} title={lf("Download options")} className={`${hwIconClasses} right attached editortools-btn hw-button button`} dataTooltip={tooltip} dataTooltipPosition={displayRight ? "top left" : undefined} displayAbove={true} displayRight={displayRight} closeOnItemClick={true} onShow={
                 () => this.forceUpdate() // force update to refresh extMenuItems
             }>
                 {webUSBSupported && !packetioConnected && <sui.Item role="menuitem" icon={usbIcon} text={lf("Connect Device")} tabIndex={-1} onClick={() => this.onPairClick(returnFocus)} />}
