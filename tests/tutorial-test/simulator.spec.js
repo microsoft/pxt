@@ -74,7 +74,7 @@ describe("simulator-focused tutorial layout", function () {
 
     async function mount({ width = 1280, height = 900, topInstructions = false, legacy = false,
         collapsed = false, bigRunButton = false, rtl = false, headless = false, startStep = 0, sidebarTutorial = false,
-        reducedMotion = false } = {}) {
+        reducedMotion = false, projectTools = false } = {}) {
         page = await browser.newPage();
         pageErrors = [];
         page.on("pageerror", error => pageErrors.push(error.message));
@@ -86,7 +86,7 @@ describe("simulator-focused tutorial layout", function () {
         await page.addScriptTag({ path: require.resolve("react/umd/react.development.js") });
         await page.addScriptTag({ path: require.resolve("react-dom/umd/react-dom.development.js") });
         await page.addScriptTag({ path: path.resolve("built", "web", "pxtapp.js") });
-        await page.evaluate(({ legacy, topInstructions, rtl, headless, bigRunButton, sidebarTutorial }) => {
+        await page.evaluate(({ legacy, topInstructions, rtl, headless, bigRunButton, sidebarTutorial, projectTools }) => {
             document.documentElement.dir = rtl ? "rtl" : "ltr";
             window.lf = (text, ...args) => text.replace(/\{(\d+)\}/g, (_, i) => args[i]);
             pxt.appTarget = { appTheme: {} };
@@ -146,9 +146,9 @@ Return to your code.`);
             window.testSimulator = { driver: { focus: () => {} } };
             window.cmds = { isNativeHost: () => false };
             window.setEditor = () => {};
-            window.shouldShowProjectTools = () => false;
+            window.shouldShowProjectTools = () => projectTools;
             window.tutorial = { shouldShowTutorialCategories: () => true,
-                WorkspaceHeader: () => null,
+                WorkspaceHeader: () => React.createElement("div", { id: "headers" }, "Workspace header"),
                 TutorialCard: ({ parent }) => React.createElement("div", { id: "tutorialcard" },
                     parent.state.tutorialOptions.tutorialStepInfo[parent.state.tutorialOptions.tutorialStep].headerContentMd,
                     React.createElement(Button, { text: "Next", onClick: () => parent.setTutorialStep(1) })) };
@@ -161,13 +161,29 @@ Return to your code.`);
             window.accessibility = { EditorAccessibilityMenu: empty };
             window.notification = { NotificationBanner: empty };
             window.headerbar = { HeaderBar: () => React.createElement("div", { id: "mainmenu" }, "Menu") };
-            window.container = { SideDocs: empty };
+            class ProjectTools extends React.Component {
+                constructor(props) {
+                    super(props);
+                    this.state = { tab: "docs", width: 400, height: 300 };
+                }
+                render() {
+                    return React.createElement("div", { className: "project-tools", style: {
+                        width: this.state.width, height: this.state.height
+                    }, ref: element => window.projectToolsElement = element },
+                    React.createElement("button", { onClick: () => this.setState({ tab: "notes", width: 500, height: 350 }) },
+                        this.state.tab));
+                }
+            }
+            window.container = { SideDocs: ({ bubble }) => bubble ? React.createElement(ProjectTools)
+                : React.createElement(React.Fragment, null,
+                    React.createElement("div", { id: "sidedocs" }, "Documentation"),
+                    React.createElement("button", { id: "sidedocstoggle" }, "Toggle documentation")) };
             window.editortoolbar = { EditorToolbar: () => React.createElement("div", { id: "editortools" }, "Editor tools") };
             window.scriptsearch = { ScriptSearch: empty };
             window.extensions = { Extensions: empty };
             window.projects = { ExitAndSaveDialog: empty, NewProjectDialog: empty };
             window.sidepanel = {};
-        }, { legacy, topInstructions, rtl, headless, bigRunButton, sidebarTutorial });
+        }, { legacy, topInstructions, rtl, headless, bigRunButton, sidebarTutorial, projectTools });
         await page.addScriptTag({ content: components });
         await page.addScriptTag({ content: appSource });
         await page.evaluate(({ topInstructions, collapsed, startStep, sidebarTutorial }) => {
@@ -192,7 +208,7 @@ Return to your code.`);
             prototype.fireResize = () => window.dispatchEvent(new Event("resize"));
             prototype.startStopSimulator = function () { this.setState({ simState: this.state.simState ? 0 : 1 }); };
             prototype.restartSimulator = () => { window.restartCount++; };
-            prototype.toggleMute = () => {};
+            prototype.toggleMute = function () { this.setState({ mute: this.state.mute ? 0 : 1 }); };
             prototype.expandSimulator = function () { window.expandCount++; this.setState({ collapseEditorTools: false }); };
             prototype.collapseSimulator = function () { window.collapseCount++; this.setState({ collapseEditorTools: true }); };
             class TestApp extends TestProjectView {
@@ -207,7 +223,7 @@ Return to your code.`);
                     this.state = {
                         header: { id: "simulator-test" }, feedback: {}, currFile: {},
                         editorState: { hasCategories: !sidebarTutorial }, showMiniSim: true,
-                        collapseEditorTools: collapsed, simState: 1,
+                        collapseEditorTools: collapsed, simState: 1, mute: 0,
                         tutorialOptions: { tutorial: "simulator-test", tutorialReady: true,
                             tutorialName: tutorialTestInfo.title, tutorialStep: startStep,
                             metadata: tutorialTestInfo.metadata, tutorialStepInfo: tutorialTestInfo.steps }
@@ -320,6 +336,59 @@ Return to your code.`);
         await page.click('button[title="Start the simulator"]');
         assert.strictEqual(await page.evaluate(() => app.state.simState), 1);
         assert.strictEqual(await page.$eval(".fullscreen-button", e => getComputedStyle(e).display), "none");
+    });
+
+    it("hides legacy side documentation and its toggle only during simulator steps", async () => {
+        await mount({ legacy: true });
+        await enterStep();
+        for (const selector of ["#sidedocs", "#sidedocstoggle"]) {
+            assert.strictEqual(await page.$eval(selector, e => e.getClientRects().length), 0);
+        }
+        await changeStep(2);
+        assert.ok(await page.$eval("#sidedocstoggle", e => e.getClientRects().length));
+    });
+
+    for (const width of [390, 850]) {
+        it(`hides legacy collapse and fullscreen controls at width ${width}`, async () => {
+            await mount({ legacy: true, width });
+            await enterStep();
+            assert.strictEqual(await page.$$eval(".expand-button, .fullscreen-button",
+                elements => elements.every(e => e.getClientRects().length === 0)), true);
+        });
+
+        it(`keeps the tutorial mute control keyboard accessible at width ${width}`, async () => {
+            await mount({ width });
+            await enterStep();
+            assert.ok(await page.$eval(".tutorial.mute-button", e => e.getClientRects().length));
+            await page.focus(".tutorial.mute-button");
+            await page.keyboard.press("Enter");
+            assert.strictEqual(await page.evaluate(() => app.state.mute), 1);
+        });
+    }
+
+    it("does not cover legacy flyoutOnly sidebar instructions with the workspace header wrapper", async () => {
+        await mount({ legacy: true, sidebarTutorial: true });
+        await enterStep();
+        assert.ok(await page.$(".tutorial-instructions #headers"));
+        assert.strictEqual(await page.$eval(".tutorial-instructions", e => e.getClientRects().length), 0);
+        assert.strictEqual(await page.$eval("#sidebar", e => {
+            const rect = e.getBoundingClientRect();
+            return e.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+        }), true);
+    });
+
+    it("preserves project-tools tabs and panel dimensions across simulator steps", async () => {
+        await mount({ projectTools: true });
+        await page.click(".project-tools button");
+        await page.evaluate(() => window.originalProjectTools = projectToolsElement);
+        await enterStep();
+        assert.strictEqual(await page.$eval(".project-tools", e => e.getClientRects().length), 0);
+        assert.strictEqual(await page.evaluate(() => projectToolsElement === originalProjectTools), true);
+        await changeStep(2);
+        assert.deepStrictEqual(await page.$eval(".project-tools", e => ({
+            tab: e.textContent, width: e.style.width, height: e.style.height,
+            sameElement: e === originalProjectTools, visible: e.getClientRects().length > 0
+        })), { tab: "notes", width: "500px", height: "350px", sameElement: true, visible: true });
     });
 
     it("expands a collapsed simulator without stopping it when changing steps", async () => {

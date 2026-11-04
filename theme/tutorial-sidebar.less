@@ -1177,10 +1177,10 @@
         grid-area: instructions;
     }
     #maineditor:not(.tutorial-instructions), #editortools, #headers,
-    #sidedocs, #project-tools-launcher, #miniSimOverlay,
+    #sidedocs, #sidedocstoggle, .project-tools, #project-tools-launcher, #miniSimOverlay,
     #simulator .expand-button, #simulator .fullscreen-button,
     #simulator .hidefullscreen:not(.tutorial.mute-button) {
-        display: none;
+        display: none !important;
     }
     .tutorial-instructions:empty {
         display: none;
@@ -1268,12 +1268,18 @@
 
 #root.tutorialSimFullscreen.tutorial.sidebarTutorial.flyoutOnly {
     --tutorial-sim-sidebar-width: 33.3%;
+    .tutorial-instructions {
+        display: none;
+    }
 }
 
 @media only screen and (max-width: @largestTabletScreen) {
     #root.tutorialSimFullscreen {
         --tutorial-sim-menu-height: @mobileMenuHeight;
         .tutorialSimFullscreenTopInstructions();
+        #simulator .simulator-container .simPanel .tutorial.mute-button {
+            display: block !important;
+        }
     }
 }
 

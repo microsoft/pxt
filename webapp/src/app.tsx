@@ -5845,7 +5845,7 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const projectTools = !tutorialSimFullscreen && shouldShowProjectTools(sideDocs, inEditor, !!targetTheme.lockedEditor,
+        const projectTools = shouldShowProjectTools(sideDocs, inEditor, !!targetTheme.lockedEditor,
             !!this.state.header?.temporary, pxt.shell.isReadOnly(),
             !!(targetTheme.projectTools || targetTheme.whiteboard || targetTheme.backpack));
         const { lightbox, greenScreen } = this.state;
