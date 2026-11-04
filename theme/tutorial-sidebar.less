@@ -1223,8 +1223,18 @@
     #simulator .simtoolbar {
         display: block;
         flex: none;
-        margin: 0;
+        margin: 1rem 0 0;
         text-align: center;
+    }
+}
+
+#root #simulator.tutorialSimTransitioning {
+    #editorSidebar {
+        overflow: visible;
+        z-index: @tutorialCardZIndex + 1;
+    }
+    .simPanel {
+        overflow: visible;
     }
 }
 

@@ -73,11 +73,13 @@ describe("simulator-focused tutorial layout", function () {
     });
 
     async function mount({ width = 1280, height = 900, topInstructions = false, legacy = false,
-        collapsed = false, bigRunButton = false, rtl = false, headless = false, startStep = 0, sidebarTutorial = false } = {}) {
+        collapsed = false, bigRunButton = false, rtl = false, headless = false, startStep = 0, sidebarTutorial = false,
+        reducedMotion = false } = {}) {
         page = await browser.newPage();
         pageErrors = [];
         page.on("pageerror", error => pageErrors.push(error.message));
         await page.setViewport({ width, height });
+        await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: reducedMotion ? "reduce" : "no-preference" }]);
         await page.setContent('<div id="mount"></div>');
         await page.addStyleTag({ content: (rtl ? rtlcss.process(css) : css)
             + "\nhtml, body { margin: 0; height: 100%; } * { box-sizing: border-box; }" });
@@ -186,7 +188,7 @@ Return to your code.`);
             prototype.isTextSourceCodeEditorActive = () => false;
             prototype.isTutorial = function () { return !!this.state.tutorialOptions; };
             prototype.typecheckNow = prototype.stopPokeUserActivity = prototype.postTutorialProgress = () => {};
-            prototype.showMiniSim = () => {};
+            prototype.showMiniSim = visible => miniSimRequests.push(visible);
             prototype.fireResize = () => window.dispatchEvent(new Event("resize"));
             prototype.startStopSimulator = function () { this.setState({ simState: this.state.simState ? 0 : 1 }); };
             prototype.restartSimulator = () => { window.restartCount++; };
@@ -213,6 +215,7 @@ Return to your code.`);
                 }
             }
             window.expandCount = window.collapseCount = window.restartCount = 0;
+            window.miniSimRequests = [];
             window.app = ReactDOM.render(React.createElement(TestApp), document.getElementById("mount"));
             const board = document.getElementById("boardview");
             board.innerHTML = '<div id="simulators"></div>';
@@ -224,9 +227,23 @@ Return to your code.`);
         await page.waitForFunction(() => window.originalFrame.contentDocument?.querySelector("button"));
     }
 
-    async function enterStep() {
-        await page.evaluate(() => app.setTutorialStep(1));
+    async function settleTransition() {
+        await page.waitForFunction(() => !document.getElementById("simulator")?.classList.contains("tutorialSimTransitioning"));
+    }
+
+    async function changeStep(step, pauseAnimation = false) {
+        await page.evaluate(({ step, pauseAnimation }) => {
+            app.setTutorialStep(step);
+            if (pauseAnimation) {
+                document.getElementById("boardview").getAnimations().forEach(animation => animation.pause());
+            }
+        }, { step, pauseAnimation });
+    }
+
+    async function enterStep(waitForAnimation = true) {
+        await changeStep(1, !waitForAnimation);
         await page.waitForSelector("#root.tutorialSimFullscreen");
+        if (waitForAnimation) await settleTransition();
     }
 
     async function geometry() {
@@ -372,5 +389,130 @@ Return to your code.`);
         const desktop = await geometry();
         assert.ok(desktop.directions.right <= desktop.simulator.x + 1, JSON.stringify(desktop));
         assert.strictEqual(desktop.sameFrame, true);
+    });
+
+    it("keeps a full rem between the simulator and its toolbar", async () => {
+        await mount({ startStep: 1 });
+        const spacing = await page.evaluate(() => ({
+            gap: document.querySelector(".simtoolbar").getBoundingClientRect().top
+                - document.getElementById("boardview").getBoundingClientRect().bottom,
+            rem: parseFloat(getComputedStyle(document.documentElement).fontSize)
+        }));
+        assert.ok(spacing.gap >= spacing.rem - 1, JSON.stringify(spacing));
+    });
+
+    async function sampleTransition(time) {
+        return page.evaluate(time => {
+            const view = document.getElementById("boardview");
+            const animation = view.getAnimations()[0];
+            if (!animation) throw new Error("Missing simulator transition");
+            animation.pause();
+            animation.currentTime = time;
+            const bounds = view.getBoundingClientRect();
+            return { x: bounds.x, y: bounds.y, width: bounds.width, height: bounds.height,
+                duration: animation.effect.getTiming().duration,
+                visible: view.contains(document.elementFromPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2)) };
+        }, time);
+    }
+
+    function assertSameBounds(actual, expected) {
+        for (const key of ["x", "y", "width", "height"]) {
+            assert.ok(Math.abs(actual[key] - expected[key]) < 2, `${key}: ${JSON.stringify({ actual, expected })}`);
+        }
+    }
+
+    async function finishTransition() {
+        await page.evaluate(() => document.getElementById("boardview").getAnimations()[0].finish());
+        await settleTransition();
+    }
+
+    for (const options of [{}, { topInstructions: true }, { width: 390, height: 844 }, { rtl: true }]) {
+        it(`animates expansion and restoration over 200ms: ${JSON.stringify(options)}`, async () => {
+            await mount(options);
+            const before = (await geometry()).simulator;
+            await enterStep(false);
+            const start = await sampleTransition(0);
+            assert.strictEqual(start.duration, 200);
+            assertSameBounds(start, before);
+            assert.strictEqual(start.visible, true);
+            const middle = await sampleTransition(100);
+            assert.strictEqual(middle.visible, true);
+            await finishTransition();
+            const expanded = (await geometry()).simulator;
+            assert.ok(middle.width > before.width && middle.width < expanded.width);
+
+            await changeStep(2, true);
+            const exit = await sampleTransition(0);
+            assert.strictEqual(exit.duration, 200);
+            assertSameBounds(exit, expanded);
+            assert.strictEqual(exit.visible, true);
+            const shrinking = await sampleTransition(100);
+            assert.strictEqual(shrinking.visible, true);
+            assert.ok(shrinking.width < expanded.width && shrinking.width > before.width);
+            await finishTransition();
+            assertSameBounds((await geometry()).simulator, before);
+            assert.strictEqual(await page.evaluate(() => originalFrame === document.querySelector("#boardview iframe")), true);
+            assert.strictEqual(await page.evaluate(() => restartCount), 0);
+        });
+    }
+
+    it("reverses an interrupted transition from its current visible position", async () => {
+        await mount();
+        await enterStep(false);
+        const midway = await sampleTransition(100);
+        await changeStep(2, true);
+        assertSameBounds(await sampleTransition(0), midway);
+        assert.strictEqual(await page.$eval("#boardview", e => e.getAnimations().length), 1);
+        await finishTransition();
+        assert.strictEqual(await page.$(".tutorialSimTransitioning"), null);
+    });
+
+    it("skips animation for reduced motion and cancels when that preference changes", async () => {
+        await mount({ reducedMotion: true });
+        await enterStep(false);
+        assert.strictEqual(await page.$eval("#boardview", e => e.getAnimations().length), 0);
+        assert.strictEqual(await page.$(".tutorialSimTransitioning"), null);
+        await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "no-preference" }]);
+        await changeStep(2, true);
+        await sampleTransition(100);
+        await page.emulateMediaFeatures([{ name: "prefers-reduced-motion", value: "reduce" }]);
+        await settleTransition();
+        assert.strictEqual(await page.$eval("#boardview", e => e.getAnimations().length), 0);
+    });
+
+    it("cleans up an active transition when the editor unmounts", async () => {
+        await mount();
+        await enterStep(false);
+        await sampleTransition(100);
+        const state = await page.evaluate(() => {
+            const view = document.getElementById("boardview");
+            ReactDOM.unmountComponentAtNode(document.getElementById("mount"));
+            return view.getAnimations().map(a => a.playState);
+        });
+        assert.deepStrictEqual(state, []);
+    });
+
+    it("preserves simulator visibility when changing or exiting tutorials", async () => {
+        await mount({ startStep: 1 });
+        await page.evaluate(() => {
+            miniSimRequests.length = 0;
+            app.setState({ tutorialOptions: { ...app.state.tutorialOptions, tutorial: "another-tutorial" } });
+        });
+        assert.deepStrictEqual(await page.evaluate(() => miniSimRequests), [true]);
+        await page.evaluate(() => {
+            miniSimRequests.length = 0;
+            app.setState({ tutorialOptions: undefined });
+        });
+        assert.deepStrictEqual(await page.evaluate(() => miniSimRequests), [false]);
+        assert.strictEqual(await page.$eval("#boardview", e => e.getAnimations().length), 0);
+    });
+
+    it("keeps simulator steps usable without the browser animation API", async () => {
+        await mount();
+        await page.$eval("#boardview", e => e.animate = undefined);
+        await enterStep();
+        assert.strictEqual(await page.$(".tutorialSimTransitioning"), null);
+        assert.ok((await geometry()).simulator.width > 700);
+        assert.strictEqual(await page.evaluate(() => originalFrame === document.querySelector("#boardview iframe")), true);
     });
 });

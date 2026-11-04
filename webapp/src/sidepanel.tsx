@@ -51,6 +51,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
     protected simPanelRef: HTMLDivElement;
     private simResizeObserver?: ResizeObserver;
     private simPanelResizeObserver?: ResizeObserver;
+    private cancelSimulatorTransition?: () => void;
 
     constructor(props: SidepanelProps) {
         super(props);
@@ -62,21 +63,12 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.updateShouldResize = this.updateShouldResize.bind(this);
     }
 
-    UNSAFE_componentWillReceiveProps(props: SidepanelProps) {
-        // This is necessary because we are not properly mounting and
-        // unmounting the component as we enter/exit the editor. We
-        // instead manually reset the state as we transition.
-        if (!props.tutorialSimSidebar
-            && ((!this.props.tutorialOptions && props.tutorialOptions)
-                    || (this.props.inHome && !props.inHome && props.tutorialOptions)
-                    || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial))) {
-            this.props.showMiniSim(true);
-        } else if (
-            (!this.props.inHome && props.inHome) ||
-            (this.props.tutorialOptions && !props.tutorialOptions)
-        ) {
-            this.showSimulator();
+    getSnapshotBeforeUpdate(props: SidepanelProps): DOMRect | null {
+        if (!!props.tutorialSimFullscreen === !!this.props.tutorialSimFullscreen || props.inHome || this.props.inHome
+            || props.tutorialOptions?.tutorial !== this.props.tutorialOptions?.tutorial) {
+            return null;
         }
+        return this.simPanelRef?.querySelector("#boardview")?.getBoundingClientRect() ?? null;
     }
 
     componentDidMount(): void {
@@ -84,16 +76,31 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         this.updateTutorialSimFullscreen(false);
     }
 
-    componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
+    componentDidUpdate(props: SidepanelProps, state: SidepanelState, snapshot: DOMRect | null) {
+        // This is necessary because we are not properly mounting and
+        // unmounting the component as we enter/exit the editor. We
+        // instead manually reset the state as we transition.
+        if (!this.props.tutorialSimSidebar
+            && ((!props.tutorialOptions && this.props.tutorialOptions)
+                    || (props.inHome && !this.props.inHome && this.props.tutorialOptions)
+                    || (this.props.tutorialOptions?.tutorial && props.tutorialOptions?.tutorial && this.props.tutorialOptions.tutorial !== props.tutorialOptions.tutorial))) {
+            this.props.showMiniSim(true);
+        } else if (
+            (!props.inHome && this.props.inHome) ||
+            (props.tutorialOptions && !this.props.tutorialOptions)
+        ) {
+            this.showSimulator();
+        }
         if ((this.state.height || state.height) && this.state.height != state.height) {
             this.props.setEditorOffset();
         }
 
         this.updateShouldResize();
-        this.updateTutorialSimFullscreen(!!props.tutorialSimFullscreen);
+        this.updateTutorialSimFullscreen(!!props.tutorialSimFullscreen, snapshot);
     }
 
     componentWillUnmount(): void {
+        this.cancelSimulatorTransition?.();
         if (this.simResizeObserver && this.simRef) {
             this.simResizeObserver.unobserve(this.simRef);
         }
@@ -115,13 +122,53 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
     }
 
-    private updateTutorialSimFullscreen(wasFullscreen: boolean) {
+    private updateTutorialSimFullscreen(wasFullscreen: boolean, previousBounds?: DOMRect | null) {
         if (!!this.props.tutorialSimFullscreen === wasFullscreen) return;
 
         if (this.props.tutorialSimFullscreen && this.props.collapseEditorTools) {
             this.props.parent.expandSimulator();
         }
         this.props.parent.fireResize();
+        this.animateTutorialSimulator(previousBounds);
+    }
+
+    private animateTutorialSimulator(previousBounds?: DOMRect | null) {
+        this.cancelSimulatorTransition?.();
+
+        const view = this.simPanelRef?.querySelector<HTMLElement>("#boardview");
+        const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+        if (!previousBounds || !view?.animate || reducedMotion.matches || previousBounds.width <= 0 || previousBounds.height <= 0) return;
+
+        const bounds = view.getBoundingClientRect();
+        if (bounds.width <= 0 || bounds.height <= 0) return;
+
+        this.simRef?.classList.add("tutorialSimTransitioning");
+        // Keep the live iframe and animate its visual bounds across the layout change.
+        const animation = view.animate([
+            {
+                transformOrigin: "top left",
+                transform: `translate(${previousBounds.left - bounds.left}px, ${previousBounds.top - bounds.top}px) scale(${previousBounds.width / bounds.width}, ${previousBounds.height / bounds.height})`
+            },
+            { transformOrigin: "top left", transform: "none" }
+        ], { duration: 200, easing: "ease-in-out" });
+        const updateMotion = () => {
+            if (reducedMotion.matches) cancel();
+        };
+        const cleanup = () => {
+            reducedMotion.removeEventListener("change", updateMotion);
+            animation.onfinish = animation.oncancel = null;
+            if (this.cancelSimulatorTransition !== cancel) return;
+            this.cancelSimulatorTransition = undefined;
+            this.simRef?.classList.remove("tutorialSimTransitioning");
+        };
+        const cancel = () => {
+            animation.cancel();
+            cleanup();
+        };
+        this.cancelSimulatorTransition = cancel;
+        reducedMotion.addEventListener("change", updateMotion);
+        animation.onfinish = cleanup;
+        animation.oncancel = cleanup;
     }
 
     protected tryShowSimulator = () => {
