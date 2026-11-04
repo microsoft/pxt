@@ -11,12 +11,13 @@ namespace pxsim {
         // Used for finding the nearest available power pins
         getBBCoord: (loc: BBLoc) => visuals.Coord,
     };
-    export interface AllocatorResult {
+    // TPart and TWire are the DOM-side part/wire types, which the allocator only stores.
+    export interface AllocatorResult<TPart = any, TWire = any> {
         partsAndWires: PartAndWiresInst[];
         requiresBreadboard?: boolean;
         hideBreadboard?: boolean;
-        parts: pxsim.visuals.IBoardPart<any>[];
-        wires: pxsim.visuals.Wire[];
+        parts: TPart[];
+        wires: TWire[];
     }
     export interface PartInst {
         name: string,

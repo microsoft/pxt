@@ -393,3 +393,316 @@ describe("simulator driver hide and unhide", () => {
         });
     });
 });
+
+describe("simulator driver broadcast routing", () => {
+    const EXT_CHANNEL = "someorg/pxt-ext";
+    const LEGACY_CHANNEL = "legacy-sim";
+    const LEGACY_URL = "https://legacy.example.com/sim.html?parent=$PARENT_ORIGIN$&lang=$LANGUAGE$";
+
+    let container: FakeElement;
+    let driver: pxsim.SimulatorDriver;
+    let nextFrameNumber: number;
+
+    function addBoardFrame(runid = ""): FakeElement {
+        const wrapper = new FakeElement("div");
+        const frame = new FakeElement("iframe");
+        frame.id = "sim-frame-" + (nextFrameNumber++);
+        frame.dataset = { origin: EDITOR_ORIGIN, runid };
+        wrapper.appendChild(frame);
+        wrapper.appendChild(new FakeElement("i"));
+        wrapper.appendChild(new FakeElement("div"));
+        container.appendChild(wrapper);
+        return frame;
+    }
+
+    function addChannelFrame(channel: string, runid = ""): FakeElement {
+        const frame = addBoardFrame(runid);
+        frame.dataset["messagechannel"] = channel;
+        return frame;
+    }
+
+    function frames(): FakeElement[] {
+        return container.getElementsByTagName("iframe");
+    }
+
+    function types(frame: FakeElement): string[] {
+        return frame.contentWindow.messages.map(m => m.type);
+    }
+
+    function createDriver(options: Partial<pxsim.SimulatorDriverOptions> = {}) {
+        // cancels the frame cleanup timer of a driver this one replaces
+        if (driver) (driver as any).cancelFrameCleanup();
+        driver = new pxsim.SimulatorDriver(container as unknown as HTMLElement, {
+            simUrl: EDITOR_ORIGIN + "/sim/simulator.html",
+            parentOrigin: "https://embedder.example.com",
+            userLanguage: "fr",
+            simulatorExtensions: {
+                [EXT_CHANNEL]: { index: "index.html", aspectRatio: 2, permanent: true }
+            },
+            messageSimulators: {
+                [LEGACY_CHANNEL]: { url: LEGACY_URL, aspectRatio: 1.5, permanent: false }
+            },
+            ...options
+        });
+    }
+
+    function send(msg: Partial<pxsim.SimulatorBroadcastMessage> & { type: string, channel?: string }, source: FakeElement) {
+        (driver as any).handleMessage({ broadcast: true, ...msg }, source.contentWindow);
+    }
+
+    const radio = { type: "radiopacket" };
+    const packet = (channel: string) => ({ type: "messagepacket", channel });
+
+    let main: FakeElement;
+
+    beforeEach(() => {
+        container = new FakeElement("div");
+        nextFrameNumber = 1;
+        main = addBoardFrame();
+        createDriver();
+        driver.run("");
+        main.contentWindow.messages = [];
+    });
+
+    afterEach(() => {
+        (driver as any).unload();
+        const w = (global as any).window;
+        delete w.parent;
+        delete w.opener;
+    });
+
+    describe("secondary board frames", () => {
+        it("spins up a second board frame for the first non-channel broadcast and defers the message to it", () => {
+            send(radio, main);
+            chai.expect(frames().length).equals(2);
+            const second = frames()[1];
+            chai.expect(second.dataset["loading"]).equals("true");
+            chai.expect(types(second)).deep.equals([]);
+            chai.expect((driver as any).deferredMessages.map((d: any) => [d[0].element, d[1].type])).deep.equals([[second, "radiopacket"]]);
+            chai.expect(types(main)).deep.equals([]);
+        });
+
+        it("does not spin up a frame when single simulator mode is set", () => {
+            driver.setSingleSimulator();
+            send(radio, main);
+            chai.expect(frames().length).equals(1);
+        });
+
+        it("does not spin up a frame when the run is single", () => {
+            driver.run("", { single: true });
+            main.contentWindow.messages = [];
+            send(radio, main);
+            chai.expect(frames().length).equals(1);
+        });
+
+        it("starts a board frame when there is none", () => {
+            const ext = addChannelFrame(EXT_CHANNEL, (driver as any).runId);
+            container.removeChild(main.parentElement);
+            send(radio, ext);
+            chai.expect(frames().length).equals(2);
+            chai.expect(frames()[1].dataset["messagechannel"]).equals(undefined);
+        });
+
+        it("never starts a third board frame", () => {
+            const second = addBoardFrame((driver as any).runId);
+            send(radio, main);
+            chai.expect(frames().length).equals(2);
+            chai.expect(types(second)).deep.equals(["radiopacket"]);
+        });
+
+        it("restarts a stale second board frame", () => {
+            const second = addBoardFrame("stale");
+            send(radio, main);
+            chai.expect(frames().length).equals(2);
+            chai.expect(types(second)).deep.equals(["run", "radiopacket"]);
+            chai.expect(second.dataset["runid"]).equals((driver as any).runId);
+        });
+
+        it("does not restart a second board frame that has the current run", () => {
+            const second = addBoardFrame((driver as any).runId);
+            send(radio, main);
+            chai.expect(types(second)).deep.equals(["radiopacket"]);
+        });
+
+        it("does not spin up a frame for a channel without a simulator", () => {
+            send(packet("unknown-channel"), main);
+            chai.expect(frames().length).equals(1);
+        });
+
+        it("delivers an unmatched channel packet to existing frames without deferral", () => {
+            const second = addBoardFrame((driver as any).runId);
+            send(packet("unknown-channel"), main);
+            chai.expect(types(second)).deep.equals(["messagepacket"]);
+        });
+
+        it("does not echo a message to its source frame", () => {
+            const second = addBoardFrame((driver as any).runId);
+            send(radio, main);
+            chai.expect(types(main)).deep.equals([]);
+            chai.expect(types(second)).deep.equals(["radiopacket"]);
+        });
+
+        it("tags a broadcast with the index of its source frame", () => {
+            const second = addBoardFrame((driver as any).runId);
+            send(radio, second);
+            const msg = main.contentWindow.messages[0] as pxsim.SimulatorBroadcastMessage;
+            chai.expect(msg.srcFrameIndex).equals(1);
+        });
+
+        it("defers a message to a board frame that is still loading and posts it once the frame is ready", () => {
+            send(radio, main);
+            const second = frames()[1];
+            (driver as any).handleDeferredMessages((driver as any).frameHost.wrap(second));
+            chai.expect(second.dataset["loading"]).equals(undefined);
+            chai.expect(types(second)).deep.equals(["radiopacket"]);
+            chai.expect((driver as any).deferredMessages).deep.equals([]);
+        });
+    });
+
+    describe("simulator extensions", () => {
+        it("spins up an extension frame on first use", () => {
+            send(packet(EXT_CHANNEL), main);
+            chai.expect(frames().length).equals(2);
+            const ext = frames()[1];
+            const wrapper = ext.parentElement;
+            chai.expect(ext.dataset["messagechannel"]).equals(EXT_CHANNEL);
+            chai.expect(ext.dataset["permanent"]).equals("true");
+            chai.expect(ext.dataset["aspectratio"]).equals("2");
+            chai.expect(wrapper.classList.contains("simmsg")).equals(true);
+            chai.expect(ext.src.indexOf("/simx/" + EXT_CHANNEL + "/-/index.html")).to.be.greaterThan(0);
+        });
+
+        it("tells the extension to trust the editor's own origin and language", () => {
+            send(packet(EXT_CHANNEL), main);
+            const url = new URL(frames()[1].src);
+            chai.expect(url.searchParams.get("parentOrigin")).equals(EDITOR_ORIGIN);
+            chai.expect(url.searchParams.get("language")).equals("fr");
+        });
+
+        it("starts the new extension frame with the run, then sends it the message", () => {
+            send(packet(EXT_CHANNEL), main);
+            chai.expect(types(frames()[1])).deep.equals(["run", "messagepacket"]);
+            chai.expect(types(main)).deep.equals([]);
+        });
+
+        it("restarts a stale extension frame instead of spawning another", () => {
+            const ext = addChannelFrame(EXT_CHANNEL, "stale");
+            send(packet(EXT_CHANNEL), main);
+            chai.expect(frames().length).equals(2);
+            chai.expect(types(ext)).deep.equals(["run", "messagepacket"]);
+        });
+
+        it("just delivers to an extension frame that has the current run", () => {
+            const ext = addChannelFrame(EXT_CHANNEL, (driver as any).runId);
+            send(packet(EXT_CHANNEL), main);
+            chai.expect(frames().length).equals(2);
+            chai.expect(types(ext)).deep.equals(["messagepacket"]);
+        });
+
+        it("does not spin up an extension frame when the run is single", () => {
+            driver.run("", { single: true });
+            send(packet(EXT_CHANNEL), main);
+            chai.expect(frames().length).equals(1);
+        });
+
+        it("prefers the extension over a legacy message simulator for the same channel", () => {
+            createDriver({
+                messageSimulators: { [EXT_CHANNEL]: { url: LEGACY_URL, aspectRatio: 1, permanent: false } }
+            });
+            driver.run("");
+            send(packet(EXT_CHANNEL), main);
+            chai.expect(frames()[1].src.indexOf("legacy.example.com")).equals(-1);
+        });
+    });
+
+    describe("legacy message simulators", () => {
+        it("spins up a legacy frame with the parent origin and language substituted", () => {
+            send(packet(LEGACY_CHANNEL), main);
+            chai.expect(frames().length).equals(2);
+            const legacy = frames()[1];
+            chai.expect(legacy.dataset["messagechannel"]).equals(LEGACY_CHANNEL);
+            chai.expect(legacy.dataset["permanent"]).equals(undefined);
+            chai.expect(legacy.src.indexOf("https://legacy.example.com/sim.html")).equals(0);
+            chai.expect(legacy.src.indexOf("parent=" + encodeURIComponent("https://embedder.example.com"))).to.be.greaterThan(0);
+            chai.expect(legacy.src.indexOf("lang=fr")).to.be.greaterThan(0);
+        });
+
+        it("restarts a stale legacy frame and delivers to a current one", () => {
+            const stale = addChannelFrame(LEGACY_CHANNEL, "stale");
+            send(packet(LEGACY_CHANNEL), main);
+            chai.expect(types(stale)).deep.equals(["run", "messagepacket"]);
+            stale.contentWindow.messages = [];
+            send(packet(LEGACY_CHANNEL), main);
+            chai.expect(frames().length).equals(2);
+            chai.expect(types(stale)).deep.equals(["messagepacket"]);
+        });
+    });
+
+    describe("suppression and forwarding", () => {
+        it("does not spin up frames with nestedEditorSim", () => {
+            createDriver({ nestedEditorSim: true });
+            driver.run("");
+            send(radio, main);
+            send(packet(EXT_CHANNEL), main);
+            chai.expect(frames().length).equals(1);
+        });
+
+        it("does not spin up frames for toParentIFrameOnly messages", () => {
+            send({ ...radio, toParentIFrameOnly: true }, main);
+            chai.expect(frames().length).equals(1);
+        });
+
+        it("forwards to dependent editors with the editor origin instead of spinning up frames", () => {
+            const posted: [any, string][] = [];
+            // the driver drops dependent editors whose window has no parent (closed windows)
+            const editor = { parent: {}, postMessage: (m: any, o: string) => posted.push([m, o]) };
+            const sourceEditor = { parent: {}, postMessage: (m: any, o: string) => posted.push([m, "source"]) };
+            driver.registerDependentEditor(editor as any);
+            driver.registerDependentEditor(sourceEditor as any);
+            driver.postMessage({ ...radio, broadcast: true } as any, sourceEditor as any);
+            chai.expect(frames().length).equals(1);
+            chai.expect(posted.map(p => p[1])).deep.equals([EDITOR_ORIGIN]);
+        });
+
+        it("posts to the parent window without restriction, but not back to the parent", () => {
+            const posted: [any, string][] = [];
+            const parent = { postMessage: (m: any, o: string) => posted.push([m, o]) };
+            (global as any).window.parent = parent;
+            driver.postMessage({ ...radio, broadcast: true } as any, main.contentWindow as any);
+            chai.expect(posted.map(p => p[1])).deep.equals(["*"]);
+            posted.length = 0;
+            driver.postMessage({ ...radio, broadcast: true } as any, parent as any);
+            chai.expect(posted).deep.equals([]);
+        });
+
+        it("posts only to the hardware debugger when one is attached", () => {
+            const posted: string[] = [];
+            (driver as any).hwdbg = { postMessage: (m: pxsim.SimulatorMessage) => posted.push(m.type) };
+            driver.postMessage({ type: "custom" } as any);
+            chai.expect(posted).deep.equals(["custom"]);
+            chai.expect(types(main)).deep.equals([]);
+        });
+
+        it("posts a message without a source to every frame and spins up nothing", () => {
+            const second = addBoardFrame((driver as any).runId);
+            driver.postMessage({ ...radio, broadcast: true } as any);
+            chai.expect(frames().length).equals(2);
+            chai.expect(types(main)).deep.equals(["radiopacket"]);
+            chai.expect(types(second)).deep.equals(["radiopacket"]);
+        });
+
+        it("posts only to the requested frame id", () => {
+            const second = addBoardFrame((driver as any).runId);
+            driver.postMessage({ type: "custom" } as any, undefined, second.id);
+            chai.expect(types(main)).deep.equals([]);
+            chai.expect(types(second)).deep.equals(["custom"]);
+        });
+
+        it("starts only one recorder", () => {
+            const second = addBoardFrame((driver as any).runId);
+            driver.postMessage({ type: "recorder", action: "start" } as any);
+            chai.expect(types(main)).deep.equals(["recorder"]);
+            chai.expect(types(second)).deep.equals([]);
+        });
+    });
+});

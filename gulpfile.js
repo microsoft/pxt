@@ -100,7 +100,20 @@ const copyTypescriptServices = () => gulp.src("pxtcompiler/ext-typescript/lib/ty
 const pxtlib = () => compileTsProject("pxtlib");
 const pxtcompiler = () => compileTsProject("pxtcompiler");
 const pxtpy = () => compileTsProject("pxtpy");
-const pxtsim = () => compileTsProject("pxtsim");
+const pxtsimDom = () => compileTsProject("pxtsim", "built", false, "pxtsimdom");
+const compilePxtsimcore = () => compileTsProject("pxtsimcore");
+const copyPxtsimcoreGlobals = () => gulp.src("pxtsimcore/globals.d.ts")
+    .pipe(concat("pxtsimcore-globals.d.ts"))
+    .pipe(gulp.dest("built"));
+const pxtsimcore = gulp.parallel(compilePxtsimcore, copyPxtsimcoreGlobals);
+const combinePxtsim = () => gulp.src(["built/pxtsimcore.js", "built/pxtsimdom.js"])
+    .pipe(concat("pxtsim.js"))
+    .pipe(gulp.dest("built"));
+const combinePxtsimDeclarations = () => gulp.src(["built/pxtsimcore.d.ts", "built/pxtsimdom.d.ts"])
+    .pipe(concat("pxtsim.d.ts"))
+    .pipe(replace(/^\/\/\/ <reference path="pxtsimcore\.d\.ts" \/>[ \t]*\r?\n/gm, ""))
+    .pipe(gulp.dest("built"));
+const pxtsim = gulp.series(pxtsimcore, pxtsimDom, gulp.parallel(combinePxtsim, combinePxtsimDeclarations));
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
@@ -219,6 +232,7 @@ function initWatch() {
 
     gulp.watch("./pxtcompiler/**/*", gulp.series(pxtcompiler, ...tasks.slice(2)));
     gulp.watch("./pxtsim/**/*", gulp.series(pxtsim, ...tasks.slice(2)));
+    gulp.watch("./pxtsimcore/**/*", gulp.series(pxtsim, ...tasks.slice(2)));
     gulp.watch("./backendutils/**/*", gulp.series(backendutils, ...tasks.slice(2)));
 
     gulp.watch("./pxtpy/**/*", gulp.series(pxtpy, ...tasks.slice(3)));
@@ -323,6 +337,7 @@ function updatestrings() {
         "pxtlib",
         "pxtpy",
         "pxtsim",
+        "pxtsimcore",
         "webapp/src",
         "react-common"
     ], true);
@@ -488,6 +503,7 @@ const copyWebapp = () =>
         "built/pxtcompiler.js",
         "built/pxtpy.js",
         "built/pxtsim.js",
+        "built/pxtsimcore.js",
         "built/webapp/src/worker.js",
         "built/webapp/src/serviceworker.js",
         "built/webapp/src/simulatorserviceworker.js",
@@ -742,7 +758,7 @@ const maybeBuildWebapps = () => {
 
 const lintWithEslint = () => Promise.all(
     ["cli", "pxtblocks", "pxteditor", "pxtlib", "pxtcompiler",
-        "pxtpy", "pxtrunner", "pxtsim", "webapp", "pxtservices",
+        "pxtpy", "pxtrunner", "pxtsim", "pxtsimcore", "webapp", "pxtservices",
         "docfiles/pxtweb", "skillmap", "authcode",
         "multiplayer"/*, "kiosk"*/, "teachertool", "docs/static/streamer"].map(dirname =>
             exec(`node node_modules/eslint/bin/eslint.js -c .eslintrc.js --ext .ts,.tsx ./${dirname}/`, true)))
@@ -757,6 +773,7 @@ const testerr = testTask("errors-test", "errorrunner.js");
 const testfmt = testTask("format-test", "formatrunner.js");
 const testembed = testTask("embed-test", "embedrunner.js");
 const testsimdriver = testTask("simdriver-test", "simdriverrunner.js");
+const testsimcore = testTask("simcore-test", "simcorerunner.js");
 const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
@@ -803,6 +820,7 @@ const testAll = gulp.series(
     testfmt,
     testembed,
     testsimdriver,
+    testsimcore,
     testpydecomp,
     testpycomp,
     testpytraces,
@@ -930,6 +948,7 @@ exports.testerr = testerr;
 exports.testfmt = testfmt;
 exports.testembed = testembed;
 exports.testsimdriver = testsimdriver;
+exports.testsimcore = testsimcore;
 exports.testpydecomp = testpydecomp;
 exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
@@ -950,6 +969,8 @@ exports.testpxteditor = testpxteditor;
 exports.testprojecttools = testprojecttools;
 exports.testcli = testcli;
 exports.reactCommon = reactCommon;
+exports.pxtsimcore = pxtsimcore;
+exports.pxtsim = pxtsim;
 exports.cli = gulp.series(
     gulp.parallel(pxtlib, pxtweb),
     gulp.parallel(pxtcompiler, pxtsim, backendutils),

@@ -1,8 +1,6 @@
 /// <reference path="../../localtypings/pxtmusic.d.ts" />
 
 namespace pxsim.music {
-    const BUFFER_SIZE = 12;
-
     export function renderInstrument(instrument: pxt.assets.music.Instrument, noteFrequency: number, gateLength: number, volume: number) {
         const totalDuration = gateLength + instrument.ampEnvelope.release;
 
@@ -113,7 +111,7 @@ namespace pxsim.music {
         let nextAmp: number;
         let nextPitch: number;
 
-        const out = new Uint8Array(BUFFER_SIZE * (timePoints.length + 1));
+        const out = new Uint8Array(INSTRUCTION_STEP_BYTES * (timePoints.length + 1));
         let ptr = 0;
         for (let i = 1; i < timePoints.length; i++) {
             if (timePoints[i] - prevTime < 5) {
@@ -160,12 +158,12 @@ namespace pxsim.music {
 
         const scaleVolume = (value: number) => (value / 1024) * volume;
 
-        let out = new Uint8Array((sound.steps.length + 1) * BUFFER_SIZE);
+        let out = new Uint8Array((sound.steps.length + 1) * INSTRUCTION_STEP_BYTES);
 
         for (let i = 0; i < sound.steps.length; i++) {
             addNote(
                 out,
-                i * BUFFER_SIZE,
+                i * INSTRUCTION_STEP_BYTES,
                 sound.steps[i].duration,
                 scaleVolume(prevAmp),
                 scaleVolume(sound.steps[i].volume),
@@ -179,7 +177,7 @@ namespace pxsim.music {
 
         addNote(
             out,
-            sound.steps.length * BUFFER_SIZE,
+            sound.steps.length * INSTRUCTION_STEP_BYTES,
             10,
             scaleVolume(prevAmp),
             0,
@@ -239,14 +237,14 @@ namespace pxsim.music {
 
     function addNote(sndInstr: Uint8Array, sndInstrPtr: number, ms: number, beg: number, end: number, soundWave: number, hz: number, endHz: number) {
         if (ms > 0) {
-            sndInstr[sndInstrPtr] = soundWave;
-            sndInstr[sndInstrPtr + 1] = 0;
-            set16BitNumber(sndInstr, sndInstrPtr + 2, hz)
-            set16BitNumber(sndInstr, sndInstrPtr + 4, ms)
-            set16BitNumber(sndInstr, sndInstrPtr + 6, (beg * 255) >> 6)
-            set16BitNumber(sndInstr, sndInstrPtr + 8, (end * 255) >> 6)
-            set16BitNumber(sndInstr, sndInstrPtr + 10, endHz);
-            sndInstrPtr += BUFFER_SIZE;
+            sndInstr[sndInstrPtr + INSTRUCTION_WAVE_OFFSET] = soundWave;
+            sndInstr[sndInstrPtr + INSTRUCTION_FLAGS_OFFSET] = 0;
+            set16BitNumber(sndInstr, sndInstrPtr + INSTRUCTION_START_FREQUENCY_OFFSET, hz)
+            set16BitNumber(sndInstr, sndInstrPtr + INSTRUCTION_DURATION_OFFSET, ms)
+            set16BitNumber(sndInstr, sndInstrPtr + INSTRUCTION_START_VOLUME_OFFSET, (beg * 255) >> 6)
+            set16BitNumber(sndInstr, sndInstrPtr + INSTRUCTION_END_VOLUME_OFFSET, (end * 255) >> 6)
+            set16BitNumber(sndInstr, sndInstrPtr + INSTRUCTION_END_FREQUENCY_OFFSET, endHz);
+            sndInstrPtr += INSTRUCTION_STEP_BYTES;
         }
         sndInstr[sndInstrPtr] = 0;
         return sndInstrPtr

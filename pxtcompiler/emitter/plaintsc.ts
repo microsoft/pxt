@@ -52,13 +52,19 @@ namespace ts.pxtc {
         return (a as any).file !== undefined;
     }
 
-    export function plainTscCompileDir(dir: string): Program {
+    /**
+     * Compiles the TypeScript project in `dir` with the bundled compiler and returns its program.
+     * Program diagnostics are written to the console unless `reportProgramDiagnostics` is false.
+     */
+    export function plainTscCompileDir(dir: string, reportProgramDiagnostics = true): Program {
         const commandLine = parseCommandLine([]);
         let configFileName = findConfigFile(dir, sys.fileExists);
         const configParseResult = parseConfigFile();
         let program = plainTscCompileFiles(configParseResult.fileNames, configParseResult.options)
-        let diagnostics = getProgramDiagnostics(program)
-        diagnostics.forEach(reportDiagnostic)
+        if (reportProgramDiagnostics) {
+            let diagnostics = getProgramDiagnostics(program)
+            diagnostics.forEach(reportDiagnostic)
+        }
         return program
 
         function parseConfigFile(): ParsedCommandLine {

@@ -261,14 +261,14 @@ namespace pxsim.instructions {
         return div;
     }
     function mkCmpDiv(cmp: "wire" | PartVisualDefinition, opts: mkCmpDivOpts): HTMLElement {
-        let state = runtime.board as pxsim.CoreBoard;
         let el: visuals.SVGElAndSize;
         if (cmp == "wire") {
             el = visuals.mkWirePart([0, 0], opts.wireClr || "red", opts.crocClips);
         } else {
             let partVis = <PartVisualDefinition>cmp;
             if (typeof partVis.builtIn == "string") {
-                let cnstr = state.builtinPartVisuals[partVis.builtIn];
+                const builtinPartVisuals = runtime.boardView ? runtime.boardView.builtinPartVisuals : {};
+                const cnstr = builtinPartVisuals[partVis.builtIn];
                 el = cnstr([0, 0]);
             } else {
                 el = visuals.mkGenericPartSVG(partVis);
@@ -336,6 +336,7 @@ namespace pxsim.instructions {
         const state = runtime.board as pxsim.CoreBoard;
         const opts: visuals.BoardHostOpts = {
             state: state,
+            builtinVisuals: runtime.boardView ? runtime.boardView.builtinVisuals : {},
             boardDef: props.boardDef,
             forceBreadboardLayout: true,
             forceBreadboardRender: props.allAlloc.requiresBreadboard,
@@ -553,15 +554,7 @@ namespace pxsim.instructions {
         return [panel, props];
     }
 
-    export interface RenderPartsOptions {
-        name: string;
-        boardDef: BoardDefinition;
-        parts: string[];
-        partDefinitions: Map<PartDefinition>;
-        fnArgs: any;
-        configData: pxsim.ConfigData;
-        print?: boolean;
-    }
+    export type RenderPartsOptions = SimulatorInstructionsOptions;
 
     export function renderParts(container: HTMLElement, options: RenderPartsOptions) {
         if (!options.boardDef.pinStyles)

@@ -13,7 +13,7 @@
 - The PXT framework follows a modular architecture with clear separation between:
   - Core framework (`pxtlib/`, `pxtcompiler/`)
   - Web application (`webapp/`)
-  - Simulator (`pxtsim/`)
+  - Simulator (`pxtsimcore/` DOM-free core, `pxtsim/` DOM and view code)
   - Target implementations (`pxt-microbit/`, `pxt-common-packages/`)
 
 ## Code Generation Standards
