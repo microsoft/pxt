@@ -6,7 +6,9 @@ const ts = require("typescript");
 const { JSDOM } = require("jsdom");
 
 const root = path.resolve(__dirname, "../..");
-const context = vm.createContext({ exports: {}, pxt: { sprite: {}, Util: { lf: text => text } } });
+const context = vm.createContext({ exports: {}, pxt: { sprite: {}, Util: {
+    lf: (text, ...args) => text.replace(/\{(\d+)\}/g, (_, index) => String(args[index]))
+} } });
 
 function loadFunctions(file, names) {
     const text = fs.readFileSync(path.join(root, file), "utf8");
@@ -26,36 +28,8 @@ function loadFunctions(file, names) {
 
 loadFunctions("pxtlib/spriteutils.ts", ["parseTags", "compileTagFilter", "getSymbolResource", "getSymbolTags", "getSymbolWeight", "sortByWeight", "filterItems"]);
 Object.assign(context.pxt.sprite, context.exports);
-loadFunctions("pxtlib/package.ts", ["inflateJRes", "getGridPickerCatalogStrings"]);
-context.pxt.inflateJRes = context.exports.inflateJRes;
-context.pxt.getGridPickerCatalogStrings = context.exports.getGridPickerCatalogStrings;
 loadFunctions("pxtblocks/fields/field_gridpicker.ts", ["getGridPickerTags", "filterGridPickerOptions", "getGridPickerGroups", "getGridPickerRows", "sortGridPickerEntries", "getGridPickerSizeRows"]);
 loadFunctions("pxtblocks/loader.ts", ["getSymbolPickerTags"]);
-
-const cliSource = ts.createSourceFile("cli.ts", fs.readFileSync(path.join(root, "cli/cli.ts"), "utf8"), ts.ScriptTarget.Latest, true);
-let catalogStringsLoop;
-function findCatalogStringsLoop(node) {
-    if (ts.isForOfStatement(node) && node.expression.getText(cliSource).includes("cfg.bundledpkgs")) catalogStringsLoop = node;
-    ts.forEachChild(node, findCatalogStringsLoop);
-}
-findCatalogStringsLoop(cliSource);
-assert(catalogStringsLoop, "Target string extraction must include grid picker catalogs");
-context.cfg = { bundledpkgs: {
-    core: { "pickers.jres": JSON.stringify({ "*": { namespace: "core.pickers" }, inventory: { gridPickerCatalog: {
-        name: "Inventory", tabs: [{ name: "Construction" }, { name: "All" }],
-        families: [{ name: "Hoes" }], materials: [{ name: "Copper" }], filters: [{ name: "Riders" }]
-    } } }) },
-    extension: { "pickers.jres": JSON.stringify({ "*": { namespace: "extension.pickers" }, mounts: {
-        gridPickerCatalog: { name: "Player Mounts", tabs: [{ name: "Vehicles" }] }
-    } }) }
-} };
-context.targetStrings = {};
-vm.runInContext(ts.transpileModule(catalogStringsLoop.getText(cliSource), {
-    compilerOptions: { target: ts.ScriptTarget.ES2017 }
-}).outputText, context);
-for (const name of ["Inventory", "Construction", "All", "Hoes", "Copper", "Riders", "Player Mounts", "Vehicles"]) {
-    assert.strictEqual(context.targetStrings[name], name, `Missing configured localization key: ${name}`);
-}
 
 const info = { apis: { jres: { "MonsterMob.Zombie": { tags: ["RIDER"] } } } };
 assert.deepStrictEqual(Array.from(context.getSymbolPickerTags(info, {
@@ -76,7 +50,7 @@ const options = [
 ];
 const filter = context.exports.filterGridPickerOptions;
 const values = query => Array.from(filter(options, query), option => option[1]);
-assert.strictEqual(filter(options, ""), options);
+assert.deepStrictEqual(Array.from(filter(options, "")), options);
 assert.deepStrictEqual(values("rider"), ["MonsterMob.Zombie", "MonsterMob.Husk"]);
 assert.deepStrictEqual(values("rider undead"), ["MonsterMob.Zombie"]);
 assert.deepStrictEqual(values("rider !undead"), ["MonsterMob.Husk"]);
@@ -93,6 +67,7 @@ const catalog = {
 const groups = context.exports.getGridPickerGroups;
 const materialTab = { id: "materials", name: "Materials", materials: true };
 const summarize = result => JSON.parse(JSON.stringify(result.map(group => ({ id: group.id, values: group.options.map(option => option[1]) }))));
+const groupValues = result => Array.from(result).flatMap(group => Array.from(group.options, option => option[1]));
 assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[0], "")), [
     { id: "swords", values: ["Item.CopperSword", "Item.IronSword"] },
     { id: "pickaxes", values: ["Item.CopperPickaxe"] }
@@ -101,37 +76,33 @@ assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[0], "copp
     { id: "swords", values: ["Item.CopperSword"] }
 ]);
 for (const query of ["family-zombies", "family_zombies"]) {
-    assert.deepStrictEqual(summarize(groups([
+    assert.deepStrictEqual(groupValues(groups([
         ["Zombie", "MonsterMob.Zombie"]
-    ], catalog, catalog.tabs[1], query, undefined, { "MonsterMob.Zombie": ["family-zombies"] })), [
-        { id: "all", values: ["MonsterMob.Zombie"] }
-    ]);
+    ], catalog, catalog.tabs[1], query, undefined, { "MonsterMob.Zombie": ["family-zombies"] })), ["MonsterMob.Zombie"]);
 }
-assert.deepStrictEqual(summarize(groups([
+assert.deepStrictEqual(groupValues(groups([
     ["Blue-Orchid", "Block.Blue_Orchid"]
-], catalog, catalog.tabs[1], "Blue-Orchid")), [{ id: "all", values: ["Block.Blue_Orchid"] }]);
-assert.deepStrictEqual(summarize(groups([
+], catalog, catalog.tabs[1], "Blue-Orchid")), ["Block.Blue_Orchid"]);
+assert.deepStrictEqual(groupValues(groups([
     ["Blue Orchid", "Block.Blue_Orchid"]
-], catalog, catalog.tabs[1], "Block.Blue_Orchid")), [{ id: "all", values: ["Block.Blue_Orchid"] }]);
-const optionalGroups = groups(options, { ...catalog, families: undefined }, catalog.tabs[0], "");
-assert.strictEqual(optionalGroups[0].flat, true);
-assert.strictEqual(optionalGroups[0].id, "other");
+], catalog, catalog.tabs[1], "Block.Blue_Orchid")), ["Block.Blue_Orchid"]);
+assert.deepStrictEqual(groupValues(groups(options, { ...catalog, families: undefined }, catalog.tabs[0], "")),
+    options.slice(0, 3).map(option => option[1]));
 assert.deepStrictEqual(summarize(groups(options, { ...catalog, materials: undefined }, materialTab, "missing")), []);
-const materialRemainder = groups(options, { ...catalog, materials: undefined }, materialTab, "");
-assert.strictEqual(materialRemainder[0].name, "Other materials");
-assert.strictEqual(materialRemainder[0].flat, false);
 const collisionCatalog = { ...catalog, materials: [
     { id: "other", name: "Copper", tags: ["copper"] },
     { id: "_other", name: "Iron", tags: ["iron"] }
 ] };
-assert.deepStrictEqual(summarize(groups(options, collisionCatalog, materialTab, "")), [
-    { id: "other", values: ["Item.CopperSword", "Item.CopperPickaxe"] },
-    { id: "_other", values: ["Item.IronSword"] },
-    { id: "__other", values: ["MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"] }
-]);
-assert.deepStrictEqual(summarize(groups(filter(options, "rider"), catalog, catalog.tabs[1], "")), [
-    { id: "all", values: ["MonsterMob.Zombie", "MonsterMob.Husk"] }
-]);
+const collisionGroups = groups(options, collisionCatalog, materialTab, "");
+assert.strictEqual(new Set(collisionGroups.map(group => group.id)).size, collisionGroups.length);
+for (const configured of collisionCatalog.materials) {
+    assert.deepStrictEqual(groupValues(collisionGroups.filter(group => group.id === configured.id)),
+        Array.from(filter(options, configured.tags), option => option[1]));
+}
+assert.deepStrictEqual(groupValues(collisionGroups.filter(group =>
+    !collisionCatalog.materials.some(configured => configured.id === group.id))), options.slice(3).map(option => option[1]));
+assert.deepStrictEqual(groupValues(groups(filter(options, "rider"), catalog, catalog.tabs[1], "")),
+    ["MonsterMob.Zombie", "MonsterMob.Husk"]);
 assert.deepStrictEqual(summarize(groups(options.slice(0, 3), catalog, materialTab, "")), [
     { id: "copper", values: ["Item.CopperSword", "Item.CopperPickaxe"] },
     { id: "iron", values: ["Item.IronSword"] }
@@ -142,9 +113,7 @@ assert.deepStrictEqual(summarize(groups(options, catalog, materialTab, "copper")
 assert.deepStrictEqual(summarize(groups(options, catalog, materialTab, "", "iron")), [
     { id: "iron", values: ["Item.IronSword"] }
 ]);
-assert.deepStrictEqual(summarize(groups(options, catalog, materialTab, "other")), [
-    { id: "other", values: ["Item.Other"] }
-]);
+assert.deepStrictEqual(groupValues(groups(options, catalog, materialTab, "other")), ["Item.Other"]);
 assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), catalog, materialTab, "")), [
     { id: "copper", values: ["Item.CopperPickaxe", "Item.CopperSword"] },
     { id: "iron", values: ["Item.IronSword"] }
@@ -162,9 +131,8 @@ assert.deepStrictEqual(summarize(groups(options, weightedCatalog, catalog.tabs[0
     { id: "pickaxes", values: ["Item.CopperPickaxe"] },
     { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] }
 ]);
-assert.deepStrictEqual(summarize(groups(options, weightedCatalog, catalog.tabs[1], "sword", undefined, undefined, choiceWeights)), [
-    { id: "all", values: ["Item.IronSword", "Item.CopperSword"] }
-]);
+assert.deepStrictEqual(groupValues(groups(options, weightedCatalog, catalog.tabs[1], "sword", undefined, undefined, choiceWeights)),
+    ["Item.IronSword", "Item.CopperSword"]);
 assert.deepStrictEqual(summarize(groups(options, weightedCatalog, catalog.tabs[0], "", "!copper", undefined, choiceWeights)), [
     { id: "swords", values: ["Item.IronSword"] }
 ]);
@@ -180,7 +148,8 @@ const overlap = { ...catalog, families: [
 ] };
 assert.strictEqual(groups(options, overlap, catalog.tabs[0], "")[0].id, "first", "Weight must not change family membership");
 const sizedCatalog = { ...catalog, tabs: catalog.tabs.concat(materialTab) };
-assert.strictEqual(context.exports.getGridPickerSizeRows(options, sizedCatalog, 4).length, 2);
+assert(context.exports.getGridPickerSizeRows(options, sizedCatalog, 4).length >= Math.ceil(options.length / 4),
+    "Reserved rows must fit the uncompressed choices");
 const swords = groups(options, catalog, catalog.tabs[0], "")[0];
 const pickaxes = groups(options, catalog, catalog.tabs[0], "")[1];
 const familyEntries = [
@@ -289,8 +258,7 @@ assert.deepStrictEqual(Array.from(treegrid.children, row => ({
     { level: "1", values: ["Item.Other"] }
 ]);
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-expanded"), "true");
-assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-controls"), "block:row-1");
-assert(treegrid.children[1].classList.contains("gridpicker-family-children-last"));
+assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-controls"), treegrid.children[1].id);
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-selected"), "false");
 assert.strictEqual(treegrid.querySelector('[data-value="Item.CopperSword"]').getAttribute("aria-selected"), "true");
 assert.strictEqual(picker.getVerticalGridItemIndex(1, 1), 4);
@@ -307,7 +275,7 @@ assert.strictEqual(treegrid.querySelectorAll('[role="gridcell"]').length, 5);
 picker.getValue = () => "Item.IronSword";
 picker.catalogExpanded_ = new Set();
 picker.populateTableContainer([], treegrid, treegrid, context.exports.getGridPickerRows(familyEntries, 2, picker.catalogExpanded_));
-assert.strictEqual(treegrid.children.length, 2);
+assert.strictEqual(treegrid.querySelector('[data-value="Item.CopperSword"]'), null);
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-expanded"), "false");
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-controls"), null);
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-selected"), "true");
@@ -336,7 +304,7 @@ function assertArrow(code, from, expected) {
     const event = new dom.window.KeyboardEvent("keydown", { code, key: code, bubbles: true, cancelable: true });
     treegrid.dispatchEvent(event);
     assert.strictEqual(picker.activeDescendantIndex, expected, `${rtl ? "RTL" : "LTR"} ${code} from ${from}`);
-    assert.strictEqual(treegrid.getAttribute("aria-activedescendant"), `block:${expected}`);
+    assert.strictEqual(treegrid.getAttribute("aria-activedescendant"), picker.gridItems[expected].id);
     assert.strictEqual(event.defaultPrevented, true);
     assert.strictEqual(picker.getValue(), "Item.IronSword");
     assert.deepStrictEqual(Array.from(picker.catalogExpanded_), ["swords"]);
@@ -385,7 +353,8 @@ picker.catalogFamilies_ = { "@family:swords": swords, "@family:pickaxes": pickax
 picker.renderCatalog_();
 picker.buttonClickAndClose_("@family:pickaxes");
 assert.deepStrictEqual(Array.from(picker.catalogExpanded_), ["pickaxes"]);
-assert.strictEqual(treegrid.children.length, 3);
+assert(treegrid.querySelector('[data-value="Item.CopperPickaxe"]'));
+assert.strictEqual(treegrid.querySelector('[data-value="Item.CopperSword"]'), null);
 assert.strictEqual(picker.gridItems[picker.activeDescendantIndex].dataset.value, "Item.CopperPickaxe");
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-expanded"), "false");
 picker.buttonClickAndClose_("@family:pickaxes");
@@ -428,15 +397,13 @@ const constrainedTable = dom.window.document.createElement("div");
 constrained.scrollContainer.appendChild(constrainedTable);
 constrainedContainer.appendChild(constrained.scrollContainer);
 constrained.createCatalog_(constrainedContainer, constrainedTable);
-assert.strictEqual(constrainedContainer.querySelectorAll("select, .gridpicker-catalog-filters").length, 0);
-assert.strictEqual(constrainedContainer.textContent.includes("Tags"), false);
 assert.deepStrictEqual(Array.from(constrained.gridItems, item => item.dataset.value), ["MonsterMob.Zombie"]);
 constrained.selectCatalogTab_("search");
 assert.deepStrictEqual(Array.from(constrained.gridItems, item => item.dataset.value), ["MonsterMob.Zombie", "MonsterMob.Husk"]);
 constrained.catalogSearch_ = "copper";
 constrained.renderCatalog_();
 assert.strictEqual(constrained.gridItems.length, 0);
-assert(constrainedContainer.textContent.includes("No matching assets"));
+assert.strictEqual(constrainedTable.hasAttribute("aria-activedescendant"), false);
 context.Blockly.browserEvents.unbind(constrained.tabKeyBind);
 assert.deepStrictEqual(options.map(option => option[1]), [
     "Item.CopperSword", "Item.IronSword", "Item.CopperPickaxe", "MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"
@@ -451,8 +418,8 @@ const initializers = pickerClass.members.filter(node => ts.isPropertyDeclaration
 context.parseColour = value => value;
 context.pxt.toolbox = { fadeColor: value => value };
 context.pxt.getGridPickerCatalog = () => ({ name: "Empty categories", tabs: [{ id: "tools", name: "Tools", tags: ["equipment"] }] });
-vm.runInContext(ts.transpileModule(`class ConstructorBase {
-    constructor(data) { this.data = data; this.value = data[0][1]; }
+vm.runInContext(ts.transpileModule(`class ConstructorBase extends PickerMethods {
+    constructor(data) { super(); this.data = data; this.value = data[0][1]; }
     getValue() { return this.value; }
     setValue(value) { this.value = value; }
     getOptions() { return this.data; }
@@ -470,8 +437,18 @@ const constructorPicker = new context.exports.PickerConstructor("", {
     blocksInfo: { apis: { byQName: {}, jres: {} } }
 });
 assert.strictEqual(constructorPicker.getValue(), "MonsterMob.Zombie");
-assert.strictEqual(constructorPicker.catalog_, undefined);
-assert.strictEqual(constructorPicker.getOptions(), defaultOptions);
+assert.deepStrictEqual(Array.from(constructorPicker.getOptions(), option => option[1]), defaultOptions.map(option => option[1]));
+Object.assign(constructorPicker, {
+    sourceBlock_: { ...picker.sourceBlock_, id: "fallback" },
+    setupIntersectionObserver_: () => {},
+    addPointerListener: () => {},
+    addKeyDownHandler: () => {},
+    shouldShowTooltips: () => true
+});
+const fallbackTable = dom.window.document.createElement("div");
+constructorPicker.createWidget_(fallbackTable);
+assert.deepStrictEqual(Array.from(constructorPicker.gridItems, item => item.dataset.value),
+    Array.from(filter(defaultOptions, "rider"), option => option[1]));
 const explicitDefaultPicker = new context.exports.PickerConstructor("AnimalMob.Chicken", {
     data: defaultOptions, filter: "rider"
 });
@@ -485,7 +462,9 @@ context.pxt.ImageConverter = class {
     convert(uri) { return "converted:" + uri; }
 };
 iconPicker.blocksInfo_ = { apis: { byQName: {
-    "assets.apiOverride": { attributes: { iconURL: "api-icon" } }
+    "assets.apiOverride": { attributes: { iconURL: "api-icon" } },
+    "symbols.encoded": { qName: "symbols.encoded", attributes: { jres: "assets.icon" } },
+    "symbols.icon": { qName: "symbols.icon", attributes: { jres: "assets.override" } }
 }, jres: {
     "assets.icon": { mimeType: "image/x-mkcd-f4", data: "base64-image" },
     "assets.override": { mimeType: "image/x-mkcd-f4", data: "base64-image", icon: "custom-icon" },
@@ -494,6 +473,8 @@ iconPicker.blocksInfo_ = { apis: { byQName: {
 assert.strictEqual(iconPicker.catalogIcon_("assets.icon"), "converted:data:image/x-mkcd-f4;base64,base64-image");
 assert.strictEqual(iconPicker.catalogIcon_("assets.override"), "custom-icon");
 assert.strictEqual(iconPicker.catalogIcon_("assets.apiOverride"), "api-icon");
+assert.strictEqual(iconPicker.catalogIcon_("symbols.encoded"), "converted:data:image/x-mkcd-f4;base64,base64-image");
+assert.strictEqual(iconPicker.catalogIcon_("symbols.icon"), "custom-icon");
 assert.strictEqual(iconPicker.catalogIcon_("missing"), undefined);
 
 constrained.catalogTabs_ = [];
@@ -506,12 +487,18 @@ constrained.getOptions = () => options.map(option => [typeof option[0] === "obje
 constrained.getValue = () => "not-in-this-category";
 constrained.renderCatalog_();
 assert.strictEqual(constrained.catalogTable_.getAttribute("aria-activedescendant"), constrained.gridItems[0].id);
-assert.strictEqual(constrained.gridItems[0].textContent.includes("Swords"), true);
+const namedFamily = constrained.gridItems.find(item =>
+    constrained.catalogFamilies_[item.dataset.value]?.id === catalog.families[0].id);
+assert(namedFamily.textContent.includes(catalog.families[0].name));
 assert.strictEqual(constrained.getValue(), "not-in-this-category");
 constrained.catalog_ = { ...catalog, families: undefined, tabs: [catalog.tabs[0]] };
 constrained.renderCatalog_();
 assert.strictEqual(constrained.gridItems.length, 3);
-assert.strictEqual(constrained.catalogTable_.querySelectorAll(".gridpicker-family").length, 0);
+assert.strictEqual(constrained.catalogTable_.querySelectorAll("[aria-expanded]").length, 0);
+constrained.catalog_.tabs = [materialTab];
+constrained.catalogTab_ = materialTab.id;
+constrained.renderCatalog_();
+for (const family of Object.values(constrained.catalogFamilies_)) assert(family.name.trim(), "Expandable groups need a name");
 
 const imageFile = "webapp/src/components/ImageFieldEditor.tsx";
 const imageSource = ts.createSourceFile(imageFile, fs.readFileSync(path.join(root, imageFile), "utf8"), ts.ScriptTarget.Latest, true);

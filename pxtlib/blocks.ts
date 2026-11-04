@@ -153,6 +153,17 @@ namespace pxt.blocks {
             entries.indexOf(name) === index && apis.byQName[name]?.kind === pxtc.SymbolKind.Enum);
     }
 
+    /** Returns the visible dropdown members in an enum's declared order. */
+    export function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string): pxtc.SymbolInfo[] {
+        return pxt.Util.values(apis.byQName).filter(symbol => symbol.namespace === enumName && !symbol.attributes.blockHidden);
+    }
+
+    /** Finds the constant required by an enum's emission policy, when one exists. */
+    export function getEnumConstant(apis: pxtc.ApisInfo, enumName: string, value: string): pxtc.SymbolInfo | undefined {
+        if (!apis.byQName[enumName]?.attributes.emitAsConstant) return undefined;
+        return pxt.Util.values(apis.byQName).find(symbol => symbol.attributes?.enumIdentity === value);
+    }
+
     export function compileInfo(fn: pxtc.SymbolInfo): BlockCompileInfo {
         const res: BlockCompileInfo = {
             parameters: [],

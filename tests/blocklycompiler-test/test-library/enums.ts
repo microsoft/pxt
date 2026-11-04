@@ -94,6 +94,18 @@ enum PickerUnsupported {
 //% enumIdentity="PickerAnimal.Chicken"
 const PICKER_CHICKEN = PickerAnimal.Chicken;
 
+class PickerAsset {
+    value = 0;
+    constructor() {}
+}
+
+namespace pickerAssets {
+    //% fixedInstance tags=unavailable
+    export const other = new PickerAsset();
+    //% fixedInstance tags=eligible
+    export const allowed = new PickerAsset();
+}
+
 namespace pickerTest {
     //% blockId=picker_choose_mount block="choose %choice"
     //% value.fieldEditor="gridpicker"
@@ -105,6 +117,19 @@ namespace pickerTest {
     //% blockId=picker_mount_shim block="mount $value" shim=TD_ID
     export function mount(value: PickerAnimal): number {
         return value;
+    }
+
+    //% blockId=picker_choose_item block="item %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.enumNames="Item,PickerAnimal"
+    export function chooseItem(value: number): void {
+    }
+
+    //% blockId=picker_choose_asset block="asset %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.fixedInstances=true
+    //% choice.fieldOptions.filter=eligible
+    export function chooseAsset(value: PickerAsset): void {
     }
 }
 

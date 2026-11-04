@@ -212,6 +212,47 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
         }, err => fail('Could not get compile options'))
 }
 
+async function decompilePickerSource(source: string) {
+    await getBlocksInfoAsync();
+    const host = await BlocklyCompilerTestHost.createTestHostAsync();
+    const readFile = host.readFile.bind(host);
+    host.readFile = (pkg, name) => pkg.id === "this" && name === pxt.MAIN_TS ? source : readFile(pkg, name);
+    const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
+    options.ast = true;
+    const compiled = pxtc.compile(options);
+    chai.assert.isTrue(compiled.success, JSON.stringify(compiled.diagnostics));
+    const info = pxtc.getBlocksInfo(pxtc.getApiInfo(compiled.ast, options.jres));
+    const result = pxtc.decompile(compiled.ast, options, pxt.MAIN_TS, true);
+    return { program: compiled.ast, info, result };
+}
+
+async function roundTripPickerSource(source: string): Promise<string> {
+    const { info, result } = await decompilePickerSource(source);
+    chai.assert.isTrue(result.success, JSON.stringify(result.diagnostics));
+    const workspace = new Blockly.Workspace();
+    try {
+        pxtblockly.domToWorkspaceNoEvents(Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]), workspace);
+        return (await pxtblockly.compileAsync(workspace, info)).source;
+    } finally {
+        workspace.dispose();
+    }
+}
+
+function sourceCalls(source: string): string[][] {
+    const file = ts.createSourceFile("calls.ts", source, ts.ScriptTarget.Latest, true);
+    const reference = (expression: ts.Expression): string => {
+        if (ts.isParenthesizedExpression(expression)) return reference(expression.expression);
+        if (ts.isIdentifier(expression)) return expression.text;
+        if (ts.isPropertyAccessExpression(expression)) return reference(expression.expression) + "." + expression.name.text;
+        throw new Error("Expected a selected API value");
+    };
+    return file.statements.filter(ts.isExpressionStatement).map(statement => {
+        const expression = statement.expression;
+        if (!ts.isCallExpression(expression)) throw new Error("Expected an API call");
+        return [reference(expression.expression), ...expression.arguments.map(reference)];
+    });
+}
+
 async function blockTestAsync(name: string) {
     let blocksFile: string;
     let tsFile: string;
@@ -480,6 +521,53 @@ describe("blockly compiler", function () {
     });
 
     describe("compiling text", () => {
+        it("should preserve field-level fixed instances and reject local-variable arguments", async () => {
+            const source = "pickerTest.chooseAsset(pickerAssets.allowed)";
+            const restored = await roundTripPickerSource(source);
+            chai.assert.deepEqual(sourceCalls(restored), sourceCalls(source), restored);
+            const { result } = await decompilePickerSource(
+                "let local = pickerAssets.allowed;\npickerTest.chooseAsset(local);");
+            const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
+            chai.assert.equal(xml.querySelectorAll('block[type="picker_choose_asset"]').length, 0);
+            chai.assert.isAtLeast(xml.querySelectorAll('block[type="typescript_statement"]').length, 1);
+        });
+
+        it("should apply the selected source enum's constant-emission policy", async () => {
+            const source = [
+                "pickerTest.chooseItem(IRON_SHOVEL)",
+                "pickerTest.chooseItem(IRON_PICKAXE)",
+                "pickerTest.chooseItem(PickerAnimal.Chicken)"
+            ].join("\n");
+            const restored = await roundTripPickerSource(source);
+            chai.assert.deepEqual(sourceCalls(restored), sourceCalls(source), restored);
+        });
+
+        it("should generate picker snippets that compile back through their dropdown fields", async () => {
+            const { program, info } = await decompilePickerSource("");
+            const checker = program.getTypeChecker();
+            for (const qName of ["pickerTest.chooseMount", "pickerTest.chooseItem", "pickerTest.chooseAsset"]) {
+                let declaration: ts.FunctionDeclaration;
+                const visit = (node: ts.Node) => {
+                    if (ts.isFunctionDeclaration(node) && node.name) {
+                        const symbol = checker.getSymbolAtLocation(node.name);
+                        if (symbol && checker.getFullyQualifiedName(symbol) === qName) declaration = node;
+                    }
+                    ts.forEachChild(node, visit);
+                };
+                program.getSourceFiles().forEach(file => visit(file));
+                chai.assert.isDefined(declaration);
+                const snippet = pxtc.service.snippetStringify(pxtc.service.getSnippet({
+                    apis: info.apis, blocksInfo: info, checker, takenNames: {}
+                }, info.apis.byQName[qName], declaration));
+                const restored = await roundTripPickerSource(snippet);
+                chai.assert.deepEqual(sourceCalls(restored), sourceCalls(snippet), snippet + "\n=>\n" + restored);
+                const { result } = await decompilePickerSource(snippet);
+                const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
+                chai.assert.equal(xml.querySelectorAll('block[type="typescript_statement"]').length, 0);
+                chai.assert.equal(xml.querySelectorAll('block[type="' + info.apis.byQName[qName].attributes.blockId + '"]').length, 1);
+            }
+        });
+
         it("should round trip configured gridpicker enum sources and resolved parameter names", async () => {
             await getBlocksInfoAsync();
             const source = [
@@ -505,12 +593,12 @@ describe("blockly compiler", function () {
                     "PickerAnimal.Chicken", "PickerMonster.Husk", "PickerAnimal.Cow", "PickerAnimal.Chicken"
                 ], decompiled.outfiles[pxt.MAIN_BLOCKS]);
                 const result = await pxtblockly.compileAsync(workspace, info);
-                chai.assert.equal(result.source.trim().replace(/\s+/g, " "), [
+                chai.assert.deepEqual(sourceCalls(result.source), sourceCalls([
                     "pickerTest.chooseMount(PickerAnimal.Chicken)",
                     "pickerTest.chooseMount(PickerMonster.Husk)",
                     "pickerTest.chooseMount(PickerAnimal.Cow)",
                     "pickerTest.chooseMount(PickerAnimal.Chicken)"
-                ].join(" "));
+                ].join("\n")));
             } finally {
                 workspace.dispose();
             }

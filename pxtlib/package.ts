@@ -1515,9 +1515,19 @@ namespace pxt {
         return allres;
     }
 
+    function validateGridPickerCatalog(id: string, catalog: GridPickerCatalog): boolean {
+        const valid = typeof catalog?.name === "string" && Array.isArray(catalog.tabs)
+            && [catalog.tabs, catalog.families, catalog.materials, catalog.filters].every(entries =>
+                entries == null || (Array.isArray(entries) && entries.every(entry =>
+                    entry && typeof entry.id === "string" && typeof entry.name === "string")));
+        if (!valid) pxt.reportError("gridpicker", "Invalid catalog metadata", { catalog: id });
+        return valid;
+    }
+
     /** Localization keys are resource-qualified so independently installed packages can own catalogs. */
     export function getGridPickerCatalogStrings(id: string, catalog: GridPickerCatalog): Map<string> {
         const strings: Map<string> = {};
+        if (!validateGridPickerCatalog(id, catalog)) return strings;
         const names = [catalog.name, ...catalog.tabs.concat(catalog.families || [], catalog.materials || [], catalog.filters || [])
             .map(entry => entry.name)];
         for (const name of names) {
@@ -1529,6 +1539,7 @@ namespace pxt {
     export function getGridPickerCatalog(jres: Map<JRes> | undefined, id: string): GridPickerCatalog | undefined {
         const catalog = jres?.[id]?.gridPickerCatalog;
         if (!catalog) return undefined;
+        if (!validateGridPickerCatalog(id, catalog)) return undefined;
         const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`) || Util.rlf(source);
         const categories = (entries?: GridPickerCategory[]) => entries?.map(entry => ({ ...entry, name: name(entry.name) }));
         return {

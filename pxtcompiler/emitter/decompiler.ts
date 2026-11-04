@@ -3071,7 +3071,7 @@ ${output}</xml>`;
                 }
                 else if (env.blocks.apis.byQName[paramInfo.type]) {
                     const typeInfo = env.blocks.apis.byQName[paramInfo.type];
-                    if (typeInfo.attributes.fixedInstances) {
+                    if (typeInfo.attributes.fixedInstances || (param.fieldEditor === "gridpicker" && param.fieldOptions?.fixedInstances)) {
                         if (decompileFixedInst(param)) {
                             return undefined;
                         }

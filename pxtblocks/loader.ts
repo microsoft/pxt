@@ -522,8 +522,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
                         if (isEnum) {
                             syms = enumNames.length
-                                ? enumNames.reduce((symbols, name) => symbols.concat(getEnumDropdownValues(info.apis, name)), [] as pxtc.SymbolInfo[])
-                                : getEnumDropdownValues(info.apis, pr.type);
+                                ? enumNames.reduce((symbols, name) => symbols.concat(pxt.blocks.getEnumDropdownValues(info.apis, name)), [] as pxtc.SymbolInfo[])
+                                : pxt.blocks.getEnumDropdownValues(info.apis, pr.type);
                         }
                         else if (isFixed) {
                             syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
@@ -1050,10 +1050,6 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
 
 function getSymbolPickerTags(info: pxtc.BlocksInfo, symbol: pxtc.SymbolInfo): string[] {
     return pxt.sprite.getSymbolTags(info.apis, symbol).map(tag => tag.toLowerCase());
-}
-
-function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
-    return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName && !sym.attributes.blockHidden);
 }
 
 export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {

@@ -460,7 +460,8 @@ namespace pxt.sprite {
         };
     }
 
-    function getSymbolResource(apis: pxtc.ApisInfo, symbol?: pxtc.SymbolInfo): pxt.JRes | undefined {
+    /** Resolves a symbol's JRES alias, or its own resource when no alias is specified. */
+    export function getSymbolResource(apis: pxtc.ApisInfo, symbol?: pxtc.SymbolInfo): pxt.JRes | undefined {
         if (!symbol) return undefined;
         const reference = symbol.attributes.jres;
         return apis.jres?.[reference && reference !== "true" ? reference : symbol.qName];

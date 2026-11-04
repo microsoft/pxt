@@ -18,7 +18,7 @@ declare namespace gameplay {
 declare const enum GameMode {
     //% block=survival alias=SURVIVAL
     Survival,
-    //% block=creative alias=CREATIVE
+    //% block=creative alias=CREATIVE tags=builder
     Creative,
     //% block=adventure alias=ADVENTURE
     Adventure
@@ -38,3 +38,49 @@ const SURVIVAL = GameMode.Survival;
 const CREATIVE = GameMode.Creative;
 //% enumIdentity="GameMode.Adventure"
 const ADVENTURE = GameMode.Adventure;
+
+enum PickerChoice {
+    //% blockHidden=1 tags=eligible
+    Hidden,
+    //% tags=ineligible
+    Other,
+    //% tags=eligible
+    Allowed
+}
+
+class PickerSnippetAsset {
+    value: number;
+}
+
+namespace pickerAssets {
+    //% fixedInstance tags=ineligible
+    export const other = new PickerSnippetAsset();
+    //% fixedInstance tags=eligible
+    export const allowed = new PickerSnippetAsset();
+}
+
+declare namespace pickerSnippets {
+    //% blockId=snippet_choose_mode block="choose %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.enumNames="GameMode"
+    //% choice.fieldOptions.filter=builder
+    function chooseMode(value: number): void;
+
+    //% blockId=snippet_choose_choice block="choose %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.enumNames="PickerChoice,GameMode"
+    //% choice.fieldOptions.filter=eligible
+    function chooseChoice(value: number): void;
+
+    //% blockId=snippet_choose_explicit block="choose %choice"
+    //% value.fieldEditor=gridpicker value.defl=PickerChoice.Other
+    //% choice.fieldOptions.enumNames="PickerChoice"
+    //% choice.fieldOptions.filter=eligible
+    function chooseExplicit(value: number): void;
+
+    //% blockId=snippet_choose_asset block="choose %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.fixedInstances=true
+    //% choice.fieldOptions.filter=eligible
+    function chooseAsset(value: PickerSnippetAsset): void;
+}

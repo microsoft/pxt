@@ -159,15 +159,13 @@ namespace ts.pxtc.service {
             fnName = U.snakify(fnName);
 
         const attrs = fn.attributes;
+        const element = fn as pxtc.SymbolInfo;
+        const params = pxt.blocks.compileInfo(element);
+        const blocksById = blocksInfo.blocksById;
 
         if (attrs.shim === "TD_ID" && recursionDepth && decl.parameters.length) {
             return getParameterDefault(decl.parameters[0]);
         }
-
-        const element = fn as pxtc.SymbolInfo;
-        const params = pxt.blocks.compileInfo(element);
-
-        const blocksById = blocksInfo.blocksById
 
         // TODO: move out of getSnippet for general reuse
         const blockParameters = attrs._def?.parameters
@@ -375,6 +373,9 @@ namespace ts.pxtc.service {
                 return paramDefl
             }
 
+            const pickerDefault = getGridPickerDefault(params.actualNameToParam[name]);
+            if (pickerDefault !== undefined) return pickerDefault;
+
             let shadowDefFromFieldEditor = getDefaultValueFromFieldEditor(name)
             if (shadowDefFromFieldEditor) {
                 return shadowDefFromFieldEditor
@@ -448,6 +449,29 @@ namespace ts.pxtc.service {
 
             // lastly, null or none
             return python ? "None" : "null";
+        }
+
+        function getGridPickerDefault(param: pxt.blocks.BlockParameter): string | undefined {
+            if (param?.fieldEditor !== "gridpicker") return undefined;
+            const type = apis.byQName[param.type];
+            const configured = pxt.blocks.getConfiguredEnumNames(param, apis);
+            const enums = configured.length ? configured : type?.kind === SymbolKind.Enum ? [param.type] : [];
+            let choices: SymbolInfo[];
+            if (enums.length) {
+                choices = enums.reduce((members, name) => members.concat(pxt.blocks.getEnumDropdownValues(apis, name)), [] as SymbolInfo[]);
+            } else if (type && (type.attributes.fixedInstances || param.fieldOptions?.fixedInstances)) {
+                choices = getFixedInstancesOf(type);
+            } else return undefined;
+
+            const filter = typeof param.fieldOptions?.filter === "string" ? param.fieldOptions.filter : undefined;
+            const matches = pxt.sprite.compileTagFilter(filter);
+            const choice = choices.find(symbol => matches(pxt.sprite.getSymbolTags(apis, symbol)));
+            if (!choice) {
+                pxt.reportError("gridpicker", "No matching default choice", { api: fn.qName, parameter: param.actualName });
+                return python ? "None" : "null";
+            }
+            const value = pxt.blocks.getEnumConstant(apis, choice.namespace, choice.qName) || choice;
+            return python ? value.pyQName || U.snakify(value.qName) : value.qName;
         }
 
         function getDefaultValueOfType(type: ts.Type): SnippetNode | undefined {

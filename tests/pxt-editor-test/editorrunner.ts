@@ -209,6 +209,51 @@ describe("library-owned picker catalogs", () => {
             pxt.Util.rlf = oldRlf;
         }
     });
+
+    it("ignores malformed catalogs without blocking API localization", async () => {
+        const main = catalogPackage();
+        const resources = main.getJRes();
+        const invalid = [
+            { name: "Broken" },
+            { name: "Broken", tabs: null },
+            { name: "Broken", tabs: {} },
+            { name: "Broken", tabs: "invalid" },
+            { name: "Broken", tabs: Array.of<unknown>(null) },
+            { name: "Broken", tabs: new Array<unknown>(), families: {} }
+        ];
+        invalid.forEach((catalog, index) => {
+            resources["invalid." + index] = JSON.parse(JSON.stringify({
+                id: "invalid." + index, mimeType: "application/x-makecode-grid-picker", data: "", gridPickerCatalog: catalog
+            }));
+        });
+        const apis: pxtc.ApisInfo = { byQName: {}, jres: resources };
+        const original = JSON.stringify(resources);
+        const oldLanguage = pxt.Util.userLanguage();
+        const oldReportError = pxt.reportError;
+        const reported: string[] = [];
+        pxt.reportError = (category, message) => { reported.push(category + ": " + message); };
+        main.localizationStringsAsync = async () => ({
+            "alpha.pickers.icons|gridPicker|Animals": "Localized animals"
+        });
+        try {
+            for (const language of ["en", "fr", "en"]) {
+                pxt.Util.setUserLanguage(language);
+                chai.expect(await pxtc.localizeApisAsync(apis, main)).equals(apis);
+                for (const index of invalid.keys()) {
+                    const id = "invalid." + index;
+                    chai.expect(pxt.getGridPickerCatalogStrings(id, resources[id].gridPickerCatalog)).deep.equals({});
+                    chai.expect(pxt.getGridPickerCatalog(resources, id)).equals(undefined);
+                }
+                chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name)
+                    .equals(language === "fr" ? "Localized animals" : "Animals");
+            }
+            chai.expect(reported.some(message => message.indexOf("gridpicker:") === 0)).equals(true);
+            chai.expect(JSON.stringify(resources)).equals(original);
+        } finally {
+            pxt.reportError = oldReportError;
+            pxt.Util.setUserLanguage(oldLanguage);
+        }
+    });
 });
 
 describe("gallery code cards", () => {

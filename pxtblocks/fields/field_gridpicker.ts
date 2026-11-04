@@ -772,8 +772,10 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     }
 
     private catalogIcon_(reference: string): string {
-        const resource = this.blocksInfo_?.apis.jres?.[reference];
-        const icon = resource?.icon || this.blocksInfo_?.apis.byQName[reference]?.attributes.iconURL;
+        const apis = this.blocksInfo_?.apis;
+        const symbol = apis?.byQName[reference];
+        const resource = (symbol && pxt.sprite.getSymbolResource(apis, symbol)) || apis?.jres?.[reference];
+        const icon = resource?.icon || symbol?.attributes.iconURL;
         if (icon) return icon;
         if (resource?.data && pxt.Util.startsWith(resource.mimeType, "image/x-mkcd-f")) {
             if (!this.catalogImageConverter_) this.catalogImageConverter_ = new pxt.ImageConverter();
