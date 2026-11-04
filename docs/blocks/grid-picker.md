@@ -51,6 +51,9 @@ export function chooseRider(mob: MonsterMob): number {
 semantics as Arcade image-gallery tags: space-separated positive tags must all
 match, and `!tag` excludes that tag. Untagged choices do not match a positive
 filter. A UI filter can narrow a hard filter further, but cannot widen it.
+Without an explicit default, new blocks start with a matching choice. Explicit
+defaults and saved values remain restorable even if they fall outside the field's
+current filter.
 
 For a numeric field that draws from existing enums, use `enumNames` instead of
 declaring another enum:
@@ -70,6 +73,9 @@ export function chooseMount(mob: number): number {
 Existing APIs do not need to change their enum types. When migrating an older
 extension, retain its old enum declarations and block IDs for saved projects.
 New selector blocks can use the standard enum sources and tag filters.
+Configured enum choices survive TypeScript-to-Blocks round trips. Field-option
+keys may use either the TypeScript parameter name or its name in the block
+definition.
 
 ## Library Catalogs
 
@@ -134,6 +140,8 @@ than concealing them inside collapsed families. The final tab should use
 `flat: true`; it shows all choices allowed by the field's source types and hard
 filter, without family compression. Unmatched families remain individually
 available, so classification never removes assets from All.
+Hyphens and underscores are treated like spaces in both search queries and
+indexed names and tags.
 
 A tab may set `icon` to a JRES ID or qualified symbol with an icon. Use
 `materials: true` to show the catalog's `materials` choices. Materials use the
@@ -145,6 +153,10 @@ scroll with the rest of the picker, and keyboard focus moves to its first choice
 without changing the saved value. There is no material dropdown or preselected
 material. Tiles follow the configured material order. Untagged choices remain
 available under an expandable Other materials tile and in the flat All view.
+Normal MakeCode image resources can be used as icons without a separate PNG.
+Family and material definitions are optional: omitted families leave choices
+ungrouped, and missing material definitions use Other materials. Empty groups
+are not rendered.
 
 Material groups may overlap intentionally, such as Wood and a specific wood
 species. Choices remain unique in the final All tab and in the result count.
@@ -167,12 +179,19 @@ The catalog picker uses a treegrid: family and material tiles are expandable
 cells, and their child choices occupy the rows immediately below their tile's
 row. Arrow keys stay within an expanded group's choices. Up from its first row
 returns to the parent tile without collapsing it; Down from that tile re-enters.
+Moving between top-level tiles skips unrelated groups' child rows.
 Enter or Space toggles a tile or chooses an asset. Tab and Escape keep their
 normal behavior. The picker reserves the largest single expanded group's height,
 including child rows, across tabs and searches. Its opening anchor stays
 fixed while groups expand. The size is bounded by the editor pane; smaller tabs
 keep the same space and larger content scrolls instead of resizing the popup.
 Pane resizes can update the reserved space, anchor, and number of columns.
+
+## Framework tests
+
+Run `npx gulp testgridpicker` for the picker, keyboard, accessibility, and shared
+gallery-tag regressions. This task is also included in the framework's full test
+chain.
 
 ## Arcade Example
 

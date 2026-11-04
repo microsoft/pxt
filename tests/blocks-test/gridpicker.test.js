@@ -91,6 +91,7 @@ const catalog = {
     materials: [{ id: "copper", name: "Copper", tags: ["copper"] }, { id: "iron", name: "Iron", tags: ["iron"] }]
 };
 const groups = context.exports.getGridPickerGroups;
+const materialTab = { id: "materials", name: "Materials", materials: true };
 const summarize = result => JSON.parse(JSON.stringify(result.map(group => ({ id: group.id, values: group.options.map(option => option[1]) }))));
 assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[0], "")), [
     { id: "swords", values: ["Item.CopperSword", "Item.IronSword"] },
@@ -99,10 +100,38 @@ assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[0], "")),
 assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[0], "copper sword")), [
     { id: "swords", values: ["Item.CopperSword"] }
 ]);
+for (const query of ["family-zombies", "family_zombies"]) {
+    assert.deepStrictEqual(summarize(groups([
+        ["Zombie", "MonsterMob.Zombie"]
+    ], catalog, catalog.tabs[1], query, undefined, { "MonsterMob.Zombie": ["family-zombies"] })), [
+        { id: "all", values: ["MonsterMob.Zombie"] }
+    ]);
+}
+assert.deepStrictEqual(summarize(groups([
+    ["Blue-Orchid", "Block.Blue_Orchid"]
+], catalog, catalog.tabs[1], "Blue-Orchid")), [{ id: "all", values: ["Block.Blue_Orchid"] }]);
+assert.deepStrictEqual(summarize(groups([
+    ["Blue Orchid", "Block.Blue_Orchid"]
+], catalog, catalog.tabs[1], "Block.Blue_Orchid")), [{ id: "all", values: ["Block.Blue_Orchid"] }]);
+const optionalGroups = groups(options, { ...catalog, families: undefined }, catalog.tabs[0], "");
+assert.strictEqual(optionalGroups[0].flat, true);
+assert.strictEqual(optionalGroups[0].id, "other");
+assert.deepStrictEqual(summarize(groups(options, { ...catalog, materials: undefined }, materialTab, "missing")), []);
+const materialRemainder = groups(options, { ...catalog, materials: undefined }, materialTab, "");
+assert.strictEqual(materialRemainder[0].name, "Other materials");
+assert.strictEqual(materialRemainder[0].flat, false);
+const collisionCatalog = { ...catalog, materials: [
+    { id: "other", name: "Copper", tags: ["copper"] },
+    { id: "_other", name: "Iron", tags: ["iron"] }
+] };
+assert.deepStrictEqual(summarize(groups(options, collisionCatalog, materialTab, "")), [
+    { id: "other", values: ["Item.CopperSword", "Item.CopperPickaxe"] },
+    { id: "_other", values: ["Item.IronSword"] },
+    { id: "__other", values: ["MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"] }
+]);
 assert.deepStrictEqual(summarize(groups(filter(options, "rider"), catalog, catalog.tabs[1], "")), [
     { id: "all", values: ["MonsterMob.Zombie", "MonsterMob.Husk"] }
 ]);
-const materialTab = { id: "materials", name: "Materials", materials: true };
 assert.deepStrictEqual(summarize(groups(options.slice(0, 3), catalog, materialTab, "")), [
     { id: "copper", values: ["Item.CopperSword", "Item.CopperPickaxe"] },
     { id: "iron", values: ["Item.IronSword"] }
@@ -216,7 +245,7 @@ const baseMethods = ["getGridRowBounds", "getVerticalGridItemIndex", "getHorizon
 const baseMethodText = baseClass.members.filter(node => ts.isMethodDeclaration(node) && baseMethods.includes(node.name.text))
     .map(node => node.getText(baseSource));
 assert.strictEqual(baseMethodText.length, baseMethods.length);
-const methods = ["createWidget_", "populateTableContainer", "populateRow", "getGridRowBounds", "getVerticalGridItemIndex", "getHorizontalGridItemIndex", "createCatalog_", "renderCatalog_", "selectCatalogTab_"];
+const methods = ["createWidget_", "populateTableContainer", "populateRow", "getGridRowBounds", "getVerticalGridItemIndex", "getHorizontalGridItemIndex", "createCatalog_", "renderCatalog_", "selectCatalogTab_", "catalogIcon_"];
 const methodText = pickerClass.members.filter(node => ts.isMethodDeclaration(node) && methods.includes(node.name.text))
     .map(node => node.getText(pickerSource));
 assert.strictEqual(methodText.length, methods.length);
@@ -264,7 +293,7 @@ assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAt
 assert(treegrid.children[1].classList.contains("gridpicker-family-children-last"));
 assert.strictEqual(treegrid.querySelector('[data-value="@family:swords"]').getAttribute("aria-selected"), "false");
 assert.strictEqual(treegrid.querySelector('[data-value="Item.CopperSword"]').getAttribute("aria-selected"), "true");
-assert.strictEqual(picker.getVerticalGridItemIndex(1, 1), 3);
+assert.strictEqual(picker.getVerticalGridItemIndex(1, 1), 4);
 assert.strictEqual(picker.getVerticalGridItemIndex(3, 1), 3);
 assert.strictEqual(picker.getVerticalGridItemIndex(2, -1), 0);
 assert.strictEqual(picker.getVerticalGridItemIndex(3, -1), 0);
@@ -272,7 +301,7 @@ assert.strictEqual(picker.getHorizontalGridItemIndex(2, -1), 2);
 assert.strictEqual(picker.getHorizontalGridItemIndex(3, 1), 3);
 assert.deepStrictEqual(JSON.parse(JSON.stringify(picker.getGridRowBounds(4))), { start: 4, end: 4 });
 assert.strictEqual(picker.getVerticalGridItemIndex(4, 1), 4);
-assert.strictEqual(picker.getVerticalGridItemIndex(4, -1), 2);
+assert.strictEqual(picker.getVerticalGridItemIndex(4, -1), 0);
 assert.strictEqual(picker.getVerticalGridItemIndex(0, -1), 0);
 assert.strictEqual(treegrid.querySelectorAll('[role="gridcell"]').length, 5);
 picker.getValue = () => "Item.IronSword";
@@ -324,6 +353,10 @@ assertArrow("ArrowRight", 6, 6);
 assertArrow("ArrowRight", 3, 4);
 assertArrow("ArrowLeft", 4, 3);
 assertArrow("ArrowLeft", 1, 0);
+assertArrow("ArrowDown", 0, 7);
+assertArrow("ArrowUp", 7, 0);
+assertArrow("ArrowRight", 1, 7);
+assertArrow("ArrowLeft", 7, 1);
 context.Blockly.browserEvents.unbind(picker.keyDownBinding);
 rtl = true;
 context.exports.PickerBaseMethods.prototype.addKeyDownHandler.call(picker, treegrid);
@@ -332,6 +365,8 @@ assertArrow("ArrowLeft", 6, 6);
 assertArrow("ArrowLeft", 3, 4);
 assertArrow("ArrowRight", 4, 3);
 assertArrow("ArrowUp", 3, 1);
+assertArrow("ArrowLeft", 1, 7);
+assertArrow("ArrowRight", 7, 1);
 context.Blockly.browserEvents.unbind(picker.keyDownBinding);
 rtl = false;
 const materialFamily = { ...largeFamily, id: "copper", name: "Copper" };
@@ -406,8 +441,94 @@ context.Blockly.browserEvents.unbind(constrained.tabKeyBind);
 assert.deepStrictEqual(options.map(option => option[1]), [
     "Item.CopperSword", "Item.IronSword", "Item.CopperPickaxe", "MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"
 ]);
-assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[1], "missing")), [{ id: "all", values: [] }]);
+assert.deepStrictEqual(summarize(groups(options, catalog, catalog.tabs[1], "missing")), []);
 assert.deepStrictEqual(options.map(option => option[1]), [
     "Item.CopperSword", "Item.IronSword", "Item.CopperPickaxe", "MonsterMob.Zombie", "MonsterMob.Husk", "AnimalMob.Chicken", "Item.Other"
 ]);
-console.log("PASS: grid picker filters, groups, scoped LTR/RTL arrow navigation, accessible expansion, and legacy values.");
+const constructor = pickerClass.members.find(ts.isConstructorDeclaration);
+const initializers = pickerClass.members.filter(node => ts.isPropertyDeclaration(node) && node.initializer
+    && !node.modifiers?.some(modifier => modifier.kind === ts.SyntaxKind.StaticKeyword));
+context.parseColour = value => value;
+context.pxt.toolbox = { fadeColor: value => value };
+context.pxt.getGridPickerCatalog = () => ({ name: "Empty categories", tabs: [{ id: "tools", name: "Tools", tags: ["equipment"] }] });
+vm.runInContext(ts.transpileModule(`class ConstructorBase {
+    constructor(data) { this.data = data; this.value = data[0][1]; }
+    getValue() { return this.value; }
+    setValue(value) { this.value = value; }
+    getOptions() { return this.data; }
+}
+class PickerConstructor extends ConstructorBase {
+    ${initializers.map(node => node.getText(pickerSource)).join("\n")}
+    ${constructor.getText(pickerSource)}
+}
+exports.PickerConstructor = PickerConstructor;`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2017 }
+}).outputText, context);
+const defaultOptions = [options[5], options[3], options[4]];
+const constructorPicker = new context.exports.PickerConstructor("", {
+    data: defaultOptions, filter: "rider", catalog: "test.pickers",
+    blocksInfo: { apis: { byQName: {}, jres: {} } }
+});
+assert.strictEqual(constructorPicker.getValue(), "MonsterMob.Zombie");
+assert.strictEqual(constructorPicker.catalog_, undefined);
+assert.strictEqual(constructorPicker.getOptions(), defaultOptions);
+const explicitDefaultPicker = new context.exports.PickerConstructor("AnimalMob.Chicken", {
+    data: defaultOptions, filter: "rider"
+});
+assert.strictEqual(explicitDefaultPicker.getValue(), "AnimalMob.Chicken");
+constructorPicker.setValue("AnimalMob.Chicken");
+assert.strictEqual(constructorPicker.getValue(), "AnimalMob.Chicken");
+
+const iconPicker = new context.exports.PickerMethods();
+context.pxt.Util.startsWith = (value, prefix) => !!value && value.startsWith(prefix);
+context.pxt.ImageConverter = class {
+    convert(uri) { return "converted:" + uri; }
+};
+iconPicker.blocksInfo_ = { apis: { byQName: {
+    "assets.apiOverride": { attributes: { iconURL: "api-icon" } }
+}, jres: {
+    "assets.icon": { mimeType: "image/x-mkcd-f4", data: "base64-image" },
+    "assets.override": { mimeType: "image/x-mkcd-f4", data: "base64-image", icon: "custom-icon" },
+    "assets.apiOverride": { mimeType: "image/x-mkcd-f4", data: "base64-image" }
+} } };
+assert.strictEqual(iconPicker.catalogIcon_("assets.icon"), "converted:data:image/x-mkcd-f4;base64,base64-image");
+assert.strictEqual(iconPicker.catalogIcon_("assets.override"), "custom-icon");
+assert.strictEqual(iconPicker.catalogIcon_("assets.apiOverride"), "api-icon");
+assert.strictEqual(iconPicker.catalogIcon_("missing"), undefined);
+
+constrained.catalogTabs_ = [];
+constrained.catalog_ = { ...catalog, tabs: [catalog.tabs[0]] };
+constrained.catalogTab_ = "equipment";
+constrained.filter_ = "";
+constrained.catalogSearch_ = "";
+constrained.optionTags_ = Object.fromEntries(options.map(option => [option[1], context.exports.getGridPickerTags(option)]));
+constrained.getOptions = () => options.map(option => [typeof option[0] === "object" ? option[0].alt : option[0], option[1]]);
+constrained.getValue = () => "not-in-this-category";
+constrained.renderCatalog_();
+assert.strictEqual(constrained.catalogTable_.getAttribute("aria-activedescendant"), constrained.gridItems[0].id);
+assert.strictEqual(constrained.gridItems[0].textContent.includes("Swords"), true);
+assert.strictEqual(constrained.getValue(), "not-in-this-category");
+constrained.catalog_ = { ...catalog, families: undefined, tabs: [catalog.tabs[0]] };
+constrained.renderCatalog_();
+assert.strictEqual(constrained.gridItems.length, 3);
+assert.strictEqual(constrained.catalogTable_.querySelectorAll(".gridpicker-family").length, 0);
+
+const imageFile = "webapp/src/components/ImageFieldEditor.tsx";
+const imageSource = ts.createSourceFile(imageFile, fs.readFileSync(path.join(root, imageFile), "utf8"), ts.ScriptTarget.Latest, true);
+const imageClass = imageSource.statements.find(node => ts.isClassDeclaration(node) &&
+    node.members.some(member => member.name?.getText(imageSource) === "filterAssetsByType"));
+const imageFilter = imageClass.members.find(member => member.name?.getText(imageSource) === "filterAssetsByType");
+vm.runInContext(ts.transpileModule(`class GalleryMethods { ${imageFilter.getText(imageSource)} }
+exports.GalleryMethods = GalleryMethods;`, {
+    compilerOptions: { target: ts.ScriptTarget.ES2017 }
+}).outputText, context);
+context.pxt.AssetType = { Image: 0 };
+const gallery = new context.exports.GalleryMethods();
+gallery.state = { options: {}, galleryFilter: "playable" };
+gallery.blocksInfo = { apis: { byQName: {
+    "images.bird": { qName: "images.bird", attributes: { tags: "playable", jres: "assets.bird" } }
+}, jres: { "assets.bird": { tags: ["bird"] } } } };
+const bird = { id: "images.bird", type: 0, meta: { tags: ["bird"] } };
+assert.deepStrictEqual(Array.from(gallery.filterAssetsByType([bird], 0, false, true), asset => asset.id), ["images.bird"]);
+assert.deepStrictEqual(Array.from(bird.meta.tags), ["bird", "playable"]);
+console.log("PASS: grid picker defaults, groups, search, icons, scoped navigation, accessibility, gallery tags, and legacy values.");

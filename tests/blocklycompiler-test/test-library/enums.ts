@@ -73,6 +73,41 @@ const FORWARD = SixDirection.Forward;
 //% enumIdentity="SixDirection.Back"
 const BACK = SixDirection.Back;
 
+enum PickerAnimal {
+    //% tags=mount
+    Chicken,
+    //% tags=mount
+    Cow
+}
+
+enum PickerMonster {
+    //% tags="rider mount"
+    Zombie,
+    //% tags=rider
+    Husk
+}
+
+enum PickerUnsupported {
+    Other
+}
+
+//% enumIdentity="PickerAnimal.Chicken"
+const PICKER_CHICKEN = PickerAnimal.Chicken;
+
+namespace pickerTest {
+    //% blockId=picker_choose_mount block="choose %choice"
+    //% value.fieldEditor="gridpicker"
+    //% choice.fieldOptions.enumNames="PickerAnimal,PickerMonster"
+    //% choice.fieldOptions.filter="rider"
+    export function chooseMount(value: number): void {
+    }
+
+    //% blockId=picker_mount_shim block="mount $value" shim=TD_ID
+    export function mount(value: PickerAnimal): number {
+        return value;
+    }
+}
+
 declare namespace agent {
     /**
      * Commands the agent to destroy a block in the given direction

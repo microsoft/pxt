@@ -145,6 +145,14 @@ namespace pxt.blocks {
         return nb;
     }
 
+    /** Resolves the enum sources shared by grid-picker dropdowns and decompilation. */
+    export function getConfiguredEnumNames(param: BlockParameter, apis: pxtc.ApisInfo): string[] {
+        const names = param?.fieldEditor === "gridpicker" && param.fieldOptions?.enumNames;
+        if (typeof names !== "string") return [];
+        return names.split(",").map(name => name.trim()).filter((name, index, entries) =>
+            entries.indexOf(name) === index && apis.byQName[name]?.kind === pxtc.SymbolKind.Enum);
+    }
+
     export function compileInfo(fn: pxtc.SymbolInfo): BlockCompileInfo {
         const res: BlockCompileInfo = {
             parameters: [],

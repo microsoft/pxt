@@ -512,11 +512,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     let customField = pr.fieldEditor;
                     let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                     let fieldType = pr.type;
-                    const fieldOptions = fn.attributes.paramFieldEditorOptions?.[actName];
-                    const enumNames = customField === "gridpicker" && typeof fieldOptions?.enumNames === "string"
-                        ? fieldOptions.enumNames.split(",").map(name => name.trim())
-                            .filter(name => info.apis.byQName[name]?.kind === pxtc.SymbolKind.Enum)
-                        : [];
+                    const fieldOptions = pr.fieldOptions;
+                    const enumNames = pxt.blocks.getConfiguredEnumNames(pr, info.apis);
                     if (enumNames.length) isEnum = true;
                     if (customField === "gridpicker" && fieldOptions?.fixedInstances && typeInfo) isFixed = true;
 
@@ -590,7 +587,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                 blocksInfo: info,
                                 optionTags
                             } as FieldCustomDropdownOptions;
-                            pxt.Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
+                            pxt.Util.jsonMergeFrom(options, fieldOptions || {});
                             fields.push(namedField(createFieldEditor(customField, defl, options), defName));
                         }
                         else
@@ -604,7 +601,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                             type: fieldType,
                             blocksInfo: info
                         } as FieldCustomOptions;
-                        pxt.Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.actualName] || {});
+                        pxt.Util.jsonMergeFrom(options, fieldOptions || {});
                         fields.push(namedField(createFieldEditor(customField, defl, options), pr.definitionName));
                     } else {
                         inputName = defName;
