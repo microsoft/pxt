@@ -91,9 +91,27 @@ function fieldModules() {
             collect(path.posix.normalize(path.posix.join(path.posix.dirname(id), match[1])));
         }
     }
-    for (const id of ["fields/field_utils", "fields/field_sprite", "fields/field_tilemap", "backpack"]) collect(id);
+    for (const id of ["fields/field_utils", "fields/field_sprite", "fields/field_tilemap",
+        "fields/field_tileset", "fields/field_animation", "fields/field_musiceditor", "fields/field_melodySandbox",
+        "backpack", "backpackDrag", "plugins/renderer/renderer",
+        "plugins/duplicateOnDrag/dragStrategy", "monkeyPatches/gesture"]) collect(id);
     return modules;
 }
+
+// Shapes and field names from Arcade's screen, game, and mixer packages.
+const arcadeAssetBlocks = [
+    ["screen_image_picker", "img", "sprite"],
+    ["background_image_picker", "img", "sprite"],
+    ["dialog_image_picker", "img", "sprite"],
+    ["tile_image_picker", "img", "sprite"],
+    ["tilemap_image_picker", "img", "sprite"],
+    ["image_picker", "image", "sprite"],
+    ["tileset_tile_picker", "tile", "tileset"],
+    ["tiles_tilemap_editor", "tilemap", "tilemap"],
+    ["animation_editor", "frames", "animation"],
+    ["music_song_field_editor", "song", "musiceditor"],
+    ["melody_editor", "melody", "melody"]
+];
 
 describe("Backpack real asset fields (full Blockly JSON, fresh destination project)", function () {
     this.timeout(30000);
@@ -103,14 +121,16 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
     after(async () => { if (browser) await browser.close(); });
     beforeEach(async () => {
         page = await browser.newPage();
-        await page.setContent('<div id="workspace" style="width:900px;height:650px"></div>');
+        await page.setViewport({ width: 1000, height: 1000 });
+        await page.setContent(`<div id="workspace" style="width:900px;height:650px"></div>
+            <div id="backpack-target" style="width:150px;height:80px">Backpack Assets</div>`);
         const blocklyDirectory = path.dirname(require.resolve("blockly"));
         for (const file of ["blockly_compressed.js", "blocks_compressed.js", "msg/en.js"]) {
             await page.addScriptTag({ path: path.join(blocklyDirectory, file) });
         }
         await page.addScriptTag({ path: path.join(root, "built/pxtlib.js") });
         await page.addScriptTag({ path: path.join(root, "built/pxtsim.js") });
-        await page.evaluate(modules => {
+        await page.evaluate(({ modules, assetBlocks }) => {
             window.lf = pxt.Util.lf;
             window.errors = [];
             pxt.reportException = error => errors.push(String(error));
@@ -142,6 +162,31 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
             const { FieldSpriteEditor } = load("fields/field_sprite");
             const { FieldTilemap } = load("fields/field_tilemap");
             window.FieldBase = load("fields/field_base").FieldBase;
+            const editors = {
+                sprite: FieldSpriteEditor,
+                tilemap: FieldTilemap,
+                tileset: load("fields/field_tileset").FieldTileset,
+                animation: load("fields/field_animation").FieldAnimationEditor,
+                musiceditor: load("fields/field_musiceditor").FieldMusicEditor,
+                melody: load("fields/field_melodySandbox").FieldCustomMelody
+            };
+            const { setDuplicateOnDragStrategy } = load("plugins/duplicateOnDrag/dragStrategy");
+            load("plugins/duplicateOnDrag/duplicateOnDrag").setDraggableShadowBlocks(
+                assetBlocks.filter(([type]) => type !== "image_picker").map(([type]) => type));
+            load("monkeyPatches/gesture").monkeyPatchShadowDragTargetBlock();
+            load("plugins/renderer/renderer");
+            for (const [type, field, editor] of assetBlocks) {
+                Blockly.Blocks[type] = { init() {
+                    this.appendDummyInput().appendField(new editors[editor]("", {}), field);
+                    this.setOutput(true);
+                    setDuplicateOnDragStrategy(this);
+                } };
+            }
+            Blockly.Blocks.backpack_asset_parent = { init() {
+                this.appendValueInput("ASSET").appendField("use");
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+            } };
             Blockly.Blocks.backpack_real_assets = {
                 init() {
                     this.appendStatementInput("BODY");
@@ -149,7 +194,7 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                     this.appendDummyInput().appendField(new FieldTilemap("", {}), "TILEMAP");
                 }
             };
-            window.workspace = Blockly.inject("workspace", { renderer: "zelos", scrollbars: true });
+            window.workspace = Blockly.inject("workspace", { renderer: "pxt", scrollbars: true });
             window.settle = async () => {
                 FieldBase.flushInitQueue();
                 await Blockly.renderManagement.finishQueuedRenders();
@@ -174,7 +219,14 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                 return { image, tile, tilemap: project.getTilemap(id) };
             };
             // AssetType is a const enum, erased from the browser runtime.
-            window.snapshot = asset => asset.type === "tilemap" ? {
+            window.snapshot = asset => asset.type === "animation" ? {
+                interval: asset.interval,
+                frames: asset.frames.map(frame => ({
+                    width: frame.width, height: frame.height, pixels: Array.from(frame.data)
+                }))
+            } : asset.type === "song" ? {
+                song: pxt.assets.music.encodeSongToHex(asset.song)
+            } : asset.type === "tilemap" ? {
                 map: Array.from(asset.data.tilemap.data().data),
                 width: asset.data.tilemap.width, height: asset.data.tilemap.height,
                 walls: Array.from(asset.data.layers.data),
@@ -183,6 +235,39 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                     width: tile.bitmap.width, height: tile.bitmap.height, pixels: Array.from(tile.bitmap.data)
                 }))
             } : { width: asset.bitmap.width, height: asset.bitmap.height, pixels: Array.from(asset.bitmap.data) };
+            window.assetSnapshot = field => {
+                if (field.getAsset) return snapshot(field.getAsset());
+                if (field instanceof editors.tileset) {
+                    return snapshot(project.lookupAsset("tile", field.saveState(true).assetId));
+                }
+                return { melody: field.getFieldDescription(), value: field.getValue() };
+            };
+            window.makeArcadeAsset = async (type, connected) => {
+                const [, fieldName, editor] = assetBlocks.find(([id]) => id === type);
+                const assets = seed(2);
+                let value;
+                if (editor === "animation") {
+                    value = pxt.getTSReferenceForAsset(project.createNewAnimationFromData(
+                        [bitmap(16, 16, 3), bitmap(16, 16, 7)], 175, "backpackAnimation"));
+                } else if (editor === "musiceditor") {
+                    const song = pxt.assets.music.getEmptySong(2);
+                    song.beatsPerMinute = 147;
+                    song.tracks[0].notes.push({ startTick: 0, endTick: 8, notes: [{ note: 48, enharmonicSpelling: 0 }] });
+                    value = pxt.getTSReferenceForAsset(project.createNewSong(song, "backpackSong"));
+                } else if (editor === "melody") {
+                    value = '"C D E F G A B C5 "';
+                } else {
+                    value = pxt.getTSReferenceForAsset(editor === "tileset" ? assets.tile
+                        : editor === "tilemap" ? assets.tilemap : assets.image);
+                }
+                const state = { type, fields: { [fieldName]: value } };
+                const parent = Blockly.serialization.blocks.append(connected ? {
+                    type: "backpack_asset_parent", inputs: { ASSET: { shadow: state } }
+                } : state, workspace);
+                parent.moveTo(new Blockly.utils.Coordinate(100, 60));
+                await settle();
+                return { block: connected ? parent.getInputTargetBlock("ASSET") : parent, fieldName };
+            };
             window.makeSource = async () => {
                 const assets = seed(2);
                 const block = Blockly.serialization.blocks.append({ type: "backpack_real_assets", fields: {
@@ -209,15 +294,163 @@ describe("Backpack real asset fields (full Blockly JSON, fresh destination proje
                         && !!project.getTilemap(tilemap.id)
                         && tilemap.data.tileset.tiles.every(tile => !!project.resolveTile(tile.id)) };
             };
-        }, fieldModules());
+        }, { modules: fieldModules(), assetBlocks: arcadeAssetBlocks });
     });
     afterEach(async () => {
         if (!page) return;
         await page.evaluate(async () => {
+            window.disposeBackpackDrag?.();
             if (window.workspace?.dispose) { await settle(); workspace.dispose(); }
         });
         await page.close();
         page = undefined;
+    });
+
+    for (const [type] of arcadeAssetBlocks) {
+        it(`classifies and round-trips ${type} as an asset, standalone or inside a statement`, async () => {
+            const results = await page.evaluate(async type => {
+                const results = [];
+                for (const connected of [false, true]) {
+                    const { block, fieldName } = await makeArcadeAsset(type, connected);
+                    const expected = assetSnapshot(block.getField(fieldName));
+                    const before = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+                    const eligible = backpack.isBackpackBlock(block);
+                    const kind = backpack.getBackpackCaptureKind(block);
+                    const standalone = !!backpack.getBackpackAssetField(block);
+                    const parentKind = connected ? backpack.getBackpackCaptureKind(block.getParent()) : undefined;
+                    const { code } = backpack.captureBackpackBlock(block);
+                    const unchanged = before === JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+                    workspace.clear();
+                    await settle();
+                    window.project = new pxt.TilemapProject();
+                    const pasted = backpack.pasteBackpackBlock(code, workspace, undefined, "asset");
+                    await settle();
+                    results.push({
+                        connected, eligible, kind, standalone, parentKind, unchanged,
+                        rootTypes: JSON.parse(code).blocks.map(state => state.type),
+                        expected, actual: assetSnapshot(pasted.getField(fieldName))
+                    });
+                    workspace.clear();
+                    await settle();
+                    window.project = new pxt.TilemapProject();
+                }
+                return { results, errors };
+            }, type);
+            for (const result of results.results) {
+                assert(result.eligible && result.standalone && result.unchanged);
+                assert.equal(result.kind, "asset");
+                assert.equal(result.parentKind, result.connected ? "code" : undefined);
+                assert.deepStrictEqual(result.rootTypes, [type]);
+                assert.deepStrictEqual(result.actual, result.expected);
+            }
+            assert.deepStrictEqual(results.errors, []);
+        });
+    }
+
+    for (const type of ["screen_image_picker", "tileset_tile_picker", "tiles_tilemap_editor",
+        "animation_editor", "music_song_field_editor", "melody_editor"]) {
+        it(`saves a native shadow drag of ${type} as an asset without changing its source`, async () => {
+            const pageErrors = [];
+            page.on("pageerror", error => pageErrors.push(error.message));
+            const start = await page.evaluate(async type => {
+                const { block, fieldName } = await makeArcadeAsset(type, true);
+                window.expectedAsset = assetSnapshot(block.getField(fieldName));
+                window.sourceBefore = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+                window.assetCapture = undefined;
+                window.disposeBackpackDrag = load("backpackDrag").registerBackpackWorkspace(workspace, {
+                    isEnabled: () => true,
+                    save: selected => {
+                        window.assetCapture = {
+                            ...backpack.captureBackpackBlock(selected),
+                            kind: backpack.getBackpackCaptureKind(selected), fieldName
+                        };
+                    },
+                    open: () => {},
+                    hoverClass: "backpack-hover",
+                    dragTargets: [{ getElement: () => document.getElementById("backpack-target") }]
+                });
+                const rect = block.getSvgRoot().getBoundingClientRect();
+                const target = document.getElementById("backpack-target").getBoundingClientRect();
+                return { x: rect.left + 10, y: rect.top + rect.height / 2,
+                    endX: target.left + 60, endY: target.top + 40 };
+            }, type);
+            await page.mouse.move(start.x, start.y);
+            await page.mouse.down();
+            await page.mouse.move(start.endX, start.endY, { steps: 15 });
+            await page.mouse.up();
+            await page.waitForFunction(() => window.assetCapture && !workspace.isDragging());
+            const result = await page.evaluate(async () => {
+                await settle();
+                const sourceAfter = Blockly.serialization.workspaces.save(workspace);
+                const { code, kind, fieldName } = assetCapture;
+                workspace.clear();
+                await settle();
+                window.project = new pxt.TilemapProject();
+                const pasted = backpack.pasteBackpackBlock(code, workspace, undefined, kind);
+                await settle();
+                return { kind, before: JSON.parse(sourceBefore), after: sourceAfter,
+                    expected: expectedAsset, actual: assetSnapshot(pasted.getField(fieldName)), errors };
+            });
+            assert.equal(result.kind, "asset");
+            assert.deepStrictEqual(result.after, result.before, "The original asset shadow and its parent must be preserved");
+            assert.deepStrictEqual(result.actual, result.expected);
+            assert.deepStrictEqual(result.errors, []);
+            assert.deepStrictEqual(pageErrors, []);
+        });
+    }
+
+    it("keeps a detached asset as a real block on later Backpack drops", async () => {
+        const pageErrors = [];
+        page.on("pageerror", error => pageErrors.push(error.message));
+        await page.evaluate(async () => {
+            const { block } = await makeArcadeAsset("screen_image_picker", true);
+            window.draggedAssetId = block.id;
+            window.assetParentId = block.getParent().id;
+            window.backpackActive = true;
+            window.disposeBackpackDrag = load("backpackDrag").registerBackpackWorkspace(workspace, {
+                isEnabled: () => backpackActive,
+                save: selected => { window.savedKind = backpack.getBackpackCaptureKind(selected); },
+                open: () => {},
+                hoverClass: "backpack-hover",
+                dragTargets: [{ getElement: () => document.getElementById("backpack-target") }]
+            });
+        });
+        for (const stage of ["copy-shadow", "detach", "copy-block"]) {
+            const start = await page.evaluate(stage => {
+                window.backpackActive = stage !== "detach";
+                window.savedKind = undefined;
+                load("backpackDrag").refreshBackpackDragTargets(workspace);
+                window.sourceBefore = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+                const rect = workspace.getBlockById(draggedAssetId).getSvgRoot().getBoundingClientRect();
+                const target = document.getElementById("backpack-target").getBoundingClientRect();
+                return { x: rect.left + 10, y: rect.top + rect.height / 2,
+                    endX: backpackActive ? target.left + 60 : 600,
+                    endY: backpackActive ? target.top + 40 : 400 };
+            }, stage);
+            await page.mouse.move(start.x, start.y);
+            await page.mouse.down();
+            await page.mouse.move(start.endX, start.endY, { steps: 15 });
+            await page.mouse.up();
+            await page.waitForFunction(() => !workspace.isDragging());
+            const result = await page.evaluate(async () => {
+                await settle();
+                const block = workspace.getBlockById(draggedAssetId);
+                return {
+                    before: JSON.parse(sourceBefore), after: Blockly.serialization.workspaces.save(workspace),
+                    shadow: block.isShadow(), attached: !!block.getParent(),
+                    parentShadow: workspace.getBlockById(assetParentId).getInputTargetBlock("ASSET").isShadow(),
+                    kind: backpack.getBackpackCaptureKind(block), savedKind, errors
+                };
+            });
+            if (stage !== "detach") assert.deepStrictEqual(result.after, result.before, stage);
+            assert.equal(result.shadow, stage === "copy-shadow", stage);
+            assert.equal(result.attached, stage === "copy-shadow", stage);
+            assert(result.parentShadow);
+            assert.equal(result.kind, "asset");
+            assert.equal(result.savedKind, stage === "detach" ? undefined : "asset");
+            assert.deepStrictEqual(result.errors, []);
+        }
+        assert.deepStrictEqual(pageErrors, []);
     });
 
     for (const defaultFirst of [true, false]) {

@@ -528,7 +528,7 @@ describe("project backpack UI", function () {
         });
     });
 
-    it("captures block thumbnails without following siblings and retries density within the byte limit", async () => {
+    it("captures complete stack thumbnails and retries density within the byte limit", async () => {
         const result = await page.evaluate(async () => {
             const test = backpackTest;
             const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -568,7 +568,7 @@ describe("project backpack UI", function () {
         });
         assert.deepStrictEqual(result, {
             saved: { previewUri: assetPreviewURI, previewPixelDensity: 1.5 },
-            request: { x: -1, y: -1, width: 402, height: 102, scale: 320 / 402 },
+            request: { x: -1, y: -1, width: 1402, height: 102, scale: 320 / 1402 },
             densities: [2, 1.5], unchanged: true, cleaned: true
         });
     });
