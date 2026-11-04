@@ -24,12 +24,12 @@ function loadFunctions(file, names) {
     }).outputText, context);
 }
 
-loadFunctions("pxtlib/spriteutils.ts", ["parseTags", "compileTagFilter", "getSymbolTags", "filterItems"]);
+loadFunctions("pxtlib/spriteutils.ts", ["parseTags", "compileTagFilter", "getSymbolResource", "getSymbolTags", "getSymbolWeight", "sortByWeight", "filterItems"]);
 Object.assign(context.pxt.sprite, context.exports);
 loadFunctions("pxtlib/package.ts", ["inflateJRes", "getGridPickerCatalogStrings"]);
 context.pxt.inflateJRes = context.exports.inflateJRes;
 context.pxt.getGridPickerCatalogStrings = context.exports.getGridPickerCatalogStrings;
-loadFunctions("pxtblocks/fields/field_gridpicker.ts", ["getGridPickerTags", "filterGridPickerOptions", "getGridPickerGroups", "getGridPickerRows", "getGridPickerSizeRows"]);
+loadFunctions("pxtblocks/fields/field_gridpicker.ts", ["getGridPickerTags", "filterGridPickerOptions", "getGridPickerGroups", "getGridPickerRows", "sortGridPickerEntries", "getGridPickerSizeRows"]);
 loadFunctions("pxtblocks/loader.ts", ["getSymbolPickerTags"]);
 
 const cliSource = ts.createSourceFile("cli.ts", fs.readFileSync(path.join(root, "cli/cli.ts"), "utf8"), ts.ScriptTarget.Latest, true);
@@ -124,6 +124,32 @@ assert.deepStrictEqual(summarize(groups(options.slice(0, 3).reverse(), catalog, 
     { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] },
     { id: "pickaxes", values: ["Item.CopperPickaxe"] }
 ]);
+const weightedCatalog = {
+    ...catalog,
+    families: [{ ...catalog.families[0], weight: 20 }, { ...catalog.families[1], weight: 80 }]
+};
+const choiceWeights = { "Item.CopperSword": 0, "Item.IronSword": 100, "Item.Other": 200 };
+assert.deepStrictEqual(summarize(groups(options, weightedCatalog, catalog.tabs[0], "", undefined, undefined, choiceWeights)), [
+    { id: "pickaxes", values: ["Item.CopperPickaxe"] },
+    { id: "swords", values: ["Item.IronSword", "Item.CopperSword"] }
+]);
+assert.deepStrictEqual(summarize(groups(options, weightedCatalog, catalog.tabs[1], "sword", undefined, undefined, choiceWeights)), [
+    { id: "all", values: ["Item.IronSword", "Item.CopperSword"] }
+]);
+assert.deepStrictEqual(summarize(groups(options, weightedCatalog, catalog.tabs[0], "", "!copper", undefined, choiceWeights)), [
+    { id: "swords", values: ["Item.IronSword"] }
+]);
+const weightedGroups = groups(options, weightedCatalog, catalog.tabs[0], "", undefined, undefined, choiceWeights);
+assert.deepStrictEqual(Array.from(context.exports.sortGridPickerEntries([
+    { option: ["Other", "Item.Other"] },
+    { option: ["Swords", "@family:swords"], family: weightedGroups[1] },
+    { option: ["Pickaxes", "@family:pickaxes"], family: weightedGroups[0] }
+], choiceWeights), entry => entry.option[1]), ["Item.Other", "@family:pickaxes", "@family:swords"]);
+const overlap = { ...catalog, families: [
+    { ...catalog.families[0], id: "first", weight: 1 },
+    { ...catalog.families[0], id: "second", weight: 100 }
+] };
+assert.strictEqual(groups(options, overlap, catalog.tabs[0], "")[0].id, "first", "Weight must not change family membership");
 const sizedCatalog = { ...catalog, tabs: catalog.tabs.concat(materialTab) };
 assert.strictEqual(context.exports.getGridPickerSizeRows(options, sizedCatalog, 4).length, 2);
 const swords = groups(options, catalog, catalog.tabs[0], "")[0];

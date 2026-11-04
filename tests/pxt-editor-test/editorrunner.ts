@@ -108,7 +108,7 @@ describe("library-owned picker catalogs", () => {
                 "*": { namespace: `${id}.pickers`, mimeType: "application/x-makecode-grid-picker" },
                 icons: { gridPickerCatalog: {
                     name: "Images",
-                    tabs: [{ id: "animals", name: "Animals", tags: ["animal"] }, { id: "all", name: "All", flat: true }],
+                    tabs: [{ id: "all", name: "All", flat: true, weight: 0 }, { id: "animals", name: "Animals", tags: ["animal"], weight: 80 }],
                     families: [{ id: "birds", name: "Birds", tags: ["bird"] }],
                     filters: [{ id: "playable", name: "Playable", tags: ["playable"] }]
                 } }
@@ -124,6 +124,39 @@ describe("library-owned picker catalogs", () => {
         chai.expect(pxt.getGridPickerCatalog(resources, "beta.pickers.icons").families[0].name).equals("Birds");
         chai.expect(pxt.getGridPickerCatalog(resources, "missing")).equals(undefined);
         chai.expect(Object.keys(resources)).contains("alpha.pickers.icons").and.contains("beta.pickers.icons");
+    });
+
+    describe("picker weight ordering", () => {
+        it("uses descending toolbox-style weights with stable default priorities", () => {
+            const items = [
+                { id: "default" }, { id: "zero", weight: 0 }, { id: "high", weight: 100 },
+                { id: "negative", weight: -10 }, { id: "explicitDefault", weight: 50 }, { id: "highTie", weight: 100 }
+            ];
+            const original = items.slice();
+            chai.expect(pxt.sprite.sortByWeight(items, item => item.weight).map(item => item.id))
+                .deep.equals(["high", "highTie", "default", "explicitDefault", "zero", "negative"]);
+            chai.expect(items).deep.equals(original);
+        });
+
+        it("resolves JRES weights through aliases before falling back to symbol annotations", () => {
+            const symbol: pxtc.SymbolInfo = {
+                qName: "extension.hero", kind: pxtc.SymbolKind.Variable, name: "hero", namespace: "extension",
+                fileName: "test.ts", parameters: [], retType: "Image",
+                attributes: { callingConvention: 0, paramDefl: {}, jres: "assets.hero", weight: 90 }
+            };
+            const apis: pxtc.ApisInfo = {
+                byQName: { [symbol.qName]: symbol },
+                jres: { "assets.hero": { id: "assets.hero", data: "", mimeType: "image/png", weight: 0 } }
+            };
+            chai.expect(pxt.sprite.getSymbolWeight(apis, symbol.qName)).equals(0);
+            delete apis.jres["assets.hero"].weight;
+            chai.expect(pxt.sprite.getSymbolWeight(apis, symbol.qName)).equals(90);
+            apis.jres["assets.hero"].weight = -5;
+            chai.expect(pxt.sprite.getSymbolWeight(apis, symbol.qName)).equals(-5);
+            chai.expect(pxt.sprite.getSymbolWeight(apis, "missing")).equals(undefined);
+            const inflated = pxt.inflateJRes(JSON.parse('{"*":{"namespace":"weighted"},"entry":{"weight":0}}'));
+            chai.expect(inflated["weighted.entry"].weight).equals(0);
+        });
     });
 
     it("does not turn picker metadata into image or JSON gallery assets", () => {

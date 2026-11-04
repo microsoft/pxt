@@ -25,7 +25,8 @@ export const hero: Image = img`
 ```json
 {
     "Zombie": {
-        "tags": ["category-monsters", "family-zombies", "rider", "mount"]
+        "tags": ["category-monsters", "family-zombies", "rider", "mount"],
+        "weight": 70
     }
 }
 ```
@@ -94,8 +95,8 @@ For example, an extension can add `pickers.jres`:
                 { "id": "search", "name": "All", "flat": true }
             ],
             "families": [
-                { "id": "heroes", "name": "Heroes", "tags": ["hero"] },
-                { "id": "enemies", "name": "Enemies", "tags": ["enemy"] }
+                { "id": "heroes", "name": "Heroes", "tags": ["hero"], "weight": 80 },
+                { "id": "enemies", "name": "Enemies", "tags": ["enemy"], "weight": 60 }
             ],
             "filters": [
                 { "id": "playable", "name": "Playable", "tags": ["playable"] }
@@ -147,8 +148,20 @@ available under an expandable Other materials tile and in the flat All view.
 
 Material groups may overlap intentionally, such as Wood and a specific wood
 species. Choices remain unique in the final All tab and in the result count.
-Choices within a family or material retain their source order. Catalogs define
-groups and titles, not explicit per-option ordering lists.
+### Weights
+
+Tabs, families, and materials may set an optional numeric `weight`. Individual
+choices may set `weight` on their JRES resource entry, alongside `tags` and
+`icon`. Larger weights appear first, with a default of `50`, like toolbox
+priorities. Zero and negative weights are supported. Equal or unspecified
+weights retain source order; no list of option IDs is needed.
+
+A choice's JRES weight takes precedence over its API `//% weight` annotation.
+Choice weights apply within expanded groups and to flat/search results. Group
+weights order their parent tiles independently of their children's weights.
+Loose choices can appear between group tiles according to their own weights.
+Weight changes presentation, not tag matching, group membership, localization,
+or the stored option value. Pickers without a catalog keep their legacy order.
 
 The catalog picker uses a treegrid: family and material tiles are expandable
 cells, and their child choices occupy the rows immediately below their tile's

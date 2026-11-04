@@ -460,14 +460,30 @@ namespace pxt.sprite {
         };
     }
 
+    function getSymbolResource(apis: pxtc.ApisInfo, symbol?: pxtc.SymbolInfo): pxt.JRes | undefined {
+        if (!symbol) return undefined;
+        const reference = symbol.attributes.jres;
+        return apis.jres?.[reference && reference !== "true" ? reference : symbol.qName];
+    }
+
     export function getSymbolTags(apis: pxtc.ApisInfo, symbol?: pxtc.SymbolInfo): string[] {
         if (!symbol) return [];
-        const reference = symbol.attributes.jres;
-        const resource = reference && reference !== "true" ? reference : symbol.qName;
         return parseTags([
             ...parseTags(symbol.attributes.tags),
-            ...parseTags(apis.jres?.[resource]?.tags)
+            ...parseTags(getSymbolResource(apis, symbol)?.tags)
         ]);
+    }
+
+    export function getSymbolWeight(apis: pxtc.ApisInfo, qName: string): number | undefined {
+        const symbol = apis.byQName[qName];
+        return getSymbolResource(apis, symbol)?.weight ?? apis.jres?.[qName]?.weight ?? symbol?.attributes.weight;
+    }
+
+    /** Match toolbox priorities while retaining source order for ties, including older browsers. */
+    export function sortByWeight<T>(items: readonly T[], getWeight: (item: T) => number | undefined): T[] {
+        return items.map((item, index) => ({ item, index, weight: getWeight(item) ?? 50 }))
+            .sort((first, second) => second.weight - first.weight || first.index - second.index)
+            .map(entry => entry.item);
     }
 
     export function filterItems(target: GalleryItem[], tags: string[]) {

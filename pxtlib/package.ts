@@ -1507,6 +1507,7 @@ namespace pxt {
                 displayName: v.displayName,
                 tileset: v.tileset,
                 tags: v.tags,
+                weight: v.weight,
                 gridPickerCatalog: v.gridPickerCatalog
             }
         }
@@ -1533,7 +1534,7 @@ namespace pxt {
         return {
             ...catalog,
             name: name(catalog.name),
-            tabs: categories(catalog.tabs),
+            tabs: pxt.sprite.sortByWeight(categories(catalog.tabs), entry => entry.weight),
             families: categories(catalog.families),
             materials: categories(catalog.materials),
             filters: categories(catalog.filters)

@@ -220,6 +220,7 @@ declare namespace pxt {
     interface GridPickerCategory {
         id: string;
         name: string;
+        weight?: number;
         icon?: string;
         tags?: string[];
         flat?: boolean;
@@ -245,6 +246,7 @@ declare namespace pxt {
         tilemapTile?: boolean;
         tileset?: string[];
         tags?: string[];
+        weight?: number;
         gridPickerCatalog?: GridPickerCatalog;
     }
 
