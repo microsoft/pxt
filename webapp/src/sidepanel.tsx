@@ -36,6 +36,7 @@ interface SidepanelProps extends ISettingsProps {
     tutorialOptions?: pxt.tutorial.TutorialOptions;
     /** An optional tutorial layout mode where the sim is on the left and instructions are at the top, regardless of screen size. */
     tutorialSimSidebar?: boolean;
+    tutorialSimFullscreen?: boolean;
     onTutorialStepChange?: (step: number) => void;
     onTutorialComplete?: () => void;
     setEditorOffset?: () => void;
@@ -80,6 +81,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
     componentDidMount(): void {
         this.updateShouldResize();
+        this.updateTutorialSimFullscreen(false);
     }
 
     componentDidUpdate(props: SidepanelProps, state: SidepanelState) {
@@ -88,6 +90,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         }
 
         this.updateShouldResize();
+        this.updateTutorialSimFullscreen(!!props.tutorialSimFullscreen);
     }
 
     componentWillUnmount(): void {
@@ -110,6 +113,15 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
             this.setState({ shouldResize, height });
         }
+    }
+
+    private updateTutorialSimFullscreen(wasFullscreen: boolean) {
+        if (!!this.props.tutorialSimFullscreen === wasFullscreen) return;
+
+        if (this.props.tutorialSimFullscreen && this.props.collapseEditorTools) {
+            this.props.parent.expandSimulator();
+        }
+        this.props.parent.fireResize();
     }
 
     protected tryShowSimulator = () => {
@@ -152,6 +164,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     this.simPanelRef?.classList.remove("invisibleScrollbar");
                 else
                     this.simPanelRef?.classList.add("invisibleScrollbar");
+                if (this.props.tutorialSimFullscreen) {
+                    window.requestAnimationFrame(this.updateShouldResize);
+                }
             })
             this.simPanelResizeObserver.observe(c);
         }
@@ -211,7 +226,7 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
 
         const simContainerClassName = classList(
             "simulator-container",
-            !this.props.tutorialSimSidebar && "hidden"
+            !this.props.tutorialSimSidebar && !this.props.tutorialSimFullscreen && "hidden"
         );
         const outerTutorialContainerClassName = classList(
             "editor-sidebar",
@@ -251,14 +266,14 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
                     </div>
                 </div>}
             </>}
-            {hasSimulator && <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar ? { height: editorSidebarHeight } : undefined}>
+            {hasSimulator && <div id="editorSidebar" className={editorSidebarClassName} style={!this.props.tutorialSimSidebar && !this.props.tutorialSimFullscreen ? { height: editorSidebarHeight } : undefined}>
                 <div className={simContainerClassName}>
                     <div className={`ui items simPanel ${showHostMultiplayerGameButton ? "multiplayer-preview" : ""}`} ref={this.handleSimPanelRef}>
                         <div id="boardview" className="ui vertical editorFloat" role="region" aria-label={lf("Simulator")} tabIndex={-1} />
                         {showHostMultiplayerGameButton && <div className="ui item grid centered portrait multiplayer-presence">
                             <SimulatorPresenceBar />
                         </div>}
-                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
+                        <simtoolbar.SimulatorToolbar parent={parent} collapsed={collapseEditorTools && !this.props.tutorialSimFullscreen} tutorialSimFullscreen={this.props.tutorialSimFullscreen} simSerialActive={simSerialActive} devSerialActive={deviceSerialActive} showSimulatorSidebar={this.tryShowSimulator} />
                         {showKeymap && <keymap.Keymap parent={parent} />}
                         <div className="ui item portrait hide hidefullscreen">
                             {pxt.options.debug && <Button key="hwdebugbtn" className="tertiary" icon="xicon chip" text={"Dev Debug"} onClick={handleHardwareDebugClick} />}

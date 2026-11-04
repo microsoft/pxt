@@ -1570,7 +1570,7 @@ export class ProjectView
             if (isCompleted && pxt.commands.onTutorialCompleted) pxt.commands.onTutorialCompleted();
             // Hide flyouts and popouts
             this.editor.closeFlyout();
-            if (this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
+            if (!this.isTutorialSimFullscreen() && this.textEditor.giveFocusOnLoading && this.isTextEditor()) {
                 this.textEditor.editor?.focus();
             }
         }
@@ -5450,6 +5450,14 @@ export class ProjectView
         return this.state.tutorialOptions != undefined;
     }
 
+    private isTutorialSimFullscreen(): boolean {
+        const options = this.state.tutorialOptions;
+        return !this.state.home && !this.state.header?.tutorialCompleted
+            && !pxt.appTarget.simulator?.headless
+            && !!options?.tutorial && !!options.tutorialReady
+            && !!options.tutorialStepInfo?.[options.tutorialStep]?.simFullscreen;
+    }
+
     useTutorialSimSidebarLayout() {
         const lang = this.isBlocksActive() ? "blocks" : this.isPythonActive() ? "python" : "javascript";
         return !!pxt.appTarget.appTheme.tutorialSimSidebarLangs?.includes(lang);
@@ -5829,6 +5837,7 @@ export class ProjectView
         const tutorialCompleted = !!this.state.header?.tutorialCompleted;
         const tutorialOptions = tutorialCompleted ? undefined : this.state.tutorialOptions;
         const inTutorial = !!tutorialOptions && !!tutorialOptions.tutorial;
+        const tutorialSimFullscreen = this.isTutorialSimFullscreen();
         const isSidebarTutorial = pxt.appTarget.appTheme.sidebarTutorial;
         const isTabTutorial = inTutorial && !pxt.BrowserUtils.useOldTutorialLayout();
         const inTutorialExpanded = inTutorial && tutorialOptions.tutorialStepExpanded;
@@ -5836,7 +5845,7 @@ export class ProjectView
         const inDebugMode = this.state.debugging;
         const inHome = this.state.home && !sandbox;
         const inEditor = !!this.state.header && !inHome;
-        const projectTools = shouldShowProjectTools(sideDocs, inEditor, !!targetTheme.lockedEditor,
+        const projectTools = !tutorialSimFullscreen && shouldShowProjectTools(sideDocs, inEditor, !!targetTheme.lockedEditor,
             !!this.state.header?.temporary, pxt.shell.isReadOnly(),
             !!(targetTheme.projectTools || targetTheme.whiteboard || targetTheme.backpack));
         const { lightbox, greenScreen } = this.state;
@@ -5852,9 +5861,9 @@ export class ProjectView
         const feedbackEnabled = pxt.U.ocvEnabled();
         const showEditorToolbar = inEditor && !hideEditorToolbar && this.editor.hasEditorToolbar();
         const useSerialEditor = pxt.appTarget.serial && !!pxt.appTarget.serial.useEditor;
-        const showSideDoc = sideDocs && !projectTools && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
+        const showSideDoc = !tutorialSimFullscreen && sideDocs && !projectTools && this.state.sideDocsLoadUrl && !this.state.sideDocsCollapsed;
         const showCollapseButton = showEditorToolbar && !inHome && !sandbox && !targetTheme.simCollapseInMenu && (!isHeadless || inDebugMode) && !isTabTutorial;
-        const shouldHideEditorFloats = this.state.hideEditorFloats || this.state.collapseEditorTools;
+        const shouldHideEditorFloats = !tutorialSimFullscreen && (this.state.hideEditorFloats || this.state.collapseEditorTools);
         const logoWide = !!targetTheme.logoWide;
         const hwDialog = !sandbox && pxt.hasHwVariants();
         const editorOffset = ((inTutorialExpanded || isTabTutorial) && this.state.editorOffset) ? { top: this.state.editorOffset } : undefined;
@@ -5872,11 +5881,11 @@ export class ProjectView
             "ui",
             lightbox ? 'dimmable dimmed' : 'dimmable',
             shouldHideEditorFloats ? "hideEditorFloats" : '',
-            this.state.collapseEditorTools ? "collapsedEditorTools" : '',
+            !tutorialSimFullscreen && this.state.collapseEditorTools ? "collapsedEditorTools" : '',
             transparentEditorToolbar ? "transparentEditorTools" : '',
             invertedTheme ? 'inverted-theme' : '',
-            this.state.fullscreen ? 'fullscreensim' : '',
-            this.state.showMiniSim ? 'miniSim' : '',
+            !tutorialSimFullscreen && this.state.fullscreen ? 'fullscreensim' : '',
+            !tutorialSimFullscreen && this.state.showMiniSim ? 'miniSim' : '',
             hc ? 'hc' : '',
             showSideDoc ? 'sideDocs' : '',
             pxt.shell.layoutTypeClass(),
@@ -5886,6 +5895,7 @@ export class ProjectView
             isTabTutorial ? 'tabTutorial' : '',
             isSidebarTutorial ? 'sidebarTutorial' : '',
             tutorialSimSidebar ? 'tutorialSimSidebar' : '',
+            tutorialSimFullscreen ? 'tutorialSimFullscreen' : '',
             inDebugMode ? 'debugger' : '',
             pxt.options.light ? 'light' : '',
             pxt.BrowserUtils.isTouchEnabled() ? 'has-touch' : '',
@@ -5948,7 +5958,7 @@ export class ProjectView
                         <headerbar.HeaderBar parent={this} />
                     </header>}
                 {isSidebarTutorial && flyoutOnly && inTutorial && <sidebarTutorial.SidebarTutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
-                {inTutorial && !isTabTutorial && <div id="maineditor" className={sandbox ? "sandbox" : ""} role="main">
+                {inTutorial && !isTabTutorial && <div id="maineditor" className={sui.cx(["tutorial-instructions", sandbox ? "sandbox" : ""])} role="main">
                     {!(isSidebarTutorial && flyoutOnly) && inTutorial && <tutorial.TutorialCard ref={ProjectView.tutorialCardId} parent={this} pokeUser={this.state.pokeUserComponent == ProjectView.tutorialCardId} />}
                     {flyoutOnly && <tutorial.WorkspaceHeader parent={this} workspaceId={this.editor.getId()} />}
                 </div>}
@@ -5967,6 +5977,7 @@ export class ProjectView
                     handleFullscreenButtonClick={this.toggleSimulatorFullscreen}
                     tutorialOptions={isTabTutorial ? tutorialOptions : undefined}
                     tutorialSimSidebar={tutorialSimSidebar}
+                    tutorialSimFullscreen={tutorialSimFullscreen}
                     onTutorialStepChange={this.setTutorialStep}
                     onTutorialComplete={this.completeTutorialAsync}
                     setEditorOffset={this.setEditorOffset} />
