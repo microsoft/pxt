@@ -864,9 +864,11 @@ export function startDocsServer(loading: HTMLElement, content: HTMLElement, back
         if (disabled) {
             pxsim.U.addClass(el, "disabled");
             el.setAttribute("aria-disabled", "true");
+            el.setAttribute("tabindex", "-1");
         } else {
             pxsim.U.removeClass(el, "disabled");
             el.setAttribute("aria-disabled", "false");
+            el.setAttribute("tabindex", "0");
         }
     }
 
