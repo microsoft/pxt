@@ -524,7 +524,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippetName: "create array",
                     attributes: {
                         blockId: "lists_create_with",
-                        group: "Create",
+                        group: lf("{id:group}Create"),
                         weight: 90
                     },
                     blockXml: `<block type="variables_set" gap="8">
@@ -550,7 +550,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippetName: "create array",
                     attributes: {
                         blockId: "lists_create_with",
-                        group: "Create",
+                        group: lf("{id:group}Create"),
                         weight: 89
                     },
                     blockXml: `<block type="variables_set">
@@ -581,7 +581,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                     snippetName: "create array",
                     attributes: {
                         blockId: "lists_create_with",
-                        group: "Create",
+                        group: lf("{id:group}Create"),
                         weight: 5
                     },
                     blockXml: `<block type="lists_create_with">
@@ -651,7 +651,7 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 advanced: true,
                 weight: 50.07,
                 icon: "arrays",
-                groups: ["Create", "Read", "Modify", "Operations"],
+                groups: [lf("{id:group}Create"), "Read", "Modify", "Operations"],
                 callingConvention: ts.pxtc.ir.CallingConvention.Plain,
                 paramDefl: {}
             }
