@@ -214,14 +214,6 @@ function newLabel(part: pxtc.BlockLabel | pxtc.BlockImage): Blockly.Field {
     }
 }
 
-function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
-    if (specific == general) return true
-    let inf = apis.byQName[specific]
-    if (inf && inf.extendsTypes)
-        return inf.extendsTypes.indexOf(general) >= 0
-    return false
-}
-
 function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp: pxt.blocks.BlockCompileInfo) {
     const ns = (fn.attributes.blockNamespace || fn.namespace).split('.')[0];
     let instance = fn.kind == pxtc.SymbolKind.Method || fn.kind == pxtc.SymbolKind.Property;
@@ -505,25 +497,24 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     const defName = pr.definitionName;
                     const actName = pr.actualName;
 
-                    let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
-                    let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
+                    const isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
+                    const isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
                     let isConstantShim = !!fn.attributes.constantShim;
                     let isCombined = pr.type == "@combined@"
                     let customField = pr.fieldEditor;
                     let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                     let fieldType = pr.type;
                     const fieldOptions = pr.fieldOptions;
-                    const enumNames = pxt.blocks.getConfiguredEnumNames(pr, info.apis);
-                    if (enumNames.length) isEnum = true;
-                    if (customField === "gridpicker" && fieldOptions?.fixedInstances && typeInfo) isFixed = true;
+                    const pickerSymbols = pxt.blocks.getGridPickerDropdownValues(info.apis, pr);
 
-                    if (isEnum || isFixed || isConstantShim || isCombined) {
+                    if (pickerSymbols || isEnum || isFixed || isConstantShim || isCombined) {
                         let syms: pxtc.SymbolInfo[];
 
-                        if (isEnum) {
-                            syms = enumNames.length
-                                ? enumNames.reduce((symbols, name) => symbols.concat(pxt.blocks.getEnumDropdownValues(info.apis, name)), [] as pxtc.SymbolInfo[])
-                                : pxt.blocks.getEnumDropdownValues(info.apis, pr.type);
+                        if (pickerSymbols) {
+                            syms = pickerSymbols;
+                        }
+                        else if (isEnum) {
+                            syms = pxt.blocks.getEnumDropdownValues(info.apis, pr.type);
                         }
                         else if (isFixed) {
                             syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
@@ -1052,12 +1043,8 @@ function getSymbolPickerTags(info: pxtc.BlocksInfo, symbol: pxtc.SymbolInfo): st
     return pxt.sprite.getSymbolTags(info.apis, symbol).map(tag => tag.toLowerCase());
 }
 
-export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-    const symbols = pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
-        && sym.attributes.fixedInstance
-        && isSubtype(apis, sym.retType, qName))
-        .sort((l, r) => (r.attributes.weight || 50) - (l.attributes.weight || 50))
-    return symbols
+export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string): pxtc.SymbolInfo[] {
+    return pxt.blocks.getFixedInstanceDropdownValues(apis, qName);
 }
 
 export function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {

@@ -452,16 +452,8 @@ namespace ts.pxtc.service {
         }
 
         function getGridPickerDefault(param: pxt.blocks.BlockParameter): string | undefined {
-            if (param?.fieldEditor !== "gridpicker") return undefined;
-            const type = apis.byQName[param.type];
-            const configured = pxt.blocks.getConfiguredEnumNames(param, apis);
-            const enums = configured.length ? configured : type?.kind === SymbolKind.Enum ? [param.type] : [];
-            let choices: SymbolInfo[];
-            if (enums.length) {
-                choices = enums.reduce((members, name) => members.concat(pxt.blocks.getEnumDropdownValues(apis, name)), [] as SymbolInfo[]);
-            } else if (type && (type.attributes.fixedInstances || param.fieldOptions?.fixedInstances)) {
-                choices = getFixedInstancesOf(type);
-            } else return undefined;
+            const choices = pxt.blocks.getGridPickerDropdownValues(apis, param);
+            if (!choices) return undefined;
 
             const filter = typeof param.fieldOptions?.filter === "string" ? param.fieldOptions.filter : undefined;
             const matches = pxt.sprite.compileTagFilter(filter);

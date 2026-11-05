@@ -1,7 +1,7 @@
 /// <reference path="../../built/pxtlib.d.ts" />
 
 import * as Blockly from "blockly";
-import { FieldCustom, FieldCustomDropdownOptions, parseColour } from "./field_utils";
+import { FieldCustom, FieldCustomDropdownOptions, isImageProperties, parseColour } from "./field_utils";
 import { FieldBase } from "./field_base";
 import { FieldDropdownGrid } from "./field_dropdowngrid";
 
@@ -211,7 +211,9 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.optionTags_ = options.optionTags;
         this.blocksInfo_ = options.blocksInfo;
         const allowed = filterGridPickerOptions(options.data, this.filter_, this.optionTags_);
-        if (!text && allowed.length && !allowed.some(option => option[1] === this.getValue())) {
+        if (text) {
+            this.setValue(text);
+        } else if (allowed.length && !allowed.some(option => option[1] === this.getValue())) {
             this.setValue(allowed[0][1]);
         }
         this.catalog_ = options.catalog ? pxt.getGridPickerCatalog(this.blocksInfo_?.apis.jres, options.catalog) : undefined;
@@ -232,8 +234,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         }
         else this.catalog_ = undefined;
 
-        const dropdownOptions = options.data as [Object | string, string][];
-        this.hasImageOptions = dropdownOptions.some(option => typeof option[0] === 'object');
+        this.hasImageOptions = options.data.some((option: Blockly.MenuOption) => isImageProperties(option[0]));
     }
 
     protected setFocusedItem_(_gridItemContainer: HTMLElement) {
@@ -399,19 +400,19 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             }
 
 
-            if (typeof content === "object") {
+            if (isImageProperties(content)) {
                 // An image, not text.
-                const buttonImg = new Image(content['width'], content['height']);
+                const buttonImg = new Image(content.width, content.height);
                 buttonImg.setAttribute('draggable', 'false');
                 if (!('IntersectionObserver' in window)) {
                     // No intersection observer support, set the image url immediately
-                    buttonImg.src = content['src'];
+                    buttonImg.src = content.src;
                 } else {
                     buttonImg.src = FieldGridPicker.DEFAULT_IMG;
-                    buttonImg.setAttribute('data-src', content['src']);
+                    buttonImg.setAttribute('data-src', content.src);
                     this.observer.observe(buttonImg);
                 }
-                buttonImg.alt = family ? menuItem.title : content['alt'] || '';
+                buttonImg.alt = family ? menuItem.title : content.alt;
                 buttonImg.setAttribute('data-value', value);
                 menuItemContent.appendChild(buttonImg);
             } else {
@@ -775,7 +776,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         const apis = this.blocksInfo_?.apis;
         const symbol = apis?.byQName[reference];
         const resource = (symbol && pxt.sprite.getSymbolResource(apis, symbol)) || apis?.jres?.[reference];
-        const icon = resource?.icon || symbol?.attributes.iconURL;
+        const icon = symbol?.attributes.iconURL || resource?.icon;
         if (icon) return icon;
         if (resource?.data && pxt.Util.startsWith(resource.mimeType, "image/x-mkcd-f")) {
             if (!this.catalogImageConverter_) this.catalogImageConverter_ = new pxt.ImageConverter();
@@ -945,8 +946,8 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.catalogFamilies_ = {};
         const choices = new Set<string>();
         for (const group of groups) {
-            group.options.forEach(option => choices.add(option[1]));
             if (!group.flat && (group.options.length > 1 || tab.materials) && !tab.flat && !this.catalogSearch_.trim()) {
+                group.options.forEach(option => choices.add(option[1]));
                 const representative = group.options.find(option => option[1] === this.getValue()) || group.options[0];
                 const value = `@family:${group.id}`;
                 this.catalogFamilies_[value] = group;
@@ -956,7 +957,13 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                         : typeof representative[0] === "string" ? group.name : representative[0], value],
                     family: group
                 });
-            } else entries.push(...group.options.map(option => ({ option })));
+            } else {
+                for (const option of group.options) {
+                    if (choices.has(option[1])) continue;
+                    choices.add(option[1]);
+                    entries.push({ option });
+                }
+            }
         }
         const rows = getGridPickerRows(sortGridPickerEntries(entries, this.optionWeights_), this.columns_, this.catalogExpanded_);
         this.populateTableContainer([], this.catalogTable_, this.scrollContainer, rows);
@@ -1190,13 +1197,16 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         return { selectedBar, cancelButton };
     }
 
-    private updateSelectedBar_(content: any, value: string) {
-        if (content['src']) {
-            this.selectedImg_.src = content['src'];
+    private updateSelectedBar_(content: string | Blockly.ImageProperties, value: string) {
+        if (isImageProperties(content)) {
+            this.selectedImg_.src = content.src;
             this.selectedImg_.style.display = '';
+        } else {
+            this.selectedImg_.style.display = 'none';
         }
-        this.selectedImg_.alt = content['alt'] || content;
-        this.selectedBarText_.textContent = content['alt'] || content;
+        const label = isImageProperties(content) ? content.alt : content;
+        this.selectedImg_.alt = label;
+        this.selectedBarText_.textContent = label;
         this.selectedBarValue_ = value;
     }
 

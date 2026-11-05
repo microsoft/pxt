@@ -441,12 +441,10 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         if (useTags) {
+            const symbolTags = this.blocksInfo ? pxt.sprite.getSymbolTagsById(this.blocksInfo.apis) : {};
             assets.forEach(a => {
-                if (this.state?.options) {
-                    a.meta.tags = pxt.sprite.parseTags([...(a.meta.tags || []), ...(this.blocksInfo
-                        ? pxt.sprite.getSymbolTags(this.blocksInfo.apis, this.blocksInfo.apis.byQName[a.id])
-                        : [])]);
-                }})
+                a.meta.tags = pxt.sprite.parseTags([...(a.meta.tags || []), ...(symbolTags[a.id] || [])]);
+            });
 
             const matches = pxt.sprite.compileTagFilter(this.state.galleryFilter);
             assets = assets.filter(asset => matches(asset.meta.tags));

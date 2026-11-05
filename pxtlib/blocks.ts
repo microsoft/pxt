@@ -158,6 +158,29 @@ namespace pxt.blocks {
         return pxt.Util.values(apis.byQName).filter(symbol => symbol.namespace === enumName && !symbol.attributes.blockHidden);
     }
 
+    /** Returns fixed-instance field choices in the same weight order as the toolbox. */
+    export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string): pxtc.SymbolInfo[] {
+        return pxt.Util.values(apis.byQName).filter(symbol => symbol.kind === pxtc.SymbolKind.Variable
+            && symbol.attributes.fixedInstance
+            && (symbol.retType === qName || apis.byQName[symbol.retType]?.extendsTypes?.indexOf(qName) >= 0))
+            .sort((left, right) => (right.attributes.weight || 50) - (left.attributes.weight || 50));
+    }
+
+    /** Resolves static picker choices without filtering out saved values. */
+    export function getGridPickerDropdownValues(apis: pxtc.ApisInfo, param: BlockParameter): pxtc.SymbolInfo[] | undefined {
+        if (param?.fieldEditor !== "gridpicker") return undefined;
+        const type = apis.byQName[param.type];
+        const configured = getConfiguredEnumNames(param, apis);
+        const enums = configured.length ? configured : type?.kind === pxtc.SymbolKind.Enum ? [param.type] : [];
+        if (enums.length) {
+            return enums.reduce((members, name) => members.concat(getEnumDropdownValues(apis, name)), [] as pxtc.SymbolInfo[]);
+        }
+        if (type && ((type.attributes.fixedInstances && !param.shadowBlockId) || param.fieldOptions?.fixedInstances)) {
+            return getFixedInstanceDropdownValues(apis, param.type);
+        }
+        return undefined;
+    }
+
     /** Finds the constant required by an enum's emission policy, when one exists. */
     export function getEnumConstant(apis: pxtc.ApisInfo, enumName: string, value: string): pxtc.SymbolInfo | undefined {
         if (!apis.byQName[enumName]?.attributes.emitAsConstant) return undefined;

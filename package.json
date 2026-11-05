@@ -134,7 +134,6 @@
     "gulp-typescript": "5.0.1",
     "highlight.js": "11.11.1",
     "jquery": "3.5.0",
-    "jsdom": "27.4.0",
     "merge-stream": "2.0.0",
     "monaco-editor": "0.24.0",
     "pouchdb": "7.3.1",

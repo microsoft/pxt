@@ -761,7 +761,6 @@ const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
-const testgridpicker = () => exec("node tests/blocks-test/gridpicker.test.js", true);
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
 const testprojecttools = gulp.series(
@@ -808,7 +807,6 @@ const testAll = gulp.series(
     testpycomp,
     testpytraces,
     testtutorials,
-    testgridpicker,
     testlanguageservice,
     karma,
     testSkillmap,
@@ -936,7 +934,6 @@ exports.testpydecomp = testpydecomp;
 exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
 exports.testtutorials = testtutorials;
-exports.testgridpicker = testgridpicker;
 exports.test = testAll;
 exports.travis = travis;
 exports.karma = karma;

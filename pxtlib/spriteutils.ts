@@ -475,6 +475,21 @@ namespace pxt.sprite {
         ]);
     }
 
+    /** Indexes merged API/resource tags for both symbolic and gallery resource IDs. */
+    export function getSymbolTagsById(apis: pxtc.ApisInfo): pxt.Map<string[]> {
+        const result: pxt.Map<string[]> = {};
+        for (const qName of Object.keys(apis.byQName)) {
+            const symbol = apis.byQName[qName];
+            const tags = getSymbolTags(apis, symbol);
+            if (!tags.length) continue;
+            const resourceId = getSymbolResource(apis, symbol)?.id;
+            for (const id of [qName, resourceId]) {
+                if (id) result[id] = parseTags([...(result[id] || []), ...tags]);
+            }
+        }
+        return result;
+    }
+
     export function getSymbolWeight(apis: pxtc.ApisInfo, qName: string): number | undefined {
         const symbol = apis.byQName[qName];
         return getSymbolResource(apis, symbol)?.weight ?? apis.jres?.[qName]?.weight ?? symbol?.attributes.weight;

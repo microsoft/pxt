@@ -173,7 +173,9 @@ describe("library-owned picker catalogs", () => {
         const before = JSON.stringify(resources);
         const apis: pxtc.ApisInfo = { byQName: {}, jres: resources };
         const oldLanguage = pxt.Util.userLanguage();
-        main.localizationStringsAsync = async () => ({
+        main.localizationStringsAsync = async lang => lang === "de" ? {
+            "alpha.pickers.icons|gridPicker|Images": "Bilder"
+        } : ({
             "alpha.pickers.icons|gridPicker|Animals": "Alpha animals",
             "beta.pickers.icons|gridPicker|Animals": "Beta animals",
             "alpha.pickers.icons|gridPicker|Birds": "Alpha birds",
@@ -189,6 +191,11 @@ describe("library-owned picker catalogs", () => {
             chai.expect(alpha.families[0].name).equals("Alpha birds");
             chai.expect(alpha.filters[0].name).equals("Alpha playable");
             chai.expect(alpha.tabs[1].name).equals("All");
+            pxt.Util.setUserLanguage("de");
+            await pxtc.localizeApisAsync(apis, main);
+            chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").name).equals("Bilder");
+            chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name).equals("Animals");
+            chai.expect(pxt.getGridPickerCatalog(resources, "beta.pickers.icons").tabs[0].name).equals("Animals");
             pxt.Util.setUserLanguage("en");
             await pxtc.localizeApisAsync(apis, main);
             chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name).equals("Animals");
@@ -219,7 +226,13 @@ describe("library-owned picker catalogs", () => {
             { name: "Broken", tabs: {} },
             { name: "Broken", tabs: "invalid" },
             { name: "Broken", tabs: Array.of<unknown>(null) },
-            { name: "Broken", tabs: new Array<unknown>(), families: {} }
+            { name: "Broken", tabs: new Array<unknown>(), families: {} },
+            ...["tabs", "families", "materials", "filters"].reduce((catalogs, collection) =>
+                catalogs.concat([{}, [1], ["valid", 1]].map(tags => ({
+                    name: "Broken",
+                    tabs: [{ id: "valid", name: "Valid" }],
+                    [collection]: [{ id: "invalid", name: "Invalid", tags }]
+                }))), new Array<unknown>())
         ];
         invalid.forEach((catalog, index) => {
             resources["invalid." + index] = JSON.parse(JSON.stringify({

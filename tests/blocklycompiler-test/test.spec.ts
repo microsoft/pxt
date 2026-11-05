@@ -13,6 +13,7 @@ import "./localization.spec";
 import "./workspaceResize.spec";
 import "./blockInjection.spec";
 import "./tutorialToolbox.spec";
+import "./gridpicker.spec";
 
 const WEB_PREFIX = "http://localhost:9876";
 
@@ -565,6 +566,14 @@ describe("blockly compiler", function () {
                 const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
                 chai.assert.equal(xml.querySelectorAll('block[type="typescript_statement"]').length, 0);
                 chai.assert.equal(xml.querySelectorAll('block[type="' + info.apis.byQName[qName].attributes.blockId + '"]').length, 1);
+                const defaultWorkspace = new Blockly.Workspace();
+                try {
+                    const block = defaultWorkspace.newBlock(info.apis.byQName[qName].attributes.blockId);
+                    chai.assert.equal(xml.querySelector('field[name="choice"]').textContent, block.getFieldValue("choice"),
+                        "Block and text insertion must select the same default");
+                } finally {
+                    defaultWorkspace.dispose();
+                }
             }
         });
 

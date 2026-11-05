@@ -54,6 +54,8 @@ filter. A UI filter can narrow a hard filter further, but cannot widen it.
 Without an explicit default, new blocks start with a matching choice. Explicit
 defaults and saved values remain restorable even if they fall outside the field's
 current filter.
+Generated TypeScript and Python snippets use the same source choices and hard
+filter as new blocks, including the toolbox weight ordering for fixed instances.
 
 For a numeric field that draws from existing enums, use `enumNames` instead of
 declaring another enum:
@@ -130,6 +132,8 @@ resource ID, such as
 `myExtension.pickers.gameImages|gridPicker|Heroes`, so different extensions may
 translate the same source title independently. Include the translated strings
 files in `pxt.json` as for other extension translations.
+Catalog labels use the package translation dictionary loaded for APIs; there is
+no separate catalog translation loader or mutable localized copy of the JRES.
 
 Bundled catalogs also contribute their source titles to target strings. Existing
 target-title translations remain a fallback, and missing translations use the
@@ -154,12 +158,15 @@ without changing the saved value. There is no material dropdown or preselected
 material. Tiles follow the configured material order. Untagged choices remain
 available under an expandable Other materials tile and in the flat All view.
 Normal MakeCode image resources can be used as icons without a separate PNG.
+For symbol references, an explicit API `iconURL` takes precedence over the
+resource's icon.
 Family and material definitions are optional: omitted families leave choices
 ungrouped, and missing material definitions use Other materials. Empty groups
 are not rendered.
 
 Material groups may overlap intentionally, such as Wood and a specific wood
-species. Choices remain unique in the final All tab and in the result count.
+species. Choices remain unique in search results, the final All tab, and the
+result count.
 ### Weights
 
 Tabs, families, and materials may set an optional numeric `weight`. Individual
@@ -189,9 +196,10 @@ Pane resizes can update the reserved space, anchor, and number of columns.
 
 ## Framework tests
 
-Run `npx gulp testgridpicker` for the picker, keyboard, accessibility, and shared
-gallery-tag regressions. This task is also included in the framework's full test
-chain.
+After building the framework and webapp, run `npx gulp karma` for the picker,
+keyboard, accessibility, and shared gallery-tag regressions in Chrome. These
+tests are included in the framework's full test chain and use its existing
+browser runner.
 
 ## Arcade Example
 
@@ -218,6 +226,8 @@ needed. This opt-in setting does not replace Arcade's existing sprite editor.
 ## Focused Checks
 
 ```sh
-node tests/blocks-test/gridpicker.test.js
+npx gulp cli
+npx gulp webapp
+npx gulp karma
 node node_modules/typescript/bin/tsc -p pxtblocks --noEmit
 ```

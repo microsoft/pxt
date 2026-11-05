@@ -53,9 +53,11 @@ class PickerSnippetAsset {
 }
 
 namespace pickerAssets {
-    //% fixedInstance tags=ineligible
+    //% fixedInstance tags=ineligible weight=1000
     export const other = new PickerSnippetAsset();
-    //% fixedInstance tags=eligible
+    //% fixedInstance tags=eligible weight=10
+    export const earlier = new PickerSnippetAsset();
+    //% fixedInstance tags=eligible weight=90
     export const allowed = new PickerSnippetAsset();
 }
 

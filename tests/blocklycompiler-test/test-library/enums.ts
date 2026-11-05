@@ -100,9 +100,11 @@ class PickerAsset {
 }
 
 namespace pickerAssets {
-    //% fixedInstance tags=unavailable
+    //% fixedInstance tags=unavailable weight=1000
     export const other = new PickerAsset();
-    //% fixedInstance tags=eligible
+    //% fixedInstance tags=eligible weight=10
+    export const earlier = new PickerAsset();
+    //% fixedInstance tags=eligible weight=90
     export const allowed = new PickerAsset();
 }
 

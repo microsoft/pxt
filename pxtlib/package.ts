@@ -1519,7 +1519,8 @@ namespace pxt {
         const valid = typeof catalog?.name === "string" && Array.isArray(catalog.tabs)
             && [catalog.tabs, catalog.families, catalog.materials, catalog.filters].every(entries =>
                 entries == null || (Array.isArray(entries) && entries.every(entry =>
-                    entry && typeof entry.id === "string" && typeof entry.name === "string")));
+                    entry && typeof entry.id === "string" && typeof entry.name === "string"
+                    && (entry.tags == null || (Array.isArray(entry.tags) && entry.tags.every(tag => typeof tag === "string"))))));
         if (!valid) pxt.reportError("gridpicker", "Invalid catalog metadata", { catalog: id });
         return valid;
     }
@@ -1540,7 +1541,8 @@ namespace pxt {
         const catalog = jres?.[id]?.gridPickerCatalog;
         if (!catalog) return undefined;
         if (!validateGridPickerCatalog(id, catalog)) return undefined;
-        const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`) || Util.rlf(source);
+        const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`)
+            || pxtc.getBlockTranslationsCacheKey(source) || Util.rlf(source);
         const categories = (entries?: GridPickerCategory[]) => entries?.map(entry => ({ ...entry, name: name(entry.name) }));
         return {
             ...catalog,
