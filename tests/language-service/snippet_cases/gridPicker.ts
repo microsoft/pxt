@@ -9,3 +9,9 @@ pickerSnippets.chooseExplicit(PickerChoice.Other)
 
 // pickerSnippets.chooseAsset
 pickerSnippets.chooseAsset(pickerAssets.allowed)
+
+// pickerSnippets.chooseExplicitAsset
+pickerSnippets.chooseExplicitAsset(pickerAssets.camelAsset)
+
+// PickerSnippetReceiver.action
+pickerReceivers.betaDevice.action()

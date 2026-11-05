@@ -148,6 +148,28 @@ describe("grid picker catalogs", () => {
         chai.assert.deepEqual(cells(popup).map(cell => cell.dataset.value), ["MonsterMob.Zombie", "MonsterMob.Husk"]);
     });
 
+    it("reports missing and invalid catalogs once rather than once per field", () => {
+        const reportError = pxt.reportError;
+        const errors: { message: string; catalog: string | number }[] = [];
+        pxt.reportError = (_category, message, data) => { errors.push({ message, catalog: data?.catalog }); };
+        try {
+            for (const settings of [
+                withCatalog(JSON.parse('{"name":"Broken","tabs":null}')),
+                { catalog: "test.missing" }
+            ]) {
+                for (let i = 0; i < 3; i++) {
+                    open(settings);
+                    Blockly.WidgetDiv.hide();
+                }
+            }
+            chai.assert.lengthOf(errors, 2);
+            chai.assert.equal(errors.find(error => error.catalog === "test.catalog")?.message, "Invalid catalog metadata");
+            chai.assert.equal(errors.find(error => error.catalog === "test.missing")?.message, "Catalog resource not found");
+        } finally {
+            pxt.reportError = reportError;
+        }
+    });
+
     it("focuses an available choice without replacing a value outside the active tab", () => {
         const { field, popup } = open(withCatalog({ ...catalog, tabs: [catalog.tabs[0]] }), "AnimalMob.Chicken");
         const table = popup.querySelector('[role="treegrid"]');

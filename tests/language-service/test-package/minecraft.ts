@@ -59,6 +59,23 @@ namespace pickerAssets {
     export const earlier = new PickerSnippetAsset();
     //% fixedInstance tags=eligible weight=90
     export const allowed = new PickerSnippetAsset();
+    //% fixedInstance tags=ineligible
+    export const camelAsset = new PickerSnippetAsset();
+}
+
+//% fixedInstances
+class PickerSnippetReceiver {
+    //% blockId=snippet_receiver_action block="use %device"
+    //% this.fieldEditor=gridpicker
+    //% this.fieldOptions.filter=eligible
+    action(): void {}
+}
+
+namespace pickerReceivers {
+    //% fixedInstance tags=ineligible
+    export const alpha = new PickerSnippetReceiver();
+    //% fixedInstance tags=eligible
+    export const betaDevice = new PickerSnippetReceiver();
 }
 
 declare namespace pickerSnippets {
@@ -85,4 +102,10 @@ declare namespace pickerSnippets {
     //% choice.fieldOptions.fixedInstances=true
     //% choice.fieldOptions.filter=eligible
     function chooseAsset(value: PickerSnippetAsset): void;
+
+    //% blockId=snippet_choose_explicit_asset block="choose %choice"
+    //% value.fieldEditor=gridpicker value.defl=pickerAssets.camelAsset
+    //% choice.fieldOptions.fixedInstances=true
+    //% choice.fieldOptions.filter=eligible
+    function chooseExplicitAsset(value: PickerSnippetAsset): void;
 }

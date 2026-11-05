@@ -187,10 +187,15 @@ namespace ts.pxtc.service {
                 }) as SnippetNode)
 
         if (element.attributes.block) {
+            const pickerReceiverDefault = !element.attributes.defaultInstance && !params.thisParameter?.defaultValue
+                ? getGridPickerDefault(params.thisParameter) : undefined;
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
                 if (python && snippetPrefix)
                     snippetPrefix = U.snakify(snippetPrefix);
+            }
+            else if (pickerReceiverDefault !== undefined) {
+                snippetPrefix = pickerReceiverDefault;
             }
             else if (params.thisParameter?.shadowBlockId === "variables_get") {
                 snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
@@ -361,6 +366,10 @@ namespace ts.pxtc.service {
                 if (typeNode.kind === SK.StringKeyword || deflKind === SK.StringKeyword) {
                     return paramDefl.indexOf(`"`) != 0 ? `"${paramDefl}"` : paramDefl;
                 }
+                if (python) {
+                    const pickerDefault = getGridPickerDefault(params.actualNameToParam[name], paramDefl);
+                    if (pickerDefault !== undefined) return pickerDefault;
+                }
                 const type = checker?.getTypeAtLocation(param);
                 const typeSymbol = getPxtSymbolFromTsSymbol(type?.symbol, apis, checker);
                 if ((typeSymbol?.attributes.fixedInstances) && python) {
@@ -451,9 +460,14 @@ namespace ts.pxtc.service {
             return python ? "None" : "null";
         }
 
-        function getGridPickerDefault(param: pxt.blocks.BlockParameter): string | undefined {
+        function getGridPickerDefault(param: pxt.blocks.BlockParameter, explicitDefault?: string): string | undefined {
             const choices = pxt.blocks.getGridPickerDropdownValues(apis, param);
             if (!choices) return undefined;
+
+            if (explicitDefault !== undefined) {
+                const symbol = apis.byQName[explicitDefault];
+                return symbol && (python ? symbol.pyQName || U.snakify(symbol.qName) : symbol.qName);
+            }
 
             const filter = typeof param.fieldOptions?.filter === "string" ? param.fieldOptions.filter : undefined;
             const matches = pxt.sprite.compileTagFilter(filter);

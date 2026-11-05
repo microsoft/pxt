@@ -217,9 +217,6 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             this.setValue(allowed[0][1]);
         }
         this.catalog_ = options.catalog ? pxt.getGridPickerCatalog(this.blocksInfo_?.apis.jres, options.catalog) : undefined;
-        if (options.catalog && !this.catalog_) {
-            pxt.reportError("gridpicker", "Catalog resource not found", { catalog: options.catalog });
-        }
         this.catalogColumns_ = this.columns_;
         if (this.catalog_?.tabs.length) {
             for (const option of options.data) {

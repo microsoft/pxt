@@ -1515,13 +1515,21 @@ namespace pxt {
         return allres;
     }
 
+    const reportedGridPickerCatalogs = new Set<string>();
+
+    function reportGridPickerCatalogError(id: string, message: string): void {
+        if (reportedGridPickerCatalogs.has(id)) return;
+        reportedGridPickerCatalogs.add(id);
+        pxt.reportError("gridpicker", message, { catalog: id });
+    }
+
     function validateGridPickerCatalog(id: string, catalog: GridPickerCatalog): boolean {
         const valid = typeof catalog?.name === "string" && Array.isArray(catalog.tabs)
             && [catalog.tabs, catalog.families, catalog.materials, catalog.filters].every(entries =>
                 entries == null || (Array.isArray(entries) && entries.every(entry =>
                     entry && typeof entry.id === "string" && typeof entry.name === "string"
                     && (entry.tags == null || (Array.isArray(entry.tags) && entry.tags.every(tag => typeof tag === "string"))))));
-        if (!valid) pxt.reportError("gridpicker", "Invalid catalog metadata", { catalog: id });
+        if (!valid) reportGridPickerCatalogError(id, "Invalid catalog metadata");
         return valid;
     }
 
@@ -1538,8 +1546,12 @@ namespace pxt {
     }
 
     export function getGridPickerCatalog(jres: Map<JRes> | undefined, id: string): GridPickerCatalog | undefined {
-        const catalog = jres?.[id]?.gridPickerCatalog;
-        if (!catalog) return undefined;
+        const resource = jres?.[id];
+        if (!resource) {
+            reportGridPickerCatalogError(id, "Catalog resource not found");
+            return undefined;
+        }
+        const catalog = resource.gridPickerCatalog;
         if (!validateGridPickerCatalog(id, catalog)) return undefined;
         const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`)
             || pxtc.getBlockTranslationsCacheKey(source) || Util.rlf(source);

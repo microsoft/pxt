@@ -260,7 +260,7 @@ describe("library-owned picker catalogs", () => {
                 chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name)
                     .equals(language === "fr" ? "Localized animals" : "Animals");
             }
-            chai.expect(reported.some(message => message.indexOf("gridpicker:") === 0)).equals(true);
+            chai.expect(reported.length).equals(invalid.length);
             chai.expect(JSON.stringify(resources)).equals(original);
         } finally {
             pxt.reportError = oldReportError;
