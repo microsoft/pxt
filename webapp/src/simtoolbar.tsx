@@ -14,6 +14,7 @@ export interface SimulatorProps extends ISettingsProps {
     devSerialActive?: boolean;
 
     showSimulatorSidebar?: () => void;
+    tutorialSimFullscreen?: boolean;
 }
 
 export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
@@ -92,7 +93,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
     }
 
     renderCore() {
-        const { collapsed, devSerialActive, parent, simSerialActive } = this.props;
+        const { collapsed, devSerialActive, parent, simSerialActive, tutorialSimFullscreen } = this.props;
 
         const parentState = parent.state;
         if (!parentState.currFile || parentState.home) return <div />
@@ -140,7 +141,7 @@ export class SimulatorToolbar extends data.Component<SimulatorProps, {}> {
         return <aside className={"ui item grid centered simtoolbar" + (sandbox ? "" : " portrait ")} role="complementary" aria-label={lf("Simulator toolbar")}>
             <div className={`ui icon tiny buttons`} style={{ padding: "0" }}>
                 {make && <sui.Button disabled={debugging} icon='configure' className="secondary" title={makeTooltip} onClick={this.openInstructions} />}
-                {run && !targetTheme.bigRunButton && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
+                {run && (!targetTheme.bigRunButton || tutorialSimFullscreen) && <PlayButton parent={parent} simState={parentState.simState} debugging={parentState.debugging} />}
                 {fullscreen && <sui.Button key='fullscreenbtn' className="fullscreen-button tablet only hidefullscreen" icon="fas fa-expand-alt fa-flip-horizontal" fontAwesome={true} title={fullscreenTooltip} onClick={this.toggleSimulatorFullscreen} />}
                 {restart && <sui.Button disabled={!runControlsEnabled} key='restartbtn' className={`restart-button`} icon="refresh" title={restartTooltip} onClick={this.restartSimulator} />}
                 {run && debug && <sui.Button disabled={!debugBtnEnabled} key='debugbtn' className={`debug-button ${debugging ? "active" : ""}`} icon="icon bug" title={debugTooltip} onClick={this.toggleDebug} />}
