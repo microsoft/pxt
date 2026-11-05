@@ -34,6 +34,80 @@ describe("tutorial test cases", () => {
     });
 });
 
+describe("simulator-focused tutorial steps", () => {
+    it("parses the flag without treating it as the deprecated fullscreen hint", () => {
+        const info = pxt.tutorial.parseTutorial(`# Simulator
+
+## Step 1
+
+Write some code.
+
+## Try it @simFullscreen
+
+Look at the simulator and press A.
+
+## Step 3
+
+Return to your code.`);
+
+        chai.expect(info.steps[1].title).to.equal("Try it");
+        chai.expect(info.steps[1].simFullscreen).to.equal(true);
+        chai.expect(info.steps[1].showHint).to.equal(undefined);
+        chai.expect(info.steps[1].showDialog).to.equal(undefined);
+        chai.expect(info.steps[1].headerContentMd).to.equal("Look at the simulator and press A.");
+        chai.expect(info.steps[0].simFullscreen).to.equal(undefined);
+        chai.expect(info.steps[2].simFullscreen).to.equal(undefined);
+    });
+
+    it("supports case-insensitive flags, hidden titles, and activity steps", () => {
+        const info = pxt.tutorial.parseTutorial(`# Simulator
+
+### @activities true
+
+## Activity 1
+
+### {Try it @SIMFULLSCREEN}
+
+Press A.
+
+### Continue
+
+Edit your code.`);
+
+        chai.expect(info.steps[0].simFullscreen).to.equal(true);
+        chai.expect(info.steps[0].title).to.equal(undefined);
+        chai.expect(info.steps[0].activity).to.equal(0);
+        chai.expect(info.steps[0].showHint).to.equal(undefined);
+        chai.expect(info.steps[1].simFullscreen).to.equal(undefined);
+    });
+
+    it("preserves hints and supports explicit combinations with other modifiers", () => {
+        const info = pxt.tutorial.parseTutorial(`# Simulator
+
+## Try it @simFullscreen @showhint @resetDiff @tutorialCompleted
+
+Press A.
+
+\`\`\`blocks
+test();
+\`\`\`
+
+## Legacy @fullscreen
+
+An ordinary fullscreen hint.`);
+
+        const step = info.steps[0];
+        chai.expect(step.simFullscreen).to.equal(true);
+        chai.expect(step.showHint).to.equal(true);
+        chai.expect(step.resetDiff).to.equal(true);
+        chai.expect(step.tutorialCompleted).to.equal(true);
+        chai.expect(step.title).to.equal("Try it");
+        chai.expect(step.hintContentMd).to.contain("test();");
+        chai.expect(info.steps[1].showHint).to.equal(true);
+        chai.expect(info.steps[1].simFullscreen).to.equal(undefined);
+    });
+});
+
 describe("documentation rendering", () => {
     const template = `
 <aside id=youtube><div data-video="youtube:@ARGS@"></div></aside>

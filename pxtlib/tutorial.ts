@@ -299,7 +299,7 @@ ${code}
 
             // if title is not hidden ("{TITLE HERE}"), strip flags
             const title = !flags.match(/^\{.*\}$/)
-                ? flags.replace(/@(fullscreen|unplugged|showdialog|showhint|tutorialCompleted|resetDiff)/gi, "").trim()
+                ? flags.replace(/@(simFullscreen|fullscreen|unplugged|showdialog|showhint|tutorialCompleted|resetDiff)\b/gi, "").trim()
                 : undefined;
 
             let info: TutorialStepInfo = {
@@ -309,10 +309,12 @@ ${code}
                 localBlockConfig: blockConfig,
                 localValidationConfig: validationConfig
             }
-            if (/@(fullscreen|unplugged|showdialog|showhint)/i.test(flags))
+            if (/@(fullscreen|unplugged|showdialog|showhint)\b/i.test(flags))
                 info.showHint = true;
             if (/@(unplugged|showdialog)/i.test(flags))
                 info.showDialog = true;
+            if (/@simFullscreen\b/i.test(flags))
+                info.simFullscreen = true;
             if (/@tutorialCompleted/.test(flags))
                 info.tutorialCompleted = true;
             if (/@resetDiff/.test(flags))
