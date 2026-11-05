@@ -9,6 +9,7 @@ import "./global.scss";
 import { App } from "./App";
 import { AppStateProvider } from "./state/appStateContext";
 import { Ticks } from "./constants";
+import { initializeLocalizationAsync, localizeDocumentMetadata } from "./utils/localization";
 
 function enableAnalytics() {
     pxt.analytics.enable(pxt.Util.userLanguage());
@@ -45,14 +46,19 @@ window.addEventListener("DOMContentLoaded", () => {
 
     pxt.Cloud.apiRoot = "https://www.makecode.com/api/";
 
-    enableAnalytics();
+    initializeLocalizationAsync()
+        .catch(e => pxt.log(`Unable to load Tutorial Tool localization: ${e}`))
+        .then(() => {
+            localizeDocumentMetadata();
+            enableAnalytics();
 
-    ReactDOM.render(
-        <React.StrictMode>
-            <AppStateProvider>
-                <App />
-            </AppStateProvider>
-        </React.StrictMode>,
-        document.getElementById("root")
-    );
+            ReactDOM.render(
+                <React.StrictMode>
+                    <AppStateProvider>
+                        <App />
+                    </AppStateProvider>
+                </React.StrictMode>,
+                document.getElementById("root")
+            );
+        });
 });
