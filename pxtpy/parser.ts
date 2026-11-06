@@ -1584,6 +1584,14 @@ namespace pxt.py {
                 while (peekToken().type != TokenType.EOF)
                     U.pushRange(res, stmt())
             }
+
+            if (currComments.length) {
+                let p = mkAST("Pass") as Pass
+                p._comments = currComments
+                p._synthetic = true
+                currComments = []
+                res.push(p)
+            }
         } catch (e) {
             error(9572, U.lf("exception: {0}", e.message))
         }

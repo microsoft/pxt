@@ -199,6 +199,7 @@ namespace ts.pxtc.decompiler {
         handlers?: Handler[];
         isShadow?: boolean;
         id?: string;
+        disabled?: boolean;
     }
 
     interface StatementNode extends BlockNode {
@@ -208,6 +209,7 @@ namespace ts.pxtc.decompiler {
         prev?: StatementNode;
         comment?: Comment[];
         id?: string;
+        disabled?: boolean;
 
         // Optional data that Blockly ignores. We use it to associate statements with workspace comments
         data?: string;
@@ -854,7 +856,8 @@ ${output}</xml>`;
 
         function openBlockTag(type: string, node: StatementNode) {
             const id = node && node.id;
-            write(`<block ${id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}">`)
+            const disabledAttr = (node && node.disabled) ? ' disabled="true" disabled-reasons="MANUALLY_DISABLED"' : '';
+            write(`<block ${id ? `id="${node.id}" ` : ''}type="${U.htmlEscape(type)}"${disabledAttr}>`)
         }
 
         function closeBlockTag() {
@@ -1355,15 +1358,39 @@ ${output}</xml>`;
                     // to this statement. Remove it from any statement it's already assigned to and any workspace
                     // comments
                     if (current.ownerStatement) {
-                        current.ownerStatement.comment.splice(current.ownerStatement.comment.indexOf(current), 1);
+                        if (current.ownerStatement.comment) {
+                            const idx = current.ownerStatement.comment.indexOf(current);
+                            if (idx !== -1) current.ownerStatement.comment.splice(idx, 1);
+                        }
 
                         for (const wsComment of workspaceComments) {
-                            wsComment.comment.splice(wsComment.comment.indexOf(current), 1)
+                            if (wsComment.comment) {
+                                const idx = wsComment.comment.indexOf(current);
+                                if (idx !== -1) wsComment.comment.splice(idx, 1);
+                            }
                         }
                     }
                     current.owner = commented;
                     current.ownerStatement = stmt;
                     comments.push(current);
+                }
+            }
+
+            if (stmt && comments.length) {
+                let hasDisabled = false;
+                comments = comments.filter(c => {
+                    const isDisabled = (c.kind === CommentKind.MultiLine && c.lines && c.lines.some(l => l.indexOf("__disabled__") !== -1)) ||
+                        (c.kind === CommentKind.SingleLine && c.text && c.text.indexOf("__disabled__") !== -1);
+                    if (isDisabled) {
+                        hasDisabled = true;
+                        c.owner = commented;
+                        c.ownerStatement = stmt;
+                        return false;
+                    }
+                    return true;
+                });
+                if (hasDisabled) {
+                    stmt.disabled = true;
                 }
             }
 
@@ -4111,5 +4138,74 @@ ${output}</xml>`;
         }
 
         return false;
+    }
+
+    export function isBlockCode(code: string): boolean {
+        if (!code || !code.trim()) return false;
+        const trimmed = code.trim();
+        // Ignore directives starting with % (e.g. %block, %color, etc.)
+        if (trimmed.startsWith("%")) return false;
+
+        const sf = ts.createSourceFile("check.ts", trimmed, ts.ScriptTarget.Latest, true);
+        if (!sf || ((sf as any).parseDiagnostics && (sf as any).parseDiagnostics.length > 0) || sf.statements.length === 0) return false;
+
+        for (const stmt of sf.statements) {
+            if (ts.isExpressionStatement(stmt)) {
+                const expr = stmt.expression;
+                const isAssignment = ts.isBinaryExpression(expr) &&
+                    (expr.operatorToken.kind >= ts.SyntaxKind.FirstAssignment && expr.operatorToken.kind <= ts.SyntaxKind.LastAssignment);
+                if (!ts.isCallExpression(expr) && !isAssignment && !ts.isPostfixUnaryExpression(expr) && !ts.isPrefixUnaryExpression(expr)) {
+                    return false;
+                }
+            } else if (!ts.isVariableStatement(stmt) && !ts.isIfStatement(stmt) && !ts.isIterationStatement(stmt, false) && !ts.isBlock(stmt)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    export function preprocessDisabledBlocks(code: string): string {
+        if (!code) return code;
+        const lines = code.split("\n");
+        const commentRegex = /^(\s*)\/\/\s?(.*)$/;
+
+        let i = 0;
+        while (i < lines.length) {
+            if (!commentRegex.test(lines[i])) {
+                i++;
+                continue;
+            }
+
+            let j = i;
+            const commentLines: string[] = [];
+            const indents: string[] = [];
+            while (j < lines.length) {
+                const match = commentRegex.exec(lines[j]);
+                if (!match) break;
+                indents.push(match[1]);
+                commentLines.push(match[2]);
+                j++;
+            }
+
+            const groupCode = commentLines.join("\n");
+            if (commentLines.length > 1 && isBlockCode(groupCode)) {
+                lines[i] = `${indents[0]}/*__disabled__*/ ${commentLines[0]}`;
+                for (let k = 1; k < commentLines.length; k++) {
+                    lines[i + k] = `${indents[k]}${commentLines[k]}`;
+                }
+                i = j;
+                continue;
+            }
+
+            for (let k = 0; k < commentLines.length; k++) {
+                const lineContent = commentLines[k];
+                if (isBlockCode(lineContent)) {
+                    lines[i + k] = `${indents[k]}/*__disabled__*/ ${lineContent}`;
+                }
+            }
+            i = j;
+        }
+
+        return lines.join("\n");
     }
 }

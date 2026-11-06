@@ -7,6 +7,7 @@ export enum BlockContextWeight {
     Duplicate = 10,
     Copy = 15,
     AddComment = 20,
+    Disable = 25,
     ExpandCollapse = 30,
     DeleteBlock = 40,
     Help = 50,
@@ -33,6 +34,19 @@ export function registerBlockitems() {
     const blockComment = Blockly.ContextMenuRegistry.registry.getItem("blockComment");
     if (blockComment) {
         blockComment.weight = BlockContextWeight.AddComment;
+    }
+    const blockDisable = Blockly.ContextMenuRegistry.registry.getItem("blockDisable");
+    if (blockDisable) {
+        blockDisable.weight = BlockContextWeight.Disable;
+        const oldCallback = blockDisable.callback;
+        blockDisable.callback = function (scope: Blockly.ContextMenuRegistry.Scope, ...args: any[]) {
+            if (scope.block) {
+                pxt.tickEvent("blocks.context.disableBlock", {
+                    disabled: (!scope.block.hasDisabledReason(Blockly.constants.MANUALLY_DISABLED)).toString()
+                }, { interactiveConsent: true });
+            }
+            (oldCallback as any).apply(this, [scope, ...args]);
+        };
     }
 }
 
