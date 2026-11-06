@@ -80,8 +80,9 @@ export const Input = (props: InputProps) => {
 
     const [value, setValue] = React.useState(initialValue || "");
     const [expanded, setExpanded] = React.useState(false);
-    const [filter] = React.useState(props.filter ? new RegExp(props.filter, "g") : undefined);
+    const filter = React.useMemo(() => (props.filter ? new RegExp(props.filter, "g") : undefined), [props.filter]);
     const optionValues = React.useMemo(() => (options ? Object.values(options) : []), [options]);
+    const isComposingRef = React.useRef(false);
 
     let container: HTMLDivElement;
 
@@ -104,20 +105,55 @@ export const Input = (props: InputProps) => {
         }
     }
 
-    const changeHandler = (e: React.ChangeEvent<any>) => {
-        let newValue = (e.target as any).value;
-        if (newValue && filter) {
-            newValue = newValue.match(filter)?.join("") || "";
+    const sanitizeValue = (val: string) => {
+        let res = val;
+        if (res && filter) {
+            filter.lastIndex = 0;
+            res = res.match(filter)?.join("") || "";
         }
+        if (maxLength && res.length > maxLength) {
+            res = res.slice(0, maxLength);
+        }
+        return res;
+    };
+
+    const applyValue = (newValue: string) => {
         if (!readOnly && (value !== newValue)) {
             setValue(newValue);
         }
         if (onChange) {
             onChange(newValue);
         }
-    }
+    };
+
+    const changeHandler = (e: React.ChangeEvent<any>) => {
+        const rawValue = (e.target as any).value;
+        if (isComposingRef.current) {
+            setValue(rawValue);
+            return;
+        }
+        const sanitized = sanitizeValue(rawValue);
+        if (e.target && (e.target as any).value !== sanitized) {
+            (e.target as any).value = sanitized;
+        }
+        applyValue(sanitized);
+    };
+
+    const compositionStartHandler = () => {
+        isComposingRef.current = true;
+    };
+
+    const compositionEndHandler = (e: React.CompositionEvent<any>) => {
+        isComposingRef.current = false;
+        const sanitized = sanitizeValue((e.target as any).value);
+        if (e.target && (e.target as any).value !== sanitized) {
+            (e.target as any).value = sanitized;
+        }
+        applyValue(sanitized);
+    };
 
     const keyDownHandler = (e: React.KeyboardEvent) => {
+        if (isComposingRef.current) return;
         const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
         if (charCode === /*enter*/13 || props.treatSpaceAsEnter && charCode === /*space*/32) {
             let validatedValue = value;
@@ -173,9 +209,15 @@ export const Input = (props: InputProps) => {
     }
 
     const blurHandler = () => {
-        let validatedValue = value;
+        let currentValue = value;
+        if (isComposingRef.current) {
+            isComposingRef.current = false;
+            currentValue = sanitizeValue(value);
+            applyValue(currentValue);
+        }
+        let validatedValue = currentValue;
         if (validator) {
-            validatedValue = validator(value, initialValue || "");
+            validatedValue = validator(currentValue, initialValue || "");
             setValue(validatedValue);
         }
         if (onBlur) {
@@ -239,6 +281,8 @@ export const Input = (props: InputProps) => {
                     autoFocus={autoFocus}
                     onClick={clickHandler}
                     onChange={changeHandler}
+                    onCompositionStart={compositionStartHandler}
+                    onCompositionEnd={compositionEndHandler}
                     onKeyDown={keyDownHandler}
                     onBlur={blurHandler}
                     onFocus={focusHandler}
@@ -246,7 +290,7 @@ export const Input = (props: InputProps) => {
                     autoCorrect={autoComplete ? "" : "off"}
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
-                    maxLength={maxLength}
+                    maxLength={filter ? undefined : maxLength}
                     disabled={disabled}
                     ref={handleInputRef} />
                 {icon && (onIconClick

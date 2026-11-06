@@ -108,7 +108,8 @@ const InlineInputSegment: React.FC<InlineInputSegmentProps> = ({
                 preserveValueOnBlur={true}
                 placeholder={numeric ? "0" : param.name}
                 title={tooltip}
-                filter={numeric && !paramOptions ? "[0-9]{1,2}" : undefined}
+                filter={numeric && !paramOptions ? "[0-9]" : undefined}
+                maxLength={numeric && !paramOptions ? 2 : undefined}
             />
         </div>
     );
