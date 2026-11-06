@@ -2155,6 +2155,7 @@ ${output}</xml>`;
                 let shadowMutation: pxt.Map<string>;
                 const param = arg.param;
                 const paramInfo = arg.info;
+                const isEnum = paramInfo?.isEnum || pxt.blocks.getConfiguredEnumNames(param, blocksInfo.apis).length > 0;
 
                 const paramComp = comp.parameters[comp.thisParameter ? i - 1 : i];
                 const paramRange = paramComp && paramComp.range;
@@ -2194,12 +2195,12 @@ ${output}</xml>`;
                     // inner enum value as a field and not the shim block as a value
                     const shimCall: pxtc.CallInfo = pxtc.pxtInfo(e).callInfo;
                     const shimAttrs: CommentAttrs = shimCall && attrs(shimCall);
-                    if (shimAttrs && shimAttrs.shim === "TD_ID" && paramInfo.isEnum) {
+                    if (shimAttrs && shimAttrs.shim === "TD_ID" && isEnum) {
                         e = unwrapNode(shimCall.args[0]) as ts.Expression;
                     }
                 }
 
-                if (param && paramInfo && paramInfo.isEnum && e.kind === SK.Identifier) {
+                if (param && isEnum && e.kind === SK.Identifier) {
                     addField(getField(U.htmlEscape(param.definitionName), pxtInfo(e).commentAttrs.enumIdentity));
                     return;
                 }
@@ -2290,7 +2291,7 @@ ${output}</xml>`;
                         if (shadowBlockInfo && shadowBlockInfo.attributes.shim === "TD_ID") {
                             addInput(mkValue(aName, getPropertyAccessExpression(e as PropertyAccessExpression, false, param.shadowBlockId), param.shadowBlockId, shadowMutation));
                         }
-                        else if (paramInfo && paramInfo.isEnum || callInfo && (argAttrs.fixedInstance || argAttrs.blockIdentity === info.qName)) {
+                        else if (isEnum || callInfo && (argAttrs.fixedInstance || argAttrs.blockIdentity === info.qName)) {
                             addField(getField(aName, (getPropertyAccessExpression(e as PropertyAccessExpression, true) as TextNode).value))
                         }
                         else {
@@ -2984,8 +2985,9 @@ ${output}</xml>`;
                 const e = unwrapNode(arg.value) as Expression;
                 const paramInfo = arg.info;
                 const param = arg.param;
+                const enumNames = pxt.blocks.getConfiguredEnumNames(param, env.blocks.apis);
 
-                if (paramInfo.isEnum) {
+                if (paramInfo.isEnum || enumNames.length) {
                     if (checkEnumArgument(e)) {
                         return undefined;
                     }
@@ -3001,7 +3003,8 @@ ${output}</xml>`;
                     }
                     else if (e.kind === SK.Identifier) {
                         const attributes = pxtInfo(e).commentAttrs;
-                        if (attributes && attributes.enumIdentity) return undefined;
+                        if (attributes?.enumIdentity && (!enumNames.length ||
+                            enumNames.indexOf(attributes.enumIdentity.slice(0, attributes.enumIdentity.lastIndexOf("."))) >= 0)) return undefined;
                     }
                     return Util.lf("Enum arguments may only be literal property access expressions");
                 }
@@ -3068,7 +3071,7 @@ ${output}</xml>`;
                 }
                 else if (env.blocks.apis.byQName[paramInfo.type]) {
                     const typeInfo = env.blocks.apis.byQName[paramInfo.type];
-                    if (typeInfo.attributes.fixedInstances) {
+                    if (typeInfo.attributes.fixedInstances || (param.fieldEditor === "gridpicker" && param.fieldOptions?.fixedInstances)) {
                         if (decompileFixedInst(param)) {
                             return undefined;
                         }
@@ -3096,8 +3099,6 @@ ${output}</xml>`;
 
                 function checkEnumArgument(enumArg: ts.Node) {
                     // Enums can be under namespaces, so split up the qualified name into parts
-                    const parts = paramInfo.type.split(".");
-
                     const enumParts: string[] = [];
                     while (enumArg.kind === SK.PropertyAccessExpression) {
                         enumParts.unshift((enumArg as PropertyAccessExpression).name.text);
@@ -3110,12 +3111,10 @@ ${output}</xml>`;
 
                     enumParts.unshift((enumArg as Identifier).text);
 
-                    // Use parts.length, because enumParts also contains the enum member
-                    for (let i = 0; i < parts.length; i++) {
-                        if (parts[i] !== enumParts[i]) return false;
-                    }
-
-                    return true;
+                    return (enumNames.length ? enumNames : [paramInfo.type]).some(name => {
+                        const parts = name.split(".");
+                        return enumParts.length === parts.length + 1 && parts.every((part, index) => part === enumParts[index]);
+                    });
                 }
             }
         }
@@ -3491,7 +3490,8 @@ ${output}</xml>`;
                                 parentInfo.args.forEach((arg, i) => {
                                     if (arg === child) {
                                         const paramInfo = api.parameters[instance ? i - 1 : i];
-                                        if (paramInfo.isEnum) {
+                                        const param = pxt.blocks.compileInfo(api).parameters[instance ? i - 1 : i];
+                                        if (paramInfo?.isEnum || pxt.blocks.getConfiguredEnumNames(param, env.blocks.apis).length) {
                                             fail = false;
                                         }
                                     }

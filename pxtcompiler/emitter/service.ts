@@ -307,6 +307,7 @@ namespace ts.pxtc {
         locs?: boolean;
         docs?: boolean;
         pxtsnippet?: pxt.SnippetConfig[]; // extract localizable strings from pxtsnippets.json files
+        jres?: pxt.Map<pxt.JRes>; // resources owned by the package being localized
     }
 
     export function genDocs(pkg: string, apiInfo: ApisInfo, options: GenDocsOptions = {}): pxt.Map<string> {
@@ -392,6 +393,12 @@ namespace ts.pxtc {
                 if (em.attributes.ariaLabel) locStrings[`${em.qName}|ariaLabel`] = em.attributes.ariaLabel;
                 if (em.attributes.jsDoc) locStrings[em.qName] = em.attributes.jsDoc;
             });
+        if (options.locs) {
+            for (const id of Object.keys(options.jres || {})) {
+                const catalog = options.jres[id].gridPickerCatalog;
+                if (catalog) Util.jsonMergeFrom(locStrings, pxt.getGridPickerCatalogStrings(id, catalog));
+            }
+        }
         mapLocs(locStrings, "");
         mapLocs(jsdocStrings, "-jsdoc");
         // Localize pxtsnippets.json files

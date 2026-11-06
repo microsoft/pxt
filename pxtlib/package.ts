@@ -1506,11 +1506,64 @@ namespace pxt {
                 tilemapTile: v.tilemapTile,
                 displayName: v.displayName,
                 tileset: v.tileset,
-                tags: v.tags
+                tags: v.tags,
+                weight: v.weight,
+                gridPickerCatalog: v.gridPickerCatalog
             }
         }
 
         return allres;
+    }
+
+    const reportedGridPickerCatalogs = new Set<string>();
+
+    function reportGridPickerCatalogError(id: string, message: string): void {
+        if (reportedGridPickerCatalogs.has(id)) return;
+        reportedGridPickerCatalogs.add(id);
+        pxt.reportError("gridpicker", message, { catalog: id });
+    }
+
+    function validateGridPickerCatalog(id: string, catalog: GridPickerCatalog): boolean {
+        const valid = typeof catalog?.name === "string" && Array.isArray(catalog.tabs)
+            && [catalog.tabs, catalog.families, catalog.materials, catalog.filters].every(entries =>
+                entries == null || (Array.isArray(entries) && entries.every(entry =>
+                    entry && typeof entry.id === "string" && typeof entry.name === "string"
+                    && (entry.tags == null || (Array.isArray(entry.tags) && entry.tags.every(tag => typeof tag === "string"))))));
+        if (!valid) reportGridPickerCatalogError(id, "Invalid catalog metadata");
+        return valid;
+    }
+
+    /** Localization keys are resource-qualified so independently installed packages can own catalogs. */
+    export function getGridPickerCatalogStrings(id: string, catalog: GridPickerCatalog): Map<string> {
+        const strings: Map<string> = {};
+        if (!validateGridPickerCatalog(id, catalog)) return strings;
+        const names = [catalog.name, ...catalog.tabs.concat(catalog.families || [], catalog.materials || [], catalog.filters || [])
+            .map(entry => entry.name)];
+        for (const name of names) {
+            if (name) strings[`${id}|gridPicker|${name}`] = name;
+        }
+        return strings;
+    }
+
+    export function getGridPickerCatalog(jres: Map<JRes> | undefined, id: string): GridPickerCatalog | undefined {
+        const resource = jres?.[id];
+        if (!resource) {
+            reportGridPickerCatalogError(id, "Catalog resource not found");
+            return undefined;
+        }
+        const catalog = resource.gridPickerCatalog;
+        if (!validateGridPickerCatalog(id, catalog)) return undefined;
+        const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`)
+            || pxtc.getBlockTranslationsCacheKey(source) || Util.rlf(source);
+        const categories = (entries?: GridPickerCategory[]) => entries?.map(entry => ({ ...entry, name: name(entry.name) }));
+        return {
+            ...catalog,
+            name: name(catalog.name),
+            tabs: pxt.sprite.sortByWeight(categories(catalog.tabs), entry => entry.weight),
+            families: categories(catalog.families),
+            materials: categories(catalog.materials),
+            filters: categories(catalog.filters)
+        };
     }
 
     export function allPkgFiles(cfg: PackageConfig) {
