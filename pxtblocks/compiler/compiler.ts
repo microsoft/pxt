@@ -8,7 +8,7 @@ import { append, countOptionals, escapeVarName, forEachChildExpression, getInput
 import { isArrayType } from "../toolbox";
 import { MutatorTypes } from "../legacyMutations";
 import { trackAllVariables } from "./variables";
-import { FieldTilemap, FieldTextInput } from "../fields";
+import { FieldTilemap, FieldTextInput, FieldInstanceDropdown, getTypeName, isReservedInstanceValue } from "../fields";
 import { CommonFunctionBlock } from "../plugins/functions/commonFunctionMixin";
 import { getContainingFunction } from "../plugins/duplicateOnDrag";
 import { FUNCTION_DEFINITION_BLOCK_TYPE } from "../plugins/functions/constants";
@@ -1213,6 +1213,14 @@ function compileArgument(e: Environment, b: Blockly.Block, p: pxt.blocks.BlockPa
     let f = b.getFieldValue(p.definitionName);
     if (f != null) {
         const field = b.getField(p.definitionName);
+
+        if (field instanceof FieldInstanceDropdown && isReservedInstanceValue(f)) {
+            e.diagnostics.push({
+                blockId: b.id,
+                message: lf("Choose a {0}", getTypeName(e.blocksInfo, p.type))
+            });
+            return pxt.blocks.mkText("null");
+        }
 
         if (field instanceof Blockly.FieldTextInput || field instanceof FieldTextInput) {
             return pxt.blocks.H.mkStringLiteral(f);

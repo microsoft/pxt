@@ -28,9 +28,11 @@ export class File implements IFile {
     diagnostics: pxtc.KsDiagnostic[];
     numDiagnosticsOverride: number;
     filters: pxt.editor.ProjectFilters;
-    forceChangeCallback: ((from: string, to: string) => void);
+    forceChangeCallback: ((from: string, to: string) => Promise<void> | void);
     virtual: boolean;
     baseGitContent: string;
+    // settles once the editor has reloaded this file after a forced change; undefined when no reload is pending
+    private editorReload: Promise<void>;
 
     constructor(public epkg: EditorPackage, public name: string, public content: string) {
     }
@@ -102,29 +104,59 @@ export class File implements IFile {
         }
     }
 
-    setContentAsync(newContent: string, force?: boolean) {
+    /**
+     * Replaces the file's content and saves it. New content is reported to
+     * the package's file change listeners before it is saved.
+     * @param force if true and a force-change callback is set, the editor
+     * reloads the file once it is saved, and the promise settles after the
+     * reload; until then, {@link editorReloadAsync} reports the reload pending
+     */
+    setContentAsync(newContent: string, force?: boolean): Promise<void> {
         Util.assert(newContent !== undefined);
         this.inSyncWithEditor = true;
         if (newContent != this.content) {
             let prevContent = this.content;
             this.content = newContent;
             this.updateStatus();
-            return this.epkg.saveFileAsync(this.name)
+            this.epkg.notifyFileChangeListeners(this.name);
+            const saved = this.epkg.saveFileAsync(this.name)
                 .then(() => {
                     if (this.content == newContent) {
                         this.updateStatus();
                     }
-                    if (force && this.forceChangeCallback) this.forceChangeCallback(prevContent, newContent);
                     if (this.name == pxt.github.GIT_JSON)
                         this.epkg.updateGitJsonCache()
-                })
+                });
+            const reloadEditor = force && this.forceChangeCallback;
+            if (!reloadEditor) return saved;
+            const reloaded = saved.then(async () => {
+                try {
+                    await reloadEditor(prevContent, newContent);
+                } catch (e) {
+                    pxt.reportException(e);
+                }
+            });
+            const pending: Promise<void> = reloaded.catch(() => { }).then(() => {
+                if (this.editorReload === pending) this.editorReload = undefined;
+            });
+            this.editorReload = pending;
+            return reloaded;
         } else {
             this.updateStatus();
             return Promise.resolve()
         }
     }
 
-    setForceChangeCallback(callback: (from: string, to: string) => void) {
+    /**
+     * Returns a promise that settles once the editor has reloaded this file
+     * after a forced change, or undefined if no reload is pending. While a
+     * reload is pending, the editor shows content older than the file's.
+     */
+    editorReloadAsync(): Promise<void> | undefined {
+        return this.editorReload;
+    }
+
+    setForceChangeCallback(callback: (from: string, to: string) => Promise<void> | void) {
         this.forceChangeCallback = callback;
     }
 
@@ -171,6 +203,10 @@ export class EditorPackage {
     protected transpileCache: CachedTranspile[] = [];
 
     tilemapProject: pxt.TilemapProject;
+    // settles once loadPkgAsync has loaded this main package; see loadedAsync
+    private loadComplete = pxt.Util.defer<void>();
+    // the listeners called on every change to the package's stored files, with the file's name, or undefined when every file is replaced
+    private fileChangeListeners: ((name: string | undefined) => void)[] = [];
 
     id: string;
     outputPkg: EditorPackage;
@@ -180,6 +216,32 @@ export class EditorPackage {
         if (ksPkg && ksPkg.verProtocol() == "workspace") {
             this.header = workspace.getHeader(ksPkg.verArgument())
         }
+    }
+
+    /**
+     * Returns a promise that resolves once loadPkgAsync has loaded this main
+     * package's files, pxt.json and dependencies, and rejects if that load
+     * fails. A load runs on when another package replaces this one as the
+     * main package, so the promise settles for a replaced package too; check
+     * that the package is still the main package before reading it.
+     */
+    loadedAsync(): Promise<void> {
+        return this.loadComplete.promise;
+    }
+
+    /**
+     * Settles the promise loadedAsync returns with the outcome of `load`, the
+     * load of this main package, and returns `load`.
+     */
+    trackLoadAsync(load: Promise<void>): Promise<void> {
+        load.then(
+            () => this.loadComplete.resolve(undefined),
+            e => {
+                // the load's caller reports the failure; a waiter sees the rejection
+                this.loadComplete.promise.catch(() => { });
+                this.loadComplete.reject(e);
+            });
+        return load;
     }
 
     getSimState() {
@@ -366,22 +428,72 @@ export class EditorPackage {
         return this.ksPkg && this.ksPkg.level == 0;
     }
 
+    /**
+     * Adds a listener called on each change to the package's stored files:
+     * with the file's name when {@link setFile} stores a file,
+     * {@link removeFileAsync} removes one, or {@link File.setContentAsync}
+     * gives one new content, pxt.json included; and with undefined when
+     * {@link setFiles} replaces every file. The listener is called
+     * synchronously, once the change has applied to the package's files and
+     * before it is saved. A listener that throws is reported with
+     * `pxt.reportException`, and the change and the other listeners proceed.
+     */
+    addFileChangeListener(listener: (name: string | undefined) => void) {
+        this.fileChangeListeners.push(listener);
+    }
+
+    /** Removes a listener added with addFileChangeListener. */
+    removeFileChangeListener(listener: (name: string | undefined) => void) {
+        this.fileChangeListeners = this.fileChangeListeners.filter(l => l !== listener);
+    }
+
+    /**
+     * Calls every file change listener with `name`; a listener that throws is
+     * reported, and the others are still called.
+     * @param name the stored file that changed, or undefined if every file was replaced
+     */
+    notifyFileChangeListeners(name: string | undefined) {
+        for (const listener of this.fileChangeListeners) {
+            try {
+                listener(name);
+            } catch (e) {
+                pxt.reportException(e);
+            }
+        }
+    }
+
     setFile(n: string, v: string, virtual?: boolean): File {
         Util.assert(!!n, "missing file name");
         let f = new File(this, n, v)
         if (virtual) f.virtual = true;
         this.files[n] = f
         data.invalidate("open-meta:")
+        this.notifyFileChangeListeners(n);
         return f
     }
 
     removeFileAsync(n: string) {
         delete this.files[n];
         data.invalidate("open-meta:")
+        this.notifyFileChangeListeners(n);
+        return this.setFileListedAsync(n, false);
+    }
+
+    /**
+     * Adds `name` to the "files" list of pxt.json, or removes it from the
+     * "files" and "testFiles" lists, and saves pxt.json. Returns null,
+     * changing nothing, if pxt.json is missing or malformed.
+     */
+    setFileListedAsync(name: string, listed: boolean) {
         return this.updateConfigAsync(cfg => {
-            cfg.files = cfg.files.filter(f => f != n)
-            if (cfg.testFiles)
-                cfg.testFiles = cfg.testFiles.filter(f => f != n)
+            if (listed) {
+                if (cfg.files.indexOf(name) < 0)
+                    cfg.files.push(name)
+            } else {
+                cfg.files = cfg.files.filter(f => f != name)
+                if (cfg.testFiles)
+                    cfg.testFiles = cfg.testFiles.filter(f => f != name)
+            }
         })
     }
 
@@ -424,12 +536,15 @@ export class EditorPackage {
     setFiles(files: pxt.Map<string>) {
         this.files = Util.mapMap(files, (k, v) => new File(this, k, v))
         data.invalidate("open-meta:")
+        this.notifyFileChangeListeners(undefined);
         this.updateGitJsonCache()
     }
 
     getAllFiles(): pxt.Map<string> {
         let r = Util.mapMap(this.files, (k, f) => f.content)
-        delete r[pxt.SERIAL_EDITOR_FILE]
+        for (const name of Object.keys(r)) {
+            if (pxt.isSessionOnlyFile(name)) delete r[name]
+        }
         return r
     }
 
@@ -460,7 +575,7 @@ export class EditorPackage {
     sortedFiles(): File[] {
         let lst = Util.values(this.files)
         if (!pxt.options.debug)
-            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && f.name != pxt.SERIAL_EDITOR_FILE && f.name != pxt.PALETTES_FILE && f.name !== pxt.HISTORY_FILE)
+            lst = lst.filter(f => f.name != pxt.github.GIT_JSON && f.name != pxt.SIMSTATE_JSON && !pxt.isSessionOnlyFile(f.name) && f.name != pxt.PALETTES_FILE && f.name !== pxt.HISTORY_FILE)
         lst.sort((a, b) => a.weight() - b.weight() || Util.strcmp(a.name, b.name))
         return lst
     }
@@ -828,8 +943,9 @@ export function notifySyncDone(updated: pxt.Map<number>) {
 export function loadPkgAsync(id: string, targetVersion?: string) {
     mainPkg = new pxt.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id;
+    const loading = getEditorPkg(mainPkg);
 
-    return theHost.downloadPackageAsync(mainPkg)
+    return loading.trackLoadAsync(theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
         .then(() => ts.pxtc.Util.jsonTryParse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
@@ -840,7 +956,7 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
 
             return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync());
-        })
+        }))
 }
 
 

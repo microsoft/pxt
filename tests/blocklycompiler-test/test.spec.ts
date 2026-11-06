@@ -19,6 +19,9 @@ const WEB_PREFIX = "http://localhost:9876";
 // Blockly crashes if this isn't defined
 (Blockly as any).Msg.DELETE_VARIABLE = "Delete the '%1' variable";
 
+// The editor can create instances of things.Thing, so parameters of that type get the instance dropdown
+pxt.react.canCreateInstance = typeQName => typeQName === "things.Thing";
+
 // Just needs to exist
 pxt.setAppTarget({
     id: "core",
@@ -212,7 +215,12 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
         }, err => fail('Could not get compile options'))
 }
 
-async function blockTestAsync(name: string) {
+async function blockTestAsync(name: string): Promise<void> {
+    await blockTestResultAsync(name);
+}
+
+// Compiles the case `name` and checks its source against the baseline; returns the compilation result
+async function blockTestResultAsync(name: string): Promise<pxtblockly.BlockCompilationResult> {
     let blocksFile: string;
     let tsFile: string;
     const blocklyOptions: Blockly.BlocklyOptions = {
@@ -285,6 +293,7 @@ async function blockTestAsync(name: string) {
     }
 
     chai.expect(compiledTs).to.equal(baselineTs, "Compiled result did not match baseline: " + name + " " + res.source);
+    return res;
 }
 
 describe("blockly compiler", function () {
@@ -768,6 +777,13 @@ describe("blockly compiler", function () {
         it ("should handle forceStatement blocks", done => {
             blockTestAsync("force_statement").then(done, done);
         })
+    });
+
+    describe("compiling instance dropdowns", () => {
+        it("should report a block holding a reserved value and emit null in its place", async () => {
+            const res = await blockTestResultAsync("instance_dropdown_reserved");
+            chai.expect(res.diagnostics.map(d => d.blockId)).to.deep.equal(["useThingBlock"]);
+        });
     });
 
     describe("compiling expandable blocks", () => {

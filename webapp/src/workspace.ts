@@ -612,11 +612,11 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
         }
         const prevProj = e
         const allChanges = computeChangeSummary(prevProj, {header: h, text})
-        const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
+        const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON]
         const ignoredHeaderFields: (keyof Header)[] = ['recentUse', 'modificationTime', 'cloudCurrent', '_rev', '_id' as keyof Header, 'cloudVersion']
         const userChanges: ProjectChanges = {
             header: allChanges.header.filter(f => ignoredHeaderFields.indexOf(f.key) < 0),
-            files: allChanges.files.filter(f => ignoredFiles.indexOf(f.key) < 0)
+            files: allChanges.files.filter(f => ignoredFiles.indexOf(f.key) < 0 && !pxt.isSessionOnlyFile(f.key))
         }
 
         const hasUserChanges = userChanges.header.length > 0 || userChanges.files.length > 0
@@ -1117,8 +1117,8 @@ export async function commitAsync(hd: Header, options: CommitOptions = {}) {
         tree: []
     }
     const filenames = options.filenamesToCommit || pxt.allPkgFiles(cfg)
-    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE]
-    for (const path of filenames.filter(f => ignoredFiles.indexOf(f) < 0)) {
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON]
+    for (const path of filenames.filter(f => ignoredFiles.indexOf(f) < 0 && !pxt.isSessionOnlyFile(f))) {
         const fileContent = files[path];
         await addToTree(path, fileContent);
     }
@@ -1496,7 +1496,7 @@ export async function recomputeHeaderFlagsAsync(h: Header, files: ScriptText) {
     let isCurrent = true
     let needsBlobs = false
     for (let k of Object.keys(files)) {
-        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || k == pxt.SERIAL_EDITOR_FILE)
+        if (k == GIT_JSON || k == pxt.SIMSTATE_JSON || pxt.isSessionOnlyFile(k))
             continue
         let treeEnt = pxt.github.lookupFile(parsed, gitjson.commit, k)
         if (!treeEnt || treeEnt.type != "blob") {
@@ -1655,9 +1655,9 @@ export async function initializeGithubRepoAsync(hd: Header, repoid: string, forc
     // remove files not in the package (only in git)
     currFiles = await getTextAsync(hd.id)
     const allfiles = pxt.allPkgFiles(pxt.Package.parseAndValidConfig(currFiles[pxt.CONFIG_NAME]))
-    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.SERIAL_EDITOR_FILE, pxt.CONFIG_NAME];
+    const ignoredFiles = [GIT_JSON, pxt.SIMSTATE_JSON, pxt.CONFIG_NAME];
     Object.keys(currFiles)
-        .filter(f => ignoredFiles.indexOf(f) < 0 && allfiles.indexOf(f) < 0)
+        .filter(f => ignoredFiles.indexOf(f) < 0 && !pxt.isSessionOnlyFile(f) && allfiles.indexOf(f) < 0)
         .forEach(f => delete currFiles[f]);
 
     await saveAsync(hd, currFiles)

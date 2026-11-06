@@ -1,4 +1,54 @@
 namespace pxsim {
+    /** Returns true if a simulator extension editor tab's `icon` is the path to an SVG within the artifact, rather than a font icon's class names. */
+    function isSimxIconPath(icon: string | undefined): boolean {
+        return !!icon && (icon.indexOf("/") >= 0 || /\.svg$/i.test(icon));
+    }
+
+    /**
+     * Returns true if `msg` is a project-file, project-asset, compiled-program or editor-tab
+     * request of a simulator extension; an editor-tab event, which carries `event`, is not a
+     * request.
+     */
+    function isExtensionRequest(msg: SimulatorMessage): boolean {
+        switch (msg?.type) {
+            case "projfs":
+            case "projassets":
+            case "projprogram":
+                return true;
+            case "simxeditor":
+                return (msg as SimulatorMessage & { event?: unknown }).event === undefined;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Returns why the driver serves no editor tab for `registration`, a registration
+     * that sets `allowEditorTab`.
+     */
+    function editorTabRefusal(registration: SimulatorDriverOptions["simulatorExtensions"][string]): string {
+        if (!registration.editor?.index)
+            return "The simulator extension's registration declares no editor with an index.";
+        if (!registration.permanent)
+            return "The simulator extension's registration is not permanent, which an editor tab needs.";
+        return "The simulator extension's registration declares no editor tab the editor can serve.";
+    }
+
+    /** A frame that sent a simulator extension request, with the `simulatorExtensions` key it was created for. */
+    interface ExtensionRequester {
+        frame: HTMLIFrameElement;
+        key: string | undefined;
+        /** True for an editor tab frame, false for a simulator frame. */
+        tab: boolean;
+    }
+
+    /** How the driver gates one kind of simulator extension request. */
+    interface ExtensionRequestGate {
+        handler: ((key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void) | undefined;
+        permission: "allowFileWrite" | "allowAssetRead" | "allowProgramRead" | "allowEditorTab";
+        failed: string;
+    }
+
     export interface SimulatorDriverOptions {
         restart?: () => void; // restart simulator
         revealElement?: (el: HTMLElement) => void;
@@ -42,11 +92,172 @@ namespace pxsim {
             permanent?: boolean;
             index?: string;
             devUrl?: string;
+            allowPopups?: boolean;
+            allowClipboard?: boolean;
+            allowCamera?: boolean;
+            allowMidi?: boolean;
+            allowUsb?: boolean;
+            allowSerial?: boolean;
+            allowBluetooth?: boolean;
+            allowHid?: boolean;
+            allowMotionSensors?: boolean;
+            allowDisplayCapture?: boolean;
+            allowGamepad?: boolean;
+            allowDownloads?: boolean;
+            allowPointerLock?: boolean;
+            allowAssetRead?: boolean;
+            allowFileWrite?: boolean;
+            allowProgramRead?: boolean;
+            editor?: {
+                index: string;
+                label?: string | pxt.Map<string>;
+                icon?: string;
+                creates?: string[];
+            };
+            allowEditorTab?: boolean;
+            hideInFullscreen?: boolean;
             // Additional fields outside of pxt.SimulatorExtensionConfig
             url?: string; // Computed URL
+            // Computed URL of the editor tab's page; set only for a registration that declares
+            // `editor` (with an index), sets `allowEditorTab` and is permanent
+            editorUrl?: string;
+            // Computed URL of the editor tab's SVG icon; set only beside `editorUrl`, when `editor.icon` is a path
+            // (see `isSimxIconPath`)
+            iconUrl?: string;
+            // The fully qualified names of the fixed-instance types whose instances the editor tab
+            // creates, from `editor.creates`; set only beside `editorUrl`
+            creates?: string[];
         }>;
         // needed when simulatorExtensions are used to provide to their frame
         userLanguage?: string;
+        // id of the running target (e.g. "microbit", "arcade"), passed to simulator extension frames
+        targetId?: string;
+        // returns the id of the open project, or undefined if none is open, passed to simulator
+        // extension frames; called as each frame is created, since the driver outlives projects
+        getProjectId?: () => string | undefined;
+        /**
+         * Receives the project-file ("projfs") requests of simulator extensions
+         * registered with `allowFileWrite`.
+         * @param key the `simulatorExtensions` key the requesting frame was created for
+         * @param msg the request, as received
+         * @param reply posts a message to the requesting frame only; may be called again
+         * later, to deliver notifications
+         * @param frame the requesting frame, to which `reply` posts
+         */
+        onProjfsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void;
+        /**
+         * Receives the project-asset ("projassets") requests of simulator extensions
+         * registered with `allowAssetRead`.
+         * @param key the `simulatorExtensions` key the requesting frame was created for
+         * @param msg the request, as received
+         * @param reply posts a message to the requesting frame only; may be called again
+         * later, to deliver notifications
+         * @param frame the requesting frame, to which `reply` posts
+         */
+        onProjassetsMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void, frame: HTMLIFrameElement) => void;
+        /**
+         * Receives the compiled-program ("projprogram") requests of simulator extensions
+         * registered with `allowProgramRead`.
+         * @param key the `simulatorExtensions` key the requesting frame was created for
+         * @param msg the request, as received
+         * @param reply posts a message to the requesting frame only
+         */
+        onProjprogramMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
+        /**
+         * Receives the editor-tab ("simxeditor") requests of simulator extension frames
+         * whose registration declares and enables an editor tab (see `editorUrl`).
+         * @param key the `simulatorExtensions` key the requesting frame was created for
+         * @param msg the request, as received
+         * @param reply posts a message to the requesting frame only
+         */
+        onSimxEditorMessage?: (key: string, msg: SimulatorMessage, reply: (msg: SimulatorMessage) => void) => void;
+        /**
+         * Called each time a frame the driver created for a `simulatorExtensions` entry
+         * finishes loading a page.
+         * @param key the `simulatorExtensions` key the frame was created for
+         * @param frame the frame
+         */
+        onSimxFrameLoad?: (key: string, frame: HTMLIFrameElement) => void;
+        /**
+         * Returns true if the open project includes the simulator extension registered
+         * under `key`. The project-file, project-asset, compiled-program and editor-tab
+         * requests of the frames of an extension it does not include are refused with
+         * `UNREGISTERED`, and the extension's simulator frame gets no `editor=1` URL
+         * parameter. When absent, the project includes every registered extension.
+         * @param key the `simulatorExtensions` key
+         */
+        isSimxInProject?: (key: string) => boolean;
+        /** Called each time the driver has removed all of its frames, as when it stops with `unload`. */
+        onFramesUnloaded?: () => void;
+    }
+
+    /**
+     * Permissions a simulator extension's registration grants its frames beyond those
+     * of the main simulator frame.
+     */
+    export interface SimulatorFrameGrants {
+        /** The sandbox gains allow-popups and allow-popups-to-escape-sandbox. */
+        allowPopups?: boolean;
+        /** The allow list gains clipboard-read and clipboard-write. */
+        allowClipboard?: boolean;
+        /** The allow list gains camera. */
+        allowCamera?: boolean;
+        /** The allow list gains midi. */
+        allowMidi?: boolean;
+        /** The allow list gains usb. */
+        allowUsb?: boolean;
+        /** The allow list gains serial. */
+        allowSerial?: boolean;
+        /** The allow list gains bluetooth. */
+        allowBluetooth?: boolean;
+        /** The allow list gains hid. */
+        allowHid?: boolean;
+        /** The allow list gains accelerometer, gyroscope and magnetometer. */
+        allowMotionSensors?: boolean;
+        /** The allow list gains display-capture. */
+        allowDisplayCapture?: boolean;
+        /** The allow list gains gamepad. */
+        allowGamepad?: boolean;
+        /** The sandbox gains allow-downloads. */
+        allowDownloads?: boolean;
+        /** The sandbox gains allow-pointer-lock. */
+        allowPointerLock?: boolean;
+    }
+
+    /**
+     * Returns the `sandbox` and `allow` attribute values of a simulator frame given
+     * `grants`: the main simulator frame's when `grants` grants nothing.
+     */
+    export function simulatorFramePermissions(grants?: SimulatorFrameGrants): { sandbox: string, allow: string } {
+        const allow = ['autoplay', 'microphone'];
+        if (grants?.allowClipboard)
+            allow.push('clipboard-read', 'clipboard-write');
+        if (grants?.allowCamera)
+            allow.push('camera');
+        if (grants?.allowMidi)
+            allow.push('midi');
+        if (grants?.allowUsb)
+            allow.push('usb');
+        if (grants?.allowSerial)
+            allow.push('serial');
+        if (grants?.allowBluetooth)
+            allow.push('bluetooth');
+        if (grants?.allowHid)
+            allow.push('hid');
+        if (grants?.allowMotionSensors)
+            allow.push('accelerometer', 'gyroscope', 'magnetometer');
+        if (grants?.allowDisplayCapture)
+            allow.push('display-capture');
+        if (grants?.allowGamepad)
+            allow.push('gamepad');
+        const sandbox = ['allow-same-origin', 'allow-scripts'];
+        if (grants?.allowPopups)
+            sandbox.push('allow-popups', 'allow-popups-to-escape-sandbox');
+        if (grants?.allowDownloads)
+            sandbox.push('allow-downloads');
+        if (grants?.allowPointerLock)
+            sandbox.push('allow-pointer-lock');
+        return { sandbox: sandbox.join(' '), allow: allow.join(';') };
     }
 
     export enum SimulatorState {
@@ -103,10 +314,73 @@ namespace pxsim {
         postMessage: (msg: pxsim.SimulatorMessage) => void;
     }
 
+    /**
+     * The `dataset` key of a simulator frame or simulator extension editor tab
+     * frame that holds the origin of the frame's page. The driver posts to a
+     * frame at that origin and serves a frame's requests only from it.
+     */
+    export const FRAME_DATA_ORIGIN = "origin";
+
+    /**
+     * The simulator-extension API level the editor serves, passed to every
+     * simulator extension frame and tab frame in the `apiLevel` URL parameter.
+     * Level 1 is the `projfs`, `projassets`, `projprogram` and `simxeditor` message
+     * families, with their requests, replies, events and asset kinds, and the fields
+     * of a simulator extension's registration. The level goes up by one whenever a
+     * change adds to or alters what a frame can observe of this surface: a
+     * family, a request, an event, an asset kind or a field. A frame URL without
+     * the parameter comes from an editor older than level 1.
+     */
+    export const SIMX_API_LEVEL = 1;
+
+    /** The inputs {@link simxFrameUrl} builds a simulator extension frame or tab frame URL from. */
+    export interface SimxFrameUrlParams {
+        /** The URL of the frame's page, without the parameters the editor adds. */
+        url: string;
+        /** The `simulatorExtensions` key the frame is created for, passed in `channel`. */
+        key: string;
+        /** The origin of the editor window that is the frame's parent, which the frame should trust. */
+        parentOrigin: string;
+        /** The user's language; the URL carries no `language` parameter without it. */
+        language?: string;
+        /** The id of the running target; the URL carries no `target` parameter without it. */
+        target?: string;
+        /** The editor's id for the open project; the URL carries no `project` parameter without it. */
+        project?: string;
+    }
+
+    /**
+     * Returns `params.url` with the parameters every simulator extension frame
+     * and tab frame URL carries: `parentOrigin`, `channel`, `apiLevel`
+     * ({@link SIMX_API_LEVEL}), and `language`, `target` and `project` where
+     * given.
+     */
+    export function simxFrameUrl(params: SimxFrameUrlParams): URL {
+        const url = new URL(params.url);
+        // searchParams.set() encodes, so don't encode the values here.
+        url.searchParams.set("parentOrigin", params.parentOrigin);
+        url.searchParams.set("channel", params.key);
+        url.searchParams.set("apiLevel", SIMX_API_LEVEL.toString());
+        if (params.language) url.searchParams.set("language", params.language);
+        if (params.target) url.searchParams.set("target", params.target);
+        if (params.project) url.searchParams.set("project", params.project);
+        return url;
+    }
+
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel"
     const FRAME_ASPECT_RATIO = "aspectratio"
     const MESSAGE_SOURCE = "pxtdriver"
     const PERMANENT = "permanent"
+    // set on a frame whose wrapper has been handed to options.removeElement,
+    // which may remove it later, until unhide brings the wrapper back
+    const FRAME_DATA_REMOVING = "removing"
+    // The wrapper class of a simulator extension frame hidden in
+    // fullscreen-simulator mode, and the container class present while the
+    // container keeps at least one extension frame, not counting frames being
+    // removed, and every one it keeps is hidden in that mode;
+    // theme/common.less styles both under .fullscreensim.
+    const HIDE_IN_FULLSCREEN = "simx-hide-fullscreen"
+    const HAS_HIDE_IN_FULLSCREEN = "has-simx-hide-fullscreen"
 
     export class SimulatorDriver {
         private themes = ["blue", "red", "green", "yellow"];
@@ -124,6 +398,8 @@ namespace pxsim {
         private _dependentEditors: Window[];
         private _allowedOrigins: string[] = [];
         private debuggingFrame: string;
+        // true while the editor is in fullscreen-simulator mode
+        private fullscreen = false;
 
         // we might "loan" a simulator when the user is recording
         // screenshots for sharing
@@ -152,6 +428,13 @@ namespace pxsim {
             // Preprocess simulator extensions
             const simXDevMode = U.isLocalHost() && /[?&]simxdev(?:[=&#]|$)/i.test(window.location.href);
             Object.entries(options?.simulatorExtensions || {}).forEach(([key, simx]) => {
+                // The computed fields hold only what this pass resolves
+                if (simx) {
+                    delete simx.url;
+                    delete simx.editorUrl;
+                    delete simx.iconUrl;
+                    delete simx.creates;
+                }
                 // Verify essential `simx` config was provided
                 if (
                     !simx ||
@@ -161,20 +444,37 @@ namespace pxsim {
                 ) {
                     return;
                 }
-                // Compute the effective URL
-                if (simXDevMode && simx.devUrl) {
-                    // Use the dev URL if the dev flag is set (and we're on localhost)
-                    simx.url = new URL(simx.index, simx.devUrl).toString();
-                } else {
+                // Compute the effective URL of a resource of the extension's artifact
+                const resolve = (resource: string) => {
+                    if (simXDevMode && simx.devUrl) {
+                        // Use the dev URL if the dev flag is set (and we're on localhost)
+                        return new URL(resource, simx.devUrl).toString();
+                    }
                     const simUrl = this.getSimUrl();
                     // Construct the path. The "-" element delineates the extension key from the resource name.
-                    const simxPath = ["simx", key, "-", simx.index].join("/");
+                    const simxPath = ["simx", key, "-", resource].join("/");
                     // Create the fully-qualified URL, preserving the origin by removing all leading slashes
-                    simx.url = new URL(simxPath.replace(/^\/+/, ""), simUrl.origin).toString();
-                }
+                    return new URL(simxPath.replace(/^\/+/, ""), simUrl.origin).toString();
+                };
+                simx.url = resolve(simx.index);
 
                 // Add the origin to the allowed origins
                 this._allowedOrigins.push(new URL(simx.url).origin);
+
+                if (simx.allowEditorTab) {
+                    if (!simx.editor?.index) {
+                        pxsim.error(`simulator extension ${key}: allowEditorTab needs an editor with an index; offering no editor tab`);
+                    } else if (!simx.permanent) {
+                        pxsim.error(`simulator extension ${key}: an editor tab needs a permanent registration; ignoring its editor`);
+                    } else {
+                        simx.editorUrl = resolve(simx.editor.index);
+                        if (isSimxIconPath(simx.editor.icon))
+                            simx.iconUrl = resolve(simx.editor.icon);
+                        if (Array.isArray(simx.editor.creates))
+                            simx.creates = simx.editor.creates;
+                        this._allowedOrigins.push(new URL(simx.editorUrl).origin);
+                    }
+                }
             });
 
             this._allowedOrigins = U.unique(this._allowedOrigins, f => f);
@@ -417,38 +717,14 @@ namespace pxsim {
                             this.options.simulatorExtensions &&
                             this.options.simulatorExtensions[messageChannel];
 
-                        const startSimulatorExtension = (url: string, permanent: boolean, aspectRatio: number) => {
-                            aspectRatio = aspectRatio || this._runOptions?.aspectRatio || 1.22;
-                            let wrapper = this.createFrame(url);
-                            this.container.appendChild(wrapper);
-                            const messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
-                            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = messageChannel;
-                            messageFrame.dataset[FRAME_ASPECT_RATIO] = aspectRatio + "";
-                            pxsim.U.addClass(wrapper, "simmsg")
-                            pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(messageChannel))
-                            if (permanent)
-                                messageFrame.dataset[PERMANENT] = "true";
-                            this.startFrame(messageFrame);
-                            frames = this.simFrames(); // refresh
-                        }
                         // should we start a simulator extension for this message?
                         if (simulatorExtension) {
                             // find a frame already running that simulator
                             let messageFrame = frames.find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === messageChannel);
                             // not found, spin a new one
                             if (!messageFrame) {
-                                const url = new URL(simulatorExtension.url);
-                                // The extension's parent window is this editor, so the origin it
-                                // should trust is the editor's own. options.parentOrigin is the
-                                // editor's *embedder* origin (controller mode) - the extension's
-                                // grandparent - so an extension that validates messages against
-                                // it rejects everything the editor sends when the editor is
-                                // embedded cross-origin.
-                                // searchParams.set() encodes, so don't encode the values here.
-                                url.searchParams.set("parentOrigin", window.location.origin);
-                                if (this.options.userLanguage)
-                                    url.searchParams.set("language", this.options.userLanguage);
-                                startSimulatorExtension(url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio);
+                                this.startSimulatorExtension(messageChannel);
+                                frames = this.simFrames(); // refresh
                             }
                             // not running the current run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
@@ -465,7 +741,8 @@ namespace pxsim {
                                 const url = ((useLocalHost && messageSimulator.localHostUrl) || messageSimulator.url)
                                     .replace("$PARENT_ORIGIN$", encodeURIComponent(this.options.parentOrigin || ""))
                                     .replace("$LANGUAGE$", encodeURIComponent(this.options.userLanguage))
-                                startSimulatorExtension(url, messageSimulator.permanent, messageSimulator.aspectRatio);
+                                this.createExtensionFrame(messageChannel, url, messageSimulator.permanent, messageSimulator.aspectRatio);
+                                frames = this.simFrames(); // refresh
                             }
                             // not running the curren run, restart
                             else if (messageFrame.dataset['runid'] != this.runId) {
@@ -518,6 +795,89 @@ namespace pxsim {
             }
         }
 
+        /**
+         * Returns the frame of the simulator extension registered under `key`, creating
+         * it if none exists: appended to the simulator container and started with the
+         * current run, if there is one. A frame created without a run gets the run
+         * message on the first message of a later run on the extension's channel.
+         * @param key the `simulatorExtensions` key
+         * @returns the frame, or undefined if no usable extension is registered under `key`
+         */
+        public startSimulatorExtension(key: string): HTMLIFrameElement | undefined {
+            const simulatorExtension = this.options.simulatorExtensions?.[key];
+            if (!simulatorExtension?.url) return undefined;
+            const existing = this.simFrames().find(frame => frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] === key);
+            if (existing) return existing;
+
+            this.addEventListeners();
+            const url = simxFrameUrl({
+                url: simulatorExtension.url,
+                key,
+                // The extension's parent window is this editor, so the origin it
+                // should trust is the editor's own. options.parentOrigin is the
+                // editor's *embedder* origin (controller mode) - the extension's
+                // grandparent - so an extension that validates messages against
+                // it rejects everything the editor sends when the editor is
+                // embedded cross-origin.
+                parentOrigin: window.location.origin,
+                language: this.options.userLanguage,
+                target: this.options.targetId,
+                project: this.options.getProjectId?.(),
+            });
+            // Tells the frame at boot that the editor offers its editor tab.
+            if (simulatorExtension.editorUrl && this.isInProject(key))
+                url.searchParams.set("editor", "1");
+            const frame = this.createExtensionFrame(key, url.toString(), simulatorExtension.permanent, simulatorExtension.aspectRatio, simulatorExtension, simulatorExtension.hideInFullscreen);
+            frame.addEventListener("load", () => this.options.onSimxFrameLoad?.(key, frame));
+            return frame;
+        }
+
+        /**
+         * Creates a frame for the extension listening on `channel`, appends it to the
+         * simulator container, starts it with the current run, if there is one, and
+         * returns it.
+         * @param grants permissions for the frame beyond the main simulator frame's; none if omitted
+         * @param hideInFullscreen hides the frame in fullscreen-simulator mode, keeping it mounted
+         */
+        private createExtensionFrame(channel: string, url: string, permanent: boolean, aspectRatio: number, grants?: SimulatorFrameGrants, hideInFullscreen?: boolean): HTMLIFrameElement {
+            aspectRatio = aspectRatio || this._runOptions?.aspectRatio || 1.22;
+            let wrapper = this.createFrame(url, grants);
+            this.container.appendChild(wrapper);
+            const messageFrame = wrapper.firstElementChild as HTMLIFrameElement;
+            messageFrame.dataset[FRAME_DATA_MESSAGE_CHANNEL] = channel;
+            messageFrame.dataset[FRAME_ASPECT_RATIO] = aspectRatio + "";
+            pxsim.U.addClass(wrapper, "simmsg")
+            pxsim.U.addClass(wrapper, "simmsg" + U.sanitizeCssName(channel))
+            if (permanent)
+                messageFrame.dataset[PERMANENT] = "true";
+            // The hidden frame stays mounted, so its messaging continues.
+            if (hideInFullscreen)
+                pxsim.U.addClass(wrapper, HIDE_IN_FULLSCREEN);
+            this.updateHideInFullscreenContainerClass();
+            messageFrame.addEventListener("load", () => {
+                if (this.fullscreen && messageFrame.contentWindow)
+                    this.postMessageCore(messageFrame, this.fullscreenMessage());
+            });
+            this.startFrame(messageFrame);
+            return messageFrame;
+        }
+
+        /**
+         * Adds the `has-simx-hide-fullscreen` class to the simulator container when
+         * it holds at least one simulator extension frame not being removed and
+         * every such frame is hidden in fullscreen-simulator mode, so the main frame
+         * takes the full width in that mode, and removes the class otherwise.
+         */
+        private updateHideInFullscreenContainerClass() {
+            const wrappers = this.simFrames(true)
+                .filter(frame => !!frame.dataset[FRAME_DATA_MESSAGE_CHANNEL] && !frame.dataset[FRAME_DATA_REMOVING])
+                .map(frame => frame.parentElement);
+            if (wrappers.length && wrappers.every(wrapper => pxsim.U.containsClass(wrapper, HIDE_IN_FULLSCREEN)))
+                pxsim.U.addClass(this.container, HAS_HIDE_IN_FULLSCREEN);
+            else
+                pxsim.U.removeClass(this.container, HAS_HIDE_IN_FULLSCREEN);
+        }
+
         protected deferredMessages: [HTMLIFrameElement, SimulatorMessage][];
         protected postDeferrableMessage(frame: HTMLIFrameElement, msg: SimulatorMessage) {
             const frameStarted = !frame.dataset["loading"];
@@ -532,7 +892,7 @@ namespace pxsim {
         }
 
         private postMessageCore(frame: HTMLIFrameElement, msg: SimulatorMessage) {
-            const origin = U.isLocalHostDev() ? "*" : frame.dataset["origin"];
+            const origin = U.isLocalHostDev() ? "*" : frame.dataset[FRAME_DATA_ORIGIN];
             frame.contentWindow.postMessage(msg, origin);
         }
 
@@ -555,7 +915,10 @@ namespace pxsim {
             return urlObject.toString();
         }
 
-        private createFrame(url?: string): HTMLDivElement {
+        /**
+         * @param grants permissions for the frame beyond the main simulator frame's; none if omitted
+         */
+        private createFrame(url?: string, grants?: SimulatorFrameGrants): HTMLDivElement {
             const wrapper = document.createElement("div") as HTMLDivElement;
             wrapper.className = `simframe ui embed`;
             wrapper.setAttribute('tabindex', '0');
@@ -564,8 +927,9 @@ namespace pxsim {
             frame.id = 'sim-frame-' + this.nextId()
             frame.title = pxsim.localization.lf("Simulator")
             frame.allowFullscreen = true;
-            frame.setAttribute('allow', 'autoplay;microphone');
-            frame.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+            const permissions = simulatorFramePermissions(grants);
+            frame.setAttribute('allow', permissions.allow);
+            frame.setAttribute('sandbox', permissions.sandbox);
             frame.className = 'no-select';
 
             let furl = this.setRunOptionQueryParams(url || this.getSimUrl().toString());
@@ -574,7 +938,7 @@ namespace pxsim {
             frame.src = furl;
             frame.frameBorder = "0";
             frame.dataset['runid'] = this.runId;
-            frame.dataset['origin'] = new URL(furl).origin || "*";
+            frame.dataset[FRAME_DATA_ORIGIN] = new URL(furl).origin || "*";
             frame.dataset['loading'] = "true";
             if (this._runOptions?.autofocus) frame.setAttribute("autofocus", "true");
 
@@ -643,17 +1007,41 @@ namespace pxsim {
         private unload() {
             this.cancelFrameCleanup();
             pxsim.U.removeChildren(this.container);
+            pxsim.U.removeClass(this.container, HAS_HIDE_IN_FULLSCREEN);
             this.setState(SimulatorState.Unloaded);
             this._runOptions = undefined; // forget about program
             this._currentRuntime = undefined;
             this.runId = undefined;
             this.deferredMessages = undefined;
+            this.options.onFramesUnloaded?.();
+        }
+
+        /** Returns true if the simulator container holds a frame, or a simulator is loaned out. */
+        public hasFrames(): boolean {
+            return this.simFrames().length > 0;
         }
 
         public mute(mute: boolean) {
             if (this._currentRuntime)
                 this._currentRuntime.mute = mute;
             this.postMessage({ type: 'mute', source: MESSAGE_SOURCE, mute: mute } as pxsim.SimulatorMuteMessage);
+        }
+
+        /**
+         * Records whether the editor is in fullscreen-simulator mode and, if that
+         * changes it, posts a `fullscreen` message to every simulator frame. A
+         * simulator extension frame is also posted the message each time its page
+         * finishes loading while the mode is on.
+         * @param enabled true when the editor enters fullscreen-simulator mode, false when it leaves it
+         */
+        public setFullscreen(enabled: boolean) {
+            if (this.fullscreen === enabled) return;
+            this.fullscreen = enabled;
+            this.postMessage(this.fullscreenMessage());
+        }
+
+        private fullscreenMessage(): pxsim.SimulatorFullscreenMessage {
+            return { type: "fullscreen", source: MESSAGE_SOURCE, enabled: this.fullscreen };
         }
 
         public stopSound() {
@@ -750,10 +1138,14 @@ namespace pxsim {
                 .forEach(frame => {
                     if (this.state == SimulatorState.Stopped
                         || frame.dataset['runid'] != this.runId) {
-                        if (this.options.removeElement) this.options.removeElement(frame.parentElement);
+                        if (this.options.removeElement) {
+                            frame.dataset[FRAME_DATA_REMOVING] = "true";
+                            this.options.removeElement(frame.parentElement);
+                        }
                         else frame.parentElement.remove();
                     }
                 });
+            this.updateHideInFullscreenContainerClass();
         }
 
         public hide(completeHandler?: () => void) {
@@ -764,9 +1156,12 @@ namespace pxsim {
             frames.forEach(frame => {
                 if (frame.dataset[PERMANENT] && this.options.hideElement)
                     this.options.hideElement(frame.parentElement, completeHandler);
-                else
+                else {
+                    frame.dataset[FRAME_DATA_REMOVING] = "true";
                     this.options.removeElement(frame.parentElement, completeHandler);
+                }
             });
+            this.updateHideInFullscreenContainerClass();
             // Execute the complete handler if there are no frames in sim view
             if (frames.length == 0 && completeHandler) {
                 completeHandler();
@@ -778,8 +1173,10 @@ namespace pxsim {
 
             const frames = this.simFrames();
             frames.forEach(frame => {
+                delete frame.dataset[FRAME_DATA_REMOVING];
                 this.options.unhideElement(frame.parentElement);
             });
+            this.updateHideInFullscreenContainerClass();
         }
 
         public setRunOptions(opts: SimulatorRunOptions = {}) {
@@ -893,7 +1290,18 @@ namespace pxsim {
             }
         }
 
-        private handleMessage(msg: pxsim.SimulatorMessage, source?: Window) {
+        /**
+         * @param source the window that posted `msg`
+         * @param origin the origin of the window that posted `msg`
+         */
+        private handleMessage(msg: pxsim.SimulatorMessage, source?: Window, origin?: string) {
+            // Only the requests of an editor tab frame are answered; nothing it posts reaches the simulators.
+            const tab = this.editorTabFrameOf(source);
+            if (tab) {
+                if (isExtensionRequest(msg))
+                    this.handleExtensionRequest(msg, tab, origin);
+                return;
+            }
             switch (msg.type || '') {
                 case 'ready': {
                     const frameid = (msg as pxsim.SimulatorReadyMessage).frameid;
@@ -951,9 +1359,154 @@ namespace pxsim {
                 case 'debugger': this.handleDebuggerMessage(msg as DebuggerMessage); break;
                 case 'toplevelcodefinished': if (this.options.onTopLevelCodeEnd) this.options.onTopLevelCodeEnd(); break;
                 case 'setmutebuttonstate': this.options.onMuteButtonStateChange?.((msg as SetMuteButtonStateMessage).state); break;
+                case 'projfs':
+                case 'projassets':
+                case 'projprogram':
+                case 'simxeditor': this.handleExtensionRequest(msg, this.simulatorFrameOf(source), origin); break;
                 default:
                     this.postMessage(msg, source);
                     break;
+            }
+        }
+
+        // the editor tab frames of simulator extensions, with the keys they were created for
+        private editorTabFrames = new Map<HTMLIFrameElement, string>();
+
+        /**
+         * Records `frame` as the editor tab frame of the simulator extension registered
+         * under `key`. Its project-file, project-asset and compiled-program requests are
+         * served as the extension's simulator frame's are, its editor-tab requests are
+         * refused, and nothing it posts reaches the simulators. Call
+         * `removeEditorTabFrame` when the frame is removed.
+         * @param key the `simulatorExtensions` key
+         */
+        public addEditorTabFrame(key: string, frame: HTMLIFrameElement) {
+            this.addEventListeners();
+            this.editorTabFrames.set(frame, key);
+        }
+
+        /** Forgets the editor tab frame `frame`, recorded with `addEditorTabFrame`. */
+        public removeEditorTabFrame(frame: HTMLIFrameElement) {
+            this.editorTabFrames.delete(frame);
+        }
+
+        /** Returns the editor tab frame whose window is `source`, with its key, or undefined if there is none. */
+        private editorTabFrameOf(source: Window | undefined): ExtensionRequester | undefined {
+            if (!source || !this.editorTabFrames.size) return undefined;
+            let found: ExtensionRequester;
+            this.editorTabFrames.forEach((key, frame) => {
+                if (!found && frame.contentWindow === source) found = { frame, key, tab: true };
+            });
+            return found;
+        }
+
+        /** Returns the simulator frame whose window is `source`, with its key, or undefined if there is none. */
+        private simulatorFrameOf(source: Window | undefined): ExtensionRequester | undefined {
+            if (!source) return undefined;
+            const frame = this.simFrames().find(f => f.contentWindow === source);
+            return frame && { frame, key: frame.dataset[FRAME_DATA_MESSAGE_CHANNEL], tab: false };
+        }
+
+        // posts messages to one frame; one function per frame, so a frame's replies are
+        // delivered through the same function whichever request they answer
+        private frameReplies = new WeakMap<HTMLIFrameElement, (msg: SimulatorMessage) => void>();
+
+        private replyTo(frame: HTMLIFrameElement): (msg: SimulatorMessage) => void {
+            let reply = this.frameReplies.get(frame);
+            if (!reply) {
+                reply = (msg: SimulatorMessage) => {
+                    if (frame.contentWindow) this.postMessageCore(frame, msg);
+                };
+                this.frameReplies.set(frame, reply);
+            }
+            return reply;
+        }
+
+        /** Returns true if the open project includes the simulator extension registered under `key`. */
+        private isInProject(key: string): boolean {
+            return !this.options.isSimxInProject || this.options.isSimxInProject(key);
+        }
+
+        /**
+         * Returns the handler of the project-file, project-asset, compiled-program or
+         * editor-tab request `type`, the registration flag a frame needs for it, and the
+         * error code that answers a request the handler throws on.
+         */
+        private extensionRequestGate(type: string): ExtensionRequestGate {
+            switch (type) {
+                case "projfs": return { handler: this.options.onProjfsMessage, permission: "allowFileWrite", failed: "FAILED" };
+                case "projassets": return { handler: this.options.onProjassetsMessage, permission: "allowAssetRead", failed: "FAILED" };
+                case "projprogram": return { handler: this.options.onProjprogramMessage, permission: "allowProgramRead", failed: "FAILED" };
+                default: return { handler: this.options.onSimxEditorMessage, permission: "allowEditorTab", failed: "INVALID_REQUEST" };
+            }
+        }
+
+        /**
+         * Passes a project-file, project-asset, compiled-program or editor-tab request
+         * from a simulator extension frame or editor tab frame to its handler with the
+         * frame's key, and answers it with an error instead when:
+         * - `UNREGISTERED`: `origin` is not the origin the frame was created with; the
+         *   frame is an editor tab frame and the request an editor-tab request; the frame
+         *   is a simulator frame that no `options.simulatorExtensions` key was created
+         *   for; no handler is set; or the open project does not include the extension;
+         * - `PERMISSION_DENIED`: the registration does not set the request's flag
+         *   (`allowFileWrite`, `allowAssetRead`, `allowProgramRead` or `allowEditorTab`),
+         *   or, for an editor-tab request, declares no editor tab the driver can serve
+         *   (one it computed `editorUrl` for);
+         * - the request family's failure code (`FAILED`, or `INVALID_REQUEST` for an
+         *   editor-tab request): the handler throws.
+         * Errors carry the request's type and id. Requests from windows that are
+         * neither kind of frame are dropped.
+         * @param requester the frame that posted the request, with its key; undefined
+         * if the request came from another window
+         * @param origin the origin of the window that posted the request
+         */
+        private handleExtensionRequest(msg: SimulatorMessage, requester: ExtensionRequester | undefined, origin: string | undefined) {
+            if (!requester) return;
+            const { frame, key, tab } = requester;
+            const { handler, permission, failed } = this.extensionRequestGate(msg.type);
+            const reply = this.replyTo(frame);
+            const refuse = (code: string, message: string) => {
+                const id = (msg as SimulatorMessage & { id?: unknown }).id;
+                reply({
+                    type: msg.type,
+                    id: typeof id === "string" ? id : undefined,
+                    subtype: "error",
+                    code,
+                    message,
+                } as SimulatorMessage);
+            };
+            if (origin !== frame.dataset[FRAME_DATA_ORIGIN]) {
+                refuse("UNREGISTERED", "The request did not come from the origin the frame was created with.");
+                return;
+            }
+            if (tab && permission === "allowEditorTab") {
+                refuse("UNREGISTERED", "The editor serves this request only to the simulator frame of an extension.");
+                return;
+            }
+            const registration = key && this.options.simulatorExtensions?.[key];
+            if (!handler || !registration) {
+                refuse("UNREGISTERED", "The editor serves this request only to the simulator extensions of the open project.");
+                return;
+            }
+            if (!this.isInProject(key)) {
+                refuse("UNREGISTERED", "The open project does not use this simulator extension.");
+                return;
+            }
+            const denied = !registration[permission]
+                ? `The simulator extension's registration does not set ${permission}.`
+                : permission === "allowEditorTab" && !registration.editorUrl
+                    ? editorTabRefusal(registration)
+                    : undefined;
+            if (denied) {
+                refuse("PERMISSION_DENIED", denied);
+                return;
+            }
+            try {
+                handler(key, msg, reply, frame);
+            } catch (e) {
+                pxsim.error(e);
+                refuse(failed, `The editor failed to handle the request: ${e?.message || e}`);
             }
         }
 
@@ -968,7 +1521,7 @@ namespace pxsim {
                         if (this._allowedOrigins.indexOf(ev.origin) < 0)
                             return
                     }
-                    this.handleMessage(ev.data, ev.source as Window)
+                    this.handleMessage(ev.data, ev.source as Window, ev.origin)
                 }
                 window.addEventListener('message', this.listener, false);
             }

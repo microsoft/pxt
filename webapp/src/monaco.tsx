@@ -373,6 +373,11 @@ export class Editor extends toolboxeditor.ToolboxEditor {
     private editAmendmentsListener: monaco.IDisposable | undefined;
     private errors: ErrorDisplayInfo[] = [];
     private errorListDebounceActive: boolean = false;
+    /**
+     * True while a reload of the current file triggered by a forced file change is in
+     * progress; content changes made during that reload do not call the change callback.
+     */
+    private forcedReloadActive: boolean = false;
     private revealErrorListDebounced: () => void;
     private callLocations: pxtc.LocationInfo[];
     private handleFlyoutWheel = (e: WheelEvent) => e.stopPropagation();
@@ -1582,11 +1587,16 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                 if (this.fileType == pxt.editor.FileType.Markdown)
                     this.parent.setSideMarkdown(file.content);
 
+                // Returns the reload so a forced write settles once the editor shows the
+                // new content.
                 this.currFile.setForceChangeCallback((from: string, to: string) => {
                     if (from != to) {
                         pxt.debug(`File changed (from ${from}, to ${to}). Reloading editor`)
-                        this.loadFileAsync(this.currFile);
+                        this.forcedReloadActive = true;
+                        return this.loadFileAsync(this.currFile)
+                            .finally(() => { this.forcedReloadActive = false; });
                     }
+                    return undefined;
                 });
 
                 if (!file.isReadonly()) {
@@ -1621,7 +1631,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
                         }
 
                         this.updateDiagnostics();
-                        this.changeCallback();
+                        if (!this.forcedReloadActive) this.changeCallback();
                         this.updateFieldEditors();
 
                         if (this.errorListDebounceActive) {

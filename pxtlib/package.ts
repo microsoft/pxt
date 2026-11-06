@@ -1003,11 +1003,23 @@ namespace pxt {
                 if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
             }
         }
+
+        /**
+         * Returns the palette the package's images are drawn with: the palette
+         * its pxt.json sets, else (also while its pxt.json has not loaded) the
+         * target's palette as the loaded packages patched it; undefined if
+         * neither has one.
+         */
+        effectivePalette(): string[] | undefined {
+            return this.config?.palette || appTarget.runtime?.palette;
+        }
     }
 
     export class MainPackage extends Package {
         public deps: Map<Package> = {};
         private _jres: Map<JRes>;
+        // called each time loadConfig reloads the project's pxt.json
+        protected configLoadListeners: (() => void)[] = [];
 
         constructor(public _host: Host) {
             super("this", "file:.", null, null, null)
@@ -1015,6 +1027,35 @@ namespace pxt {
             this.addedBy = [this]
             this.level = 0
             this.deps[this.id] = this;
+        }
+
+        /**
+         * Adds a listener called each time the project's pxt.json is reloaded
+         * into the package's config, after the reload. The listener is called
+         * synchronously, whether or not the config changed. A listener that
+         * throws is reported with `pxt.reportException`, and the other
+         * listeners are still called.
+         */
+        addConfigLoadListener(listener: () => void) {
+            this.configLoadListeners.push(listener);
+        }
+
+        /**
+         * Removes a listener added with addConfigLoadListener.
+         */
+        removeConfigLoadListener(listener: () => void) {
+            this.configLoadListeners = this.configLoadListeners.filter(l => l !== listener);
+        }
+
+        loadConfig(skipSave = false) {
+            super.loadConfig(skipSave);
+            this.configLoadListeners.forEach(listener => {
+                try {
+                    listener();
+                } catch (e) {
+                    pxt.reportException(e);
+                }
+            });
         }
 
         installAllAsync(targetVersion?: string) {
