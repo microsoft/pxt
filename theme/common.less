@@ -1768,10 +1768,10 @@ p.ui.font.small {
 
 #root.headless.transparentEditorTools {
     #editortools {
+        position: absolute;
         left: auto;
         height: 5.7rem;
         margin-right: 1rem;
-        bottom: var(--extra-mobile-sim-padding);
     }
 
     #editortools #downloadArea,
@@ -2088,7 +2088,11 @@ p.ui.font.small {
         left: -1px;
         position: relative;
     }
-    .collapsedEditorTools .hw-button:hover:after {
+    // The download options button sits at the left edge of the toolbar when its
+    // menu opens to the right, so anchor its tooltip to the left instead of
+    // centering it (which pushes the start of the text off screen).
+    .collapsedEditorTools .hw-button:hover:after,
+    .hw-button.menuRight:hover:after {
         transform: translateX(0%)!important;
         left: -2rem;
     }
@@ -2124,7 +2128,7 @@ p.ui.font.small {
         left: -2rem;
     }
 
-    #root:not(.fullscreensim):not(.headless):not(.sandbox) {
+    #root:not(.fullscreensim):not(.tutorialSimFullscreen):not(.headless):not(.sandbox) {
         #boardview {
             width: 6.5rem !important;
         }

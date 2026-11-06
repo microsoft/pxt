@@ -187,6 +187,15 @@ export class EditorDriver extends IframeDriver {
         );
     }
 
+    async showExtensions() {
+        await this.sendRequest(
+            {
+                type: "pxteditor",
+                action: "showextensions"
+            } as pxt.editor.EditorMessageRequest
+        );
+    }
+
     async toggleHighContrast() {
         await this.sendRequest(
             {

@@ -22,6 +22,7 @@ module.exports = async function(config) {
       'webapp/public/blockly/**/*.js',
       'built/pxtlib.js',
       'built/pxtcompiler.js',
+      'built/pxtsim.js',
       'built/tests/karma-test-runner.js',
 
       // test assets

@@ -201,6 +201,12 @@ declare namespace pxt {
         onStartGroup?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+        foreverNamespace?: string; // default = loops
+        foreverGroup?: string;
+        foreverWeight?: number;
+        pauseNamespace?: string; // default = loops
+        pauseGroup?: string;
+        pauseWeight?: number;
         pauseUntilBlock?: BlockOptions;
         breakBlock?: boolean;
         continueBlock?: boolean;
@@ -392,6 +398,9 @@ declare namespace pxt {
         docMenu?: DocMenuEntry[];
         TOC?: TOCMenuEntry[];
         hideSideDocs?: boolean;
+        projectTools?: boolean; // Enable the Project tools documentation bubbles
+        whiteboard?: boolean; // Enable private project whiteboards (requires a runtime palette)
+        backpack?: boolean; // Enable Backpack; local-only when sign-in is unavailable
         homeScreenHero?: string | CodeCard; // home screen hero image or codecard
         homeScreenHeroGallery?: string; // path to markdown file containing the gallery to display on homescreen
         sideDoc?: string; // deprecated
@@ -1349,6 +1358,7 @@ declare namespace pxt.tutorial {
         // Step metadata
         showHint?: boolean; // automatically displays hint
         showDialog?: boolean; // no coding, displays in modal
+        simFullscreen?: boolean; // fills the coding area with the simulator, keeping step directions visible
         resetDiff?: boolean; // reset diffify algo
         tutorialCompleted?: boolean;
 
