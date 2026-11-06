@@ -124,6 +124,65 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         try { assert.deepStrictEqual(errors, []); } finally { await page?.close(); }
     });
 
+    it("resets guest and pending account records for this target without deleting cloud or other target items", async () => {
+        const result = await page.evaluate(async () => {
+            bt.signIn(undefined);
+            await store.saveBackpackItemAsync(bt.item(1));
+            const adapter = store.createBackpackLocalStorage(indexedDB);
+            const namespaces = [store.backpackLocalNamespace("arcade", "alice"),
+                store.backpackLocalNamespace("arcade", "bob"), store.backpackLocalNamespace("arcade-other")];
+            for (const namespace of namespaces) {
+                await adapter.changeAsync(namespace, bt.id(2), undefined, { namespace, key: bt.id(2), payload: "corrupt" });
+            }
+            bt.seed(3);
+            let notifications = 0;
+            const unsubscribe = store.subscribeBackpack(() => notifications++);
+            await store.resetBackpackAsync();
+            const cached = store.getBackpackState().entries;
+            await store.refreshBackpackAsync();
+            const records = await Promise.all([bt.readLocal(), ...namespaces.map(namespace => adapter.listAsync(namespace))]);
+            unsubscribe();
+            await store.resetBackpackAsync();
+            return { cached, entries: store.getBackpackState().entries, records, notifications,
+                requests: bt.requests, remote: Object.keys(bt.remote) };
+        });
+        assert.deepStrictEqual(result.cached, []);
+        assert.deepStrictEqual(result.entries, []);
+        assert.deepStrictEqual(result.records.slice(0, 3), [[], [], []]);
+        assert.equal(result.records[3].length, 1);
+        assert.ok(result.notifications > 0);
+        assert.deepStrictEqual(result.requests, []);
+        assert.equal(result.remote.length, 1);
+    });
+
+    it("invalidates an in-flight save and clears its pending record before reset completes", async () => {
+        const result = await page.evaluate(async () => {
+            bt.hold();
+            bt.hook = async (options, run) => { bt.enter(); await bt.gate; return run(); };
+            const saving = bt.outcome(() => store.saveBackpackItemAsync(bt.item(1)));
+            await bt.entered;
+            const resetting = store.resetBackpackAsync();
+            bt.release();
+            const failure = await saving;
+            await resetting;
+            return { failure, records: await bt.readLocal("alice"), entries: store.getBackpackState().entries };
+        });
+        assert.match(result.failure, /account|editor/);
+        assert.deepStrictEqual(result.records, []);
+        assert.deepStrictEqual(result.entries, []);
+    });
+
+    it("clears local records even when the backpack feature is disabled", async () => {
+        const result = await page.evaluate(async () => {
+            bt.signIn(undefined);
+            await store.saveBackpackItemAsync(bt.item(1));
+            pxt.appTarget.appTheme.backpack = false;
+            await store.resetBackpackAsync();
+            return { records: await bt.readLocal(), entries: store.getBackpackState().entries };
+        });
+        assert.deepStrictEqual(result, { records: [], entries: [] });
+    });
+
     it("pages metadata completely without fetching bodies; explicit Add loads content", async () => {
         const result = await page.evaluate(async () => {
             for (let n = 1; n <= 45; n++) bt.seed(n);
