@@ -60,8 +60,8 @@ export function initLogic() {
     // builtin logic_ternary
     const logicTernaryId = "logic_ternary";
     const logicTernaryDef = pxt.blocks.getBlockDefinition(logicTernaryId);
-    if (logicTernaryDef) {
-        let block = Blockly.Blocks[logicTernaryId];
+    let block = Blockly.Blocks[logicTernaryId];
+    if (logicTernaryDef && block) {
         block.init = function () {
             this.jsonInit({
                 "message0": logicTernaryDef.block.message0,

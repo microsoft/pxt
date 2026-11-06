@@ -420,7 +420,19 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
     }
     else if (check === "T") {
         if (b.type === "logic_ternary") {
-            const target = getInputTargetBlock(e, b, "THEN") || getInputTargetBlock(e, b, "ELSE");
+            const thenBlock = getInputTargetBlock(e, b, "THEN");
+            const elseBlock = getInputTargetBlock(e, b, "ELSE");
+            if (thenBlock && elseBlock) {
+                const t1 = returnType(e, thenBlock);
+                const t2 = returnType(e, elseBlock);
+                try {
+                    union(t1, t2);
+                } catch (err) {
+                    // TypeScript will report type mismatch
+                }
+                return find(t1);
+            }
+            const target = thenBlock || elseBlock;
             if (target) {
                 return returnType(e, target);
             }

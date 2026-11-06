@@ -1132,7 +1132,7 @@ function compileTernary(e: Environment, b: Blockly.Block, comments: string[]): p
             arg.children[0].op === "(" && arg.children[2].op === ")") {
             let middle = arg.children[1];
             if (middle && middle.children && middle.children.length === 2 &&
-                middle.children[1].op === " as any") {
+                (middle.children[1].op || "").trim() === "as any") {
                 return middle.children[0];
             }
         }
