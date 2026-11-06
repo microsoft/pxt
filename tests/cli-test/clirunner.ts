@@ -258,6 +258,124 @@ describe("extension info explicit inputs", () => {
         chai.expect(target.compile.utf8).equals(undefined);
     });
 
+    it("preserves conditional branches, enum values and argument defaults when parsing C++", () => {
+        const files = extensionTestFiles();
+        files["main.cpp"] = `
+namespace test {
+#if 0
+//% block
+int excluded();
+#elif
+//% block
+int included();
+#endif
+#if false
+//% block
+int alsoExcluded();
+#else
+//% block
+int fallback();
+#endif
+#if PXT_UTF8
+//% block
+int utf8Only();
+#endif
+enum Values {
+    First,
+    Second = -2,
+    Third = true,
+    Fourth =   ,
+    Fifth,
+}
+/**
+ * Parse defaults.
+ */
+//% block
+int run(int value = -7, int other = NULL, String text);
+}
+`.replace(/\n/g, "\r\n");
+        const target = extensionTestTarget();
+        target.compile.utf8 = false;
+        const result = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(result.functions.map(f => f.name)).deep.equals(["test::included", "test::fallback", "test::run"]);
+        chai.expect(result.enumsDTS).contains("Second = -2,");
+        chai.expect(result.enumsDTS).contains("Third = 1,");
+        chai.expect(result.enumsDTS).contains("Fourth = 2,");
+        chai.expect(result.enumsDTS).contains("Fifth = 3,");
+        chai.expect(result.shimsDTS).contains("function run(value?: int32, other?: int32, text: string): int32;");
+        chai.expect(result.shimsDTS).contains("value.defl=-7");
+        chai.expect(result.shimsDTS).contains("other.defl=0");
+        target.compile.utf8 = true;
+        chai.expect(pxt.cpp.getExtensionInfo(files, target, undefined, host).functions.map(f => f.name))
+            .deep.equals(["test::included", "test::fallback", "test::utf8Only", "test::run"]);
+    });
+
+    it("parses unterminated C++ conditionals without rescanning the source", () => {
+        for (const prefix of [
+            "#if X" + "\n".repeat(20000),
+            "#if X\nx\n".repeat(20000),
+            "#if X\nx\n" + "\n".repeat(20000)
+        ]) {
+            const files = extensionTestFiles();
+            files["main.cpp"] = prefix + files["main.cpp"];
+            const result: pxtc.ExtensionInfo = vm.runInNewContext(
+                "generate(files, target, undefined, host)",
+                { generate: pxt.cpp.getExtensionInfo, files, target: extensionTestTarget(), host },
+                { timeout: 1000 }
+            );
+            chai.expect(result.functions.map(f => f.name)).deep.equals(["test::run"]);
+        }
+    });
+
+    it("parses long C++ return types and arguments without quadratic suffix searches", () => {
+        const files = extensionTestFiles();
+        const type = "_".repeat(100000) + "Value";
+        const arg = "a".repeat(100000);
+        files["main.cpp"] = `namespace test {
+/**
+ * Long identifiers.
+ */
+//% block
+${type}** run(int ${arg});
+}`;
+        const result: pxtc.ExtensionInfo = vm.runInNewContext(
+            "generate(files, target, undefined, host)",
+            { generate: pxt.cpp.getExtensionInfo, files, target: extensionTestTarget(), host },
+            { timeout: 1000 }
+        );
+        chai.expect(result.functions[0].argsFmt).deep.equals(["_" + type, "I"]);
+        chai.expect(result.shimsDTS).contains(`run(${arg}: int32)`);
+    });
+
+    it("reports malformed long C++ arguments without quadratic backtracking", () => {
+        const files = extensionTestFiles();
+        files["main.cpp"] = `namespace test {
+//% block
+int run(int ${"a".repeat(100000)}! = 1);
+}`;
+        chai.expect(() => vm.runInNewContext(
+            "generate(files, target, undefined, host)",
+            { generate: pxt.cpp.getExtensionInfo, files, target: extensionTestTarget(), host },
+            { timeout: 1000 }
+        )).throws("invalid argument:");
+    });
+
+    it("passes through malformed long enum members without quadratic backtracking", () => {
+        const files = extensionTestFiles();
+        const member = "Value" + " ".repeat(100000) + "!";
+        files["main.cpp"] = `namespace test {
+enum Values {
+${member}
+}
+}`;
+        const result: pxtc.ExtensionInfo = vm.runInNewContext(
+            "generate(files, target, undefined, host)",
+            { generate: pxt.cpp.getExtensionInfo, files, target: extensionTestTarget(), host },
+            { timeout: 1000 }
+        );
+        chai.expect(result.enumsDTS).contains(member);
+    });
+
     it("resolves different build engines and compile switches without leaking between variants", () => {
         const target = extensionTestTarget();
         const variant = extensionTestTarget();

@@ -11,6 +11,7 @@ describe("host-provided Backpack drag targets", function () {
     let page;
     const bundle = bundleSource([
         "pxtblocks/backpackDrag.ts",
+        "pxtblocks/backpack.ts",
         "webapp/src/components/backpack/useBackpackDrag.tsx"
     ], "backpackDrag", { blockly: "window.Blockly", react: "window.React" });
 
@@ -30,7 +31,10 @@ describe("host-provided Backpack drag targets", function () {
         await page.evaluate(() => {
             window.lf = text => text;
             window.dragTest = { enabled: true, visible: true, opens: 0, saves: 0, errors: [] };
-            window.pxt = { reportException: error => dragTest.errors.push(error.message) };
+            window.pxt = {
+                reportException: error => dragTest.errors.push(error.message),
+                U: { userError: message => { throw new Error(message); } }
+            };
             Blockly.Blocks.backpack_drag_container = {
                 init() {
                     this.appendDummyInput().appendField("loop");
@@ -51,6 +55,71 @@ describe("host-provided Backpack drag targets", function () {
                 dragTest.workspace?.dispose();
             });
         } finally { await page.close(); }
+    });
+
+    it("accepts a single statement and preserves the connected source when a selected tail is dropped", async () => {
+        await page.setViewport({ width: 900, height: 900 });
+        const start = await page.evaluate(async () => {
+            Blockly.Blocks.backpack_drag_statement = { init() {
+                this.appendDummyInput().appendField("step");
+                this.setPreviousStatement(true);
+                this.setNextStatement(true);
+            } };
+            const workspace = dragTest.workspace;
+            const first = Blockly.serialization.blocks.append({
+                type: "backpack_drag_statement",
+                next: { block: { type: "backpack_drag_statement", next: { block: { type: "backpack_drag_statement" } } } }
+            }, workspace);
+            first.moveTo(new Blockly.utils.Coordinate(100, 80));
+            const selected = first.getNextBlock();
+            dragTest.captures = [];
+            dragTest.dispose = backpackDrag.registerBackpackWorkspace(workspace, {
+                isEnabled: () => true,
+                save: block => {
+                    dragTest.captures.push(JSON.parse(backpackDrag.captureBackpackBlock(block).code));
+                    dragTest.saves++;
+                },
+                open: () => {},
+                hoverClass: "custom-hover",
+                dragTargets: [{ getElement: () => document.getElementById("custom-panel") }]
+            });
+            await Blockly.renderManagement.finishQueuedRenders();
+            const menu = Blockly.ContextMenuRegistry.registry.getItem("pxtBackpackSave");
+            dragTest.singleEnabled = menu.preconditionFn({ block: selected.getNextBlock() });
+            dragTest.stackEnabled = menu.preconditionFn({ block: selected });
+            menu.callback({ block: selected });
+            dragTest.before = JSON.stringify(Blockly.serialization.workspaces.save(workspace));
+            const rect = selected.getSvgRoot().getBoundingClientRect();
+            const target = document.getElementById("custom-panel").getBoundingClientRect();
+            return { x: rect.left + 20, y: rect.top + 15, endX: target.left + 50, endY: target.top + 50 };
+        });
+        await page.mouse.move(start.x, start.y);
+        await page.mouse.down();
+        await page.mouse.move(start.endX, start.endY, { steps: 10 });
+        await page.mouse.up();
+        await page.waitForFunction(() => dragTest.saves === 2 && !dragTest.workspace.isDragging());
+        const result = await page.evaluate(async () => {
+            await Blockly.renderManagement.finishQueuedRenders();
+            return {
+                single: dragTest.singleEnabled,
+                stack: dragTest.stackEnabled,
+                captures: dragTest.captures.map(capture => ({
+                    type: capture.blocks[0].type,
+                    next: capture.blocks[0].next.block.type,
+                    beyond: !!capture.blocks[0].next.block.next
+                })),
+                unchanged: dragTest.before === JSON.stringify(Blockly.serialization.workspaces.save(dragTest.workspace)),
+                errors: dragTest.errors
+            };
+        });
+        assert.deepStrictEqual(result, {
+            single: "enabled", stack: "enabled",
+            captures: [
+                { type: "backpack_drag_statement", next: "backpack_drag_statement", beyond: false },
+                { type: "backpack_drag_statement", next: "backpack_drag_statement", beyond: false }
+            ],
+            unchanged: true, errors: []
+        });
     });
 
     it("uses arbitrary host elements while retaining dwell, drop, and cleanup behavior", async () => {

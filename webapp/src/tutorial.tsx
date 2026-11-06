@@ -788,9 +788,12 @@ export class WorkspaceHeader extends data.Component<any, WorkspaceHeaderState> {
         }
     }
 
-    private headerStyle() {
+    private headerStyle(workspace = Blockly.common.getMainWorkspace()): React.CSSProperties & { "--flyout-title-scale": number } {
         return {
-            width: this.flyoutWidth
+            width: this.flyoutWidth,
+            "--flyout-title-scale": workspace instanceof Blockly.WorkspaceSvg
+                ? Math.min(1, workspace.scale / workspace.options.zoomOptions.startScale)
+                : 1
         }
     }
 

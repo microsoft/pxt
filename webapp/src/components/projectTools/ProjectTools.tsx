@@ -157,6 +157,7 @@ export function ProjectTools(props: ProjectToolsProps): JSX.Element {
         expanded: props.expanded,
         optionsOpen,
         compact,
+        keepOpenOnBlockDrag: tab === "backpack",
         docsUrl: props.docsUrl,
         docsRequest: props.docsRequest,
         onDismiss: dismissTools
