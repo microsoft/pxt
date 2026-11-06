@@ -455,6 +455,14 @@ parameter like so:
 
 **Playground example**: [Enumerations](https://makecode.com/playground#basic-enums)
 
+### Color picker shadows
+
+Use `color.shadow=makecode_color_picker` with a numeric color parameter. Set
+`color.fieldOptions.format` to `rgb` (the default), `hsv`, `hsl`, `cmyk`, or `hex`.
+`color.defl=0x7f3fbf` supplies the RGB color regardless of the initial display mode.
+For example, `color.fieldOptions.format=hex` displays that default as `#7F3FBF`.
+The picker always outputs a number through `colorHelpers`.
+
 ### Creating enumerations with blocks
 
 You can have blocks themselves define an enumeration dynamically. The block will specify some initial members but additional ones are added by selecting the "Add a new &lt;enum_name&gt;..." option in the parameter dropdown.

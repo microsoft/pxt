@@ -244,6 +244,16 @@ export function bindEditorMessages(getEditorAsync: () => Promise<IProjectView>) 
                                 return Promise.resolve()
                                     .then(() => projectView.showThemePicker());
                             }
+                            case "showextensions": {
+                                if (!pxt.appTarget.cloud?.packages) {
+                                    throw new Error("extensions are not supported by this target");
+                                }
+                                if (!projectView.state.header) {
+                                    throw new Error("no project loaded");
+                                }
+                                return Promise.resolve()
+                                    .then(() => projectView.showPackageDialog());
+                            }
                             case "togglehighcontrast": {
                                 return Promise.resolve()
                                     .then(() => projectView.toggleHighContrast());

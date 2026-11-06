@@ -15,7 +15,12 @@ export interface CommandFlag {
     possibleValues?: (string | RegExp)[];
     deprecated?: boolean;
     hidden?: boolean;
-
+    /**
+     * The flag may be given more than once, and its values are collected into a
+     * string[]. Applies to string flags with an argument only: defineCommand
+     * throws on a repeatable flag of another type or without an argument.
+     */
+    repeatable?: boolean;
 }
 
 export interface Command {
@@ -40,7 +45,7 @@ export interface Command {
 export interface ParsedCommand {
     name: string;
     args: string[];
-    flags: { [index: string]: boolean | string | number };
+    flags: { [index: string]: boolean | string | number | string[] };
 }
 
 export class CommandParser {
@@ -51,6 +56,9 @@ export class CommandParser {
 
         for (const flag in c.flags) {
             const def = c.flags[flag];
+            if (def.repeatable && ((def.type && def.type !== "string") || !def.argument)) {
+                throw new Error(`Flag ${flag} of command ${c.name} is repeatable, so it must be a string flag with an argument`);
+            }
 
             recordAlias(flag, flag);
             const aliases = c.flags[flag].aliases;
@@ -78,7 +86,7 @@ export class CommandParser {
             args = ["help"];
         const name = args[0];
         const parsedArgs: string[] = [];
-        const flags: { [index: string]: string | boolean | number } = {};
+        const flags: { [index: string]: string | boolean | number | string[] } = {};
 
         const filtered = this.commands.filter(c => c.name === name || c.aliases && c.aliases.indexOf(name) !== -1);
         if (!filtered.length)
@@ -135,7 +143,10 @@ export class CommandParser {
                     pxt.U.userError(`Unknown value for flag '${currentFlag}', '${match[2]}'`);
                 }
 
-                if (!currentFlagDef.type || currentFlagDef.type === "string") {
+                if (currentFlagDef.repeatable) {
+                    flags[currentFlag] = ((flags[currentFlag] as string[]) || []).concat([match[2]]);
+                }
+                else if (!currentFlagDef.type || currentFlagDef.type === "string") {
                     flags[currentFlag] = match[2];
                 }
                 else if (currentFlagDef.type === "boolean") {

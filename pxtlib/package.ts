@@ -2,8 +2,18 @@
 /// <reference path="../localtypings/pxtparts.d.ts"/>
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="util.ts"/>
+/// <reference path="shared/packageutils.ts"/>
+
+namespace pxt.cpp {
+    export interface PkgConflictError {
+        pkg0: Package;
+        pkg1: Package;
+    }
+}
 
 namespace pxt {
+    const extensionInfoCache: Map<pxtc.ExtensionInfo> = {};
+
     const CONFIG_FIELDS_ORDER = [
         "name",
         "version",
@@ -106,8 +116,8 @@ namespace pxt {
             this.addedBy = [addedBy];
         }
 
-        disablesVariant(v: string) {
-            return this.config && this.config.disablesVariants && this.config.disablesVariants.indexOf(v) >= 0
+        disablesVariant(v: string): boolean {
+            return packageUtils.isVariantDisabled(this.config, v);
         }
 
         invalid(): boolean {
@@ -118,10 +128,8 @@ namespace pxt {
             return this.resolvedVersion || this._verspec;
         }
 
-        verProtocol() {
-            let spl = this.version().split(':')
-            if (spl.length > 1) return spl[0]
-            else return ""
+        verProtocol(): string {
+            return packageUtils.getVersionProtocol(this.version());
         }
 
         verArgument() {
@@ -639,21 +647,12 @@ namespace pxt {
         }
 
         dependencies(includeCpp = false): pxt.Map<string> {
-            if (!this.config) return {};
-
-            const dependencies = Util.clone(this.config.dependencies || {});
-            // add test dependencies if nedeed
-            if (this.level == 0 && this.config.testDependencies) {
-                // only add testDepdencies that can be resolved
-                Util.iterMap(this.config.testDependencies, (k, v) => {
-                    if (v != "*" || pxt.appTarget.bundledpkgs[k])
-                        dependencies[k] = v;
-                })
-            }
-            if (includeCpp && this.config.cppDependencies) {
-                Util.jsonMergeFrom(dependencies, this.config.cppDependencies);
-            }
-            return dependencies;
+            return packageUtils.getConfigDependencies(
+                this.config,
+                this.level == 0,
+                includeCpp,
+                (id, version) => version != "*" || !!pxt.appTarget.bundledpkgs[id]
+            );
         }
 
         async loadAsync(isInstall = false, targetVersion?: string): Promise<void> {
@@ -895,41 +894,22 @@ namespace pxt {
         }
 
         static depWarnings: Map<boolean> = {}
-        getFiles() {
-            let res: string[]
-            if (this.level == 0 && !this.ignoreTests)
-                res = this.config.files.concat(this.config.testFiles || [])
-            else
-                res = this.config.files.slice(0);
-            const fd = this.config.fileDependencies
-            if (this.config.fileDependencies)
-                res = res.filter(fn => {
-                    const evalCond = (cond: string): boolean => {
-                        cond = cond.trim()
-                        if (cond[0] == '!')
-                            return !evalCond(cond.slice(1))
-                        if (/^[\w-]+$/.test(cond)) {
-                            const dep = this.parent.resolveDep(cond)
-                            if (dep && !dep.cppOnly)
-                                return true
-                            return false
-                        }
-                        const m = /^target:(\w+)$/.exec(cond)
-                        if (m)
-                            return m[1] == pxt.appTarget.id || m[1] == pxt.appTarget.platformid
-
-                        if (!Package.depWarnings[cond]) {
-                            Package.depWarnings[cond] = true
-                            pxt.log(`invalid dependency expression: ${cond} in ${this.id}/${fn}`)
-                        }
-                        return false
+        getFiles(): string[] {
+            return packageUtils.getConfigFiles(
+                this.config,
+                this.level == 0 && !this.ignoreTests,
+                pxt.appTarget,
+                id => {
+                    const dep = this.parent.resolveDep(id);
+                    return !!dep && !dep.cppOnly;
+                },
+                (condition, filename) => {
+                    if (!Package.depWarnings[condition]) {
+                        Package.depWarnings[condition] = true;
+                        pxt.log(`invalid dependency expression: ${condition} in ${this.id}/${filename}`);
                     }
-
-                    const cond = U.lookup(fd, fn)
-                    if (!cond || !cond.trim()) return true
-                    return cond.split('||').some(c => c.split('&&').every(evalCond))
-                })
-            return res
+                }
+            );
         }
 
         addSnapshot(files: Map<string>, exts: string[] = [""]) {
@@ -1171,32 +1151,36 @@ namespace pxt {
             const disabledVariants = pxt.appTarget.disabledVariants;
 
             let shimsGenerated = false
+            const extensionFiles: Map<string> = {};
+            let extensionTarget: TargetBundle;
+            const extensionHost: cpp.ExtensionInfoHost = {
+                cache: extensionInfoCache,
+                logger: { debug: pxt.debug, log: pxt.log },
+                perf: { measureStart: pxt.perf.measureStart, measureEnd: pxt.perf.measureEnd }
+            };
 
             const fillExtInfoAsync = async (variant: string) => {
                 const res: pxtc.ExtensionTarget = {
                     extinfo: null,
                     target: null
                 }
-                const prevVariant = pxt.appTargetVariant
-
-                if (variant) {
-                    pxt.setAppTargetVariant(variant, { temporary: true });
-                }
-
                 let einfo: pxtc.ExtensionInfo;
 
                 try {
-                    res.target = pxt.appTarget.compile;
-                    einfo = cpp.getExtensionInfo(this)
+                    const compileVariant = variant || pxt.appTargetVariant;
+                    res.target = pxt.getAppTargetVariant(extensionTarget, compileVariant).compile;
+                    einfo = cpp.getExtensionInfo(extensionFiles, extensionTarget, compileVariant, extensionHost);
                     if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }
-                } finally {
-                    if (variant) {
-                        pxt.setAppTargetVariant(prevVariant, { temporary: true })
+                } catch (e) {
+                    if (e instanceof cpp.PkgConflictError) {
+                        e.pkg0 = this.resolveDep(e.pkg0Id);
+                        e.pkg1 = this.resolveDep(e.pkg1Id);
                     }
+                    throw e;
                 }
 
                 einfo.appVariant = variant;
@@ -1215,6 +1199,31 @@ namespace pxt {
             }
 
             await this.loadAsync()
+            this.loadConfig(true);
+            extensionTarget = pxt.getUnpatchedAppTarget();
+            for (const pkg of this.sortedDeps(true)) {
+                const prefix = pkg == this ? "" : "pxt_modules/" + pkg.id + "/";
+                const config = U.clone(pkg.config);
+                const resolveVersions = (deps: Map<string>): Map<string> => {
+                    const result: Map<string> = {};
+                    for (const id of Object.keys(deps || {})) {
+                        const dep = pkg.resolveDep(id);
+                        if (dep) result[id] = dep.version();
+                    }
+                    return result;
+                };
+                config.dependencies = resolveVersions(pkg.dependencies());
+                config.cppDependencies = resolveVersions(config.cppDependencies);
+                // testDependencies are merged into the main dependencies by pkg.dependencies(), so
+                // it's safe to delete them from the config object here
+                delete config.testDependencies;
+                if (pkg != this || pkg.ignoreTests) {
+                    delete config.testFiles;
+                }
+                extensionFiles[prefix + pxt.CONFIG_NAME] = JSON.stringify(config);
+                for (const fn of config.files.concat(config.testFiles || []))
+                    extensionFiles[prefix + fn] = pkg.readFile(fn);
+            }
 
             opts.bannedCategories = this.resolveBannedCategories();
             pxt.debug(`building: ${this.sortedDeps().map(p => p.config?.name).join(", ")}`)
@@ -1238,8 +1247,7 @@ namespace pxt {
                     variants = variants.filter(v => !disabledVariants.includes(v));
                 }
             } else {
-                // no multi-variants, use empty variant name,
-                // so we don't mess with pxt.setAppTargetVariant() in fillExtInfoAsync()
+                // no multi-variants, use empty variant name
                 variants = [null]
             }
 

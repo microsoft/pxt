@@ -1290,7 +1290,7 @@ __flash_checksums:
         const opts0 = U.flatClone(opts)
         // normally, this would already have been done, but if the main variant
         // is disabled, another variant may be set up
-        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo(), cres)
+        hexfile.setupFor(opts.target, opts.extinfo || emptyExtInfo(pxt.appTarget.compileService), cres)
         assembleAndPatch(src, bin, opts, cres)
         if (!cres.builtVariants) {
             cres.builtVariants = [];

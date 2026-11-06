@@ -98,6 +98,19 @@ export async function initAsync(cfg: SimulatorConfig) {
             ...x.v
         });
 
+    // Plays the simulator frame exit animation on `el`, then calls `done`.
+    const playExitAnimation = (el: HTMLElement, done: () => void) => {
+        const animation = pxt.appTarget.appTheme.simAnimationExit || 'fly right out';
+        el.style.animationDuration = '500ms';
+        const animationClasses = `${animation} visible transition animating`;
+        pxsim.U.addClass(el, animationClasses);
+        pxt.Util.delay(500).then(() => {
+            pxsim.U.removeClass(el, animationClasses);
+            el.style.animationDuration = '';
+            done();
+        })
+    };
+
     let options: pxsim.SimulatorDriverOptions = {
         restart: () => cfg.restartSimulator(),
         revealElement: (el) => {
@@ -136,21 +149,34 @@ export async function initAsync(cfg: SimulatorConfig) {
                     return;
                 }
                 // Play exit animation
-                const animation = pxt.appTarget.appTheme.simAnimationExit || 'fly right out';
-                el.style.animationDuration = '500ms';
-                const animationClasses = `${animation} visible transition animating`;
-                pxsim.U.addClass(el, animationClasses);
-                pxt.Util.delay(500).then(() => {
-                    pxsim.U.removeClass(el, `animating`);
-                    el.style.animationDuration = '';
-
+                playExitAnimation(el, () => {
                     if (completeHandler) completeHandler();
                     pxsim.U.remove(el);
-                })
+                });
+            }
+        },
+        hideElement: (el, completeHandler) => {
+            if (pxt.appTarget.simulator.headless) {
+                pxsim.U.addClass(el, 'simHeadless');
+                if (completeHandler) completeHandler();
+            }
+            else if (pxt.options.light) {
+                pxsim.U.addClass(el, 'simHidden');
+                if (completeHandler) completeHandler();
+            }
+            else {
+                playExitAnimation(el, () => {
+                    pxsim.U.addClass(el, 'simHidden');
+                    if (completeHandler) completeHandler();
+                });
             }
         },
         unhideElement: (el) => {
             pxsim.U.removeClass(el, "simHeadless");
+            if (pxsim.U.containsClass(el, "simHidden")) {
+                pxsim.U.removeClass(el, "simHidden");
+                options.revealElement(el);
+            }
         },
         onDebuggerBreakpoint: function (brk) {
             // walk stack until breakpoint is found

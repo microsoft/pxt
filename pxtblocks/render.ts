@@ -21,6 +21,8 @@ export interface BlocksRenderOptions {
     forceCompilation?: boolean;
     generateSourceMap?: boolean;
     assets?: pxt.Map<string>;
+    // keep the rendering workspace for the next render instead of disposing it
+    reuseWorkspace?: boolean;
 }
 
 export function initRenderingWorkspace() {
@@ -102,13 +104,14 @@ export function render(blocksXml: string, options: BlocksRenderOptions = { emPix
             { applyHideMetaComment: true }
         );
 
-        return renderWorkspace(options);
+        const svg = renderWorkspace(options);
+        if (!options.reuseWorkspace)
+            cleanRenderingWorkspace();
+        return svg;
     } catch (e) {
         pxt.reportException(e);
-        return undefined;
-    }
-    finally {
         cleanRenderingWorkspace();
+        return undefined;
     }
 }
 

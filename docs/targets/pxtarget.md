@@ -254,6 +254,14 @@ This severely misnamed option controls the available blocks in the Blockly edito
         onStartGroup?: string;
         onStartWeight?: number;
         onStartUnDeletable?: boolean;
+
+        // options for standard "forever" and "pause" blocks
+        foreverNamespace?: string; // default = loops
+        foreverGroup?: string;
+        foreverWeight?: number;
+        pauseNamespace?: string; // default = loops
+        pauseGroup?: string;
+        pauseWeight?: number;
     }
 ```
 

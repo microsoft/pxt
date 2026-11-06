@@ -1,17 +1,24 @@
 import { classList } from "../util";
-import {  Button, ButtonViewProps } from "./Button";
+import { Button, ButtonProps, ButtonViewProps } from "./Button";
+
+export interface TabListItem extends ButtonViewProps {
+    id: string;
+    ariaControls: string;
+    buttonRef?: ButtonProps["buttonRef"];
+}
 
 export interface TabListProps {
     className?: string;
+    ariaLabel?: string;
     manualActivation?: boolean;
     orientation: "horizontal" | "vertical";
     selectedId: string;
     onTabSelected: (id: string) => void;
-    tabs: (ButtonViewProps & {id: string, ariaControls: string})[];
+    tabs: TabListItem[];
 }
 
 export const TabList = (props: TabListProps) => {
-    const { className, manualActivation, orientation, selectedId, onTabSelected, tabs } = props;
+    const { className, ariaLabel, manualActivation, orientation, selectedId, onTabSelected, tabs } = props;
 
     const onKeyDown = (e: React.KeyboardEvent<HTMLElement>) => {
         const currentIndex = tabs.findIndex(t => t.id === document.activeElement?.id);
@@ -68,6 +75,7 @@ export const TabList = (props: TabListProps) => {
     return (
         <div
             role="tablist"
+            aria-label={ariaLabel}
             aria-orientation={orientation}
             className={classList("common-tab-list", className)}
             onKeyDown={onKeyDown}

@@ -204,7 +204,7 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
                 }
                 return <div />;
             case "debugging":
-                return  <sui.MenuItem className="centered" icon="large bug" name="Debug Mode" />
+                return  <sui.MenuItem className="centered" icon="large bug" name={lf("Debug Mode")} />
             case "sandbox":
             case "editor":
             case "time-machine":

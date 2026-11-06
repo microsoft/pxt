@@ -629,6 +629,8 @@ export class ScriptManagerDialog extends data.Component<ScriptManagerDialogProps
                                 return <ProjectsCodeCard
                                     key={id}
                                     id={id}
+                                    role="checkbox"
+                                    selected={isSelected}
                                     cardType="file"
                                     className={`file ${isMarkedNew ? 'warning' : isSelected ? 'positive' : ''}`}
                                     name={scr.name}

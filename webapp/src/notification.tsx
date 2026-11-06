@@ -126,11 +126,18 @@ export class NotificationBanner extends data.Component<ISettingsProps, {}> {
 
         if (showExperimentalBanner) {
             const liveUrl = pxt.appTarget.appTheme.homeUrl + location.search + location.hash;
+
+            const openHandler = pxt.BrowserUtils.isIpcRenderer() ? () => {
+                window.location.href = liveUrl;
+            } : undefined;
+
+            const href = openHandler ? undefined : liveUrl;
+
             return (
                 <GenericBanner id="experimental" parent={this.props.parent} bannerType={"negative"} >
                     <sui.Icon icon="warning circle" />
                     <div className="header">{lf("You are viewing an experimental version of the editor")}</div>
-                    <sui.Link className="link" ariaLabel={lf("Go back to live editor")} href={liveUrl}>{lf("Take me back")}</sui.Link>
+                    <sui.Link className="link" ariaLabel={lf("Go back to live editor")} href={href} onClick={openHandler}>{lf("Take me back")}</sui.Link>
                 </GenericBanner>
             );
         }
