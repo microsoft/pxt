@@ -12,6 +12,8 @@ export interface BackpackLocalRecord {
 
 export interface BackpackLocalStorage {
     listAsync(namespace: string): Promise<BackpackLocalRecord[]>;
+    /** Clear guest and pending account records for this target only. */
+    clearAsync(targetId: string): Promise<void>;
     /** Write only if the stored record matches expected; undefined requires an absent key. */
     changeAsync(
         namespace: string,
@@ -99,6 +101,19 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
         listAsync: namespace => transactionAsync<BackpackLocalRecord[]>("readonly", (store, done) => {
             const request = store.index("namespace").getAll(namespace);
             request.onsuccess = () => done(request.result);
+        }),
+        clearAsync: targetId => transactionAsync<void>("readwrite", (store, done) => {
+            const prefix = JSON.stringify([targetId]).slice(0, -1) + ",";
+            const request = store.openCursor();
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (!cursor) {
+                    done(undefined);
+                    return;
+                }
+                if ((cursor.primaryKey as string[])[0].startsWith(prefix)) cursor.delete();
+                cursor.continue();
+            };
         }),
         changeAsync: (namespace, key, expected, next) => transactionAsync<boolean>("readwrite", (store, done) => {
             const request = store.get([namespace, key]);
