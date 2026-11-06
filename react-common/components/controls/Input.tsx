@@ -83,11 +83,13 @@ export const Input = (props: InputProps) => {
     const filter = React.useMemo(() => (props.filter ? new RegExp(props.filter, "g") : undefined), [props.filter]);
     const optionValues = React.useMemo(() => (options ? Object.values(options) : []), [options]);
     const isComposingRef = React.useRef(false);
+    const lastCommittedValueRef = React.useRef(initialValue || "");
 
     let container: HTMLDivElement;
 
     React.useEffect(() => {
         setValue(initialValue || "");
+        lastCommittedValueRef.current = initialValue || "";
     }, [initialValue]);
 
     const handleContainerRef = (ref: HTMLDivElement) => {
@@ -111,9 +113,6 @@ export const Input = (props: InputProps) => {
             filter.lastIndex = 0;
             res = res.match(filter)?.join("") || "";
         }
-        if (maxLength && res.length > maxLength) {
-            res = res.slice(0, maxLength);
-        }
         return res;
     };
 
@@ -121,22 +120,57 @@ export const Input = (props: InputProps) => {
         if (!readOnly && (value !== newValue)) {
             setValue(newValue);
         }
-        if (onChange) {
-            onChange(newValue);
+        if (lastCommittedValueRef.current !== newValue) {
+            lastCommittedValueRef.current = newValue;
+            if (onChange) {
+                onChange(newValue);
+            }
         }
     };
 
     const changeHandler = (e: React.ChangeEvent<any>) => {
-        const rawValue = (e.target as any).value;
+        const input = e.target as HTMLInputElement;
+        const rawValue = input.value;
         if (isComposingRef.current) {
             setValue(rawValue);
             return;
         }
+        const caret = input.selectionStart ?? rawValue.length;
+        const rawBeforeCaret = rawValue.slice(0, caret);
+        filter.lastIndex = 0;
+        const cleanBeforeCaret = filter ? (rawBeforeCaret.match(filter)?.join("") || "") : rawBeforeCaret;
+        const newCaretPos = cleanBeforeCaret.length;
+
         const sanitized = sanitizeValue(rawValue);
-        if (e.target && (e.target as any).value !== sanitized) {
-            (e.target as any).value = sanitized;
+        if (input.value !== sanitized) {
+            input.value = sanitized;
+            if (input.setSelectionRange) {
+                input.setSelectionRange(newCaretPos, newCaretPos);
+            }
         }
         applyValue(sanitized);
+    };
+
+    const pasteHandler = (e: React.ClipboardEvent<HTMLInputElement>) => {
+        if (!filter) return;
+        e.preventDefault();
+        const input = e.currentTarget;
+        const text = e.clipboardData.getData("text");
+        filter.lastIndex = 0;
+        const cleanPaste = text.match(filter)?.join("") || "";
+        const selStart = input.selectionStart ?? value.length;
+        const selEnd = input.selectionEnd ?? value.length;
+        const prefix = value.slice(0, selStart);
+        const suffix = value.slice(selEnd);
+        const maxInsertLen = maxLength !== undefined ? Math.max(0, maxLength - prefix.length - suffix.length) : cleanPaste.length;
+        const inserted = cleanPaste.slice(0, maxInsertLen);
+        const newValue = prefix + inserted + suffix;
+        const newPos = selStart + inserted.length;
+        input.value = newValue;
+        if (input.setSelectionRange) {
+            input.setSelectionRange(newPos, newPos);
+        }
+        applyValue(newValue);
     };
 
     const compositionStartHandler = () => {
@@ -145,9 +179,20 @@ export const Input = (props: InputProps) => {
 
     const compositionEndHandler = (e: React.CompositionEvent<any>) => {
         isComposingRef.current = false;
-        const sanitized = sanitizeValue((e.target as any).value);
-        if (e.target && (e.target as any).value !== sanitized) {
-            (e.target as any).value = sanitized;
+        const input = e.target as HTMLInputElement;
+        const rawValue = input.value;
+        const caret = input.selectionStart ?? rawValue.length;
+        const rawBeforeCaret = rawValue.slice(0, caret);
+        filter.lastIndex = 0;
+        const cleanBeforeCaret = filter ? (rawBeforeCaret.match(filter)?.join("") || "") : rawBeforeCaret;
+        const newCaretPos = cleanBeforeCaret.length;
+
+        const sanitized = sanitizeValue(rawValue);
+        if (input.value !== sanitized) {
+            input.value = sanitized;
+            if (input.setSelectionRange) {
+                input.setSelectionRange(newCaretPos, newCaretPos);
+            }
         }
         applyValue(sanitized);
     };
@@ -219,12 +264,14 @@ export const Input = (props: InputProps) => {
         if (validator) {
             validatedValue = validator(currentValue, initialValue || "");
             setValue(validatedValue);
+            lastCommittedValueRef.current = validatedValue;
         }
         if (onBlur) {
             onBlur(validatedValue);
         }
         if (!preserveValueOnBlur) {
             setValue("");
+            lastCommittedValueRef.current = "";
         }
     }
 
@@ -239,6 +286,7 @@ export const Input = (props: InputProps) => {
 
         const value = options[option];
         setValue(value);
+        lastCommittedValueRef.current = value;
         if (onOptionSelected) {
             onOptionSelected(value);
         }
@@ -281,6 +329,7 @@ export const Input = (props: InputProps) => {
                     autoFocus={autoFocus}
                     onClick={clickHandler}
                     onChange={changeHandler}
+                    onPaste={pasteHandler}
                     onCompositionStart={compositionStartHandler}
                     onCompositionEnd={compositionEndHandler}
                     onKeyDown={keyDownHandler}
@@ -290,7 +339,7 @@ export const Input = (props: InputProps) => {
                     autoCorrect={autoComplete ? "" : "off"}
                     autoCapitalize={autoComplete ? "" : "off"}
                     spellCheck={autoComplete}
-                    maxLength={filter ? undefined : maxLength}
+                    maxLength={maxLength}
                     disabled={disabled}
                     ref={handleInputRef} />
                 {icon && (onIconClick
