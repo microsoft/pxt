@@ -743,6 +743,15 @@ namespace pxt.blocks {
                     LOGIC_BOOLEAN_FALSE: Util.blf("{id:boolean}false")
                 }
             },
+            'logic_ternary': {
+                name: Util.lf("ternary operator"),
+                tooltip: Util.lf("If the condition is true, returns the first value; otherwise returns the second value."),
+                url: '/blocks/logic/ternary',
+                category: 'logic',
+                block: {
+                    message0: Util.blf("{id:ternary}if %1 then %2 else %3")
+                }
+            },
             'text': {
                 name: Util.lf("a piece of text"),
                 tooltip: Util.lf("A letter, word, or line of text."),
