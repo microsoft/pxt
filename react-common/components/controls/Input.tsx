@@ -128,18 +128,16 @@ export const Input = (props: InputProps) => {
         }
     };
 
-    const changeHandler = (e: React.ChangeEvent<any>) => {
-        const input = e.target as HTMLInputElement;
+    const processInput = (input: HTMLInputElement) => {
         const rawValue = input.value;
-        if (isComposingRef.current) {
-            setValue(rawValue);
-            return;
-        }
         const caret = input.selectionStart ?? rawValue.length;
-        const rawBeforeCaret = rawValue.slice(0, caret);
-        filter.lastIndex = 0;
-        const cleanBeforeCaret = filter ? (rawBeforeCaret.match(filter)?.join("") || "") : rawBeforeCaret;
-        const newCaretPos = cleanBeforeCaret.length;
+        let newCaretPos = caret;
+        if (filter) {
+            filter.lastIndex = 0;
+            const rawBeforeCaret = rawValue.slice(0, caret);
+            const cleanBeforeCaret = rawBeforeCaret.match(filter)?.join("") || "";
+            newCaretPos = cleanBeforeCaret.length;
+        }
 
         const sanitized = sanitizeValue(rawValue);
         if (input.value !== sanitized) {
@@ -151,8 +149,17 @@ export const Input = (props: InputProps) => {
         applyValue(sanitized);
     };
 
+    const changeHandler = (e: React.ChangeEvent<any>) => {
+        const input = e.target as HTMLInputElement;
+        if (isComposingRef.current) {
+            setValue(input.value);
+            return;
+        }
+        processInput(input);
+    };
+
     const pasteHandler = (e: React.ClipboardEvent<HTMLInputElement>) => {
-        if (!filter) return;
+        if (!filter || readOnly || disabled) return;
         e.preventDefault();
         const input = e.currentTarget;
         const text = e.clipboardData.getData("text");
@@ -179,22 +186,7 @@ export const Input = (props: InputProps) => {
 
     const compositionEndHandler = (e: React.CompositionEvent<any>) => {
         isComposingRef.current = false;
-        const input = e.target as HTMLInputElement;
-        const rawValue = input.value;
-        const caret = input.selectionStart ?? rawValue.length;
-        const rawBeforeCaret = rawValue.slice(0, caret);
-        filter.lastIndex = 0;
-        const cleanBeforeCaret = filter ? (rawBeforeCaret.match(filter)?.join("") || "") : rawBeforeCaret;
-        const newCaretPos = cleanBeforeCaret.length;
-
-        const sanitized = sanitizeValue(rawValue);
-        if (input.value !== sanitized) {
-            input.value = sanitized;
-            if (input.setSelectionRange) {
-                input.setSelectionRange(newCaretPos, newCaretPos);
-            }
-        }
-        applyValue(sanitized);
+        processInput(e.target as HTMLInputElement);
     };
 
     const keyDownHandler = (e: React.KeyboardEvent) => {
