@@ -20,6 +20,13 @@ export * from "./importer";
 export * from "./diff";
 export * from "./legacyMutations";
 export * from "./blockDragger";
+export * from "./clipboard";
+export {
+    BackpackCode, isBackpackContainer, isBackpackBlock, getBackpackAssetField,
+    BackpackAssetCapture, captureBackpackAsset, getBackpackAssetFields, getBackpackCaptureKind,
+    captureBackpackBlock, parseBackpackCode, getBackpackBlockTypes, pasteBackpackBlock,
+} from "./backpack";
+export { BackpackDragTargetOptions, BackpackWorkspaceOptions, registerBackpackWorkspace } from "./backpackDrag";
 export * from "./workspaceSearch";
 export * from "./monkeyPatches";
 export * from "./getBlockText";

@@ -193,6 +193,26 @@ If you want to display your tutorial step in a dialog and then have it skip to t
 
 ```
 
+### simFullscreen
+
+Use ``@simFullscreen`` for a step that asks the learner to watch or interact with the simulator instead of editing code:
+
+```markdown
+## Step 3 @simFullscreen
+
+Look at the simulator. Press **A** and watch what happens.
+
+## Step 4
+
+Return to your code and change the animation.
+```
+
+The directions and tutorial navigation keep their usual layout, and the simulator fills the remaining space. The code editor and its tools are hidden only for this step. Moving to a step without ``@simFullscreen`` restores the editor.
+
+The simulator's run, restart, and sound controls remain available. Entering this mode does not restart an already-running program. A collapsed simulator is expanded as needed, just like the normal fullscreen simulator.
+
+This modifier is separate from the deprecated ``@fullscreen`` hint modifier and does not open a hint or dialog. Targets without a visible simulator continue to use their normal tutorial layout.
+
 ## Using blocks
 
 ### Hint blocks

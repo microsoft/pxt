@@ -4,6 +4,7 @@ import { CommonFunctionBlock } from "../functions/commonFunctionMixin";
 import { InlineSvgsExtensionBlock } from "../functions";
 import { FieldImageNoText } from "../../fields/field_imagenotext";
 import { maybeMoveFocusFromButton } from "../../utils";
+import { isFunctionArgumentReporter } from "../functions/utils";
 
 type ListCreateMixinType = typeof LIST_CREATE_MIXIN;
 
@@ -101,6 +102,12 @@ const LIST_CREATE_MIXIN = {
                             const mutation = Blockly.utils.xml.createElement('mutation');
                             mutation.setAttribute('name', (connectedBlock as CommonFunctionBlock).getName());
                             blockDom.appendChild(mutation);
+                        } else if (isFunctionArgumentReporter(connectedBlock)) {
+                            blockDom.appendChild(connectedBlock.mutationToDom());
+                            const field = Blockly.utils.xml.createElement('field');
+                            field.setAttribute('name', 'VALUE');
+                            field.textContent = connectedBlock.getFieldValue('VALUE');
+                            blockDom.appendChild(field);
                         } else if (connectedBlock.inputList) {
                             for (let i = 0; i < connectedBlock.inputList.length; i++) {
                                 const input = connectedBlock.inputList[i];

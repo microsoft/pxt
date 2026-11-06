@@ -1,0 +1,7 @@
+{
+    "name": "incomplete",
+    "dependencies": {},
+    "files": [
+        "missing.ts"
+    ]
+}

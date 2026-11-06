@@ -5,6 +5,7 @@ import { ImageEditorStore, AnimationState, TilemapState } from './store/imageRed
 import { dispatchChangeImageDimensions, dispatchUndoImageEdit, dispatchRedoImageEdit, dispatchToggleAspectRatioLocked, dispatchChangeZoom, dispatchToggleOnionSkinEnabled, dispatchChangeAssetName } from './actions/dispatch';
 import { fireClickOnlyOnEnter } from "./util";
 import { isNameTaken } from "../../assets";
+import { AssetEditorContext } from "../AssetEditorContext";
 import { obtainShortcutLock, releaseShortcutLock } from "./keyboardShortcuts";
 import { classList } from "../../../../react-common/components/util";
 import { Button } from "../../../../react-common/components/controls/Button";
@@ -45,11 +46,18 @@ export interface BottomBarState {
 }
 
 export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarState> {
+    static contextType = AssetEditorContext;
+    declare context: React.ContextType<typeof AssetEditorContext>;
+
     protected shortcutLock: number;
 
     constructor(props: BottomBarProps) {
         super(props);
         this.state = {};
+    }
+
+    componentWillUnmount() {
+        this.setShortcutsEnabled(true);
     }
 
     render() {
@@ -263,7 +271,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         if (!pxt.validateAssetName(trimmedName)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
-        else if (isNameTaken(trimmedName) && trimmedName !== this.props.assetName) {
+        else if (isNameTaken(trimmedName, this.context) && trimmedName !== this.props.assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
         }
 
@@ -276,7 +284,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         if (this.state.assetName) {
             let newName = this.state.assetName.trim();
 
-            if (newName !== assetName && pxt.validateAssetName(newName) && !isNameTaken(newName)) {
+            if (newName !== assetName && pxt.validateAssetName(newName) && !isNameTaken(newName, this.context)) {
                 dispatchChangeAssetName(newName);
             }
         }
@@ -313,7 +321,7 @@ function mapStateToProps({store: { present: state, past, future }, editor}: Imag
         aspectRatioLocked: state.aspectRatioLocked,
         onionSkinEnabled: editor.onionSkinEnabled,
         cursorLocation: editor.cursorLocation,
-        resizeDisabled: state.asset?.type === pxt.AssetType.Tile,
+        resizeDisabled: editor.resizeDisabled || state.asset?.type === pxt.AssetType.Tile,
         assetName: state.asset?.meta?.displayName,
         hasUndo: !!past.length,
         hasRedo: !!future.length,

@@ -23,6 +23,7 @@ import { initOnStart } from "./builtins/misc";
 import { initContextMenu } from "./contextMenu";
 import { renderCodeCard } from "./codecardRenderer";
 import { FieldDropdown } from "./fields/field_dropdown";
+import { COLOR_PICKER_BLOCK_TYPE } from "./plugins/colorpicker";
 import { setDraggableShadowBlocks, setDuplicateOnDrag, setDuplicateOnDragStrategy } from "./plugins/duplicateOnDrag";
 import { initCopyPaste } from "./copyPaste";
 export { initCopyPaste } from "./copyPaste";
@@ -110,7 +111,10 @@ export function blockSymbol(type: string): pxtc.SymbolInfo {
 export function injectBlocks(blockInfo: pxtc.BlocksInfo): pxtc.SymbolInfo[] {
     cachedBlockInfo = blockInfo;
 
-    setDraggableShadowBlocks(blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId));
+    setDraggableShadowBlocks([
+        COLOR_PICKER_BLOCK_TYPE,
+        ...blockInfo.blocks.filter(fn => fn.attributes.duplicateShadowOnDrag).map(fn => fn.attributes.blockId)
+    ]);
 
     setArgumentReporterLocalizeFunction((arg, block) => {
         return localizeArgumentReporter(blockInfo, arg, block);
@@ -143,11 +147,15 @@ function injectBlockDefinition(info: pxtc.BlocksInfo, fn: pxtc.SymbolInfo, comp:
     }
 
     let hash = JSON.stringify(fn);
-    if (cachedBlocks[id] && cachedBlocks[id].hash == hash) {
+    const cached = cachedBlocks[id];
+    const ownsDefinition = !!cached && Blockly.Blocks[id] === cached.block;
+    if (ownsDefinition && cached.hash === hash) {
         return true;
     }
 
-    if (Blockly.Blocks[fn.attributes.blockId]) {
+    // Workspace reloads can refresh metadata for a definition we already own.
+    const sameSymbol = ownsDefinition && !!fn.qName && cached.fn.qName === fn.qName;
+    if (Blockly.Blocks[id] && !sameSymbol) {
         pxt.error("duplicate block definition: " + id);
         return false;
     }

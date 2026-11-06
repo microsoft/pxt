@@ -1,4 +1,5 @@
 import { monkeyPatchBlockSvg } from "./blockSvg";
+import { monkeyPatchBlockDragStrategy } from "./block_drag_strategy";
 import { monkeyPatchConnection } from "./connection";
 import { monkeyPatchFullBlockField } from "./fullBlockField";
 import { monkeyPatchGesture, monkeyPatchShadowDragTargetBlock } from "./gesture";
@@ -13,4 +14,5 @@ export function applyMonkeyPatches() {
     monkeyPatchAddKeyMapping();
     monkeyPatchConnection();
     monkeyPatchFullBlockField();
+    monkeyPatchBlockDragStrategy();
 }

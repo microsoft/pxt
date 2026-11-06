@@ -1,19 +1,8 @@
 /// <reference path="tickEvent.ts" />
 /// <reference path="apptarget.ts"/>
 /// <reference path="commonutil.ts"/>
-
-namespace ts.pxtc {
-    /**
-     * atob replacement
-     * @param s
-     */
-    export let decodeBase64 = function (s: string) { return atob(s); }
-    /**
-     * bota replacement
-     * @param s
-     */
-    export let encodeBase64 = function (s: string) { return btoa(s); }
-}
+/// <reference path="shared/targetutils.ts"/>
+/// <reference path="shared/sha256.ts"/>
 
 namespace ts.pxtc.Util {
 
@@ -230,41 +219,10 @@ namespace ts.pxtc.Util {
         return true;
     }
 
-    export function iterMap<T>(m: pxt.Map<T>, f: (k: string, v: T) => void) {
-        Object.keys(m).forEach(k => f(k, m[k]))
-    }
-
     export function mapMap<T, S>(m: pxt.Map<T>, f: (k: string, v: T) => S) {
         let r: pxt.Map<S> = {}
         Object.keys(m).forEach(k => r[k] = f(k, m[k]))
         return r
-    }
-
-    export function values<T>(m: pxt.Map<T>) {
-        return Object.keys(m || {}).map(k => m[k])
-    }
-
-    export function pushRange<T>(trg: T[], src: ArrayLike<T>): void {
-        if (src)
-            for (let i = 0; i < src.length; ++i)
-                trg.push(src[i])
-    }
-
-    // TS gets lost in type inference when this is passed an array
-    export function concatArrayLike<T>(arrays: ArrayLike<ArrayLike<T>>): T[] {
-        return concat(arrays as any)
-    }
-
-    export function concat<T>(arrays: T[][]): T[] {
-        let r: T[] = []
-        for (let i = 0; i < arrays.length; ++i) {
-            pushRange(r, arrays[i])
-        }
-        return r
-    }
-
-    function isKV(v: any) {
-        return !!v && typeof v === "object" && !Array.isArray(v)
     }
 
     export function memcpy(trg: Uint8Array, trgOff: number, src: ArrayLike<number>, srcOff?: number, len?: number) {
@@ -296,64 +254,6 @@ namespace ts.pxtc.Util {
         }
     }
 
-    export function jsonMergeFrom(trg: any, src: any) {
-        if (!src) return;
-        Object.keys(src).forEach(k => {
-            if (isKV(trg[k]) && isKV(src[k]))
-                jsonMergeFrom(trg[k], src[k]);
-            else trg[k] = clone(src[k]);
-        });
-    }
-
-    export function jsonCopyFrom<T>(trg: T, src: T) {
-        let v = clone(src)
-        for (let k of Object.keys(src)) {
-            (trg as any)[k] = (v as any)[k]
-        }
-    }
-
-    // { a: { b: 1 }, c: 2} => { "a.b": 1, c: 2 }
-    export function jsonFlatten(v: any) {
-        let res: pxt.Map<any> = {}
-        let loop = (pref: string, v: any) => {
-            if (v !== null && typeof v == "object") {
-                assert(!Array.isArray(v))
-                if (pref) pref += "."
-                for (let k of Object.keys(v)) {
-                    loop(pref + k, v[k])
-                }
-            } else {
-                res[pref] = v
-            }
-        }
-        loop("", v)
-        return res
-    }
-
-    export function jsonUnFlatten(v: pxt.Map<any>) {
-        let res: any = {}
-        for (let k of Object.keys(v)) {
-            let ptr = res
-            let parts = k.split(".")
-            for (let i = 0; i < parts.length; ++i) {
-                let part = parts[i]
-                if (i == parts.length - 1)
-                    ptr[part] = v[k]
-                else {
-                    if (typeof ptr[part] != "object") ptr[part] = {}
-                    ptr = ptr[part]
-                }
-            }
-        }
-        return res
-    }
-
-    export function strcmp(a: string, b: string) {
-        if (a == b) return 0;
-        if (a < b) return -1;
-        else return 1;
-    }
-
     export function stringMapEq(a: pxt.Map<string>, b: pxt.Map<string>) {
         let ak = Object.keys(a)
         let bk = Object.keys(b)
@@ -365,23 +265,6 @@ namespace ts.pxtc.Util {
         return true
     }
 
-    export function endsWith(str: string, suffix: string) {
-        if (str.length < suffix.length) return false
-        if (suffix.length == 0) return true
-        return str.slice(-suffix.length) == suffix
-    }
-
-    export function startsWith(str: string, prefix: string) {
-        if (str.length < prefix.length) return false
-        if (prefix.length == 0) return true
-        return str.slice(0, prefix.length) == prefix
-    }
-
-    export function contains(str: string, contains: string) {
-        if (str.length < contains.length) return false
-        if (contains.length == 0) return true
-        return str.indexOf(contains) > -1
-    }
 
     export function replaceAll(str: string, old: string, new_: string): string {
         if (!old) return str;
@@ -959,31 +842,6 @@ namespace ts.pxtc.Util {
 
         // decodeURIComponent does the actual UTF8 decoding
         return decodeURIComponent(escaped)
-    }
-
-    export function toUTF8(str: string, cesu8?: boolean) {
-        let res = "";
-        if (!str) return res;
-        for (let i = 0; i < str.length; ++i) {
-            let code = str.charCodeAt(i);
-            if (code <= 0x7f) res += str.charAt(i);
-            else if (code <= 0x7ff) {
-                res += String.fromCharCode(0xc0 | (code >> 6), 0x80 | (code & 0x3f));
-            } else {
-                if (!cesu8 && 0xd800 <= code && code <= 0xdbff) {
-                    let next = str.charCodeAt(++i);
-                    if (!isNaN(next))
-                        code = 0x10000 + ((code - 0xd800) << 10) + (next - 0xdc00);
-                }
-
-                if (code <= 0xffff)
-                    res += String.fromCharCode(0xe0 | (code >> 12), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
-                else
-                    res += String.fromCharCode(0xf0 | (code >> 18), 0x80 | ((code >> 12) & 0x3f), 0x80 | ((code >> 6) & 0x3f), 0x80 | (code & 0x3f));
-            }
-
-        }
-        return res;
     }
 
     export function toHex(bytes: ArrayLike<number>) {
@@ -1742,153 +1600,6 @@ namespace ts.pxtc.Util {
         }
         return url
     }
-    export function cloneTargetBundle(target: pxt.TargetBundle) {
-        target = {
-            ...target
-        };
-
-        const apiInfo = target.apiInfo;
-        delete target.apiInfo;
-
-        const bundleddirs = target.bundleddirs;
-        delete target.bundleddirs;
-
-        const bundledpkgs = target.bundledpkgs;
-        delete target.bundledpkgs;
-
-        const tutorialInfo = target.tutorialInfo;
-        delete target.tutorialInfo;
-
-        const res = clone(target);
-
-        if (apiInfo) {
-            res.apiInfo = {};
-            for (const key of Object.keys(apiInfo)) {
-                const apis = apiInfo[key].apis;
-
-                res.apiInfo[key] = {
-                    sha: apiInfo[key].sha,
-                    apis: {
-                        jres: { ...apis.jres },
-                        byQName: cloneApis(apis.byQName)
-                    }
-                }
-            }
-        }
-
-        if (bundleddirs) {
-            res.bundleddirs = [...bundleddirs]
-        }
-
-        if (bundledpkgs) {
-            res.bundledpkgs = {};
-            for (const key of Object.keys(bundledpkgs)) {
-                res.bundledpkgs[key] = {
-                    ...bundledpkgs[key]
-                };
-            }
-        }
-
-        if (tutorialInfo) {
-            res.tutorialInfo = {};
-
-            for (const key of Object.keys(tutorialInfo)) {
-                const built = tutorialInfo[key];
-
-                res.tutorialInfo[key] = {
-                    hash: built.hash,
-                    usedBlocks: {
-                        ...built.usedBlocks
-                    },
-                    snippetBlocks: {
-                        ...built.snippetBlocks
-                    },
-                    highlightBlocks: {
-                        ...built.highlightBlocks
-                    },
-                    validateBlocks: {
-                        ...built.validateBlocks
-                    },
-                }
-            }
-        }
-
-        return res;
-    }
-
-    export function cloneApis(byQName: pxt.Map<pxtc.SymbolInfo>) {
-        const res: pxt.Map<pxtc.SymbolInfo> = {};
-
-        for (const key of Object.keys(byQName)) {
-            res[key] = cloneSymbolInfo(byQName[key]);
-        }
-
-        return res;
-    }
-
-    export function cloneSymbolInfo(sym: pxtc.SymbolInfo): pxtc.SymbolInfo {
-        return {
-            // FIXME: This is a little dangerous, because we do edit the symbol attributes in some places
-            // for localization. However, most of those edits are to top-level properties and only edits
-            // to child objects matter so it *should* be fine
-            attributes: {
-                ...sym.attributes
-            },
-
-            parameters: sym.parameters?.map(cloneParameterDesc),
-            extendsTypes: sym.extendsTypes ? [...sym.extendsTypes] : undefined,
-            pkgs: sym.pkgs ? [...sym.pkgs] : undefined,
-            combinedProperties: sym.combinedProperties ? [...sym.combinedProperties] : undefined,
-
-            name: sym.name,
-            namespace: sym.namespace,
-            fileName: sym.fileName,
-            kind: sym.kind,
-            retType: sym.retType,
-            isInstance: sym.isInstance,
-            isContextual: sym.isContextual,
-            qName: sym.qName,
-            pkg: sym.pkg,
-            snippet: sym.snippet,
-            snippetName: sym.snippetName,
-            snippetWithMarkers: sym.snippetWithMarkers,
-            pySnippet: sym.pySnippet,
-            pySnippetName: sym.pySnippetName,
-            pySnippetWithMarkers: sym.pySnippetWithMarkers,
-            blockFields: sym.blockFields,
-            isReadOnly: sym.isReadOnly,
-            pyName: sym.pyName,
-            pyQName: sym.pyQName,
-            snippetAddsDefinitions: sym.snippetAddsDefinitions,
-        }
-    }
-
-    function cloneParameterDesc(param: pxtc.ParameterDesc): pxtc.ParameterDesc {
-        return {
-            name: param.name,
-            description: param.description,
-            type: param.type,
-            pyTypeString: param.pyTypeString,
-            initializer: param.initializer,
-            default: param.default,
-            properties: param.properties?.map(clonePropertyDesc),
-            handlerParameters: param.handlerParameters?.map(clonePropertyDesc),
-            options: param.options ? U.clone(param.options) : undefined,
-            isEnum: param.isEnum
-        }
-    }
-
-    function clonePropertyDesc(prop: pxtc.PropertyDesc): pxtc.PropertyDesc {
-        return {
-            name: prop.name,
-            type: prop.type
-        }
-    }
-
-
-    export function toUTF8Array(s: string) {
-        return (new TextEncoder()).encode(s);
-    }
 
     export function fromUTF8Array(s: Uint8Array) {
         return (new TextDecoder()).decode(s);
@@ -2104,121 +1815,6 @@ namespace ts.pxtc.BrowserImpl {
             else
                 client.send(buf);
         })
-    }
-
-    const sha256_k = new Uint32Array([
-        0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
-        0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
-        0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
-        0x983e5152, 0xa831c66d, 0xb00327c8, 0xbf597fc7, 0xc6e00bf3, 0xd5a79147, 0x06ca6351, 0x14292967,
-        0x27b70a85, 0x2e1b2138, 0x4d2c6dfc, 0x53380d13, 0x650a7354, 0x766a0abb, 0x81c2c92e, 0x92722c85,
-        0xa2bfe8a1, 0xa81a664b, 0xc24b8b70, 0xc76c51a3, 0xd192e819, 0xd6990624, 0xf40e3585, 0x106aa070,
-        0x19a4c116, 0x1e376c08, 0x2748774c, 0x34b0bcb5, 0x391c0cb3, 0x4ed8aa4a, 0x5b9cca4f, 0x682e6ff3,
-        0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
-    ])
-
-    function rotr(v: number, b: number) {
-        return (v >>> b) | (v << (32 - b));
-    }
-
-    function sha256round(hs: Uint32Array, w: Uint32Array) {
-        Util.assert(hs.length == 8);
-        Util.assert(w.length == 64);
-
-        for (let i = 16; i < 64; ++i) {
-            let s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
-            let s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
-            w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
-        }
-
-        let a = hs[0];
-        let b = hs[1];
-        let c = hs[2];
-        let d = hs[3];
-        let e = hs[4];
-        let f = hs[5];
-        let g = hs[6];
-        let h = hs[7];
-
-        for (let i = 0; i < 64; ++i) {
-            let s1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25)
-            let ch = (e & f) ^ (~e & g)
-            let temp1 = (h + s1 + ch + sha256_k[i] + w[i]) | 0
-            let s0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22)
-            let maj = (a & b) ^ (a & c) ^ (b & c)
-            let temp2 = (s0 + maj) | 0
-
-            h = g
-            g = f
-            f = e
-            e = (d + temp1) | 0
-            d = c
-            c = b
-            b = a
-            a = (temp1 + temp2) | 0
-        }
-
-        hs[0] += a
-        hs[1] += b
-        hs[2] += c
-        hs[3] += d
-        hs[4] += e
-        hs[5] += f
-        hs[6] += g
-        hs[7] += h
-    }
-
-    export function sha256buffer(buf: Uint8Array) {
-        let h = new Uint32Array(8);
-        h[0] = 0x6a09e667
-        h[1] = 0xbb67ae85
-        h[2] = 0x3c6ef372
-        h[3] = 0xa54ff53a
-        h[4] = 0x510e527f
-        h[5] = 0x9b05688c
-        h[6] = 0x1f83d9ab
-        h[7] = 0x5be0cd19
-
-        let work = new Uint32Array(64);
-
-        let chunkLen = 16 * 4;
-
-        function addBuf(buf: Uint8Array) {
-            let end = buf.length - (chunkLen - 1)
-            for (let i = 0; i < end; i += chunkLen) {
-                for (let j = 0; j < 16; j++) {
-                    let off = (j << 2) + i
-                    work[j] = (buf[off] << 24) | (buf[off + 1] << 16) | (buf[off + 2] << 8) | buf[off + 3]
-                }
-                sha256round(h, work)
-            }
-        }
-
-        addBuf(buf)
-
-        let padSize = 64 - (buf.length + 9) % 64
-        if (padSize == 64) padSize = 0
-        let endPos = buf.length - (buf.length % chunkLen)
-        let padBuf = new Uint8Array((buf.length - endPos) + 1 + padSize + 8)
-        let dst = 0
-        while (endPos < buf.length) padBuf[dst++] = buf[endPos++]
-        padBuf[dst++] = 0x80
-        while (padSize-- > 0)
-            padBuf[dst++] = 0x00
-        let len = buf.length * 8
-        dst = padBuf.length
-        while (len > 0) {
-            padBuf[--dst] = len & 0xff
-            len >>= 8
-        }
-
-        addBuf(padBuf)
-
-        let res = ""
-        for (let i = 0; i < h.length; ++i)
-            res += ("000000000" + h[i].toString(16)).slice(-8)
-
-        return res.toLowerCase()
     }
 
     export function sha256string(s: string) {

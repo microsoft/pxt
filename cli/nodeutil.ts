@@ -243,7 +243,7 @@ export async function getGitHubOwnerAndRepoAsync(): Promise<{ owner: string; rep
     if (!remoteUrl) {
         Util.userError("No remote origin URL found");
     }
-    const match = remoteUrl.match(/github\.com[:\/](.+?)\/(.+?)(\.git)?$/);
+    const match = remoteUrl.replace(/\/+$/, "").match(/github\.com[:\/](.+?)\/(.+?)(\.git)?$/);
     if (!match) {
         Util.userError("Invalid remote origin URL: " + remoteUrl);
     }
@@ -252,7 +252,7 @@ export async function getGitHubOwnerAndRepoAsync(): Promise<{ owner: string; rep
     return { owner, repo };
 }
 
-export async function createBranchAsync(branchName: string) {
+export async function createBranchAsync(branchName: string): Promise<void> {
     await spawnAsync({
         cmd: "git",
         args: ["checkout", "-b", branchName],
@@ -260,7 +260,7 @@ export async function createBranchAsync(branchName: string) {
     });
     await spawnAsync({
         cmd: "git",
-        args: ["push", "--set-upstream", "origin", branchName],
+        args: ["push", "--no-follow-tags", "--set-upstream", "origin", branchName],
         silent: true,
     });
 }
@@ -324,13 +324,10 @@ function quoteIfNeeded(arg: string) {
     return arg;
 }
 
-export function gitPushAsync(followTags: boolean = true) {
-    const args = ["push"];
-    if (followTags) args.push("--follow-tags");
-    args.push("origin", "HEAD");
+export function gitPushAsync(followTags: boolean = true): Promise<void> {
     return spawnAsync({
         cmd: "git",
-        args,
+        args: ["push", "--atomic", followTags ? "--follow-tags" : "--no-follow-tags", "origin", "HEAD"],
         cwd: ".",
         silent: true,
     });

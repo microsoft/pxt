@@ -674,6 +674,10 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 paramDefl: {}
             }
         };
+
+        // Builtin category group names for localization extraction -- do not remove
+        // lf("{id:group}Create")
+
         _cachedBuiltinCategories[CategoryNameID.Text] = {
             name: lf("{id:category}Text"),
             nameid: CategoryNameID.Text,

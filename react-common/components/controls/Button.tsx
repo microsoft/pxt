@@ -3,6 +3,7 @@ import { classList, ContainerProps, fireClickOnEnter } from "../util";
 
 export interface ButtonViewProps extends ContainerProps {
     title: string;
+    type?: "button" | "submit" | "reset";
     label?: string | JSX.Element;
     labelClassName?: string;
     leftIcon?: string;
@@ -137,6 +138,7 @@ export function inflateButtonViewProps(props: ButtonViewProps) {
         ariaPressed,
         role,
         title,
+        type,
         hardDisabled,
         tabIndex,
         autoFocus,
@@ -159,6 +161,7 @@ export function inflateButtonViewProps(props: ButtonViewProps) {
         "className": classes,
         "style": style,
         "title": title,
+        "type": type,
         "role": role || "button",
         "tabIndex": tabIndex || (disabled ? -1 : 0),
         "autoFocus": autoFocus,

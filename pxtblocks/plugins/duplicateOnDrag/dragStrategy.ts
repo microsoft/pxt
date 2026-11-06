@@ -14,14 +14,25 @@ interface DragStrategyInternals {
 
 // @ts-expect-error overriding private method
 export class DuplicateOnDragStrategy extends Blockly.dragging.BlockDragStrategy {
+  private startedAsShadow = false;
+
   protected getTargetBlock(): Blockly.BlockSvg {
     const self = this as unknown as DragStrategyInternals;
+    this.startedAsShadow = self.block.isShadow();
     // Keep the drag on an allowlisted shadow so disconnectBlock can extract
     // it; otherwise Blockly's default would delegate the drag to the parent.
     if (self.block.isShadow() && isAllowlistedShadow(self.block)) {
         return self.block;
     }
     return super.getTargetBlock();
+  }
+
+  override revertDrag(): void {
+    super.revertDrag();
+    // Reverting must restore the source shadow, not a real block over its replacement.
+    if (this.startedAsShadow) {
+      (this as unknown as DragStrategyInternals).block.setShadow(true);
+    }
   }
 
   override drag(newLoc: Blockly.utils.Coordinate, e?: PointerEvent | KeyboardEvent): void {
@@ -40,12 +51,13 @@ export class DuplicateOnDragStrategy extends Blockly.dragging.BlockDragStrategy 
     let target: Blockly.Connection;
     let xml: Element;
     const isShadow = self.block.isShadow();
+    const duplicate = shouldDuplicateOnDrag(self.block);
 
     if (isShadow) {
         self.block.setShadow(false);
     }
 
-    if (shouldDuplicateOnDrag(self.block)) {
+    if (duplicate) {
         const output = self.block.outputConnection;
 
         if (!output?.targetConnection) return;
