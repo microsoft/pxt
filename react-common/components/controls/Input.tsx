@@ -54,6 +54,21 @@ const truncateToCodePointBoundary = (str: string, maxLen: number): string => {
     return truncated;
 };
 
+const getSelection = (input: HTMLInputElement): { start: number; end: number } | null => {
+    try {
+        if (input.selectionStart !== null && input.selectionEnd !== null) {
+            return { start: input.selectionStart, end: input.selectionEnd };
+        }
+    } catch {}
+    return null;
+};
+
+const setCaret = (input: HTMLInputElement, pos: number) => {
+    try {
+        input.setSelectionRange?.(pos, pos);
+    } catch {}
+};
+
 export const Input = (props: InputProps) => {
     const {
         id,
@@ -143,7 +158,8 @@ export const Input = (props: InputProps) => {
 
     const processInput = (input: HTMLInputElement) => {
         const rawValue = input.value;
-        const caret = input.selectionStart ?? rawValue.length;
+        const selection = getSelection(input);
+        const caret = selection ? selection.start : rawValue.length;
         let newCaretPos = caret;
         if (filter) {
             filter.lastIndex = 0;
@@ -155,9 +171,9 @@ export const Input = (props: InputProps) => {
         const sanitized = sanitizeValue(rawValue);
         if (input.value !== sanitized) {
             input.value = sanitized;
-            if (input.setSelectionRange) {
+            if (selection) {
                 const boundedCaret = Math.min(newCaretPos, sanitized.length);
-                input.setSelectionRange(boundedCaret, boundedCaret);
+                setCaret(input, boundedCaret);
             }
         }
         applyValue(sanitized);
@@ -179,12 +195,14 @@ export const Input = (props: InputProps) => {
         const text = e.clipboardData?.getData("text");
         if (!text) return;
 
-        const textWithoutBreaks = text.replace(/[\r\n]+/g, "");
         const input = e.currentTarget;
-        const selStart = input.selectionStart ?? value.length;
-        const selEnd = input.selectionEnd ?? value.length;
-        const prefix = value.slice(0, selStart);
-        const suffix = value.slice(selEnd);
+        const selection = getSelection(input);
+        // Leave paste to the browser when selection offsets are unavailable (e.g. number/email inputs)
+        if (!selection) return;
+
+        const textWithoutBreaks = text.replace(/[\r\n]+/g, "");
+        const prefix = value.slice(0, selection.start);
+        const suffix = value.slice(selection.end);
 
         filter.lastIndex = 0;
         const cleanPaste = textWithoutBreaks.match(filter)?.join("") || "";
@@ -205,12 +223,10 @@ export const Input = (props: InputProps) => {
         } catch {}
 
         if (!insertedViaExecCommand) {
-            const newValue = prefix + truncated + suffix;
-            const newPos = selStart + truncated.length;
+            const newValue = sanitizeValue(prefix + truncated + suffix);
             input.value = newValue;
-            if (input.setSelectionRange) {
-                input.setSelectionRange(newPos, newPos);
-            }
+            const newPos = Math.min(selection.start + truncated.length, newValue.length);
+            setCaret(input, newPos);
             applyValue(newValue);
         }
     };
