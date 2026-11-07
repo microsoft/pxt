@@ -50,6 +50,17 @@ export function getSimxRepository(key: string): string | undefined {
 }
 
 /**
+ * Returns the GitHub extension that a simulator extension's registration key
+ * names, in lower case: its repository, `owner/repo`, or an extension in a
+ * subfolder of it, `owner/repo/path`; undefined if the key names no
+ * repository.
+ * @param key the registration key, e.g. `owner/repo` or `Owner/Repo/sub`
+ */
+export function getSimxExtension(key: string): string | undefined {
+    return pxt.github.parseRepoId(key)?.fullName.toLowerCase();
+}
+
+/**
  * Returns `project`, the project open when a request arrived, if it is still
  * the open project.
  * @param getOpen returns the open project now, or undefined if none is open

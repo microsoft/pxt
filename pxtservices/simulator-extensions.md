@@ -10,7 +10,7 @@ common-docs/extensions/simulator-extensions.md.
 
 ## Registration
 
-A simulator extension is registered in the `simx` entry of its repository in the target's `targetconfig.json` (`packages.approvedRepoLib`), under the extension's key, such as `owner/repo`:
+A simulator extension is registered in the `simx` entry of its repository in the target's `targetconfig.json` (`packages.approvedRepoLib`), under the extension's key: `owner/repo` for an extension at the root of its repository, `owner/repo/path` for one in a subfolder:
 
 ```json
 "approvedRepoLib": {
@@ -54,6 +54,10 @@ The fields of the `simx` entry:
 | `allowEditorTab` | Enables the editor tab that `editor` declares (see [Editor tab](#editor-tab)). | `false` | tab frame, and the simulator frame's request to open it |
 | `editor` | Declares the extension's editor tab: its page, label (text, or a map by language) and icon, and the types whose instances it creates. | none | tab frame |
 | `hideInFullscreen` | Hides the simulator frame while the editor is in fullscreen-simulator mode; it stays loaded and keeps messaging. | `false` | simulator frame |
+
+### The extensions a project includes
+
+The open project includes a registered extension when one of its dependencies, direct or not, is that extension: a `github:` dependency whose full name, `owner/repo` or `owner/repo/path`, equals the key, compared ignoring case. A dependency on another extension of the same repository does not include it. While the project includes an extension, the editor serves the requests of its frames and offers its [editor tab](#editor-tab).
 
 ### Grants and trust
 
@@ -143,13 +147,11 @@ An extension's folder is the folder of its GitHub repository, `owner/repo/`, wha
 
 ### Limits
 
-The limits are defined in `webapp/src/projfsHost.ts`:
-
-* `PROJFS_FOLDER_QUOTA_BYTES` (512 KiB): the most the files in a folder may hold, counting the UTF-8 bytes of each file's content and of its name relative to the folder, listed or not. A write that leaves the folder no larger than it was is accepted even while the folder is over the quota.
-* `PROJFS_MAX_FOLDER_FILES` (256): the most files a folder may store.
-* `PROJFS_MAX_NAME_LENGTH` (128) and `PROJFS_MAX_NAME_SEGMENTS` (8): the most characters, and `/`-separated segments, of a name a write gives a file.
-* `PROJFS_RATE_LIMIT` (30) within `PROJFS_RATE_WINDOW_MS` (10 seconds): the most writes and deletes on a folder applied within any such window. Later ones are deferred, not refused: they wait, with the requests behind them, until the window allows them.
-* `PROJFS_MAX_PENDING_REQUESTS` (1000): the most requests on a folder that may wait for replies; more are refused with `RATE_LIMITED`.
+* A folder holds at most 512 KiB, counting the UTF-8 bytes of each file's content and of its name relative to the folder, listed or not. A write that leaves the folder no larger than it was is accepted even while the folder is over the quota.
+* A folder stores at most 256 files.
+* A name a write gives a file has at most 128 characters and 8 `/`-separated segments.
+* At most 30 writes and deletes on a folder are applied within any 10 seconds. Later ones are deferred, not refused: they wait, with the requests behind them, until the window allows them.
+* At most 1000 requests on a folder may wait for replies; more are refused with `RATE_LIMITED`.
 
 ### Ordering
 
@@ -157,7 +159,7 @@ The editor keeps one queue per folder: it applies a folder's requests one at a t
 
 ### Subscribing
 
-`{ type: "projfs", id, subtype: "subscribe" }` subscribes the requesting frame to changes in its folder and is answered with `{ type: "projfs", id, subtype: "ack" }`. The editor then posts `{ type: "projfs", subtype: "changed", names }` to the frame when files in the folder change: their content, whether they exist, or whether `pxt.json` lists them. `names` holds the names of the files that changed since the last notification, or since the subscription, each once, in the order they first changed, relative to the folder as `list` returns them; a `list` or `read` after it shows the changes. Several changes in quick succession lead to one notification, posted `PROJFS_NOTIFY_DEBOUNCE_MS` (250 milliseconds) after the last change, and no later than `PROJFS_NOTIFY_MAX_DELAY_MS` (2 seconds) after the first, so changes that keep coming are still notified, about every 2 seconds; both are defined in `webapp/src/projfsHost.ts`. The extension's own writes and deletes are notified like any other change.
+`{ type: "projfs", id, subtype: "subscribe" }` subscribes the requesting frame to changes in its folder and is answered with `{ type: "projfs", id, subtype: "ack" }`. The editor then posts `{ type: "projfs", subtype: "changed", names }` to the frame when files in the folder change: their content, whether they exist, or whether `pxt.json` lists them. `names` holds the names of the files that changed since the last notification, or since the subscription, each once, in the order they first changed, relative to the folder as `list` returns them; a `list` or `read` after it shows the changes. Several changes in quick succession lead to one notification, posted 250 milliseconds after the last change, and no later than 2 seconds after the first, so changes that keep coming are still notified, about every 2 seconds. The extension's own writes and deletes are notified like any other change.
 
 A frame holds at most one subscription: subscribing again from the same frame is acknowledged and changes nothing, and each frame of an extension subscribes for itself. Subscribe requests are not limited. A subscription ends, without notice, when the project closes or reloads. The editor then removes the extension's frames, whose pages hear `pagehide`, and creates new ones as the next load needs them, so a page subscribes once.
 
@@ -191,11 +193,11 @@ Each entry of `assets` carries its `kind`, its `id`, and its `displayName` (the 
 | `song` | `data`, the song in the [song encoding](#encodings) | `id` as an image's. |
 | `json` | `fileName`, the file name the asset carries, absent if it has none; `data`, the JSON value | `id` as an image's. |
 
-The editor answers the list requests of the extensions of one repository in the order they arrive, at most `PROJASSETS_LIST_RATE_LIMIT` (30) within `PROJASSETS_LIST_RATE_WINDOW_MS` (10 seconds), both defined in `webapp/src/projassetsHost.ts`; later ones wait for the window to allow them.
+The editor answers the list requests of the extensions of one repository in the order they arrive, at most 30 within any 10 seconds; later ones wait for the window to allow them.
 
 ### Subscribing
 
-`{ type: "projassets", id, subtype: "subscribe" }` subscribes the requesting frame and is answered with `{ type: "projassets", id, subtype: "ack" }`. The editor then posts `{ type: "projassets", subtype: "changed" }` to the frame when the project's assets, its name or its visual configuration may have changed; several changes in quick succession lead to one notification, and a `list` after it shows them all. The notification is posted `PROJASSETS_NOTIFY_DEBOUNCE_MS` (250 milliseconds) after the last change, and no later than `PROJASSETS_NOTIFY_MAX_DELAY_MS` (2 seconds) after the first, so changes that keep coming are still notified, about every 2 seconds; both are defined in `webapp/src/projassetsHost.ts`.
+`{ type: "projassets", id, subtype: "subscribe" }` subscribes the requesting frame and is answered with `{ type: "projassets", id, subtype: "ack" }`. The editor then posts `{ type: "projassets", subtype: "changed" }` to the frame when the project's assets, its name or its visual configuration may have changed; several changes in quick succession lead to one notification, and a `list` after it shows them all. The notification is posted 250 milliseconds after the last change, and no later than 2 seconds after the first, so changes that keep coming are still notified, about every 2 seconds.
 
 A frame holds at most one subscription: subscribing again from the same frame is acknowledged and changes nothing, and each frame of an extension subscribes for itself. Subscribe requests are not limited. A subscription ends, without notice, when the project closes or reloads. The editor then removes the extension's frames, whose pages hear `pagehide`, and creates new ones as the next load needs them, so a page subscribes once.
 
@@ -221,7 +223,7 @@ Every request compiles the project, as the editor holds it when the compile star
 
 ### Ordering
 
-The editor answers the requests of the extensions of one repository in the order they arrive, and compiles for one request at a time, whichever extension sent it: a request that arrives while a compile runs waits its turn and then compiles again. At most `PROJPROGRAM_RATE_LIMIT` (5) compiles for one repository are admitted within any `PROJPROGRAM_RATE_WINDOW_MS` (10 seconds), both defined in `webapp/src/projprogramHost.ts`; later ones wait, with the requests behind them, until the window admits them. An admitted compile then waits for the compiles before it to finish, so it may start after its window. A request applies to the project open when it arrived, once that project has loaded.
+The editor answers the requests of the extensions of one repository in the order they arrive, and compiles for one request at a time, whichever extension sent it: a request that arrives while a compile runs waits its turn and then compiles again. At most 5 compiles for one repository are admitted within any 10 seconds; later ones wait, with the requests behind them, until the window admits them. An admitted compile then waits for the compiles before it to finish, so it may start after its window. A request applies to the project open when it arrived, once that project has loaded.
 
 ### Error codes
 
@@ -233,7 +235,7 @@ Besides the [shared codes](#talking-to-the-editor):
 
 ## Editor tab
 
-A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. Switching between the tab and Blocks leaves the simulator running, in both directions. The tab is offered only while the open project includes the extension from GitHub (a `github:` dependency; an extension added from a file or a local folder gets no tab), and never in views whose editor toggle lists no tabs: embedded (sandbox), read-only (such as the time machine), tutorial and debugging views, and targets that hide the menu bar or show Blocks only.
+A simulator extension can also contribute an editor tab: a page of the extension that the editor shows in the editor area, beside Blocks and the text editors, while the simulator stays visible. The editor lists the tab in the language dropdown of the editor toggle, after JavaScript and Python. Switching between the tab and Blocks leaves the simulator running, in both directions. The tab is offered only while the open project [includes the extension](#the-extensions-a-project-includes) from GitHub (a `github:` dependency; an extension added from a file or a local folder gets no tab), and never in views whose editor toggle lists no tabs: embedded (sandbox), read-only (such as the time machine), tutorial and debugging views, and targets that hide the menu bar or show Blocks only.
 
 A tab may also create the instances of a fixed-instance type for the block dropdowns that list them (see `editor.creates` in [Declaring the tab](#declaring-the-tab)).
 
@@ -265,13 +267,11 @@ The tab is declared in the extension's `simx` entry (see [Registration](#registr
 * `allowEditorTab` enables the tab. The editor offers no tab unless the registration sets both `editor`, with its `index`, and `allowEditorTab`; it logs a registration that sets `allowEditorTab` without them.
 * A registration with an editor tab must be `permanent` (the default); the editor ignores, and logs, an `editor` on a registration with `permanent: false`.
 
-The editor selects the tab through a session-only marker file named after the extension's key (`owner~repo.simxeditor`), which it creates the first time the tab is opened in a session. The marker is never saved, listed with the project's files, shared or exported, so the project itself does not change. File names ending in `.simxeditor` are reserved for these markers.
-
 ### Two frames
 
 An extension with an editor tab has two frames, both created for its key:
 
-* Its **simulator frame**, in the simulator column, is [the simulator frame](#the-simulator-frame) as before. Its URL also carries `editor=1` when the open project includes the extension, so the frame knows at startup that the tab exists.
+* Its **simulator frame**, in the simulator column, is [the simulator frame](#the-simulator-frame) described above. Its URL also carries `editor=1` when the open project includes the extension, so the frame knows at startup that the tab exists.
 * Its **tab frame**, in the editor area, is created the first time the tab is opened and removed when the project closes or reloads. Its URL carries the same parameters as the simulator frame's plus `role=editor`, and it gets the same sandbox and permissions under the same grants: it may send [project-file](#project-files), [project-asset](#project-assets) and [compiled-program](#compiled-program) requests just as the simulator frame may, in the same folder and under the same limits. It is not a simulator frame: it receives no simulator messages, and nothing it posts is relayed to the simulator. The editor-wide messages any frame may post, such as `screenshot` and `addextensions`, are handled from it as from a simulator frame.
 
 Whenever the editor shows the tab and the extension's simulator frame does not exist (for example, because the program has not run), the editor creates it. It also creates it again after the simulator unloads while the tab exists, as when the simulator theme picker closes.

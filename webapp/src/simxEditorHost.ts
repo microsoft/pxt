@@ -11,7 +11,7 @@ import {
     SimxEditorSimulatorCommand,
     SimxEditorSimulatorState,
 } from "../../pxtservices/simxeditor";
-import { errorReply, getSimxRepository, requestId } from "./simxRequests";
+import { errorReply, getSimxExtension, getSimxRepository, requestId } from "./simxRequests";
 
 // The editor side of simx editor tabs: the registrations that
 // offer a tab to the open project, the tab frames (one per registration,
@@ -158,18 +158,16 @@ export function getSimxEditorRegistrations(simulatorExtensions: pxt.Map<SimxEdit
 
 /**
  * Returns true if the project includes the simulator extension registered under
- * `key`: if the GitHub repository `key` names (`owner/repo`, in any case,
- * whatever subfolder `key` adds) is the repository of one of `dependencies`,
- * the version specs of the project's dependencies, direct or not, such as
- * `github:owner/repo/path#ref`. Every registration of one repository is
- * therefore included whenever the project depends on any extension of that
- * repository, and each such registration's tab is offered. A key that names
- * no repository is never included.
+ * `key`: if one of `dependencies`, the version specs of the project's
+ * dependencies, direct or not, such as `github:owner/repo/path#ref`, is the
+ * GitHub extension `key` names, by full name (`owner/repo`, or
+ * `owner/repo/path` for an extension in a subfolder of its repository),
+ * compared ignoring case. A key that names no repository is never included.
  */
 export function isSimxInProject(key: string, dependencies: string[]): boolean {
-    const slug = getSimxRepository(key);
-    if (!slug) return false;
-    return dependencies.some(dep => getDependencyRepository(dep)?.toLowerCase() === slug);
+    const extension = getSimxExtension(key);
+    if (!extension) return false;
+    return dependencies.some(dep => getDependencyExtension(dep)?.toLowerCase() === extension);
 }
 
 /**
@@ -180,6 +178,18 @@ export function isSimxInProject(key: string, dependencies: string[]): boolean {
 export function getDependencyRepository(dependency: string | undefined): string | undefined {
     if (!/^github:/i.test(dependency || "")) return undefined;
     return pxt.github.parseRepoId(dependency)?.slug;
+}
+
+/**
+ * Returns the GitHub extension the dependency whose version spec is
+ * `dependency` names: its repository, `owner/repo`, or an extension in a
+ * subfolder of it, `owner/repo/path`, for a spec such as
+ * `github:owner/repo/path#ref`; undefined if it is not a `github:` spec, or
+ * names no repository.
+ */
+export function getDependencyExtension(dependency: string | undefined): string | undefined {
+    if (!/^github:/i.test(dependency || "")) return undefined;
+    return pxt.github.parseRepoId(dependency)?.fullName;
 }
 
 /** Why the editor ignores a registration's claim, in its `creates`, on a type. */

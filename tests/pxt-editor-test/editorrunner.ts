@@ -8,6 +8,7 @@ import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../
 import {
     answerSimxEditorRequest,
     findSimxInstanceCreator,
+    getDependencyExtension,
     getDependencyRepository,
     getProjectSimxEditors,
     getSimxEditorKeyOfMarker,
@@ -6154,29 +6155,44 @@ describe("simulator extension editor tab registrations", () => {
         chai.expect(plain.creates).equals(undefined);
     });
 
-    it("offers a project the tabs of the extensions it includes, matching the repository in any case and at any depth", () => {
+    it("offers a project the tabs of the extensions it depends on, matching the key in any case", () => {
         const registrations = getSimxEditorRegistrations({ [EXT]: resolved(EXT), [OTHER]: resolved(OTHER) });
         const keys = (deps: string[]) => getProjectSimxEditors(registrations, deps).map(r => r.key);
-        chai.expect(keys(["*", "github:SomeOrg/PXT-Ext/makecode/extensions/arcade#v1.0.0"])).deep.equals([EXT]);
+        chai.expect(keys(["*", "github:SomeOrg/PXT-Ext#v1.0.0"])).deep.equals([EXT]);
         chai.expect(keys(["github:otherorg/pxt-other#abc", "github:someorg/pxt-ext"])).deep.equals([EXT, OTHER]);
         chai.expect(keys(["*", "file:../pxt-ext", "github:someorg/pxt-extended"])).deep.equals([]);
     });
 
-    it("tells whether a project includes an extension by the GitHub repositories of its dependencies", () => {
-        chai.expect(isSimxInProject(EXT, ["*", "github:SomeOrg/PXT-Ext/makecode/extensions/arcade#v1.0.0"])).equals(true);
+    it("tells whether a project includes an extension by the GitHub dependency naming it", () => {
+        chai.expect(isSimxInProject(EXT, ["*", "github:SomeOrg/PXT-Ext#v1.0.0"])).equals(true);
         chai.expect(isSimxInProject(EXT, ["*", "file:../pxt-ext", "github:someorg/pxt-extended", undefined])).equals(false);
         chai.expect(isSimxInProject(EXT, [])).equals(false);
     });
 
-    it("includes every registration of a repository the project depends on, whatever subfolder its key names", () => {
-        const deps = ["*", "github:owner/repo/some/path#v1.0.0"];
-        chai.expect(isSimxInProject("owner/repo/sub", deps)).equals(true);
-        chai.expect(isSimxInProject("Owner/Repo/other/sub", deps)).equals(true);
-        chai.expect(isSimxInProject("owner/repo", deps)).equals(true);
-        chai.expect(isSimxInProject("owner/repo2/sub", deps)).equals(false);
-        chai.expect(isSimxInProject("other/repo/sub", deps)).equals(false);
-        const registrations = getSimxEditorRegistrations({ "owner/repo/sub": resolved("owner/repo/sub"), [OTHER]: resolved(OTHER) });
-        chai.expect(getProjectSimxEditors(registrations, deps).map(r => r.key)).deep.equals(["owner/repo/sub"]);
+    it("includes a registration only when a dependency names the extension its key names, never a sibling or parent of it", () => {
+        chai.expect(isSimxInProject("owner/repo", ["github:Owner/Repo#v2"])).equals(true);
+        chai.expect(isSimxInProject("owner/repo", ["*", "github:owner/repo/some/path#v1.0.0"])).equals(false);
+        const deps = ["*", "github:Owner/Repo/ext/widget#v1.0.0"];
+        chai.expect(isSimxInProject("owner/repo/ext/widget", deps)).equals(true);
+        chai.expect(isSimxInProject("OWNER/REPO/EXT/WIDGET", deps)).equals(true);
+        chai.expect(isSimxInProject("owner/repo", deps)).equals(false);
+        chai.expect(isSimxInProject("owner/repo/ext", deps)).equals(false);
+        chai.expect(isSimxInProject("owner/repo/ext/widget-core", deps)).equals(false);
+        chai.expect(isSimxInProject("owner/repo/ext/widget/nested", deps)).equals(false);
+        chai.expect(isSimxInProject("owner/repo/other", deps)).equals(false);
+        chai.expect(isSimxInProject("owner/repo/ext/widget", ["github:owner/repo#v1", "github:owner/repo/ext/widget/nested#v1"])).equals(false);
+    });
+
+    it("offers a project, of two registrations of one repository, the tabs of the extensions it depends on", () => {
+        const registrations = getSimxEditorRegistrations({
+            "owner/repo/ext/widget": resolved("owner/repo/ext/widget"),
+            "owner/repo/ext/gadget": resolved("owner/repo/ext/gadget"),
+            [OTHER]: resolved(OTHER),
+        });
+        const keys = (deps: string[]) => getProjectSimxEditors(registrations, deps).map(r => r.key);
+        chai.expect(keys(["*", "github:owner/repo/ext/widget-core#v1"])).deep.equals([]);
+        chai.expect(keys(["*", "github:owner/repo/ext/widget-core#v1", "github:Owner/Repo/ext/gadget#v1"])).deep.equals(["owner/repo/ext/gadget"]);
+        chai.expect(keys(["github:owner/repo/ext/widget#v1", "github:owner/repo/ext/gadget#v1", "github:otherorg/pxt-other#abc"])).deep.equals(["owner/repo/ext/widget", "owner/repo/ext/gadget", OTHER]);
     });
 
     it("never includes a registration whose key names no repository", () => {
@@ -6231,8 +6247,9 @@ describe("simulator extension instance creators", () => {
 
     it("is the registration claiming the type that the project includes, of the repository declaring the type", () => {
         const regs = registrations({ "someorg/pxt-ext/sub": [TYPE], "otherorg/pxt-other": [TYPE] });
-        chai.expect(find(regs, ["github:SomeOrg/PXT-Ext/makecode/vm#v1"], "someorg/pxt-ext")).deep.equals({ creator: "someorg/pxt-ext/sub", ignored: [] });
-        chai.expect(find(regs, ["github:someorg/pxt-ext"], "SomeOrg/PXT-Ext").creator).equals("someorg/pxt-ext/sub");
+        chai.expect(find(regs, ["github:SomeOrg/PXT-Ext/sub#v1", "github:SomeOrg/PXT-Ext/makecode/vm#v1"], "someorg/pxt-ext")).deep.equals({ creator: "someorg/pxt-ext/sub", ignored: [] });
+        chai.expect(find(regs, ["github:SomeOrg/PXT-Ext/Sub"], "SomeOrg/PXT-Ext").creator).equals("someorg/pxt-ext/sub");
+        chai.expect(find(regs, ["github:someorg/pxt-ext/makecode/vm#v1"], "someorg/pxt-ext").creator).equals(undefined);
     });
 
     it("is none for a type no included registration claims", () => {
@@ -6256,17 +6273,27 @@ describe("simulator extension instance creators", () => {
 
     it("is the first in registration order of two registrations claiming one type, the other ignored", () => {
         const regs = registrations({ "someorg/pxt-ext/b": [TYPE], "someorg/pxt-ext/a": ["ext.Other", TYPE] });
-        chai.expect(find(regs, ["github:someorg/pxt-ext"], "someorg/pxt-ext")).deep.equals({
+        const deps = ["github:someorg/pxt-ext/a#v1", "github:someorg/pxt-ext/b#v1"];
+        chai.expect(find(regs, deps, "someorg/pxt-ext")).deep.equals({
             creator: "someorg/pxt-ext/b",
             ignored: [{ key: "someorg/pxt-ext/a", reason: "CLAIMED_EARLIER" }],
         });
-        chai.expect(find(regs, ["github:someorg/pxt-ext"], "someorg/pxt-ext", "ext.Other").creator).equals("someorg/pxt-ext/a");
+        chai.expect(find(regs, deps, "someorg/pxt-ext", "ext.Other").creator).equals("someorg/pxt-ext/a");
+        chai.expect(find(regs, ["github:someorg/pxt-ext/a#v1"], "someorg/pxt-ext")).deep.equals({ creator: "someorg/pxt-ext/a", ignored: [] });
     });
 
     it("reads the repository of a dependency from its GitHub version spec only", () => {
         chai.expect(getDependencyRepository("github:SomeOrg/pxt-ext/makecode/vm#v1.0.0")).equals("SomeOrg/pxt-ext");
         for (const spec of ["*", "file:../pxt-ext", "workspace:abc", "", undefined])
             chai.expect(getDependencyRepository(spec), spec).equals(undefined);
+    });
+
+    it("reads the extension of a dependency from its GitHub version spec only", () => {
+        chai.expect(getDependencyExtension("github:SomeOrg/pxt-ext/makecode/vm#v1.0.0")).equals("SomeOrg/pxt-ext/makecode/vm");
+        chai.expect(getDependencyExtension("github:someorg/pxt-ext#v1.0.0")).equals("someorg/pxt-ext");
+        chai.expect(getDependencyExtension("github:someorg/pxt-ext")).equals("someorg/pxt-ext");
+        for (const spec of ["*", "file:../pxt-ext", "workspace:abc", "", undefined])
+            chai.expect(getDependencyExtension(spec), spec).equals(undefined);
     });
 });
 
