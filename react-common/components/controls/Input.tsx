@@ -214,25 +214,12 @@ export const Input = (props: InputProps) => {
         }
 
         e.preventDefault();
-        const cleanPrefix = sanitizeValue(prefix);
-        const cleanBeforePasteEnd = sanitizeValue(prefix + textWithoutBreaks);
-        const insertedText = cleanBeforePasteEnd.slice(cleanPrefix.length);
-        const cleanSuffix = sanitizeValue(suffix);
-        const maxInsertLen = maxLength !== undefined ? Math.max(0, maxLength - cleanPrefix.length - cleanSuffix.length) : insertedText.length;
-        const truncated = truncateToCodePointBoundary(insertedText, maxInsertLen);
-
-        let insertedViaExecCommand = false;
-        try {
-            insertedViaExecCommand = document.execCommand("insertText", false, truncated);
-        } catch {}
-
-        if (!insertedViaExecCommand) {
-            const newValue = sanitizeValue(cleanPrefix + truncated + cleanSuffix);
-            input.value = newValue;
-            const newPos = Math.min(cleanPrefix.length + truncated.length, newValue.length);
-            setCaret(input, newPos);
-            applyValue(newValue);
-        }
+        input.value = cleanFull;
+        const rawBeforePasteEnd = prospectiveRaw.slice(0, prefix.length + textWithoutBreaks.length);
+        const cleanBeforePasteEnd = sanitizeValue(rawBeforePasteEnd);
+        const newPos = Math.min(cleanBeforePasteEnd.length, cleanFull.length);
+        setCaret(input, newPos);
+        applyValue(cleanFull);
     };
 
     const compositionStartHandler = () => {
