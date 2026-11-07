@@ -2042,6 +2042,9 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     if (cfg.appTheme?.pxtJsonOptions?.length) {
         for (const option of cfg.appTheme.pxtJsonOptions) {
             targetStrings[`{id:setting}${option.label}`] = option.label;
+            if (option.type === "input" && option.placeholder) {
+                targetStrings[`{id:setting}${option.placeholder}`] = option.placeholder;
+            }
         }
     }
 
