@@ -201,25 +201,28 @@ export const Input = (props: InputProps) => {
         if (!selection) return;
 
         const textWithoutBreaks = text.replace(/[\r\n]+/g, "");
+        filter.lastIndex = 0;
+        const cleanPaste = textWithoutBreaks.match(filter)?.join("") || "";
         const prefix = value.slice(0, selection.start);
         const suffix = value.slice(selection.end);
 
-        const prospectiveRaw = prefix + textWithoutBreaks + suffix;
-        const cleanFull = sanitizeValue(prospectiveRaw);
+        const remainingCapacity = maxLength !== undefined
+            ? Math.max(0, maxLength - prefix.length - suffix.length)
+            : cleanPaste.length;
 
-        // If the full prospective value is already completely valid and matches, let native paste handle it
+        // If the pasted text is already valid and fits without truncation, let native paste handle it
         // so that browser undo/redo history (Ctrl+Z) is preserved.
-        if (textWithoutBreaks === text && cleanFull === prospectiveRaw && (maxLength === undefined || prospectiveRaw.length <= maxLength)) {
+        if (cleanPaste === text && text.length <= remainingCapacity) {
             return;
         }
 
         e.preventDefault();
-        input.value = cleanFull;
-        const rawBeforePasteEnd = prospectiveRaw.slice(0, prefix.length + textWithoutBreaks.length);
-        const cleanBeforePasteEnd = sanitizeValue(rawBeforePasteEnd);
-        const newPos = Math.min(cleanBeforePasteEnd.length, cleanFull.length);
+        const truncatedInsert = truncateToCodePointBoundary(cleanPaste, remainingCapacity);
+        const newValue = prefix + truncatedInsert + suffix;
+        input.value = newValue;
+        const newPos = prefix.length + truncatedInsert.length;
         setCaret(input, newPos);
-        applyValue(cleanFull);
+        applyValue(newValue);
     };
 
     const compositionStartHandler = () => {
