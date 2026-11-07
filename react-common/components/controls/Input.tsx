@@ -204,18 +204,22 @@ export const Input = (props: InputProps) => {
         const prefix = value.slice(0, selection.start);
         const suffix = value.slice(selection.end);
 
-        filter.lastIndex = 0;
-        const cleanPaste = textWithoutBreaks.match(filter)?.join("") || "";
-        const maxInsertLen = maxLength !== undefined ? Math.max(0, maxLength - prefix.length - suffix.length) : cleanPaste.length;
+        const prospectiveRaw = prefix + textWithoutBreaks + suffix;
+        const cleanFull = sanitizeValue(prospectiveRaw);
 
-        // If the pasted text is already valid and fits without truncation, let native paste handle it
+        // If the full prospective value is already completely valid and matches, let native paste handle it
         // so that browser undo/redo history (Ctrl+Z) is preserved.
-        if (cleanPaste === text && text.length <= maxInsertLen) {
+        if (textWithoutBreaks === text && cleanFull === prospectiveRaw && (maxLength === undefined || prospectiveRaw.length <= maxLength)) {
             return;
         }
 
         e.preventDefault();
-        const truncated = truncateToCodePointBoundary(cleanPaste, maxInsertLen);
+        const cleanPrefix = sanitizeValue(prefix);
+        const cleanBeforePasteEnd = sanitizeValue(prefix + textWithoutBreaks);
+        const insertedText = cleanBeforePasteEnd.slice(cleanPrefix.length);
+        const cleanSuffix = sanitizeValue(suffix);
+        const maxInsertLen = maxLength !== undefined ? Math.max(0, maxLength - cleanPrefix.length - cleanSuffix.length) : insertedText.length;
+        const truncated = truncateToCodePointBoundary(insertedText, maxInsertLen);
 
         let insertedViaExecCommand = false;
         try {
@@ -223,9 +227,9 @@ export const Input = (props: InputProps) => {
         } catch {}
 
         if (!insertedViaExecCommand) {
-            const newValue = sanitizeValue(prefix + truncated + suffix);
+            const newValue = sanitizeValue(cleanPrefix + truncated + cleanSuffix);
             input.value = newValue;
-            const newPos = Math.min(selection.start + truncated.length, newValue.length);
+            const newPos = Math.min(cleanPrefix.length + truncated.length, newValue.length);
             setCaret(input, newPos);
             applyValue(newValue);
         }
