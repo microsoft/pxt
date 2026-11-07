@@ -44,6 +44,16 @@ const sanitizeForDomId = (text: string | undefined) => {
     return sanitized || "option";
 };
 
+const truncateToCodePointBoundary = (str: string, maxLen: number): string => {
+    if (str.length <= maxLen) return str;
+    let truncated = str.slice(0, maxLen);
+    const lastCharCode = truncated.charCodeAt(truncated.length - 1);
+    if (lastCharCode >= 0xD800 && lastCharCode <= 0xDBFF) {
+        truncated = truncated.slice(0, -1);
+    }
+    return truncated;
+};
+
 export const Input = (props: InputProps) => {
     const {
         id,
@@ -113,6 +123,9 @@ export const Input = (props: InputProps) => {
             filter.lastIndex = 0;
             res = res.match(filter)?.join("") || "";
         }
+        if (maxLength !== undefined && res.length > maxLength) {
+            res = truncateToCodePointBoundary(res, maxLength);
+        }
         return res;
     };
 
@@ -143,15 +156,18 @@ export const Input = (props: InputProps) => {
         if (input.value !== sanitized) {
             input.value = sanitized;
             if (input.setSelectionRange) {
-                input.setSelectionRange(newCaretPos, newCaretPos);
+                const boundedCaret = Math.min(newCaretPos, sanitized.length);
+                input.setSelectionRange(boundedCaret, boundedCaret);
             }
         }
         applyValue(sanitized);
     };
 
+    const isConstrained = Boolean(filter || maxLength !== undefined);
+
     const changeHandler = (e: React.ChangeEvent<any>) => {
         const input = e.target as HTMLInputElement;
-        if (isComposingRef.current) {
+        if (isComposingRef.current && isConstrained) {
             setValue(input.value);
             return;
         }
@@ -160,24 +176,43 @@ export const Input = (props: InputProps) => {
 
     const pasteHandler = (e: React.ClipboardEvent<HTMLInputElement>) => {
         if (!filter || readOnly || disabled) return;
-        e.preventDefault();
+        const text = e.clipboardData?.getData("text");
+        if (!text) return;
+
+        const textWithoutBreaks = text.replace(/[\r\n]+/g, "");
         const input = e.currentTarget;
-        const text = e.clipboardData.getData("text");
-        filter.lastIndex = 0;
-        const cleanPaste = text.match(filter)?.join("") || "";
         const selStart = input.selectionStart ?? value.length;
         const selEnd = input.selectionEnd ?? value.length;
         const prefix = value.slice(0, selStart);
         const suffix = value.slice(selEnd);
+
+        filter.lastIndex = 0;
+        const cleanPaste = textWithoutBreaks.match(filter)?.join("") || "";
         const maxInsertLen = maxLength !== undefined ? Math.max(0, maxLength - prefix.length - suffix.length) : cleanPaste.length;
-        const inserted = cleanPaste.slice(0, maxInsertLen);
-        const newValue = prefix + inserted + suffix;
-        const newPos = selStart + inserted.length;
-        input.value = newValue;
-        if (input.setSelectionRange) {
-            input.setSelectionRange(newPos, newPos);
+
+        // If the pasted text is already valid and fits without truncation, let native paste handle it
+        // so that browser undo/redo history (Ctrl+Z) is preserved.
+        if (cleanPaste === text && text.length <= maxInsertLen) {
+            return;
         }
-        applyValue(newValue);
+
+        e.preventDefault();
+        const truncated = truncateToCodePointBoundary(cleanPaste, maxInsertLen);
+
+        let insertedViaExecCommand = false;
+        try {
+            insertedViaExecCommand = document.execCommand("insertText", false, truncated);
+        } catch {}
+
+        if (!insertedViaExecCommand) {
+            const newValue = prefix + truncated + suffix;
+            const newPos = selStart + truncated.length;
+            input.value = newValue;
+            if (input.setSelectionRange) {
+                input.setSelectionRange(newPos, newPos);
+            }
+            applyValue(newValue);
+        }
     };
 
     const compositionStartHandler = () => {
@@ -190,13 +225,14 @@ export const Input = (props: InputProps) => {
     };
 
     const keyDownHandler = (e: React.KeyboardEvent) => {
-        if (isComposingRef.current) return;
+        if (isComposingRef.current && isConstrained) return;
         const charCode = (typeof e.which == "number") ? e.which : e.keyCode;
         if (charCode === /*enter*/13 || props.treatSpaceAsEnter && charCode === /*space*/32) {
             let validatedValue = value;
             if (validator) {
                 validatedValue = validator(value, initialValue || "");
                 setValue(validatedValue);
+                lastCommittedValueRef.current = validatedValue;
             }
             if (onEnterKey) {
                 e.preventDefault();
