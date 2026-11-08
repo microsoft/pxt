@@ -3,6 +3,7 @@ import * as React from "react";
 import * as core from "./core";
 import * as workspace from "./workspace";
 import * as pkg from "./package";
+import { githubExtensionCardMetadata } from "./extensionMetadata";
 
 import { Button } from "../../react-common/components/controls/Button";
 import { Input } from "../../react-common/components/controls/Input";
@@ -585,19 +586,11 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         props.importExtensionCallback()
     }
 
-    function ghName(scr: pxt.github.GitRepo) {
-        let n = scr.name.replace(/^pxt-/, "");
-        return n;
-    }
-
     function parseGithubRepo(r: pxt.github.GitRepo): ExtensionMeta {
         return withInstalledFlag({
-            name: ghName(r),
-            displayName: r.displayName,
+            ...githubExtensionCardMetadata(r),
             type: ExtensionType.Github,
-            imageUrl: pxt.github.repoIconUrl(r),
             repo: r,
-            description: r.description,
             fullRepo: r.fullName
         })
     }
@@ -658,7 +651,7 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         })
     }
 
-    function installedExtensions(packagesConfig: pxt.PackagesConfig): ExtensionMeta[] {
+    function installedExtensions(packagesConfig: pxt.PackagesConfig, fetched: ExtensionMeta[] = []): ExtensionMeta[] {
         const dependencies = currentProjectDependencies();
         const result: ExtensionMeta[] = [];
 
@@ -672,22 +665,23 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
             if (githubRepo) {
                 if (pxt.github.isRepoHidden(githubRepo, packagesConfig)) return;
 
+                const metadata = fetched.find(extension => githubReposMatch(extension.repo, githubRepo))
+                    || getExtensionFromFetched(githubRepo.fullName);
                 const repo: pxt.github.GitRepo = {
                     ...githubRepo,
-                    name: githubRepo.project,
-                    displayName: config.displayName,
-                    description: config.description || "",
-                    defaultBranch: "",
+                    name: config.name || metadata?.repo?.name || githubRepo.project,
+                    displayName: metadata?.displayName,
+                    description: metadata?.description || "",
+                    icon: metadata?.repo?.icon,
+                    defaultBranch: metadata?.repo?.defaultBranch || "",
                     status: pxt.github.repoStatus(githubRepo, packagesConfig)
                 };
                 result.push(withInstalledFlag({
+                    ...githubExtensionCardMetadata(repo, config),
                     dependencyName,
-                    name: config.name || dependencyName,
-                    displayName: config.displayName,
                     type: ExtensionType.Github,
-                    imageUrl: config.icon || pxt.github.repoIconUrl(repo),
+                    pkgConfig: config,
                     repo,
-                    description: config.description,
                     fullRepo: githubRepo.fullName
                 }));
                 return;
@@ -769,6 +763,14 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
                 }
             })
         }
+        repos.forEach(extension => {
+            const repo = extension.repo;
+            if (extension.dependencyName && repo?.status === pxt.github.GitRepoStatus.Approved
+                && !extension.description && !getExtensionFromFetched(repo.fullName)
+                && !toBeFetched.some(path => path.toLowerCase() === repo.fullName.toLowerCase())) {
+                toBeFetched.push(repo.fullName);
+            }
+        });
         const loadingCards = [];
         for (let i = 0; i < toBeFetched.length; i++) {
             loadingCards.push(emptyCard)
@@ -777,7 +779,9 @@ export const ExtensionsBrowser = (props: ExtensionsProps) => {
         setPreferredExts(prioritizeInstalledExtensions([...uniqueRepos, ...loadingCards]))
 
         const exts = await fetchGithubDataAndAddAsync(toBeFetched);
-        setPreferredExts(prioritizeInstalledExtensions(mergeUniqueExtensions(repos, exts)))
+        setPreferredExts(prioritizeInstalledExtensions(mergeUniqueExtensions(
+            installedExtensions(packagesConfig, exts), repos, exts
+        )))
     }
 
     async function handleImportUrl(url: string) {

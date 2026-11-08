@@ -959,6 +959,13 @@ namespace pxt.github {
         company: string;
     }
 
+    interface RepoPackageMetadata {
+        name?: string;
+        displayName?: string;
+        description?: string;
+        icon?: string;
+    }
+
     interface Repo {
         id: number;
         name: string; // "pxt-microbit-cppsample",
@@ -985,6 +992,7 @@ namespace pxt.github {
 
         // non-github, added to track search request
         tag?: string;
+        packageMetadata?: RepoPackageMetadata;
     }
 
     interface SearchResults {
@@ -1002,6 +1010,7 @@ namespace pxt.github {
     export interface GitRepo extends ParsedRepo {
         name: string;
         displayName?: string;
+        icon?: string;
         description: string;
         defaultBranch: string;
         status?: GitRepoStatus;
@@ -1126,10 +1135,13 @@ namespace pxt.github {
         }
     }
 
-    export function repoIconUrl(repo: GitRepo): string {
+    /** Resolve explicit image URLs directly and repository-relative icons through the approved icon proxy. */
+    export function repoIconUrl(repo: GitRepo, packageIcon?: string): string {
+        const icon = packageIcon?.trim();
+        if (icon && /^(?:https?:\/\/|\/\/|data:image\/)/i.test(icon)) return icon;
         if (repo.status != GitRepoStatus.Approved) return undefined;
 
-        return mkRepoIconUrl(repo)
+        return mkRepoIconUrl(repo);
     }
 
     export function mkRepoIconUrl(repo: ParsedRepo): string {
@@ -1148,8 +1160,10 @@ namespace pxt.github {
             slug: r.full_name.toLowerCase(),
             fullName: (options?.fullName || r.full_name).toLowerCase(),
             fileName: options?.fileName?.toLocaleLowerCase(),
-            name: r.name,
-            description: r.description,
+            name: r.packageMetadata?.name || r.name,
+            displayName: r.packageMetadata?.displayName,
+            icon: r.packageMetadata?.icon,
+            description: r.packageMetadata?.description || r.description || "",
             defaultBranch: r.default_branch,
             tag: options?.tag,
             updatedAt: Math.round(new Date(r.updated_at).getTime() / 1000),
@@ -1263,6 +1277,7 @@ namespace pxt.github {
             slug: rid.slug,
             name: rid.fileName ? `${meta.name}-${rid.fileName}` : meta.name,
             displayName: meta.displayName,
+            icon: meta.icon,
             description: meta.description,
             defaultBranch: meta.defaultBranch || "master",
             tag: rid.tag,
