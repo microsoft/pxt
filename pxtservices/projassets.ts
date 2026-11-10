@@ -193,12 +193,17 @@ export interface ProjassetsTilemap {
     /**
      * The tilemap in pxt's tilemap encoding (MIME type
      * `application/mkcd-tilemap`), as the project's tileset file stores it:
-     * the bytes written as hexadecimal text, then base64-encoded. The bytes
-     * are the tile width in pixels; the width and then the height in tiles,
-     * each 16 bits, little-endian; one byte per cell, row by row, holding the
-     * index in `tileset` of the tile the cell shows; then the walls, 4
-     * bits per cell, row by row, two cells per byte with the first in the low
-     * bits, nonzero for a wall.
+     * the bytes written as hexadecimal text, then base64-encoded. The format
+     * is as follows:
+     * 
+     *     [0]  The tile width
+     *     [1..2]   Width of the tilemap in tiles
+     *     [3..4]   Height of the tilemap in tiles
+     *     [5..N]   Tile indices, row-major order, each location represented by a single byte
+     *     [N+1..]  Wall data, row-major order, each location represented by 4 bits
+     * 
+     * When reading wall data, a value of 2 represents that a location is a wall. The length of
+     * the tile indices and wall sections can be determined from the width and height of the tilemap.
      */
     data: string;
     /** The tiles the map's cells index, in order. */
