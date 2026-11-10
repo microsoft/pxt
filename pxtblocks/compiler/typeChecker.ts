@@ -109,7 +109,7 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
                         }
                         else {
                             try {
-                                union(p1, tr[0]);
+                                unionWithInheritance(e, p1, tr[0]);
                             } catch (e) {
                                 // TypeScript should catch this error and bubble it up
                             }
@@ -232,7 +232,8 @@ export function infer(allBlocks: Blockly.Block[], e: Environment, w: Blockly.Wor
             const gen = getInputTargetBlock(e, b, genericArgs[0].name);
             if (gen) {
                 const arg = returnType(e, gen);
-                const arrayType = arg.type ? ground(returnType(e, gen).type + "[]") : ground(null);
+                // Keep the array tied to its element as the element's type is refined.
+                const arrayType = mkPoint(null, true);
                 genericLink(arrayType, arg);
                 unionParam(e, b, name, arrayType);
                 return true;
@@ -292,11 +293,26 @@ function union(p1: Point, p2: Point) {
     p2.type = t;
 }
 
+function unionWithInheritance(e: Environment, p1: Point, p2: Point) {
+    const first = find(p1);
+    const second = find(p2);
+    if (first.type && second.type) {
+        const apis = e.blocksInfo.apis.byQName;
+        if (apis[first.type]?.extendsTypes?.indexOf(second.type) >= 0) {
+            second.type = first.type;
+        }
+        else if (apis[second.type]?.extendsTypes?.indexOf(first.type) >= 0) {
+            first.type = second.type;
+        }
+    }
+    union(first, second);
+}
+
 // Unify the *return* type of the parameter [n] of block [b] with point [p].
 function unionParam(e: Environment, b: Blockly.Block, n: string, p: Point) {
     attachPlaceholderIf(e, b, n);
     try {
-        union(returnType(e, getInputTargetBlock(e, b, n)), p);
+        unionWithInheritance(e, returnType(e, getInputTargetBlock(e, b, n)), p);
     } catch (e) {
         // TypeScript should catch this error and bubble it up
     }
@@ -416,9 +432,9 @@ export function returnType(e: Environment, b: Blockly.Block): Point {
             }
 
             if (parentInput.connection && parentInput.connection.targetBlock()) {
-                const parentType = returnType(e, parentInput.connection.targetBlock());
+                const parentType = find(returnType(e, parentInput.connection.targetBlock()));
                 if (parentType.childType) {
-                    return parentType.childType;
+                    return find(parentType.childType);
                 }
                 const p = isArrayType(parentType.type) && parentType.type !== "Array" ? mkPoint(parentType.type.substr(0, parentType.type.length - 2)) : mkPoint(null);
                 genericLink(parentType, p);
@@ -545,7 +561,7 @@ function genericLink(parent: Point, child: Point) {
     if (p.childType) {
         union(p.childType, c);
     }
-    else if (!p.type) {
+    else if (!p.type || p.type === "Array") {
         p.childType = c;
     }
 
@@ -579,7 +595,7 @@ export function getConcreteType(point: Point, found: Point[] = []) {
 
             if (t.childType) {
                 const child = getConcreteType(t.childType, found);
-                if (child.type) {
+                if (child.type && child.type !== "Array") {
                     t.type = child.type + "[]";
                     return t;
                 }

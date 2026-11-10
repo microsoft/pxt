@@ -1358,6 +1358,7 @@ declare namespace pxt.tutorial {
         // Step metadata
         showHint?: boolean; // automatically displays hint
         showDialog?: boolean; // no coding, displays in modal
+        simFullscreen?: boolean; // fills the coding area with the simulator, keeping step directions visible
         resetDiff?: boolean; // reset diffify algo
         tutorialCompleted?: boolean;
 

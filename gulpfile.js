@@ -761,6 +761,11 @@ const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
+const testtutorialui = gulp.series(
+    gulp.parallel(pxtlib, pxtsim),
+    pxtapp,
+    () => exec(`${getMochaExecutable()} "tests/tutorial-test/*.spec.js" --reporter dot`, true)
+);
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
 const testprojecttools = gulp.series(
@@ -807,6 +812,7 @@ const testAll = gulp.series(
     testpycomp,
     testpytraces,
     testtutorials,
+    testtutorialui,
     testlanguageservice,
     karma,
     testSkillmap,
@@ -934,6 +940,7 @@ exports.testpydecomp = testpydecomp;
 exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
 exports.testtutorials = testtutorials;
+exports.testtutorialui = testtutorialui;
 exports.test = testAll;
 exports.travis = travis;
 exports.karma = karma;
