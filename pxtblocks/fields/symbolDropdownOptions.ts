@@ -24,18 +24,8 @@ function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
 }
 
 /**
- * Returns the dropdown options of `symbols`, in their order, except that the
- * option whose value is `defaultValue` comes first. An option's value is its
- * symbol's qualified name (`namespace.name`) and its third element the
- * symbol's `ariaLabel`. Its label is the symbol's `block` attribute, else its
- * `blockId`, else its name, less `@set` for a `blockCombine` symbol; a symbol
- * with an icon or a `blockImage` shows as an image descriptor whose `alt` is
- * that label and whose `value` is the symbol's name. A symbol holding a jres
- * image and no icon gets its `iconURL` set to the image converted by
- * `imgConv`.
- * @param symbols the symbols to list
- * @param defaultValue the value of the option to list first; undefined to keep the order of `symbols`
- * @param imgConv the converter of jres images to icons
+ * Returns a list of Blockly menu options from a list of pxt symbols. The `defaultValue` parameter
+ * specifies the option that will always appear first in the list (if present).
  */
 export function getSymbolDropdownOptions(symbols: pxtc.SymbolInfo[], defaultValue: string | undefined, imgConv: pxt.ImageConverter): Blockly.MenuOption[] {
     const dd: Blockly.MenuOption[] = symbols.map(v => {
