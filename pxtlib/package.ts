@@ -1017,6 +1017,11 @@ namespace pxt {
             return r;
         }
 
+        /**
+         * If this package's pxt.json sets a palette, makes it the target's palette.
+         * Dependencies apply theirs first and the project last, so the project
+         * overrides everything. Between unrelated dependencies, the last one wins.
+         */
         patchAppTargetPalette() {
             if (this.config.palette && appTarget.runtime) {
                 appTarget.runtime.palette = U.clone(this.config.palette);
@@ -1025,10 +1030,10 @@ namespace pxt {
         }
 
         /**
-         * Returns the palette the package's images are drawn with: the palette
-         * its pxt.json sets, else (also while its pxt.json has not loaded) the
-         * target's palette as the loaded packages patched it; undefined if
-         * neither has one.
+         * Returns the palette this package's images are drawn with. Uses the palette
+         * from this package's pxt.json if it sets one. Otherwise falls back to the
+         * target's palette, which a dependency may have replaced (see
+         * patchAppTargetPalette).
          */
         effectivePalette(): string[] | undefined {
             return this.config?.palette || appTarget.runtime?.palette;
