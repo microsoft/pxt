@@ -2,21 +2,15 @@
  * The project-asset ("projassets") messages a simulator extension exchanges
  * with the editor, and a client that wraps them in promises.
  *
- * A simulator extension registered with `allowAssetRead` can list the named
- * assets of the project open in the editor, with the project's name and its
- * visual configuration (its palette and simulator theme), and subscribe to
- * hear when any of them changes. The editor answers from the project as it
- * is when the request arrives, including edits not yet built into the
- * project's files. Assets, name and configuration are read-only through
- * this API.
+ * A simulator extension registered with `allowAssetRead` can list project
+ * assets and subscribe to any changes. Assets, name and configuration are
+ * read-only through this API.
  *
  * Requests are posted to the editor window; the editor replies to each request
  * once, to the requesting frame only, with the request's `id`. Change
  * notifications carry no `id` and go to the frames that subscribed. A frame
  * holds at most one subscription, which lasts until the project it was made
- * in closes or reloads. The editor then removes the extension's frames,
- * whose pages hear `pagehide`, and creates new ones as the next load needs
- * them, so a page subscribes once.
+ * in closes or reloads.
  *
  * This module has no dependencies; a simulator extension can import or copy it
  * as-is.
