@@ -206,10 +206,10 @@ export function isValidRelativeName(name: unknown): name is string {
 
 /**
  * Returns the project folder of the simulator extension registered under
- * `key`: the root of its GitHub repository, `owner/repo` in lower case,
- * whatever subfolder `key` names, so every registration of one repository
- * shares the folder. Returns undefined if `key` names no repository, or the
- * folder would fall under `pxt_modules/`.
+ * `key`. This folder generally follows the format `owner/repo/subfolder` where
+ * subfolder is only present if this is not the root extension in the GitHub repo.
+ * Returns undefined if `key` names no repository, or the folder would fall
+ * under `pxt_modules/`.
  * @param key the simulator extension's key, e.g. `owner/repo` or `owner/repo/sub`
  */
 export function getProjfsFolder(key: string): string | undefined {
