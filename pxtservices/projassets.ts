@@ -141,8 +141,7 @@ export interface ProjassetsTile {
     kind: "tile";
     /**
      * The tile's qualified id, as the project's tilemaps reference it, e.g.
-     * `myTiles.tile1`. Tilesets reference tiles by qualified id, and tiles
-     * supplied by extensions have no other.
+     * `myTiles.tile1`. Tilemaps reference tiles using this id.
      */
     id: string;
     /** The name the user gave the tile; absent if it has none. */
