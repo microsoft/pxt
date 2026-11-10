@@ -218,9 +218,9 @@ export function getProjfsFolder(key: string): string | undefined {
 }
 
 /**
- * Returns true if the open project's own code declares `symbol` in a file in
- * `folder`: the symbol comes from no package, and its file name, the file's
- * project name, lies under `folder`.
+ * Returns true if the given symbol is declared in the open project in a file
+ * that exists within the given `folder`. Returns false for any symbols declared
+ * in project dependencies.
  * @param symbol the symbol, as the API info gives it
  * @param folder a simulator extension's folder, e.g. `owner/repo`, as {@link getProjfsFolder} returns it
  */
