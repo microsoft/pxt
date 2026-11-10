@@ -108,10 +108,6 @@ export function getSimxApiLevel(search?: string): number {
     return value !== null && /^[0-9]+$/.test(value) ? Number(value) : 0;
 }
 
-/**
- * Why a request failed. Clients branch on the code; the message that
- * accompanies it is for people.
- */
 export type ProjfsErrorCode =
     /**
      * Reads: the extension's folder has no file of that name that pxt.json
