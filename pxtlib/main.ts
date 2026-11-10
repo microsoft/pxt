@@ -5,6 +5,7 @@
 /// <reference path="util.ts"/>
 /// <reference path="apptarget.ts"/>
 /// <reference path="tickEvent.ts"/>
+/// <reference path="shared/targetutils.ts"/>
 
 namespace pxt.perf {
     export type EventSource<T> = {
@@ -42,9 +43,6 @@ namespace pxt.perf {
 })()
 
 namespace pxt {
-    export import U = pxtc.Util;
-    export import Util = pxtc.Util;
-
     export interface TCPIO {
         onData: (v: Uint8Array) => void;
         onError: (e: Error) => void;
@@ -117,6 +115,18 @@ namespace pxt {
 
     export function savedAppTheme(): AppTheme {
         return savedAppTarget ? savedAppTarget.appTheme : undefined;
+    }
+
+    export function getUnpatchedAppTarget(): TargetBundle {
+        const target = U.cloneTargetBundle(savedAppTarget);
+        for (const variant of Object.keys(target.variants || {})) {
+            const compile = target.variants[variant].compile;
+            if (compile) {
+                if (!compile.switches) compile.switches = {};
+                U.jsonCopyFrom(compile.switches, savedSwitches);
+            }
+        }
+        return target;
     }
 
     export function setCompileSwitch(name: string, value: boolean) {
@@ -197,33 +207,11 @@ namespace pxt {
     }
 
     function patchAppTarget() {
-        // patch-up the target
-        let comp = appTarget.compile
-        if (!comp)
-            comp = appTarget.compile = { isNative: false, hasHex: false, switches: {} }
-        if (comp.hasHex) {
-            if (!comp.nativeType)
-                comp.nativeType = pxtc.NATIVE_TYPE_THUMB
-        }
-        if (!comp.switches)
-            comp.switches = {}
-        if (comp.nativeType == pxtc.NATIVE_TYPE_VM)
-            comp.sourceMap = true
-        U.jsonCopyFrom(comp.switches, savedSwitches)
-        // JS ref counting currently not supported
-        comp.jsRefCounting = false
-        if (!comp.useUF2 && !comp.useELF && comp.noSourceInFlash == undefined)
-            comp.noSourceInFlash = true // no point putting sources in hex to be flashed
-        if (comp.utf8 === undefined)
-            comp.utf8 = true
+        patchCompileTarget(appTarget);
+        U.jsonCopyFrom(appTarget.compile.switches, savedSwitches);
         if (!appTarget.appTheme) appTarget.appTheme = {}
         if (!appTarget.appTheme.embedUrl)
             appTarget.appTheme.embedUrl = appTarget.appTheme.homeUrl
-        let cs = appTarget.compileService
-        if (cs) {
-            if (cs.yottaTarget && !cs.yottaBinary)
-                cs.yottaBinary = "pxt-microbit-app-combined.hex"
-        }
 
         // patch cdn url locations
         appTarget = replaceCdnUrlsInJsonBlob(appTarget);

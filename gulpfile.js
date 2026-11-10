@@ -1,6 +1,7 @@
 const fs = require("fs");
 const os = require("os");
 const path = require("path");
+const { execFileSync } = require("child_process");
 const { Transform, PassThrough } = require("stream");
 const { minify } = require("terser");
 
@@ -103,7 +104,22 @@ const pxtsim = () => compileTsProject("pxtsim");
 const pxtrunner = () => compileTsProject("pxtrunner", "built", true);
 const pxteditor = () => compileTsProject("pxteditor", "built", true);
 const pxtweb = () => compileTsProject("docfiles/pxtweb", "built/web");
-const backendutils = () => compileTsProject("backendutils")
+const backendutils = gulp.series(
+    () => compileTsProject("backendutils"),
+    () => {
+        const gitOptions = { cwd: __dirname, encoding: "utf8" };
+        const gitHash = execFileSync("git", ["rev-parse", "HEAD"], gitOptions).trim();
+        const gitStatus = execFileSync("git", ["status", "--porcelain", "--untracked-files=normal"], gitOptions).trim();
+        const version = { hash: gitHash, hasLocalChanges: !!gitStatus };
+        const header = `// Git commit: ${gitHash}\n`
+            + `// Local untracked files or uncommitted changes at build time: ${version.hasLocalChanges ? "yes" : "no"}\n`;
+
+        return gulp.src(["built/backendutils.js", "built/backendutils.d.ts"])
+            .pipe(replace(/"@PXT_BACKENDUTILS_VERSION@"/g, JSON.stringify(JSON.stringify(version))))
+            .pipe(prependHeader(header))
+            .pipe(gulp.dest("built"));
+    }
+);
 const cli = () => compileTsProject("cli", "built", true);
 const webapp = () => compileTsProject("webapp", "built", true);
 const reactCommon = () => compileTsProject("react-common", "built/react-common", true);
@@ -745,6 +761,11 @@ const testpydecomp = testTask("pydecompile-test", "pydecompilerunner.js");
 const testpycomp = testTask("pyconverter-test", "pyconvertrunner.js");
 const testpytraces = testTask("runtime-trace-tests", "tracerunner.js");
 const testtutorials = testTask("tutorial-test", "tutorialrunner.js");
+const testtutorialui = gulp.series(
+    gulp.parallel(pxtlib, pxtsim),
+    pxtapp,
+    () => exec(`${getMochaExecutable()} "tests/tutorial-test/*.spec.js" --reporter dot`, true)
+);
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
 const testprojecttools = gulp.series(
@@ -791,6 +812,7 @@ const testAll = gulp.series(
     testpycomp,
     testpytraces,
     testtutorials,
+    testtutorialui,
     testlanguageservice,
     karma,
     testSkillmap,
@@ -851,7 +873,7 @@ function cliTestTask() {
         .pipe(concat("runner.js"))
         .pipe(gulp.dest(`${outDir}/tests/cli-test`));
     const runTests = () => exec(`${getMochaExecutable()} ${outDir}/tests/cli-test/runner.js --reporter dot`, true);
-    return gulp.series([buildTs, buildRunner, runTests]);
+    return gulp.series([backendutils, buildTs, buildRunner, runTests]);
 }
 
 function getMochaExecutable() {
@@ -918,6 +940,7 @@ exports.testpydecomp = testpydecomp;
 exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
 exports.testtutorials = testtutorials;
+exports.testtutorialui = testtutorialui;
 exports.test = testAll;
 exports.travis = travis;
 exports.karma = karma;

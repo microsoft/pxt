@@ -21,7 +21,8 @@ function sources() {
         }
     }
     for (const id of ["fields/field_utils", "fields/field_sprite",
-        "fields/field_tilemap", "fields/field_tileset", "backpack"]) collect(id);
+        "fields/field_tilemap", "fields/field_tileset", "fields/field_animation",
+        "fields/field_musiceditor", "fields/field_melodySandbox", "backpack"]) collect(id);
     modules.backpack = ts.transpileModule(fs.readFileSync(path.join(root, "pxtblocks/backpack.ts"), "utf8"), {
         compilerOptions: { target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.CommonJS }
     }).outputText;
@@ -69,7 +70,9 @@ describe("Backpack scratch native asset editing", function () {
             const fields = Object.assign({}, ...Object.keys(modules).filter(id => id.startsWith("fields/")).map(load));
             const backpack = load("backpack");
             for (const [type, Field] of [["extension_portrait", fields.FieldSpriteEditor],
-                ["tiles_tilemap_editor", fields.FieldTilemap], ["tileset_tile_picker", fields.FieldTileset]]) {
+                ["tiles_tilemap_editor", fields.FieldTilemap], ["tileset_tile_picker", fields.FieldTileset],
+                ["animation_editor", fields.FieldAnimationEditor], ["music_song_field_editor", fields.FieldMusicEditor],
+                ["melody_editor", fields.FieldCustomMelody]]) {
                 Blockly.Blocks[type] = { init() {
                     this.appendDummyInput().appendField(new Field("", {}), "ASSET");
                     this.setOutput(true);
@@ -218,6 +221,62 @@ describe("Backpack scratch native asset editing", function () {
         assert.deepStrictEqual(result.pixels, result.expected);
     });
 
+    for (const type of ["animation_editor", "music_song_field_editor"]) {
+        it(`reopens and edits ${type} without the source project`, async () => {
+            const result = await page.evaluate(type => {
+                const animation = type === "animation_editor";
+                const frames = [bitmap(), bitmap()];
+                frames[0].data.fill(0x22);
+                frames[1].data.fill(0x88);
+                const song = pxt.assets.music.getEmptySong(2);
+                song.tracks[0].notes.push({ startTick: 0, endTick: 8, notes: [{ note: 48, enharmonicSpelling: 0 }] });
+                const source = animation ? project.createNewAnimationFromData(frames, 175, "savedAnimation")
+                    : project.createNewSong(song, "savedSong");
+                const code = codeFor(type, fieldState(source));
+                const before = JSON.stringify(project);
+                const { editor, asset } = open(code);
+                if (animation) {
+                    asset.frames[1].data.fill(0x66);
+                    asset.interval = 230;
+                } else {
+                    asset.song.beatsPerMinute = 177;
+                    asset.song.tracks[0].notes[0].notes[0].note = 55;
+                }
+                const expected = animation ? {
+                    frames: asset.frames.map(frame => Array.from(frame.data)), interval: asset.interval
+                } : { song: pxt.assets.music.encodeSongToHex(asset.song) };
+                const saved = editor.save(asset);
+                editor.dispose();
+                editors.pop();
+                const unchanged = before === JSON.stringify(project);
+                window.project = new pxt.TilemapProject();
+                const reopened = open(saved.code).asset;
+                const actual = animation ? {
+                    frames: reopened.frames.map(frame => Array.from(frame.data)), interval: reopened.interval
+                } : { song: pxt.assets.music.encodeSongToHex(reopened.song) };
+                return { unchanged, expected, actual };
+            }, type);
+            assert(result.unchanged);
+            assert.deepStrictEqual(result.actual, result.expected);
+        });
+    }
+
+    it("reopens and saves a melody as a scalar asset without requiring a project asset", async () => {
+        const result = await page.evaluate(() => {
+            const code = codeFor("melody_editor", '"C D E F G A B C5 "');
+            const { editor, asset } = open(code);
+            const saved = editor.save();
+            editor.dispose();
+            editors.pop();
+            window.project = new pxt.TilemapProject();
+            const reopened = open(saved.code);
+            return { scalar: asset === undefined && reopened.asset === undefined,
+                value: JSON.parse(reopened.editor.save().code).blocks[0].fields.ASSET };
+        });
+        assert(result.scalar);
+        assert.equal(result.value, '"C D E F G A B C5 "');
+    });
+
     it("captures either asset from a custom statement without retaining its block or other fields", async () => {
         const result = await page.evaluate(() => {
             Blockly.Blocks.two_assets = { init() {
@@ -276,7 +335,7 @@ describe("Backpack scratch native asset editing", function () {
             }
         });
         assert.equal(result.unchanged, true);
-        assert.equal(result.kind, "asset");
+        assert.equal(result.kind, "code");
         assert.equal(result.containerKind, "code");
         assert.deepStrictEqual(result.restored, [
             { pixel: 2, type: "extension_portrait", fields: ["ASSET"], name: "First image" },

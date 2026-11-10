@@ -879,7 +879,7 @@
     /*******************************
             Simulator Tab
     *******************************/
-    #root.tabTutorial:not(.fullscreensim) .simulator-container:not(.hidden) {
+    #root.tabTutorial:not(.fullscreensim):not(.tutorialSimFullscreen) .simulator-container:not(.hidden) {
         .simPanel {
             display: flex;
             position: relative;
@@ -1135,9 +1135,163 @@
     max-width: 100%;
 }
 
+/*******************************
+    Simulator-focused steps
+*******************************/
+
+#root.tutorialSimFullscreen {
+    --tutorial-sim-menu-height: @mainMenuHeight;
+    --tutorial-sim-sidebar-width: @simulatorWidth;
+    display: grid;
+    grid-template-areas: "instructions simulator";
+    grid-template-rows: minmax(0, 1fr);
+    grid-template-columns: var(--tutorial-sim-sidebar-width) minmax(0, 1fr);
+    padding-top: var(--tutorial-sim-menu-height);
+
+    &.notificationBannerVisible {
+        padding-top: calc(var(--tutorial-sim-menu-height) + @bannerHeight);
+    }
+    &.hideMenuBar {
+        padding-top: 0;
+    }
+
+    #simulator, .topInstructionsWrapper {
+        display: contents;
+    }
+    #simulator #editorSidebar,
+    #simulator .tutorialWrapper,
+    .tutorial-instructions,
+    #sidebar {
+        position: relative;
+        inset: auto;
+        min-width: 0;
+        max-width: none;
+        width: 100%;
+        height: 100%;
+    }
+    #simulator #editorSidebar {
+        grid-area: simulator;
+        overflow: hidden;
+    }
+    #simulator .tutorialWrapper, .tutorial-instructions, #sidebar {
+        grid-area: instructions;
+    }
+    #maineditor:not(.tutorial-instructions), #editortools, #headers,
+    #sidedocs, #sidedocstoggle, .project-tools, #project-tools-launcher, #miniSimOverlay,
+    #simulator .expand-button, #simulator .fullscreen-button,
+    #simulator .hidefullscreen:not(.tutorial.mute-button) {
+        display: none !important;
+    }
+    .tutorial-instructions:empty {
+        display: none;
+    }
+    .simulator-container {
+        height: 100%;
+    }
+    #simulator .simPanel {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        min-height: 0;
+        padding: 1rem;
+        margin: 0;
+        overflow: hidden;
+    }
+    #simulator #boardview {
+        flex: 1;
+        width: 100%;
+        height: auto;
+        min-height: 0;
+        padding: 0;
+    }
+    #simulator #simulators {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        gap: 1rem;
+    }
+    #simulator .simframe {
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        // SimulatorDriver writes the normal aspect ratio as an inline padding.
+        padding-bottom: 0 !important;
+        margin: 0;
+    }
+    #simulator .simtoolbar {
+        display: block;
+        flex: none;
+        margin: 1rem 0 0;
+        text-align: center;
+    }
+}
+
+#root #simulator.tutorialSimTransitioning {
+    #editorSidebar {
+        overflow: visible;
+        z-index: @tutorialCardZIndex + 1;
+    }
+    .simPanel {
+        overflow: visible;
+    }
+}
+
+.tutorialSimFullscreenTopInstructions() {
+    grid-template-areas: "instructions" "simulator";
+    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr);
+
+    #simulator .tutorialWrapper, .tutorial-instructions {
+        height: @defaultTutorialHeight;
+        max-height: 40vh;
+    }
+    .tutorial-instructions, #sidebar {
+        height: auto;
+        max-height: 40vh;
+        overflow: auto;
+    }
+}
+
+#root.tutorialSimFullscreen.tutorialSimSidebar,
+#root.tutorialSimFullscreen.tutorial:not(.sidebarTutorial),
+#root.tutorialSimFullscreen.tutorial:not(.flyoutOnly) {
+    .tutorialSimFullscreenTopInstructions();
+}
+
+@media only screen and (max-width: @largestSmallMonitor) {
+    #root.tutorialSimFullscreen {
+        --tutorial-sim-sidebar-width: @simulatorWidthSmall;
+    }
+}
+
+#root.tutorialSimFullscreen.tutorial.sidebarTutorial.flyoutOnly {
+    --tutorial-sim-sidebar-width: 33.3%;
+    .tutorial-instructions {
+        display: none;
+    }
+}
+
+@media only screen and (max-width: @largestTabletScreen) {
+    #root.tutorialSimFullscreen {
+        --tutorial-sim-menu-height: @mobileMenuHeight;
+        .tutorialSimFullscreenTopInstructions();
+        #simulator .simulator-container .simPanel .tutorial.mute-button {
+            display: block !important;
+        }
+    }
+}
+
+@media only screen and (min-width: @largestMobileScreen) and (max-height: @tallEditorBreakpoint) {
+    #root.tutorialSimFullscreen {
+        --tutorial-sim-menu-height: @thinMenuHeight;
+    }
+}
+
 /* Mobile */
 @media only screen and (max-width: @largestMobileScreen) {
-    #root.tabTutorial:not(.fullscreensim) .simulator-container:not(.hidden) .simPanel {
+    #root.tabTutorial:not(.fullscreensim):not(.tutorialSimFullscreen) .simulator-container:not(.hidden) .simPanel {
         #simulators {
             width: 16rem;
         }

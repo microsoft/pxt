@@ -30,12 +30,12 @@ function invalidCode(): never {
 
 function checkCodeSize(length: number): void {
     if (length > MAX_CODE_LENGTH) {
-        pxt.U.userError(lf("This snippet is too large for Backpack ({0} characters; limit {1}). This includes its supporting functions and assets. Try saving a smaller block container.", length, MAX_CODE_LENGTH));
+        pxt.U.userError(lf("This snippet is too large for Backpack ({0} characters; limit {1}). This includes its supporting functions and assets. Try saving fewer blocks.", length, MAX_CODE_LENGTH));
     }
 }
 
 function tooManyBlocks(): never {
-    return pxt.U.userError(lf("This snippet contains too many blocks for Backpack. The limit is {0} blocks, including supporting functions. Try saving a smaller block container.", MAX_BLOCKS));
+    return pxt.U.userError(lf("This snippet contains too many blocks for Backpack. The limit is {0} blocks, including supporting functions. Try saving fewer blocks.", MAX_BLOCKS));
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -49,8 +49,12 @@ function isEditableBackpackBlock(block: Blockly.Block): boolean {
         && !legacyProcedures.has(block.type);
 }
 
+function isBackpackCodeBlock(block: Blockly.Block): boolean {
+    return isEditableBackpackBlock(block) && !block.isShadow() && block.isMovable();
+}
+
 export function isBackpackContainer(block: Blockly.Block): boolean {
-    return isEditableBackpackBlock(block) && !block.isShadow() && block.isMovable()
+    return isBackpackCodeBlock(block)
         && block.inputList.some(input => input.type === Blockly.inputs.inputTypes.STATEMENT);
 }
 
@@ -72,13 +76,14 @@ export function getBackpackAssetFields(block: Blockly.Block): Blockly.Field[] {
 }
 
 export function getBackpackCaptureKind(block: Blockly.Block): pxt.auth.BackpackKind {
-    return isBackpackContainer(block) ? "code" : getBackpackAssetFields(block).length ? "asset" : "code";
+    return isBackpackCodeBlock(block) && !getBackpackAssetField(block)
+        ? "code" : getBackpackAssetFields(block).length ? "asset" : "code";
 }
 
 /** Asset shadows can be copied without detaching them from their owning statement. */
 export function isBackpackBlock(block: Blockly.Block): boolean {
-    return isEditableBackpackBlock(block) && (isBackpackContainer(block)
-        || !!getBackpackAssetFields(block).length && (block.isShadow() || block.isMovable()));
+    return isBackpackCodeBlock(block) || isEditableBackpackBlock(block)
+        && block.isShadow() && !!getBackpackAssetFields(block).length;
 }
 
 export interface BackpackAssetCapture {
@@ -166,8 +171,9 @@ export function parseBackpackCode(code: string): BackpackCode {
     const definitions = new Map<string, State>();
     result.blocks.forEach((state, index) => {
         if (!state) invalidCode();
-        if (state.next || (index < result.blocks.length - 1 && !isDefinition(state))) invalidCode();
+        if (index < result.blocks.length - 1 && !isDefinition(state)) invalidCode();
         if (isDefinition(state)) {
+            if (state.next) invalidCode();
             const key = functionName(state);
             if (definitions.has(key)) invalidCode();
             definitions.set(key, state);
@@ -189,14 +195,14 @@ export function parseBackpackCode(code: string): BackpackCode {
     return result;
 }
 
-/** Include referenced function definitions, but not statements following the selected block. */
+/** Include the selected block, its following stack, and referenced function definitions. */
 export function captureBackpackBlock(block: Blockly.Block): { code: string; blockText: string } {
     if (!isBackpackBlock(block)) {
-        pxt.U.userError(lf("Choose an editable block container or an image, animation, tilemap or music asset to save to Backpack."));
+        pxt.U.userError(lf("Choose an editable, movable block or an image, animation, tilemap or music asset to save to Backpack."));
     }
 
     const save = (source: Blockly.Block): State => copyBlock(source).blockState;
-    const root = save(block);
+    const root = copyBlock(block, true).blockState;
     const states = [root];
     const included = new Set<Blockly.Block>([block]);
 
@@ -237,11 +243,11 @@ export function captureBackpackBlock(block: Blockly.Block): { code: string; bloc
                     ?.replace(/\s+/g, " ").trim();
                 if (value) text.add(value);
             }
-            // Follow input bodies and their statement chains, but not a root's following siblings.
-            for (let child = input.connection?.targetBlock(); child; child = child.getNextBlock()) {
-                pending.push(child);
-            }
+            const child = input.connection?.targetBlock();
+            if (child) pending.push(child);
         }
+        const next = current.getNextBlock();
+        if (next) pending.push(next);
     }
     return { code, blockText: Array.from(text).join(" ").slice(0, MAX_CODE_LENGTH) };
 }

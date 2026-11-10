@@ -17,6 +17,9 @@ those modules. Browser tests require Puppeteer's Chromium, not a development ser
   host-provided targets, dwell and cleanup.
 - UI/launcher/whiteboard suites cover panel interaction, accessibility,
   native button/tab behavior and feature-control appearance.
+- Launcher checks include top- and left-tutorial workspace positioning and resize
+  accessibility bounds. Backpack UI checks compare high-contrast search-border
+  pixels at all four corners and verify keyboard focus styling.
 
 Shared browser and source-loading helpers live in [browser.js](browser.js) and
 [source.js](source.js). Network and account calls are mocked. Before release,

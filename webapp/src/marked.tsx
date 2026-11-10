@@ -462,8 +462,8 @@ export class MarkedContent extends data.Component<MarkedContentProps, MarkedCont
                         const isAdvanced = bi?.attributes?.advanced || ns === "arrays";
                         inlineBlock.classList.add("clickable");
                         inlineBlock.tabIndex = 0;
-                        inlineBlock.ariaLabel = lf("Toggle the {0} category", ns);
-                        inlineBlock.title = inlineBlock.ariaLabel;
+                        inlineBlock.ariaLabel = inlineBlock.textContent;
+                        inlineBlock.title = lf("Toggle the {0} category", ns);
 
                         // handle adding the icon
                         const iconContainer = inlineBlock.children[0];
