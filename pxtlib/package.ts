@@ -1525,7 +1525,7 @@ namespace pxt {
 
     function validateGridPickerCatalog(id: string, catalog: GridPickerCatalog): boolean {
         const valid = typeof catalog?.name === "string" && Array.isArray(catalog.tabs)
-            && [catalog.tabs, catalog.families, catalog.materials, catalog.filters].every(entries =>
+            && [catalog.tabs, catalog.groups, catalog.filters].every(entries =>
                 entries == null || (Array.isArray(entries) && entries.every(entry =>
                     entry && typeof entry.id === "string" && typeof entry.name === "string"
                     && (entry.tags == null || (Array.isArray(entry.tags) && entry.tags.every(tag => typeof tag === "string"))))));
@@ -1537,7 +1537,7 @@ namespace pxt {
     export function getGridPickerCatalogStrings(id: string, catalog: GridPickerCatalog): Map<string> {
         const strings: Map<string> = {};
         if (!validateGridPickerCatalog(id, catalog)) return strings;
-        const names = [catalog.name, ...catalog.tabs.concat(catalog.families || [], catalog.materials || [], catalog.filters || [])
+        const names = [catalog.name, ...catalog.tabs.concat(catalog.groups || [], catalog.filters || [])
             .map(entry => entry.name)];
         for (const name of names) {
             if (name) strings[`${id}|gridPicker|${name}`] = name;
@@ -1560,8 +1560,7 @@ namespace pxt {
             ...catalog,
             name: name(catalog.name),
             tabs: pxt.sprite.sortByWeight(categories(catalog.tabs), entry => entry.weight),
-            families: categories(catalog.families),
-            materials: categories(catalog.materials),
+            groups: categories(catalog.groups),
             filters: categories(catalog.filters)
         };
     }

@@ -49,17 +49,17 @@ export interface GridPickerGroup {
 
 export interface GridPickerEntry {
     option: Blockly.MenuOption;
-    family?: GridPickerGroup;
+    group?: GridPickerGroup;
 }
 
 export interface GridPickerRow {
     entries: GridPickerEntry[];
-    family?: GridPickerGroup;
+    group?: GridPickerGroup;
 }
 
 export function sortGridPickerEntries(entries: GridPickerEntry[], optionWeights?: pxt.Map<number>): GridPickerEntry[] {
-    return pxt.sprite.sortByWeight(entries, entry => entry.family
-        ? entry.family.weight : optionWeights?.[entry.option[1]]);
+    return pxt.sprite.sortByWeight(entries, entry => entry.group
+        ? entry.group.weight : optionWeights?.[entry.option[1]]);
 }
 
 export function getGridPickerRows(entries: GridPickerEntry[], columns: number, expanded: ReadonlySet<string>): GridPickerRow[] {
@@ -68,12 +68,12 @@ export function getGridPickerRows(entries: GridPickerEntry[], columns: number, e
         const parents = entries.slice(i, i + columns);
         rows.push({ entries: parents });
         for (const parent of parents) {
-            if (!parent.family || !expanded.has(parent.family.id)) continue;
-            const children = parent.family.options;
+            if (!parent.group || !expanded.has(parent.group.id)) continue;
+            const children = parent.group.options;
             for (let j = 0; j < children.length; j += columns) {
                 rows.push({
                     entries: children.slice(j, j + columns).map(option => ({ option })),
-                    family: parent.family
+                    group: parent.group
                 });
             }
         }
@@ -102,13 +102,13 @@ export function getGridPickerGroups(
     visible = pxt.sprite.sortByWeight(visible, option => optionWeights?.[option[1]]);
     if (!visible.length) return [];
     if (tab.flat) return [{ id: "all", name: "", flat: true, options: visible }];
-    const categories = (tab.materials ? catalog.materials : catalog.families) || [];
+    const categories = catalog.groups || [];
 
     const claimed = new Set<string>();
     let groups: GridPickerGroup[] = [];
     for (const category of categories) {
         const members = filterGridPickerOptions(visible, category.tags || [], optionTags)
-            .filter(option => tab.materials || !claimed.has(option[1]));
+            .filter(option => !claimed.has(option[1]));
         if (!members.length) continue;
         members.forEach(option => claimed.add(option[1]));
         groups.push({ id: category.id, name: category.name, icon: category.icon, weight: category.weight, options: members });
@@ -118,7 +118,7 @@ export function getGridPickerGroups(
     if (remaining.length) {
         let id = "other";
         while (categories.some(category => category.id === id)) id = "_" + id;
-        groups.push({ id, name: tab.materials ? pxt.Util.lf("Other materials") : "", flat: !tab.materials, options: remaining });
+        groups.push({ id, name: "", flat: true, options: remaining });
     }
     return groups;
 }
@@ -127,16 +127,16 @@ export function getGridPickerSizeRows(options: Blockly.MenuOption[], catalog: px
     let largest = getGridPickerRows(options.map(option => ({ option })), columns, new Set());
     for (const tab of catalog.tabs) {
         const entries: GridPickerEntry[] = [];
-        let largestFamily: GridPickerGroup;
+        let largestGroup: GridPickerGroup;
         for (const group of getGridPickerGroups(options, catalog, tab, "", undefined, optionTags, optionWeights)) {
-            if (!group.flat && (group.options.length > 1 || tab.materials) && !tab.flat) {
-                entries.push({ option: group.options[0], family: group });
-                if (!largestFamily || group.options.length > largestFamily.options.length) largestFamily = group;
+            if (!group.flat && group.options.length > 1 && !tab.flat) {
+                entries.push({ option: group.options[0], group });
+                if (!largestGroup || group.options.length > largestGroup.options.length) largestGroup = group;
             } else {
                 entries.push(...group.options.map(option => ({ option })));
             }
         }
-        const rows = getGridPickerRows(sortGridPickerEntries(entries, optionWeights), columns, new Set(largestFamily ? [largestFamily.id] : []));
+        const rows = getGridPickerRows(sortGridPickerEntries(entries, optionWeights), columns, new Set(largestGroup ? [largestGroup.id] : []));
         if (rows.length > largest.length) largest = rows;
     }
     return largest;
@@ -157,7 +157,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private catalogTab_: string;
     private catalogSearch_ = "";
     private catalogExpanded_ = new Set<string>();
-    private catalogFamilies_: pxt.Map<GridPickerGroup> = {};
+    private catalogGroups_: pxt.Map<GridPickerGroup> = {};
     private catalogChildRowIds_: pxt.Map<string[]> = {};
     private catalogTable_: HTMLElement;
     private catalogContainer_: HTMLElement;
@@ -298,16 +298,16 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
         if (rows) {
             rows.forEach((entry, index) => {
-                if (entry.family) {
-                    const ids = this.catalogChildRowIds_[entry.family.id] || [];
+                if (entry.group) {
+                    const ids = this.catalogChildRowIds_[entry.group.id] || [];
                     ids.push(`${this.sourceBlock_.id}:row-${index}`);
-                    this.catalogChildRowIds_[entry.family.id] = ids;
+                    this.catalogChildRowIds_[entry.group.id] = ids;
                 }
             });
             rows.forEach((entry, index) => {
-                const row = this.populateRow(index, entry.entries.map(item => item.option), tableContainer, entry.family);
-                if (entry.family && entry.family !== rows[index + 1]?.family) {
-                    row.classList.add("gridpicker-family-children-last");
+                const row = this.populateRow(index, entry.entries.map(item => item.option), tableContainer, entry.group);
+                if (entry.group && entry.group !== rows[index + 1]?.group) {
+                    row.classList.add("gridpicker-group-children-last");
                 }
                 tableContainer.appendChild(row);
             });
@@ -329,16 +329,16 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
      * @param options
      * @param tableContainer
      */
-    private populateRow(row: number, options: (Object | string[])[], tableContainer: HTMLElement, parentFamily?: GridPickerGroup): HTMLElement {
+    private populateRow(row: number, options: (Object | string[])[], tableContainer: HTMLElement, parentGroup?: GridPickerGroup): HTMLElement {
         const rowContent = document.createElement('div');
         rowContent.className = 'blocklyGridPickerRow';
         rowContent.setAttribute('role', 'row');
         rowContent.id = `${this.sourceBlock_.id}:row-${row}`;
         if (this.catalog_) {
-            rowContent.setAttribute("aria-level", parentFamily ? "2" : "1");
-            if (parentFamily) {
-                rowContent.classList.add("gridpicker-family-children");
-                rowContent.dataset.family = parentFamily.id;
+            rowContent.setAttribute("aria-level", parentGroup ? "2" : "1");
+            if (parentGroup) {
+                rowContent.classList.add("gridpicker-group-children");
+                rowContent.dataset.group = parentGroup.id;
             }
         }
 
@@ -361,13 +361,13 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             menuItemContent.title = content['alt'] || content;
             menuItemContent.setAttribute('data-value', value);
 
-            const family = this.catalogFamilies_[value];
-            if (family) {
-                menuItem.classList.add("gridpicker-family");
-                menuItem.setAttribute("aria-expanded", String(this.catalogExpanded_.has(family.id)));
-                const childRows = this.catalogChildRowIds_[family.id];
+            const group = this.catalogGroups_[value];
+            if (group) {
+                menuItem.classList.add("gridpicker-group");
+                menuItem.setAttribute("aria-expanded", String(this.catalogExpanded_.has(group.id)));
+                const childRows = this.catalogChildRowIds_[group.id];
                 if (childRows?.length) menuItem.setAttribute("aria-controls", childRows.join(" "));
-                menuItem.title = pxt.Util.lf("{0}: {1} choices", family.name, family.options.length);
+                menuItem.title = pxt.Util.lf("{0}: {1} choices", group.name, group.options.length);
                 menuItem.setAttribute("aria-label", menuItem.title);
                 menuItemContent.title = menuItem.title;
             }
@@ -375,7 +375,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
             // Set colour
             let backgroundColour = this.backgroundColour_;
-            if ((!family && value == this.getValue()) || (family && !this.catalogExpanded_.has(family.id) && family.options.some(option => option[1] === this.getValue()))) {
+            if ((!group && value == this.getValue()) || (group && !this.catalogExpanded_.has(group.id) && group.options.some(option => option[1] === this.getValue()))) {
                 // This option is selected
                 menuItem.setAttribute('aria-selected', 'true');
                 this.activeDescendantIndex = i;
@@ -409,7 +409,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                     buttonImg.setAttribute('data-src', content.src);
                     this.observer.observe(buttonImg);
                 }
-                buttonImg.alt = family ? menuItem.title : content.alt;
+                buttonImg.alt = group ? menuItem.title : content.alt;
                 buttonImg.setAttribute('data-value', value);
                 menuItemContent.appendChild(buttonImg);
             } else {
@@ -417,13 +417,13 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                 menuItemContent.textContent = content;
             }
 
-            if (family) {
+            if (group) {
                 const disclosure = document.createElement("i");
-                disclosure.className = this.catalogExpanded_.has(family.id) ? "gridpicker-family-toggle icon minus" : "gridpicker-family-toggle icon plus";
+                disclosure.className = this.catalogExpanded_.has(group.id) ? "gridpicker-group-toggle icon minus" : "gridpicker-group-toggle icon plus";
                 disclosure.setAttribute("aria-hidden", "true");
                 const count = document.createElement("span");
-                count.className = "gridpicker-family-count";
-                count.textContent = String(family.options.length);
+                count.className = "gridpicker-group-count";
+                count.textContent = String(group.options.length);
                 menuItem.appendChild(count);
                 menuItem.appendChild(disclosure);
             }
@@ -524,13 +524,13 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     };
 
     protected buttonClickAndClose_ = (value: string | null) => {
-        const family = this.catalogFamilies_[value];
-        if (family) {
-            const collapsing = this.catalogExpanded_.has(family.id);
+        const group = this.catalogGroups_[value];
+        if (group) {
+            const collapsing = this.catalogExpanded_.has(group.id);
             this.catalogExpanded_.clear();
-            if (!collapsing) this.catalogExpanded_.add(family.id);
+            if (!collapsing) this.catalogExpanded_.add(group.id);
             this.renderCatalog_();
-            const firstChildRow = !collapsing && this.catalogChildRowIds_[family.id]?.[0];
+            const firstChildRow = !collapsing && this.catalogChildRowIds_[group.id]?.[0];
             const index = this.gridItems.findIndex(item => firstChildRow
                 ? item.parentElement.id === firstChildRow && item === item.parentElement.firstElementChild
                 : item.getAttribute("data-value") === value);
@@ -803,7 +803,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.catalogTabs_ = [];
         const selected = this.getOptions().find(option => option[1] === this.getValue());
         if (!this.catalogTab_) this.catalogTab_ = this.catalog_.tabs.find(tab =>
-            !tab.flat && !tab.materials && (!selected || filterGridPickerOptions([selected], tab.tags || [], this.optionTags_).length)
+            !tab.flat && (!selected || filterGridPickerOptions([selected], tab.tags || [], this.optionTags_).length)
         )?.id || this.catalog_.tabs[0].id;
         for (const tab of this.catalog_.tabs) {
             const button = document.createElement("button");
@@ -940,19 +940,19 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.catalogContainer_.querySelector(".gridpicker-catalog-title").textContent = tab.name;
         const groups = getGridPickerGroups(this.getOptions(), this.catalog_, tab, this.catalogSearch_, this.filter_, this.optionTags_, this.optionWeights_);
         const entries: GridPickerEntry[] = [];
-        this.catalogFamilies_ = {};
+        this.catalogGroups_ = {};
         const choices = new Set<string>();
         for (const group of groups) {
-            if (!group.flat && (group.options.length > 1 || tab.materials) && !tab.flat && !this.catalogSearch_.trim()) {
+            if (!group.flat && group.options.length > 1 && !tab.flat && !this.catalogSearch_.trim()) {
                 group.options.forEach(option => choices.add(option[1]));
                 const representative = group.options.find(option => option[1] === this.getValue()) || group.options[0];
-                const value = `@family:${group.id}`;
-                this.catalogFamilies_[value] = group;
+                const value = `@group:${group.id}`;
+                this.catalogGroups_[value] = group;
                 const icon = this.catalogIcon_(group.icon);
                 entries.push({
                     option: [icon ? { src: icon, alt: group.name, width: 36, height: 36 }
                         : typeof representative[0] === "string" ? group.name : representative[0], value],
-                    family: group
+                    group
                 });
             } else {
                 for (const option of group.options) {
@@ -993,7 +993,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             return;
         }
         if (this.catalogContentHeight_ === undefined) {
-            this.catalogFamilies_ = {};
+            this.catalogGroups_ = {};
             const allowed = filterGridPickerOptions(this.getOptions(), this.filter_, this.optionTags_);
             const rows = getGridPickerSizeRows(allowed, this.catalog_, this.columns_, this.optionTags_, this.optionWeights_);
             this.populateTableContainer([], this.catalogTable_, this.scrollContainer, rows);
@@ -1036,19 +1036,19 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         if (!this.catalog_) return super.getVerticalGridItemIndex(index, direction);
         const row = this.gridItems[index].parentElement;
         let adjacent = direction < 0 ? row.previousElementSibling : row.nextElementSibling;
-        const familyId = row.dataset.family;
-        if (familyId !== undefined && adjacent?.getAttribute("data-family") !== familyId) {
+        const groupId = row.dataset.group;
+        if (groupId !== undefined && adjacent?.getAttribute("data-group") !== groupId) {
             if (direction > 0) return index;
-            const parent = this.gridItems.findIndex(item => item.getAttribute("data-value") === `@family:${familyId}`);
+            const parent = this.gridItems.findIndex(item => item.getAttribute("data-value") === `@group:${groupId}`);
             return parent >= 0 ? parent : index;
         }
         if (direction > 0) {
-            const family = this.catalogFamilies_[this.gridItems[index].getAttribute("data-value")];
-            const firstChildRow = family && this.catalogChildRowIds_[family.id]?.[0];
+            const group = this.catalogGroups_[this.gridItems[index].getAttribute("data-value")];
+            const firstChildRow = group && this.catalogChildRowIds_[group.id]?.[0];
             if (firstChildRow) return this.gridItems.findIndex(item => item.parentElement.id === firstChildRow);
         }
-        if (familyId === undefined) {
-            while (adjacent?.hasAttribute("data-family")) {
+        if (groupId === undefined) {
+            while (adjacent?.hasAttribute("data-group")) {
                 adjacent = direction < 0 ? adjacent.previousElementSibling : adjacent.nextElementSibling;
             }
         }
@@ -1059,14 +1059,14 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
 
     protected override getHorizontalGridItemIndex(index: number, direction: number): number {
         if (!this.catalog_) return super.getHorizontalGridItemIndex(index, direction);
-        const familyId = this.gridItems[index].parentElement.dataset.family;
-        if (familyId === undefined) {
+        const groupId = this.gridItems[index].parentElement.dataset.group;
+        if (groupId === undefined) {
             let next = index + direction;
-            while (this.gridItems[next]?.parentElement.dataset.family !== undefined) next += direction;
+            while (this.gridItems[next]?.parentElement.dataset.group !== undefined) next += direction;
             return this.gridItems[next] ? next : index;
         }
         const next = index + direction;
-        return this.gridItems[next]?.parentElement.dataset.family === familyId ? next : index;
+        return this.gridItems[next]?.parentElement.dataset.group === groupId ? next : index;
     }
 
     private createSearchBar_(tableContainer: HTMLElement, scrollContainer: HTMLElement, options: (Object | string[])[]) {
@@ -1270,7 +1270,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.catalogTabs_ = [];
         this.catalogContentHeight_ = undefined;
         this.catalogAnchor_ = undefined;
-        this.catalogFamilies_ = {};
+        this.catalogGroups_ = {};
         this.scrollContainer = undefined;
         this.getFocusableElement().ariaExpanded = 'false';
     }
@@ -1407,7 +1407,7 @@ Blockly.Css.register(`
     margin-bottom: 6px;
 }
 
-.blocklyWidgetDiv .blocklyGridPickerCatalog .gridpicker-family-children {
+.blocklyWidgetDiv .blocklyGridPickerCatalog .gridpicker-group-children {
     padding: 6px;
     padding-inline-start: 12px;
     margin-bottom: 0;
@@ -1415,11 +1415,11 @@ Blockly.Css.register(`
     border-inline-start: 2px solid var(--pxt-neutral-stencil1);
 }
 
-.blocklyWidgetDiv .blocklyGridPickerCatalog .gridpicker-family-children + .gridpicker-family-children {
+.blocklyWidgetDiv .blocklyGridPickerCatalog .gridpicker-group-children + .gridpicker-group-children {
     padding-top: 0;
 }
 
-.blocklyWidgetDiv .blocklyGridPickerCatalog .gridpicker-family-children-last {
+.blocklyWidgetDiv .blocklyGridPickerCatalog .gridpicker-group-children-last {
     margin-bottom: 6px;
 }
 
@@ -1460,7 +1460,7 @@ Blockly.Css.register(`
     box-shadow: none;
 }
 
-.gridpicker-family > .gridpicker-family-toggle {
+.gridpicker-group > .gridpicker-group-toggle {
     position: absolute;
     inset-inline-end: 2px;
     bottom: 2px;
@@ -1478,12 +1478,12 @@ Blockly.Css.register(`
     background: var(--pxt-neutral-background1);
 }
 
-.gridpicker-family > .gridpicker-family-toggle::before {
+.gridpicker-group > .gridpicker-group-toggle::before {
     display: block;
     line-height: 1;
 }
 
-.gridpicker-family-count {
+.gridpicker-group-count {
     position: absolute;
     inset-inline-start: 2px;
     top: 1px;

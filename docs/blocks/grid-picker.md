@@ -1,11 +1,10 @@
 # Tagged Grid Pickers
 
 The `gridpicker` field editor supports optional catalogs for browsing large sets of
-assets. A catalog adds category tabs, collapsible families and materials,
-tag filters, and search. Without a catalog, the existing flat picker is unchanged.
+assets. A catalog adds category tabs, collapsible groups, tag filters, and search. Without a catalog, the existing flat picker is unchanged.
 
 The picker stores the original qualified symbol name. Categories, tags, expanded
-families, and search terms do not change the block's generated code or saved value.
+groups, and search terms do not change the block's generated code or saved value.
 
 ## Tags
 
@@ -25,7 +24,7 @@ export const hero: Image = img`
 ```json
 {
     "Zombie": {
-        "tags": ["category-monsters", "family-zombies", "rider", "mount"],
+        "tags": ["category-monsters", "group-zombies", "rider", "mount"],
         "weight": 70
     }
 }
@@ -102,7 +101,7 @@ For example, an extension can add `pickers.jres`:
                 { "id": "terrain", "name": "Terrain", "tags": ["terrain"] },
                 { "id": "search", "name": "All", "flat": true }
             ],
-            "families": [
+            "groups": [
                 { "id": "heroes", "name": "Heroes", "tags": ["hero"], "weight": 80 },
                 { "id": "enemies", "name": "Enemies", "tags": ["enemy"], "weight": 60 }
             ],
@@ -126,8 +125,8 @@ user-pickable control; the parent block applies its constraint through
 
 ### Localization
 
-The package localization generator extracts catalog, tab, family, material, and
-filter names into the owning package's strings file. Keys include the full
+The package localization generator extracts catalog, tab, group, and filter
+names into the owning package's strings file. Keys include the full
 resource ID, such as
 `myExtension.pickers.gameImages|gridPicker|Heroes`, so different extensions may
 translate the same source title independently. Include the translated strings
@@ -140,35 +139,32 @@ target-title translations remain a fallback, and missing translations use the
 original names. Localization never changes catalog IDs, tags, or stored choices.
 
 Every tab has search. Searching a grouped tab expands the matching results rather
-than concealing them inside collapsed families. The final tab should use
+than concealing them inside collapsed groups. The final tab should use
 `flat: true`; it shows all choices allowed by the field's source types and hard
-filter, without family compression. Unmatched families remain individually
+filter, without group compression. Choices outside every group remain individually
 available, so classification never removes assets from All.
 Hyphens and underscores are treated like spaces in both search queries and
 indexed names and tags.
 
-A tab may set `icon` to a JRES ID or qualified symbol with an icon. Use
-`materials: true` to show the catalog's `materials` choices. Materials use the
-same category shape (`id`, `name`, `tags`, optional `icon`). The Materials tab
-shows a tile for every material represented by the field's allowed choices.
-Expanding a tile reveals its choices in tinted rows below the tile's row, without
-moving other tiles sideways. Only one group can be open at a time; its choices
-scroll with the rest of the picker. Tiles follow the configured material order. Untagged choices remain
-available under an expandable Other materials tile and in the flat All view.
+A tab may set `icon` to a JRES ID or qualified symbol with an icon. Catalog
+`groups` use the same shape as tabs (`id`, `name`, `tags`, optional `icon` and
+`weight`). Within each non-flat tab, a group with more than one matching choice
+is shown as a single collapsible tile. Expanding a tile reveals its choices in
+tinted rows below the tile's row, without moving other tiles sideways. Only one
+group can be open at a time; its choices scroll with the rest of the picker.
+Each choice belongs to at most one group: the first matching group listed in the
+catalog claims it. Choices that match no group, or whose group has only one
+matching choice, appear as individual tiles.
 Normal MakeCode image resources can be used as icons without a separate PNG.
 For symbol references, an explicit API `iconURL` takes precedence over the
 resource's icon.
-Family and material definitions are optional: omitted families leave choices
-ungrouped, and missing material definitions use Other materials. Empty groups
-are not rendered.
-
-Material groups may overlap intentionally, such as Wood and a specific wood
-species. Choices remain unique in search results, the final All tab, and the
-result count.
+Group definitions are optional: omitted groups leave choices ungrouped. Empty
+groups are not rendered. Choices remain unique in search results, the final All
+tab, and the result count.
 
 ### Weights
 
-Tabs, families, and materials may set an optional numeric `weight`. Individual
+Tabs and groups may set an optional numeric `weight`. Individual
 choices may set `weight` on their JRES resource entry, alongside `tags` and
 `icon`. Larger weights appear first, with a default of `50`, like toolbox
 priorities. Zero and negative weights are supported. Equal or unspecified

@@ -18,8 +18,7 @@ describe("grid picker catalogs", () => {
     const catalog: pxt.GridPickerCatalog = {
         name: "Inventory",
         tabs: [{ id: "equipment", name: "Equipment", tags: ["equipment"] }, { id: "search", name: "All", flat: true }],
-        families: [{ id: "swords", name: "Swords", tags: ["sword"] }, { id: "pickaxes", name: "Pickaxes", tags: ["pickaxe"] }],
-        materials: [{ id: "copper", name: "Copper", tags: ["copper"] }, { id: "iron", name: "Iron", tags: ["iron"] }]
+        groups: [{ id: "swords", name: "Swords", tags: ["sword"] }, { id: "pickaxes", name: "Pickaxes", tags: ["pickaxe"] }]
     };
     const emptyInfo: pxtc.BlocksInfo = {
         apis: { byQName: {}, jres: {} }, blocks: [], blocksById: {}, enumsByName: {}, kindsByName: {}
@@ -109,18 +108,16 @@ describe("grid picker catalogs", () => {
     });
 
     it("keeps loose choices and collision-free remainder groups when categories are optional", () => {
-        const loose = getGridPickerGroups(options, { ...catalog, families: undefined }, catalog.tabs[0], "", undefined, tags);
+        const loose = getGridPickerGroups(options, { ...catalog, groups: undefined }, catalog.tabs[0], "", undefined, tags);
         chai.assert.deepEqual(loose.reduce((all, group) => all.concat(values(group.options)), [] as string[]), values(options.slice(0, 3)));
-        const materials = [{ id: "other", name: "Copper", tags: ["copper"] }, { id: "_other", name: "Iron", tags: ["iron"] }];
-        const groups = getGridPickerGroups(options, { ...catalog, materials }, { id: "materials", name: "Materials", materials: true }, "", undefined, tags);
-        chai.assert.equal(new Set(groups.map(group => group.id)).size, groups.length);
-        chai.assert.deepEqual(groups.filter(group => !materials.some(material => material.id === group.id))
-            .reduce((all, group) => all.concat(values(group.options)), [] as string[]), values(options.slice(3)));
-        groups.forEach(group => chai.assert.isAbove(group.name.length, 0));
+        const groups = getGridPickerGroups(options, { ...catalog, groups: [{ id: "other", name: "Copper", tags: ["copper"] }] },
+            catalog.tabs[0], "", undefined, tags);
+        chai.assert.deepEqual(groups.map(group => group.id), ["other", "_other"]);
+        chai.assert.deepEqual(groups.map(group => values(group.options)), [["Item.CopperSword", "Item.CopperPickaxe"], ["Item.IronSword"]]);
     });
 
     it("orders weighted groups and choices while retaining stable ties", () => {
-        const weighted = { ...catalog, families: [{ ...catalog.families[0], weight: 20 }, { ...catalog.families[1], weight: 80 }] };
+        const weighted = { ...catalog, groups: [{ ...catalog.groups[0], weight: 20 }, { ...catalog.groups[1], weight: 80 }] };
         const groups = getGridPickerGroups(options, weighted, catalog.tabs[0], "", undefined, tags,
             { "Item.CopperSword": 0, "Item.IronSword": 100 });
         chai.assert.deepEqual(groups.map(group => values(group.options)), [
@@ -174,19 +171,19 @@ describe("grid picker catalogs", () => {
         const { field, popup } = open(withCatalog({ ...catalog, tabs: [catalog.tabs[0]] }), "AnimalMob.Chicken");
         const table = popup.querySelector('[role="treegrid"]');
         chai.assert.equal(table.getAttribute("aria-activedescendant"), cells(popup)[0].id);
-        chai.assert.include(cells(popup)[0].textContent, catalog.families[0].name);
+        chai.assert.include(cells(popup)[0].textContent, catalog.groups[0].name);
         chai.assert.equal(field.getValue(), "AnimalMob.Chicken");
     });
 
-    it("preserves overlapping browse groups but emits unique search results", () => {
+    it("assigns each choice to one group and emits unique search results", () => {
         const overlapping = {
             ...catalog,
-            tabs: [{ id: "materials", name: "Materials", materials: true }],
-            materials: [{ id: "metal", name: "Metal", tags: ["equipment"] }, catalog.materials[0]]
+            tabs: [{ id: "equipment", name: "Equipment" }],
+            groups: [{ id: "metal", name: "Metal", tags: ["equipment"] }, { id: "copper", name: "Copper", tags: ["copper"] }]
         };
         const { field, popup } = open(withCatalog(overlapping));
-        chai.assert.equal(Object.values(field["catalogFamilies_"]).filter(group =>
-            group.options.some(option => option[1] === "Item.CopperSword")).length, 2);
+        chai.assert.equal(Object.values(field["catalogGroups_"]).filter(group =>
+            group.options.some(option => option[1] === "Item.CopperSword")).length, 1);
         const search = popup.querySelector<HTMLInputElement>('input[type="search"]');
         search.value = "copper";
         search.dispatchEvent(new Event("input"));
@@ -280,12 +277,12 @@ describe("grid picker catalogs", () => {
     });
 
     it("renders children on separate rows without disturbing other parent choices", () => {
-        const families = getGridPickerGroups(options, catalog, catalog.tabs[0], "", undefined, tags);
-        const entries = families.map(family => ({ option: family.options[0], family }));
-        const rows = getGridPickerRows(entries, 2, new Set([families[0].id]));
-        chai.assert.deepEqual(rows[0].entries.map(entry => entry.family.id), families.map(family => family.id));
+        const groups = getGridPickerGroups(options, catalog, catalog.tabs[0], "", undefined, tags);
+        const entries = groups.map(group => ({ option: group.options[0], group }));
+        const rows = getGridPickerRows(entries, 2, new Set([groups[0].id]));
+        chai.assert.deepEqual(rows[0].entries.map(entry => entry.group.id), groups.map(group => group.id));
         chai.assert.deepEqual(rows.slice(1).reduce((all, row) => all.concat(row.entries.map(entry => entry.option[1])), [] as string[]),
-            values(families[0].options));
+            values(groups[0].options));
         chai.assert.isAtLeast(getGridPickerSizeRows(options, catalog, 2, tags).length, rows.length);
     });
 });

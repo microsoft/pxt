@@ -224,14 +224,12 @@ declare namespace pxt {
         icon?: string;
         tags?: string[];
         flat?: boolean;
-        materials?: boolean;
     }
 
     interface GridPickerCatalog {
         name: string;
         tabs: GridPickerCategory[];
-        families?: GridPickerCategory[];
-        materials?: GridPickerCategory[];
+        groups?: GridPickerCategory[];
         filters?: GridPickerCategory[];
     }
 

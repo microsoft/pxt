@@ -109,7 +109,7 @@ describe("library-owned picker catalogs", () => {
                 icons: { gridPickerCatalog: {
                     name: "Images",
                     tabs: [{ id: "all", name: "All", flat: true, weight: 0 }, { id: "animals", name: "Animals", tags: ["animal"], weight: 80 }],
-                    families: [{ id: "birds", name: "Birds", tags: ["bird"] }],
+                    groups: [{ id: "birds", name: "Birds", tags: ["bird"] }],
                     filters: [{ id: "playable", name: "Playable", tags: ["playable"] }]
                 } }
             }) };
@@ -121,7 +121,7 @@ describe("library-owned picker catalogs", () => {
     it("loads independent catalogs from multiple extension packages without target configuration", () => {
         const resources = catalogPackage().getJRes();
         chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").name).equals("Images");
-        chai.expect(pxt.getGridPickerCatalog(resources, "beta.pickers.icons").families[0].name).equals("Birds");
+        chai.expect(pxt.getGridPickerCatalog(resources, "beta.pickers.icons").groups[0].name).equals("Birds");
         chai.expect(pxt.getGridPickerCatalog(resources, "missing")).equals(undefined);
         chai.expect(Object.keys(resources)).contains("alpha.pickers.icons").and.contains("beta.pickers.icons");
     });
@@ -188,7 +188,7 @@ describe("library-owned picker catalogs", () => {
             const beta = pxt.getGridPickerCatalog(resources, "beta.pickers.icons");
             chai.expect(alpha.tabs[0].name).equals("Alpha animals");
             chai.expect(beta.tabs[0].name).equals("Beta animals");
-            chai.expect(alpha.families[0].name).equals("Alpha birds");
+            chai.expect(alpha.groups[0].name).equals("Alpha birds");
             chai.expect(alpha.filters[0].name).equals("Alpha playable");
             chai.expect(alpha.tabs[1].name).equals("All");
             pxt.Util.setUserLanguage("de");
@@ -226,8 +226,8 @@ describe("library-owned picker catalogs", () => {
             { name: "Broken", tabs: {} },
             { name: "Broken", tabs: "invalid" },
             { name: "Broken", tabs: Array.of<unknown>(null) },
-            { name: "Broken", tabs: new Array<unknown>(), families: {} },
-            ...["tabs", "families", "materials", "filters"].reduce((catalogs, collection) =>
+            { name: "Broken", tabs: new Array<unknown>(), groups: {} },
+            ...["tabs", "groups", "filters"].reduce((catalogs, collection) =>
                 catalogs.concat([{}, [1], ["valid", 1]].map(tags => ({
                     name: "Broken",
                     tabs: [{ id: "valid", name: "Valid" }],

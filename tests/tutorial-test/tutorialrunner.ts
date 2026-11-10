@@ -21,8 +21,7 @@ describe("library picker string extraction", () => {
             icons: { gridPickerCatalog: {
                 name: "Images",
                 tabs: [{ id: "all", name: "All", flat: true }],
-                families: [{ id: "birds", name: "Birds", tags: ["bird"] }],
-                materials: [{ id: "wood", name: "Wood", tags: ["wood"] }],
+                groups: [{ id: "birds", name: "Birds", tags: ["bird"] }],
                 filters: [{ id: "playable", name: "Playable", tags: ["playable"] }]
             } }
         })));
@@ -30,7 +29,7 @@ describe("library picker string extraction", () => {
         const beta = make("beta.pickers");
         const files = ts.pxtc.genDocs("alpha", { byQName: {}, jres: { ...alpha, ...beta } }, { locs: true, jres: alpha });
         const strings = JSON.parse(files["alpha-strings.json"]);
-        for (const name of ["Images", "All", "Birds", "Wood", "Playable"]) {
+        for (const name of ["Images", "All", "Birds", "Playable"]) {
             chai.expect(strings[`alpha.pickers.icons|gridPicker|${name}`]).equals(name);
         }
         chai.expect(Object.keys(strings).some(key => key.startsWith("beta."))).equals(false);
