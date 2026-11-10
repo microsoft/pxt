@@ -57,7 +57,9 @@ The fields of the `simx` entry:
 
 ### The extensions a project includes
 
-The open project includes a registered extension when one of its dependencies, direct or not, is that extension: a `github:` dependency whose full name, `owner/repo` or `owner/repo/path`, equals the key, compared ignoring case. A dependency on another extension of the same repository does not include it. While the project includes an extension, the editor serves the requests of its frames and offers its [editor tab](#editor-tab).
+An extension is included in a project if it is listed as a dependency in pxt.json or in the pxt.json of one of the project's other dependencies/sub-dependencies. For repositories that contain multiple extensions, including a dependency on another extension of the same repository will not enable the simx features of a sibling extension unless it is also included in the project.
+
+When included by a project, the editor will serve request's to the extension's simx iframes and show the extension's [editor tab](#editor-tab).
 
 ### Grants and trust
 
