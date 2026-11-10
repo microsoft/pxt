@@ -357,6 +357,11 @@ export class Editor extends srceditor.Editor {
         this.config = JSON.parse(file.content)
         this.setDiagnostics(file, this.snapshotState())
         this.changeMade = false;
+        file.setForceChangeCallback((from, to) => {
+            if (from != to) {
+                this.loadFileAsync(file).then(() => this.parent.forceUpdate());
+            }
+        });
         return Promise.resolve();
     }
 
