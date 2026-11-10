@@ -66,14 +66,9 @@ export function getSymbolDropdownOptions(symbols: pxtc.SymbolInfo[], defaultValu
 }
 
 /**
- * Returns the dropdown options of the fixed instances of the type `typeQName`
- * that `blocksInfo` declares (its variables marked `fixedInstance` whose type
- * is `typeQName` or a type extending it), by descending `weight`, except that
- * the option whose value is `defaultValue` comes first.
- * @param blocksInfo the API info declaring the type and its instances
- * @param typeQName the fully qualified name of the fixed-instance type
- * @param defaultValue the value of the option to list first; undefined to keep the instances' order
- * @param imgConv the converter of jres images to icons
+ * Returns a list of dropdown options for a given `fixedInstances` type (and its subtypes)
+ * based on the given API info. The value passed as `defaultValue` will always appear first in
+ * the resulting list if present in the API info.
  */
 export function getFixedInstanceDropdownOptions(blocksInfo: pxtc.BlocksInfo, typeQName: string, defaultValue: string | undefined, imgConv: pxt.ImageConverter): Blockly.MenuOption[] {
     return getSymbolDropdownOptions(getFixedInstanceDropdownValues(blocksInfo.apis, typeQName), defaultValue, imgConv);
