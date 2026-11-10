@@ -128,12 +128,8 @@ function getInstanceLabel(instances: Blockly.MenuOption[], value: string): strin
     return undefined;
 }
 
-/**
- * Returns the name the dropdown of a fixed-instance parameter calls the type
- * by: the type's `block` attribute, else its unqualified name in lower case.
- * @param blocksInfo the API info that declares the type; undefined if none is available
- * @param typeQName the type's fully qualified name
- */
+// Finds the display name for the given fixedInstances type. Used by the "new instance"
+// dropdown menu item.
 export function getTypeName(blocksInfo: pxtc.BlocksInfo | undefined, typeQName: string): string {
     const block = blocksInfo?.apis.byQName[typeQName]?.attributes.block;
     return block || typeQName.slice(typeQName.lastIndexOf(".") + 1).toLowerCase();
