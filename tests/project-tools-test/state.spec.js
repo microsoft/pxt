@@ -4,6 +4,37 @@ const assert = require("assert");
 const fs = require("fs");
 const ts = require("typescript");
 
+describe("workspace reset", () => {
+    const source = ts.createSourceFile("workspace.ts", fs.readFileSync("webapp/src/workspace.ts", "utf8"),
+        ts.ScriptTarget.Latest, true);
+    const reset = source.statements.find(node => ts.isFunctionDeclaration(node) && node.name?.text === "resetAsync");
+    const code = ts.transpileModule(reset.getText(source), {
+        compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 }
+    }).outputText;
+
+    it("awaits backpack cleanup before clearing settings and resyncing", async () => {
+        const exports = {};
+        const calls = [];
+        let release;
+        const pending = new Promise(resolve => release = resolve);
+        const resetAsync = async () => {};
+        const clearDb = { clearTranslationDbAsync: resetAsync, clearTutorialInfoDbAsync: resetAsync };
+        new Function("exports", "allScripts", "impl", "cloudsync", "db", "pxt", "compiler", "data", "Cloud",
+            "syncAsync", "backpack", code)(exports, [], { resetAsync }, { resetAsync }, { destroyAsync: resetAsync },
+            { BrowserUtils: clearDb, storage: { clearLocal: () => calls.push("settings") } },
+            { clearApiInfoDbAsync: resetAsync }, { clearCache: () => {} }, {},
+            async () => calls.push("sync"),
+            { resetBackpackAsync: async () => { calls.push("backpack"); await pending; } });
+
+        const resetting = exports.resetAsync();
+        await new Promise(resolve => setImmediate(resolve));
+        assert.deepStrictEqual(calls, ["backpack"]);
+        release();
+        await resetting;
+        assert.deepStrictEqual(calls, ["backpack", "settings", "sync"]);
+    });
+});
+
 describe("project-tools state on project unload", () => {
     const source = ts.createSourceFile("app.tsx", fs.readFileSync("webapp/src/app.tsx", "utf8"),
         ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
