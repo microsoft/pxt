@@ -117,8 +117,8 @@ function createMenuGenerator(options: FieldCustomDropdownOptions, typeName: stri
     };
 }
 
-// The label of the option among `instances` whose value is `value`: its text,
-// or its image's alt text; undefined if no option has that value.
+// Finds the display text for a given instance in the menu list. Used by the "edit instance"
+// dropdown menu item.
 function getInstanceLabel(instances: Blockly.MenuOption[], value: string): string | undefined {
     for (const option of instances) {
         if (option === Blockly.FieldDropdown.SEPARATOR || option[1] !== value) continue;
