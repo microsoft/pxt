@@ -37,7 +37,7 @@ export interface FieldCustomDropdownOptions extends FieldCustomOptions {
      * may change without the blocks editor being re-initialized.
      */
     getBlocksInfo?: () => pxtc.BlocksInfo | undefined;
-    /** The value of the option a field that rebuilds its options lists first. */
+    /** The value listed first in the dropdown */
     defaultValue?: string;
 }
 
