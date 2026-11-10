@@ -2916,7 +2916,9 @@ ${output}</xml>`;
 
             if (api) {
                 const ns = env.blocks.apis.byQName[api.namespace];
-                if (ns && ns.attributes.fixedInstances && !ns.attributes.decompileIndirectFixedInstances && info.args.length) {
+                // A grid picker receiver is always a dropdown, so it can't hold an indirect reference either.
+                const pickerReceiver = !!comp.thisParameter && !!pxt.blocks.getGridPickerDropdownValues(env.blocks.apis, comp.thisParameter);
+                if ((ns?.attributes.fixedInstances && !ns.attributes.decompileIndirectFixedInstances || pickerReceiver) && info.args.length) {
                     const callInfo: pxtc.CallInfo = pxtc.pxtInfo(info.args[0]).callInfo;
                     if (!callInfo || !env.attrs(callInfo).fixedInstance) {
                         return Util.lf("Fixed instance APIs can only be called directly from the fixed instance");
@@ -3071,7 +3073,7 @@ ${output}</xml>`;
                 }
                 else if (env.blocks.apis.byQName[paramInfo.type]) {
                     const typeInfo = env.blocks.apis.byQName[paramInfo.type];
-                    if (typeInfo.attributes.fixedInstances || (param.fieldEditor === "gridpicker" && param.fieldOptions?.fixedInstances)) {
+                    if (typeInfo.attributes.fixedInstances || pxt.blocks.hasGridPickerFixedInstances(param)) {
                         if (decompileFixedInst(param)) {
                             return undefined;
                         }

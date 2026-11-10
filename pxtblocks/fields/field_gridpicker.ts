@@ -1172,6 +1172,10 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         this.catalogContentHeight_ = undefined;
         this.catalogAnchor_ = undefined;
         this.catalogGroups_ = {};
+        // Start fresh on the next open, so the picker reopens on a tab that holds the current value.
+        this.catalogTab_ = undefined;
+        this.catalogSearch_ = "";
+        this.catalogExpanded_.clear();
         this.scrollContainer = undefined;
         this.getFocusableElement().ariaExpanded = 'false';
     }

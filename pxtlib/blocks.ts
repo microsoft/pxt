@@ -166,6 +166,15 @@ namespace pxt.blocks {
             .sort((left, right) => (right.attributes.weight || 50) - (left.attributes.weight || 50));
     }
 
+    /**
+     * Whether a grid picker field draws its choices from fixed instances. Field options are parsed as strings,
+     * so `fixedInstances=false` has to count as off.
+     */
+    export function hasGridPickerFixedInstances(param: BlockParameter): boolean {
+        const value: unknown = param?.fieldEditor === "gridpicker" && param.fieldOptions?.fixedInstances;
+        return value === true || value === "true" || value === "1";
+    }
+
     /** Resolves static picker choices without filtering out saved values. */
     export function getGridPickerDropdownValues(apis: pxtc.ApisInfo, param: BlockParameter): pxtc.SymbolInfo[] | undefined {
         if (param?.fieldEditor !== "gridpicker") return undefined;
@@ -175,7 +184,7 @@ namespace pxt.blocks {
         if (enums.length) {
             return enums.reduce((members, name) => members.concat(getEnumDropdownValues(apis, name)), [] as pxtc.SymbolInfo[]);
         }
-        if (type && ((type.attributes.fixedInstances && !param.shadowBlockId) || param.fieldOptions?.fixedInstances)) {
+        if (type && ((type.attributes.fixedInstances && !param.shadowBlockId) || hasGridPickerFixedInstances(param))) {
             return getFixedInstanceDropdownValues(apis, param.type);
         }
         return undefined;
@@ -311,8 +320,11 @@ namespace pxt.blocks {
         }
 
         function fieldOptions(defName: string, actualName: string) {
-            return fn.attributes.paramFieldEditorOptions &&
-                (fn.attributes.paramFieldEditorOptions[defName] || fn.attributes.paramFieldEditorOptions[actualName]);
+            const options = fn.attributes.paramFieldEditorOptions;
+            const byDefinition = options?.[defName];
+            const byActual = options?.[actualName];
+            // Options can be keyed by either name, so combine both. The block definition name wins on conflicts.
+            return byDefinition && byActual && byDefinition !== byActual ? { ...byActual, ...byDefinition } : byDefinition || byActual;
         }
 
         function shadowOptions(defName: string, actualName: string) {

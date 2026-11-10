@@ -15,3 +15,9 @@ pickerSnippets.chooseExplicitAsset(pickerAssets.camelAsset)
 
 // PickerSnippetReceiver.action
 pickerReceivers.betaDevice.action()
+
+// pickerSnippets.chooseUnmatched
+pickerSnippets.chooseUnmatched(PickerChoice.Other)
+
+// PickerDefaultReceiver.action
+pickerDefaultReceivers.betaDevice.action()

@@ -187,8 +187,8 @@ namespace ts.pxtc.service {
                 }) as SnippetNode)
 
         if (element.attributes.block) {
-            const pickerReceiverDefault = !element.attributes.defaultInstance && !params.thisParameter?.defaultValue
-                ? getGridPickerDefault(params.thisParameter) : undefined;
+            const pickerReceiverDefault = !element.attributes.defaultInstance
+                ? getGridPickerDefault(params.thisParameter, params.thisParameter?.defaultValue || undefined) : undefined;
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
                 if (python && snippetPrefix)
@@ -471,10 +471,12 @@ namespace ts.pxtc.service {
 
             const filter = typeof param.fieldOptions?.filter === "string" ? param.fieldOptions.filter : undefined;
             const matches = pxt.sprite.compileTagFilter(filter);
-            const choice = choices.find(symbol => matches(pxt.sprite.getSymbolTags(apis, symbol)));
+            let choice = choices.find(symbol => matches(pxt.sprite.getSymbolTags(apis, symbol)));
             if (!choice) {
                 pxt.reportError("gridpicker", "No matching default choice", { api: fn.qName, parameter: param.actualName });
-                return python ? "None" : "null";
+                // Match the block, which starts on its first choice when none fit the filter.
+                choice = choices[0];
+                if (!choice) return python ? "None" : "null";
             }
             const value = pxt.blocks.getEnumConstant(apis, choice.namespace, choice.qName) || choice;
             return python ? value.pyQName || U.snakify(value.qName) : value.qName;

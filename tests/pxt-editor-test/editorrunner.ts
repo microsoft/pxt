@@ -205,6 +205,31 @@ describe("library-owned picker catalogs", () => {
         }
     });
 
+    it("only reads resource-qualified catalog keys from the package dictionary", async () => {
+        const main = catalogPackage();
+        const resources = main.getJRes();
+        const apis: pxtc.ApisInfo = { byQName: {}, jres: resources };
+        const oldLanguage = pxt.Util.userLanguage();
+        // Package dictionaries also hold JSDoc under bare API names, which must not become labels.
+        main.localizationStringsAsync = async () => ({
+            "Animals": "Documentation for an API named Animals",
+            "music": "Documentation for the music parameter",
+            "alpha.pickers.icons|gridPicker|Birds": "Alpha birds"
+        });
+        try {
+            pxt.Util.setUserLanguage("fr");
+            await pxtc.localizeApisAsync(apis, main);
+            const alpha = pxt.getGridPickerCatalog(resources, "alpha.pickers.icons");
+            chai.expect(alpha.tabs[0].name).equals("Animals");
+            chai.expect(alpha.groups[0].name).equals("Alpha birds");
+            chai.expect(pxtc.getBlockTranslationsCacheKey("music")).equals(undefined);
+        } finally {
+            pxt.Util.setUserLanguage("en");
+            await pxtc.localizeApisAsync(apis, main);
+            pxt.Util.setUserLanguage(oldLanguage);
+        }
+    });
+
     it("retains former target-string translations as a fallback", () => {
         const resources = catalogPackage().getJRes();
         const oldRlf = pxt.Util.rlf;

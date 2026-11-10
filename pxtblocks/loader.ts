@@ -550,11 +550,19 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                 v.attributes.ariaLabel
                             ];
                         });
+                        // Defaults can name a constant alias (such as SURVIVAL for GameMode.Survival), so map
+                        // those to the option they stand for. Defaults that already match an option are left alone.
+                        const resolveDefault = (value: string) => {
+                            if (!value || dd.some(option => option[1] === value)) return value;
+                            const identity = info.apis.byQName[value]?.attributes.enumIdentity;
+                            return identity && dd.some(option => option[1] === identity) ? identity : value;
+                        };
+                        const defaultValue = resolveDefault(pr.defaultValue);
                         // if a value is provided, move it first
-                        if (pr.defaultValue) {
+                        if (defaultValue) {
                             let shadowValueIndex = -1;
                             dd.some((v, i) => {
-                                if (v[1] === (pr as pxt.blocks.BlockParameter).defaultValue) {
+                                if (v[1] === defaultValue) {
                                     shadowValueIndex = i;
                                     return true;
                                 }
@@ -567,7 +575,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                         }
 
                         if (customField) {
-                            let defl = fn.attributes.paramDefl[actName] || "";
+                            let defl = resolveDefault(fn.attributes.paramDefl[actName] || "");
                             const optionTags: pxt.Map<string[]> = {};
                             syms.forEach(symbol => optionTags[symbol.qName] = getSymbolPickerTags(info, symbol));
                             const options = {

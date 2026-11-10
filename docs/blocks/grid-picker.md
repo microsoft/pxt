@@ -234,13 +234,22 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
 - The block's filter is a hard restriction, including on the All tab. A tab or
   search can narrow it further but never widen it.
 - Without an explicit default, new blocks start with a choice that matches the
-  filter. Explicit defaults and saved values are still restored even if they fall
-  outside the field's current filter.
-- Generated TypeScript and Python snippets use the same source choices and hard
-  filter as new blocks, including toolbox weight ordering for fixed instances.
+  filter, or with their first choice if none match. Explicit defaults and saved
+  values are still restored even if they fall outside the field's current filter.
+- An explicit default can name a constant alias, such as `SURVIVAL` declared with
+  `enumIdentity="GameMode.Survival"`. It selects the option the alias stands for.
+- Generated TypeScript and Python snippets use the same source choices, hard
+  filter, defaults, and fallback as new blocks, including explicit receiver
+  defaults and toolbox weight ordering for fixed instances.
 - Configured enum choices survive TypeScript-to-Blocks round trips. Field-option
   keys may use either the TypeScript parameter name or its name in the block
-  definition.
+  definition, and both sets are combined. If both set the same key, the block
+  definition name wins.
+- Field options are read as strings, so `fixedInstances` is only on when set to
+  `true` (or `1`). `fixedInstances=false` leaves it off.
+- A receiver (`this`) shown as a grid picker is always a dropdown. Calls on an
+  indirect receiver, such as a local variable, stay as TypeScript blocks rather
+  than losing the receiver.
 - When migrating an older extension, keep its old enum declarations and block IDs
   for saved projects. New selector blocks can use the standard enum sources with
   tag filters.
@@ -261,7 +270,10 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
   and the field falls back to the plain filtered picker. It also falls back when
   no catalog tab is eligible.
 - When the picker opens, it shows the first non-flat tab that contains the
-  current value, or the first tab otherwise.
+  current value, or the first tab otherwise. The tab, search, and expanded
+  group reset each time the picker closes.
+- Flat tabs ignore their own `tags`. They always show everything the block's
+  filter allows.
 
 ### Groups
 
@@ -292,6 +304,8 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
 - Ordinary MakeCode image resources can be used as icons without a separate PNG.
 - For symbol references, an explicit API `iconURL` takes precedence over the
   resource's icon.
+- Encoded JRES icons are converted with the current project's palette each time,
+  so switching to a project with a different palette updates their colors.
 
 ### Weights
 
@@ -312,6 +326,9 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
   same source title independently.
 - Catalog labels use the package translation dictionary loaded for APIs. There is
   no separate catalog translation loader, and the JRES is never mutated.
+- Only resource-qualified `|gridPicker|` keys are looked up in the package
+  dictionary. That dictionary also holds JSDoc under bare API names, so a bare
+  title lookup could pick up documentation text instead of a label.
 - Bundled catalogs also contribute their source titles to target strings.
   Existing target-title translations remain a fallback, and missing translations
   use the original names.

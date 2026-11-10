@@ -681,6 +681,7 @@ namespace ts.pxtc {
 
     export let apiLocalizationStrings: pxt.Map<string> = {};
     let packageLocalizationStrings: pxt.Map<string> = {};
+    const GRID_PICKER_LOCALIZATION_SEPARATOR = "|gridPicker|";
 
     export async function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
@@ -888,7 +889,10 @@ namespace ts.pxtc {
     export function getBlockTranslationsCacheKey(key: string): string | undefined {
         const cache = pxt.Util.translationsCache();
 
-        return cache[BLOCK_TRANSLATION_CACHE_KEY]?.[key] || packageLocalizationStrings[key];
+        const cached = cache[BLOCK_TRANSLATION_CACHE_KEY]?.[key];
+        if (cached) return cached;
+        // The package dictionary also holds JSDoc under bare API names, so only use it for catalog titles.
+        return key.indexOf(GRID_PICKER_LOCALIZATION_SEPARATOR) >= 0 ? packageLocalizationStrings[key] : undefined;
     }
 
     function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {

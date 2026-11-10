@@ -534,6 +534,44 @@ describe("blockly compiler", function () {
             chai.assert.isAtLeast(xml.querySelectorAll('block[type="typescript_statement"]').length, 1);
         });
 
+        it("should keep indirect receivers of a field-level fixed-instance picker as TypeScript", async () => {
+            const direct = "pickerDevices.second.action()";
+            chai.assert.deepEqual(sourceCalls(await roundTripPickerSource(direct)), sourceCalls(direct));
+            const { result } = await decompilePickerSource("let device = pickerDevices.first;\ndevice.action();");
+            const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
+            chai.assert.equal(xml.querySelectorAll('block[type="picker_device_action"]').length, 0);
+            chai.assert.isAtLeast(xml.querySelectorAll('block[type="typescript_statement"]').length, 1);
+        });
+
+        it("should combine field options keyed by the parameter and block definition names", async () => {
+            const info = await getBlocksInfoAsync();
+            const param = pxt.blocks.compileInfo(info.apis.byQName["pickerTest.chooseMixed"]).actualNameToParam["value"];
+            chai.assert.deepEqual(param.fieldOptions, { enumNames: "PickerMonster", width: "300" });
+            const workspace = new Blockly.Workspace();
+            try {
+                chai.assert.equal(workspace.newBlock("picker_choose_mixed").getFieldValue("choice"), "PickerMonster.Zombie");
+            } finally {
+                workspace.dispose();
+            }
+        });
+
+        it("should treat fixedInstances=false as off", async () => {
+            const info = await getBlocksInfoAsync();
+            const param = pxt.blocks.compileInfo(info.apis.byQName["pickerTest.chooseDisabledAsset"]).actualNameToParam["value"];
+            chai.assert.isFalse(pxt.blocks.hasGridPickerFixedInstances(param));
+            chai.assert.isUndefined(pxt.blocks.getGridPickerDropdownValues(info.apis, param));
+        });
+
+        it("should select the option a constant alias default stands for", async () => {
+            await getBlocksInfoAsync();
+            const workspace = new Blockly.Workspace();
+            try {
+                chai.assert.equal(workspace.newBlock("picker_choose_alias").getFieldValue("choice"), "PickerAnimal.Cow");
+            } finally {
+                workspace.dispose();
+            }
+        });
+
         it("should apply the selected source enum's constant-emission policy", async () => {
             const source = [
                 "pickerTest.chooseItem(IRON_SHOVEL)",

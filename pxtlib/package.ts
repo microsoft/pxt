@@ -1553,8 +1553,7 @@ namespace pxt {
         }
         const catalog = resource.gridPickerCatalog;
         if (!validateGridPickerCatalog(id, catalog)) return undefined;
-        const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`)
-            || pxtc.getBlockTranslationsCacheKey(source) || Util.rlf(source);
+        const name = (source: string) => pxtc.getBlockTranslationsCacheKey(`${id}|gridPicker|${source}`) || Util.rlf(source);
         const categories = (entries?: GridPickerCategory[]) => entries?.map(entry => ({ ...entry, name: name(entry.name) }));
         return {
             ...catalog,

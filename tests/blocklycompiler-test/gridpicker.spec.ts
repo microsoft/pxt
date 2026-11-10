@@ -210,6 +210,37 @@ describe("grid picker catalogs", () => {
         chai.assert.isFalse(popup.querySelector('[role="treegrid"]').hasAttribute("aria-activedescendant"));
     });
 
+    it("shows every allowed choice on a flat tab even when the tab has tags", () => {
+        const flatWithTags = { id: "all", name: "All", flat: true, tags: ["equipment"] };
+        const groups = getGridPickerGroups(options, catalog, flatWithTags, "", "rider", tags);
+        chai.assert.deepEqual(groups.reduce((all, group) => all.concat(values(group.options)), [] as string[]),
+            ["MonsterMob.Zombie", "MonsterMob.Husk"]);
+        const searched = getGridPickerGroups(options, catalog, flatWithTags, "husk", undefined, tags);
+        chai.assert.deepEqual(searched.reduce((all, group) => all.concat(values(group.options)), [] as string[]), ["MonsterMob.Husk"]);
+    });
+
+    it("forgets the tab, search, and expanded group when the picker closes", () => {
+        const { field, popup } = open(withCatalog(catalog));
+        cells(popup)[0].click();
+        chai.assert.equal(field["catalogExpanded_"].size, 1);
+        const search = popup.querySelector<HTMLInputElement>('input[type="search"]');
+        search.value = "iron";
+        search.dispatchEvent(new Event("input"));
+        Blockly.WidgetDiv.hide();
+        chai.assert.equal(field["catalogSearch_"], "");
+        chai.assert.equal(field["catalogExpanded_"].size, 0);
+
+        field["showEditor_"]();
+        Blockly.WidgetDiv.getDiv().querySelectorAll<HTMLButtonElement>('[role="tab"]')[1].click();
+        Blockly.WidgetDiv.hide();
+        chai.assert.isUndefined(field["catalogTab_"]);
+
+        field["showEditor_"]();
+        const reopened = Blockly.WidgetDiv.getDiv();
+        chai.assert.equal(reopened.querySelectorAll('[role="tab"]')[0].getAttribute("aria-selected"), "true");
+        chai.assert.equal(reopened.querySelector<HTMLInputElement>('input[type="search"]').value, "");
+    });
+
     it("uses explicit symbol icons ahead of resource icons and resolves encoded aliases", async () => {
         const { field } = open();
         const palette = pxt.appTarget.runtime.palette;
@@ -230,6 +261,15 @@ describe("grid picker catalogs", () => {
             await icon.decode();
             chai.assert.equal(icon.naturalWidth, 1);
             chai.assert.equal(icon.naturalHeight, 1);
+
+            const colored = new pxt.sprite.Bitmap(1, 1);
+            colored.set(0, 0, 1);
+            const apis = { byQName: {}, jres: { "assets.colored": { id: "assets.colored", mimeType: "image/x-mkcd-f4",
+                data: pxt.sprite.base64EncodeBitmap(colored.data()) } } };
+            const black = getGridPickerCatalogIcon(apis, "assets.colored");
+            pxt.appTarget.runtime.palette = ["#000000", "#ff0000", ...new Array<string>(14).fill("#000000")];
+            chai.assert.notEqual(getGridPickerCatalogIcon(apis, "assets.colored"), black,
+                "Icons should follow the current palette");
         } finally {
             pxt.appTarget.runtime.palette = palette;
             field["blocksInfo_"].apis = { byQName: {}, jres: {} };

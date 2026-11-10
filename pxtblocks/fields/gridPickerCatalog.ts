@@ -88,7 +88,8 @@ export function getGridPickerGroups(
     optionTags?: pxt.Map<string[]>,
     optionWeights?: pxt.Map<number>
 ): GridPickerGroup[] {
-    let visible = filterGridPickerOptions(options, tab.tags || [], optionTags);
+    // Flat tabs show everything the block allows, so only the block's filter applies to them.
+    let visible = tab.flat ? options : filterGridPickerOptions(options, tab.tags || [], optionTags);
     if (filter) visible = filterGridPickerOptions(visible, filter, optionTags);
     const words = (search || "").replace(/[-_]/g, " ").trim().toLowerCase().split(/\s+/).filter(word => !!word);
     visible = visible.filter(option => {
@@ -144,8 +145,6 @@ export function getGridPickerSizeRows(options: Blockly.MenuOption[], catalog: px
     return largest;
 }
 
-let catalogImageConverter: pxt.ImageConverter;
-
 /**
  * Resolves a catalog icon reference, which can be a qualified symbol or a JRES ID, to an image URL.
  * Returns undefined when the reference has no usable image.
@@ -156,8 +155,8 @@ export function getGridPickerCatalogIcon(apis: pxtc.ApisInfo | undefined, refere
     const icon = symbol?.attributes.iconURL || resource?.icon;
     if (icon) return icon;
     if (resource?.data && pxt.Util.startsWith(resource.mimeType, "image/x-mkcd-f")) {
-        if (!catalogImageConverter) catalogImageConverter = new pxt.ImageConverter();
-        return catalogImageConverter.convert(`data:${resource.mimeType};base64,${resource.data}`);
+        // A converter keeps the palette it first saw, so use a new one each time to follow the current project's palette.
+        return new pxt.ImageConverter().convert(`data:${resource.mimeType};base64,${resource.data}`);
     }
     return undefined;
 }

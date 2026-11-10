@@ -78,6 +78,21 @@ namespace pickerReceivers {
     export const betaDevice = new PickerSnippetReceiver();
 }
 
+//% fixedInstances
+class PickerDefaultReceiver {
+    //% blockId=snippet_default_receiver_action block="use %device"
+    //% this.fieldEditor=gridpicker
+    //% this.defl=pickerDefaultReceivers.betaDevice
+    action(): void {}
+}
+
+namespace pickerDefaultReceivers {
+    //% fixedInstance
+    export const alpha = new PickerDefaultReceiver();
+    //% fixedInstance
+    export const betaDevice = new PickerDefaultReceiver();
+}
+
 declare namespace pickerSnippets {
     //% blockId=snippet_choose_mode block="choose %choice"
     //% value.fieldEditor=gridpicker
@@ -108,4 +123,10 @@ declare namespace pickerSnippets {
     //% choice.fieldOptions.fixedInstances=true
     //% choice.fieldOptions.filter=eligible
     function chooseExplicitAsset(value: PickerSnippetAsset): void;
+
+    //% blockId=snippet_choose_unmatched block="choose %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.enumNames="PickerChoice"
+    //% choice.fieldOptions.filter=missing
+    function chooseUnmatched(value: number): void;
 }

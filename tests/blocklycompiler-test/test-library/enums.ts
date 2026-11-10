@@ -93,10 +93,30 @@ enum PickerUnsupported {
 
 //% enumIdentity="PickerAnimal.Chicken"
 const PICKER_CHICKEN = PickerAnimal.Chicken;
+//% enumIdentity="PickerAnimal.Cow"
+const PICKER_COW = PickerAnimal.Cow;
 
 class PickerAsset {
     value = 0;
     constructor() {}
+}
+
+class PickerDevice {
+    value = 0;
+    constructor() {}
+
+    //% blockId=picker_device_action block="use %device"
+    //% this.fieldEditor=gridpicker
+    //% this.fieldOptions.fixedInstances=true
+    action(): void {
+    }
+}
+
+namespace pickerDevices {
+    //% fixedInstance
+    export const first = new PickerDevice();
+    //% fixedInstance
+    export const second = new PickerDevice();
 }
 
 namespace pickerAssets {
@@ -132,6 +152,25 @@ namespace pickerTest {
     //% choice.fieldOptions.fixedInstances=true
     //% choice.fieldOptions.filter=eligible
     export function chooseAsset(value: PickerAsset): void {
+    }
+
+    //% blockId=picker_choose_mixed block="mixed %choice"
+    //% value.fieldEditor=gridpicker
+    //% value.fieldOptions.enumNames="PickerMonster"
+    //% choice.fieldOptions.width=300
+    export function chooseMixed(value: number): void {
+    }
+
+    //% blockId=picker_choose_disabled_asset block="disabled asset %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.fixedInstances=false
+    export function chooseDisabledAsset(value: PickerAsset): void {
+    }
+
+    //% blockId=picker_choose_alias block="alias %choice"
+    //% value.fieldEditor=gridpicker value.defl=PICKER_COW
+    //% choice.fieldOptions.enumNames="PickerAnimal"
+    export function chooseAlias(value: number): void {
     }
 }
 
