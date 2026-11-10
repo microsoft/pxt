@@ -118,7 +118,7 @@ The field then uses `catalog=myExtension.pickers.gameImages`. Multiple installed
 packages can contribute independent catalogs; choose an extension-specific
 namespace to avoid resource-ID collisions. A catalog can be shared by multiple
 fields: source enums and each parent block's hard filter still determine which
-choices and tabs are available. Catalog resources are metadata, not image assets.
+choices and tabs are available.
 
 Catalog `filters` entries describe named filter metadata. They do not add a
 user-pickable control; the parent block applies its constraint through
@@ -153,9 +153,7 @@ same category shape (`id`, `name`, `tags`, optional `icon`). The Materials tab
 shows a tile for every material represented by the field's allowed choices.
 Expanding a tile reveals its choices in tinted rows below the tile's row, without
 moving other tiles sideways. Only one group can be open at a time; its choices
-scroll with the rest of the picker, and keyboard focus moves to its first choice
-without changing the saved value. There is no material dropdown or preselected
-material. Tiles follow the configured material order. Untagged choices remain
+scroll with the rest of the picker. Tiles follow the configured material order. Untagged choices remain
 available under an expandable Other materials tile and in the flat All view.
 Normal MakeCode image resources can be used as icons without a separate PNG.
 For symbol references, an explicit API `iconURL` takes precedence over the
@@ -167,6 +165,7 @@ are not rendered.
 Material groups may overlap intentionally, such as Wood and a specific wood
 species. Choices remain unique in search results, the final All tab, and the
 result count.
+
 ### Weights
 
 Tabs, families, and materials may set an optional numeric `weight`. Individual
@@ -181,18 +180,6 @@ weights order their parent tiles independently of their children's weights.
 Loose choices can appear between group tiles according to their own weights.
 Weight changes presentation, not tag matching, group membership, localization,
 or the stored option value. Pickers without a catalog keep their legacy order.
-
-The catalog picker uses a treegrid: family and material tiles are expandable
-cells, and their child choices occupy the rows immediately below their tile's
-row. Arrow keys stay within an expanded group's choices. Up from its first row
-returns to the parent tile without collapsing it; Down from that tile re-enters.
-Moving between top-level tiles skips unrelated groups' child rows.
-Enter or Space toggles a tile or chooses an asset. Tab and Escape keep their
-normal behavior. The picker reserves the largest single expanded group's height,
-including child rows, across tabs and searches. Its opening anchor stays
-fixed while groups expand. The size is bounded by the editor pane; smaller tabs
-keep the same space and larger content scrolls instead of resizing the popup.
-Pane resizes can update the reserved space, anchor, and number of columns.
 
 ## Framework tests
 

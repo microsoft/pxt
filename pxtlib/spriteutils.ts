@@ -443,7 +443,11 @@ namespace pxt.sprite {
         });
     }
 
-    /** Compile a tag constraint; optional tags satisfy positive queries but not exclusions. */
+    /**
+     * Creates a filter that checks an item's tags.
+     * A "?hero" tag counts as "hero" when looking for matches,
+     * but not when excluding items with "!hero".
+     */
     export function compileTagFilter(filter?: string | readonly string[], matchAny = false): (tags?: readonly string[]) => boolean {
         const tags = parseTags(filter).map(tag => tag.toLowerCase());
         const includeTags = tags
