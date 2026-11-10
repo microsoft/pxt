@@ -489,6 +489,18 @@ function localStorage(): BackpackLocalStorage {
     }
 }
 
+/** Clear this editor's local backpack without deleting cloud-saved items. */
+export function resetBackpackAsync(): Promise<void> {
+    const targetId = pxt.appTarget.id;
+    identityGeneration++;
+    snapshot = undefined;
+    clearBackpackCache();
+    const operation = queue.then(() => localStorage().clearAsync(targetId));
+    queue = operation.then(() => {}, () => {});
+    notifyBackpackEditorChanged();
+    return operation;
+}
+
 function namespace(context: Identity): string {
     return backpackLocalNamespace(context.targetId, context.kind === "cloud" ? context.userId : undefined);
 }
