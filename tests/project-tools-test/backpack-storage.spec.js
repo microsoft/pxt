@@ -132,7 +132,8 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const namespaces = [store.backpackLocalNamespace("arcade", "alice"),
                 store.backpackLocalNamespace("arcade", "bob"), store.backpackLocalNamespace("arcade-other")];
             for (const namespace of namespaces) {
-                await adapter.changeAsync(namespace, bt.id(2), undefined, { namespace, key: bt.id(2), payload: "corrupt" });
+                await adapter.changeAsync(namespace, bt.id(2), undefined, { namespace, key: bt.id(2), payload: "corrupt" },
+                    await adapter.resetEpochAsync(namespace.includes("arcade-other") ? "arcade-other" : "arcade"));
             }
             bt.seed(3);
             let notifications = 0;
@@ -172,6 +173,118 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.deepStrictEqual(result.entries, []);
     });
 
+    for (const operation of ["save", "refresh", "auth"]) {
+        it(`finishes reset when an earlier ${operation} never settles`, async () => {
+            const result = await page.evaluate(async operation => {
+                bt.hold();
+                let signal;
+                bt.hook = options => { signal = options.signal; bt.enter(); return new Promise(() => {}); };
+                if (operation === "auth") {
+                    pxt.auth.getAuthTokenAsync = () => { bt.enter(); return new Promise(() => {}); };
+                }
+                const pending = bt.outcome(() => operation === "refresh" ? store.refreshBackpackAsync() : store.saveBackpackItemAsync(bt.item(1)));
+                await bt.entered;
+                await store.resetBackpackAsync();
+                const failure = await pending;
+                const records = await bt.readLocal("alice");
+                bt.signIn(undefined);
+                await store.saveBackpackItemAsync(bt.item(2));
+                return { failure, records, aborted: !signal || signal.aborted, fresh: await bt.readLocal() };
+            }, operation);
+            assert.notEqual(result.failure, "OK");
+            assert.equal(result.aborted, true);
+            assert.deepStrictEqual(result.records, []);
+            assert.equal(result.fresh.length, 1);
+        });
+    }
+
+    it("rejects pre-reset captures and stale atomic writes from another service instance", async () => {
+        await page.evaluate(async () => {
+            bt.signIn(undefined);
+            window.oldStore = store;
+            window.capture = await store.captureBackpackSessionAsync();
+        });
+        await page.addScriptTag({ content: storageBundle });
+        const result = await page.evaluate(async () => {
+            await store.resetBackpackAsync();
+            const failure = await bt.outcome(() => oldStore.saveBackpackItemAsync(bt.item(1), capture));
+            const adapter = store.createBackpackLocalStorage(indexedDB);
+            const namespace = store.backpackLocalNamespace("arcade");
+            const record = { namespace, key: bt.id(2), payload: JSON.stringify(bt.item(2)) };
+            const written = await adapter.changeAsync(namespace, record.key, undefined, record, capture.resetEpoch);
+            await store.saveBackpackItemAsync(bt.item(3));
+            return { failure, written, current: oldStore.isBackpackSessionCurrent(capture), records: await bt.readLocal() };
+        });
+        assert.notEqual(result.failure, "OK");
+        assert.equal(result.written, false);
+        assert.equal(result.current, false);
+        assert.equal(result.records.length, 1);
+        assert.equal(result.records[0].key.endsWith("000000000003"), true);
+    });
+
+    it("does not restore a guest save paused during its read in another tab", async () => {
+        await page.evaluate(async () => {
+            bt.signIn(undefined);
+            window.oldStore = store;
+            const original = IDBIndex.prototype.getAll;
+            bt.entered = new Promise(resolve => bt.enter = resolve);
+            IDBIndex.prototype.getAll = function (...args) {
+                const request = original.apply(this, args);
+                request.addEventListener("success", event => {
+                    event.stopImmediatePropagation();
+                    bt.resumeRead = () => request.onsuccess(event);
+                    IDBIndex.prototype.getAll = original;
+                    bt.enter();
+                }, { once: true });
+                return request;
+            };
+            bt.saving = bt.outcome(() => oldStore.saveBackpackItemAsync(bt.item(1)));
+            await bt.entered;
+        });
+        await page.addScriptTag({ content: storageBundle });
+        const result = await page.evaluate(async () => {
+            await store.resetBackpackAsync();
+            bt.resumeRead();
+            return { failure: await bt.saving, records: await bt.readLocal() };
+        });
+        assert.notEqual(result.failure, "OK");
+        assert.deepStrictEqual(result.records, []);
+    });
+
+    it("rolls back both record deletion and its reset epoch when clear aborts", async () => {
+        const result = await page.evaluate(async () => {
+            bt.signIn(undefined);
+            await store.saveBackpackItemAsync(bt.item(1));
+            const adapter = store.createBackpackLocalStorage(indexedDB);
+            const epoch = await adapter.resetEpochAsync("arcade");
+            const original = IDBCursor.prototype.delete;
+            IDBCursor.prototype.delete = function () {
+                const request = original.call(this);
+                request.addEventListener("success", () => request.transaction.abort());
+                return request;
+            };
+            let failure;
+            try { failure = await bt.outcome(() => store.resetBackpackAsync()); }
+            finally { IDBCursor.prototype.delete = original; }
+            return { failure, before: epoch, after: await adapter.resetEpochAsync("arcade"), records: await bt.readLocal() };
+        });
+        assert.notEqual(result.failure, "OK");
+        assert.equal(result.after, result.before);
+        assert.equal(result.records.length, 1);
+    });
+
+    it("keeps cloud reads available with an explicit warning when local storage is unavailable", async () => {
+        const result = await page.evaluate(async () => {
+            bt.seed(1);
+            Object.defineProperty(window, "indexedDB", { configurable: true, get: () => { throw new Error("PRIVATE_QUOTA"); } });
+            await store.refreshBackpackAsync();
+            return store.getBackpackState();
+        });
+        assert.equal(result.entries.length, 1);
+        assert.match(result.warning, /storage|read/);
+        assert.doesNotMatch(result.warning, /PRIVATE/);
+    });
+
     it("clears local records even when the backpack feature is disabled", async () => {
         const result = await page.evaluate(async () => {
             bt.signIn(undefined);
@@ -181,6 +294,32 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             return { records: await bt.readLocal(), entries: store.getBackpackState().entries };
         });
         assert.deepStrictEqual(result, { records: [], entries: [] });
+    });
+
+    it("upgrades existing guest storage without losing captures", async () => {
+        const result = await page.evaluate(async () => {
+            bt.signIn(undefined);
+            const namespace = store.backpackLocalNamespace("arcade");
+            const db = await new Promise((resolve, reject) => {
+                const request = indexedDB.open("pxt-backpack", 1);
+                request.onupgradeneeded = () => {
+                    const items = request.result.createObjectStore("items", { keyPath: ["namespace", "key"] });
+                    items.createIndex("namespace", "namespace", { unique: false });
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            await new Promise((resolve, reject) => {
+                const transaction = db.transaction("items", "readwrite");
+                transaction.objectStore("items").put({ namespace, key: bt.id(1), payload: JSON.stringify(bt.item(1)) });
+                transaction.oncomplete = resolve;
+                transaction.onabort = () => reject(transaction.error);
+            });
+            db.close();
+            await store.refreshBackpackAsync();
+            return store.getBackpackState().entries.map(entry => entry.id);
+        });
+        assert.deepStrictEqual(result, ["00000000-0000-4000-8000-000000000001"]);
     });
 
     it("pages metadata completely without fetching bodies; explicit Add loads content", async () => {
@@ -291,7 +430,8 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
                     const records = await bt.readLocal("alice");
                     const record = records[0];
                     const next = { ...record, payload: JSON.stringify(bt.item(1, { name: "Newer local edit" })) };
-                    await store.createBackpackLocalStorage(indexedDB).changeAsync(record.namespace, record.key, record, next);
+                    const adapter = store.createBackpackLocalStorage(indexedDB);
+                    await adapter.changeAsync(record.namespace, record.key, record, next, await adapter.resetEpochAsync("arcade"));
                 }
                 return run();
             };
@@ -361,18 +501,19 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             const adapter = store.createBackpackLocalStorage(indexedDB);
             const namespace = store.backpackLocalNamespace("arcade");
             const record = { namespace, key: bt.id(1), payload: JSON.stringify(bt.item(1)) };
+            const epoch = await adapter.resetEpochAsync("arcade");
             const put = IDBObjectStore.prototype.put;
             IDBObjectStore.prototype.put = function (...args) {
                 const request = put.apply(this, args);
                 request.addEventListener("success", () => this.transaction.abort());
                 return request;
             };
-            const aborted = await bt.outcome(() => adapter.changeAsync(namespace, record.key, undefined, record));
+            const aborted = await bt.outcome(() => adapter.changeAsync(namespace, record.key, undefined, record, epoch));
             IDBObjectStore.prototype.put = put;
             const afterAbort = await adapter.listAsync(namespace);
-            const committed = await adapter.changeAsync(namespace, record.key, undefined, record);
+            const committed = await adapter.changeAsync(namespace, record.key, undefined, record, epoch);
             const reopened = await store.createBackpackLocalStorage(indexedDB).listAsync(namespace);
-            const stale = await adapter.changeAsync(namespace, record.key, undefined, undefined);
+            const stale = await adapter.changeAsync(namespace, record.key, undefined, undefined, epoch);
             return { aborted, afterAbort, committed, reopened, stale };
         });
         assert.match(result.aborted, /browser storage/);

@@ -764,7 +764,7 @@ export function showReportAbuseAsync(pubId?: string) {
 export function showResetDialogAsync() {
     return core.confirmAsync({
         header: lf("Reset"),
-        body: lf("You are about to clear all projects. Are you sure? This operation cannot be undone."),
+        body: lf("You are about to clear local projects, settings, and local Backpack contents, including snippets that have not synced. Cloud-saved projects and Backpack items will not be deleted. This operation cannot be undone. Continue?"),
         agreeLbl: lf("Reset"),
         agreeClass: "red",
         agreeIcon: "sign out",

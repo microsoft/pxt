@@ -21,11 +21,13 @@ export function getDbAsync(): Promise<any> {
         });
 }
 
-export function destroyAsync(): Promise<void> {
-    return !_db ? Promise.resolve() : _db.then((db: any) => {
-        db.destroy();
+export async function destroyAsync(): Promise<void> {
+    const pending = getDbAsync();
+    const db = await pending;
+    await db.destroy();
+    if (_db === pending) {
         _db = undefined;
-    });
+    }
 }
 
 export class Table {

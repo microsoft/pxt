@@ -104,7 +104,7 @@ describe("Backpack asset capture routing", () => {
         const captures = [];
         const dialogs = [];
         const state = { kind, standalone: false, eligible: true, user: "alice", selected: "RIGHT", choices: [],
-            chooser: undefined, captureError: undefined, previews: 0 };
+            chooser: undefined, captureError: undefined, previews: 0, generation: 0, preview: undefined };
         class AssetField {
             constructor(name) { this.name = name; }
             getAsset() { return { meta: { displayName: this.name + " image" } }; }
@@ -132,6 +132,8 @@ describe("Backpack asset capture routing", () => {
                 captureBackpackAsset: field => { captures.push(field.name); return { code: field.name, blockText: field.name, name: field.name }; }
             },
             backpack: {
+                captureBackpackSessionAsync: async () => ({ generation: state.generation }),
+                isBackpackSessionCurrent: session => session.generation === state.generation,
                 validateBackpackItem: () => {},
                 saveBackpackItemAsync: async item => saved.push(item),
                 requestBackpackOpen: () => {}
@@ -140,7 +142,7 @@ describe("Backpack asset capture routing", () => {
                 if (state.captureError) throw state.captureError;
                 return { dependencies: {} };
             },
-            backpackPreviewAsync: async () => { ++state.previews; return {}; },
+            backpackPreviewAsync: async () => { ++state.previews; return state.preview ? state.preview() : {}; },
             backpackUserErrorMessage: error => error.message,
             core: { infoNotification: () => {}, confirmAsync: async options => {
                 if (!state.captureError) throw new Error(options.body);
@@ -170,6 +172,21 @@ describe("Backpack asset capture routing", () => {
         assert.deepStrictEqual(e.state.choices, []);
         assert.deepStrictEqual(e.captures, ["block"]);
         assert.equal(e.saved[0].kind, "code");
+    });
+
+    it("does not save a capture whose preview finishes after reset", async () => {
+        const e = environment("code");
+        let release, entered;
+        const started = new Promise(resolve => entered = resolve);
+        const preview = new Promise(resolve => release = resolve);
+        e.state.preview = () => { entered(); return preview; };
+        const saving = e.run();
+        await started;
+        e.state.generation++;
+        release({});
+        await saving;
+        assert.deepStrictEqual(e.saved, []);
+        assert.deepStrictEqual(e.dialogs, []);
     });
 
     it("shows capture guidance without creating a preview or saving a nonportable code capture", async () => {
@@ -215,6 +232,7 @@ describe("Backpack asset capture routing", () => {
         let resolve;
         e.state.chooser = () => new Promise(done => { resolve = done; });
         const pending = e.run();
+        await new Promise(done => setImmediate(done));
         assert.equal(e.editor.choosingBackpackAsset, true);
         await e.run();
         assert.deepStrictEqual(e.saved, []);

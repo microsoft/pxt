@@ -739,6 +739,8 @@ namespace ts.pxtc.Util {
         forceLiveEndpoint?: boolean;
         successCodes?: number[];
         withCredentials?: boolean;
+        /** Cancels browser HTTP requests when the owning operation is invalidated. */
+        signal?: AbortSignal;
     }
 
     export interface HttpResponse {
@@ -1758,6 +1760,16 @@ namespace ts.pxtc.BrowserImpl {
         return new Promise<Util.HttpResponse>((resolve, reject) => {
             let client: XMLHttpRequest;
             let resolved = false
+            const fail = () => {
+                if (resolved) return;
+                resolved = true;
+                options.signal?.removeEventListener("abort", abort);
+                reject(new Error("HTTP request aborted"));
+            };
+            const abort = () => {
+                fail();
+                client.abort();
+            };
 
             let headers = Util.clone(options.headers) || {}
 
@@ -1771,6 +1783,7 @@ namespace ts.pxtc.BrowserImpl {
 
                 if (client.readyState == 4) {
                     resolved = true
+                    options.signal?.removeEventListener("abort", abort);
                     let res: Util.HttpResponse = {
                         statusCode: client.status,
                         headers: {},
@@ -1805,6 +1818,12 @@ namespace ts.pxtc.BrowserImpl {
             }
 
             client.open(method, options.url);
+            if (options.signal?.aborted) {
+                abort();
+                return;
+            }
+            options.signal?.addEventListener("abort", abort);
+            client.onabort = fail;
 
             Object.keys(headers).forEach(k => {
                 client.setRequestHeader(k, headers[k])

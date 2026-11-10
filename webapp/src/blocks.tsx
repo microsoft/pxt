@@ -2659,10 +2659,12 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         const signedIn = auth.loggedIn();
         const userId = auth.userProfile()?.id;
         const targetId = pxt.appTarget.id;
+        let session: backpack.BackpackSession;
         const isCurrentCapture = (): boolean => pxt.appTarget.id === targetId && auth.loggedIn() === signedIn
-            && (!signedIn || auth.userProfile()?.id === userId);
+            && (!signedIn || auth.userProfile()?.id === userId) && (!session || backpack.isBackpackSessionCurrent(session));
         let item: pxt.auth.BackpackItem;
         try {
+            session = await backpack.captureBackpackSessionAsync();
             let capture: { code: string; blockText: string; name?: string };
             if (kind === "asset" && !pxtblockly.getBackpackAssetField(block)) {
                 const fields = pxtblockly.getBackpackAssetFields(block);
@@ -2729,7 +2731,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Retain the captured item/ID for an explicit retry after a failed local save or upload.
         while (isCurrentCapture()) {
             try {
-                await backpack.saveBackpackItemAsync(item);
+                await backpack.saveBackpackItemAsync(item, session);
                 if (!isCurrentCapture()) return;
                 core.infoNotification(lf("Added {0} to Backpack.", item.name));
                 if (this.parent.state.header?.id === headerId) backpack.requestBackpackOpen(headerId, false, item.kind);

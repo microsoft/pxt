@@ -900,6 +900,7 @@ namespace pxt.BrowserUtils {
                 const request = idbFactory.deleteDatabase(name);
                 request.onsuccess = () => resolve();
                 request.onerror = () => reject(request.error);
+                request.onblocked = () => reject(new Error("Database deletion blocked by another tab"));
             });
         }
 
@@ -909,6 +910,7 @@ namespace pxt.BrowserUtils {
                 const request = idbFactory.open(this.name, this.version);
                 request.onsuccess = () => {
                     this._db = request.result;
+                    this._db.onversionchange = () => request.result.close();
                     resolve();
                 };
                 request.onerror = () => this.errorHandler(request.error, "open", reject);
@@ -968,12 +970,14 @@ namespace pxt.BrowserUtils {
             });
         }
 
-        public deleteAllAsync(storeName: string): Promise<void> {
+        public deleteAllAsync(storeName: string | string[]): Promise<void> {
             return new Promise((resolve, reject) => {
-                const store = this.getObjectStore(storeName, "readwrite");
-                const request = store.clear();
-                request.onsuccess = () => resolve();
-                request.onerror = () => this.errorHandler(request.error, "deleteAll", reject);
+                this.throwIfNotOpened();
+                const names = typeof storeName === "string" ? [storeName] : storeName;
+                const transaction = this._db.transaction(names, "readwrite");
+                transaction.oncomplete = () => resolve();
+                transaction.onabort = transaction.onerror = () => this.errorHandler(transaction.error || new Error("Database transaction aborted"), "deleteAll", reject);
+                for (const name of names) transaction.objectStore(name).clear();
             });
         }
 
@@ -1086,10 +1090,7 @@ namespace pxt.BrowserUtils {
 
         clearAsync(): Promise<void> {
             return this.db.deleteAllAsync(IndexedDbTranslationDb.TABLE)
-                .then(() => pxt.debug(`db: all clean`))
-                .catch(e => {
-                    pxt.error('db: failed to delete all');
-                })
+                .then(() => pxt.debug(`db: all clean`));
         }
     }
 
@@ -1115,6 +1116,7 @@ namespace pxt.BrowserUtils {
                 .catch(e => {
                     pxt.log(`db: failed to delete ${n}`);
                     _translationDbPromise = undefined;
+                    throw e;
                 });
         }
 
@@ -1234,10 +1236,7 @@ namespace pxt.BrowserUtils {
 
         clearAsync(): Promise<void> {
             return this.db.deleteAllAsync(TutorialInfoIndexedDb.TABLE)
-                .then(() => pxt.debug(`db: all clean`))
-                .catch(e => {
-                    pxt.error('db: failed to delete all');
-                })
+                .then(() => pxt.debug(`db: all clean`));
         }
     }
 
@@ -1258,6 +1257,7 @@ namespace pxt.BrowserUtils {
                 .catch(e => {
                     pxt.log(`db: failed to delete ${n}`);
                     _tutorialInfoDbPromise = undefined;
+                    throw e;
                 });
         }
 

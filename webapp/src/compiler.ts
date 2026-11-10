@@ -1236,10 +1236,7 @@ class ApiInfoIndexedDb {
 
     clearAsync(): Promise<void> {
         return this.db.deleteAllAsync(ApiInfoIndexedDb.TABLE)
-            .then(() => pxt.debug(`db: all clean`))
-            .catch(e => {
-                pxt.error('db: failed to delete all');
-            })
+            .then(() => pxt.debug(`db: all clean`));
     }
 }
 

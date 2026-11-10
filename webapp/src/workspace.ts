@@ -37,6 +37,7 @@ type InstallHeader = pxt.workspace.InstallHeader;
 type File = pxt.workspace.File;
 
 let allScripts: File[] = [];
+let workspaceGeneration = 0;
 
 let headerQ = new U.PromiseQueue();
 
@@ -361,6 +362,8 @@ export async function updateShareHistoryAsync(id: string): Promise<void> {
 }
 
 async function enqueueHistoryOperationAsync(id: string, op: (text: ScriptText, header: Header) => void) {
+    const generation = workspaceGeneration;
+    if (resetPromise) throw new Error(lf("The editor is resetting."));
     await maybeSyncHeadersAsync();
 
     const e = lookup(id);
@@ -368,12 +371,14 @@ async function enqueueHistoryOperationAsync(id: string, op: (text: ScriptText, h
     if (!e) return;
 
     await headerQ.enqueue(id, async () => {
+        if (generation !== workspaceGeneration) throw new Error(lf("The editor was reset."));
         const saved = await impl.getAsync(e.header);
 
         const h = saved.header;
 
         op(saved.text, h);
 
+        if (generation !== workspaceGeneration) throw new Error(lf("The editor was reset."));
         const ver = await impl.setAsync(h, saved.version, saved.text);
         e.text = saved.text;
         e.version = ver;
@@ -582,6 +587,8 @@ export async function saveProjectNotesAsync(id: string, notes: pxt.workspace.Pro
 }
 
 export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: boolean, privateMetadataOnly = false): Promise<void> {
+    const generation = workspaceGeneration;
+    if (resetPromise) throw new Error(lf("The editor is resetting."));
     pxt.debug(`workspace.saveAsync ${dbgHdrToString(h)}`)
     if (h.isDeleted)
         clearHeaderSession(h);
@@ -676,6 +683,7 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
     }
 
     return headerQ.enqueue<void>(h.id, async () => {
+        if (generation !== workspaceGeneration) throw new Error(lf("The editor was reset."));
         await fixupVersionAsync(e);
         let ver: any;
 
@@ -709,11 +717,11 @@ export async function saveAsync(h: Header, text?: ScriptText, fromCloudSync?: bo
                 pxt.warn("Unable to update project history", e);
             }
         }
-
-
+        if (generation !== workspaceGeneration) throw new Error(lf("The editor was reset."));
         try {
             ver = await impl.setAsync(h, e.version, toWrite);
         } catch (e) {
+            if (generation !== workspaceGeneration) throw e;
             // Private notes are excluded from downloads and shares, so a memory-only
             // fallback could lose unsaved notes.
             if (privateMetadataOnly) throw e;
@@ -1766,14 +1774,17 @@ let syncAsyncPromise: Promise<pxt.editor.EditorSyncState>;
 export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     pxt.debug("workspace: sync")
     if (syncAsyncPromise) return syncAsyncPromise;
-    return syncAsyncPromise = impl.listAsync()
+    const generation = workspaceGeneration;
+    const pending = impl.listAsync()
         .catch((e) => {
+            if (generation !== workspaceGeneration) return [];
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
             return switchToMemoryWorkspace("sync failed")
                 .then(() => impl.listAsync());
         })
         .then(headers => {
+            if (generation !== workspaceGeneration) return;
             const existing = U.toDictionary(allScripts || [], h => h.header.id)
             // this is an in-place update the header instances
             allScripts = headers.map(hd => {
@@ -1801,33 +1812,65 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
             cloudsync.syncAsync(); // sync in background
         })
         .then(() => {
+            if (generation !== workspaceGeneration) return undefined;
             refreshHeadersSession();
             return impl.getSyncState ? impl.getSyncState() : null
         })
         .finally(() => {
-            syncAsyncPromise = undefined;
+            if (syncAsyncPromise === pending) syncAsyncPromise = undefined;
         });
+    syncAsyncPromise = pending;
+    return pending;
 }
 
-export async function resetAsync() {
-    allScripts = []
+let resetPromise: Promise<void>;
 
-    await impl.resetAsync();
-    await cloudsync.resetAsync();
-    await db.destroyAsync();
-    await pxt.BrowserUtils.clearTranslationDbAsync();
-    await pxt.BrowserUtils.clearTutorialInfoDbAsync();
-    await compiler.clearApiInfoDbAsync();
-    await backpack.resetBackpackAsync();
-    pxt.storage.clearLocal();
-    data.clearCache();
+export function resetAsync(): Promise<void> {
+    if (!resetPromise) resetPromise = resetCoreAsync().finally(() => { resetPromise = undefined; });
+    return resetPromise;
+}
 
-    // keep local token (localhost and electron) on reset
-    if (Cloud.localToken) {
-        pxt.storage.setLocal("local_token", Cloud.localToken);
-    }
+async function resetCoreAsync(): Promise<void> {
+    workspaceGeneration++;
+    syncAsyncPromise = undefined;
+    allScripts = [];
+    const failed: string[] = [];
+    const reset = async (name: string, action: () => void | Promise<unknown>): Promise<void> => {
+        let timeout: ReturnType<typeof setTimeout>;
+        try {
+            await Promise.race([
+                Promise.resolve().then(action),
+                new Promise<never>((_resolve, reject) => {
+                    timeout = setTimeout(() => reject(new Error(`Reset timed out: ${name}`)), 10000);
+                })
+            ]);
+        } catch (error) {
+            failed.push(name);
+            pxt.reportException(error, { operation: "reset", step: name });
+        } finally {
+            clearTimeout(timeout);
+        }
+    };
 
-    await syncAsync(); // sync again to notify other tabs
+    await reset("backpack", () => backpack.resetBackpackAsync());
+    await reset("pending-writes", () => Promise.all(Object.keys(headerQ.promises)
+        .map(id => headerQ.enqueue(id, async () => {}))));
+    allScripts = [];
+    await reset("workspace", () => impl.resetAsync());
+    await reset("cloud", () => cloudsync.resetAsync());
+    await reset("database", () => db.destroyAsync());
+    await reset("translations", () => pxt.BrowserUtils.clearTranslationDbAsync());
+    await reset("tutorials", () => pxt.BrowserUtils.clearTutorialInfoDbAsync());
+    await reset("api", () => compiler.clearApiInfoDbAsync());
+    await reset("settings", () => pxt.storage.clearLocal());
+    await reset("cache", () => data.clearCache());
+
+    // Keep local token (localhost and electron) even when another reset step fails.
+    await reset("local-token", () => {
+        if (Cloud.localToken) pxt.storage.setLocal("local_token", Cloud.localToken);
+    });
+    await reset("sync", () => syncAsync());
+    if (failed.length) throw new Error(lf("Could not reset all editor data. Failed steps: {0}", failed.join(", ")));
 }
 
 export function loadedAsync() {

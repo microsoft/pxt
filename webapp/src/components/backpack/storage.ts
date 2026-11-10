@@ -11,6 +11,8 @@ export interface BackpackLocalRecord {
 }
 
 export interface BackpackLocalStorage {
+    /** Capture before preparing a write; changeAsync checks it in the write transaction. */
+    resetEpochAsync(targetId: string): Promise<number>;
     listAsync(namespace: string): Promise<BackpackLocalRecord[]>;
     /** Clear guest and pending account records for this target only. */
     clearAsync(targetId: string): Promise<void>;
@@ -19,7 +21,8 @@ export interface BackpackLocalStorage {
         namespace: string,
         key: string,
         expected: BackpackLocalRecord | undefined,
-        next: BackpackLocalRecord | undefined
+        next: BackpackLocalRecord | undefined,
+        resetEpoch: number
     ): Promise<boolean>;
 }
 
@@ -37,15 +40,18 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
         let request: IDBOpenDBRequest;
         let failed = false;
         try {
-            request = factory.open("pxt-backpack", 1);
+            request = factory.open("pxt-backpack", 2);
         } catch {
             reject(storageError());
             return;
         }
 
         request.onupgradeneeded = () => {
-            const store = request.result.createObjectStore("items", { keyPath: ["namespace", "key"] });
-            store.createIndex("namespace", "namespace", { unique: false });
+            if (!request.result.objectStoreNames.contains("items")) {
+                const store = request.result.createObjectStore("items", { keyPath: ["namespace", "key"] });
+                store.createIndex("namespace", "namespace", { unique: false });
+            }
+            if (!request.result.objectStoreNames.contains("resets")) request.result.createObjectStore("resets");
         };
         request.onerror = request.onblocked = () => {
             failed = true;
@@ -63,7 +69,7 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
 
     const transactionAsync = async <T>(
         mode: IDBTransactionMode,
-        action: (store: IDBObjectStore, result: (value: T) => void) => void
+        action: (store: IDBObjectStore, resets: IDBObjectStore, result: (value: T) => void) => void
     ): Promise<T> => {
         const db = await openAsync();
         try {
@@ -73,14 +79,14 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
                 try {
                     // The optional third argument is ignored by older implementations.
                     const begin = db.transaction as (
-                        name: string,
+                        name: string[],
                         mode: IDBTransactionMode,
                         options?: { durability: "strict" }
                     ) => IDBTransaction;
-                    transaction = begin.call(db, "items", mode, { durability: "strict" });
+                    transaction = begin.call(db, ["items", "resets"], mode, { durability: "strict" });
                     transaction.oncomplete = () => resolve(result);
                     transaction.onerror = transaction.onabort = () => reject(storageError());
-                    action(transaction.objectStore("items"), value => {
+                    action(transaction.objectStore("items"), transaction.objectStore("resets"), value => {
                         result = value;
                     });
                 } catch {
@@ -98,11 +104,17 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
     };
 
     return {
-        listAsync: namespace => transactionAsync<BackpackLocalRecord[]>("readonly", (store, done) => {
+        resetEpochAsync: targetId => transactionAsync<number>("readonly", (_store, resets, done) => {
+            const request = resets.get(targetId);
+            request.onsuccess = () => done(request.result || 0);
+        }),
+        listAsync: namespace => transactionAsync<BackpackLocalRecord[]>("readonly", (store, _resets, done) => {
             const request = store.index("namespace").getAll(namespace);
             request.onsuccess = () => done(request.result);
         }),
-        clearAsync: targetId => transactionAsync<void>("readwrite", (store, done) => {
+        clearAsync: targetId => transactionAsync<void>("readwrite", (store, resets, done) => {
+            const epoch = resets.get(targetId);
+            epoch.onsuccess = () => resets.put((epoch.result || 0) + 1, targetId);
             const prefix = JSON.stringify([targetId]).slice(0, -1) + ",";
             const request = store.openCursor();
             request.onsuccess = () => {
@@ -115,23 +127,30 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
                 cursor.continue();
             };
         }),
-        changeAsync: (namespace, key, expected, next) => transactionAsync<boolean>("readwrite", (store, done) => {
-            const request = store.get([namespace, key]);
-            request.onsuccess = () => {
-                try {
-                    const current: BackpackLocalRecord = request.result;
-                    const same = !current ? !expected : !!expected && current.payload === expected.payload
-                        && current.owner === expected.owner && current.firstAttemptAt === expected.firstAttemptAt;
-                    if (!same) {
-                        done(false);
-                        return;
-                    }
-                    if (next) store.put({ ...next, namespace, key });
-                    else store.delete([namespace, key]);
-                    done(true);
-                } catch {
-                    store.transaction.abort();
+        changeAsync: (namespace, key, expected, next, resetEpoch) => transactionAsync<boolean>("readwrite", (store, resets, done) => {
+            const epoch = resets.get(JSON.parse(namespace)[0]);
+            epoch.onsuccess = () => {
+                if ((epoch.result || 0) !== resetEpoch) {
+                    done(false);
+                    return;
                 }
+                const request = store.get([namespace, key]);
+                request.onsuccess = () => {
+                    try {
+                        const current: BackpackLocalRecord = request.result;
+                        const same = !current ? !expected : !!expected && current.payload === expected.payload
+                            && current.owner === expected.owner && current.firstAttemptAt === expected.firstAttemptAt;
+                        if (!same) {
+                            done(false);
+                            return;
+                        }
+                        if (next) store.put({ ...next, namespace, key });
+                        else store.delete([namespace, key]);
+                        done(true);
+                    } catch {
+                        store.transaction.abort();
+                    }
+                };
             };
         })
     };

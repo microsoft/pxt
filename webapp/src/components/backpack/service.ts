@@ -23,6 +23,7 @@ interface LocalIdentity {
     kind: "local";
     targetId: string;
     generation: number;
+    signal: AbortSignal;
 }
 
 interface CloudIdentity {
@@ -31,15 +32,24 @@ interface CloudIdentity {
     targetId: string;
     client: pxt.auth.AuthClient;
     generation: number;
+    signal: AbortSignal;
 }
 
 type Identity = LocalIdentity | CloudIdentity;
 
 interface CloudContext extends CloudIdentity {
     token: string;
+    resetEpoch?: number;
+    localStorageError?: unknown;
 }
 
-type OperationContext = LocalIdentity | CloudContext;
+type OperationContext = (LocalIdentity & { resetEpoch: number }) | CloudContext;
+
+export interface BackpackSession {
+    generation: number;
+    targetId: string;
+    resetEpoch?: number;
+}
 
 export interface BackpackEntry {
     /** The collection key, not the potentially damaged ID inside the stored item. */
@@ -280,6 +290,23 @@ export function validateBackpackRequirements(value: pxt.Map<unknown>): {
 
 let identityGeneration = 0;
 let lastIdentity: Identity;
+let identityController: AbortController;
+
+function invalidateIdentity(): void {
+    identityGeneration++;
+    identityController?.abort();
+    identityController = new AbortController();
+    clearBackpackCache();
+}
+
+function awaitActiveAsync<T>(identity: Identity, operation: Promise<T>): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+        const abort = () => reject(new BackpackUserError(lf("Your account or editor changed. Please reopen the backpack.")));
+        identity.signal.addEventListener("abort", abort, { once: true });
+        if (identity.signal.aborted) abort();
+        operation.then(resolve, reject).finally(() => identity.signal.removeEventListener("abort", abort));
+    });
+}
 
 function activeIdentity(): Identity | undefined {
     const targetId = pxt.appTarget?.id;
@@ -289,7 +316,7 @@ function activeIdentity(): Identity | undefined {
 
     // A partially loaded signed-in session must not write to the guest backpack.
     if (!isBackpackEnabled() || !targetId || !safeKey(targetId) || signedIn && (!client || !userId)) {
-        if (lastIdentity) identityGeneration++;
+        if (lastIdentity) invalidateIdentity();
         clearBackpackCache();
         lastIdentity = undefined;
         return undefined;
@@ -298,13 +325,12 @@ function activeIdentity(): Identity | undefined {
     const kind = signedIn ? "cloud" : "local";
     if (!lastIdentity || lastIdentity.targetId !== targetId || lastIdentity.kind !== kind
         || lastIdentity.kind === "cloud" && (lastIdentity.userId !== userId || lastIdentity.client !== client)) {
-        identityGeneration++;
-        clearBackpackCache();
+        invalidateIdentity();
     }
 
     lastIdentity = signedIn
-        ? { kind: "cloud", client, userId, targetId, generation: identityGeneration }
-        : { kind: "local", targetId, generation: identityGeneration };
+        ? { kind: "cloud", client, userId, targetId, generation: identityGeneration, signal: identityController.signal }
+        : { kind: "local", targetId, generation: identityGeneration, signal: identityController.signal };
     return lastIdentity;
 }
 
@@ -321,32 +347,49 @@ function assertActive(identity: Identity): void {
 
 // Keep the account that requested the operation, even if it must wait for another write.
 async function captureAsync(): Promise<OperationContext> {
-    const identity = activeIdentity();
-    if (!identity) throw new BackpackUserError(lf("Your backpack session is not ready. Please reopen the backpack."));
+    const active = activeIdentity();
+    if (!active) throw new BackpackUserError(lf("Your backpack session is not ready. Please reopen the backpack."));
+    let resetEpoch: number;
+    let localStorageError: unknown;
+    try {
+        resetEpoch = await awaitActiveAsync(active, localStorage().resetEpochAsync(active.targetId));
+    } catch (error) {
+        assertActive(active);
+        if (active.kind === "local") throw error;
+        // Cloud reads remain available; localEntriesAsync surfaces the storage failure as a warning.
+        localStorageError = error;
+    }
+    assertActive(active);
+    const identity = { ...active, resetEpoch };
     if (identity.kind === "local") return identity;
 
     let token: string;
     try {
-        token = await pxt.auth.getAuthTokenAsync();
+        token = await awaitActiveAsync(identity, pxt.auth.getAuthTokenAsync());
     } catch {
         throw new BackpackUserError(lf("Your backpack session is unavailable. Please sign in again."));
     }
     assertActive(identity);
     if (!token) throw new BackpackUserError(lf("Sign in to use your backpack."));
 
-    const context = { ...identity, token };
+    const context = { ...identity, token, localStorageError };
     await verifyAsync(context);
     return context;
 }
 
 async function verifyAsync(context: OperationContext): Promise<void> {
     assertActive(context);
+    if (context.resetEpoch !== undefined
+        && await awaitActiveAsync(context, localStorage().resetEpochAsync(context.targetId)) !== context.resetEpoch) {
+        invalidateIdentity();
+        throw new BackpackUserError(lf("Your backpack was reset in another tab. Please reopen it."));
+    }
     if (context.kind === "local") return;
 
     let state: Readonly<pxt.auth.UserState>;
     let token: string;
     try {
-        state = await pxt.auth.getUserStateAsync();
+        state = await awaitActiveAsync(context, pxt.auth.getUserStateAsync());
     } catch {
         throw new BackpackUserError(lf("Your backpack session is unavailable. Please sign in again."));
     }
@@ -354,7 +397,7 @@ async function verifyAsync(context: OperationContext): Promise<void> {
     if (state?.profile?.id !== context.userId) throw new BackpackUserError(lf("Your backpack account changed."));
 
     try {
-        token = await pxt.auth.getAuthTokenAsync();
+        token = await awaitActiveAsync(context, pxt.auth.getAuthTokenAsync());
     } catch {
         throw new BackpackUserError(lf("Your backpack session is unavailable. Please sign in again."));
     }
@@ -421,7 +464,7 @@ function apiUrl(path: string): string {
 
 async function headersAsync(context: CloudContext): Promise<pxt.Map<string>> {
     try {
-        const headers = await pxt.auth.getAuthHeadersAsync(context.token);
+        const headers = await awaitActiveAsync(context, pxt.auth.getAuthHeadersAsync(context.token));
         headers["x-pxt-target"] = context.targetId;
         return headers;
     } catch {
@@ -443,14 +486,15 @@ async function requestAsync(
 
     let response: pxt.Util.HttpResponse;
     try {
-        response = await pxt.Util.requestAsync({
+        response = await awaitActiveAsync(context, pxt.Util.requestAsync({
             url: apiUrl(path),
             method,
             data,
             headers,
             withCredentials: true,
-            allowHttpErrors: true
-        });
+            allowHttpErrors: true,
+            signal: context.signal
+        }));
     } catch {
         await verifyAsync(context);
         throw new BackpackRequestError(undefined);
@@ -492,10 +536,11 @@ function localStorage(): BackpackLocalStorage {
 /** Clear this editor's local backpack without deleting cloud-saved items. */
 export function resetBackpackAsync(): Promise<void> {
     const targetId = pxt.appTarget.id;
-    identityGeneration++;
+    invalidateIdentity();
     snapshot = undefined;
     clearBackpackCache();
-    const operation = queue.then(() => localStorage().clearAsync(targetId));
+    // The clear transaction drains earlier writes and rejects later writes with an old epoch.
+    const operation = localStorage().clearAsync(targetId);
     queue = operation.then(() => {}, () => {});
     notifyBackpackEditorChanged();
     return operation;
@@ -516,6 +561,7 @@ function localEntry(record: BackpackLocalRecord): BackpackEntry {
 }
 
 async function localEntriesAsync(context: OperationContext): Promise<BackpackEntry[]> {
+    if (context.kind === "cloud" && context.localStorageError) throw context.localStorageError;
     const records = await localStorage().listAsync(namespace(context));
     if (context.kind === "cloud") {
         const guests = await localStorage().listAsync(backpackLocalNamespace(context.targetId));
@@ -531,7 +577,8 @@ async function changeLocalAsync(
     next?: BackpackLocalRecord
 ): Promise<boolean> {
     await verifyAsync(context);
-    const changed = await localStorage().changeAsync(record.namespace, record.key, record, next);
+    if (context.resetEpoch === undefined) throw new BackpackUserError(lf("Allow browser storage before changing your local backpack."));
+    const changed = await localStorage().changeAsync(record.namespace, record.key, record, next, context.resetEpoch);
     assertActive(context);
     return changed;
 }
@@ -815,7 +862,18 @@ export function refreshBackpackAsync(): Promise<void> {
     });
 }
 
-export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promise<void> {
+/** Capture before rendering a preview so reset invalidates the entire capture, not just its save. */
+export async function captureBackpackSessionAsync(): Promise<BackpackSession> {
+    const context = await captureAsync();
+    return { generation: context.generation, targetId: context.targetId, resetEpoch: context.resetEpoch };
+}
+
+export function isBackpackSessionCurrent(session: BackpackSession): boolean {
+    const identity = activeIdentity();
+    return !!identity && identity.generation === session.generation && identity.targetId === session.targetId;
+}
+
+export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem, session?: BackpackSession): Promise<void> {
     const validated = validateBackpackItem(item);
     // Check the service's UTF-8 metadata limit before saving a new item locally.
     if (utf8Length(JSON.stringify({
@@ -829,6 +887,11 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
     })) > DEFAULT_LIMITS.maxMetadataBytes) throw new BackpackRequestError("backpack_entry_too_large");
 
     return enqueue(async context => {
+        if (context.kind === "cloud" && context.localStorageError) throw context.localStorageError;
+        if (session && (!isBackpackSessionCurrent(session) || context.resetEpoch !== session.resetEpoch)) {
+            if (session.generation === context.generation && context.resetEpoch !== session.resetEpoch) invalidateIdentity();
+            throw new BackpackUserError(lf("Your backpack changed while capturing this snippet. Please capture it again."));
+        }
         const records = await localStorage().listAsync(namespace(context));
         await verifyAsync(context);
         const previous = records.find(record => record.key === validated.id);
@@ -855,7 +918,8 @@ export async function saveBackpackItemAsync(item: pxt.auth.BackpackItem): Promis
             payload,
             ...(context.kind === "cloud" ? { owner: context.userId } : {})
         };
-        if (!await localStorage().changeAsync(next.namespace, next.key, previous, next))
+        if (context.resetEpoch === undefined
+            || !await localStorage().changeAsync(next.namespace, next.key, previous, next, context.resetEpoch))
             throw new BackpackRequestError("backpack_version_conflict");
 
         assertActive(context);

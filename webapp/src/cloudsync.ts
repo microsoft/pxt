@@ -361,23 +361,27 @@ function setProvider(impl: IdentityProvider) {
     }
 }
 
-export function resetAsync() {
+export async function resetAsync(): Promise<void> {
     const ghProvider = githubProvider();
     const ghNeedsLogout = ghProvider && ghProvider.hasToken();
-
-    if (currentProvider)
-        currentProvider.logout()
-    currentProvider = null
-
-    pxt.storage.removeLocal("cloudId")
-    clearOauth();
-    invalidateData();
-
-    // the user was signed in with github
-    if (ghNeedsLogout)
-        ghProvider.logout();
-
-    return Promise.resolve()
+    const providers = new Set([currentProvider, ghNeedsLogout ? ghProvider : undefined]);
+    currentProvider = null;
+    let failed = false;
+    const clear = (action: () => void) => {
+        try {
+            action();
+        } catch (error) {
+            failed = true;
+            pxt.reportException(error, { operation: "reset-cloud" });
+        }
+    };
+    for (const provider of providers) {
+        if (provider) clear(() => provider.logout());
+    }
+    clear(() => pxt.storage.removeLocal("cloudId"));
+    clear(() => clearOauth());
+    clear(() => invalidateData());
+    if (failed) throw new Error(lf("Could not clear all cloud session data."));
 }
 
 function updateNameAsync(provider: IdentityProvider) {

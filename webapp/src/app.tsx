@@ -3415,13 +3415,20 @@ export class ProjectView
         }
     }
 
-    resetWorkspace() {
+    async resetWorkspace(): Promise<void> {
         this.reload = true;
-        return workspace.resetAsync()
-            .then(
-                () => this.reloadEditor(),
-                () => this.reloadEditor()
-            );
+        this.stopSimulator();
+        try {
+            await workspace.resetAsync();
+        } catch (error) {
+            await core.confirmAsync({
+                header: lf("Reset incomplete"),
+                body: lf("Some editor data could not be cleared. Close other editor tabs and allow browser storage, then try resetting again. Cloud-saved projects and Backpack items were not deleted."),
+                hideCancel: true,
+                agreeLbl: lf("Reload")
+            });
+        }
+        this.reloadEditor();
     }
 
     pairAsync(): Promise<boolean> {

@@ -79,6 +79,13 @@ Deleting a pending local copy does **not** delete a cloud copy that may already
 have synced; delete the cloud card separately. Inserted project code is unaffected.
 
 Do not clear all browser storage: that also removes unsynced captures and projects.
+**Reset** clears local projects, settings, and this target's local Backpack
+contents, including guest captures and pending account uploads. Cloud-saved
+projects and Backpack items, and other targets' Backpack contents, are not deleted.
+Captures started before reset must be captured again, even in another tab.
+If any reset step fails, the remaining cleanup is still attempted and the editor
+shows an incomplete-reset warning before reloading. Close other editor tabs and
+allow browser storage before retrying.
 
 See [testing](../tests/project-tools-test/README.md) for developer checks.
 
