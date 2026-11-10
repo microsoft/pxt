@@ -179,11 +179,8 @@ export interface ProjfsPackage {
 
 /**
  * Creates or replaces the stored file `name` of `epkg` and saves it. If the
- * text editor shows the file, it reloads to show `content`, which replaces any
- * change not yet saved from it and resets its undo history and cursor; the
- * promise then settles once the editor shows `content`. Only a write to the
- * shown file forces that reload: forcing any other write would discard the
- * shown file's unsaved changes.
+ * file is currently open in a text editor, also reloads the current text editor
+ * to show the new content and waits for the reload to complete.
  * @param editor the editor showing the project, or undefined if there is none
  */
 export function writeProjectFileAsync(epkg: ProjfsPackage, editor: ProjfsEditor | undefined, name: string, content: string): Promise<void> {
