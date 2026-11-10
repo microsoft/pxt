@@ -203,8 +203,8 @@ export class EditorPackage {
     protected transpileCache: CachedTranspile[] = [];
 
     tilemapProject: pxt.TilemapProject;
-    // settles once loadPkgAsync has loaded this main package; see loadedAsync
-    private loadComplete = pxt.Util.defer<void>();
+    // The promise for this package's load. Set by loadPkgAsync.
+    loadPromise: Promise<void> = Promise.resolve();
     // the listeners called on every change to the package's stored files, with the file's name, or undefined when every file is replaced
     private fileChangeListeners: ((name: string | undefined) => void)[] = [];
 
@@ -219,29 +219,12 @@ export class EditorPackage {
     }
 
     /**
-     * Returns a promise that resolves once loadPkgAsync has loaded this main
-     * package's files, pxt.json and dependencies, and rejects if that load
-     * fails. A load runs on when another package replaces this one as the
-     * main package, so the promise settles for a replaced package too; check
-     * that the package is still the main package before reading it.
+     * Resolves once this package has loaded. Rejects if the load failed
+     * or a newer load replaced this package.
      */
-    loadedAsync(): Promise<void> {
-        return this.loadComplete.promise;
-    }
-
-    /**
-     * Settles the promise loadedAsync returns with the outcome of `load`, the
-     * load of this main package, and returns `load`.
-     */
-    trackLoadAsync(load: Promise<void>): Promise<void> {
-        load.then(
-            () => this.loadComplete.resolve(undefined),
-            e => {
-                // the load's caller reports the failure; a waiter sees the rejection
-                this.loadComplete.promise.catch(() => { });
-                this.loadComplete.reject(e);
-            });
-        return load;
+    async loadedAsync(): Promise<void> {
+        await this.loadPromise;
+        if (this !== mainEditorPkg()) throw new Error("the package was replaced while it loaded");
     }
 
     getSimState() {
@@ -943,9 +926,8 @@ export function notifySyncDone(updated: pxt.Map<number>) {
 export function loadPkgAsync(id: string, targetVersion?: string) {
     mainPkg = new pxt.MainPackage(theHost)
     mainPkg._verspec = "workspace:" + id;
-    const loading = getEditorPkg(mainPkg);
 
-    return loading.trackLoadAsync(theHost.downloadPackageAsync(mainPkg)
+    const load = theHost.downloadPackageAsync(mainPkg)
         .catch(core.handleNetworkError)
         .then(() => ts.pxtc.Util.jsonTryParse(theHost.readFile(mainPkg, pxt.CONFIG_NAME)) as pxt.PackageConfig)
         .then(config => {
@@ -956,7 +938,9 @@ export function loadPkgAsync(id: string, targetVersion?: string) {
 
             return mainPkg.installAllAsync(targetVersion)
                 .then(() => mainEditorPkg().afterMainLoadAsync());
-        }))
+        });
+    getEditorPkg(mainPkg).loadPromise = load;
+    return load;
 }
 
 
