@@ -189,6 +189,32 @@ describe("reset workspace providers", () => {
             assert.deepStrictEqual(environment.headers(), ["after"]);
             assert.equal(refreshed, 1);
         });
+
+        it("doesn't fall back to the memory workspace when listing fails during a reset", async () => {
+            const code = functionsFrom("webapp/src/workspace.ts", ["syncAsync"]);
+            let fallbacks = 0;
+            const globals = {
+                impl: { listAsync: () => Promise.reject(new Error("projects folder is being deleted")) },
+                pxt: { debug: () => {} }, U: { toDictionary: () => ({}), jsonCopyFrom: Object.assign },
+                data: {}, cloudsync: { syncAsync: () => {} },
+                switchToMemoryWorkspace: async () => { fallbacks++; },
+                refreshHeadersSession: () => {}
+            };
+            const environment = new Function(...Object.keys(globals), `
+                let allScripts = [{ header: { id: "before" } }], workspaceGeneration = 1, syncAsyncPromise, resetPromise;
+                ${code}
+                return { sync: syncAsync, setResetting: value => { resetPromise = value ? Promise.resolve() : undefined; },
+                    headers: () => allScripts.map(file => file.header.id) };
+            `)(...Object.values(globals));
+            environment.setResetting(true);
+            await environment.sync();
+            assert.equal(fallbacks, 0);
+            assert.deepStrictEqual(environment.headers(), []);
+
+            environment.setResetting(false);
+            await assert.rejects(environment.sync());
+            assert.equal(fallbacks, 1, "outside a reset, a failed list still falls back to memory");
+        });
     });
 
     for (const electron of [false, true]) {

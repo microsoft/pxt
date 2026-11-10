@@ -1777,7 +1777,9 @@ export function syncAsync(): Promise<pxt.editor.EditorSyncState> {
     const generation = workspaceGeneration;
     const pending = impl.listAsync()
         .catch((e) => {
-            if (generation !== workspaceGeneration) return [];
+            // A reset empties the workspace and then reloads the editor, so a list that fails while the reset is
+            // still clearing the provider (such as Electron deleting the projects folder) isn't a storage failure.
+            if (generation !== workspaceGeneration || resetPromise) return [];
             // There might be a problem with the native databases. Switch to memory for this session so the user can at
             // least use the editor.
             return switchToMemoryWorkspace("sync failed")
