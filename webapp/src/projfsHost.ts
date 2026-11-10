@@ -620,7 +620,7 @@ export class ProjfsHost {
         this.watched = { project, folders: {} };
     }
 
-    /** Starts comparing the files of `folder` in the watched project with their state as of now, unless it already does. */
+    /** Starts comparing the files of `folder` in the watched project with their state as of now. No-op if already watching */
     protected watchFolder(folder: string) {
         const watched = this.watched;
         if (!watched || Object.prototype.hasOwnProperty.call(watched.folders, folder)) return;
