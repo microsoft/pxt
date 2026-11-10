@@ -63,7 +63,7 @@ When included by a project, the editor will serve request's to the extension's s
 
 ### Grants and trust
 
-The grants (`allowPopups`, `allowClipboard`, `allowCamera`, `allowMidi`, `allowUsb`, `allowSerial`, `allowBluetooth`, `allowHid`, `allowMotionSensors`, `allowDisplayCapture`, `allowGamepad`, `allowDownloads`, `allowPointerLock`, `allowFileWrite`, `allowAssetRead`, `allowProgramRead` and `allowEditorTab`) are approved by the target's owner together with the registration. A grant is given per registration, but grants do not isolate extensions from one another: every simulator extension frame, every tab frame and the main simulator are served from the simulator's one origin, so an extension's frames can reach the frames of another extension, and a request posted from another extension's window is served under that extension's grants. The grants hold among the target's approved extensions, not against each other.
+All of the `allow*` simx registration keys grant permissions to the approved extension. These permissions should be carefully considered before checking them into `targetconfig.json` as many of them can have security implications. The purpose of these permissions is to prevent extensions from arbitrarily accessing certain browser APIs, but it should be noted that these permissions do nothing to isolate one simx extension from another. There are many ways that iframes can communicate with one another to share data (especially if they exist on the same domain).
 
 Nine grants deserve a second look:
 
