@@ -60,10 +60,6 @@ export function getSimxApiLevel(search?: string): number {
     return value !== null && /^[0-9]+$/.test(value) ? Number(value) : 0;
 }
 
-/**
- * Why a request failed. Clients branch on the code; the message that
- * accompanies it is for people.
- */
 export type ProjprogramErrorCode =
     /**
      * The compile produced no simulator program, as when the project has
