@@ -48,7 +48,7 @@ export function getSimxApiLevel(search?: string): number {
     return value !== null && /^[0-9]+$/.test(value) ? Number(value) : 0;
 }
 
-/** A kind of asset the editor lists: the name of one of pxt's asset types. */
+/** A pxt asset type. Duplicated from the AsssetType enum in pxtlib */
 export type ProjassetsKind = "image" | "tile" | "tilemap" | "animation" | "song" | "json";
 
 export type ProjassetsErrorCode =
