@@ -32,9 +32,9 @@ export interface FieldCustomOptions {
 export interface FieldCustomDropdownOptions extends FieldCustomOptions {
     data?: any;
     /**
-     * Returns the current API info, from which a field that rebuilds its
-     * options each time its dropdown opens builds them; undefined while there
-     * is none, the field then listing `data`.
+     * A function that returns the current API info for the project. Required for fields
+     * that generate a dynamic list based on exported constants, functions, etc. that
+     * may change without the blocks editor being re-initialized.
      */
     getBlocksInfo?: () => pxtc.BlocksInfo | undefined;
     /** The value of the option a field that rebuilds its options lists first. */
