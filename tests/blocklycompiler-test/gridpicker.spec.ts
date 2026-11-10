@@ -102,8 +102,8 @@ describe("grid picker catalogs", () => {
             const result = getGridPickerGroups(options, catalog, catalog.tabs[1], search, undefined, tags);
             chai.assert.deepEqual(result.reduce((all, group) => all.concat(values(group.options)), [] as string[]), ["Item.CopperSword"]);
         }
-        const result = getGridPickerGroups(options, catalog, catalog.tabs[1], "family_zombies", undefined,
-            { ...tags, "MonsterMob.Zombie": ["family-zombies"] });
+        const result = getGridPickerGroups(options, catalog, catalog.tabs[1], "group_zombies", undefined,
+            { ...tags, "MonsterMob.Zombie": ["group-zombies"] });
         chai.assert.deepEqual(result.reduce((all, group) => all.concat(values(group.options)), [] as string[]), ["MonsterMob.Zombie"]);
     });
 
