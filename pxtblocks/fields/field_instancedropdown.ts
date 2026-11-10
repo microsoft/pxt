@@ -41,18 +41,9 @@ export function isReservedInstanceValue(value: string): boolean {
 }
 
 /**
- * Returns the options of the dropdown of a fixed-instance parameter: the
- * options of the type's instances, in their order, then, if `editText` or
- * `createText` is given, the entries given: one showing `editText` whose
- * value is `OPEN_INSTANCE_OPTION_VALUE`, then one showing `createText` whose
- * value is `CREATE_INSTANCE_OPTION_VALUE`, after a separator when there are
- * instances to separate them from. With no instances and neither entry given,
- * it returns one entry showing `emptyText` whose value is
- * `NO_INSTANCE_OPTION_VALUE`, so the list is never empty.
- * @param instances the options of the type's instances
- * @param editText the text of the entry asking to edit the instance the field holds; undefined if the editor cannot open it here
- * @param createText the text of the entry asking for a new instance; undefined if the editor cannot create the type's instances here
- * @param emptyText the text of the entry saying the type has no instances yet
+ * Takes a list of dropdown menu options and inserts the create, open, and empty placeholder
+ * items as needed. Create and edit are added after the list of instances and a separator menu
+ * item.
  */
 export function getInstanceDropdownOptions(instances: Blockly.MenuOption[], editText: string | undefined, createText: string | undefined, emptyText: string): Blockly.MenuOption[] {
     const commands: Blockly.MenuOption[] = [];
