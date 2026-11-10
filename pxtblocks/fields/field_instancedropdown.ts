@@ -63,28 +63,18 @@ export function getInstanceDropdownOptions(instances: Blockly.MenuOption[], edit
 }
 
 /**
- * The dropdown of a fixed-instance parameter whose instances the editor can
- * create. Each time it opens, it lists the type's instances the current API
- * info declares, then, after a separator, an entry asking to edit the
- * instance the field holds, while the editor can open it
- * (`pxt.react.canOpenInstance`), and an entry asking for a new instance, while
- * the editor can create one (`pxt.react.canCreateInstance`). Picking either
- * entry keeps the field's value; the first asks the editor to open the
- * instance (`pxt.react.openInstance`), the second to create one
- * (`pxt.react.createInstance`). With no instances and neither entry offered,
- * it lists one entry saying the type has none yet, and picking it changes
- * nothing. The field's value is not always an instance: while the type has no
- * instances, it starts as the value of the entry asking for a new instance or
- * of the entry saying there are none, and keeps that value until an instance
- * is picked. The blocks compiler reports a block whose field holds such a
- * value and emits `null` in its place.
- *
- * Options: `data`, the options of the type's instances, listed while
- * `getBlocksInfo` is not given or returns undefined; `type`, the type's fully
- * qualified name; `blocksInfo`, the API info that declares the type;
- * `getBlocksInfo`, returning the current API info; `defaultValue`, the value
- * of the instance listed first. The field's value is kept when the current
- * API info no longer declares it.
+ * A field editor that provides a dropdown for selecting instances of a
+ * type that has the fixedInstances annotation on it. This editor is intended
+ * to be used with simx editor extensions that can emit instances of the 
+ * specified type in the user's project. For example, a song editor might
+ * emit instances of a Track type to indicate the different songs that a
+ * user has created within that simx editor.
+ * 
+ * This field editor also provides an optional pair of entry points into the simx
+ * editor from within the dropdown, similar to how the variable dropdown allows
+ * you to edit and create variables within the dropdown itself. These are checked using
+ * `pxt.react.canOpenInstance`/`pxt.react.canCreateInstance` and invoked using
+ * `pxt.react.openInstance`/`pxt.react.createInstance` respectively.
  */
 export class FieldInstanceDropdown extends FieldDropdown implements FieldCustom {
     public isFieldCustom_ = true;
