@@ -97,12 +97,11 @@ export class FieldInstanceDropdown extends FieldDropdown implements FieldCustom 
     }
 }
 
-// Lists the options of the type's instances, built with `imgConv` from the
-// API info `getBlocksInfo` returns, else `data`, then the entry asking to edit
-// the instance the field holds, while the editor can open it, and the entry
-// asking for a new instance, while the editor can create the type's instances,
-// or, with none of these to list, the entry saying the type has no instances
-// yet, all read each time the dropdown opens.
+// Creates a function that returns a dynamic list of menu options
+// based on the instances of the fixedInstance type in the current
+// API info. Will also include placeholder options for creating new
+// instances and editing existing instances if supported by the simx
+// editor extension.
 function createMenuGenerator(options: FieldCustomDropdownOptions, typeName: string, imgConv: pxt.ImageConverter): Blockly.MenuGeneratorFunction {
     const { data, type: typeQName, getBlocksInfo, defaultValue } = options;
     return function (this: Blockly.FieldDropdown) {
