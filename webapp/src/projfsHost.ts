@@ -358,52 +358,10 @@ interface ProjfsWatchedFolder {
 const APPLY_LANE = "apply";
 
 /**
- * Serves the project-file requests of simulator extensions. Each extension
- * lists, reads, writes and deletes files in its folder (see
- * {@link getProjfsFolder}), by names relative to that folder; within the
- * folder it lists and reads only the files pxt.json lists. Every
- * registration of one repository, and both frames of each, share the
- * folder, its quota, its rate limit and its queue.
- *
- * Every request gets one reply, and the replies for one folder are sent in
- * the order its requests arrive, a subscribe request's excepted. One request
- * applies at a time, and each folder's requests apply in the order they
- * arrive. A folder's writes and deletes beyond {@link PROJFS_RATE_LIMIT}
- * within {@link PROJFS_RATE_WINDOW_MS} wait, with the requests behind them,
- * until the window allows them. A request applies only to the project open
- * when it arrived, once that project has loaded; if that project fails to
- * load, or has closed by the time the request's turn comes, it is refused
- * with `PROJECT_CLOSED`, and a request that has begun applying is applied in
- * the project it began in.
- *
- * A request is refused on arrival, without waiting its turn, with
- * `RATE_LIMITED` when {@link PROJFS_MAX_PENDING_REQUESTS} requests on its
- * folder already wait for replies, and with `QUOTA_EXCEEDED` when it writes
- * more content than {@link PROJFS_FOLDER_QUOTA_BYTES}; its reply still
- * follows the replies to the requests before it.
- *
- * Writes and deletes are artifacts unless flagged `dirty`, in which case they
- * also pass through {@link ProjfsProject.markDirty} once applied, if their
- * project is still open; a flagged change whose project closed while it was
- * being applied stays applied in that project and is refused with
- * `PROJECT_CLOSED`.
- *
- * A subscribe request subscribes the requesting frame to its folder's
- * changes. It is neither queued nor limited: it is answered once the project
- * open when it arrived has loaded. A frame holds at most one subscription,
- * which ends when the project it was made in closes, or when the frame is
- * removed. The host listens to one project at a time, the one its
- * subscriptions were made in, and lets go of it when it closes. A folder's
- * subscribers are told the names, relative to the folder, of the files whose
- * content, existence or listing in pxt.json changed: the names the project's
- * change listener reports under the folder, then, after a pxt.json change or
- * a replacement of every file, the names whose stored state differs from the
- * one last notified. Changes are merged per folder: subscribers get one
- * notification for all the changes made before it is sent, sent
- * {@link PROJFS_NOTIFY_DEBOUNCE_MS} after the last of them, or
- * {@link PROJFS_NOTIFY_MAX_DELAY_MS} after the first if that is sooner, and
- * none when the changes leave no name to report. A notification pending when
- * the project closes is not sent.
+ * Handles "projfs" requests from simulator extensions. Lets each extension
+ * list, read, write and delete the project files within its folder, and sends
+ * notifications when those files change. See pxtservices/simulator-extensions.md
+ * for the protocol, limits and error codes.
  */
 export class ProjfsHost {
     // per folder: the requests received for the folder, each until it has been

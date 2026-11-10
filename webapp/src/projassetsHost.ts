@@ -284,29 +284,9 @@ const listers: { [K in ProjassetsKind]: (project: pxt.TilemapProject) => Projass
 };
 
 /**
- * Serves the project-asset requests of simulator extensions: lists the named
- * assets of the open project by kind, with its name and visual configuration,
- * and notifies subscribed frames when those assets, that name or that
- * configuration change. Every request gets one reply. A request applies to
- * the project open when it arrives, and is answered once that project has
- * loaded. A frame holds at most one subscription, which ends when the
- * project it was made in closes, or when the frame is removed.
- *
- * The list requests of the extensions of one GitHub repository, `owner/repo`
- * in any letter case, whatever subfolder their keys name, wait in one queue
- * and are answered in the order they arrive; those beyond
- * {@link PROJASSETS_LIST_RATE_LIMIT} within {@link PROJASSETS_LIST_RATE_WINDOW_MS}
- * wait, with the list requests behind them, until the window allows them. A
- * list request whose project has closed by the time its turn comes is
- * refused with `PROJECT_CLOSED`, and one whose key names no repository with
- * `UNREGISTERED`. Subscribe requests are neither queued nor limited.
- *
- * The host listens to one project at a time, the one its subscriptions were
- * made in, and lets go of it when it closes. Changes are merged: subscribers
- * get one notification for all the changes made before it is sent, sent
- * {@link PROJASSETS_NOTIFY_DEBOUNCE_MS} after the last of them, or
- * {@link PROJASSETS_NOTIFY_MAX_DELAY_MS} after the first if that is sooner. A
- * notification pending when the project closes is not sent.
+ * Handles "projassets" requests from simulator extensions. Lists the
+ * project's assets and sends notifications when they change. See
+ * pxtservices/simulator-extensions.md for the protocol, limits and error codes.
  */
 export class ProjassetsHost {
     // the subscribed frames, each once, with the function that delivers its notifications

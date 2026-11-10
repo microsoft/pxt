@@ -77,28 +77,9 @@ export function getProgramDiagnostics(result: pxtc.CompileResult): ProjprogramDi
 const COMPILE_LANE = "compile";
 
 /**
- * Serves the compiled-program requests of simulator extensions: compiles the
- * open project and replies with the program a simulator run of it executes,
- * or with `COMPILE_FAILED` and the compile's diagnostics when the compile
- * produces no program. Every request gets one reply.
- *
- * The requests of the extensions of one GitHub repository, `owner/repo` in
- * any letter case, whatever subfolder their keys name, wait in one queue and
- * are answered in the order they arrive; a request whose key names no
- * repository is refused with `UNREGISTERED` at once. One compile runs at a
- * time, whichever repository asked for it, and each request gets a compile of
- * its own, started once the compiles before it have finished. At most
- * {@link PROJPROGRAM_RATE_LIMIT} compiles for one repository are admitted
- * within any {@link PROJPROGRAM_RATE_WINDOW_MS}; later ones wait, with the
- * requests behind them, until the window admits them. An admitted compile
- * then waits for the compiles before it to finish, so it may start after its
- * window.
- *
- * A request applies to the project open when it arrives, once that project
- * has loaded. If that project fails to load, or has closed by the time its
- * compile starts or finishes, the request is refused with `PROJECT_CLOSED`,
- * and the program of a compile that finishes after its project closed is
- * never sent.
+ * Handles "projprogram" requests from simulator extensions. Lets an extension
+ * compile the project and get back the compiled program. See
+ * pxtservices/simulator-extensions.md for the protocol, limits and error codes.
  */
 export class ProjprogramHost {
     // per repository: the requests received from it, each until it has been
