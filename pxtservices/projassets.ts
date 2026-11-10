@@ -22,7 +22,7 @@ export const PROJASSETS_MESSAGE_TYPE = "projassets";
 /**
  * Returns the origin of the editor hosting this simulator extension's frame,
  * e.g. `https://arcade.makecode.com`, which the editor passes in the frame
- * URL's `parentOrigin` parameter. Post requests to it.
+ * URL's `parentOrigin` parameter. Requests should be posted to this origin.
  * @param search the frame URL's query string; defaults to `window.location.search`
  * @returns the origin, or undefined if the URL provides none
  */
