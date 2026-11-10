@@ -306,7 +306,10 @@ export interface ProjassetsVisualConfig {
  * and its visual configuration.
  */
 export interface ProjassetsProjectConfig extends ProjassetsVisualConfig {
-    /** The project's name, as the user gave it and as its pxt.json holds it. */
+    /**
+     * The project's current name, which can change if the user renames the project.
+     * Read the project's id from the simx iframe's `project` URL parameter.
+     */
     name: string;
 }
 
