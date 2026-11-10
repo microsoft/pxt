@@ -212,6 +212,14 @@ node node_modules/typescript/bin/tsc -p pxtblocks --noEmit
 
 Detailed behavior and edge cases, mainly for contributors and automated agents.
 
+### Code layout
+
+- The catalog model (tag filtering, grouping, row layout, sizing, and icon
+  lookup) lives in `pxtblocks/fields/gridPickerCatalog.ts` and doesn't depend
+  on the picker's DOM. Reuse it from other editors instead of copying it.
+- `FieldGridPicker` in `pxtblocks/fields/field_gridpicker.ts` owns the catalog
+  UI: tabs, search, rendering, positioning, and keyboard navigation.
+
 ### Tags
 
 - API `tags` and JRES `tags` are merged case-insensitively. JRES references and

@@ -1,6 +1,9 @@
 import * as Blockly from "blockly";
 import * as pxtblockly from "../../pxtblocks";
-import { FieldGridPicker, FieldGridPickerOptions, filterGridPickerOptions, getGridPickerGroups, getGridPickerRows, getGridPickerSizeRows } from "../../pxtblocks/fields/field_gridpicker";
+import { FieldGridPicker, FieldGridPickerOptions } from "../../pxtblocks/fields/field_gridpicker";
+import {
+    filterGridPickerOptions, getGridPickerCatalogIcon, getGridPickerGroups, getGridPickerRows, getGridPickerSizeRows
+} from "../../pxtblocks/fields/gridPickerCatalog";
 
 describe("grid picker catalogs", () => {
     const options: Blockly.MenuOption[] = [
@@ -219,11 +222,11 @@ describe("grid picker catalogs", () => {
                 data: pxt.sprite.base64EncodeBitmap(new pxt.sprite.Bitmap(1, 1).data()) }
         } };
         try {
-            chai.assert.equal(field["catalogIcon_"]("images.picture"), "api-icon");
-            chai.assert.equal(field["catalogIcon_"]("assets.picture"), "resource-icon");
+            chai.assert.equal(getGridPickerCatalogIcon(field["blocksInfo_"].apis, "images.picture"), "api-icon");
+            chai.assert.equal(getGridPickerCatalogIcon(field["blocksInfo_"].apis, "assets.picture"), "resource-icon");
             field["blocksInfo_"].apis.byQName["images.encoded"] = symbol("images.encoded", "", "assets.encoded");
             const icon = new Image();
-            icon.src = field["catalogIcon_"]("images.encoded");
+            icon.src = getGridPickerCatalogIcon(field["blocksInfo_"].apis, "images.encoded");
             await icon.decode();
             chai.assert.equal(icon.naturalWidth, 1);
             chai.assert.equal(icon.naturalHeight, 1);
