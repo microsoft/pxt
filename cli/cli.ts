@@ -1967,6 +1967,25 @@ function replaceStaticImagesInJsonBlob(cfg: any, staticAssetHandler: (fileLocati
     return pxt.replaceStringsInJsonBlob(cfg, /^\.?\/static\/.+\.(png|gif|jpeg|jpg|svg|mp4|ico)$/i, staticAssetHandler);
 }
 
+/**
+ * Collects grid picker catalog titles from bundled packages so they're translated as target strings.
+ * Each package also gets resource-qualified keys of its own when its strings are generated.
+ */
+function getBundledGridPickerCatalogStrings(bundledpkgs: pxt.Map<pxt.Map<string>>): pxt.Map<string> {
+    const strings: pxt.Map<string> = {};
+    for (const files of Object.values(bundledpkgs || {})) {
+        for (const file of Object.keys(files).filter(name => /\.jres$/i.test(name))) {
+            const resources = pxt.inflateJRes(JSON.parse(files[file]));
+            for (const id of Object.keys(resources)) {
+                const catalog = resources[id].gridPickerCatalog;
+                if (!catalog) continue;
+                for (const name of Object.values(pxt.getGridPickerCatalogStrings(id, catalog))) strings[name] = name;
+            }
+        }
+    }
+    return strings;
+}
+
 function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boolean) {
     cfg.appTheme.id = cfg.id
     cfg.appTheme.title = cfg.title
@@ -1992,7 +2011,15 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
         cfg.appTheme.htmlTemplates = readJson("built/templates.json")
     }
 
-    // extract strings from theme for target
+    nodeutil.mkdirP("built");
+    nodeutil.writeFileSync("built/theme.json", nodeutil.stringify(cfg.appTheme))
+}
+
+/**
+ * Collects every string the target needs translated, from its theme, bundled packages, docs, and
+ * targetconfig.json, and writes them to built/target-strings.json for localization.
+ */
+function saveTargetStrings(cfg: pxt.TargetBundle) {
     const theme = cfg.appTheme;
     let targetStrings: pxt.Map<string> = {};
     if (theme.title) targetStrings[theme.title] = theme.title;
@@ -2005,17 +2032,6 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
         targetStrings[`{id:simulator-layout-name}${layout.name}`] = layout.name;
         for (const field of layout.colorFields ?? []) {
             targetStrings[`{id:simulator-theme-field}${field.label}`] = field.label;
-        }
-    }
-    for (const files of Object.values(cfg.bundledpkgs || {})) {
-        for (const file of Object.keys(files).filter(name => /\.jres$/i.test(name))) {
-            const resources = pxt.inflateJRes(JSON.parse(files[file]));
-            for (const id of Object.keys(resources)) {
-                const catalog = resources[id].gridPickerCatalog;
-                if (!catalog) continue;
-                const strings = pxt.getGridPickerCatalogStrings(id, catalog);
-                for (const key of Object.keys(strings)) targetStrings[strings[key]] = strings[key];
-            }
         }
     }
     if (theme.homeScreenHero && typeof theme.homeScreenHero != "string") {
@@ -2069,6 +2085,7 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
                 .forEach(userConfig => targetStrings[userConfig.description] = userConfig.description);
         }
     })
+    Object.assign(targetStrings, getBundledGridPickerCatalogStrings(cfg.bundledpkgs));
 
     // extract strings from docs
     function walkDocs(docs: pxt.DocMenuEntry[]) {
@@ -2081,56 +2098,15 @@ function saveThemeJson(cfg: pxt.TargetBundle, localDir?: boolean, packaged?: boo
     walkDocs(theme.docMenu);
     if (nodeutil.fileExistsSync("targetconfig.json")) {
         const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
-        if (targetConfig?.galleries) {
-            const docsRoot = nodeutil.targetDir;
-            let gcards: pxt.CodeCard[] = [];
-            let tocmd: string =
-                `# Projects
-
-`;
-            Object.keys(targetConfig.galleries).forEach(k => {
-                targetStrings[k] = k;
-                const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
-                const gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
-                const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
-                const gurl = `/${galleryUrl.replace(/^\//, '')}`;
-                tocmd +=
-                    `* [${k}](${gurl})
-`;
-                const gcard: pxt.CodeCard = {
-                    name: k,
-                    url: gurl
-                };
-                gcards.push(gcard)
-                gallery.forEach(cards => cards.cards
-                    .forEach(card => {
-                        if (card.imageUrl && !gcard.imageUrl)
-                            gcard.imageUrl = card.imageUrl;
-                        if (card.largeImageUrl && !gcard.largeImageUrl)
-                            gcard.largeImageUrl = card.largeImageUrl;
-                        if (card.videoUrl && !gcard.videoUrl)
-                            gcard.videoUrl = card.videoUrl;
-                        const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
-                        tocmd += `  * [${card.name || card.title}](${url})
-`;
-                        for (const term of (card.tags || []).concat(card.searchTerms || []))
-                            targetStrings[term] = term;
-                    }))
-            });
-
-            nodeutil.writeFileSync(path.join(docsRoot, "docs/projects/SUMMARY.md"), tocmd, { encoding: "utf8" });
-            nodeutil.writeFileSync(path.join(docsRoot, "docs/projects.md"),
-                `# Projects
-
-\`\`\`codecard
-${JSON.stringify(gcards, null, 4)}
-\`\`\`
-
-## See Also
-
-${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
-
-`, { encoding: "utf8" });
+        for (const galleryName of Object.keys(targetConfig?.galleries || {})) {
+            targetStrings[galleryName] = galleryName;
+            const gallerymd = nodeutil.resolveMd(nodeutil.targetDir, getGalleryUrl(targetConfig.galleries[galleryName]));
+            for (const cards of pxt.gallery.parseGalleryMardown(gallerymd)) {
+                for (const card of cards.cards) {
+                    for (const term of (card.tags || []).concat(card.searchTerms || []))
+                        targetStrings[term] = term;
+                }
+            }
         }
         const multiplayerGames = targetConfig?.multiplayer?.games;
         for (const game of (multiplayerGames ?? [])) {
@@ -2186,11 +2162,63 @@ ${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
     let targetStringsSorted: pxt.Map<string> = {};
     Object.keys(targetStrings).sort().map(k => targetStringsSorted[k] = targetStrings[k]);
 
-    // write files
     nodeutil.mkdirP("built");
-    nodeutil.writeFileSync("built/theme.json", nodeutil.stringify(cfg.appTheme))
     nodeutil.writeFileSync("built/target-strings.json", nodeutil.stringify(targetStringsSorted))
     pxt.log(`target-strings.json built`)
+}
+
+/** Writes the projects page and its table of contents from the galleries listed in targetconfig.json. */
+function saveProjectGalleryDocs() {
+    if (!nodeutil.fileExistsSync("targetconfig.json")) return;
+    const targetConfig = nodeutil.readJson("targetconfig.json") as pxt.TargetConfig;
+    if (targetConfig?.galleries) {
+        const docsRoot = nodeutil.targetDir;
+        let gcards: pxt.CodeCard[] = [];
+        let tocmd: string =
+            `# Projects
+
+`;
+        Object.keys(targetConfig.galleries).forEach(k => {
+            const galleryUrl = getGalleryUrl(targetConfig.galleries[k])
+            const gallerymd = nodeutil.resolveMd(docsRoot, galleryUrl);
+            const gallery = pxt.gallery.parseGalleryMardown(gallerymd);
+            const gurl = `/${galleryUrl.replace(/^\//, '')}`;
+            tocmd +=
+                `* [${k}](${gurl})
+`;
+            const gcard: pxt.CodeCard = {
+                name: k,
+                url: gurl
+            };
+            gcards.push(gcard)
+            gallery.forEach(cards => cards.cards
+                .forEach(card => {
+                    if (card.imageUrl && !gcard.imageUrl)
+                        gcard.imageUrl = card.imageUrl;
+                    if (card.largeImageUrl && !gcard.largeImageUrl)
+                        gcard.largeImageUrl = card.largeImageUrl;
+                    if (card.videoUrl && !gcard.videoUrl)
+                        gcard.videoUrl = card.videoUrl;
+                    const url = card.url || card.learnMoreUrl || card.buyUrl || (card.youTubeId && `https://youtu.be/${card.youTubeId}`);
+                    tocmd += `  * [${card.name || card.title}](${url})
+`;
+                }))
+        });
+
+        nodeutil.writeFileSync(path.join(docsRoot, "docs/projects/SUMMARY.md"), tocmd, { encoding: "utf8" });
+        nodeutil.writeFileSync(path.join(docsRoot, "docs/projects.md"),
+            `# Projects
+
+\`\`\`codecard
+${JSON.stringify(gcards, null, 4)}
+\`\`\`
+
+## See Also
+
+${gcards.map(gcard => `[${gcard.name}](${gcard.url})`).join(',\n')}
+
+`, { encoding: "utf8" });
+    }
 }
 
 function lessFilePaths() {
@@ -2870,6 +2898,8 @@ async function buildTargetCoreAsync(options: BuildTargetOptions = {}) {
         pxt: pxtVersion()
     }
     saveThemeJson(cfg, options.localDir, options.packaged)
+    saveTargetStrings(cfg)
+    saveProjectGalleryDocs()
     fillInCompilerExtension(cfg);
 
     const webmanifest = buildWebManifest(cfg)
