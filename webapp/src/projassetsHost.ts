@@ -204,7 +204,7 @@ export function getVisualConfig(
     return config;
 }
 
-/** The open project's configuration, as the asset host reads and watches it. */
+/** A handle object that watches for changes to the open project's config info. */
 export interface ProjassetsConfig {
     /** Returns the project's name as it is now. */
     getName(): string;
@@ -220,7 +220,7 @@ export interface ProjassetsConfig {
     removeChangeListener(listener: () => void): void;
 }
 
-/** The user's simulator theme, as the asset host reads and watches it. */
+/** A handle object that watches for changes to the simulator theme for the open project. */
 export interface ProjassetsAccountTheme {
     /** Returns the user's effective simulator theme. */
     get(): pxt.SimulatorTheme | undefined;
@@ -231,10 +231,9 @@ export interface ProjassetsAccountTheme {
 }
 
 /**
- * Returns the configuration of the project whose main package is `mainPkg`,
- * as the asset host reads and watches it; its theme is resolved against the
- * target's simulator theme presets as they are when it is read.
- * @param accountTheme the user's simulator theme
+ * Subscribes to changes of the specified package's configuration and returns
+ * a handle that can be used to subscribe to and read the current state.
+ * @param accountTheme the user's simulator theme from their account preferences
  */
 export function createProjassetsConfig(
     mainPkg: pxt.MainPackage,
@@ -255,9 +254,9 @@ export function createProjassetsConfig(
 }
 
 /**
- * The open project as the asset host waits on it. The host reads a project
- * only once it has loaded and while it is still the open one: a project read
- * before its load has no assets yet.
+ * A deferred project open that can be awaited. Projects should be read only
+ * once they have finished loading and while they are still open in the
+ * editor.
  */
 export interface ProjassetsOpenProject {
     /**

@@ -630,8 +630,6 @@ class BaseMenuItemProps extends data.Component<IBaseMenuItemProps, {}> {
     renderCore() {
         const active = this.props.isActive();
         const className = `base-menuitem ${this.props.className} ${active ? "selected" : ""}`;
-        // An item with an SVG icon draws the icon and its text itself, with the
-        // classes sui.Item gives a font icon and its text.
         if (this.props.iconUrl)
             return <sui.Item className={className} role={this.props.role || "button"} active={active} onClick={this.props.onClick}
                 title={this.props.title || this.props.text} ariaLabel={this.props.ariaLabel}>

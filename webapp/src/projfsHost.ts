@@ -21,19 +21,19 @@ import {
 } from "./simxRequests";
 
 /**
- * The most bytes the files under one simulator extension folder may hold: the
- * UTF-8 bytes of each file's content plus those of its name relative to the
- * folder.
+ * The maximum size of a simulator extension's project folder. Each file's size is
+ * measured by the total UTF-8 bytes of the file's content plus those of its name
+ * relative to the extension's project folder.
  */
 export const PROJFS_FOLDER_QUOTA_BYTES = 512 * 1024;
 
 /** The most files one simulator extension folder may store. */
 export const PROJFS_MAX_FOLDER_FILES = 256;
 
-/** The most characters of a name a write gives a file, relative to its folder. */
+/** The maximum length of a project file name. All names are relative to the simx project folder. */
 export const PROJFS_MAX_NAME_LENGTH = 128;
 
-/** The most `/`-separated segments of a name a write gives a file, relative to its folder. */
+/** The maximum directory depth of a file relative to the simx folder. */
 export const PROJFS_MAX_NAME_SEGMENTS = 8;
 
 /**
@@ -80,7 +80,7 @@ export interface ProjfsProject {
     loadedAsync(): Promise<void>;
     /** Every file stored in the project, keyed by name, whether or not pxt.json lists it. */
     getFiles(): pxt.Map<string>;
-    /** Creates or replaces a stored file; a text editor showing the file shows the new content. Leaves pxt.json unchanged. */
+    /** Creates or replaces a stored file. Leaves pxt.json unchanged. */
     writeFileAsync(name: string, content: string): Promise<void>;
     /**
      * Deletes a stored file and removes it from the "files" and "testFiles"
@@ -139,13 +139,11 @@ export interface ProjfsEditor {
 }
 
 /**
- * Makes a change already saved to the project file `name` take effect as a user
- * edit would, through the same editor entry points. The editor showing the
- * file shows `content`; replacing the text editor's content resets its undo
- * history and cursor. The simulator is marked as running outdated code, and a
- * typecheck is scheduled; the editor's own debouncing merges the typechecks,
- * and so the reruns, of changes that arrive in quick succession. The toolbox
- * is left alone and picks up new blocks the next time it loads.
+ * Applies the changes to a file as if a user had made the edit. This does not
+ * edit the project files, and should only be called after the file changes have
+ * already been written. Calling this will overwrite the contents of the current
+ * blocks/text editor, trigger a simulator restart, and a typecheck just as a user
+ * change would. The toolbox is not updated by this function.
  * @param content the file's new content, or undefined if it was deleted
  */
 export function applyUserEdit(editor: ProjfsEditor, name: string, content: string | undefined): void {
@@ -161,8 +159,8 @@ export function applyUserEdit(editor: ProjfsEditor, name: string, content: strin
 export interface ProjfsPackageFile {
     /**
      * Replaces the file's content and saves it.
-     * @param force if true, the text editor reloads the file it shows, and
-     * the promise settles once it has
+     * @param force if true, any open text editor will reload its current
+     *  file and the promise will settle once the reload is complete.
      */
     setContentAsync(content: string, force?: boolean): Promise<void>;
 }

@@ -480,9 +480,9 @@ export class EditorPackage {
     }
 
     /**
-     * Adds `name` to the "files" list of pxt.json, or removes it from the
-     * "files" and "testFiles" lists, and saves pxt.json. Returns null,
-     * changing nothing, if pxt.json is missing or malformed.
+     * If listed is true, adds the file to the "files" list of pxt.json; otherwise, removes the
+     * file from both "files" and "testFiles". In either case, saves the changes to the config.
+     * If pxt.json is invalid, does nothing
      */
     setFileListedAsync(name: string, listed: boolean) {
         return this.updateConfigAsync(cfg => {
