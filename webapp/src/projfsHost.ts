@@ -243,12 +243,12 @@ export function getFolderFileName(folder: string, name: unknown): string | undef
 }
 
 /**
- * Returns true if a write may give a file the name `name`, relative to its
- * folder: the file explorer accepts it for a new file (see
- * `pxt.isValidProjectFileName`), it has at most
- * {@link PROJFS_MAX_NAME_LENGTH} characters in at most
- * {@link PROJFS_MAX_NAME_SEGMENTS} segments, and its last segment is not
- * `pxt.json` and does not end in `.jres`, in any letter case.
+ * Validates a filename to ensure it:
+ *   1. Contains no invalid characters
+ *   2. Does not exceed the max file name length
+ *   3. Does not exceed the max directory depth
+ *   4. Is not named `pxt.json`
+ *   5. Is not a `.jres` file.
  */
 function isWritableName(name: string): boolean {
     const segments = name.split("/");
