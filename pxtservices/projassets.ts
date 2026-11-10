@@ -51,10 +51,6 @@ export function getSimxApiLevel(search?: string): number {
 /** A kind of asset the editor lists: the name of one of pxt's asset types. */
 export type ProjassetsKind = "image" | "tile" | "tilemap" | "animation" | "song" | "json";
 
-/**
- * Why a request failed. Clients branch on the code; the message that
- * accompanies it is for people.
- */
 export type ProjassetsErrorCode =
     /** The editor does not list assets of the requested kind. */
     | "UNSUPPORTED_KIND"
