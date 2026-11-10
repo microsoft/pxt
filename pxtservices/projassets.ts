@@ -291,11 +291,12 @@ export interface ProjassetsVisualConfig {
      */
     palette: string[];
     /**
-     * The simulator theme the project shows, as the editor resolves it: the
-     * project's own theme if its pxt.json declares one, resolved over the
-     * user's, else the user's. Maps each token (e.g. `background-color`) to
-     * its value, a color as `#rrggbb`, and `layout` to the simulator layout's
-     * id. Absent if the target offers no simulator themes.
+     * The simulator theme for the project, if the target supports sim themes.
+     * The theme is pulled from one of three places: the user's settings, the
+     * project's pxt.json, or the default theme for the target (in decreasing order
+     * of priority). All keys in this object are tokens (e.g. `background-color`) that
+     * map to a color in `#rrggbb` format except for `layout`, which represents the
+     * configuration of buttons in the sim.
      */
     theme?: { [token: string]: string };
 }
