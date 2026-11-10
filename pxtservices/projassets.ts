@@ -135,7 +135,7 @@ export interface ProjassetsImage {
 /**
  * A tile asset of the project, for its tilemaps. The project's tiles include
  * the blank tile the editor generates for each tile width, such as
- * `myTiles.transparency16` for 16-pixel tiles.
+ * `myTiles.transparency16` for 16x16 tiles.
  */
 export interface ProjassetsTile {
     kind: "tile";
