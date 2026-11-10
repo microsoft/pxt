@@ -4166,7 +4166,6 @@ export class ProjectView
             || this.debugOptionsChanged()) {
             this.startSimulator();
         } else {
-            simulator.postSimxEditorSimulatorCommand("restart");
             simulator.driver.restart(); // fast restart
         }
         if (!isDebug) {
@@ -4206,7 +4205,6 @@ export class ProjectView
         }
 
         if (simulator.driver && (this.isSimulatorRunning() || unload && simulator.driver.state !== pxsim.SimulatorState.Unloaded)) {
-            simulator.postSimxEditorSimulatorCommand("stop");
             simulator.stop(unload);
         } else if (unload && simulator.driver?.hasFrames()) {
             // frames created while unloaded, such as a simulator extension's for its editor tab
@@ -4352,7 +4350,6 @@ export class ProjectView
 
                             const hc = this.themeManager.isHighContrast(this.themeManager.getCurrentColorTheme()?.id);
                             if (!pxt.react.isFieldEditorViewVisible?.()) {
-                                simulator.postSimxEditorSimulatorCommand("start");
                                 simulator.run(pkg.mainPkg, opts.debug, resp, {
                                     mute: this.state.mute === pxt.editor.MuteState.Muted,
                                     highContrast: hc,

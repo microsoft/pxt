@@ -25,7 +25,7 @@ import {
     SimxEditorRegistration,
 } from "./simxEditorHost";
 import { OpenProjectTracker } from "./simxRequests";
-import { SimxEditorSimulatorCommand, SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
+import { SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
 
 
 
@@ -276,6 +276,7 @@ export async function initAsync(cfg: SimulatorConfig) {
             }
             cfg.onStateChanged(state);
         },
+        onDriverCommand: command => simxEditorHost?.simulatorCommand(command),
         onSimulatorReady: function () {
             pxt.perf.recordMilestone(Milestones.SimulatorReady)
             cfg.onSimulatorReady();
@@ -423,11 +424,6 @@ export function getProjectSimxInstanceCreator(typeQName: string, declaringPackag
             : `simulator extension ${key}: ignoring its claim to create ${typeQName}, which an earlier registration creates`);
     }
     return creator?.key;
-}
-
-/** Tells every ready simulator extension editor tab that the editor is giving the simulator `command`. */
-export function postSimxEditorSimulatorCommand(command: SimxEditorSimulatorCommand) {
-    simxEditorHost?.simulatorCommand(command);
 }
 
 /**
