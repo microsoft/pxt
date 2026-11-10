@@ -89,9 +89,7 @@ interface ProjassetsMessage {
 
 /**
  * Lists the project's named assets of one kind. The reply is a
- * {@link ProjassetsAssetsReply}. The editor answers the list requests of the
- * extensions of one GitHub repository in the order they arrive, at most 30
- * within any 10 seconds; later ones wait for their turn.
+ * {@link ProjassetsAssetsReply}
  */
 export interface ProjassetsListRequest extends ProjassetsMessage {
     subtype: "list";
