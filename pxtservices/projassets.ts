@@ -286,8 +286,8 @@ export interface ProjassetsVisualConfig {
     /**
      * The project's palette, as the editor draws the project's images: the
      * project's own palette if its pxt.json sets one, else the target's. Each
-     * entry is a color as `#rrggbb`; a pixel value is an index into it. Any
-     * length, including empty for a target without a palette.
+     * entry is a color in `#rrggbb` format. Should always contain 16 colors,
+     * with the entry at index 0 representing transparency.
      */
     palette: string[];
     /**
