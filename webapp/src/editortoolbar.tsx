@@ -9,7 +9,6 @@ import * as identity from "./identity";
 import { ProjectView } from "./app";
 import { userPrefersDownloadFlagSet } from "./webusb";
 import { dialogAsync, hideDialog } from "./core";
-import { getEditorToolbarControls } from "./editorToolbarControls";
 
 import ISettingsProps = pxt.editor.ISettingsProps;
 import SimState = pxt.editor.SimState;
@@ -400,13 +399,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
-        const { showUndoRedo, showZoomControls } = getEditorToolbarControls({
-            readOnly,
-            debugging: !!debugging,
-            hideZoomAndUndo: !!hideZoomAndUndo,
-            hideToolbox: !!hideToolbox,
-            editorHasEditingControls: this.props.parent.editor.hasEditorToolbarEditingControls(),
-        });
+        const editorHasEditingControls = this.props.parent.editor.hasEditorToolbarEditingControls();
+        const showUndoRedo = editorHasEditingControls && !readOnly && !debugging && !hideZoomAndUndo && !hideToolbox;
+        const showZoomControls = editorHasEditingControls && !hideZoomAndUndo && !hideToolbox;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor

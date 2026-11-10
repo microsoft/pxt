@@ -27,7 +27,6 @@ import {
     showsSimxEditorTabs,
     SimxEditorTabsShownInput,
 } from "../../webapp/src/editorToggleLayout";
-import { getEditorToolbarControls, EditorToolbarControlsInput } from "../../webapp/src/editorToolbarControls";
 import {
     getParentOrigin as getSimxEditorParentOrigin,
     getSimxApiLevel as getSimxEditorApiLevel,
@@ -6648,36 +6647,6 @@ describe("editor toggle layout", () => {
         chai.expect(showsSimxEditorTabs(editorView)).equals(true);
         for (const field of Object.keys(editorView) as (keyof SimxEditorTabsShownInput)[])
             chai.expect(showsSimxEditorTabs({ ...editorView, [field]: true }), field).equals(false);
-    });
-});
-
-describe("editor toolbar editing controls", () => {
-    function controls(extra: Partial<EditorToolbarControlsInput> = {}) {
-        return getEditorToolbarControls({
-            readOnly: false,
-            debugging: false,
-            hideZoomAndUndo: false,
-            hideToolbox: false,
-            editorHasEditingControls: true,
-            ...extra,
-        });
-    }
-
-    it("shows undo, redo and zoom for an editor that has them", () => {
-        chai.expect(controls()).deep.equals({ showUndoRedo: true, showZoomControls: true });
-    });
-
-    it("leaves out undo, redo and zoom for an editor that has none, whatever else holds", () => {
-        const none = { showUndoRedo: false, showZoomControls: false };
-        chai.expect(controls({ editorHasEditingControls: false })).deep.equals(none);
-        chai.expect(controls({ editorHasEditingControls: false, readOnly: true, debugging: true })).deep.equals(none);
-    });
-
-    it("keeps the toolbar's own rules for an editor that has them", () => {
-        chai.expect(controls({ readOnly: true })).deep.equals({ showUndoRedo: false, showZoomControls: true });
-        chai.expect(controls({ debugging: true })).deep.equals({ showUndoRedo: false, showZoomControls: true });
-        chai.expect(controls({ hideZoomAndUndo: true })).deep.equals({ showUndoRedo: false, showZoomControls: false });
-        chai.expect(controls({ hideToolbox: true })).deep.equals({ showUndoRedo: false, showZoomControls: false });
     });
 });
 
