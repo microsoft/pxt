@@ -1019,7 +1019,7 @@ namespace pxt {
 
         /**
          * If this package's pxt.json sets a palette, makes it the target's palette.
-         * Dependencies apply theirs first and the project last, so the project
+         * Compiling applies dependencies first and the project last, so the project
          * overrides everything. Between unrelated dependencies, the last one wins.
          */
         patchAppTargetPalette() {
@@ -1030,9 +1030,8 @@ namespace pxt {
         }
 
         /**
-         * Returns the palette this package's images are drawn with. Uses the palette
-         * from this package's pxt.json if it sets one. Otherwise falls back to the
-         * target's palette, which a dependency may have replaced (see
+         * Returns this package's own palette if its pxt.json sets one. Otherwise
+         * returns the target's palette, which a dependency may have replaced (see
          * patchAppTargetPalette).
          */
         effectivePalette(): string[] | undefined {
