@@ -3,11 +3,9 @@
 import * as Blockly from "blockly";
 
 /**
- * Returns the fixed instances of the type `qName` that `apis` declares: its
- * variables marked `fixedInstance` whose type is `qName` or a type extending
- * it, by descending `weight` (50 when unset).
- * @param apis the API info declaring the type and its instances
- * @param qName the fully qualified name of the fixed-instance type
+ * Finds all the exported variable symbols of a `fixedInstances` type and sorts them based
+ * on weight (defaults to 50 when not specified). Also handles subtypes that extend the
+ * specified type.
  */
 export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
     const symbols = pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
