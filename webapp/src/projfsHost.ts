@@ -261,7 +261,7 @@ function isWritableName(name: string): boolean {
 }
 
 /**
- * Returns the names in a list of the project's pxt.json.
+ * Returns either the `files` or `testFiles` listed in a project's pxt.json.
  * @param list the list to read: `files` (the default) or `testFiles`
  */
 function getListedFiles(files: pxt.Map<string>, list: "files" | "testFiles" = "files"): string[] {
