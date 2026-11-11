@@ -680,12 +680,15 @@ namespace ts.pxtc {
 
 
     export let apiLocalizationStrings: pxt.Map<string> = {};
+    let packageLocalizationStrings: pxt.Map<string> = {};
 
     export async function localizeApisAsync(apis: pxtc.ApisInfo, mainPkg: pxt.MainPackage): Promise<pxtc.ApisInfo> {
         const lang = pxtc.Util.userLanguage();
 
-        if (lang == "en")
+        if (lang == "en") {
+            packageLocalizationStrings = {};
             return Promise.resolve(cleanLocalizations(apis));
+        }
 
         const langLower = lang.toLowerCase();
         const attrJsLocsKey = langLower + "|jsdoc";
@@ -695,6 +698,7 @@ namespace ts.pxtc {
         const loc = await mainPkg.localizationStringsAsync(lang);
         if (apiLocalizationStrings)
             Util.jsonMergeFrom(loc, apiLocalizationStrings);
+        packageLocalizationStrings = loc;
 
         const toLocalize = Util.values(apis.byQName).filter(fn => fn.attributes._translatedLanguageCode !== lang);
         await Util.promiseMapAll(toLocalize, async fn => {
@@ -884,11 +888,7 @@ namespace ts.pxtc {
     export function getBlockTranslationsCacheKey(key: string): string | undefined {
         const cache = pxt.Util.translationsCache();
 
-        if (cache[BLOCK_TRANSLATION_CACHE_KEY]) {
-            return cache[BLOCK_TRANSLATION_CACHE_KEY][key];
-        }
-
-        return undefined;
+        return cache[BLOCK_TRANSLATION_CACHE_KEY]?.[key] || packageLocalizationStrings[key];
     }
 
     function hasEquivalentParameters(a: pxt.blocks.BlockCompileInfo, b: pxt.blocks.BlockCompileInfo) {

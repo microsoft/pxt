@@ -1242,15 +1242,12 @@ function compileArgument(e: Environment, b: Blockly.Block, p: pxt.blocks.BlockPa
 
         // For some enums in pxt-minecraft, we emit the members as constants that are defined in
         // libs/core. For example, Blocks.GoldBlock is emitted as GOLD_BLOCK
-        const type = e.blocksInfo.apis.byQName[p.type];
-        if (type && type.attributes.emitAsConstant) {
-            for (const symbolName of Object.keys(e.blocksInfo.apis.byQName)) {
-                const symbol = e.blocksInfo.apis.byQName[symbolName];
-                if (symbol && symbol.attributes && symbol.attributes.enumIdentity === f) {
-                    return pxt.blocks.mkText(symbolName);
-                }
-            }
-        }
+        const apis = e.blocksInfo.apis;
+        const enumNames = pxt.blocks.getConfiguredEnumNames(p, apis);
+        const selectedEnum = typeof f === "string" ? f.slice(0, f.lastIndexOf(".")) : undefined;
+        const enumName = enumNames.indexOf(selectedEnum) >= 0 ? selectedEnum : p.type;
+        const constant = pxt.blocks.getEnumConstant(apis, enumName, f);
+        if (constant) return pxt.blocks.mkText(constant.qName);
 
         let text = pxt.blocks.mkText(f)
         text.canIndentInside = typeof f == "string" && f.indexOf('\n') >= 0;
