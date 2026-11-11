@@ -540,6 +540,63 @@ describe("comment attribute parser", () => {
         chai.expect(strings["display.showNumber|param|value|defl"]).to.equal(undefined);
     });
 
+    it("should extract display-only default variable names", () => {
+        const blockSet = testSymbolInfo("sprites.create", "create sprite", [], `
+            //% blockSetVariable="projectile"
+            //% blockSetVariableLocalizable
+        `);
+        blockSet.retType = "Sprite";
+        const unquoted = testSymbolInfo("sprites.follow", "follow $other=variables_get", [testParameter("other", "Sprite")], `
+            //% other.defl=otherSprite
+            //% other.fieldOptions.localizeVariable=true
+        `);
+        const quotedOne = testSymbolInfo("images.draw", "draw in $picture=variables_get", [testParameter("picture", "Image")], `
+            //% picture.defl="picture"
+            //% picture.fieldOptions.localizeVariable=true
+        `);
+        const quotedTwo = testSymbolInfo("images.fill", "fill $picture=variables_get", [testParameter("picture", "Image")], `
+            //% picture.defl="picture"
+            //% picture.fieldOptions.localizeVariable=true
+        `);
+
+        const docs = pxtc.genDocs("test", testApisInfo([blockSet, unquoted, quotedOne, quotedTwo]), { locs: true });
+        const strings = JSON.parse(docs["test-strings.json"]);
+        chai.expect(strings["{id:var}projectile"]).to.equal("projectile");
+        chai.expect(strings["{id:var}otherSprite"]).to.equal("otherSprite");
+        chai.expect(strings["{id:var}picture"]).to.equal("picture");
+        chai.expect(strings["images.draw|param|picture|defl"]).to.equal(undefined);
+        chai.expect(Object.keys(strings).filter(key => key === "{id:var}picture")).to.have.length(1);
+
+        const notOptedIn = testSymbolInfo("light.createStrip", "create strip", [], `
+            //% blockSetVariable="strip"
+        `);
+        notOptedIn.retType = "Strip";
+        const unscoped = JSON.parse(pxtc.genDocs("test", testApisInfo([notOptedIn]), { locs: true })["test-strings.json"]);
+        chai.expect(unscoped["{id:var}strip"]).to.equal(undefined);
+    });
+
+    it("should cache variable display translations without translating raw parameter defaults", async () => {
+        const symbol = testSymbolInfo("images.draw", "draw in $picture=variables_get", [testParameter("picture", "Image")], `
+            //% picture.defl="picture"
+            //% picture.fieldOptions.localizeVariable=true
+        `);
+        pxt.Util.setUserLanguage("da");
+        try {
+            await pxtc.localizeApisAsync(testApisInfo([symbol]), {
+                localizationStringsAsync: () => Promise.resolve({
+                    "{id:var}picture": "billede"
+                })
+            } as unknown as pxt.MainPackage);
+
+            chai.expect(pxtc.getBlockTranslationsCacheKey("{id:var}picture")).to.equal("billede");
+            chai.expect(symbol.attributes.paramDefl["picture"]).to.equal("picture");
+            chai.expect(symbol.parameters[0].default).to.equal("picture");
+        }
+        finally {
+            pxt.Util.setUserLanguage("en");
+        }
+    });
+
     it("should apply localized parameter default strings", async () => {
         const explicitDefault = testSymbolInfo("game.setGameOverMessage", "use message $message", [testParameter("message", "string")], `
             //% message.defl="GAME OVER!"
