@@ -151,9 +151,6 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
             },
             { transformOrigin: "top left", transform: "none" }
         ], { duration: 200, easing: "ease-in-out" });
-        const updateMotion = () => {
-            if (reducedMotion.matches) cancel();
-        };
         const cleanup = () => {
             reducedMotion.removeEventListener("change", updateMotion);
             animation.onfinish = animation.oncancel = null;
@@ -164,6 +161,9 @@ export class Sidepanel extends data.Component<SidepanelProps, SidepanelState> {
         const cancel = () => {
             animation.cancel();
             cleanup();
+        };
+        const updateMotion = () => {
+            if (reducedMotion.matches) cancel();
         };
         this.cancelSimulatorTransition = cancel;
         reducedMotion.addEventListener("change", updateMotion);
