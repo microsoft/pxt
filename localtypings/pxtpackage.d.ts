@@ -217,6 +217,22 @@ declare namespace pxt {
         variant?: string;
     }
 
+    interface GridPickerCategory {
+        id: string;
+        name: string;
+        weight?: number;
+        icon?: string;
+        tags?: string[];
+        flat?: boolean;
+    }
+
+    interface GridPickerCatalog {
+        name: string;
+        tabs: GridPickerCategory[];
+        groups?: GridPickerCategory[];
+        filters?: GridPickerCategory[];
+    }
+
     interface JRes {
         id: string; // something like "sounds.bark"
         data: string;
@@ -228,6 +244,8 @@ declare namespace pxt {
         tilemapTile?: boolean;
         tileset?: string[];
         tags?: string[];
+        weight?: number;
+        gridPickerCatalog?: GridPickerCatalog;
     }
 
     type SnippetOutputType = 'blocks'
