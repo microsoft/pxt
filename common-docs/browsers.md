@@ -22,6 +22,8 @@ The compatible **Windows** browsers are:
 
 You need to have one of these **macOS** versions:
 
+* Golden Gate 27
+* Tahoe 26
 * Sequoia 15
 * Sonoma 14
 * Ventura 13
