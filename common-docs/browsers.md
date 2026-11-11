@@ -14,7 +14,7 @@ You need to have one of these **Windows** versions:
 
 The compatible **Windows** browsers are:
 
-* Microsoft Edge ([Download](https://www.microsoft.com/en-us/edge))
+* Microsoft Edge ([Download](https://explore.microsoft.com/en-us/edge))
 * Google Chrome
 * Mozilla Firefox
 
