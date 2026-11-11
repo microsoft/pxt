@@ -326,9 +326,9 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
   same source title independently.
 - Catalog labels use the package translation dictionary loaded for APIs. There is
   no separate catalog translation loader, and the JRES is never mutated.
-- Only resource-qualified `|gridPicker|` keys are looked up in the package
-  dictionary. That dictionary also holds JSDoc under bare API names, so a bare
-  title lookup could pick up documentation text instead of a label.
+- The catalog resolver only requests resource-qualified `|gridPicker|` keys from
+  the shared translation lookup. The package dictionary also holds JSDoc under
+  bare API names, so the picker does not fall back to bare-title dictionary keys.
 - Bundled catalogs also contribute their source titles to target strings.
   Existing target-title translations remain a fallback, and missing translations
   use the original names.

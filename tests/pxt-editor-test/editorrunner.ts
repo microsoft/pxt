@@ -210,20 +210,40 @@ describe("library-owned picker catalogs", () => {
         const resources = main.getJRes();
         const apis: pxtc.ApisInfo = { byQName: {}, jres: resources };
         const oldLanguage = pxt.Util.userLanguage();
+        const getTranslation = pxtc.getBlockTranslationsCacheKey;
+        const lookedUp: string[] = [];
         // Package dictionaries also hold JSDoc under bare API names, which must not become labels.
         main.localizationStringsAsync = async () => ({
+            "Images": "Documentation for an API named Images",
             "Animals": "Documentation for an API named Animals",
-            "music": "Documentation for the music parameter",
+            "All": "Documentation for an API named All",
+            "Birds": "Documentation for an API named Birds",
+            "Playable": "Documentation for an API named Playable",
             "alpha.pickers.icons|gridPicker|Birds": "Alpha birds"
         });
         try {
             pxt.Util.setUserLanguage("fr");
             await pxtc.localizeApisAsync(apis, main);
+            chai.expect(getTranslation("Animals")).equals("Documentation for an API named Animals");
+            pxtc.getBlockTranslationsCacheKey = key => {
+                lookedUp.push(key);
+                return getTranslation(key);
+            };
             const alpha = pxt.getGridPickerCatalog(resources, "alpha.pickers.icons");
+            chai.expect(alpha.name).equals("Images");
             chai.expect(alpha.tabs[0].name).equals("Animals");
+            chai.expect(alpha.tabs[1].name).equals("All");
             chai.expect(alpha.groups[0].name).equals("Alpha birds");
-            chai.expect(pxtc.getBlockTranslationsCacheKey("music")).equals(undefined);
+            chai.expect(alpha.filters[0].name).equals("Playable");
+            chai.expect(lookedUp).deep.equals([
+                "alpha.pickers.icons|gridPicker|Images",
+                "alpha.pickers.icons|gridPicker|All",
+                "alpha.pickers.icons|gridPicker|Animals",
+                "alpha.pickers.icons|gridPicker|Birds",
+                "alpha.pickers.icons|gridPicker|Playable"
+            ]);
         } finally {
+            pxtc.getBlockTranslationsCacheKey = getTranslation;
             pxt.Util.setUserLanguage("en");
             await pxtc.localizeApisAsync(apis, main);
             pxt.Util.setUserLanguage(oldLanguage);
