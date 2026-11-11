@@ -1255,6 +1255,8 @@ declare namespace ts.pxtc {
         target: string;
         variant: string;
         versions: pxt.TargetVersions;
+        // enabled compile switches that affect the native build (e.g. "gcDebug")
+        compileSwitches?: string[];
     }
 
     interface ExtensionTarget {

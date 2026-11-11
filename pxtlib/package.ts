@@ -1184,9 +1184,11 @@ namespace pxt {
                 }
 
                 let einfo: pxtc.ExtensionInfo;
+                let compileSwitches: string[];
 
                 try {
                     res.target = pxt.appTarget.compile;
+                    compileSwitches = cpp.getEnabledNativeCompileSwitches();
                     einfo = cpp.getExtensionInfo(this)
                     if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
@@ -1200,7 +1202,7 @@ namespace pxt {
                 }
 
                 einfo.appVariant = variant;
-                injectProjectCompileData(einfo, this)
+                injectProjectCompileData(einfo, this, compileSwitches)
 
                 const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
 
@@ -1514,17 +1516,21 @@ namespace pxt {
         return cfg && /\bbeta\b/.test(cfg.description);
     }
 
-    function injectProjectCompileData(extinfo: pxtc.ExtensionInfo, mainPkg: MainPackage) {
+    function injectProjectCompileData(extinfo: pxtc.ExtensionInfo, mainPkg: MainPackage, compileSwitches: string[]) {
         const data: pxtc.ProjectCompileData = {
             files: {},
             target: pxt.appTarget.id,
             variant: extinfo.appVariant || pxt.appTargetVariant,
             versions: pxt.appTarget.versions
         };
+        // only include when non-empty so that the sha is unchanged for default builds
+        if (compileSwitches?.length) {
+            data.compileSwitches = compileSwitches;
+        }
 
         for (const pkg of mainPkg.sortedDeps(true)) {
             const prefix = pkg == mainPkg ? "" : "pxt_modules/" + pkg.id + "/";
-            const config = U.clone(pkg.config);
+            const config: PackageConfig & { installedVersion?: string } = U.clone(pkg.config);
             const resolveVersions = (deps: Map<string>): Map<string> => {
                 const result: Map<string> = {};
                 for (const id of Object.keys(deps || {})) {
@@ -1538,6 +1544,38 @@ namespace pxt {
             // testDependencies are merged into the main dependencies by pkg.dependencies(), so
             // it's safe to delete them from the config object here
             delete config.testDependencies;
+            // Remove metadata that does not affect package loading or the native build.
+            delete config.description;
+            delete config.displayName;
+            delete config.icon;
+            delete config.documentation;
+            delete config.license;
+            delete config.authors;
+            delete config.preferredEditor;
+            delete config.languageRestriction;
+            delete config.public;
+            delete config.palette;
+            delete config.paletteNames;
+            delete config.card;
+            delete config.weight;
+            delete config.gistId;
+            delete config.hidden;
+            delete config.searchOnly;
+            delete config.snippetBuilders;
+            delete config.requiredCategories;
+            delete config.firmwareUrl;
+            delete config.disableTargetTemplateFiles;
+            delete config.theme;
+            delete config.toolboxFilter;
+            delete config.disableHistory;
+            if (config.targetVersions) {
+                delete config.targetVersions.targetWebsite;
+                delete config.targetVersions.pxt;
+                delete config.targetVersions.tag;
+                delete config.targetVersions.branch;
+                delete config.targetVersions.commits;
+            }
+
             if (pkg != mainPkg || pkg.ignoreTests) {
                 delete config.testFiles;
             }

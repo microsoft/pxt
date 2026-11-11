@@ -155,6 +155,14 @@ namespace pxt.cpp {
         }
     }
 
+    // compile switches that are mapped to #defines in the generated pxtconfig.h
+    const nativeCompileSwitches: (keyof pxtc.CompileSwitches)[] = ["boxDebug", "profile", "gcDebug", "numFloat"]
+
+    export function getEnabledNativeCompileSwitches(): string[] {
+        const switches = pxt.appTarget.compile?.switches || {}
+        return nativeCompileSwitches.filter(s => !!switches[s])
+    }
+
     export function getExtensionInfo(mainPkg: MainPackage): pxtc.ExtensionInfo {
         const pkgSnapshot: Map<string> = {
             "__appVariant": pxt.appTargetVariant || ""
