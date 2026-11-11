@@ -1567,8 +1567,7 @@ namespace pxt {
                         !/^[a-zA-Z0-9_.-]+$/.test(part)
                     )
                 ) {
-                    pxt.warn("Excluding invalid filename from compilation request: " + filename);
-                    continue;
+                    U.userError(lf("Cannot compile native file {0} because its path contains an unsupported character or component. Rename the file or folder before compiling.", filename));
                 }
 
                 data.files[filename] = pkg.readFile(fn);
