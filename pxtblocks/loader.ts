@@ -34,8 +34,7 @@ import { getArgumentReporterParent } from "./plugins/functions/utils";
 import { isFunctionDefinition } from "./compiler/util";
 import { AUTO_DISABLED_REASON } from "./compiler/compiler";
 import { DEFAULT_LED_COLORS, FieldLEDMatrixColorPicker, getDefaultColorNames } from "./fields/field_ledmatrix_colorPicker";
-import { getFixedInstanceDropdownOptions, getSymbolDropdownOptions } from "./fields/symbolDropdownOptions";
-export { getFixedInstanceDropdownValues } from "./fields/symbolDropdownOptions";
+import { getSymbolDropdownOptions, getSymbolPickerTags, resolveDropdownDefault } from "./fields/symbolDropdownOptions";
 
 export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
 
@@ -500,8 +499,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     const defName = pr.definitionName;
                     const actName = pr.actualName;
 
-                    let isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
-                    let isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
+                    const isEnum = typeInfo && typeInfo.kind == pxtc.SymbolKind.Enum
+                    const isFixed = typeInfo && !!typeInfo.attributes.fixedInstances && !pr.shadowBlockId;
                     let isConstantShim = !!fn.attributes.constantShim;
                     let isCombined = pr.type == "@combined@"
                     let customField = pr.fieldEditor;
@@ -509,41 +508,50 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                         customField = INSTANCE_DROPDOWN_FIELD;
                     let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                     let fieldType = pr.type;
+                    const fieldOptions = pr.fieldOptions;
+                    const pickerSymbols = pxt.blocks.getGridPickerDropdownValues(info.apis, pr);
 
-                    if (isEnum || isFixed || isConstantShim || isCombined) {
-                        let dd: Blockly.MenuOption[];
+                    if (pickerSymbols || isEnum || isFixed || isConstantShim || isCombined) {
+                        let syms: pxtc.SymbolInfo[];
 
-                        if (isEnum) {
-                            dd = getSymbolDropdownOptions(getEnumDropdownValues(info.apis, pr.type), pr.defaultValue, imgConv);
+                        if (pickerSymbols) {
+                            syms = pickerSymbols;
+                        }
+                        else if (isEnum) {
+                            syms = pxt.blocks.getEnumDropdownValues(info.apis, pr.type);
                         }
                         else if (isFixed) {
-                            dd = getFixedInstanceDropdownOptions(info, typeInfo.qName, pr.defaultValue, imgConv);
+                            syms = getFixedInstanceDropdownValues(info.apis, typeInfo.qName);
                         }
                         else if (isCombined) {
-                            dd = getSymbolDropdownOptions(fn.combinedProperties.map(p => pxt.Util.lookup(info.apis.byQName, p)), pr.defaultValue, imgConv);
+                            syms = fn.combinedProperties.map(p => pxt.Util.lookup(info.apis.byQName, p))
                         }
                         else {
-                            dd = getSymbolDropdownOptions(getConstantDropdownValues(info.apis, fn.qName), pr.defaultValue, imgConv);
+                            syms = getConstantDropdownValues(info.apis, fn.qName);
                         }
 
-                        if (dd.length == 0) {
-                            pxt.error(`no instances of ${typeInfo.qName} found`)
+                        if (syms.length == 0) {
+                            pxt.error(`no instances of ${typeInfo?.qName || fieldType} found`)
                         }
+                        const dd = getSymbolDropdownOptions(info, syms, pr.defaultValue, imgConv);
 
                         if (customField) {
-                            let defl = fn.attributes.paramDefl[actName] || "";
+                            let defl = resolveDropdownDefault(info, dd, fn.attributes.paramDefl[actName] || "");
+                            const optionTags: pxt.Map<string[]> = {};
+                            syms.forEach(symbol => optionTags[symbol.qName] = getSymbolPickerTags(info, symbol));
                             const options = {
                                 data: dd,
                                 colour: color,
                                 label: fieldLabel,
                                 type: fieldType,
-                                blocksInfo: info
+                                blocksInfo: info,
+                                optionTags
                             } as FieldCustomDropdownOptions;
                             if (isFixed && customField === INSTANCE_DROPDOWN_FIELD) {
                                 options.getBlocksInfo = () => cachedBlockInfo;
                                 options.defaultValue = pr.defaultValue;
                             }
-                            pxt.Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[actName] || {});
+                            pxt.Util.jsonMergeFrom(options, fieldOptions || {});
                             fields.push(namedField(createFieldEditor(customField, defl, options), defName));
                         }
                         else
@@ -557,7 +565,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                             type: fieldType,
                             blocksInfo: info
                         } as FieldCustomOptions;
-                        pxt.Util.jsonMergeFrom(options, fn.attributes.paramFieldEditorOptions && fn.attributes.paramFieldEditorOptions[pr.actualName] || {});
+                        pxt.Util.jsonMergeFrom(options, fieldOptions || {});
                         fields.push(namedField(createFieldEditor(customField, defl, options), pr.definitionName));
                     } else {
                         inputName = defName;
@@ -1004,8 +1012,8 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
     input.setAriaLabelProvider(label);
 }
 
-function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string) {
-    return pxt.Util.values(apis.byQName).filter(sym => sym.namespace === enumName && !sym.attributes.blockHidden);
+export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string): pxtc.SymbolInfo[] {
+    return pxt.blocks.getFixedInstanceDropdownValues(apis, qName);
 }
 
 export function generateIcons(instanceSymbols: pxtc.SymbolInfo[]) {

@@ -170,6 +170,280 @@ pxt.appTarget = {
 
 const differ = new dmp.diff_match_patch();
 
+describe("shared gallery and picker tags", () => {
+    it("parses whitespace consistently without losing category label casing", () => {
+        chai.expect(pxt.sprite.parseTags("  Sprite\t?HERO\n!tile  ")).deep.equals(["Sprite", "?HERO", "!tile"]);
+        chai.expect(pxt.sprite.parseTags(["", " category-Forest ", "hero", "hero"])).deep.equals(["category-Forest", "hero"]);
+        chai.expect(pxt.sprite.parseTags(["HERO", "hero", "category-Forest", "category-forest"]))
+            .deep.equals(["HERO", "category-Forest"]);
+    });
+
+    it("shares case-insensitive positive, optional, and negative constraints", () => {
+        const matches = pxt.sprite.compileTagFilter(" HERO\t!tile ");
+        chai.expect(matches(["?Hero"])).equals(true);
+        chai.expect(matches(["HERO", "TILE"])).equals(false);
+        chai.expect(matches([])).equals(false);
+        chai.expect(matches(undefined)).equals(false);
+        chai.expect(pxt.sprite.compileTagFilter("!tile")([])).equals(true);
+        chai.expect(pxt.sprite.compileTagFilter("!tile")(["?tile"])).equals(true);
+        chai.expect(pxt.sprite.compileTagFilter("")()).equals(true);
+    });
+
+    it("retains the image gallery's any-selected-tag behavior", () => {
+        const any = pxt.sprite.compileTagFilter(["hero", "villain"], true);
+        const all = pxt.sprite.compileTagFilter(["hero", "villain"]);
+        chai.expect(any(["?HERO"])).equals(true);
+        chai.expect(any(["villain"])).equals(true);
+        chai.expect(all(["hero"])).equals(false);
+        chai.expect(all(["hero", "villain"])).equals(true);
+    });
+
+    it("merges symbol and referenced-resource tags through the common parser", () => {
+        const symbol: pxtc.SymbolInfo = {
+            qName: "extension.hero", kind: pxtc.SymbolKind.Variable, name: "hero", namespace: "extension",
+            fileName: "test.ts", parameters: [], retType: "Image",
+            attributes: { callingConvention: 0, paramDefl: {}, jres: "assets.hero", tags: "hero\tplayable" }
+        };
+        const apis: pxtc.ApisInfo = {
+            byQName: { [symbol.qName]: symbol },
+            jres: { "assets.hero": { id: "assets.hero", data: "", mimeType: "image/png", tags: ["?hero", "category-Forest"] } }
+        };
+        chai.expect(pxt.sprite.getSymbolTags(apis, symbol)).deep.equals(["hero", "playable", "?hero", "category-Forest"]);
+        chai.expect(pxt.sprite.filterItems([
+            { qName: "hero", src: "", alt: "Hero", tags: ["?HERO"] },
+            { qName: "tile", src: "", alt: "Tile", tags: ["hero", "tile"] }
+        ], ["hero", "!tile"]).map(item => item.qName)).deep.equals(["hero"]);
+    });
+});
+
+describe("library-owned picker catalogs", () => {
+    function catalogPackage(): pxt.MainPackage {
+        const files: pxt.Map<pxt.Map<string>> = {};
+        const host: pxt.Host = {
+            readFile: (pkg, name) => files[pkg.id]?.[name],
+            writeFile: () => { throw new Error("Unexpected catalog test write"); },
+            downloadPackageAsync: async () => { throw new Error("Unexpected catalog test download"); },
+            getHexInfoAsync: async () => { throw new Error("Unexpected native compilation"); },
+            cacheStoreAsync: async () => {},
+            cacheGetAsync: async () => undefined
+        };
+        const main = new pxt.MainPackage(host);
+        main.config = { name: "main", files: [], dependencies: { alpha: "*", beta: "*" } };
+        main.isLoaded = true;
+        for (const id of ["alpha", "beta"]) {
+            const dep = new pxt.Package(id, "*", main, main, id);
+            dep.config = { name: id, files: ["pickers.jres"], dependencies: {} };
+            dep.isLoaded = true;
+            files[id] = { "pickers.jres": JSON.stringify({
+                "*": { namespace: `${id}.pickers`, mimeType: "application/x-makecode-grid-picker" },
+                icons: { gridPickerCatalog: {
+                    name: "Images",
+                    tabs: [{ id: "all", name: "All", flat: true, weight: 0 }, { id: "animals", name: "Animals", tags: ["animal"], weight: 80 }],
+                    groups: [{ id: "birds", name: "Birds", tags: ["bird"] }],
+                    filters: [{ id: "playable", name: "Playable", tags: ["playable"] }]
+                } }
+            }) };
+            main.deps[id] = dep;
+        }
+        return main;
+    }
+
+    it("loads independent catalogs from multiple extension packages without target configuration", () => {
+        const resources = catalogPackage().getJRes();
+        chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").name).equals("Images");
+        chai.expect(pxt.getGridPickerCatalog(resources, "beta.pickers.icons").groups[0].name).equals("Birds");
+        chai.expect(pxt.getGridPickerCatalog(resources, "missing")).equals(undefined);
+        chai.expect(Object.keys(resources)).contains("alpha.pickers.icons").and.contains("beta.pickers.icons");
+    });
+
+    describe("picker weight ordering", () => {
+        it("uses descending toolbox-style weights with stable default priorities", () => {
+            const items = [
+                { id: "default" }, { id: "zero", weight: 0 }, { id: "high", weight: 100 },
+                { id: "negative", weight: -10 }, { id: "explicitDefault", weight: 50 }, { id: "highTie", weight: 100 }
+            ];
+            const original = items.slice();
+            chai.expect(pxt.sprite.sortByWeight(items, item => item.weight).map(item => item.id))
+                .deep.equals(["high", "highTie", "default", "explicitDefault", "zero", "negative"]);
+            chai.expect(items).deep.equals(original);
+        });
+
+        it("resolves JRES weights through aliases before falling back to symbol annotations", () => {
+            const symbol: pxtc.SymbolInfo = {
+                qName: "extension.hero", kind: pxtc.SymbolKind.Variable, name: "hero", namespace: "extension",
+                fileName: "test.ts", parameters: [], retType: "Image",
+                attributes: { callingConvention: 0, paramDefl: {}, jres: "assets.hero", weight: 90 }
+            };
+            const apis: pxtc.ApisInfo = {
+                byQName: { [symbol.qName]: symbol },
+                jres: { "assets.hero": { id: "assets.hero", data: "", mimeType: "image/png", weight: 0 } }
+            };
+            chai.expect(pxt.sprite.getSymbolWeight(apis, symbol.qName)).equals(0);
+            delete apis.jres["assets.hero"].weight;
+            chai.expect(pxt.sprite.getSymbolWeight(apis, symbol.qName)).equals(90);
+            apis.jres["assets.hero"].weight = -5;
+            chai.expect(pxt.sprite.getSymbolWeight(apis, symbol.qName)).equals(-5);
+            chai.expect(pxt.sprite.getSymbolWeight(apis, "missing")).equals(undefined);
+            const inflated = pxt.inflateJRes(JSON.parse('{"*":{"namespace":"weighted"},"entry":{"weight":0}}'));
+            chai.expect(inflated["weighted.entry"].weight).equals(0);
+        });
+    });
+
+    it("does not turn picker metadata into image or JSON gallery assets", () => {
+        const resources = catalogPackage().getJRes();
+        const assets = new pxt.TilemapProject();
+        assets.loadAssetsJRes(resources, true);
+        chai.expect(assets.getGalleryAssets(pxt.AssetType.Image)).to.have.length(0);
+        chai.expect(assets.getGalleryAssets(pxt.AssetType.Json)).to.have.length(0);
+    });
+
+    it("localizes extension-owned titles independently and restores untranslated names", async () => {
+        const main = catalogPackage();
+        const resources = main.getJRes();
+        const before = JSON.stringify(resources);
+        const apis: pxtc.ApisInfo = { byQName: {}, jres: resources };
+        const oldLanguage = pxt.Util.userLanguage();
+        main.localizationStringsAsync = async lang => lang === "de" ? {
+            "alpha.pickers.icons|gridPicker|Images": "Bilder"
+        } : ({
+            "alpha.pickers.icons|gridPicker|Animals": "Alpha animals",
+            "beta.pickers.icons|gridPicker|Animals": "Beta animals",
+            "alpha.pickers.icons|gridPicker|Birds": "Alpha birds",
+            "alpha.pickers.icons|gridPicker|Playable": "Alpha playable"
+        });
+        try {
+            pxt.Util.setUserLanguage("fr");
+            await pxtc.localizeApisAsync(apis, main);
+            const alpha = pxt.getGridPickerCatalog(resources, "alpha.pickers.icons");
+            const beta = pxt.getGridPickerCatalog(resources, "beta.pickers.icons");
+            chai.expect(alpha.tabs[0].name).equals("Alpha animals");
+            chai.expect(beta.tabs[0].name).equals("Beta animals");
+            chai.expect(alpha.groups[0].name).equals("Alpha birds");
+            chai.expect(alpha.filters[0].name).equals("Alpha playable");
+            chai.expect(alpha.tabs[1].name).equals("All");
+            pxt.Util.setUserLanguage("de");
+            await pxtc.localizeApisAsync(apis, main);
+            chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").name).equals("Bilder");
+            chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name).equals("Animals");
+            chai.expect(pxt.getGridPickerCatalog(resources, "beta.pickers.icons").tabs[0].name).equals("Animals");
+            pxt.Util.setUserLanguage("en");
+            await pxtc.localizeApisAsync(apis, main);
+            chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name).equals("Animals");
+            chai.expect(JSON.stringify(resources)).equals(before);
+        } finally {
+            pxt.Util.setUserLanguage(oldLanguage);
+        }
+    });
+
+    it("only reads resource-qualified catalog keys from the package dictionary", async () => {
+        const main = catalogPackage();
+        const resources = main.getJRes();
+        const apis: pxtc.ApisInfo = { byQName: {}, jres: resources };
+        const oldLanguage = pxt.Util.userLanguage();
+        const getTranslation = pxtc.getBlockTranslationsCacheKey;
+        const lookedUp: string[] = [];
+        // Package dictionaries also hold JSDoc under bare API names, which must not become labels.
+        main.localizationStringsAsync = async () => ({
+            "Images": "Documentation for an API named Images",
+            "Animals": "Documentation for an API named Animals",
+            "All": "Documentation for an API named All",
+            "Birds": "Documentation for an API named Birds",
+            "Playable": "Documentation for an API named Playable",
+            "alpha.pickers.icons|gridPicker|Birds": "Alpha birds"
+        });
+        try {
+            pxt.Util.setUserLanguage("fr");
+            await pxtc.localizeApisAsync(apis, main);
+            chai.expect(getTranslation("Animals")).equals("Documentation for an API named Animals");
+            pxtc.getBlockTranslationsCacheKey = key => {
+                lookedUp.push(key);
+                return getTranslation(key);
+            };
+            const alpha = pxt.getGridPickerCatalog(resources, "alpha.pickers.icons");
+            chai.expect(alpha.name).equals("Images");
+            chai.expect(alpha.tabs[0].name).equals("Animals");
+            chai.expect(alpha.tabs[1].name).equals("All");
+            chai.expect(alpha.groups[0].name).equals("Alpha birds");
+            chai.expect(alpha.filters[0].name).equals("Playable");
+            chai.expect(lookedUp).deep.equals([
+                "alpha.pickers.icons|gridPicker|Images",
+                "alpha.pickers.icons|gridPicker|All",
+                "alpha.pickers.icons|gridPicker|Animals",
+                "alpha.pickers.icons|gridPicker|Birds",
+                "alpha.pickers.icons|gridPicker|Playable"
+            ]);
+        } finally {
+            pxtc.getBlockTranslationsCacheKey = getTranslation;
+            pxt.Util.setUserLanguage("en");
+            await pxtc.localizeApisAsync(apis, main);
+            pxt.Util.setUserLanguage(oldLanguage);
+        }
+    });
+
+    it("retains former target-string translations as a fallback", () => {
+        const resources = catalogPackage().getJRes();
+        const oldRlf = pxt.Util.rlf;
+        try {
+            pxt.Util.rlf = text => text === "Animals" ? "Existing target translation" : text;
+            chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name)
+                .equals("Existing target translation");
+        } finally {
+            pxt.Util.rlf = oldRlf;
+        }
+    });
+
+    it("ignores malformed catalogs without blocking API localization", async () => {
+        const main = catalogPackage();
+        const resources = main.getJRes();
+        const invalid = [
+            { name: "Broken" },
+            { name: "Broken", tabs: null },
+            { name: "Broken", tabs: {} },
+            { name: "Broken", tabs: "invalid" },
+            { name: "Broken", tabs: Array.of<unknown>(null) },
+            { name: "Broken", tabs: new Array<unknown>(), groups: {} },
+            ...["tabs", "groups", "filters"].reduce((catalogs, collection) =>
+                catalogs.concat([{}, [1], ["valid", 1]].map(tags => ({
+                    name: "Broken",
+                    tabs: [{ id: "valid", name: "Valid" }],
+                    [collection]: [{ id: "invalid", name: "Invalid", tags }]
+                }))), new Array<unknown>())
+        ];
+        invalid.forEach((catalog, index) => {
+            resources["invalid." + index] = JSON.parse(JSON.stringify({
+                id: "invalid." + index, mimeType: "application/x-makecode-grid-picker", data: "", gridPickerCatalog: catalog
+            }));
+        });
+        const apis: pxtc.ApisInfo = { byQName: {}, jres: resources };
+        const original = JSON.stringify(resources);
+        const oldLanguage = pxt.Util.userLanguage();
+        const oldReportError = pxt.reportError;
+        const reported: string[] = [];
+        pxt.reportError = (category, message) => { reported.push(category + ": " + message); };
+        main.localizationStringsAsync = async () => ({
+            "alpha.pickers.icons|gridPicker|Animals": "Localized animals"
+        });
+        try {
+            for (const language of ["en", "fr", "en"]) {
+                pxt.Util.setUserLanguage(language);
+                chai.expect(await pxtc.localizeApisAsync(apis, main)).equals(apis);
+                for (const index of invalid.keys()) {
+                    const id = "invalid." + index;
+                    chai.expect(pxt.getGridPickerCatalogStrings(id, resources[id].gridPickerCatalog)).deep.equals({});
+                    chai.expect(pxt.getGridPickerCatalog(resources, id)).equals(undefined);
+                }
+                chai.expect(pxt.getGridPickerCatalog(resources, "alpha.pickers.icons").tabs[0].name)
+                    .equals(language === "fr" ? "Localized animals" : "Animals");
+            }
+            chai.expect(reported.length).equals(invalid.length);
+            chai.expect(JSON.stringify(resources)).equals(original);
+        } finally {
+            pxt.reportError = oldReportError;
+            pxt.Util.setUserLanguage(oldLanguage);
+        }
+    });
+});
+
 describe("gallery code cards", () => {
     it("parses comma-separated tags and search terms as arrays", () => {
         const markdownCards = pxt.gallery.parseCodeCards(`

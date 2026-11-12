@@ -73,6 +73,107 @@ const FORWARD = SixDirection.Forward;
 //% enumIdentity="SixDirection.Back"
 const BACK = SixDirection.Back;
 
+enum PickerAnimal {
+    //% tags=mount
+    Chicken,
+    //% tags=mount
+    Cow
+}
+
+enum PickerMonster {
+    //% tags="rider mount"
+    Zombie,
+    //% tags=rider
+    Husk
+}
+
+enum PickerUnsupported {
+    Other
+}
+
+//% enumIdentity="PickerAnimal.Chicken"
+const PICKER_CHICKEN = PickerAnimal.Chicken;
+//% enumIdentity="PickerAnimal.Cow"
+const PICKER_COW = PickerAnimal.Cow;
+
+class PickerAsset {
+    value = 0;
+    constructor() {}
+}
+
+class PickerDevice {
+    value = 0;
+    constructor() {}
+
+    //% blockId=picker_device_action block="use %device"
+    //% this.fieldEditor=gridpicker
+    //% this.fieldOptions.fixedInstances=true
+    action(): void {
+    }
+}
+
+namespace pickerDevices {
+    //% fixedInstance
+    export const first = new PickerDevice();
+    //% fixedInstance
+    export const second = new PickerDevice();
+}
+
+namespace pickerAssets {
+    //% fixedInstance tags=unavailable weight=1000
+    export const other = new PickerAsset();
+    //% fixedInstance tags=eligible weight=10
+    export const earlier = new PickerAsset();
+    //% fixedInstance tags=eligible weight=90
+    export const allowed = new PickerAsset();
+}
+
+namespace pickerTest {
+    //% blockId=picker_choose_mount block="choose %choice"
+    //% value.fieldEditor="gridpicker"
+    //% choice.fieldOptions.enumNames="PickerAnimal,PickerMonster"
+    //% choice.fieldOptions.filter="rider"
+    export function chooseMount(value: number): void {
+    }
+
+    //% blockId=picker_mount_shim block="mount $value" shim=TD_ID
+    export function mount(value: PickerAnimal): number {
+        return value;
+    }
+
+    //% blockId=picker_choose_item block="item %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.enumNames="Item,PickerAnimal"
+    export function chooseItem(value: number): void {
+    }
+
+    //% blockId=picker_choose_asset block="asset %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.fixedInstances=true
+    //% choice.fieldOptions.filter=eligible
+    export function chooseAsset(value: PickerAsset): void {
+    }
+
+    //% blockId=picker_choose_mixed block="mixed %choice"
+    //% value.fieldEditor=gridpicker
+    //% value.fieldOptions.enumNames="PickerMonster"
+    //% choice.fieldOptions.width=300
+    export function chooseMixed(value: number): void {
+    }
+
+    //% blockId=picker_choose_disabled_asset block="disabled asset %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.fixedInstances=false
+    export function chooseDisabledAsset(value: PickerAsset): void {
+    }
+
+    //% blockId=picker_choose_alias block="alias %choice"
+    //% value.fieldEditor=gridpicker value.defl=PICKER_COW
+    //% choice.fieldOptions.enumNames="PickerAnimal"
+    export function chooseAlias(value: number): void {
+    }
+}
+
 declare namespace agent {
     /**
      * Commands the agent to destroy a block in the given direction

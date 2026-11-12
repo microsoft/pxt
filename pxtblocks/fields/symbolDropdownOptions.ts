@@ -2,32 +2,23 @@
 
 import * as Blockly from "blockly";
 
-/**
- * Finds all the exported variable symbols of a `fixedInstances` type and sorts them based
- * on weight (defaults to 50 when not specified). Also handles subtypes that extend the
- * specified type.
- */
-export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string) {
-    const symbols = pxt.Util.values(apis.byQName).filter(sym => sym.kind === pxtc.SymbolKind.Variable
-        && sym.attributes.fixedInstance
-        && isSubtype(apis, sym.retType, qName))
-        .sort((l, r) => (r.attributes.weight || 50) - (l.attributes.weight || 50))
-    return symbols
+export function getSymbolPickerTags(info: pxtc.BlocksInfo, symbol: pxtc.SymbolInfo): string[] {
+    return pxt.sprite.getSymbolTags(info.apis, symbol).map(tag => tag.toLowerCase());
 }
 
-function isSubtype(apis: pxtc.ApisInfo, specific: string, general: string) {
-    if (specific == general) return true
-    let inf = apis.byQName[specific]
-    if (inf && inf.extendsTypes)
-        return inf.extendsTypes.indexOf(general) >= 0
-    return false
+// Defaults can name a constant alias (such as SURVIVAL for GameMode.Survival), so map
+// those to the option they stand for. Defaults that already match an option are left alone.
+export function resolveDropdownDefault(info: pxtc.BlocksInfo, dd: Blockly.MenuOption[], value: string): string {
+    if (!value || dd.some(option => option[1] === value)) return value;
+    const identity = info.apis.byQName[value]?.attributes.enumIdentity;
+    return identity && dd.some(option => option[1] === identity) ? identity : value;
 }
 
 /**
  * Returns a list of Blockly menu options from a list of pxt symbols. The `defaultValue` parameter
  * specifies the option that will always appear first in the list (if present).
  */
-export function getSymbolDropdownOptions(symbols: pxtc.SymbolInfo[], defaultValue: string | undefined, imgConv: pxt.ImageConverter): Blockly.MenuOption[] {
+export function getSymbolDropdownOptions(info: pxtc.BlocksInfo, symbols: pxtc.SymbolInfo[], defaultValue: string | undefined, imgConv: pxt.ImageConverter): Blockly.MenuOption[] {
     const dd: Blockly.MenuOption[] = symbols.map(v => {
         let k = v.attributes.block || v.attributes.blockId || v.name;
         let comb = v.attributes.blockCombine
@@ -42,12 +33,14 @@ export function getSymbolDropdownOptions(symbols: pxtc.SymbolInfo[], defaultValu
                 alt: k,
                 width: 36,
                 height: 36,
-                value: v.name
+                value: v.name,
+                tags: getSymbolPickerTags(info, v)
             } : k,
             v.namespace + "." + v.name,
             v.attributes.ariaLabel
         ];
     });
+    defaultValue = resolveDropdownDefault(info, dd, defaultValue);
     if (defaultValue) {
         let shadowValueIndex = -1;
         dd.some((v, i) => {
@@ -71,5 +64,5 @@ export function getSymbolDropdownOptions(symbols: pxtc.SymbolInfo[], defaultValu
  * the resulting list if present in the API info.
  */
 export function getFixedInstanceDropdownOptions(blocksInfo: pxtc.BlocksInfo, typeQName: string, defaultValue: string | undefined, imgConv: pxt.ImageConverter): Blockly.MenuOption[] {
-    return getSymbolDropdownOptions(getFixedInstanceDropdownValues(blocksInfo.apis, typeQName), defaultValue, imgConv);
+    return getSymbolDropdownOptions(blocksInfo, pxt.blocks.getFixedInstanceDropdownValues(blocksInfo.apis, typeQName), defaultValue, imgConv);
 }

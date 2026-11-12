@@ -159,15 +159,13 @@ namespace ts.pxtc.service {
             fnName = U.snakify(fnName);
 
         const attrs = fn.attributes;
+        const element = fn as pxtc.SymbolInfo;
+        const params = pxt.blocks.compileInfo(element);
+        const blocksById = blocksInfo.blocksById;
 
         if (attrs.shim === "TD_ID" && recursionDepth && decl.parameters.length) {
             return getParameterDefault(decl.parameters[0]);
         }
-
-        const element = fn as pxtc.SymbolInfo;
-        const params = pxt.blocks.compileInfo(element);
-
-        const blocksById = blocksInfo.blocksById
 
         // TODO: move out of getSnippet for general reuse
         const blockParameters = attrs._def?.parameters
@@ -189,10 +187,15 @@ namespace ts.pxtc.service {
                 }) as SnippetNode)
 
         if (element.attributes.block) {
+            const pickerReceiverDefault = !element.attributes.defaultInstance
+                ? getGridPickerDefault(params.thisParameter, params.thisParameter?.defaultValue || undefined) : undefined;
             if (element.attributes.defaultInstance) {
                 snippetPrefix = element.attributes.defaultInstance;
                 if (python && snippetPrefix)
                     snippetPrefix = U.snakify(snippetPrefix);
+            }
+            else if (pickerReceiverDefault !== undefined) {
+                snippetPrefix = pickerReceiverDefault;
             }
             else if (params.thisParameter?.shadowBlockId === "variables_get") {
                 snippetPrefix = params.thisParameter.defaultValue || params.thisParameter.definitionName;
@@ -363,6 +366,10 @@ namespace ts.pxtc.service {
                 if (typeNode.kind === SK.StringKeyword || deflKind === SK.StringKeyword) {
                     return paramDefl.indexOf(`"`) != 0 ? `"${paramDefl}"` : paramDefl;
                 }
+                if (python) {
+                    const pickerDefault = getGridPickerDefault(params.actualNameToParam[name], paramDefl);
+                    if (pickerDefault !== undefined) return pickerDefault;
+                }
                 const type = checker?.getTypeAtLocation(param);
                 const typeSymbol = getPxtSymbolFromTsSymbol(type?.symbol, apis, checker);
                 if ((typeSymbol?.attributes.fixedInstances) && python) {
@@ -374,6 +381,9 @@ namespace ts.pxtc.service {
 
                 return paramDefl
             }
+
+            const pickerDefault = getGridPickerDefault(params.actualNameToParam[name]);
+            if (pickerDefault !== undefined) return pickerDefault;
 
             let shadowDefFromFieldEditor = getDefaultValueFromFieldEditor(name)
             if (shadowDefFromFieldEditor) {
@@ -448,6 +458,28 @@ namespace ts.pxtc.service {
 
             // lastly, null or none
             return python ? "None" : "null";
+        }
+
+        function getGridPickerDefault(param: pxt.blocks.BlockParameter, explicitDefault?: string): string | undefined {
+            const choices = pxt.blocks.getGridPickerDropdownValues(apis, param);
+            if (!choices) return undefined;
+
+            if (explicitDefault !== undefined) {
+                const symbol = apis.byQName[explicitDefault];
+                return symbol && (python ? symbol.pyQName || U.snakify(symbol.qName) : symbol.qName);
+            }
+
+            const filter = typeof param.fieldOptions?.filter === "string" ? param.fieldOptions.filter : undefined;
+            const matches = pxt.sprite.compileTagFilter(filter);
+            let choice = choices.find(symbol => matches(pxt.sprite.getSymbolTags(apis, symbol)));
+            if (!choice) {
+                pxt.reportError("gridpicker", "No matching default choice", { api: fn.qName, parameter: param.actualName });
+                // Match the block, which starts on its first choice when none fit the filter.
+                choice = choices[0];
+                if (!choice) return python ? "None" : "null";
+            }
+            const value = pxt.blocks.getEnumConstant(apis, choice.namespace, choice.qName) || choice;
+            return python ? value.pyQName || U.snakify(value.qName) : value.qName;
         }
 
         function getDefaultValueOfType(type: ts.Type): SnippetNode | undefined {

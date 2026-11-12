@@ -13,6 +13,7 @@ import "./localization.spec";
 import "./workspaceResize.spec";
 import "./blockInjection.spec";
 import "./tutorialToolbox.spec";
+import "./gridpicker.spec";
 
 const WEB_PREFIX = "http://localhost:9876";
 
@@ -213,6 +214,47 @@ function getBlocksInfoAsync(): Promise<pxtc.BlocksInfo> {
 
             return cachedBlocksInfo;
         }, err => fail('Could not get compile options'))
+}
+
+async function decompilePickerSource(source: string) {
+    await getBlocksInfoAsync();
+    const host = await BlocklyCompilerTestHost.createTestHostAsync();
+    const readFile = host.readFile.bind(host);
+    host.readFile = (pkg, name) => pkg.id === "this" && name === pxt.MAIN_TS ? source : readFile(pkg, name);
+    const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
+    options.ast = true;
+    const compiled = pxtc.compile(options);
+    chai.assert.isTrue(compiled.success, JSON.stringify(compiled.diagnostics));
+    const info = pxtc.getBlocksInfo(pxtc.getApiInfo(compiled.ast, options.jres));
+    const result = pxtc.decompile(compiled.ast, options, pxt.MAIN_TS, true);
+    return { program: compiled.ast, info, result };
+}
+
+async function roundTripPickerSource(source: string): Promise<string> {
+    const { info, result } = await decompilePickerSource(source);
+    chai.assert.isTrue(result.success, JSON.stringify(result.diagnostics));
+    const workspace = new Blockly.Workspace();
+    try {
+        pxtblockly.domToWorkspaceNoEvents(Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]), workspace);
+        return (await pxtblockly.compileAsync(workspace, info)).source;
+    } finally {
+        workspace.dispose();
+    }
+}
+
+function sourceCalls(source: string): string[][] {
+    const file = ts.createSourceFile("calls.ts", source, ts.ScriptTarget.Latest, true);
+    const reference = (expression: ts.Expression): string => {
+        if (ts.isParenthesizedExpression(expression)) return reference(expression.expression);
+        if (ts.isIdentifier(expression)) return expression.text;
+        if (ts.isPropertyAccessExpression(expression)) return reference(expression.expression) + "." + expression.name.text;
+        throw new Error("Expected a selected API value");
+    };
+    return file.statements.filter(ts.isExpressionStatement).map(statement => {
+        const expression = statement.expression;
+        if (!ts.isCallExpression(expression)) throw new Error("Expected an API call");
+        return [reference(expression.expression), ...expression.arguments.map(reference)];
+    });
 }
 
 async function blockTestAsync(name: string, verify?: (result: pxtblockly.BlockCompilationResult) => Promise<void>) {
@@ -484,6 +526,163 @@ describe("blockly compiler", function () {
     });
 
     describe("compiling text", () => {
+        it("should preserve field-level fixed instances and reject local-variable arguments", async () => {
+            const source = "pickerTest.chooseAsset(pickerAssets.allowed)";
+            const restored = await roundTripPickerSource(source);
+            chai.assert.deepEqual(sourceCalls(restored), sourceCalls(source), restored);
+            const { result } = await decompilePickerSource(
+                "let local = pickerAssets.allowed;\npickerTest.chooseAsset(local);");
+            const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
+            chai.assert.equal(xml.querySelectorAll('block[type="picker_choose_asset"]').length, 0);
+            chai.assert.isAtLeast(xml.querySelectorAll('block[type="typescript_statement"]').length, 1);
+        });
+
+        it("should keep indirect receivers of a field-level fixed-instance picker as TypeScript", async () => {
+            const direct = "pickerDevices.second.action()";
+            chai.assert.deepEqual(sourceCalls(await roundTripPickerSource(direct)), sourceCalls(direct));
+            const { result } = await decompilePickerSource("let device = pickerDevices.first;\ndevice.action();");
+            const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
+            chai.assert.equal(xml.querySelectorAll('block[type="picker_device_action"]').length, 0);
+            chai.assert.isAtLeast(xml.querySelectorAll('block[type="typescript_statement"]').length, 1);
+        });
+
+        it("should combine field options keyed by the parameter and block definition names", async () => {
+            const info = await getBlocksInfoAsync();
+            const param = pxt.blocks.compileInfo(info.apis.byQName["pickerTest.chooseMixed"]).actualNameToParam["value"];
+            chai.assert.deepEqual(param.fieldOptions, { enumNames: "PickerMonster", width: "300" });
+            const workspace = new Blockly.Workspace();
+            try {
+                chai.assert.equal(workspace.newBlock("picker_choose_mixed").getFieldValue("choice"), "PickerMonster.Zombie");
+            } finally {
+                workspace.dispose();
+            }
+        });
+
+        it("should treat fixedInstances=false as off", async () => {
+            const info = await getBlocksInfoAsync();
+            const param = pxt.blocks.compileInfo(info.apis.byQName["pickerTest.chooseDisabledAsset"]).actualNameToParam["value"];
+            chai.assert.isFalse(pxt.blocks.hasGridPickerFixedInstances(param));
+            chai.assert.isUndefined(pxt.blocks.getGridPickerDropdownValues(info.apis, param));
+        });
+
+        it("should select the option a constant alias default stands for", async () => {
+            await getBlocksInfoAsync();
+            const workspace = new Blockly.Workspace();
+            try {
+                chai.assert.equal(workspace.newBlock("picker_choose_alias").getFieldValue("choice"), "PickerAnimal.Cow");
+            } finally {
+                workspace.dispose();
+            }
+        });
+
+        it("should apply the selected source enum's constant-emission policy", async () => {
+            const source = [
+                "pickerTest.chooseItem(IRON_SHOVEL)",
+                "pickerTest.chooseItem(IRON_PICKAXE)",
+                "pickerTest.chooseItem(PickerAnimal.Chicken)"
+            ].join("\n");
+            const restored = await roundTripPickerSource(source);
+            chai.assert.deepEqual(sourceCalls(restored), sourceCalls(source), restored);
+        });
+
+        it("should generate picker snippets that compile back through their dropdown fields", async () => {
+            const { program, info } = await decompilePickerSource("");
+            const checker = program.getTypeChecker();
+            for (const qName of ["pickerTest.chooseMount", "pickerTest.chooseItem", "pickerTest.chooseAsset"]) {
+                let declaration: ts.FunctionDeclaration;
+                const visit = (node: ts.Node) => {
+                    if (ts.isFunctionDeclaration(node) && node.name) {
+                        const symbol = checker.getSymbolAtLocation(node.name);
+                        if (symbol && checker.getFullyQualifiedName(symbol) === qName) declaration = node;
+                    }
+                    ts.forEachChild(node, visit);
+                };
+                program.getSourceFiles().forEach(file => visit(file));
+                chai.assert.isDefined(declaration);
+                const snippet = pxtc.service.snippetStringify(pxtc.service.getSnippet({
+                    apis: info.apis, blocksInfo: info, checker, takenNames: {}
+                }, info.apis.byQName[qName], declaration));
+                const restored = await roundTripPickerSource(snippet);
+                chai.assert.deepEqual(sourceCalls(restored), sourceCalls(snippet), snippet + "\n=>\n" + restored);
+                const { result } = await decompilePickerSource(snippet);
+                const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
+                chai.assert.equal(xml.querySelectorAll('block[type="typescript_statement"]').length, 0);
+                chai.assert.equal(xml.querySelectorAll('block[type="' + info.apis.byQName[qName].attributes.blockId + '"]').length, 1);
+                const defaultWorkspace = new Blockly.Workspace();
+                try {
+                    const block = defaultWorkspace.newBlock(info.apis.byQName[qName].attributes.blockId);
+                    chai.assert.equal(xml.querySelector('field[name="choice"]').textContent, block.getFieldValue("choice"),
+                        "Block and text insertion must select the same default");
+                } finally {
+                    defaultWorkspace.dispose();
+                }
+            }
+        });
+
+        it("should round trip configured gridpicker enum sources and resolved parameter names", async () => {
+            await getBlocksInfoAsync();
+            const source = [
+                "pickerTest.chooseMount(PickerAnimal.Chicken);",
+                "pickerTest.chooseMount(PickerMonster.Husk);",
+                "pickerTest.chooseMount(pickerTest.mount(PickerAnimal.Cow));",
+                "pickerTest.chooseMount(PICKER_CHICKEN);"
+            ].join("\n");
+            const host = await BlocklyCompilerTestHost.createTestHostAsync();
+            const readFile = host.readFile.bind(host);
+            host.readFile = (pkg, name) => pkg.id === "this" && name === pxt.MAIN_TS ? source : readFile(pkg, name);
+            const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
+            options.ast = true;
+            const compiled = pxtc.compile(options);
+            chai.assert.isTrue(compiled.success, JSON.stringify(compiled.diagnostics));
+            const info = pxtc.getBlocksInfo(pxtc.getApiInfo(compiled.ast, options.jres));
+            const decompiled = pxtc.decompile(compiled.ast, options, pxt.MAIN_TS, true);
+            chai.assert.isTrue(decompiled.success, JSON.stringify(decompiled.diagnostics));
+            const workspace = new Blockly.Workspace();
+            try {
+                pxtblockly.domToWorkspaceNoEvents(Blockly.utils.xml.textToDom(decompiled.outfiles[pxt.MAIN_BLOCKS]), workspace);
+                chai.assert.deepEqual(workspace.getBlocksByType("picker_choose_mount", false).map(block => block.getFieldValue("choice")), [
+                    "PickerAnimal.Chicken", "PickerMonster.Husk", "PickerAnimal.Cow", "PickerAnimal.Chicken"
+                ], decompiled.outfiles[pxt.MAIN_BLOCKS]);
+                const result = await pxtblockly.compileAsync(workspace, info);
+                chai.assert.deepEqual(sourceCalls(result.source), sourceCalls([
+                    "pickerTest.chooseMount(PickerAnimal.Chicken)",
+                    "pickerTest.chooseMount(PickerMonster.Husk)",
+                    "pickerTest.chooseMount(PickerAnimal.Cow)",
+                    "pickerTest.chooseMount(PickerAnimal.Chicken)"
+                ].join("\n")));
+            } finally {
+                workspace.dispose();
+            }
+        });
+
+        it("should constrain initial picker values without discarding restored enum choices", async () => {
+            await getBlocksInfoAsync();
+            const workspace = new Blockly.Workspace();
+            try {
+                const block = workspace.newBlock("picker_choose_mount");
+                chai.assert.equal(block.getFieldValue("choice"), "PickerMonster.Zombie");
+                block.setFieldValue("PickerAnimal.Chicken", "choice");
+                chai.assert.equal(block.getFieldValue("choice"), "PickerAnimal.Chicken");
+            } finally {
+                workspace.dispose();
+            }
+        });
+
+        it("should reject values outside configured gridpicker enum sources", async () => {
+            const host = await BlocklyCompilerTestHost.createTestHostAsync();
+            const readFile = host.readFile.bind(host);
+            host.readFile = (pkg, name) => pkg.id === "this" && name === pxt.MAIN_TS
+                ? "pickerTest.chooseMount(PickerUnsupported.Other);\npickerTest.chooseMount(42);" : readFile(pkg, name);
+            const options = await new pxt.MainPackage(host).getCompileOptionsAsync();
+            options.ast = true;
+            const compiled = pxtc.compile(options);
+            chai.assert.isTrue(compiled.success, JSON.stringify(compiled.diagnostics));
+            const decompiled = pxtc.decompile(compiled.ast, options, pxt.MAIN_TS, true);
+            const xml = Blockly.utils.xml.textToDom(decompiled.outfiles[pxt.MAIN_BLOCKS]);
+            chai.assert.equal(xml.querySelectorAll('block[type="picker_choose_mount"]').length, 0);
+            chai.assert.isAtLeast(xml.querySelectorAll('block[type="typescript_statement"]').length, 1);
+        });
+
         it("should initialize color picker shadows in the parameter's requested mode", async () => {
             const info = await getBlocksInfoAsync();
             const coloredInfo = {
