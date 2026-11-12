@@ -6,6 +6,7 @@ namespace pxt.cpp {
         target: string;
         variant: string;
         versions: { target: string; [key: string]: string };
+        compileSwitches?: pxtc.CompileSwitches;
     }
 
     export function createExtensionInfoRequest(
@@ -13,7 +14,7 @@ namespace pxt.cpp {
         target: TargetBundle,
         variant: string
     ): string {
-        if (!target || !target.id)
+        if (!target || !target.id || !target.versions?.target)
             U.userError("A target ID and version are required to create an extension info request.");
         const appTarget = getAppTargetVariant(target, variant);
         const configs: Map<PackageConfig> = Object.create(null);
