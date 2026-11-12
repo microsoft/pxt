@@ -6,6 +6,7 @@ namespace pxt.cpp {
         target: string;
         variant: string;
         versions: { target: string; [key: string]: string };
+        compileSwitches?: pxtc.CompileSwitches;
     }
 
     export function createExtensionInfoRequest(
