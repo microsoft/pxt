@@ -20,11 +20,13 @@ namespace pxt.cpp {
         const configs: Map<PackageConfig> = Object.create(null);
         const aliases: Map<string[]> = Object.create(null);
         for (const filename of Object.keys(files).sort()) {
-            const match = /^(pxt_modules\/([^/]+)\/)?pxt\.json$/.exec(filename);
+            const match = /^(pxt_modules\/(.+)\/)?pxt\.json$/.exec(filename);
             if (!match) continue;
             const path = match[1] || "";
             const config = configs[path] = JSON.parse(files[filename]) as PackageConfig;
-            if (!path) continue;
+            // Nested directories (e.g. file: dependencies) only resolve by exact path,
+            // matching getExtensionInfo
+            if (!path || match[2].indexOf("/") >= 0) continue;
             for (const id of [match[2], config.name]) {
                 if (!id) continue;
                 for (const alias of [id, id.replace(/---.*/, "")]) {
