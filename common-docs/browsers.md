@@ -14,7 +14,7 @@ You need to have one of these **Windows** versions:
 
 The compatible **Windows** browsers are:
 
-* Microsoft Edge ([Download](https://www.microsoft.com/en-us/edge))
+* Microsoft Edge ([Download](https://explore.microsoft.com/en-us/edge))
 * Google Chrome
 * Mozilla Firefox
 
@@ -22,6 +22,8 @@ The compatible **Windows** browsers are:
 
 You need to have one of these **macOS** versions:
 
+* Golden Gate 27
+* Tahoe 26
 * Sequoia 15
 * Sonoma 14
 * Ventura 13
@@ -60,7 +62,7 @@ You need to have a **Linux** distribution recent enough to run the most recent
 version of one of the following:
 
 * Google Chrome or Chromium
-* Mozilla Firefox
+* Mozilla Firefox or Based
 
 ## Chrome OS
 
@@ -109,7 +111,7 @@ If you need to find out which version of operating system (OS) and browser you c
 Microsoft Edge automatically updates, so you should always be using the latest version.
 
 1. Click on the menu icon in the top right (three dots)
-2. Scroll to the bottom
+2. Click Help and feedback, And About Microsoft Edge
 3. Information similar to the following will be displayed:
 
     ![Microsoft Edge version dialog](/static/configurations/edge-version.png)
