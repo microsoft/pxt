@@ -145,6 +145,57 @@ namespace pxt.blocks {
         return nb;
     }
 
+    /** Resolves the enum sources shared by grid-picker dropdowns and decompilation. */
+    export function getConfiguredEnumNames(param: BlockParameter, apis: pxtc.ApisInfo): string[] {
+        const names = param?.fieldEditor === "gridpicker" && param.fieldOptions?.enumNames;
+        if (typeof names !== "string") return [];
+        return names.split(",").map(name => name.trim()).filter((name, index, entries) =>
+            entries.indexOf(name) === index && apis.byQName[name]?.kind === pxtc.SymbolKind.Enum);
+    }
+
+    /** Returns the visible dropdown members in an enum's declared order. */
+    export function getEnumDropdownValues(apis: pxtc.ApisInfo, enumName: string): pxtc.SymbolInfo[] {
+        return pxt.Util.values(apis.byQName).filter(symbol => symbol.namespace === enumName && !symbol.attributes.blockHidden);
+    }
+
+    /** Returns fixed-instance field choices in the same weight order as the toolbox. */
+    export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string): pxtc.SymbolInfo[] {
+        return pxt.Util.values(apis.byQName).filter(symbol => symbol.kind === pxtc.SymbolKind.Variable
+            && symbol.attributes.fixedInstance
+            && (symbol.retType === qName || apis.byQName[symbol.retType]?.extendsTypes?.indexOf(qName) >= 0))
+            .sort((left, right) => (right.attributes.weight || 50) - (left.attributes.weight || 50));
+    }
+
+    /**
+     * Whether a grid picker field draws its choices from fixed instances. Field options are parsed as strings,
+     * so `fixedInstances=false` has to count as off.
+     */
+    export function hasGridPickerFixedInstances(param: BlockParameter): boolean {
+        const value: unknown = param?.fieldEditor === "gridpicker" && param.fieldOptions?.fixedInstances;
+        return value === true || value === "true" || value === "1";
+    }
+
+    /** Resolves static picker choices without filtering out saved values. */
+    export function getGridPickerDropdownValues(apis: pxtc.ApisInfo, param: BlockParameter): pxtc.SymbolInfo[] | undefined {
+        if (param?.fieldEditor !== "gridpicker") return undefined;
+        const type = apis.byQName[param.type];
+        const configured = getConfiguredEnumNames(param, apis);
+        const enums = configured.length ? configured : type?.kind === pxtc.SymbolKind.Enum ? [param.type] : [];
+        if (enums.length) {
+            return enums.reduce((members, name) => members.concat(getEnumDropdownValues(apis, name)), [] as pxtc.SymbolInfo[]);
+        }
+        if (type && ((type.attributes.fixedInstances && !param.shadowBlockId) || hasGridPickerFixedInstances(param))) {
+            return getFixedInstanceDropdownValues(apis, param.type);
+        }
+        return undefined;
+    }
+
+    /** Finds the constant required by an enum's emission policy, when one exists. */
+    export function getEnumConstant(apis: pxtc.ApisInfo, enumName: string, value: string): pxtc.SymbolInfo | undefined {
+        if (!apis.byQName[enumName]?.attributes.emitAsConstant) return undefined;
+        return pxt.Util.values(apis.byQName).find(symbol => symbol.attributes?.enumIdentity === value);
+    }
+
     export function compileInfo(fn: pxtc.SymbolInfo): BlockCompileInfo {
         const res: BlockCompileInfo = {
             parameters: [],
@@ -269,8 +320,11 @@ namespace pxt.blocks {
         }
 
         function fieldOptions(defName: string, actualName: string) {
-            return fn.attributes.paramFieldEditorOptions &&
-                (fn.attributes.paramFieldEditorOptions[defName] || fn.attributes.paramFieldEditorOptions[actualName]);
+            const options = fn.attributes.paramFieldEditorOptions;
+            const byDefinition = options?.[defName];
+            const byActual = options?.[actualName];
+            // Options can be keyed by either name, so combine both. The block definition name wins on conflicts.
+            return byDefinition && byActual && byDefinition !== byActual ? { ...byActual, ...byDefinition } : byDefinition || byActual;
         }
 
         function shadowOptions(defName: string, actualName: string) {

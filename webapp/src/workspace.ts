@@ -13,6 +13,7 @@ import * as compiler from "./compiler"
 import * as auth from "./auth"
 import * as cloud from "./cloud"
 import * as simulatorTheme from "./simulatorTheme"
+import * as backpack from "./components/backpack/service";
 
 import * as pxteditor from "../../pxteditor";
 
@@ -1817,6 +1818,7 @@ export async function resetAsync() {
     await pxt.BrowserUtils.clearTranslationDbAsync();
     await pxt.BrowserUtils.clearTutorialInfoDbAsync();
     await compiler.clearApiInfoDbAsync();
+    await backpack.resetBackpackAsync();
     pxt.storage.clearLocal();
     data.clearCache();
 
