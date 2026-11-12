@@ -45,13 +45,16 @@ interface PackageConfig {
     cppDependencies?: Map<string>;
 
     binaryonly?: boolean;
-    platformio?: PlatformIOConfig;
     yotta?: YottaConfig;
 
 
     gistId?: string;
 }
 ```
+
+The legacy `npmDependencies` and `platformio` fields are ignored with a warning;
+they no longer add native build dependencies. PlatformIO target settings remain
+available through `compileService.platformioIni`.
 
 ## dependencies (on other extensions)
 

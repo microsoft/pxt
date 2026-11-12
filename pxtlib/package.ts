@@ -1170,6 +1170,8 @@ namespace pxt {
                     const compileVariant = variant || pxt.appTargetVariant;
                     res.target = pxt.getAppTargetVariant(extensionTarget, compileVariant).compile;
                     einfo = cpp.getExtensionInfo(extensionFiles, extensionTarget, compileVariant, extensionHost);
+                    cpp.injectProjectCompileData(einfo, extensionFiles, extensionTarget, compileVariant);
+
                     if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)

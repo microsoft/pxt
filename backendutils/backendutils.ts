@@ -1,5 +1,6 @@
 /// <reference path="../pxtlib/shared/docsrender.ts"/>
 /// <reference path="../pxtlib/shared/extensioninfo.ts"/>
+/// <reference path="../pxtlib/shared/extensionrequest.ts"/>
 
 namespace pxt {
     export interface BackendutilsVersion {

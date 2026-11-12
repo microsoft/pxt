@@ -192,6 +192,9 @@ namespace pxt.cpp {
                 const config = JSON.parse(configText) as PackageConfig;
                 if (!config.dependencies || !Array.isArray(config.files))
                     U.userError(`Invalid pxt.json in extension ${id}`);
+                packageUtils.removeUnsupportedPackageConfigFields(
+                    config, path + "pxt.json", message => host.logger.log(message)
+                );
                 const packageId = path ? path.slice("pxt_modules/".length, -1) : "this";
                 pkg = packages[path] = { id: packageId, path, config, files: [], version };
             }
@@ -920,14 +923,6 @@ namespace pxt.cpp {
         const codalLibraries: pxt.Map<github.ParsedRepo> = {}
 
         function parseJson(pkg: ExtensionPackage) {
-            const j0 = pkg.config.platformio
-            if (j0 && j0.dependencies) {
-                U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
-            }
-
-            if (res.npmDependencies && pkg.config.npmDependencies)
-                U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
-
             const codal = pkg.config.codal
             if (isCodal && codal) {
                 for (const lib of codal.libraries || []) {
@@ -1138,11 +1133,6 @@ namespace pxt.cpp {
         } else if (isPlatformio) {
             const iniLines = compileService.platformioIni.slice()
             // TODO merge configjson
-            iniLines.push("lib_deps =")
-            U.iterMap(res.platformio.dependencies, (pkg, ver) => {
-                let pkgSpec = /[@#\/]/.test(ver) ? ver : pkg + "@" + ver
-                iniLines.push("  " + pkgSpec)
-            })
             res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
         } else {
             res.yotta.config = configJson;
