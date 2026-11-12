@@ -13,7 +13,7 @@ namespace pxt.cpp {
         target: TargetBundle,
         variant: string
     ): string {
-        if (!target || !target.id || !target.versions?.target)
+        if (!target || !target.id)
             U.userError("A target ID and version are required to create an extension info request.");
         const appTarget = getAppTargetVariant(target, variant);
         const configs: Map<PackageConfig> = Object.create(null);
