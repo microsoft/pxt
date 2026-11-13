@@ -1195,6 +1195,9 @@ namespace pxt {
                         if (einfo.shimsDTS) generateFile("shims.d.ts", einfo.shimsDTS)
                         if (einfo.enumsDTS) generateFile("enums.d.ts", einfo.enumsDTS)
                     }
+                    if (target.isNative) {
+                        cpp.injectProjectCompileData(einfo, pxt.packageUtils.getProjectFiles(this), pxt.appTarget, variant || pxt.appTargetVariant)
+                    }
                 } finally {
                     if (variant) {
                         pxt.setAppTargetVariant(prevVariant, { temporary: true })
@@ -1202,7 +1205,6 @@ namespace pxt {
                 }
 
                 einfo.appVariant = variant;
-                cpp.injectProjectCompileData(einfo, pxt.packageUtils.getProjectFiles(this), pxt.appTarget, variant)
 
                 const inf = target.isNative ? await this.host().getHexInfoAsync(einfo) : null
 
@@ -1211,6 +1213,7 @@ namespace pxt {
                     delete einfo.compileData;
                     delete einfo.generatedFiles;
                     delete einfo.extensionFiles;
+                    delete einfo.projectCompileData;
                 }
                 einfo.hexinfo = inf
                 res.extinfo = einfo
