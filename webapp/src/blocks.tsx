@@ -1919,7 +1919,7 @@ export class Editor extends toolboxeditor.ToolboxEditor {
             trashcan: false,
             collapse: !!theme.blocksCollapsing,
             comments: true,
-            disable: false,
+            disable: true,
             readOnly: readOnly,
             plugins: {
                 'blockDragger': pxtblockly.BlockDragger,

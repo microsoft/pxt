@@ -301,6 +301,13 @@ namespace ts.pxtc {
     }
 
     export function decompile(program: Program, opts: CompileOptions, fileName: string, includeGreyBlockMessages = false) {
+        if (opts && (opts as any).preprocessDisabledBlocks && opts.fileSystem && opts.fileSystem[fileName]) {
+            const preprocessed = pxtc.decompiler.preprocessDisabledBlocks(opts.fileSystem[fileName]);
+            if (preprocessed !== opts.fileSystem[fileName]) {
+                opts.fileSystem[fileName] = preprocessed;
+                program = getTSProgram(opts);
+            }
+        }
         let file = program.getSourceFile(fileName);
         annotate(program, fileName, target || (pxt.appTarget && pxt.appTarget.compile));
         const apis = getApiInfo(program, opts.jres);
