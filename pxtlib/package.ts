@@ -1170,7 +1170,9 @@ namespace pxt {
                     const compileVariant = variant || pxt.appTargetVariant;
                     res.target = pxt.getAppTargetVariant(extensionTarget, compileVariant).compile;
                     einfo = cpp.getExtensionInfo(extensionFiles, extensionTarget, compileVariant, extensionHost);
-                    cpp.injectProjectCompileData(einfo, extensionFiles, extensionTarget, compileVariant);
+                    if (target.isNative) {
+                        cpp.injectProjectCompileData(einfo, extensionFiles, extensionTarget, compileVariant);
+                    }
 
                     if (!shimsGenerated && (einfo.shimsDTS || einfo.enumsDTS)) {
                         shimsGenerated = true
@@ -1192,6 +1194,7 @@ namespace pxt {
                 einfo = U.flatClone(einfo)
                 if (!target.keepCppFiles) {
                     delete einfo.compileData;
+                    delete einfo.projectCompileData;
                     delete einfo.generatedFiles;
                     delete einfo.extensionFiles;
                 }
