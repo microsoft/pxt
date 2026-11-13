@@ -17,6 +17,7 @@ import { FieldLedMatrix } from "./fields";
 import { FieldStyledLabel } from "./fields";
 import { FieldUserEnum } from "./fields";
 import { createFieldEditor, initFieldEditors } from "./fields";
+import { INSTANCE_DROPDOWN_FIELD } from "./fields";
 import { promptTranslateBlock } from "./external";
 import { initVariables } from "./builtins/variables";
 import { initOnStart } from "./builtins/misc";
@@ -33,6 +34,7 @@ import { getArgumentReporterParent } from "./plugins/functions/utils";
 import { isFunctionDefinition } from "./compiler/util";
 import { AUTO_DISABLED_REASON } from "./compiler/compiler";
 import { DEFAULT_LED_COLORS, FieldLEDMatrixColorPicker, getDefaultColorNames } from "./fields/field_ledmatrix_colorPicker";
+import { getSymbolDropdownOptions, getSymbolPickerTags, resolveDropdownDefault } from "./fields/symbolDropdownOptions";
 
 export const DRAGGABLE_PARAM_INPUT_PREFIX = "HANDLER_DRAG_PARAM_";
 
@@ -502,6 +504,8 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                     let isConstantShim = !!fn.attributes.constantShim;
                     let isCombined = pr.type == "@combined@"
                     let customField = pr.fieldEditor;
+                    if (isFixed && !customField && pxt.react.canCreateInstance?.(typeInfo.qName))
+                        customField = INSTANCE_DROPDOWN_FIELD;
                     let fieldLabel = defName.charAt(0).toUpperCase() + defName.slice(1);
                     let fieldType = pr.type;
                     const fieldOptions = pr.fieldOptions;
@@ -529,53 +533,10 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                         if (syms.length == 0) {
                             pxt.error(`no instances of ${typeInfo?.qName || fieldType} found`)
                         }
-                        const dd: Blockly.MenuOption[] = syms.map(v => {
-                            let k = v.attributes.block || v.attributes.blockId || v.name;
-                            let comb = v.attributes.blockCombine
-                            if (v.attributes.jresURL && !v.attributes.iconURL && pxt.Util.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
-                                v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
-                            }
-                            if (!!comb)
-                                k = k.replace(/@set/, "")
-                            return [
-                                v.attributes.iconURL || v.attributes.blockImage ? {
-                                    src: v.attributes.iconURL || pxt.Util.pathJoin(pxt.webConfig.commitCdnUrl, `blocks/${v.namespace.toLowerCase()}/${v.name.toLowerCase()}.png`),
-                                    alt: k,
-                                    width: 36,
-                                    height: 36,
-                                    value: v.name,
-                                    tags: getSymbolPickerTags(info, v)
-                                } : k,
-                                v.namespace + "." + v.name,
-                                v.attributes.ariaLabel
-                            ];
-                        });
-                        // Defaults can name a constant alias (such as SURVIVAL for GameMode.Survival), so map
-                        // those to the option they stand for. Defaults that already match an option are left alone.
-                        const resolveDefault = (value: string) => {
-                            if (!value || dd.some(option => option[1] === value)) return value;
-                            const identity = info.apis.byQName[value]?.attributes.enumIdentity;
-                            return identity && dd.some(option => option[1] === identity) ? identity : value;
-                        };
-                        const defaultValue = resolveDefault(pr.defaultValue);
-                        // if a value is provided, move it first
-                        if (defaultValue) {
-                            let shadowValueIndex = -1;
-                            dd.some((v, i) => {
-                                if (v[1] === defaultValue) {
-                                    shadowValueIndex = i;
-                                    return true;
-                                }
-                                return false;
-                            });
-                            if (shadowValueIndex > -1) {
-                                const shadowValue = dd.splice(shadowValueIndex, 1)[0];
-                                dd.unshift(shadowValue);
-                            }
-                        }
+                        const dd = getSymbolDropdownOptions(info, syms, pr.defaultValue, imgConv);
 
                         if (customField) {
-                            let defl = resolveDefault(fn.attributes.paramDefl[actName] || "");
+                            let defl = resolveDropdownDefault(info, dd, fn.attributes.paramDefl[actName] || "");
                             const optionTags: pxt.Map<string[]> = {};
                             syms.forEach(symbol => optionTags[symbol.qName] = getSymbolPickerTags(info, symbol));
                             const options = {
@@ -586,6 +547,10 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                 blocksInfo: info,
                                 optionTags
                             } as FieldCustomDropdownOptions;
+                            if (isFixed && customField === INSTANCE_DROPDOWN_FIELD) {
+                                options.getBlocksInfo = () => cachedBlockInfo;
+                                options.defaultValue = pr.defaultValue;
+                            }
                             pxt.Util.jsonMergeFrom(options, fieldOptions || {});
                             fields.push(namedField(createFieldEditor(customField, defl, options), defName));
                         }
@@ -1045,10 +1010,6 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
     if (!label) return;
 
     input.setAriaLabelProvider(label);
-}
-
-function getSymbolPickerTags(info: pxtc.BlocksInfo, symbol: pxtc.SymbolInfo): string[] {
-    return pxt.sprite.getSymbolTags(info.apis, symbol).map(tag => tag.toLowerCase());
 }
 
 export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string): pxtc.SymbolInfo[] {

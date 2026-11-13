@@ -399,8 +399,9 @@ export class EditorToolbar extends data.Component<ISettingsProps, EditorToolbarS
         const running = simState == SimState.Running;
         const starting = simState == SimState.Starting;
 
-        const showUndoRedo = !readOnly && !debugging && !hideZoomAndUndo && !hideToolbox;
-        const showZoomControls = !hideZoomAndUndo && !hideToolbox;
+        const editorHasEditingControls = this.props.parent.editor.hasEditorToolbarEditingControls();
+        const showUndoRedo = editorHasEditingControls && !readOnly && !debugging && !hideZoomAndUndo && !hideToolbox;
+        const showZoomControls = editorHasEditingControls && !hideZoomAndUndo && !hideToolbox;
         const showGithub = !!pxt.appTarget.cloud
             && !!pxt.appTarget.cloud.githubPackages
             && targetTheme.githubEditor

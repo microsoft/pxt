@@ -197,6 +197,19 @@ namespace pxsim {
         frameid: string
     }
 
+    /**
+     * Posted to every simulator frame when the editor enters or leaves
+     * fullscreen-simulator mode, and to a simulator extension frame each time
+     * its page finishes loading while the mode is on.
+     */
+    export interface SimulatorFullscreenMessage extends SimulatorMessage {
+        type: "fullscreen";
+        /**
+         * True while the editor is in fullscreen-simulator mode
+         */
+        enabled: boolean;
+    }
+
     export interface SimulatorRecorderMessage extends SimulatorMessage {
         type: "recorder";
         action: "start" | "stop";

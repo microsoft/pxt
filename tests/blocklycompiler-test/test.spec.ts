@@ -20,6 +20,9 @@ const WEB_PREFIX = "http://localhost:9876";
 // Blockly crashes if this isn't defined
 (Blockly as any).Msg.DELETE_VARIABLE = "Delete the '%1' variable";
 
+// The editor can create instances of things.Thing, so parameters of that type get the instance dropdown
+pxt.react.canCreateInstance = typeQName => typeQName === "things.Thing";
+
 // Just needs to exist
 pxt.setAppTarget({
     id: "core",
@@ -1232,6 +1235,14 @@ describe("blockly compiler", function () {
         it ("should handle forceStatement blocks", done => {
             blockTestAsync("force_statement").then(done, done);
         })
+    });
+
+    describe("compiling instance dropdowns", () => {
+        it("should report a block holding a reserved value and emit null in its place", async () => {
+            await blockTestAsync("instance_dropdown_reserved", async res => {
+                chai.expect(res.diagnostics.map(d => d.blockId)).to.deep.equal(["useThingBlock"]);
+            });
+        });
     });
 
     describe("compiling expandable blocks", () => {

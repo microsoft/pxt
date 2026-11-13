@@ -31,6 +31,14 @@ export interface FieldCustomOptions {
 
 export interface FieldCustomDropdownOptions extends FieldCustomOptions {
     data?: any;
+    /**
+     * A function that returns the current API info for the project. Required for fields
+     * that generate a dynamic list based on exported constants, functions, etc. that
+     * may change without the blocks editor being re-initialized.
+     */
+    getBlocksInfo?: () => pxtc.BlocksInfo | undefined;
+    /** The value listed first in the dropdown */
+    defaultValue?: string;
 }
 
 export interface FieldCustomConstructor {

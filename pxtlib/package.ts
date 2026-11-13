@@ -997,17 +997,33 @@ namespace pxt {
             return r;
         }
 
+        /**
+         * If this package's pxt.json sets a palette, makes it the target's palette.
+         * Compiling applies dependencies first and the project last, so the project
+         * overrides everything. Between unrelated dependencies, the last one wins.
+         */
         patchAppTargetPalette() {
             if (this.config.palette && appTarget.runtime) {
                 appTarget.runtime.palette = U.clone(this.config.palette);
                 if (this.config.paletteNames) appTarget.runtime.paletteNames = this.config.paletteNames;
             }
         }
+
+        /**
+         * Returns this package's own palette if its pxt.json sets one. Otherwise
+         * returns the target's palette, which a dependency may have replaced (see
+         * patchAppTargetPalette).
+         */
+        effectivePalette(): string[] | undefined {
+            return this.config?.palette || appTarget.runtime?.palette;
+        }
     }
 
     export class MainPackage extends Package {
         public deps: Map<Package> = {};
         private _jres: Map<JRes>;
+        // called each time loadConfig reloads the project's pxt.json
+        protected configLoadListeners: (() => void)[] = [];
 
         constructor(public _host: Host) {
             super("this", "file:.", null, null, null)
@@ -1015,6 +1031,35 @@ namespace pxt {
             this.addedBy = [this]
             this.level = 0
             this.deps[this.id] = this;
+        }
+
+        /**
+         * Adds a listener called each time the project's pxt.json is reloaded
+         * into the package's config, after the reload. The listener is called
+         * synchronously, whether or not the config changed. A listener that
+         * throws is reported with `pxt.reportException`, and the other
+         * listeners are still called.
+         */
+        addConfigLoadListener(listener: () => void) {
+            this.configLoadListeners.push(listener);
+        }
+
+        /**
+         * Removes a listener added with addConfigLoadListener.
+         */
+        removeConfigLoadListener(listener: () => void) {
+            this.configLoadListeners = this.configLoadListeners.filter(l => l !== listener);
+        }
+
+        loadConfig(skipSave = false) {
+            super.loadConfig(skipSave);
+            this.configLoadListeners.forEach(listener => {
+                try {
+                    listener();
+                } catch (e) {
+                    pxt.reportException(e);
+                }
+            });
         }
 
         installAllAsync(targetVersion?: string) {
