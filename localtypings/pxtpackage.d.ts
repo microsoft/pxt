@@ -61,14 +61,12 @@ declare namespace pxt {
         public?: boolean;
         partial?: boolean; // true if project is not compileable on its own (eg base)
         binaryonly?: boolean;
-        platformio?: PlatformIOConfig;
         compileServiceVariant?: string;
         palette?: string[];
         paletteNames?: string[];
         screenSize?: Size;
         yotta?: YottaConfig;
         codal?: CodalConfig;
-        npmDependencies?: Map<string>;
         card?: CodeCard;
         additionalFilePath?: string;
         additionalFilePaths?: string[];

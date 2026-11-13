@@ -53,6 +53,22 @@ namespace test {
     };
 }
 
+interface ExtensionInfoRequest {
+    files: pxt.Map<string>;
+    target: string;
+    variant: string;
+    versions: { target: string; [key: string]: string };
+    compileSwitches?: pxtc.CompileSwitches;
+}
+
+function createExtensionRequest(
+    files: pxt.Map<string>,
+    target: pxt.TargetBundle,
+    variant: string
+): ExtensionInfoRequest {
+    return JSON.parse(pxt.cpp.createExtensionInfoRequest(files, target, variant)) as ExtensionInfoRequest;
+}
+
 describe("backend extension info", () => {
     it("generates and caches variant extension info without the Package class or browser globals", () => {
         const backendGlobal: { pxt?: typeof pxt } = {};
@@ -92,6 +108,8 @@ describe("backend extension info", () => {
             serviceId: "codal", gittag: "v1", buildEngine: "codal",
             codalTarget: "board", githubCorePackage: "owner/core"
         };
+        variant.id = "variant-target";
+        variant.versions.target = "2.0.0";
         variant.compile.switches.profile = true;
         target.variants = { codal: variant };
         const result = backend.cpp.getExtensionInfo(files, target, "codal", host);
@@ -103,6 +121,13 @@ describe("backend extension info", () => {
         chai.expect(backend.cpp.getExtensionInfo(files, target, "codal", host)).deep.equals(result);
         chai.expect(messages[messages.length - 1]).equals("Using cached extinfo");
         chai.expect(measurements).deep.equals(["start:sha256buffer", "end:sha256buffer"]);
+        const request = JSON.parse(backend.cpp.createExtensionInfoRequest(files, target, "codal")) as ExtensionInfoRequest;
+        chai.expect(request.target).equals(target.id);
+        chai.expect(request.versions.target).equals(target.versions.target);
+        chai.expect(request.compileSwitches).deep.equals(variant.compile.switches);
+        const prepared = backend.cpp.getExtensionInfo(request.files, target, request.variant, host);
+        chai.expect(prepared.shimsDTS).equals(result.shimsDTS);
+        chai.expect(prepared.generatedFiles["/pxtapp/pxtconfig.h"]).equals(result.generatedFiles["/pxtapp/pxtconfig.h"]);
         chai.expect(backend.docs.normalizeStaticMarkdown("text")).equals("text");
     });
 });
@@ -654,6 +679,332 @@ ${member}
         chai.expect(conflict.pkg0Id).equals("a");
         chai.expect(conflict.pkg1Id).equals("b");
         chai.expect(conflict.settingName).equals("setting");
+    });
+
+    it("prepares identical request JSON after project metadata and JavaScript-only dependency changes", () => {
+        const files = extensionTestFiles();
+        const target = extensionTestTarget();
+        const original = JSON.stringify({ files, target });
+        const first = createExtensionRequest(files, target, undefined);
+        chai.expect(JSON.stringify({ files, target })).equals(original);
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.name = "renamed project";
+        config.description = "New description";
+        config.preferredEditor = "pyprj";
+        config.files.push("main.ts", "main.blocks");
+        config.dependencies.script = "github:owner/script#v2";
+        files["pxt.json"] = JSON.stringify(config);
+        files["main.ts"] = "changed TypeScript";
+        files["main.blocks"] = "changed blocks";
+        files["pxt_modules/script/pxt.json"] = JSON.stringify({
+            name: "script", description: "JavaScript only", files: ["script.ts"], dependencies: {}, utf8: true
+        });
+        files["pxt_modules/script/script.ts"] = "script contents";
+        target.name = "Renamed target";
+        target.appTheme = { accentColor: "#ffffff" };
+        target.bundledpkgs.script = { "main.ts": "unrelated" };
+        const second = createExtensionRequest(files, target, undefined);
+        chai.expect(JSON.stringify(second)).equals(JSON.stringify(first));
+        chai.expect(Object.keys(second)).deep.equals(["compileSwitches", "files", "target", "variant", "versions"]);
+        chai.expect(second.target).equals("extension-test");
+        chai.expect(second.versions.target).equals("1.0.0");
+        chai.expect(Object.keys(second.files)).deep.equals(["main.cpp", "pxt.json"]);
+        const info = pxt.cpp.getExtensionInfo(second.files, target, second.variant, host);
+        chai.expect(info.extensionFiles["/pxtapp/this/main.cpp"]).equals(files["main.cpp"]);
+        chai.expect(info.shimsDTS).contains("function run(value?: int32): int32;");
+    });
+
+    it("canonicalizes request maps but preserves native file order", () => {
+        const files = extensionTestFiles();
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.yotta = { config: { z: 1, a: 2 } };
+        config.files.push("second.cpp");
+        files["pxt.json"] = JSON.stringify(config);
+        files["second.cpp"] = "// second";
+        const target = extensionTestTarget();
+        const first = createExtensionRequest(files, target, undefined);
+        config.yotta = { config: { a: 2, z: 1 } };
+        const reordered: pxt.Map<string> = {
+            "second.cpp": files["second.cpp"],
+            "main.cpp": files["main.cpp"],
+            "pxt.json": JSON.stringify({ files: config.files, dependencies: {}, name: config.name,
+                yotta: config.yotta })
+        };
+        chai.expect(JSON.stringify(createExtensionRequest(reordered, target, "")))
+            .equals(JSON.stringify(first));
+        config.files.reverse();
+        reordered["pxt.json"] = JSON.stringify(config);
+        chai.expect(JSON.stringify(createExtensionRequest(reordered, target, "")))
+            .not.equals(JSON.stringify(first));
+    });
+
+    it("warns about legacy package fields without changing native output or request keys", () => {
+        const files = extensionTestFiles();
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.dependencies = { script: "*", native: "*" };
+        files["pxt.json"] = JSON.stringify(config);
+        files["pxt_modules/script/pxt.json"] = JSON.stringify({
+            name: "script", files: ["script.ts"], dependencies: {}
+        });
+        files["pxt_modules/native/pxt.json"] = JSON.stringify({
+            name: "native", files: ["native.cpp"], dependencies: {}
+        });
+        files["pxt_modules/native/native.cpp"] = "// native";
+        const target = extensionTestTarget();
+        const cleanRequest = createExtensionRequest(files, target, "");
+        const cleanResult = pxt.cpp.getExtensionInfo(files, target, "", host);
+
+        const filenames = ["pxt.json", "pxt_modules/script/pxt.json", "pxt_modules/native/pxt.json"];
+        const warnings: string[] = [];
+        for (const filename of filenames) {
+            files[filename] = JSON.stringify({
+                ...JSON.parse(files[filename]),
+                npmDependencies: { obsolete: "1.0.0" },
+                platformio: { dependencies: { obsolete: "1.0.0" } }
+            });
+            for (const field of ["npmDependencies", "platformio"])
+                warnings.push(`${filename}: "${field}" is no longer supported and will be ignored.`);
+        }
+        const snapshot = JSON.stringify(files);
+        messages.length = 0;
+        const result = pxt.cpp.getExtensionInfo(files, target, "", host);
+        chai.expect(result).deep.equals(cleanResult);
+        chai.expect(messages.filter(message => message.includes("no longer supported")).sort()).deep.equals(warnings.sort());
+        chai.expect(messages[messages.length - 1]).equals("Using cached extinfo");
+        chai.expect(JSON.parse(result.generatedFiles["/package.json"]).dependencies).deep.equals({});
+
+        const request = createExtensionRequest(files, target, "");
+        chai.expect(JSON.stringify(request)).equals(JSON.stringify(cleanRequest));
+        chai.expect(request.files["pxt_modules/script/pxt.json"]).equals(undefined);
+        chai.expect(JSON.stringify(files)).equals(snapshot);
+    });
+
+    it("preserves target-level PlatformIO dependencies while ignoring legacy package fields", () => {
+        const target = extensionTestTarget();
+        target.compileService = {
+            serviceId: "platformio", gittag: "v1", buildEngine: "platformio",
+            platformioIni: ["[env:test]", "lib_deps =", "  vendor/target-lib@1.0.0"]
+        };
+        const files = extensionTestFiles();
+        files["pxt.json"] = JSON.stringify({
+            ...JSON.parse(files["pxt.json"]),
+            name: "this",
+            npmDependencies: { obsolete: "1.0.0" },
+            platformio: { dependencies: { obsolete: "1.0.0" } }
+        });
+        const result = pxt.cpp.getExtensionInfo(files, target, "", host);
+        chai.expect(result.generatedFiles["/platformio.ini"])
+            .equals(target.compileService.platformioIni.join("\n") + "\n");
+        chai.expect(result.platformio.dependencies).deep.equals({});
+        chai.expect(messages.filter(message => message.includes("no longer supported")).length).equals(2);
+        const request = createExtensionRequest(files, target, "");
+        chai.expect(pxt.cpp.getExtensionInfo(request.files, target, request.variant, host)).deep.equals(result);
+    });
+
+    it("includes effective compile switches without mutating the target", () => {
+        const files = extensionTestFiles();
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.name = "this";
+        files["pxt.json"] = JSON.stringify(config);
+        const target = extensionTestTarget();
+        target.compile.switches = { boxDebug: true, profile: true };
+        const variant = extensionTestTarget();
+        variant.compile.switches = { profile: false, numFloat: true };
+        target.variants = { board: variant };
+        const original = JSON.stringify(target);
+
+        const request = createExtensionRequest(files, target, "board");
+        chai.expect(request.compileSwitches).deep.equals({ boxDebug: true, numFloat: true, profile: false });
+        chai.expect(JSON.stringify(target)).equals(original);
+        const expected = pxt.cpp.getExtensionInfo(request.files, target, request.variant, host);
+        chai.expect(expected.generatedFiles["/pxtapp/pxtconfig.h"]).contains("#define PXT_BOX_DEBUG 1");
+        chai.expect(expected.generatedFiles["/pxtapp/pxtconfig.h"]).contains("#define PXT_USE_FLOAT 1");
+        chai.expect(expected.generatedFiles["/pxtapp/pxtconfig.h"]).not.contains("#define PXT_PROFILE 1");
+
+        target.compile.switches = { profile: true, boxDebug: true };
+        variant.compile.switches = { numFloat: true, profile: false };
+        chai.expect(JSON.stringify(createExtensionRequest(files, target, "board")))
+            .equals(JSON.stringify(request));
+        variant.compile.switches.profile = true;
+        chai.expect(JSON.stringify(createExtensionRequest(files, target, "board")))
+            .not.equals(JSON.stringify(request));
+        chai.expect(request.compileSwitches.profile).equals(false);
+    });
+
+    it("includes inherited compile switches with and without a variant compile override", () => {
+        const files = extensionTestFiles();
+        const target = extensionTestTarget();
+        target.compile.switches = { profile: true };
+        let request = createExtensionRequest(files, target, undefined);
+        chai.expect(request.compileSwitches).deep.equals({ profile: true });
+
+        target.variants = { board: extensionTestTarget() };
+        delete target.variants.board.compile;
+        request = createExtensionRequest(files, target, "board");
+        chai.expect(request.compileSwitches).deep.equals({ profile: true });
+    });
+
+    it("includes target identity and version in requests", () => {
+        const target = extensionTestTarget();
+        const request = createExtensionRequest(extensionTestFiles(), target, "");
+        target.versions.target = "2.0.0";
+        chai.expect(request.target).equals("extension-test");
+        chai.expect(request.versions.target).equals("1.0.0");
+        chai.expect(request.compileSwitches).deep.equals({});
+    });
+
+    it("resolves conditions and native dependencies through JavaScript-only wrappers before pruning", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({
+                name: "this", files: ["main.cpp", "excluded.cpp"], dependencies: { wrapper: "*" },
+                fileDependencies: { "main.cpp": "wrapper && !hw && target:board", "excluded.cpp": "hw" }
+            }),
+            "main.cpp": "// root",
+            "excluded.cpp": "// excluded",
+            "pxt_modules/wrapper/pxt.json": JSON.stringify({
+                name: "wrapper", files: ["wrapper.ts"], dependencies: {}, cppDependencies: { hw: "embed:hw" }
+            }),
+            "pxt_modules/hw---board/pxt.json": JSON.stringify({
+                name: "hw", files: ["hw.cpp"], dependencies: {},
+                fileDependencies: { "hw.cpp": "wrapper && !hw" }
+            }),
+            "pxt_modules/hw---board/hw.cpp": extensionTestFiles()["main.cpp"]
+        };
+        const target = extensionTestTarget();
+        target.platformid = "board";
+        const expected = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(expected.extensionFiles["/pxtapp/this/main.cpp"]).equals("// root");
+        const request = createExtensionRequest(files, target, undefined);
+        chai.expect(request.files["pxt_modules/wrapper/pxt.json"]).equals(undefined);
+        chai.expect(request.files["excluded.cpp"]).equals(undefined);
+        chai.expect(pxt.cpp.getExtensionInfo(request.files, target, request.variant, host)).deep.equals(expected);
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.fileDependencies["main.cpp"] = "!wrapper";
+        files["pxt.json"] = JSON.stringify(config);
+        const changed = createExtensionRequest(files, target, undefined);
+        chai.expect(changed.files["main.cpp"]).equals(undefined);
+        chai.expect(JSON.stringify(changed)).not.equals(JSON.stringify(request));
+    });
+
+    it("preserves variant disabling without promoting transitive disabled packages to direct runtime dependencies", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({ name: "this", files: ["main.cpp"], dependencies: { wrapper: "*" } }),
+            "main.cpp": "// enabled root",
+            "pxt_modules/wrapper/pxt.json": JSON.stringify({
+                name: "wrapper", files: [], dependencies: { disabled: "*" }
+            }),
+            "pxt_modules/disabled/pxt.json": JSON.stringify({
+                name: "disabled", files: ["disabled.cpp"], dependencies: {}, disablesVariants: ["board"]
+            }),
+            "pxt_modules/disabled/disabled.cpp": "// disabled"
+        };
+        const target = extensionTestTarget();
+        target.variants = { board: extensionTestTarget() };
+        const expected = pxt.cpp.getExtensionInfo(files, target, "board", host);
+        const request = createExtensionRequest(files, target, "board");
+        const result = pxt.cpp.getExtensionInfo(request.files, target, request.variant, host);
+        chai.expect(result).deep.equals(expected);
+        chai.expect(result.disabledDeps).equals("disabled, wrapper");
+        chai.expect(result.extensionFiles["/pxtapp/this/main.cpp"]).equals("// enabled root");
+    });
+
+    it("keeps build configuration, test files and utf8 contributions from packages without C++", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({
+                name: "this", files: [], testFiles: ["test.cpp"],
+                dependencies: { settings: "*", utf8: "*" }, testDependencies: { test: "*", unavailable: "*" }
+            }),
+            "test.cpp": "// native test",
+            "pxt_modules/settings/pxt.json": JSON.stringify({
+                name: "settings", files: [], dependencies: {}, yotta: { config: { codal: { feature: true } } }
+            }),
+            "pxt_modules/utf8/pxt.json": JSON.stringify({
+                name: "utf8", files: ["main.ts"], dependencies: {}, utf8: true
+            }),
+            "pxt_modules/test/pxt.json": JSON.stringify({
+                name: "test", files: ["test.c", "startup.S", "Makefile", "dal.d.ts"], dependencies: {}
+            }),
+            "pxt_modules/test/test.c": "// C",
+            "pxt_modules/test/startup.S": "// assembly",
+            "pxt_modules/test/Makefile": "# make",
+            "pxt_modules/test/dal.d.ts": "declare const enum DAL {\n VALUE = 1,\n}"
+        };
+        const target = extensionTestTarget();
+        target.compile.utf8 = false;
+        target.compileService = { serviceId: "codal", gittag: "v1", buildEngine: "codal" };
+        const expected = pxt.cpp.getExtensionInfo(files, target, undefined, host);
+        chai.expect(JSON.parse(expected.generatedFiles["/codal.json"]).definitions.DEVICE_FEATURE).equals(true);
+        const request = createExtensionRequest(files, target, undefined);
+        chai.expect(request.files["pxt_modules/utf8/pxt.json"]).equals(undefined);
+        chai.expect(JSON.parse(request.files["pxt.json"]).utf8).equals(true);
+        chai.expect(request.files["pxt_modules/test/test.c"]).equals("// C");
+        chai.expect(request.files["pxt_modules/test/startup.S"]).equals("// assembly");
+        chai.expect(request.files["pxt_modules/test/dal.d.ts"]).contains("enum DAL");
+        chai.expect(target.compile.utf8).equals(false);
+    });
+
+    it("retains utf8 from pruned and disabled packages for a variant with utf8 disabled", () => {
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({ name: "this", files: ["main.cpp"], dependencies: { feature: "*" } }),
+            "main.cpp": "// root",
+            "pxt_modules/feature/pxt.json": JSON.stringify({
+                name: "feature", files: [], dependencies: {}, utf8: true, disablesVariants: ["board"]
+            })
+        };
+        const target = extensionTestTarget();
+        const variant = extensionTestTarget();
+        variant.compile.utf8 = false;
+        target.variants = { board: variant };
+        const expected = pxt.cpp.getExtensionInfo(files, target, "board", host);
+        const request = createExtensionRequest(files, target, "board");
+        const result = pxt.cpp.getExtensionInfo(request.files, target, request.variant, host);
+        chai.expect(result).deep.equals(expected);
+        chai.expect(result.generatedFiles["/pxtapp/pxtconfig.h"]).contains("#define PXT_UTF8 1");
+    });
+
+    it("keys requests by target identity and version as well as native inputs", () => {
+        const files = extensionTestFiles();
+        const target = extensionTestTarget();
+        const hash = () => crypto.createHash("sha256").update(JSON.stringify(
+            createExtensionRequest(files, target, undefined)
+        )).digest("hex");
+        let previous = hash();
+        files["main.cpp"] += "\n// changed native source";
+        chai.expect(hash()).not.equals(previous);
+        previous = hash();
+        target.compileService.gittag = "v2";
+        chai.expect(hash()).equals(previous);
+        target.versions.target = "2.0.0";
+        chai.expect(hash()).not.equals(previous);
+        previous = hash();
+        target.id = "other-target";
+        chai.expect(hash()).not.equals(previous);
+        previous = hash();
+        const config = JSON.parse(files["pxt.json"]) as pxt.PackageConfig;
+        config.yotta = { config: { native: true } };
+        files["pxt.json"] = JSON.stringify(config);
+        chai.expect(hash()).not.equals(previous);
+        delete files["main.cpp"];
+        const request = createExtensionRequest(files, target, undefined);
+        chai.expect(() => pxt.cpp.getExtensionInfo(request.files, target, request.variant, host))
+            .throws("C++ file main.cpp is missing");
+        chai.expect(() => createExtensionRequest(files, target, "missing"))
+            .throws("Variant 'missing'");
+    });
+
+    it("rejects requests without a target ID or version", () => {
+        const files = extensionTestFiles();
+        const target = extensionTestTarget();
+        target.id = "";
+        chai.expect(() => createExtensionRequest(files, target, undefined))
+            .throws("A target ID and version are required");
+        target.id = "extension-test";
+        target.versions.target = "";
+        chai.expect(() => createExtensionRequest(files, target, undefined))
+            .throws("A target ID and version are required");
+        target.versions = undefined;
+        chai.expect(() => createExtensionRequest(files, target, undefined))
+            .throws("A target ID and version are required");
     });
 
     it("reports missing variants and missing native source files", () => {

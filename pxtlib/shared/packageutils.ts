@@ -13,6 +13,21 @@ namespace pxt.packageUtils {
         return !!config && !!config.disablesVariants && config.disablesVariants.indexOf(variant) >= 0;
     }
 
+    /** Removes obsolete native build settings from a parsed package config, warning for each field. */
+    export function removeUnsupportedPackageConfigFields(
+        config: PackageConfig,
+        filename: string,
+        warn: (message: string) => void
+    ): void {
+        const legacy: PackageConfig & { npmDependencies?: unknown; platformio?: unknown } = config;
+        for (const field of ["npmDependencies", "platformio"] as const) {
+            if (Object.prototype.hasOwnProperty.call(legacy, field)) {
+                warn(`${filename}: "${field}" is no longer supported and will be ignored.`);
+                delete legacy[field];
+            }
+        }
+    }
+
     export function getConfigDependencies(
         config: PackageConfig,
         includeTests: boolean,
