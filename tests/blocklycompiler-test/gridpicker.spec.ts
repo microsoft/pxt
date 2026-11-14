@@ -328,6 +328,20 @@ describe("grid picker catalogs", () => {
             values(groups[0].options));
         chai.assert.isAtLeast(getGridPickerSizeRows(options, catalog, 2, tags).length, rows.length);
     });
+
+    it("sizes for an expanded group when a flat layout has as many rows", () => {
+        const tieOptions: Blockly.MenuOption[] = [["S1", "S1"], ["S2", "S2"], ["P1", "P1"], ["P2", "P2"], ["X1", "X1"], ["X2", "X2"]];
+        const tieTags = { S1: ["equipment", "sword"], S2: ["equipment", "sword"], P1: ["equipment"], P2: ["equipment"] };
+        const tieCatalog: pxt.GridPickerCatalog = {
+            name: "Inventory",
+            tabs: [{ id: "equipment", name: "Equipment", tags: ["equipment"] }, { id: "search", name: "All", flat: true }],
+            groups: [{ id: "swords", name: "Swords", tags: ["sword"] }]
+        };
+        // Both the flat "All" tab and the equipment tab with swords expanded take three rows; the expanded one is taller.
+        const rows = getGridPickerSizeRows(tieOptions, tieCatalog, 2, tieTags);
+        chai.assert.equal(rows.length, 3);
+        chai.assert.equal(rows.filter(row => row.group).length, 1);
+    });
 });
 
 function symbol(qName: string, tags: string, jres: string, iconURL?: string): pxtc.SymbolInfo {

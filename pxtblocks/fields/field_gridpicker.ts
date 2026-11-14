@@ -897,7 +897,10 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             const allowed = filterGridPickerOptions(this.getOptions(), this.filter_, this.optionTags_);
             const rows = getGridPickerSizeRows(allowed, this.catalog_, this.columns_, this.optionTags_, this.optionWeights_);
             this.populateTableContainer([], this.catalogTable_, this.scrollContainer, rows);
-            this.catalogContentHeight_ = this.catalogTable_.offsetHeight;
+            // Measure the scroller rather than the table so its padding, border and the last row's margin are
+            // included; otherwise the largest group overflows by a few pixels and scrolls when it's expanded.
+            this.scrollContainer.style.height = "";
+            this.catalogContentHeight_ = this.scrollContainer.offsetHeight;
             this.renderCatalog_();
             return;
         }
