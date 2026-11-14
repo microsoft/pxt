@@ -385,6 +385,34 @@ export class EditorPackage {
         })
     }
 
+    async renameFileAsync(oldName: string, newName: string): Promise<void> {
+        Util.assert(!!oldName && !!newName, "missing file name");
+        const f = this.files[oldName];
+        if (!f) return Promise.resolve();
+
+        delete this.files[oldName];
+        f.name = newName;
+        this.files[newName] = f;
+        data.invalidate("open-meta:");
+
+        await this.updateConfigAsync(cfg => {
+            if (cfg.files) {
+                const idx = cfg.files.indexOf(oldName);
+                if (idx >= 0) {
+                    cfg.files[idx] = newName;
+                } else if (cfg.files.indexOf(newName) < 0) {
+                    cfg.files.push(newName);
+                }
+            }
+            if (cfg.testFiles) {
+                const idx = cfg.testFiles.indexOf(oldName);
+                if (idx >= 0) {
+                    cfg.testFiles[idx] = newName;
+                }
+            }
+        });
+    }
+
     async setContentAsync(n: string, v: string): Promise<void> {
         Util.assert(!!n, "missing file name");
         let f = this.files[n];
