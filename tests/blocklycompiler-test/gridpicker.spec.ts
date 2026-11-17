@@ -153,7 +153,8 @@ describe("grid picker catalogs", () => {
             const tooltip = field["gridTooltip_"];
             popup.dispatchEvent(new PointerEvent("pointermove", { bubbles: true }));
             for (const [clientX, clientY] of [
-                [120, 120], [window.innerWidth - 1, 120], [1, 1], [window.innerWidth - 1, window.innerHeight - 1]
+                [120, 120], [window.innerWidth - 1, 120], [1, 1],
+                [window.innerWidth - 1, 1], [window.innerWidth - 1, window.innerHeight - 1]
             ]) {
                 item.dispatchEvent(new PointerEvent("pointermove", { clientX, clientY, bubbles: true }));
                 const rect = tooltip.getBoundingClientRect();
@@ -166,6 +167,13 @@ describe("grid picker catalogs", () => {
                 if (clientX === 120) {
                     chai.assert.equal(rect.left, clientX + (rtl ? -15 : 15));
                     chai.assert.equal(rect.top, clientY - 10);
+                } else if (clientX === window.innerWidth - 1) {
+                    chai.assert.equal(rect.right, document.documentElement.clientWidth);
+                    if (clientY === 1) {
+                        chai.assert.equal(rect.top, clientY + 24, "Leave room below the mouse cursor");
+                    } else {
+                        chai.assert.isAtMost(rect.bottom, clientY - 8, "Keep the tooltip above the mouse cursor");
+                    }
                 }
             }
             item.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
@@ -179,14 +187,16 @@ describe("grid picker catalogs", () => {
         const tooltip = field["gridTooltip_"];
         popup.dispatchEvent(new PointerEvent("pointermove", { bubbles: true }));
         const [long, short] = cells(popup);
+        const clientY = document.documentElement.clientHeight - 1;
         long.dispatchEvent(new PointerEvent("pointermove", {
-            clientX: window.innerWidth - 1, clientY: 120, bubbles: true
+            clientX: window.innerWidth - 1, clientY, bubbles: true
         }));
         const rect = tooltip.getBoundingClientRect();
         chai.assert.equal(tooltip.textContent, title);
         chai.assert.isAtLeast(rect.left, 0);
         chai.assert.isAtMost(rect.right, document.documentElement.clientWidth);
         chai.assert.isAtMost(tooltip.scrollWidth, tooltip.clientWidth);
+        chai.assert.isAtMost(rect.bottom, clientY - 8, "Keep wrapped labels above the mouse cursor");
         short.dispatchEvent(new PointerEvent("pointermove", { clientX: 120, clientY: 120, bubbles: true }));
         chai.assert.equal(tooltip.textContent, image.alt);
         chai.assert.equal(tooltip.getBoundingClientRect().left, 135);

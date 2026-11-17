@@ -191,12 +191,18 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         document.body.appendChild(this.gridTooltip_);
     }
 
-    private positionTooltip_(x: number, y: number): void {
+    private positionTooltip_(x: number, y: number, pointerY?: number): void {
         // Measure from the viewport origin so the previous position doesn't squeeze the tooltip.
         this.gridTooltip_.style.left = '0px';
         this.gridTooltip_.style.top = '0px';
         const { width, height } = this.gridTooltip_.getBoundingClientRect();
-        this.gridTooltip_.style.left = `${Math.max(0, Math.min(x, document.documentElement.clientWidth - width))}px`;
+        const left = Math.max(0, Math.min(x, document.documentElement.clientWidth - width));
+        if (pointerY !== undefined && left !== x) {
+            // A horizontally clamped tooltip can overlap the cursor. Prefer above it, or leave room below the cursor.
+            const above = pointerY - height - 8;
+            y = above >= 0 ? above : pointerY + 24;
+        }
+        this.gridTooltip_.style.left = `${left}px`;
         this.gridTooltip_.style.top = `${Math.max(0, Math.min(y, document.documentElement.clientHeight - height))}px`;
     }
 
@@ -366,7 +372,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                             // Show the tooltip
                             this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
                             this.gridTooltip_.style.display = title ? '' : 'none';
-                            this.positionTooltip_(e.clientX + xOffset, e.clientY + yOffset);
+                            this.positionTooltip_(e.clientX + xOffset, e.clientY + yOffset, e.clientY);
                         }
 
                         pxt.BrowserUtils.addClass(menuItem, 'gridpicker-menuitem-highlight');
