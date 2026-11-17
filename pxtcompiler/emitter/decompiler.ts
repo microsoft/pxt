@@ -2210,6 +2210,12 @@ ${output}</xml>`;
                     return;
                 }
 
+                const pickerShadow = getEnumGridPickerShadow(e, shadowBlockInfo);
+                if (pickerShadow) {
+                    addInput(mkValue(U.htmlEscape(param.definitionName), pickerShadow, param.shadowBlockId, shadowMutation));
+                    return;
+                }
+
                 switch (e.kind) {
                     case SK.FunctionExpression:
                     case SK.ArrowFunction:
@@ -2379,6 +2385,37 @@ ${output}</xml>`;
             }
 
             return r;
+        }
+
+        function getEnumGridPickerShadow(value: Expression, shadow: SymbolInfo | undefined): ExpressionNode | undefined {
+            if (shadow?.attributes.shim !== "TD_ID") return undefined;
+            const field = fieldBlockInfo(shadow.attributes.blockId);
+            if (field?.fieldEditor !== "gridpicker") return undefined;
+
+            let memberName: string | undefined;
+            if (value.kind === SK.Identifier) {
+                memberName = pxtInfo(value).commentAttrs?.enumIdentity;
+            }
+            else if (value.kind === SK.PropertyAccessExpression) {
+                const info = pxtInfo(value).callInfo;
+                if (info) {
+                    memberName = info.decl?.kind === SK.EnumMember ? info.qName : attrs(info).enumIdentity;
+                }
+            }
+            if (!memberName) return undefined;
+
+            const apis = blocksInfo.apis;
+            const member = apis.byQName[memberName];
+            if (member?.kind !== SymbolKind.EnumMember || member.attributes.blockHidden) return undefined;
+            const enums = pxt.blocks.getConfiguredEnumNames(field, apis);
+            if (enums.length ? enums.indexOf(member.namespace) < 0 : member.namespace !== field.type) return undefined;
+
+            // An out-of-filter value keeps its ordinary block, rather than being forced into this picker.
+            const filter = field.fieldOptions?.filter;
+            if (typeof filter === "string" && !pxt.sprite.compileTagFilter(filter)(pxt.sprite.getSymbolTags(apis, member))) {
+                return undefined;
+            }
+            return getFieldBlock(U.htmlEscape(shadow.attributes.blockId), U.htmlEscape(field.definitionName), member.qName);
         }
 
         function fieldBlockInfo(blockId: string) {
