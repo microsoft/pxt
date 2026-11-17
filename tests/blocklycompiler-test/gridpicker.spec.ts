@@ -142,6 +142,84 @@ describe("grid picker catalogs", () => {
         chai.assert.equal(field["selectedBarText_"].textContent, "Text");
     });
 
+    for (const rtl of [false, true]) {
+        it(`keeps hovered catalog tooltips inside the viewport (${rtl ? "RTL" : "LTR"})`, () => {
+            pxt.Util.setUserLanguage(rtl ? "ar" : "en");
+            const { field, popup } = open({
+                ...withCatalog(catalog),
+                data: options.map(option => [{ ...image, alt: option[0] as string }, option[1]])
+            });
+            const item = cells(popup)[0];
+            const tooltip = field["gridTooltip_"];
+            popup.dispatchEvent(new PointerEvent("pointermove", { bubbles: true }));
+            for (const [clientX, clientY] of [
+                [120, 120], [window.innerWidth - 1, 120], [1, 1],
+                [window.innerWidth - 1, 1], [window.innerWidth - 1, window.innerHeight - 1]
+            ]) {
+                item.dispatchEvent(new PointerEvent("pointermove", { clientX, clientY, bubbles: true }));
+                const rect = tooltip.getBoundingClientRect();
+                chai.assert.equal(tooltip.textContent, item.title);
+                chai.assert.equal(tooltip.style.visibility, "visible");
+                chai.assert.isAtLeast(rect.left, 0);
+                chai.assert.isAtLeast(rect.top, 0);
+                chai.assert.isAtMost(rect.right, document.documentElement.clientWidth);
+                chai.assert.isAtMost(rect.bottom, document.documentElement.clientHeight);
+                if (clientX === 120) {
+                    chai.assert.equal(rect.left, clientX + (rtl ? -15 : 15));
+                    chai.assert.equal(rect.top, clientY - 10);
+                } else if (clientX === window.innerWidth - 1) {
+                    chai.assert.equal(rect.right, document.documentElement.clientWidth);
+                    if (clientY === 1) {
+                        chai.assert.equal(rect.top, clientY + 24, "Leave room below the mouse cursor");
+                    } else {
+                        chai.assert.isAtMost(rect.bottom, clientY - 8, "Keep the tooltip above the mouse cursor");
+                    }
+                }
+            }
+            item.dispatchEvent(new PointerEvent("pointerout", { bubbles: true }));
+            chai.assert.equal(tooltip.style.display, "none");
+        });
+    }
+
+    it("wraps oversized tooltip labels and remeasures when the hovered item changes", () => {
+        const title = "Pickaxes".repeat(100);
+        const { field, popup } = open({ data: [[{ ...image, alt: title }, "long"], [image, "short"]] });
+        const tooltip = field["gridTooltip_"];
+        popup.dispatchEvent(new PointerEvent("pointermove", { bubbles: true }));
+        const [long, short] = cells(popup);
+        const clientY = document.documentElement.clientHeight - 1;
+        long.dispatchEvent(new PointerEvent("pointermove", {
+            clientX: window.innerWidth - 1, clientY, bubbles: true
+        }));
+        const rect = tooltip.getBoundingClientRect();
+        chai.assert.equal(tooltip.textContent, title);
+        chai.assert.isAtLeast(rect.left, 0);
+        chai.assert.isAtMost(rect.right, document.documentElement.clientWidth);
+        chai.assert.isAtMost(tooltip.scrollWidth, tooltip.clientWidth);
+        chai.assert.isAtMost(rect.bottom, clientY - 8, "Keep wrapped labels above the mouse cursor");
+        short.dispatchEvent(new PointerEvent("pointermove", { clientX: 120, clientY: 120, bubbles: true }));
+        chai.assert.equal(tooltip.textContent, image.alt);
+        chai.assert.equal(tooltip.getBoundingClientRect().left, 135);
+        chai.assert.isBelow(tooltip.getBoundingClientRect().width, rect.width);
+    });
+
+    it("keeps keyboard tooltips inside the viewport", () => {
+        const { field, popup } = open({ data: [[image, "picture"]] });
+        popup.style.left = `${document.documentElement.clientWidth - 1}px`;
+        popup.style.top = `${document.documentElement.clientHeight - 1}px`;
+        const table = popup.querySelector<HTMLElement>('[role="grid"]');
+        table.dispatchEvent(new KeyboardEvent("keydown", { code: "Home", key: "Home", bubbles: true }));
+        const tooltip = field["gridTooltip_"];
+        const rect = tooltip.getBoundingClientRect();
+        chai.assert.equal(tooltip.textContent, image.alt);
+        chai.assert.equal(tooltip.style.visibility, "visible");
+        chai.assert.isAtLeast(rect.left, 0);
+        chai.assert.isAtLeast(rect.top, 0);
+        chai.assert.isAtMost(rect.right, document.documentElement.clientWidth);
+        chai.assert.isAtMost(rect.bottom, document.documentElement.clientHeight);
+        chai.assert.equal(table.getAttribute("aria-activedescendant"), cells(popup)[0].id);
+    });
+
     it("falls back to the filtered picker when no catalog tab is eligible", () => {
         const { popup } = open({ ...withCatalog({ name: "Empty", tabs: [catalog.tabs[0]] }), filter: "rider" });
         chai.assert.isNotNull(popup.querySelector('[role="grid"]'));
