@@ -63,6 +63,8 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private blocksInfo_: pxtc.BlocksInfo;
     private catalogTab_: string;
     private catalogSearch_ = "";
+    // The tab to go back to when the search box is emptied, set when typing moved the picker to the flat tab.
+    private catalogSearchReturnTab_: string;
     private catalogExpanded_ = new Set<string>();
     private catalogGroups_: pxt.Map<GridPickerGroup> = {};
     private catalogChildRowIds_: pxt.Map<string[]> = {};
@@ -756,7 +758,11 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         search.placeholder = pxt.Util.lf("Search");
         search.setAttribute("aria-label", pxt.Util.lf("Search assets"));
         search.addEventListener("input", () => {
+            const wasSearching = !!this.catalogSearch_.trim();
             this.catalogSearch_ = search.value;
+            const searching = !!this.catalogSearch_.trim();
+            if (searching && !wasSearching) this.startCatalogSearch_();
+            else if (!searching && wasSearching) this.endCatalogSearch_();
             this.renderCatalog_();
         });
         search.addEventListener("keydown", event => {
@@ -816,9 +822,29 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     }
 
     private selectCatalogTab_(id: string): void {
+        // Picking a tab by hand while searching keeps the search on that tab.
+        this.catalogSearchReturnTab_ = undefined;
         this.catalogTab_ = id;
         this.catalogExpanded_.clear();
         this.renderCatalog_();
+    }
+
+    /** Searching covers everything, so move to the flat tab if there is one and remember where to come back to. */
+    private startCatalogSearch_(): void {
+        const current = this.catalog_.tabs.find(tab => tab.id === this.catalogTab_);
+        const flat = this.catalog_.tabs.find(tab => tab.flat);
+        if (!flat || current?.flat) return;
+        this.catalogSearchReturnTab_ = this.catalogTab_;
+        this.catalogTab_ = flat.id;
+        this.catalogExpanded_.clear();
+    }
+
+    /** Goes back to the tab the search started from, unless a tab was picked by hand in the meantime. */
+    private endCatalogSearch_(): void {
+        if (this.catalogSearchReturnTab_ === undefined) return;
+        this.catalogTab_ = this.catalogSearchReturnTab_;
+        this.catalogSearchReturnTab_ = undefined;
+        this.catalogExpanded_.clear();
     }
 
     private renderCatalog_(): void {
@@ -1175,6 +1201,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         // Start fresh on the next open, so the picker reopens on a tab that holds the current value.
         this.catalogTab_ = undefined;
         this.catalogSearch_ = "";
+        this.catalogSearchReturnTab_ = undefined;
         this.catalogExpanded_.clear();
         this.scrollContainer = undefined;
         this.getFocusableElement().ariaExpanded = 'false';
