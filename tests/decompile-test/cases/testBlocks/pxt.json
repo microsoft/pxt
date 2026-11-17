@@ -16,6 +16,7 @@
         "globals.ts",
         "spritekind.ts",
         "decompilerShadowAlias.ts",
+        "gridPickerShadow.ts",
         "blockAliasFor.ts",
         "forceStatement.ts",
         "robot.ts"
