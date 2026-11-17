@@ -245,6 +245,9 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
   keys may use either the TypeScript parameter name or its name in the block
   definition, and both sets are combined. If both set the same key, the block
   definition name wins.
+- When an input uses an identity grid picker as its shadow, an enum member and
+  its `enumIdentity` constant alias both use that picker if the choice matches
+  its enum sources and tag filter. Other values keep their normal blocks.
 - Field options are read as strings, so `fixedInstances` is only on when set to
   `true` (or `1`). `fixedInstances=false` leaves it off.
 - A receiver (`this`) shown as a grid picker is always a dropdown. Calls on an
