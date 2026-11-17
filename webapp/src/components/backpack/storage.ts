@@ -27,76 +27,148 @@ export function backpackLocalNamespace(target: string, userId?: string): string 
     return JSON.stringify([target, userId === undefined ? "guest" : "user", userId || ""]);
 }
 
-function storageError(): Error {
-    return new BackpackUserError(lf("Could not save or read your local backpack. Allow browser storage and check available space, then try again."));
+const DB_NAME = "pxt-backpack";
+const ITEMS = "items";
+const NAMESPACE_INDEX = "namespace";
+
+/** Which part of a local backpack operation failed, so the message (and telemetry) can tell them apart. */
+type StorageStep = "open" | "read" | "write";
+
+function storageError(step: StorageStep, cause?: unknown): Error {
+    // Only the DOMException name is reported; messages can carry details we don't want in telemetry.
+    const name = cause && typeof (cause as { name?: unknown }).name === "string" ? (cause as { name: string }).name : "unknown";
+    try {
+        pxt.tickEvent("backpack.storage.error", { step, error: name });
+    } catch {
+        /* Telemetry must not replace the storage error. */
+    }
+    switch (step) {
+        case "open":
+            return new BackpackUserError(lf("Could not open your local backpack. Allow browser storage, then try again."));
+        case "read":
+            return new BackpackUserError(lf("Could not load your local backpack. Allow browser storage, then try again."));
+        default:
+            return new BackpackUserError(lf("Could not save to your local backpack. Check available space, then try again."));
+    }
+}
+
+function hasItemsKeyPath(keyPath: string | string[]): boolean {
+    return Array.isArray(keyPath) && keyPath.length === 2 && keyPath[0] === "namespace" && keyPath[1] === "key";
+}
+
+/** Creates whatever part of the items store is missing. A store with a different key can't hold our records, so it's replaced. */
+function upgradeSchema(db: IDBDatabase, transaction: IDBTransaction): void {
+    let store = db.objectStoreNames.contains(ITEMS) ? transaction.objectStore(ITEMS) : undefined;
+    if (store && !hasItemsKeyPath(store.keyPath)) {
+        db.deleteObjectStore(ITEMS);
+        store = undefined;
+    }
+    if (!store) store = db.createObjectStore(ITEMS, { keyPath: ["namespace", "key"] });
+    if (!store.indexNames.contains(NAMESPACE_INDEX)) store.createIndex(NAMESPACE_INDEX, NAMESPACE_INDEX, { unique: false });
+}
+
+function hasSchema(db: IDBDatabase): boolean {
+    if (!db.objectStoreNames.contains(ITEMS)) return false;
+    const store = db.transaction(ITEMS, "readonly").objectStore(ITEMS);
+    return hasItemsKeyPath(store.keyPath) && store.indexNames.contains(NAMESPACE_INDEX);
 }
 
 /** Report IndexedDB failures instead of falling back to storage that may lose pending uploads. */
 export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalStorage {
-    const openAsync = (): Promise<IDBDatabase> => new Promise((resolve, reject) => {
+    const requestAsync = (version?: number): Promise<IDBDatabase> => new Promise((resolve, reject) => {
         let request: IDBOpenDBRequest;
-        let failed = false;
+        let upgradeFailure: unknown;
         try {
-            request = factory.open("pxt-backpack", 1);
-        } catch {
-            reject(storageError());
+            request = version === undefined ? factory.open(DB_NAME) : factory.open(DB_NAME, version);
+        } catch (error) {
+            reject(storageError("open", error));
             return;
         }
 
         request.onupgradeneeded = () => {
-            const store = request.result.createObjectStore("items", { keyPath: ["namespace", "key"] });
-            store.createIndex("namespace", "namespace", { unique: false });
-        };
-        request.onerror = request.onblocked = () => {
-            failed = true;
-            reject(storageError());
-        };
-        request.onsuccess = () => {
-            if (failed) {
-                request.result.close();
-                return;
+            try {
+                upgradeSchema(request.result, request.transaction);
+            } catch (error) {
+                upgradeFailure = error;
+                request.transaction.abort();
             }
-            request.result.onversionchange = () => request.result.close();
-            resolve(request.result);
+        };
+        request.onerror = () => reject(storageError("open", upgradeFailure || request.error));
+        // A blocked upgrade waits for other connections to close, which they do on versionchange; like the project
+        // store, keep waiting for success or error instead of failing.
+        request.onsuccess = () => {
+            const db = request.result;
+            db.onversionchange = () => db.close();
+            resolve(db);
         };
     });
+
+    // Opens whatever version exists, so a database left by a newer or older build still works as long as its items
+    // store does. Anything missing is added with a one-step upgrade.
+    const openAsync = async (): Promise<IDBDatabase> => {
+        const db = await requestAsync();
+        let usable: boolean;
+        try {
+            usable = hasSchema(db);
+        } catch (error) {
+            db.close();
+            throw storageError("open", error);
+        }
+        if (usable) return db;
+
+        const version = db.version + 1;
+        db.close();
+        const upgraded = await requestAsync(version);
+        try {
+            if (hasSchema(upgraded)) return upgraded;
+        } catch {
+            /* Reported below. */
+        }
+        upgraded.close();
+        throw storageError("open", { name: "MissingStore" });
+    };
 
     const transactionAsync = async <T>(
         mode: IDBTransactionMode,
         action: (store: IDBObjectStore, result: (value: T) => void) => void
     ): Promise<T> => {
+        const step: StorageStep = mode === "readonly" ? "read" : "write";
         const db = await openAsync();
         try {
             return await new Promise<T>((resolve, reject) => {
                 let transaction: IDBTransaction;
                 let result: T;
+                let settled = false;
+                // A failed request fires error and then abort; report it once.
+                const fail = (error: unknown) => {
+                    if (settled) return;
+                    settled = true;
+                    reject(storageError(step, error));
+                };
                 try {
-                    // The optional third argument is ignored by older implementations.
-                    const begin = db.transaction as (
-                        name: string,
-                        mode: IDBTransactionMode,
-                        options?: { durability: "strict" }
-                    ) => IDBTransaction;
-                    transaction = begin.call(db, "items", mode, { durability: "strict" });
-                    transaction.oncomplete = () => resolve(result);
-                    transaction.onerror = transaction.onabort = () => reject(storageError());
-                    action(transaction.objectStore("items"), value => {
+                    transaction = db.transaction(ITEMS, mode);
+                    transaction.oncomplete = () => {
+                        settled = true;
+                        resolve(result);
+                    };
+                    transaction.onerror = event => fail(transaction.error || (event.target as IDBRequest)?.error);
+                    transaction.onabort = () => fail(transaction.error || { name: "AbortError" });
+                    action(transaction.objectStore(ITEMS), value => {
                         result = value;
                     });
-                } catch {
+                } catch (error) {
                     try {
                         transaction?.abort();
                     } catch {
                         /* Already completed. */
                     }
-                    reject(storageError());
+                    fail(error);
                 }
             });
         } finally {
             db.close();
         }
     };
-
     return {
         listAsync: namespace => transactionAsync<BackpackLocalRecord[]>("readonly", (store, done) => {
             const request = store.index("namespace").getAll(namespace);
