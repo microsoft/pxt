@@ -52,25 +52,35 @@ function storageError(step: StorageStep, cause?: unknown): Error {
     }
 }
 
-function hasItemsKeyPath(keyPath: string | string[]): boolean {
-    return Array.isArray(keyPath) && keyPath.length === 2 && keyPath[0] === "namespace" && keyPath[1] === "key";
+function requireItemsKeyPath(store: IDBObjectStore): void {
+    const keyPath = store.keyPath;
+    if (!Array.isArray(keyPath) || keyPath.length !== 2 || keyPath[0] !== "namespace" || keyPath[1] !== "key") {
+        throw new DOMException("Unsupported backpack items key path", "NotSupportedError");
+    }
 }
 
-/** Creates whatever part of the items store is missing. A store with a different key can't hold our records, so it's replaced. */
+function hasNamespaceIndex(store: IDBObjectStore): boolean {
+    if (!store.indexNames.contains(NAMESPACE_INDEX)) return false;
+    const index = store.index(NAMESPACE_INDEX);
+    return index.keyPath === NAMESPACE_INDEX && !index.unique;
+}
+
+/** Repair the schema without discarding existing backpack records. */
 function upgradeSchema(db: IDBDatabase, transaction: IDBTransaction): void {
-    let store = db.objectStoreNames.contains(ITEMS) ? transaction.objectStore(ITEMS) : undefined;
-    if (store && !hasItemsKeyPath(store.keyPath)) {
-        db.deleteObjectStore(ITEMS);
-        store = undefined;
-    }
-    if (!store) store = db.createObjectStore(ITEMS, { keyPath: ["namespace", "key"] });
-    if (!store.indexNames.contains(NAMESPACE_INDEX)) store.createIndex(NAMESPACE_INDEX, NAMESPACE_INDEX, { unique: false });
+    const store = db.objectStoreNames.contains(ITEMS)
+        ? transaction.objectStore(ITEMS)
+        : db.createObjectStore(ITEMS, { keyPath: ["namespace", "key"] });
+    requireItemsKeyPath(store);
+    if (hasNamespaceIndex(store)) return;
+    if (store.indexNames.contains(NAMESPACE_INDEX)) store.deleteIndex(NAMESPACE_INDEX);
+    store.createIndex(NAMESPACE_INDEX, NAMESPACE_INDEX, { unique: false });
 }
 
 function hasSchema(db: IDBDatabase): boolean {
     if (!db.objectStoreNames.contains(ITEMS)) return false;
     const store = db.transaction(ITEMS, "readonly").objectStore(ITEMS);
-    return hasItemsKeyPath(store.keyPath) && store.indexNames.contains(NAMESPACE_INDEX);
+    requireItemsKeyPath(store);
+    return hasNamespaceIndex(store);
 }
 
 /** Report IndexedDB failures instead of falling back to storage that may lose pending uploads. */
@@ -121,8 +131,9 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
         const upgraded = await requestAsync(version);
         try {
             if (hasSchema(upgraded)) return upgraded;
-        } catch {
-            /* Reported below. */
+        } catch (error) {
+            upgraded.close();
+            throw storageError("open", error);
         }
         upgraded.close();
         throw storageError("open", { name: "MissingStore" });
@@ -130,7 +141,7 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
 
     const transactionAsync = async <T>(
         mode: IDBTransactionMode,
-        action: (store: IDBObjectStore, result: (value: T) => void) => void
+        action: (store: IDBObjectStore, result: (value: T) => void, abort: (error: unknown) => void) => void
     ): Promise<T> => {
         const step: StorageStep = mode === "readonly" ? "read" : "write";
         const db = await openAsync();
@@ -139,11 +150,24 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
                 let transaction: IDBTransaction;
                 let result: T;
                 let settled = false;
+                let abortCause: unknown;
                 // A failed request fires error and then abort; report it once.
                 const fail = (error: unknown) => {
                     if (settled) return;
                     settled = true;
                     reject(storageError(step, error));
+                };
+                const abort = (error: unknown) => {
+                    abortCause = error;
+                    try {
+                        if (transaction) {
+                            transaction.abort();
+                            return;
+                        }
+                    } catch {
+                        /* Already completed. */
+                    }
+                    fail(error);
                 };
                 try {
                     transaction = db.transaction(ITEMS, mode);
@@ -151,18 +175,13 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
                         settled = true;
                         resolve(result);
                     };
-                    transaction.onerror = event => fail(transaction.error || (event.target as IDBRequest)?.error);
-                    transaction.onabort = () => fail(transaction.error || { name: "AbortError" });
+                    transaction.onerror = event => fail(abortCause ?? transaction.error ?? (event.target as IDBRequest)?.error);
+                    transaction.onabort = () => fail(abortCause ?? transaction.error ?? { name: "AbortError" });
                     action(transaction.objectStore(ITEMS), value => {
                         result = value;
-                    });
+                    }, abort);
                 } catch (error) {
-                    try {
-                        transaction?.abort();
-                    } catch {
-                        /* Already completed. */
-                    }
-                    fail(error);
+                    abort(error);
                 }
             });
         } finally {
@@ -187,7 +206,7 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
                 cursor.continue();
             };
         }),
-        changeAsync: (namespace, key, expected, next) => transactionAsync<boolean>("readwrite", (store, done) => {
+        changeAsync: (namespace, key, expected, next) => transactionAsync<boolean>("readwrite", (store, done, abort) => {
             const request = store.get([namespace, key]);
             request.onsuccess = () => {
                 try {
@@ -201,8 +220,8 @@ export function createBackpackLocalStorage(factory: IDBFactory): BackpackLocalSt
                     if (next) store.put({ ...next, namespace, key });
                     else store.delete([namespace, key]);
                     done(true);
-                } catch {
-                    store.transaction.abort();
+                } catch (error) {
+                    abort(error);
                 }
             };
         })

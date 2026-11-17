@@ -384,7 +384,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.equal(result.stale, false);
     });
 
-    it("uses a backpack database left at another version, and repairs a missing store or index", async () => {
+    it("uses a backpack database left at another version, and repairs a missing store or unusable index", async () => {
         const result = await page.evaluate(async () => {
             const openWith = (version, upgrade) => new Promise((resolve, reject) => {
                 const request = indexedDB.open("pxt-backpack", version);
@@ -416,15 +416,64 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
             await openWith(1, db => db.createObjectStore("items", { keyPath: ["namespace", "key"] }));
             const missingIndex = await roundTrip(3);
 
-            await deleteDb();
-            await openWith(1, db => db.createObjectStore("items", { keyPath: "id" }));
-            const wrongKey = await roundTrip(4);
-            return { newer, missingStore, missingIndex, wrongKey, ticks: bt.ticks };
+            const repairIndex = async (keyPath, unique) => {
+                await deleteDb();
+                await openWith(1, db => {
+                    const items = db.createObjectStore("items", { keyPath: ["namespace", "key"] });
+                    items.createIndex("namespace", keyPath, { unique });
+                    items.put(record(4));
+                });
+                const adapter = store.createBackpackLocalStorage(indexedDB);
+                const beforeWrite = await adapter.listAsync(namespace);
+                const saved = await adapter.changeAsync(namespace, bt.id(5), undefined, record(5));
+                const afterWrite = await adapter.listAsync(namespace);
+                return { saved, beforeWrite, afterWrite };
+            };
+            const arrayIndex = await repairIndex(["namespace"], false);
+            const uniqueIndex = await repairIndex("namespace", true);
+            return { newer, missingStore, missingIndex, arrayIndex, uniqueIndex, records: [record(4), record(5)], ticks: bt.ticks };
         });
-        for (const outcome of [result.newer, result.missingStore, result.missingIndex, result.wrongKey]) {
+        for (const outcome of [result.newer, result.missingStore, result.missingIndex]) {
             assert.deepStrictEqual(outcome, { saved: "OK", listed: 1 });
         }
+        for (const outcome of [result.arrayIndex, result.uniqueIndex]) {
+            assert.deepStrictEqual(outcome, { saved: true, beforeWrite: [result.records[0]], afterWrite: result.records });
+        }
         assert.deepStrictEqual(result.ticks, []);
+    });
+
+    it("rejects an unsupported items key path without changing the database", async () => {
+        const result = await page.evaluate(async () => {
+            const namespace = store.backpackLocalNamespace("arcade");
+            const record = { id: bt.id(1), namespace, key: bt.id(1), payload: JSON.stringify(bt.item(1)) };
+            const open = version => new Promise((resolve, reject) => {
+                const request = indexedDB.open("pxt-backpack", version);
+                request.onupgradeneeded = () => {
+                    request.result.createObjectStore("items", { keyPath: "id" }).put(record);
+                };
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            const seeded = await open(1);
+            seeded.close();
+
+            const adapter = store.createBackpackLocalStorage(indexedDB);
+            const failure = await bt.outcome(() => adapter.listAsync(namespace));
+            const reopened = await open();
+            const items = reopened.transaction("items").objectStore("items");
+            const stored = await new Promise((resolve, reject) => {
+                const request = items.get(record.id);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+            reopened.close();
+            return { failure, keyPath: items.keyPath, version: reopened.version, record, stored, ticks: bt.ticks };
+        });
+        assert.match(result.failure, /open your local backpack/);
+        assert.equal(result.keyPath, "id");
+        assert.equal(result.version, 1);
+        assert.deepStrictEqual(result.stored, result.record);
+        assert.deepStrictEqual(result.ticks.map(tick => tick.data), [{ step: "open", error: "NotSupportedError" }]);
     });
 
     it("does not pass a transaction options argument", async () => {
@@ -469,7 +518,7 @@ describe("dedicated Backpack API and durable IndexedDB (current source)", functi
         assert.deepStrictEqual(result.ticks.map(tick => tick.data), [
             { step: "open", error: "UnknownError" },
             { step: "read", error: "InvalidStateError" },
-            { step: "write", error: "AbortError" }
+            { step: "write", error: "QuotaExceededError" }
         ]);
         assert.doesNotMatch(JSON.stringify(result), /PRIVATE/);
     });
