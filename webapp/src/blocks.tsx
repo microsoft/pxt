@@ -1082,7 +1082,8 @@ export class Editor extends toolboxeditor.ToolboxEditor {
         // Position blocklyDiv over blocklyArea.
         if (blocklyDiv && this.editor) {
             // A pinned flyout's scrollbars can shift the workspace origin underneath a drag.
-            if (!this.editor.options.hasCategories && this.editor.isDragging()) {
+            if (!this.editor.options.hasCategories && this.editor.isDragging()
+                && this.editor.getAllBlocks(false).some(block => block.isDragging())) {
                 this.pendingResize = true;
                 return;
             }
