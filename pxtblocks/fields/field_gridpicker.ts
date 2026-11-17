@@ -159,8 +159,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
             this.gridTooltip_.style.display = title ? '' : 'none';
 
-            this.gridTooltip_.style.top = `${rect.bottom + 5}px`;
-            this.gridTooltip_.style.left = `${rect.left}px`;
+            this.positionTooltip_(rect.left, rect.bottom + 5);
         }
 
         this.addKeyboardNavigableClass();
@@ -183,10 +182,30 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         // Create tooltip
         this.gridTooltip_ = document.createElement('div');
         this.gridTooltip_.className = 'blocklyGridPickerTooltip';
-        this.gridTooltip_.style.position = 'absolute';
+        this.gridTooltip_.style.position = 'fixed';
+        this.gridTooltip_.style.maxWidth = '100vw';
+        this.gridTooltip_.style.boxSizing = 'border-box';
+        this.gridTooltip_.style.whiteSpace = 'normal';
+        this.gridTooltip_.style.overflowWrap = 'anywhere';
+        this.gridTooltip_.style.pointerEvents = 'none';
         this.gridTooltip_.style.display = 'none';
         this.gridTooltip_.style.visibility = 'hidden';
         document.body.appendChild(this.gridTooltip_);
+    }
+
+    private positionTooltip_(x: number, y: number, pointerY?: number): void {
+        // Measure from the viewport origin so the previous position doesn't squeeze the tooltip.
+        this.gridTooltip_.style.left = '0px';
+        this.gridTooltip_.style.top = '0px';
+        const { width, height } = this.gridTooltip_.getBoundingClientRect();
+        const left = Math.max(0, Math.min(x, document.documentElement.clientWidth - width));
+        if (pointerY !== undefined && left !== x) {
+            // A horizontally clamped tooltip can overlap the cursor. Prefer above it, or leave room below the cursor.
+            const above = pointerY - height - 8;
+            y = above >= 0 ? above : pointerY + 24;
+        }
+        this.gridTooltip_.style.left = `${left}px`;
+        this.gridTooltip_.style.top = `${Math.max(0, Math.min(y, document.documentElement.clientHeight - height))}px`;
     }
 
     /**
@@ -349,14 +368,13 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                         this.activeDescendantIndex = i;
                         if (this.catalogStatus_) this.catalogStatus_.textContent = menuItem.title;
                         if (this.gridTooltip_ && this.hasImageOptions) {
-                            this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
-                            this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
                             // Set tooltip text
                             const title = menuItem.title;
                             this.gridTooltip_.textContent = title;
                             // Show the tooltip
                             this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
                             this.gridTooltip_.style.display = title ? '' : 'none';
+                            this.positionTooltip_(e.clientX + xOffset, e.clientY + yOffset, e.clientY);
                         }
 
                         pxt.BrowserUtils.addClass(menuItem, 'gridpicker-menuitem-highlight');
