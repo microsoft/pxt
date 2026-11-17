@@ -210,6 +210,30 @@ describe("grid picker catalogs", () => {
         chai.assert.isFalse(popup.querySelector('[role="treegrid"]').hasAttribute("aria-activedescendant"));
     });
 
+    it("moves a search to the flat tab and back to the tab it started on", () => {
+        const { popup } = open(withCatalog(catalog));
+        const tabs = () => Array.from(popup.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+        const selected = () => tabs().findIndex(tab => tab.getAttribute("aria-selected") === "true");
+        const search = popup.querySelector<HTMLInputElement>('input[type="search"]');
+        const type = (text: string) => { search.value = text; search.dispatchEvent(new Event("input")); };
+        chai.assert.equal(selected(), 0);
+        type("zom");
+        chai.assert.equal(selected(), 1);
+        chai.assert.deepEqual(cells(popup).map(cell => cell.dataset.value), ["MonsterMob.Zombie"]);
+        type("zombie");
+        chai.assert.equal(selected(), 1);
+        type("");
+        chai.assert.equal(selected(), 0);
+
+        // Picking a tab while searching keeps the search on that tab, and emptying the box stays there.
+        type("copper");
+        tabs()[0].click();
+        chai.assert.equal(selected(), 0);
+        chai.assert.deepEqual(cells(popup).map(cell => cell.dataset.value), ["Item.CopperSword", "Item.CopperPickaxe"]);
+        type("");
+        chai.assert.equal(selected(), 0);
+    });
+
     it("shows every allowed choice on a flat tab even when the tab has tags", () => {
         const flatWithTags = { id: "all", name: "All", flat: true, tags: ["equipment"] };
         const groups = getGridPickerGroups(options, catalog, flatWithTags, "", "rider", tags);
