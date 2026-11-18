@@ -63,6 +63,8 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     private blocksInfo_: pxtc.BlocksInfo;
     private catalogTab_: string;
     private catalogSearch_ = "";
+    // The tab to go back to when the search box is emptied, set when typing moved the picker to the flat tab.
+    private catalogSearchReturnTab_: string;
     private catalogExpanded_ = new Set<string>();
     private catalogGroups_: pxt.Map<GridPickerGroup> = {};
     private catalogChildRowIds_: pxt.Map<string[]> = {};
@@ -157,8 +159,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
             this.gridTooltip_.style.display = title ? '' : 'none';
 
-            this.gridTooltip_.style.top = `${rect.bottom + 5}px`;
-            this.gridTooltip_.style.left = `${rect.left}px`;
+            this.positionTooltip_(rect.left, rect.bottom + 5);
         }
 
         this.addKeyboardNavigableClass();
@@ -181,10 +182,30 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         // Create tooltip
         this.gridTooltip_ = document.createElement('div');
         this.gridTooltip_.className = 'blocklyGridPickerTooltip';
-        this.gridTooltip_.style.position = 'absolute';
+        this.gridTooltip_.style.position = 'fixed';
+        this.gridTooltip_.style.maxWidth = '100vw';
+        this.gridTooltip_.style.boxSizing = 'border-box';
+        this.gridTooltip_.style.whiteSpace = 'normal';
+        this.gridTooltip_.style.overflowWrap = 'anywhere';
+        this.gridTooltip_.style.pointerEvents = 'none';
         this.gridTooltip_.style.display = 'none';
         this.gridTooltip_.style.visibility = 'hidden';
         document.body.appendChild(this.gridTooltip_);
+    }
+
+    private positionTooltip_(x: number, y: number, pointerY?: number): void {
+        // Measure from the viewport origin so the previous position doesn't squeeze the tooltip.
+        this.gridTooltip_.style.left = '0px';
+        this.gridTooltip_.style.top = '0px';
+        const { width, height } = this.gridTooltip_.getBoundingClientRect();
+        const left = Math.max(0, Math.min(x, document.documentElement.clientWidth - width));
+        if (pointerY !== undefined && left !== x) {
+            // A horizontally clamped tooltip can overlap the cursor. Prefer above it, or leave room below the cursor.
+            const above = pointerY - height - 8;
+            y = above >= 0 ? above : pointerY + 24;
+        }
+        this.gridTooltip_.style.left = `${left}px`;
+        this.gridTooltip_.style.top = `${Math.max(0, Math.min(y, document.documentElement.clientHeight - height))}px`;
     }
 
     /**
@@ -347,14 +368,13 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
                         this.activeDescendantIndex = i;
                         if (this.catalogStatus_) this.catalogStatus_.textContent = menuItem.title;
                         if (this.gridTooltip_ && this.hasImageOptions) {
-                            this.gridTooltip_.style.top = `${e.clientY + yOffset}px`;
-                            this.gridTooltip_.style.left = `${e.clientX + xOffset}px`;
                             // Set tooltip text
                             const title = menuItem.title;
                             this.gridTooltip_.textContent = title;
                             // Show the tooltip
                             this.gridTooltip_.style.visibility = title ? 'visible' : 'hidden';
                             this.gridTooltip_.style.display = title ? '' : 'none';
+                            this.positionTooltip_(e.clientX + xOffset, e.clientY + yOffset, e.clientY);
                         }
 
                         pxt.BrowserUtils.addClass(menuItem, 'gridpicker-menuitem-highlight');
@@ -756,7 +776,11 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         search.placeholder = pxt.Util.lf("Search");
         search.setAttribute("aria-label", pxt.Util.lf("Search assets"));
         search.addEventListener("input", () => {
+            const wasSearching = !!this.catalogSearch_.trim();
             this.catalogSearch_ = search.value;
+            const searching = !!this.catalogSearch_.trim();
+            if (searching && !wasSearching) this.startCatalogSearch_();
+            else if (!searching && wasSearching) this.endCatalogSearch_();
             this.renderCatalog_();
         });
         search.addEventListener("keydown", event => {
@@ -816,9 +840,29 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
     }
 
     private selectCatalogTab_(id: string): void {
+        // Picking a tab by hand while searching keeps the search on that tab.
+        this.catalogSearchReturnTab_ = undefined;
         this.catalogTab_ = id;
         this.catalogExpanded_.clear();
         this.renderCatalog_();
+    }
+
+    /** Searching covers everything, so move to the flat tab if there is one and remember where to come back to. */
+    private startCatalogSearch_(): void {
+        const current = this.catalog_.tabs.find(tab => tab.id === this.catalogTab_);
+        const flat = this.catalog_.tabs.find(tab => tab.flat);
+        if (!flat || current?.flat) return;
+        this.catalogSearchReturnTab_ = this.catalogTab_;
+        this.catalogTab_ = flat.id;
+        this.catalogExpanded_.clear();
+    }
+
+    /** Goes back to the tab the search started from, unless a tab was picked by hand in the meantime. */
+    private endCatalogSearch_(): void {
+        if (this.catalogSearchReturnTab_ === undefined) return;
+        this.catalogTab_ = this.catalogSearchReturnTab_;
+        this.catalogSearchReturnTab_ = undefined;
+        this.catalogExpanded_.clear();
     }
 
     private renderCatalog_(): void {
@@ -897,7 +941,10 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
             const allowed = filterGridPickerOptions(this.getOptions(), this.filter_, this.optionTags_);
             const rows = getGridPickerSizeRows(allowed, this.catalog_, this.columns_, this.optionTags_, this.optionWeights_);
             this.populateTableContainer([], this.catalogTable_, this.scrollContainer, rows);
-            this.catalogContentHeight_ = this.catalogTable_.offsetHeight;
+            // Measure the scroller rather than the table so its padding, border and the last row's margin are
+            // included; otherwise the largest group overflows by a few pixels and scrolls when it's expanded.
+            this.scrollContainer.style.height = "";
+            this.catalogContentHeight_ = this.scrollContainer.offsetHeight;
             this.renderCatalog_();
             return;
         }
@@ -1175,6 +1222,7 @@ export class FieldGridPicker extends FieldDropdownGrid implements FieldCustom {
         // Start fresh on the next open, so the picker reopens on a tab that holds the current value.
         this.catalogTab_ = undefined;
         this.catalogSearch_ = "";
+        this.catalogSearchReturnTab_ = undefined;
         this.catalogExpanded_.clear();
         this.scrollContainer = undefined;
         this.getFocusableElement().ariaExpanded = 'false';

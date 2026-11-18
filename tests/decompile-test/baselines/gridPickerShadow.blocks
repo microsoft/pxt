@@ -1,0 +1,120 @@
+<xml xmlns="http://www.w3.org/1999/xhtml">
+<block type="pxt-on-start">
+<statement name="HANDLER">
+<block type="test_grid_picker_jockey">
+<value name="rider">
+<shadow type="test_grid_picker_rider">
+<field name="choice">TestMonster.Zombie</field>
+</shadow>
+</value>
+<value name="mount">
+<shadow type="test_grid_picker_mount">
+<field name="choice">TestAnimal.Chicken</field>
+</shadow>
+</value>
+<next>
+<block type="test_grid_picker_jockey">
+<value name="rider">
+<shadow type="test_grid_picker_rider">
+<field name="choice">TestMonster.Zombie</field>
+</shadow>
+</value>
+<value name="mount">
+<shadow type="test_grid_picker_mount">
+<field name="choice">TestAnimal.Chicken</field>
+</shadow>
+</value>
+<next>
+<block type="test_grid_picker_jockey">
+<value name="rider">
+<shadow type="test_grid_picker_rider"/>
+<block type="test_grid_picker_monster">
+<field name="value">TestMonster.Creeper</field>
+</block>
+</value>
+<value name="mount">
+<shadow type="test_grid_picker_mount"/>
+<block type="test_grid_picker_animal">
+<field name="value">TestAnimal.Cow</field>
+</block>
+</value>
+<next>
+<block type="test_grid_picker_jockey">
+<value name="rider">
+<shadow type="test_grid_picker_rider"/>
+<block type="test_grid_picker_monster">
+<field name="value">TestMonster.Creeper</field>
+</block>
+</value>
+<value name="mount">
+<shadow type="test_grid_picker_mount"/>
+<block type="test_grid_picker_animal">
+<field name="value">TestAnimal.Cow</field>
+</block>
+</value>
+<next>
+<block type="test_grid_picker_jockey">
+<value name="rider">
+<shadow type="test_grid_picker_rider">
+<field name="choice">TestMonster.Zombie</field>
+</shadow>
+</value>
+<value name="mount">
+<shadow type="test_grid_picker_mount"/>
+<block type="test_grid_picker_terrain">
+<field name="value">TestTerrain.Grass</field>
+</block>
+</value>
+<next>
+<block type="test_grid_picker_jockey">
+<value name="rider">
+<shadow type="test_grid_picker_rider">
+<field name="choice">TestMonster.Zombie</field>
+</shadow>
+</value>
+<value name="mount">
+<shadow type="test_grid_picker_mount"/>
+<block type="test_grid_picker_terrain">
+<field name="value">TestTerrain.Grass</field>
+</block>
+</value>
+<next>
+<block type="variables_set">
+<field name="VAR">mount</field>
+<value name="VALUE">
+<shadow type="math_number"><field name="NUM">0</field></shadow>
+<block type="test_grid_picker_animal">
+<field name="value">TestAnimal.Chicken</field>
+</block>
+</value>
+<next>
+<block type="test_grid_picker_jockey">
+<value name="rider">
+<shadow type="test_grid_picker_rider">
+<field name="choice">TestMonster.Zombie</field>
+</shadow>
+</value>
+<value name="mount">
+<shadow type="test_grid_picker_mount"/>
+<block type="variables_get">
+<field name="VAR">mount</field>
+</block>
+</value>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</next>
+</block>
+</statement>
+</block>
+</xml>
