@@ -17,8 +17,6 @@ declare namespace pxsim {
 /** The first message the toy bundle posts: what the context it loaded in defines. */
 interface ProbeMessage extends pxsim.SimulatorMessage {
     type: "probe";
-    runtime: string;
-    bareRuntime: string;
     globals: { [name: string]: string };
 }
 
@@ -32,8 +30,6 @@ pxsim.initHeadlessRuntime = function () {
     pxsim.initBareRuntime();
     const probe: ProbeMessage = {
         type: "probe",
-        runtime: typeof pxsim.Runtime,
-        bareRuntime: typeof pxsim.initBareRuntime,
         globals: {
             window: typeof window,
             document: typeof document,
