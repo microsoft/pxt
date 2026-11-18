@@ -1,4 +1,5 @@
-// Browser implementation of SimFrameHost: frames are iframes inside wrapper divs in a container element.
+// The browser implementation of SimFrameHost. Each simulator frame is an iframe inside a wrapper
+// div in the container element.
 namespace pxsim {
     const FRAME_DATA_MESSAGE_CHANNEL = "messagechannel";
     const FRAME_ASPECT_RATIO = "aspectratio";
@@ -218,8 +219,8 @@ namespace pxsim {
             else this.container.style.opacity = "";
         }
 
-        // A simulator can be lent out to be hosted anywhere in the page. While one is
-        // loaned, the frames in the container are suspended by the driver.
+        // A simulator can be lent out to be hosted anywhere in the page. The recorder and the
+        // theme picker do this.
 
         isLoanedFrame(el: HTMLElement) {
             return !!this.loanedSimulator && this.loanedIFrame() == el;

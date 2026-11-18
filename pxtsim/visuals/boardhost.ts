@@ -13,8 +13,8 @@ namespace pxsim.visuals {
         partsList: string[],
         partDefs: Map<PartDefinition>,
         /**
-         * Part view constructors keyed by simulation behavior name; addPart builds the view of each
-         * part instance that declares a simulationBehavior with the matching entry.
+         * Part view constructors keyed by simulation behavior name. When a part declares a
+         * simulationBehavior, addPart builds its view with the matching entry.
          */
         builtinVisuals: Map<() => any>,
         fnArgs: any,

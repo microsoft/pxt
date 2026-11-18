@@ -9,11 +9,12 @@ export interface HeadlessRunResult {
     serial: string[];
     /** Every message the runtime posted other than serial output and status. */
     messages: pxsim.SimulatorMessage[];
-    /** Set when the runtime reported an error. */
     error?: string;
-    /** True when the run did not finish within the timeout. */
     timedOut: boolean;
-    /** The virtual host the run ran on, stopped once the run finished; `now()` reads the virtual time it reached. */
+    /**
+     * The virtual host the program ran on, already stopped. Its `now()` returns the virtual time
+     * the run reached.
+     */
     readonly host: pxsim.host.VirtualHost;
 }
 
@@ -22,27 +23,22 @@ export interface HeadlessRunOptions {
     timeoutMs: number;
     /** Virtual milliseconds the program runs after its top-level code finishes, before the run ends. */
     settleMs: number;
-    /** The seed the virtual host's random source starts from; `pxsim.host.DEFAULT_SEED` when omitted. */
+    /** Seed for the virtual host's random numbers. Defaults to `pxsim.host.DEFAULT_SEED`. */
     seed?: number;
 }
 
 /**
- * Runs compiled simulator JS in a fresh vm context whose only globals besides the JavaScript
- * built-ins are `console`, `performance`, `btoa`, `atob`, `TextEncoder`, `TextDecoder`, `URL`,
- * `URLSearchParams` and the timer functions, so that any use of the DOM by the loaded simulator
- * code fails the run.
+ * Runs a compiled program headless in a fresh vm context. The context has the JavaScript
+ * built-ins plus a few Node globals, such as `console`, `performance`, the timers and
+ * `TextEncoder`, but no DOM. Any use of the DOM by the simulator code fails the run.
  *
- * The runtime runs on a virtual host made in the context with `pxsim.host.createVirtualHost`: its
- * clock, timers, frames and random numbers come from that host, seeded with `options.seed`, so the
- * run takes no real time for pauses and two runs of one program with one seed produce the same
- * output. The host is driven until the top-level code finishes, then advanced by
- * `settleMs`, and then the run ends, whatever the program still has scheduled. Only the timeout
- * watchdog, and anything the bundles schedule on the global timers, run on the sandbox's real
- * timers, which are cleared when the run finishes or fails.
+ * The program runs on a virtual host from `pxsim.host.createVirtualHost`, which supplies the
+ * clock, timers, frames and random numbers. Pauses take no real time, and two runs of the same
+ * program with the same seed produce the same output. The run goes until the top-level code
+ * finishes, then for `settleMs` more virtual milliseconds, and then it ends.
  *
- * Errors thrown while stopping the runtime, the board and the board view at the end of the run are
- * dropped and never change the result. The returned promise rejects when a bundle fails to load or
- * the last bundle does not set `pxsim.initHeadlessRuntime`.
+ * Errors while shutting down the runtime and board are ignored. Rejects if a bundle fails to load
+ * or the last bundle does not set `pxsim.initHeadlessRuntime`.
  * @param bundles simulator scripts to load, in order: pxtsimcore first, then the target's bundle
  */
 export async function runHeadlessAsync(js: string, bundles: string[], options: HeadlessRunOptions): Promise<HeadlessRunResult> {
@@ -91,7 +87,7 @@ export async function runHeadlessAsync(js: string, bundles: string[], options: H
         sandbox.__yieldToEventLoop = () => new Promise<void>(resolve => setImmediate(resolve));
         sandbox.__host = vm.runInContext("pxsim.host.createVirtualHost({ seed: __seed, yieldToEventLoop: __yieldToEventLoop })", context);
         vm.runInContext("__host.use()", context);
-        // a headless run plays sound on the silent audio host, whichever host the bundles registered
+        // Headless runs always use the silent audio host, even if a bundle registered another one.
         vm.runInContext("pxsim.audiohost.setAudioHost({})", context);
         sandbox.__js = js;
         sandbox.__options = options;
@@ -166,7 +162,7 @@ export async function runHeadlessAsync(js: string, bundles: string[], options: H
     }
 }
 
-/** Lines the test expects on the serial port, from every line of source that is a `// @serial: text` comment, in order. */
+/** Returns the serial lines a test expects, taken from its `// @serial: text` comments. */
 export function parseSerialExpectations(source: string): string[] {
     const expected: string[] = [];
     const re = /^\s*\/\/\s*@serial:[ \t]?(.*?)\s*$/gm;

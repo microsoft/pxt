@@ -1,15 +1,16 @@
-// Minimal declarations for the host-agnostic globals pxtsimcore may use (available in browsers,
-// workers and Node), and for the structural ImageData shape core reads from board view screenshots.
+// Declarations for the globals pxtsimcore may use. Core compiles without the DOM library, so these
+// are declared by hand. Globals that only some hosts have may be undefined at run time. ImageData
+// is the shape core reads from board view screenshots.
 declare function setTimeout(handler: (...args: any[]) => void, timeout?: number, ...args: any[]): any;
 declare function clearTimeout(handle?: any): void;
 declare function setInterval(handler: (...args: any[]) => void, timeout?: number, ...args: any[]): any;
 declare function clearInterval(handle?: any): void;
-// Present in browsers and workers only; check typeof before calling.
+// Present in browsers and workers only. Check typeof before calling.
 declare const requestAnimationFrame: ((callback: () => void) => any) | undefined;
 declare const cancelAnimationFrame: ((handle: any) => void) | undefined;
-// Present in Node only; check typeof before calling.
+// Present in Node only. Check typeof before calling.
 declare const setImmediate: ((callback: () => void) => any) | undefined;
-// Present in browsers, workers and Node; check typeof before calling.
+// Present in browsers, workers and Node. Check typeof before calling.
 declare const MessageChannel: (new () => {
     port1: { onmessage: ((event: any) => void) | null; close(): void };
     port2: { postMessage(message: any): void };

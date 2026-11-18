@@ -31,7 +31,10 @@ const core = path.resolve(process.cwd(), "built", "pxtsimcore.js");
 /** Where the test project emits the compiled fixtures under fixtures/. */
 const bundleDir = path.resolve(process.cwd(), "built", "tests", "simcore-test", "fixtures");
 
-/** The toy bundle, compiled with this test project from fixtures/toybundle.ts; its `probe` message reports the type of each name in BROWSER_GLOBALS. */
+/**
+ * The toy bundle, compiled with this test project from fixtures/toybundle.ts. Its `probe` message
+ * reports the type of each name in BROWSER_GLOBALS.
+ */
 const toyBundle = path.join(bundleDir, "toybundle.js");
 
 /** Declares `control.millis`, which the toy board provides. */

@@ -2,23 +2,21 @@ namespace pxsim.host {
     /** The seed a virtual host's random source starts from when none is given. */
     export const DEFAULT_SEED = 0x5EED1234;
 
-    /** Options for createVirtualHost. */
     export interface VirtualHostOptions {
-        /** The seed the random source starts from; DEFAULT_SEED when omitted. */
+        /** Seed for the random source. Defaults to DEFAULT_SEED. */
         seed?: number;
         /**
-         * Returns a promise that resolves after pending microtasks have run and the event loop has
-         * had a turn, so real timers due by then fire. When omitted, the host uses `setImmediate`
-         * where it is defined, else a `MessageChannel` message where that is defined, else
-         * `setTimeout(fn, 0)`.
+         * Waits for one turn of the event loop, so pending promises and any real timers that are
+         * due get to run. Defaults to `setImmediate`, falling back to a `MessageChannel` message
+         * and then `setTimeout(fn, 0)`.
          */
         yieldToEventLoop?: () => Promise<void>;
     }
 
     /**
-     * A deterministic simulator host: a clock that only moves when the caller advances it, timers
-     * and frames on a queue ordered by virtual time, and a seeded random source. Call `use` to make
-     * it the host the runtime reads, then drive it with `runUntil` and `advance`.
+     * A simulator host where time only moves when the caller advances it. Timers and frames wait
+     * on a queue in virtual time, and random numbers come from a seed, so runs with the same seed
+     * behave the same. Call `use` to install it, then drive it with `runUntil` and `advance`.
      */
     export interface VirtualHost {
         clock: Clock;
@@ -27,27 +25,30 @@ namespace pxsim.host {
         /** Virtual milliseconds elapsed since the host was created. */
         now(): number;
         /**
-         * Moves virtual time forward by ms, firing every callback that falls due on the way in time
-         * order and yielding to the event loop before and after each one.
+         * Moves virtual time forward by `ms`, firing each callback that comes due, in time order.
+         * The event loop gets a turn before and after each callback.
          */
         advance(ms: number): Promise<void>;
         /**
-         * Fires queued callbacks one at a time in time order, intervals included, moving virtual time
-         * to each and yielding to the event loop before and after each one, until done returns true.
-         * While nothing is queued it keeps yielding to the event loop, so real timers can still make
-         * done true.
+         * Fires queued callbacks, intervals included, one at a time in time order until `done`
+         * returns true. Virtual time jumps to each callback, and the event loop gets a turn before
+         * and after each one. When the queue is empty it keeps yielding, so real timers can still
+         * make `done` true.
          */
         runUntil(done: () => boolean): Promise<void>;
         /**
-         * Stops the host for good: an `advance` or `runUntil` in progress returns at its next step
-         * without firing anything more, and later calls return at once.
+         * Stops the host for good. An `advance` or `runUntil` in progress returns at its next step
+         * without firing anything else, and later calls return right away.
          */
         stop(): void;
         /** Makes this host's clock, timers and random source the ones the runtime reads. */
         use(): void;
     }
 
-    /** What the clock reads at virtual time 0. Must be nonzero: the runtime treats a performance time of 0 as unset. */
+    /**
+     * What the clock reads at virtual time 0. It must not be 0, because the runtime treats a
+     * performance time of 0 as unset.
+     */
     const EPOCH_MS = 1000000;
 
     interface Entry {
@@ -56,7 +57,7 @@ namespace pxsim.host {
         /** Insertion order, breaking ties between entries due at the same time. */
         seq: number;
         fn: () => void;
-        /** Set for intervals: the period to reschedule by after each firing. */
+        /** For intervals, how long to wait before firing again. */
         period?: number;
     }
 
