@@ -39,9 +39,9 @@ namespace pxsim {
         }
     }
 
-    /** The browser simulator driver: a coordinator whose frames are iframes inside `container`. */
+    /** The simulator driver for the browser. It runs each simulator in an iframe in `container`. */
     export class SimulatorDriver extends SimulatorCoordinator {
-        /** The coordinator's frameHost, as the DomSimFrameHost this driver created. */
+        /** The same object as `frameHost`, typed as the DomSimFrameHost this driver created. */
         private readonly domFrameHost: DomSimFrameHost;
 
         constructor(public container: HTMLElement,

@@ -408,7 +408,7 @@ namespace pxsim {
             this.serialOutBuffer += s;
             if (/\n/.test(this.serialOutBuffer) || this.serialOutBuffer.length > SERIAL_BUFFER_LENGTH) {
                 this.messages.push({
-                    // real wall-clock time the line was written, for telemetry
+                    // Wall-clock time, not the host clock. The editor's serial view shows it.
                     time: Date.now(),
                     data: this.serialOutBuffer
                 });
@@ -461,8 +461,8 @@ namespace pxsim {
     }
 
     /**
-     * The view of a board. A target sets it on `runtime.boardView` next to `runtime.board`; a
-     * headless run has none, and the runtime skips every view call while it is unset.
+     * The view of a board. A target sets it as `runtime.boardView`, next to `runtime.board`.
+     * Headless runs have no view, and the runtime skips its view calls when there is none.
      */
     export interface RuntimeBoardView {
         /**
@@ -476,23 +476,17 @@ namespace pxsim {
          */
         builtinPartVisuals: Map<(xy: visuals.Coord) => any>;
         /**
-         * Builds the view for a run. The embed calls it with each run message once the board's
-         * initAsync has resolved, while that runtime is still current and alive, and starts the
-         * program when it resolves.
+         * Builds the view for a run. It is called after the board's initAsync, and the program
+         * starts once it resolves.
          */
         initAsync(msg: SimulatorRunMessage): Promise<void>;
-        /**
-         * Redraws the view from the board state. The runtime calls it from updateDisplay, which runs
-         * when a target requests a redraw and when queued display updates are flushed.
-         */
+        /** Redraws the view from the board state. The runtime calls it from updateDisplay. */
         updateView(): void;
-        /** Registers subscriber to run on every updateView. */
         addUpdateSubscriber(subscriber: () => void): void;
         /**
-         * Renders the view to an image width pixels wide, or at a size the view picks when width is
-         * omitted; resolves undefined when it cannot render. The runtime calls it for each screenshot
-         * request, for each frame while recording, and for each thumbnail frame after a user
-         * interaction.
+         * Renders the view to an image `width` pixels wide, or at a size the view picks when
+         * `width` is omitted. Resolves undefined if it cannot render. Used for screenshots,
+         * recordings and automatic thumbnails.
          */
         screenshotAsync(width?: number): Promise<ImageData>;
         /** Releases the view. The embed calls it when it stops a run, after killing the runtime and the board. */
@@ -678,7 +672,7 @@ namespace pxsim {
 
     // overriden at loadtime by specific implementation
     export let initCurrentRuntime: (msg: SimulatorRunMessage) => void = undefined;
-    // set by a target's DOM-free simulator bundle; creates its board with no view, for headless runs
+    // Set by a target's DOM-free simulator bundle. It creates the board with no view, for headless runs.
     export let initHeadlessRuntime: (msg?: SimulatorRunMessage) => void = undefined;
     export let handleCustomMessage: (message: pxsim.SimulatorCustomMessage) => void = undefined;
 
@@ -1165,7 +1159,8 @@ namespace pxsim {
             let dbgResume: ResumeFn;
             let breakFrame: StackFrame = null // for step-over
             let lastYield = host.clock().now()
-            // maybeYield calls seen while the clock read yieldClock, and the reading they were counted at
+            // How many maybeYield calls have run since the clock last moved, and the clock reading
+            // they were counted at.
             let yieldCalls = 0
             let yieldClock = lastYield
             let userGlobals: string[];

@@ -1692,17 +1692,13 @@ function buildEditorExtensionAsync(dirname: string, optionName: string) {
 }
 
 /**
- * Compiles the TypeScript project `configName` (default `tsconfig.json`) in folder `p` by running
- * tsc from that folder, then prepends any files listed in the config's `prepend` to its outFile,
- * in list order. When compilerOptions.declaration is set, each prepended `x.js` that has a sibling
- * `x.d.ts` also has that `.d.ts` prepended to the emitted `.d.ts`, in the same order.
- * Returns a promise that resolves when the build finishes and rejects if tsc fails.
- * A missing config file is a user error unless `optional`, in which case nothing is built.
- * With `outputName`, compilerOptions.outFile must be `../built/<outputName>.js`; a config in a
- * `node_modules/pxt-*-sim` folder may instead use `./built/<outputName>.js`, in which case its
- * output, and its `.d.ts` when compilerOptions.declaration is set, is copied to `built/`. Any
- * other outFile, `prepend` in a config other than `tsconfig.json`, or a missing
- * `node_modules/typescript` is a user error, thrown synchronously before tsc runs.
+ * Compiles the TypeScript project in folder `p` by running tsc on `configName`. When `outputName`
+ * is given, the config must put its output in `../built/<outputName>.js`. A sim installed from npm
+ * (`node_modules/pxt-*-sim`) can build into its own `./built/` folder instead, and the output is
+ * then copied to `built/`. With `optional`, a missing config just means there is nothing to build.
+ *
+ * Files listed in the config's `prepend` are added to the start of the output, in order. If the
+ * config sets `declaration`, the `.d.ts` files next to them are prepended to the emitted `.d.ts`.
  */
 function buildFolderAsync(p: string, optional?: boolean, outputName?: string, configName = "tsconfig.json"): Promise<void> {
     const configFile = `${p}/${configName}`;
@@ -2616,24 +2612,20 @@ function rebundleAsync() {
 }
 
 /**
- * Compiles the target's sim folder (`sim/`, else `node_modules/pxt-<target>-sim/`, whichever
- * first has a tsconfig.json): its tsconfig.json to built/sim.js and, when the folder has one,
- * its tsconfig.core.json to built/simcore.js; the common target writes built/common-sim.js and
- * built/common-simcore.js instead. Resolves without building anything when neither folder has a
- * tsconfig.json. Rejects if either build fails or a config's compilerOptions.outFile is not the
- * required built/ path.
+ * Compiles the target's simulator. The sim folder is `sim/`, or `node_modules/pxt-<target>-sim/`
+ * when `sim/` has no tsconfig.json. The output goes to built/sim.js, plus built/simcore.js when the
+ * folder has a tsconfig.core.json. The common target builds built/common-sim.js and
+ * built/common-simcore.js instead.
  */
 async function buildSimAsync() {
     await buildSimFolderAsync(simDir(), pxt.appTarget.id === "common" ? "common-sim" : "sim");
 }
 
 /**
- * Compiles sim folder `dir` (the empty string means the working directory): first, when `dir` is
- * not empty and has one, its tsconfig.core.json to `../built/<outputName>core.js`, then its
- * tsconfig.json to `../built/<outputName>.js`, both relative to `dir`. A `node_modules/pxt-*-sim`
- * folder may use `./built/` instead, and its output is then copied to the working directory's
- * `built/`. An absent config skips its own build. Rejects if either build fails or a config's
- * compilerOptions.outFile is not one of those paths.
+ * Compiles a sim folder's tsconfig.json into `../built/<outputName>.js`. If the folder also has a
+ * tsconfig.core.json, that is compiled first, into the DOM-free `../built/<outputName>core.js`.
+ * A missing config is skipped. An empty `dir` means the working directory, and only its
+ * tsconfig.json is built.
  */
 async function buildSimFolderAsync(dir: string, outputName: string) {
     if (dir)
@@ -4386,7 +4378,8 @@ function simshimAsync() {
         pxt.debug("no sim/tsconfig.json; skipping")
         return Promise.resolve();
     }
-    // the shim scan reads only the //% annotations; the simulator's own build reports its errors
+    // Don't report errors here. The shim scan only reads the //% annotations, and the
+    // simulator's own build reports any errors.
     let prog = pxtc.plainTscCompileDir(path.resolve(simDir()), false)
     let shims = pxt.simshim(prog, path.parse)
     let filename = "sims.d.ts"
@@ -4461,7 +4454,10 @@ function getApiInfoAsync() {
         })
 }
 
-/** Returns the main package's only .ts file; fails with a user error naming command when it has none or several. */
+/**
+ * Returns the main package's only .ts file. Fails with an error naming `command` when the package
+ * has none or more than one.
+ */
 function findTestFile(command: string) {
     let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
     if (tsFiles.length != 1)
@@ -4622,15 +4618,15 @@ function simtestFiles(args: string[]): string[] {
 }
 
 /**
- * Compiles each test program on top of a base project and runs it headless against the target's
- * simulator bundle (the DOM-free bundles with --core). A program passes when it runs without a
- * runtime error and, if it has `// @serial: text` comments, writes exactly those lines to the
- * serial port.
+ * Runs `pxt simtest`. Each test program is compiled on top of a base project and run headless
+ * against the target's simulator bundle. A test passes when it finishes in time without a runtime error.
+ * If it has `// @serial: text` comments, it must also write exactly those lines to the serial port.
  */
 async function simtestAsync(parsed: commandParser.ParsedCommand) {
     const targetDir = process.cwd();
     const base = path.resolve(parsed.flags["base"] as string || ".");
-    // the DOM-free pair when the target has built one or --core asks for it, the full pair otherwise
+    // Use the DOM-free bundles with --core. Without --core or --sim, use them if the target has
+    // built simcore.js.
     const core = !!parsed.flags["core"] || (!parsed.flags["sim"] && fs.existsSync(path.join("built", "simcore.js")));
     const simBundle = path.resolve(parsed.flags["sim"] as string || path.join("built", core ? "simcore.js" : "sim.js"));
     const coreBundle = path.join(nodeutil.pxtCoreDir, "built", core ? "pxtsimcore.js" : "pxtsim.js");

@@ -19,7 +19,6 @@
     "files": [
         "simcorerunner.ts",
         "fixtures/toybundle.ts",
-        "fixtures/emptybundle.ts",
         "../common/testUtils.ts",
         "../common/testHost.ts"
     ]

@@ -1,6 +1,7 @@
-// Host abstraction: everything the DOM-free simulator core needs to know about the
-// environment it runs in. The DOM bundle installs a browser implementation
-// (see domhost.ts); without one the core runs with inert defaults.
+// The host is what the DOM-free simulator core needs from the place it runs: a way to message the
+// editor, a few facts about the page, a clock, timers and random numbers. Each part has a default
+// that works without a browser. In the browser, domhost.ts installs an environment that posts to
+// the parent window.
 namespace pxsim.host {
     export interface Environment {
         /** Delivers a message to the parent (editor) window, if any. */
@@ -27,7 +28,7 @@ namespace pxsim.host {
         return current;
     }
 
-    /** Overrides parts of the environment; omitted members keep their defaults. */
+    /** Overrides parts of the environment. Anything left out goes back to its default. */
     export function setEnvironment(env: Partial<Environment>) {
         current = { ...defaultEnvironment, ...env };
     }
@@ -40,7 +41,7 @@ namespace pxsim.host {
         perfNowUs(): number;
     }
 
-    /** A pending timer or frame request, as returned by Timers; pass it to the matching cancel call. */
+    /** A pending timer or frame request. Pass it to the matching clear or cancel call. */
     export type TimerHandle = unknown;
 
     /** The timer source the runtime schedules work on. */
@@ -58,14 +59,13 @@ namespace pxsim.host {
     export interface RandomSource {
         /** Returns the next number in [0, 1). */
         next(): number;
-        /** Seeds the generator; a source that cannot be seeded ignores it. */
+        /** Seeds the generator. A source that cannot be seeded ignores this. */
         seed(value: number): void;
     }
 
     /**
-     * Creates a deterministic random source: a 32-bit mulberry32 generator returning numbers in
-     * [0, 1), starting from seed. `seed(value)` restarts the sequence from value, so one seed always
-     * yields the same sequence.
+     * Creates a random source that always gives the same sequence for the same seed. It uses the
+     * mulberry32 generator. Calling `seed` restarts the sequence from the new value.
      */
     export function createSeededRandom(seed: number): RandomSource {
         let state = seed;
@@ -82,8 +82,8 @@ namespace pxsim.host {
     }
 
     /**
-     * Returns the first of performance.now, mozNow, msNow, webkitNow and oNow that exists, bound to
-     * performance; Date.now when performance is undefined or has none of them.
+     * Returns performance.now, or a vendor-prefixed version of it. Falls back to Date.now when
+     * there is none.
      */
     function highResolutionNow(): () => number {
         if (typeof performance == "undefined")
@@ -104,7 +104,10 @@ namespace pxsim.host {
         }
     };
 
-    /** One frame at about 60 Hz, in milliseconds: the delay requestFrame waits when there is no display frame to wait for. */
+    /**
+     * One frame at about 60 Hz, in milliseconds. requestFrame waits this long when there is no
+     * display frame to wait for.
+     */
     export const FRAME_MS = 16;
 
     const defaultTimers: Timers = {
@@ -129,7 +132,7 @@ namespace pxsim.host {
         return currentClock;
     }
 
-    /** Overrides parts of the clock; omitted members keep their defaults. */
+    /** Overrides parts of the clock. Anything left out goes back to its default. */
     export function setClock(c: Partial<Clock>) {
         currentClock = { ...defaultClock, ...c };
     }
@@ -138,7 +141,7 @@ namespace pxsim.host {
         return currentTimers;
     }
 
-    /** Overrides parts of the timers; omitted members keep their defaults. */
+    /** Overrides parts of the timers. Anything left out goes back to its default. */
     export function setTimers(t: Partial<Timers>) {
         currentTimers = { ...defaultTimers, ...t };
     }
@@ -147,7 +150,7 @@ namespace pxsim.host {
         return currentRng;
     }
 
-    /** Overrides parts of the random source; omitted members keep their defaults. */
+    /** Overrides parts of the random source. Anything left out goes back to its default. */
     export function setRng(r: Partial<RandomSource>) {
         currentRng = { ...defaultRng, ...r };
     }

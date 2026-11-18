@@ -1,10 +1,10 @@
-// Frame abstraction used by the simulator driver policy. These types do not reference the DOM;
-// the browser implementation is in simframedom.ts.
+// These types let the simulator driver manage simulator frames without touching the DOM.
+// The browser implementation is in simframedom.ts.
 namespace pxsim {
     /** An opaque handle to one simulator frame (a board simulator or a simulator extension). */
     export interface SimFrame {
         readonly id: string;
-        /** Set for simulator extensions and legacy message simulators; unset for board simulators. */
+        /** Set for simx iframes and legacy message simulators. Unset for board simulators. */
         messageChannel: string | undefined;
         /** The run last started in this frame. */
         runId: string | undefined;
@@ -17,7 +17,6 @@ namespace pxsim {
         aspectRatio: number | undefined;
         /** False once the frame has left the document and can no longer receive messages. */
         readonly attached: boolean;
-        /** True when `source` is the window of this frame. */
         matchesSource(source: unknown): boolean;
         focus(): void;
     }
@@ -37,15 +36,17 @@ namespace pxsim {
     export type SimFramePosition = "first" | "last" | "detached";
 
     export interface SimFrameAppearance {
-        /** True when the run was started with `autoRun`. */
         autoRun: boolean;
         stoppedClass: string;
         invalidatedClass: string;
     }
 
-    /** Everything the driver policy needs from the environment that holds the frames. */
+    /** Everything the simulator driver needs from whatever holds the simulator frames. */
     export interface SimFrameHost {
-        /** The frames in display order; `skipLoaned` omits the frame lent out by `loanSimulator`. */
+        /**
+         * Returns the frames in display order. `skipLoaned` leaves out the frame
+         * lent out by `loanSimulator`.
+         */
         frames(skipLoaned?: boolean): SimFrame[];
         frameById(id: string): SimFrame | undefined;
         createFrame(spec: SimFrameSpec, position: SimFramePosition): SimFrame;

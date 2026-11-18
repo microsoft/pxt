@@ -1,10 +1,13 @@
 /// <reference path="../../../built/pxtsimcore.d.ts"/>
 
-// The toy simulator bundle the simcore tests run on: the bare board with idle handlers, a
-// cleanup message when the board is killed, `control.millis` reading the runtime's running time,
-// and `testAudio.playAsync`, which plays two silent instruction steps lasting 300 ms and 200 ms
-// and then posts a `testaudio` message carrying the running time it resolved at. Its first
-// message is a `probe` describing the context it loaded in.
+// The toy simulator bundle the simcore tests run on. It is the bare board with idle handlers,
+// plus a few things the tests look for:
+//
+// - a `probe` message, posted first, describing the context it loaded in
+// - a `boardcleanup` message when the board is killed
+// - `control.millis`, which reads the runtime's running time
+// - `testAudio.playAsync`, which plays two silent instruction steps of 300 ms and 200 ms and then
+//   posts a `testaudio` message with the running time it resolved at
 
 declare namespace pxsim.control {
     let millis: () => number;
@@ -17,8 +20,6 @@ declare namespace pxsim {
 /** The first message the toy bundle posts: what the context it loaded in defines. */
 interface ProbeMessage extends pxsim.SimulatorMessage {
     type: "probe";
-    runtime: string;
-    bareRuntime: string;
     globals: { [name: string]: string };
 }
 
@@ -32,8 +33,6 @@ pxsim.initHeadlessRuntime = function () {
     pxsim.initBareRuntime();
     const probe: ProbeMessage = {
         type: "probe",
-        runtime: typeof pxsim.Runtime,
-        bareRuntime: typeof pxsim.initBareRuntime,
         globals: {
             window: typeof window,
             document: typeof document,

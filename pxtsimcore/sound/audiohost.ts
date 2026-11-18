@@ -1,8 +1,6 @@
-// Audio abstraction for the DOM-free core. The browser bundle registers a Web Audio
-// implementation (see audiohostdom.ts); without one, audio calls are silent no-ops, except that
-// playing instructions takes as long as the sound would, the metronome ticks on the host timers,
-// stopAll runs the onStopAll listeners, and playing instructions and stopAll notify the sound
-// event handler.
+// The audio host is how the DOM-free core plays sound. The browser bundle registers a Web Audio
+// implementation (see audiohostdom.ts). Without one, the core uses a silent host. It makes no sound,
+// but playing instructions still takes as long as the sound would, and the metronome still ticks.
 namespace pxsim.audiohost {
     export interface SoundOscilloscopeData {
         data: Float32Array;
@@ -18,7 +16,7 @@ namespace pxsim.audiohost {
 
     /** Periodic tick source used by the music sequencer. */
     export interface Metronome {
-        /** Resolves once the metronome can start; the value it resolves with is unspecified. */
+        /** Resolves once the metronome is ready to start. Ignore the value it resolves with. */
         initAsync(): Promise<unknown>;
         start(interval: number): void;
         stop(): void;
@@ -68,19 +66,17 @@ namespace pxsim.audiohost {
     }
 
     /**
-     * A sound event, named by its multiplayer wire string: "playinstructions" carries the
-     * instruction buffer, "muteallchannels" carries none.
+     * A sound event, named by the string multiplayer sends for it. "playinstructions" comes with
+     * the instruction buffer, and "muteallchannels" has no data.
      */
     export type SoundEvent = "playinstructions" | "muteallchannels";
 
     let soundEventHandler: ((ev: SoundEvent, data?: Uint8Array) => void) | undefined;
 
-    /** Sets the single sound event handler, replacing any previous one; undefined removes it. */
     export function setSoundEventHandler(handler: ((ev: SoundEvent, data?: Uint8Array) => void) | undefined) {
         soundEventHandler = handler;
     }
 
-    /** Calls the sound event handler with ev and data when one is set; otherwise does nothing. */
     export function notifySoundEvent(ev: SoundEvent, data?: Uint8Array) {
         if (soundEventHandler)
             soundEventHandler(ev, data);
@@ -89,9 +85,9 @@ namespace pxsim.audiohost {
     const CANCEL_POLL_MS = 16;
 
     /**
-     * Notifies the sound event "playinstructions" with the buffer, then resolves once the buffer's
-     * duration has elapsed on the host clock, or early once isCancelled returns true; isCancelled is
-     * polled every frame-sized tick on the host timers.
+     * Plays instructions on the silent host. Sends the "playinstructions" sound event, then
+     * resolves after the sound's duration on the host clock. If `isCancelled` is given, it is
+     * checked about once a frame and ends the wait early.
      */
     function silentPlayInstructionsAsync(instructions: Uint8Array, isCancelled?: () => boolean): Promise<void> {
         notifySoundEvent("playinstructions", instructions);
@@ -109,25 +105,25 @@ namespace pxsim.audiohost {
     }
 
     /**
-     * A metronome that ticks on `host.timers()`: while running, it calls every tick listener, in the
-     * order added, once per interval. It is running from `start` until `stop` or `dispose`.
+     * A metronome driven by `host.timers()`. While running, it calls each tick listener once per
+     * interval, in the order they were added. The silent audio host uses it.
      */
     export class TimerMetronome implements Metronome {
         protected tickListeners: (() => void)[] = [];
-        /** The host interval id while running, else undefined. */
         protected timerId: host.TimerHandle | undefined;
 
-        /** Resolves at once. */
         initAsync(): Promise<void> {
             return Promise.resolve();
         }
 
-        /** Starts ticking every interval ms, the first tick interval ms from now; when already running, restarts the period from now. */
+        /**
+         * Starts ticking every `interval` ms, with the first tick one interval from now. If it is
+         * already running, the timing restarts from now.
+         */
         start(interval: number) {
             this.updateInterval(interval, true);
         }
 
-        /** Stops ticking; does nothing when not running. */
         stop() {
             if (this.timerId !== undefined) {
                 host.timers().clearInterval(this.timerId);
@@ -135,7 +131,6 @@ namespace pxsim.audiohost {
             }
         }
 
-        /** When running, restarts ticking every interval ms from now; when not running, does nothing. */
         setInterval(interval: number) {
             this.updateInterval(interval, false);
         }
@@ -144,18 +139,15 @@ namespace pxsim.audiohost {
             this.tickListeners.push(listener);
         }
 
-        /** Removes every registration of listener. */
         removeTickListener(listener: () => void) {
             this.tickListeners = this.tickListeners.filter(l => l !== listener);
         }
 
-        /** Stops ticking and removes every tick listener. */
         dispose() {
             this.stop();
             this.tickListeners = [];
         }
 
-        /** Reschedules ticking every interval ms from now when running or when startIfStopped is true. */
         protected updateInterval(interval: number, startIfStopped: boolean) {
             if (this.timerId !== undefined) {
                 host.timers().clearInterval(this.timerId);
@@ -171,21 +163,14 @@ namespace pxsim.audiohost {
         };
     }
 
-    /** The silent host's onStopAll listeners, in registration order. */
     const silentStopAllListeners: (() => void)[] = [];
 
-    /** Notifies the sound event "muteallchannels", then calls every silent onStopAll listener in registration order. */
     function silentStopAll() {
         notifySoundEvent("muteallchannels");
         for (const listener of silentStopAllListeners)
             listener();
     }
 
-    /**
-     * Returns a new audio element for the silent host: play() resolves at once and fires no events,
-     * pause and the listener calls do nothing, and the properties read playbackRate 1,
-     * preservesPitch true and currentTime 0 until assigned.
-     */
     function silentCreateAudioElement(): AudioElementHandle {
         return {
             playbackRate: 1,
@@ -223,20 +208,18 @@ namespace pxsim.audiohost {
         return current;
     }
 
-    /** Overrides parts of the audio host; omitted members keep the silent defaults. */
+    /** Overrides parts of the audio host. Anything left out goes back to the silent host. */
     export function setAudioHost(overrides: Partial<AudioHost>) {
         current = { ...silentHost, ...overrides };
     }
 
-    /** Incremented by the stopAll of every audio host queuePlay has run on. */
     let stopGeneration = 0;
-    /** The audio host of the latest queuePlay call, else undefined. */
     let stopGenerationHost: AudioHost | undefined;
 
     /**
-     * Calls play `when` milliseconds from now on host.timers(), unless the stopAll of an audio host
-     * this function has run on runs in between. Registers an onStopAll listener on audio() on the
-     * first call and on every call whose audio() differs from the previous call's.
+     * Calls `play` in `when` milliseconds, unless stopAll runs first. This lets stopAll cancel
+     * sounds that are scheduled but have not started yet. It hooks onStopAll on the current audio
+     * host whenever that host changes.
      */
     export function queuePlay(when: number, play: () => void): void {
         const target = audio();
@@ -251,7 +234,6 @@ namespace pxsim.audiohost {
         }, when);
     }
 
-    /** Calls audio().playInstructionsAsync(instructions) `when` milliseconds from now through queuePlay. */
     export function queuePlayInstructions(when: number, instructions: Uint8Array): void {
         queuePlay(when, () => audio().playInstructionsAsync(instructions));
     }
