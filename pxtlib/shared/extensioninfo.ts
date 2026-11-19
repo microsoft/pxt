@@ -137,11 +137,19 @@ namespace pxt.cpp {
      * under pxt_modules/<directory>/. Dependencies resolve by directory, pxt.json name,
      * or their prefix before "---".
      * Bundled packages supply missing Makefile, sdkconfig.defaults, and CMakeLists.txt files.
+     * Supplied compile switches replace the target's variant switches.
      * The target must not have variant overrides applied.
-     * @example getExtensionInfo({ "pxt.json": config, "main.cpp": source }, target, "v2", host)
+     * @example getExtensionInfo(request.files, target, request.variant, host, request.compileSwitches)
      */
-    export function getExtensionInfo(files: Map<string>, target: TargetBundle, variant: string, host: ExtensionInfoHost): pxtc.ExtensionInfo {
+    export function getExtensionInfo(
+        files: Map<string>,
+        target: TargetBundle,
+        variant: string,
+        host: ExtensionInfoHost,
+        compileSwitches?: pxtc.CompileSwitches
+    ): pxtc.ExtensionInfo {
         const appTarget = getAppTargetVariant(target, variant);
+        if (compileSwitches) appTarget.compile.switches = { ...compileSwitches };
         const bundledPackages = appTarget.bundledpkgs || {};
         const bundledBuildFiles = ["Makefile", "sdkconfig.defaults", "CMakeLists.txt"];
         const constsName = "dal.d.ts"
