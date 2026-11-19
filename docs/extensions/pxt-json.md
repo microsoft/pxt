@@ -28,6 +28,7 @@ interface PackageConfig {
                                     // in support of publishing user scripts
 
     icon?: string;                // url to icon -- support for built-in extensions only
+    searchOnly?: boolean;         // show a built-in extension only in gallery search results
     card?: CodeCard;
     documentation?: string; // doc page to open when loading project
 
