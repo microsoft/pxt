@@ -585,7 +585,7 @@ describe("blockly compiler", function () {
         it("should generate picker snippets that compile back through their dropdown fields", async () => {
             const { program, info } = await decompilePickerSource("");
             const checker = program.getTypeChecker();
-            for (const qName of ["pickerTest.chooseMount", "pickerTest.chooseItem", "pickerTest.chooseAsset"]) {
+            for (const qName of ["pickerTest.chooseMount", "pickerTest.chooseItem", "pickerTest.chooseAsset", "pickerTest.chooseFeatured"]) {
                 let declaration: ts.FunctionDeclaration;
                 const visit = (node: ts.Node) => {
                     if (ts.isFunctionDeclaration(node) && node.name) {
@@ -599,6 +599,7 @@ describe("blockly compiler", function () {
                 const snippet = pxtc.service.snippetStringify(pxtc.service.getSnippet({
                     apis: info.apis, blocksInfo: info, checker, takenNames: {}
                 }, info.apis.byQName[qName], declaration));
+                if (qName === "pickerTest.chooseFeatured") chai.assert.include(snippet, "PickerAnimal.Cow");
                 const restored = await roundTripPickerSource(snippet);
                 chai.assert.deepEqual(sourceCalls(restored), sourceCalls(snippet), snippet + "\n=>\n" + restored);
                 const { result } = await decompilePickerSource(snippet);
@@ -614,6 +615,14 @@ describe("blockly compiler", function () {
                     defaultWorkspace.dispose();
                 }
             }
+        });
+
+        it("should decompile a value allowed by another catalog from the same package into the filtered shadow", async () => {
+            const { result } = await decompilePickerSource("pickerTest.useFeatured(PickerAnimal.Cow)");
+            chai.assert.isTrue(result.success, JSON.stringify(result.diagnostics));
+            const xml = Blockly.utils.xml.textToDom(result.outfiles[pxt.MAIN_BLOCKS]);
+            const field = xml.querySelector('block[type="picker_use_featured"] > value > shadow[type="picker_featured_shadow"] > field');
+            chai.assert.equal(field?.textContent, "PickerAnimal.Cow");
         });
 
         it("should round trip configured gridpicker enum sources and resolved parameter names", async () => {

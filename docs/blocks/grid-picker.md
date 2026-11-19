@@ -51,6 +51,45 @@ Or add them to the choice's entry in its JRES file:
 
 Tags from both places are combined, so you can use whichever is more convenient.
 
+### Tagging choices from another package
+
+**Use case:** your `my-mounts` extension wants a picker for horses and donkeys
+from Minecraft without changing the target's mob definitions.
+
+Add an `assetTags` map inside a `gridPickerCatalog`:
+
+```json
+{
+    "*": {
+        "namespace": "myMounts.pickers",
+        "mimeType": "application/x-makecode-grid-picker"
+    },
+    "animals": {
+        "gridPickerCatalog": {
+            "name": "Animals",
+            "assetTags": {
+                "AnimalMob.Horse": ["mount"],
+                "AnimalMob.Donkey": ["mount"]
+            },
+            "tabs": [
+                { "id": "mounts", "name": "Mounts", "tags": ["my-mounts:mount"] },
+                { "id": "all", "name": "All", "flat": true }
+            ]
+        }
+    }
+}
+```
+
+The keys can be qualified API names, constants with an `enumIdentity`, or
+existing JRES IDs. Write the tag without a prefix in `assetTags`; MakeCode adds
+the extension's dependency name and a colon. Use the full tag
+`my-mounts:mount` in tabs, groups, or `fieldOptions.filter` on a block using
+`myMounts.pickers.animals` or another catalog from `my-mounts`.
+
+These tags are shared by the catalogs from the same extension. They don't
+change the source assets or what another extension's catalogs see. If a
+constant or asset can't be found, MakeCode skips it and writes a console warning.
+
 ## Using a catalog in a block
 
 **Use case:** a Minecraft block that should only offer mobs that can ride, while
@@ -225,6 +264,10 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
 - API `tags` and JRES `tags` are merged case-insensitively. JRES references and
   aliases resolve tags the same way they resolve icons.
 - When adding tags to an existing JRES entry, keep its icon and data properties.
+- Catalog `assetTags` add picker-only tags from the catalog's owning package.
+  The package loader provides the prefix; it isn't read from the JRES entry.
+  A `?tag` becomes `?package:tag`, so it still works with shared tag filters.
+  Decompilation and generated snippets use the same tags as the picker.
 
 ### Filters and values
 

@@ -272,7 +272,7 @@ namespace pxt {
         parseJRes(allres: Map<JRes> = {}) {
             for (const f of this.getFiles()) {
                 if (U.endsWith(f, ".jres")) {
-                    inflateJRes(JSON.parse(this.readFile(f)), allres)
+                    inflateJRes(JSON.parse(this.readFile(f)), allres, this.id === "this" ? this.config.name : this.id)
                 }
             }
             return allres
@@ -1483,7 +1483,7 @@ namespace pxt {
         }
     }
 
-    export function inflateJRes(js: Map<JRes>, allres: Map<JRes> = {}) {
+    export function inflateJRes(js: Map<JRes>, allres: Map<JRes> = {}, packageName?: string) {
         let base: JRes = js["*"] || {} as any
         for (let k of Object.keys(js)) {
             if (k == "*") continue
@@ -1513,7 +1513,8 @@ namespace pxt {
                 tileset: v.tileset,
                 tags: v.tags,
                 weight: v.weight,
-                gridPickerCatalog: v.gridPickerCatalog
+                gridPickerCatalog: v.gridPickerCatalog,
+                gridPickerCatalogOwner: v.gridPickerCatalog ? packageName : undefined
             }
         }
 

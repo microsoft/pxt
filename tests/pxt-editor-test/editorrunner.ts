@@ -106,12 +106,19 @@ describe("library-owned picker catalogs", () => {
             dep.isLoaded = true;
             files[id] = { "pickers.jres": JSON.stringify({
                 "*": { namespace: `${id}.pickers`, mimeType: "application/x-makecode-grid-picker" },
-                icons: { gridPickerCatalog: {
+                icons: { gridPickerCatalogOwner: "alpha", gridPickerCatalog: {
                     name: "Images",
                     tabs: [{ id: "all", name: "All", flat: true, weight: 0 }, { id: "animals", name: "Animals", tags: ["animal"], weight: 80 }],
                     groups: [{ id: "birds", name: "Birds", tags: ["bird"] }],
-                    filters: [{ id: "playable", name: "Playable", tags: ["playable"] }]
-                } }
+                    filters: [{ id: "playable", name: "Playable", tags: ["playable"] }],
+                    assetTags: id === "alpha" ? {
+                        "TEST_HORSE": ["mount", "MOUNT"],
+                        "animals.Horse": ["wild"],
+                        "assets.horse": ["?favorite"],
+                        "Missing.Constant": ["mount"]
+                    } : { "animals.Horse": ["mount"] }
+                } },
+                more: { gridPickerCatalog: { name: "More", tabs: [{ id: "all", name: "All", flat: true }] } }
             }) };
             main.deps[id] = dep;
         }
@@ -124,6 +131,40 @@ describe("library-owned picker catalogs", () => {
         chai.expect(pxt.getGridPickerCatalog(resources, "beta.pickers.icons").groups[0].name).equals("Birds");
         chai.expect(pxt.getGridPickerCatalog(resources, "missing")).equals(undefined);
         chai.expect(Object.keys(resources)).contains("alpha.pickers.icons").and.contains("beta.pickers.icons");
+    });
+
+    it("shares namespaced tags across the owner's catalogs and warns without failing on unknown references", () => {
+        const jres = catalogPackage().getJRes();
+        jres["assets.horse"] = { id: "assets.horse", data: "", mimeType: "image/png", tags: ["animal"] };
+        const horse: pxtc.SymbolInfo = {
+            kind: pxtc.SymbolKind.EnumMember, qName: "animals.Horse", name: "Horse", namespace: "animals",
+            fileName: "animals.ts", parameters: [], retType: "animals",
+            attributes: { callingConvention: 0, paramDefl: {}, jres: "assets.horse", tags: "tameable" }
+        };
+        const alias: pxtc.SymbolInfo = {
+            ...horse, qName: "TEST_HORSE", name: "TEST_HORSE", kind: pxtc.SymbolKind.Variable,
+            attributes: { callingConvention: 0, paramDefl: {}, enumIdentity: horse.qName }
+        };
+        const apis: pxtc.ApisInfo = { jres, byQName: { [horse.qName]: horse, [alias.qName]: alias } };
+        const tags = (id?: string) => pxt.sprite.getGridPickerSymbolTags(apis, horse, id);
+
+        const warnings: string[] = [];
+        const warn = console.warn;
+        console.warn = (message: string) => warnings.push(message);
+        try {
+            const alpha = ["tameable", "animal", "alpha:mount", "alpha:wild", "?alpha:favorite"];
+            chai.expect(tags("alpha.pickers.icons")).deep.equals(alpha);
+            chai.expect(tags("alpha.pickers.more")).deep.equals(alpha);
+            chai.expect(tags("beta.pickers.icons")).deep.equals(["tameable", "animal", "beta:mount"]);
+            chai.expect(tags()).deep.equals(["tameable", "animal"]);
+            chai.expect(jres["assets.horse"].tags).deep.equals(["animal"]);
+            chai.expect(pxt.sprite.compileTagFilter("alpha:mount alpha:favorite")(alpha)).equals(true);
+            chai.expect(pxt.sprite.compileTagFilter("mount")(alpha)).equals(false);
+            chai.expect(warnings).to.have.length(1);
+            chai.expect(warnings[0]).to.include("Missing.Constant");
+        } finally {
+            console.warn = warn;
+        }
     });
 
     describe("picker weight ordering", () => {

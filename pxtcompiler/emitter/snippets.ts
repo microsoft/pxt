@@ -470,8 +470,9 @@ namespace ts.pxtc.service {
             }
 
             const filter = typeof param.fieldOptions?.filter === "string" ? param.fieldOptions.filter : undefined;
+            const catalog = typeof param.fieldOptions?.catalog === "string" ? param.fieldOptions.catalog : undefined;
             const matches = pxt.sprite.compileTagFilter(filter);
-            let choice = choices.find(symbol => matches(pxt.sprite.getSymbolTags(apis, symbol)));
+            let choice = choices.find(symbol => matches(pxt.sprite.getGridPickerSymbolTags(apis, symbol, catalog)));
             if (!choice) {
                 pxt.reportError("gridpicker", "No matching default choice", { api: fn.qName, parameter: param.actualName });
                 // Match the block, which starts on its first choice when none fit the filter.

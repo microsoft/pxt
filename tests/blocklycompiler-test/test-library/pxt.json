@@ -4,6 +4,7 @@
     "files": [
         "actionEvent.ts",
         "enums.ts",
+        "pickers.jres",
         "mbit.ts",
         "expandableBlocks.ts",
         "spritekind.ts",

@@ -229,6 +229,8 @@ declare namespace pxt {
         tabs: GridPickerCategory[];
         groups?: GridPickerCategory[];
         filters?: GridPickerCategory[];
+        /** Extra tags keyed by a qualified symbol name, constant alias, or JRES ID. */
+        assetTags?: Map<string[]>;
     }
 
     interface JRes {
@@ -244,6 +246,8 @@ declare namespace pxt {
         tags?: string[];
         weight?: number;
         gridPickerCatalog?: GridPickerCatalog;
+        /** Set by the package loader, not by authored JRES. */
+        gridPickerCatalogOwner?: string;
     }
 
     type SnippetOutputType = 'blocks'

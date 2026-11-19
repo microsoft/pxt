@@ -1,0 +1,21 @@
+{
+    "*": {
+        "namespace": "testlib.pickers",
+        "mimeType": "application/x-makecode-grid-picker"
+    },
+    "tags": {
+        "gridPickerCatalog": {
+            "name": "Tagged animals",
+            "assetTags": {
+                "PICKER_COW": ["featured"]
+            },
+            "tabs": [{ "id": "all", "name": "All", "flat": true }]
+        }
+    },
+    "animals": {
+        "gridPickerCatalog": {
+            "name": "Animals",
+            "tabs": [{ "id": "featured", "name": "Featured", "tags": ["testlib:featured"] }]
+        }
+    }
+}
