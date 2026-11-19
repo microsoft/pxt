@@ -136,11 +136,14 @@ namespace pxt.cpp {
      * Generates native extension files from pxt.json and project files, with dependencies
      * under pxt_modules/<directory>/. Dependencies resolve by directory, pxt.json name,
      * or their prefix before "---".
+     * Bundled packages supply missing Makefile, sdkconfig.defaults, and CMakeLists.txt files.
      * The target must not have variant overrides applied.
      * @example getExtensionInfo({ "pxt.json": config, "main.cpp": source }, target, "v2", host)
      */
     export function getExtensionInfo(files: Map<string>, target: TargetBundle, variant: string, host: ExtensionInfoHost): pxtc.ExtensionInfo {
         const appTarget = getAppTargetVariant(target, variant);
+        const bundledPackages = appTarget.bundledpkgs || {};
+        const bundledBuildFiles = ["Makefile", "sdkconfig.defaults", "CMakeLists.txt"];
         const constsName = "dal.d.ts"
         let sourcePath = "/source/"
         let disabledDeps = ""
@@ -170,8 +173,14 @@ namespace pxt.cpp {
                 U.userError(`extension ${id} matches multiple directories: ${paths.join(", ")}`);
             return paths && paths[0];
         };
-        const readFile = (pkg: ExtensionPackage, name: string): string =>
-            files[pkg.path + name];
+        const readFile = (pkg: ExtensionPackage, name: string): string => {
+            if (bundledBuildFiles.indexOf(name) >= 0 && pkg.path) {
+                const id = pkg.path.slice("pxt_modules/".length, -1);
+                const bundledFile = bundledPackages[id] && bundledPackages[id][name];
+                if (bundledFile != null) return bundledFile;
+            }
+            return files[pkg.path + name];
+        };
         const dependencies = (pkg: ExtensionPackage): Map<string> => packageUtils.getConfigDependencies(
             pkg.config,
             pkg.id == "this",
@@ -217,6 +226,14 @@ namespace pxt.cpp {
                 id => !!runtimePackages[resolvePath(id)],
                 condition => host.logger.log(`invalid dependency expression: ${condition} in ${pkg.id}`)
             );
+            if (pkg.path) {
+                const id = pkg.path.slice("pxt_modules/".length, -1);
+                const bundledFiles = bundledPackages[id];
+                for (const name of bundledBuildFiles) {
+                    if (bundledFiles && bundledFiles[name] != null && pkg.files.indexOf(name) < 0)
+                        pkg.files.push(name);
+                }
+            }
         }
 
         const mainDeps: ExtensionPackage[] = [];
