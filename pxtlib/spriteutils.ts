@@ -479,6 +479,70 @@ namespace pxt.sprite {
         ]);
     }
 
+    type GridPickerAssetTags = globalThis.Map<string, string[]>;
+    const gridPickerAssetTags = new WeakMap<pxtc.ApisInfo, globalThis.Map<string, GridPickerAssetTags>>();
+
+    /**
+     * Adds the tags declared by the package that supplies the catalog, without changing the
+     * symbol or its JRES entry. Other catalogs and asset galleries still see the original tags.
+     */
+    export function getGridPickerSymbolTags(apis: pxtc.ApisInfo, symbol: pxtc.SymbolInfo, catalogId?: string): string[] {
+        const tags = getSymbolTags(apis, symbol);
+        const owner = catalogId && apis.jres?.[catalogId]?.gridPickerCatalogOwner;
+        if (!owner || !symbol) return tags;
+
+        let byOwner = gridPickerAssetTags.get(apis);
+        if (!byOwner) gridPickerAssetTags.set(apis, byOwner = new Map());
+        let assetTags = byOwner.get(owner);
+        if (!assetTags) byOwner.set(owner, assetTags = collectGridPickerAssetTags(apis, owner));
+        if (!assetTags.size) return tags;
+
+        const symbolTags = assetTags.get(symbol.qName);
+        const resourceTags = assetTags.get(getSymbolResource(apis, symbol)?.id);
+        return symbolTags || resourceTags ? parseTags([...tags, ...(symbolTags || []), ...(resourceTags || [])]) : tags;
+    }
+
+    function collectGridPickerAssetTags(apis: pxtc.ApisInfo, owner: string): GridPickerAssetTags {
+        const result = new Map<string, string[]>();
+        for (const catalog of Object.values(apis.jres || {})) {
+            if (catalog.gridPickerCatalogOwner !== owner) continue;
+            const entries = catalog.gridPickerCatalog?.assetTags;
+            if (entries === undefined) continue;
+            if (!entries || typeof entries !== "object" || Array.isArray(entries) || /[!?:\s]/.test(owner)) {
+                pxt.warn(`Grid picker catalog "${catalog.id}": invalid assetTags or package name.`);
+                continue;
+            }
+
+            for (const [reference, values] of Object.entries(entries)) {
+                const symbol = Object.prototype.hasOwnProperty.call(apis.byQName, reference) ? apis.byQName[reference] : undefined;
+                const identity = symbol?.attributes.enumIdentity;
+                const target = identity
+                    ? (Object.prototype.hasOwnProperty.call(apis.byQName, identity) ? apis.byQName[identity]?.qName : undefined)
+                    : symbol?.qName || (Object.prototype.hasOwnProperty.call(apis.jres, reference) ? reference : undefined);
+                if (!target) {
+                    pxt.warn(`Grid picker catalog "${catalog.id}": assetTags references unknown asset or constant "${reference}".`);
+                    continue;
+                }
+                if (!Array.isArray(values) || !values.every(tag => typeof tag === "string")) {
+                    pxt.warn(`Grid picker catalog "${catalog.id}": expected a list of tags for "${reference}".`);
+                    continue;
+                }
+
+                const extraTags: string[] = [];
+                for (const tag of parseTags(values)) {
+                    if (!/^\??[^!?:\s]+$/.test(tag)) {
+                        pxt.warn(`Grid picker catalog "${catalog.id}": invalid asset tag "${tag}" for "${reference}".`);
+                        continue;
+                    }
+                    // The optional marker must stay before the prefix for the shared tag filter.
+                    extraTags.push(tag.startsWith("?") ? `?${owner}:${tag.slice(1)}` : `${owner}:${tag}`);
+                }
+                if (extraTags.length) result.set(target, parseTags([...(result.get(target) || []), ...extraTags]));
+            }
+        }
+        return result;
+    }
+
     /** Indexes merged API/resource tags for both symbolic and gallery resource IDs. */
     export function getSymbolTagsById(apis: pxtc.ApisInfo): pxt.Map<string[]> {
         const result: pxt.Map<string[]> = {};

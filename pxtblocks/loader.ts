@@ -529,9 +529,13 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                         if (syms.length == 0) {
                             pxt.error(`no instances of ${typeInfo?.qName || fieldType} found`)
                         }
+                        const catalog = customField === "gridpicker" && typeof fieldOptions?.catalog === "string" ? fieldOptions.catalog : undefined;
+                        const optionTags: pxt.Map<string[]> = {};
                         const dd: Blockly.MenuOption[] = syms.map(v => {
                             let k = v.attributes.block || v.attributes.blockId || v.name;
                             let comb = v.attributes.blockCombine
+                            const tags = pxt.sprite.getGridPickerSymbolTags(info.apis, v, catalog).map(tag => tag.toLowerCase());
+                            optionTags[v.qName] = tags;
                             if (v.attributes.jresURL && !v.attributes.iconURL && pxt.Util.startsWith(v.attributes.jresURL, "data:image/x-mkcd-f")) {
                                 v.attributes.iconURL = imgConv.convert(v.attributes.jresURL)
                             }
@@ -544,7 +548,7 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
                                     width: 36,
                                     height: 36,
                                     value: v.name,
-                                    tags: getSymbolPickerTags(info, v)
+                                    tags
                                 } : k,
                                 v.namespace + "." + v.name,
                                 v.attributes.ariaLabel
@@ -576,8 +580,6 @@ function initBlock(block: Blockly.Block, info: pxtc.BlocksInfo, fn: pxtc.SymbolI
 
                         if (customField) {
                             let defl = resolveDefault(fn.attributes.paramDefl[actName] || "");
-                            const optionTags: pxt.Map<string[]> = {};
-                            syms.forEach(symbol => optionTags[symbol.qName] = getSymbolPickerTags(info, symbol));
                             const options = {
                                 data: dd,
                                 colour: color,
@@ -1045,10 +1047,6 @@ function applyInputLabel(input: Blockly.Input, parameter: pxt.blocks.BlockParame
     if (!label) return;
 
     input.setAriaLabelProvider(label);
-}
-
-function getSymbolPickerTags(info: pxtc.BlocksInfo, symbol: pxtc.SymbolInfo): string[] {
-    return pxt.sprite.getSymbolTags(info.apis, symbol).map(tag => tag.toLowerCase());
 }
 
 export function getFixedInstanceDropdownValues(apis: pxtc.ApisInfo, qName: string): pxtc.SymbolInfo[] {

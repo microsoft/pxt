@@ -2412,7 +2412,8 @@ ${output}</xml>`;
 
             // An out-of-filter value keeps its ordinary block, rather than being forced into this picker.
             const filter = field.fieldOptions?.filter;
-            if (typeof filter === "string" && !pxt.sprite.compileTagFilter(filter)(pxt.sprite.getSymbolTags(apis, member))) {
+            const catalog = typeof field.fieldOptions?.catalog === "string" ? field.fieldOptions.catalog : undefined;
+            if (typeof filter === "string" && !pxt.sprite.compileTagFilter(filter)(pxt.sprite.getGridPickerSymbolTags(apis, member, catalog))) {
                 return undefined;
             }
             return getFieldBlock(U.htmlEscape(shadow.attributes.blockId), U.htmlEscape(field.definitionName), member.qName);

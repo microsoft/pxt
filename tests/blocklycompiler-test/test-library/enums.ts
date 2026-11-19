@@ -172,6 +172,24 @@ namespace pickerTest {
     //% choice.fieldOptions.enumNames="PickerAnimal"
     export function chooseAlias(value: number): void {
     }
+
+    //% blockId=picker_choose_featured block="featured %choice"
+    //% value.fieldEditor=gridpicker
+    //% choice.fieldOptions.catalog=testlib.pickers.animals
+    //% choice.fieldOptions.enumNames="PickerAnimal" choice.fieldOptions.filter="testlib:featured"
+    export function chooseFeatured(value: number): void {
+    }
+
+    //% blockId=picker_featured_shadow block="$value" shim=TD_ID blockHidden=1
+    //% value.fieldEditor=gridpicker
+    //% value.fieldOptions.catalog=testlib.pickers.animals value.fieldOptions.filter="testlib:featured"
+    export function featured(value: PickerAnimal): number {
+        return value;
+    }
+
+    //% blockId=picker_use_featured block="use featured $animal" animal.shadow=picker_featured_shadow
+    export function useFeatured(animal: number): void {
+    }
 }
 
 declare namespace agent {
