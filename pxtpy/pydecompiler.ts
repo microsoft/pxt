@@ -221,7 +221,7 @@ namespace pxt.py {
 
             // emit any comments that could not be associated with a
             // statement at the end of the file
-            commentMap.filter(c => !c.owner)
+            commentMap.filter(c => !c.owner && !isCommentDisabled(c))
                 .forEach(comment => outLns.push(...emitComment(comment)))
 
             return outLns.join("\n")
@@ -239,6 +239,11 @@ namespace pxt.py {
                 default:
                     return emitStmtWithNewlines(s as ts.Statement)
             }
+        }
+
+        function isCommentDisabled(c: pxtc.decompiler.Comment): boolean {
+            return !!((c.kind === pxtc.decompiler.CommentKind.MultiLine && c.lines && c.lines.some(l => l.indexOf("__disabled__") !== -1)) ||
+                (c.kind === pxtc.decompiler.CommentKind.SingleLine && c.text && c.text.indexOf("__disabled__") !== -1));
         }
 
         function emitComment(comment: pxtc.decompiler.Comment) {
@@ -260,9 +265,24 @@ namespace pxt.py {
             const out = emitStmt(s);
 
             // get comments after emit so that child nodes get a chance to claim them
-            const comments = pxtc.decompiler.getCommentsForStatement(s, commentMap)
+            const rawComments = pxtc.decompiler.getCommentsForStatement(s, commentMap);
+            let hasDisabled = false;
+            const filteredComments = rawComments.filter(c => {
+                if (isCommentDisabled(c)) {
+                    hasDisabled = true;
+                    return false;
+                }
+                return true;
+            });
+
+            const comments = filteredComments
                 .map(emitComment)
-                .reduce((p, c) => p.concat(c), [])
+                .reduce((p, c) => p.concat(c), []);
+
+            if (hasDisabled) {
+                const commentedOut = out.map(line => line ? "# " + line : line);
+                return comments.concat(commentedOut);
+            }
 
             return comments.concat(out);
         }
