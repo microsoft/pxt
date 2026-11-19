@@ -1487,6 +1487,40 @@ export class ProjectView
         })
     }
 
+    renameFile(fn: pkg.File, newName: string): Promise<void> {
+        const isCurrent = this.state.currFile?.name === fn.name;
+        const main = pkg.mainEditorPkg();
+        const oldHistoryName = "this/" + fn.name;
+        const newHistoryName = "this/" + newName;
+
+        return main.renameFileAsync(fn.name, newName)
+            .then(() => main.saveFilesAsync())
+            .then(() => {
+                const monacoEditor = (window as any).monaco?.editor;
+                if (monacoEditor) {
+                    const oldProto = "pkg:" + fn.getName();
+                    const oldModel = monacoEditor.getModels?.()?.find((m: any) => m.uri?.toString() === oldProto);
+                    if (oldModel) oldModel.dispose();
+                }
+                if (this.settings?.fileHistory) {
+                    this.settings.fileHistory.forEach(e => {
+                        if (e.id === this.state.header?.id && e.name === oldHistoryName) {
+                            e.name = newHistoryName;
+                        }
+                    });
+                }
+                return this.reloadHeaderAsync();
+            })
+            .then(() => {
+                if (isCurrent) {
+                    const newF = main.lookupFile(newHistoryName);
+                    if (newF) {
+                        this.setFile(newF);
+                    }
+                }
+            });
+    }
+
     updateFileAsync(name: string, content: string, open?: boolean): Promise<void> {
         const p = pkg.mainEditorPkg();
         return p.setContentAsync(name, content)
