@@ -250,9 +250,11 @@ span.blocklyTreeIcon {
     opacity: 1;
     margin: 0.0em 0.25em 0.0em 0.25em;
     width: 30px;
-    font-family: 'Icons';
+    // Keep legacy glyphs first, and use the bundled solid face for newer glyphs.
+    font-family: 'Icons', 'Font Awesome 5 Free';
     font-style: normal;
-    font-weight: normal;
+    font-weight: 900;
+    font-synthesis: none;
     text-decoration: inherit;
     text-align: center;
     speak: none;
