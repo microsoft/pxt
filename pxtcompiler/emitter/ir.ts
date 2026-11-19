@@ -609,6 +609,11 @@ namespace ts.pxtc.ir {
             return text || "inline"
         }
 
+        getDeclName() {
+            return getDeclName(this.action)
+        }
+
+
         mkLocal(def: Declaration, info: VariableAddInfo) {
             let l = new Cell(this.locals.length, def, info)
             this.locals.push(l)
