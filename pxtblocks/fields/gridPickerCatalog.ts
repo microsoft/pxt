@@ -124,9 +124,12 @@ export function getGridPickerGroups(
 
 /**
  * Returns the tallest layout any tab can produce, with its largest group expanded. The picker sizes
- * itself from this so it doesn't jump around when switching tabs.
+ * itself from this so it doesn't jump around when switching tabs. When two layouts have the same number
+ * of rows, the one with more expanded rows wins, because those rows are indented and padded and so take
+ * more space.
  */
 export function getGridPickerSizeRows(options: Blockly.MenuOption[], catalog: pxt.GridPickerCatalog, columns: number, optionTags?: pxt.Map<string[]>, optionWeights?: pxt.Map<number>): GridPickerRow[] {
+    const childRows = (rows: GridPickerRow[]) => rows.filter(row => row.group).length;
     let largest = getGridPickerRows(options.map(option => ({ option })), columns, new Set());
     for (const tab of catalog.tabs) {
         const entries: GridPickerEntry[] = [];
@@ -140,7 +143,7 @@ export function getGridPickerSizeRows(options: Blockly.MenuOption[], catalog: px
             }
         }
         const rows = getGridPickerRows(sortGridPickerEntries(entries, optionWeights), columns, new Set(largestGroup ? [largestGroup.id] : []));
-        if (rows.length > largest.length) largest = rows;
+        if (rows.length > largest.length || (rows.length === largest.length && childRows(rows) > childRows(largest))) largest = rows;
     }
     return largest;
 }
