@@ -69,10 +69,41 @@ declare namespace pxt {
         permanent?: boolean; // If true, don't recycle the iframe between runs. Default: true.
         devUrl?: string; // URL to load for local development. Pass `simxdev` on URL to enable. Default: undefined.
         index?: string; // The path to the simulator extension's entry point within the repo. Default: "index.html".
+        allowPopups?: boolean; // If true, the iframe sandbox gains allow-popups and allow-popups-to-escape-sandbox. Default: false.
+        allowClipboard?: boolean; // If true, the iframe allow list gains clipboard-read and clipboard-write. Default: false.
+        allowCamera?: boolean; // If true, the iframe allow list gains camera. Default: false.
+        allowMidi?: boolean; // If true, the iframe allow list gains midi. Default: false.
+        allowUsb?: boolean; // If true, the iframe allow list gains usb. Default: false.
+        allowSerial?: boolean; // If true, the iframe allow list gains serial. Default: false.
+        allowBluetooth?: boolean; // If true, the iframe allow list gains bluetooth. Default: false.
+        allowHid?: boolean; // If true, the iframe allow list gains hid. Default: false.
+        allowMotionSensors?: boolean; // If true, the iframe allow list gains accelerometer, gyroscope and magnetometer. Default: false.
+        allowDisplayCapture?: boolean; // If true, the iframe allow list gains display-capture. Default: false.
+        allowGamepad?: boolean; // If true, the iframe allow list gains gamepad. Default: false.
+        allowDownloads?: boolean; // If true, the iframe sandbox gains allow-downloads. Default: false.
+        allowPointerLock?: boolean; // If true, the iframe sandbox gains allow-pointer-lock. Default: false.
+        allowFileWrite?: boolean; // If true, the frame may list, read, write and delete files in its own folder of the project ("projfs" messages). Default: false.
+        allowAssetRead?: boolean; // If true, the frame may list the open project's assets and visual configuration (palette, simulator theme) and subscribe to their changes ("projassets" messages). Default: false.
+        allowProgramRead?: boolean; // If true, the frame may compile the open project and receive the program the simulator runs ("projprogram" messages). Default: false.
+        editor?: SimxEditorConfig; // The extension's editor tab. Ignored unless allowEditorTab is set; refused on a registration with permanent set to false. Default: undefined.
+        allowEditorTab?: boolean; // If true, the editor offers the tab `editor` describes, brokers a port between it and the simulator frame, and serves the simulator frame's request to open it ("simxeditor" messages); the registration's grants above apply to the tab frame as well as the simulator frame. Default: false.
+        hideInFullscreen?: boolean; // If true, hide the iframe in fullscreen-simulator mode; it stays loaded and keeps messaging. Default: false.
         // backend-only options
         sha?: string; // The commit to checkout (must exist in the branch/ref). Required.
         repo?: string; // Actual repo to load simulator extension from. Defaults to key of parent in `approvedRepoLib` map.
         ref?: string; // The branch of the repo to sync. Default: "gh-pages".
+    }
+
+    /**
+     * The editor tab of a simulator extension: a page of the extension's artifact that
+     * the editor hosts in the editor area, beside Blocks and the text editors, while the
+     * open project includes the extension.
+     */
+    interface SimxEditorConfig {
+        index: string; // The path to the tab's page within the artifact, resolved as the simulator extension's `index` is. Required.
+        label?: string | pxt.Map<string>; // The tab's name in the editor toggle, and its accessible name: the name, or a map from language code (e.g. "en", "pt-BR") to the name in that language, from which the editor picks the user's language, its base language, or its lower-case code (e.g. "pt-br"), then "en", then the first entry with text. When none resolves, or no label is given, the registration's key names the tab.
+        icon?: string; // The icon shown before the label in the editor toggle: a font icon's class names (e.g. "xicon js"), or, if it contains a "/" or ends in ".svg", the path to an SVG within the artifact, resolved as `index` is and drawn in the toggle's text color. Default: none.
+        creates?: string[]; // The fully qualified names of fixed-instance types whose instances the tab creates (e.g. "myext.Widget"); a block dropdown listing a type's instances ends in an entry asking the tab to create one. Honoured only for a type declared by a package of the extension's own repository; for a type two registrations claim, the first in registration order. Default: none.
     }
 
     interface ShareConfig {

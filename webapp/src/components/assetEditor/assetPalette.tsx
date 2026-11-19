@@ -185,7 +185,7 @@ export const AssetPalette = (props: AssetPaletteProps) => {
             initialCustomPalettes = {nextPaletteID: 0, palettes: {}};
         }
         const paletteOptions = Object.values(initialCustomPalettes?.palettes).concat(BuiltinPalettes);
-        const colors = pkg.mainPkg.config.palette || pxt.appTarget.runtime.palette;
+        const colors = pkg.mainPkg.effectivePalette();
         let match = false;
         for (const palette of paletteOptions) {
             if (isSameColors(colors, palette.colors)) {

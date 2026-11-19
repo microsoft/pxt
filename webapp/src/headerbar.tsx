@@ -171,9 +171,10 @@ export class HeaderBar extends data.Component<ISettingsProps, {}> {
 
     getCenterLabel(targetTheme: pxt.AppTheme, view: HeaderBarView, tutorialOptions?: pxt.tutorial.TutorialOptions) {
         const showAssets = !!pkg.mainEditorPkg().files[pxt.ASSETS_FILE];
+        const showExtensionEditors = this.props.parent.getSimxEditors().length > 0;
         const languageRestriction = pkg.mainPkg?.config?.languageRestriction;
         // If there is only one editor (eg Py only, no assets), we display a label instead of a toggle
-        const hideToggle = !showAssets && (languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly
+        const hideToggle = !showAssets && !showExtensionEditors && (languageRestriction === pxt.editor.LanguageRestriction.JavaScriptOnly
             || languageRestriction === pxt.editor.LanguageRestriction.PythonOnly) || targetTheme.blocksOnly;
 
         switch (view) {

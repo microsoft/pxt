@@ -9,7 +9,8 @@
         "spritekind.ts",
         "toStringArgs.ts",
         "blockAliasFor.ts",
-        "forceStatement.ts"
+        "forceStatement.ts",
+        "instanceDropdown.ts"
     ],
     "public": true,
     "dependencies": {},

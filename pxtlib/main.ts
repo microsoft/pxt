@@ -510,6 +510,8 @@ namespace pxt {
     export const CONFIG_NAME = "pxt.json"
     export const SIMSTATE_JSON = ".simstate.json"
     export const SERIAL_EDITOR_FILE = "serial.txt"
+    /** The suffix of the name of a simulator extension editor tab's marker file. */
+    export const SIMX_EDITOR_MARKER_SUFFIX = ".simxeditor"
     export const README_FILE = "README.md"
     export const GITIGNORE_FILE = ".gitignore"
     export const ASSETS_FILE = "assets.json"
@@ -534,6 +536,27 @@ namespace pxt {
     export const PALETTES_FILE = "_palettes.json";
     export const HISTORY_FILE = "_history";
     export const MAX_DESCRIPTION_LENGTH = 5000;
+
+    /**
+     * Returns true if `name` names a file the editor creates for the current
+     * session only: the serial editor's file, or the marker file of a
+     * simulator extension editor tab (a top-level name, without a `/`, ending
+     * in {@link SIMX_EDITOR_MARKER_SUFFIX}). Such a file is never saved, shown
+     * in the file explorer (outside debug mode), synced, committed to GitHub,
+     * diffed, shared or exported.
+     */
+    export function isSessionOnlyFile(name: string): boolean {
+        return name === SERIAL_EDITOR_FILE
+            || (U.endsWith(name, SIMX_EDITOR_MARKER_SUFFIX) && name.indexOf("/") < 0);
+    }
+    /**
+     * Returns true if `name` is a name the file explorer accepts for a new
+     * project file: a letter, digit or underscore, followed by letters,
+     * digits, underscores, `-`, `.` and `/`.
+     */
+    export function isValidProjectFileName(name: string): boolean {
+        return /^[\w][\/\w\-\.]*$/.test(name);
+    }
 
     export function outputName(trg: pxtc.CompileTarget = null) {
         if (!trg) trg = appTarget.compile

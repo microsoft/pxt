@@ -1,6 +1,6 @@
 # Simulator Extensions
 
-A simulator extension is a static web application that complements a traditional MakeCode extension. When you add an extension containing a simulator extension to your MakeCode project, the simulator extension is loaded into a separate iframe within the MakeCode editor. This enables extensions to display custom UI when the project is running.
+A simulator extension (simx) is a static web application that complements a traditional MakeCode extension. When you add an extension containing a simulator extension to your MakeCode project, the simulator extension is loaded into a separate iframe within the MakeCode editor. This enables extensions to display custom UI when the project is running.
 
 > [!IMPORTANT]
 > Simulator extensions are only supported for [Approved Extensions](./approval.md), and they must go through an additional approval process. The MakeCode team reserves the right to approve or decline simulator extensions at their discretion. We strongly recommend consulting with the MakeCode team before investing time and resources into creating a simulator extension.
@@ -12,7 +12,17 @@ A simulator extension is a static web application that complements a traditional
 * [microbit-robot](https://github.com/microsoft/microbit-robot)
 * [pxt-jacdac](https://github.com/microsoft/)
 
+## What a simulator extension can do
+
+Beyond showing its own UI beside the simulator, a simulator extension can, when its registration grants it:
+
+* contribute an **editor tab**, a page shown in the editor area and listed in the language dropdown beside JavaScript and Python, with the simulator still visible;
+* read and write **project files** in its own folder of the project, so what it authors is saved with the project;
+* read the project's **assets** (images, tiles, tilemaps, animations, songs and JSON files) and hear when they change;
+* compile the project and receive the **program** the simulator runs.
+
+Each of these is a grant in the extension's registration, approved by the target's owner together with the extension.
+
 ## Creating a simulator extension
 
-Refer to the [pxt-simx-sample](https://github.com/microsoft/pxt-simx-sample) project for detailed instructions.
-
+Refer to the [pxt-simx-sample](https://github.com/microsoft/pxt-simx-sample) project for detailed instructions. The registration fields, the frames and the messages the editor answers are specified in the [simulator extension API reference](https://github.com/microsoft/pxt/blob/master/pxtservices/simulator-extensions.md).
