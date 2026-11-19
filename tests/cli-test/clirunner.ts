@@ -624,6 +624,50 @@ ${member}
         chai.expect(disabled.functions).deep.equals([]);
     });
 
+    it("restores bundled build files filtered out of backend requests and ignores supplied overrides", () => {
+        const target = extensionTestTarget();
+        const bundledFiles: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({
+                name: "core", files: ["core.cpp", "Makefile", "sdkconfig.defaults", "CMakeLists.txt"],
+                dependencies: { support: "*" }
+            }),
+            "core.cpp": "// bundled source",
+            "Makefile": "# bundled make",
+            "sdkconfig.defaults": "CONFIG_BUNDLED=y",
+            "CMakeLists.txt": "# bundled cmake"
+        };
+        target.bundledpkgs.core = bundledFiles;
+        target.bundledpkgs.support = {
+            "pxt.json": JSON.stringify({ name: "support", files: ["support.cpp"], dependencies: {} }),
+            "support.cpp": "// bundled support"
+        };
+        const files: pxt.Map<string> = {
+            "pxt.json": JSON.stringify({ name: "this", files: ["main.cpp"], dependencies: { core: "*" } }),
+            "main.cpp": "// project"
+        };
+        for (const id of Object.keys(target.bundledpkgs)) {
+            for (const name of Object.keys(target.bundledpkgs[id]))
+                files[`pxt_modules/${id}/${name}`] = target.bundledpkgs[id][name];
+        }
+        const request = createExtensionRequest(files, target, undefined);
+        for (const name of ["Makefile", "sdkconfig.defaults", "CMakeLists.txt"])
+            chai.expect(request.files["pxt_modules/core/" + name]).equals(undefined);
+        request.files["pxt_modules/core/core.cpp"] = "// supplied override";
+        request.files["pxt_modules/core/Makefile"] = "# supplied override";
+        const original = JSON.stringify({ files: request.files, target });
+        const result = pxt.cpp.getExtensionInfo(request.files, target, undefined, host);
+        for (const name of ["Makefile", "sdkconfig.defaults", "CMakeLists.txt"])
+            chai.expect(result.generatedFiles["/" + name]).equals(bundledFiles[name]);
+        chai.expect(result.extensionFiles["/pxtapp/core/core.cpp"]).equals("// supplied override");
+        chai.expect(result.extensionFiles["/pxtapp/support/support.cpp"]).equals("// bundled support");
+        chai.expect(result.extensionFiles["/pxtapp/this/main.cpp"]).equals("// project");
+        chai.expect(JSON.stringify({ files: request.files, target })).equals(original);
+        bundledFiles["sdkconfig.defaults"] = "CONFIG_CHANGED=y";
+        const changed = pxt.cpp.getExtensionInfo(request.files, target, undefined, host);
+        chai.expect(changed.generatedFiles["/sdkconfig.defaults"]).equals("CONFIG_CHANGED=y");
+        chai.expect(changed.sha).not.equals(result.sha);
+    });
+
     it("does not reuse stale or caller-mutated results for changed native inputs", () => {
         const target = extensionTestTarget();
         const files = extensionTestFiles();
