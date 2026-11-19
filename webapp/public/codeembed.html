@@ -77,6 +77,8 @@
         }
 
         window.addEventListener("message", function (ev) {
+            if (ev.origin !== pxtConfig.targetUrl) return;
+
             var msg = ev.data;
             if (msg.source != "makecode") return;
 
