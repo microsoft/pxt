@@ -297,14 +297,18 @@ export const ShareInfo = (props: ShareInfoProps) => {
         title: lf("Editor"),
         focusable: true,
         onClick: () => setEmbedState("editor")
-    },
-    {
-        name: "simulator",
-        label: lf("Simulator"),
-        title: lf("Simulator"),
-        focusable: true,
-        onClick: () => setEmbedState("simulator")
     }];
+
+    // Headless targets (e.g. Minecraft) have no visible simulator, so there's nothing worth embedding.
+    if (!pxt.appTarget.simulator?.headless) {
+        embedOptions.push({
+            name: "simulator",
+            label: lf("Simulator"),
+            title: lf("Simulator"),
+            focusable: true,
+            onClick: () => setEmbedState("simulator")
+        });
+    }
 
     const handleQRCodeButtonRef = (ref: HTMLButtonElement) => {
         if (ref) qrCodeButtonRef = ref;

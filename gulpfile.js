@@ -766,6 +766,7 @@ const testtutorialui = gulp.series(
     pxtapp,
     () => exec(`${getMochaExecutable()} "tests/tutorial-test/*.spec.js" --reporter dot`, true)
 );
+const testshareui = () => exec(`${getMochaExecutable()} "tests/share-test/*.spec.js" --reporter dot`, true);
 const testlanguageservice = testTask("language-service", "languageservicerunner.js");
 const testpxteditor = pxtEditorTestTask();
 const testprojecttools = gulp.series(
@@ -813,6 +814,7 @@ const testAll = gulp.series(
     testpytraces,
     testtutorials,
     testtutorialui,
+    testshareui,
     testlanguageservice,
     karma,
     testSkillmap,
@@ -941,6 +943,7 @@ exports.testpycomp = testpycomp;
 exports.testpytraces = testpytraces;
 exports.testtutorials = testtutorials;
 exports.testtutorialui = testtutorialui;
+exports.testshareui = testshareui;
 exports.test = testAll;
 exports.travis = travis;
 exports.karma = karma;
