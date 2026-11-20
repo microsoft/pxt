@@ -9,6 +9,7 @@ import { ArgumentReporterBlock } from "../../pxtblocks/plugins/functions/blocks/
 
 import "./commentparsing.spec";
 import "./fieldUserEnum.spec";
+import "./flyoutHeading.spec";
 import "./localization.spec";
 import "./workspaceResize.spec";
 import "./blockInjection.spec";

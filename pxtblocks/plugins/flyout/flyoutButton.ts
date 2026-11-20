@@ -93,7 +93,8 @@ export class FlyoutButton extends Blockly.FlyoutButton {
             for (let i = 0; i < svgGroup.children.length; i++) {
                 const el = svgGroup.children.item(i);
 
-                if (el !== svgImage && el !== rect) {
+                // In RTL the icon is placed on the right, so the text stays put.
+                if (!ws.RTL && el !== svgImage && el !== rect) {
                     const x = Number(el.getAttribute("x"));
                     el.setAttribute("x", (x + iconWidth) + "")
                 }
@@ -128,7 +129,8 @@ export class FlyoutButton extends Blockly.FlyoutButton {
             for (let i = 0; i < svgGroup.children.length; i++) {
                 const el = svgGroup.children.item(i);
 
-                if (el !== svgIcon && el !== rect) {
+                // In RTL the icon is placed on the right, so the text stays put.
+                if (!ws.RTL && el !== svgIcon && el !== rect) {
                     const x = Number(el.getAttribute("x"));
                     el.setAttribute("x", (x + iconWidth) + "")
                 }
