@@ -33,6 +33,36 @@ pxt.setAppTarget(util.testAppTarget);
 
 // TODO: deduplicate this code with decompilerrunner.ts
 describe("pydecompiler", () => {
+    it("preserves identifiers behind localized block display labels through a Python round trip", async () => {
+        const rawTypescript = `
+let myTile = 0
+let kinds = [
+    SpriteKind.Player,
+    SpriteKind.Projectile,
+    SpriteKind.Food,
+    SpriteKind.Enemy
+]
+`;
+        const python = await util.ts2pyAsync(rawTypescript, testBlocksDir, false, "localized display identity");
+
+        chai.expect(python).to.contain("myTile = 0");
+        for (const kind of ["player", "projectile", "food", "enemy"]) {
+            chai.expect(python).to.contain(`SpriteKind.${kind}`);
+        }
+        for (const localized of ["min_flise", "spiller", "projektil", "mad", "fjende"]) {
+            chai.expect(python.toLowerCase()).not.to.contain(localized.toLowerCase());
+        }
+
+        const roundTrip = await util.py2tsAsync(python, testBlocksDir, false, false, "localized display identity");
+        chai.expect(roundTrip.ts).to.contain("myTile");
+        for (const kind of ["Player", "Projectile", "Food", "Enemy"]) {
+            chai.expect(roundTrip.ts).to.contain(`SpriteKind.${kind}`);
+        }
+        for (const localized of ["minFlise", "Spiller", "Projektil", "Mad", "Fjende"]) {
+            chai.expect(roundTrip.ts).not.to.contain(localized);
+        }
+    });
+
     let decompilerBaselineFiles = util.getFilesByExt(decompilerBaselines, ".py")
     decompilerBaselineFiles = decompilerBaselineFiles.filter(f => f.indexOf(".local.py") === -1);
 
