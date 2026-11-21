@@ -1230,7 +1230,7 @@ namespace ts.pxtc.Util {
                 // Tutorial Tool has no API surface, so avoid delaying its startup
                 // with an unused API catalog request.
                 if (opts.translationKind === ts.pxtc.Util.TranslationsKind.TutorialTool) {
-                    return;
+                    return Promise.resolve();
                 }
 
                 // Download api translations
