@@ -42,10 +42,15 @@ export class MonacoReactFieldEditor<U> implements pxt.editor.MonacoFieldEditor {
 
     onClosed() {
         if (this.resolver) {
-            this.resolver({
-                range: this.editrange,
-                replacement: this.resultToText(this.fv.getResult())
-            });
+            const res = this.fv.getResult();
+            if (res) {
+                this.resolver({
+                    range: this.editrange,
+                    replacement: this.resultToText(res)
+                });
+            } else {
+                this.resolver(null);
+            }
 
             this.editrange = undefined;
             this.resolver = undefined;

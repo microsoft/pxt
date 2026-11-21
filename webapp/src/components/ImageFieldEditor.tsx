@@ -65,6 +65,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     protected shortcutLock: number;
     protected lightMode: boolean;
     protected imageEditorRegion: HTMLDivElement;
+    protected isCancelled = false;
 
     protected get asset() {
         return this.ref?.getAsset();
@@ -151,7 +152,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
         }
 
         return (
-            <FocusTrap onEscape={this.onDoneClick} className={classList("image-editor-wrapper", this.isSongEditor() && "music-asset-editor")}>
+            <FocusTrap onEscape={this.onCancelClick} className={classList("image-editor-wrapper", this.isSongEditor() && "music-asset-editor")}>
                 {showHeader && <div className="gallery-editor-header">
                     <div className="image-editor-header-left" />
                     <div className="image-editor-header-center">
@@ -169,7 +170,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                             </div>
                             <div className="gallery-filter-button-label">{lf("Filter")}</div>
                         </div>
-                        {!editingTile && !hideCloseButton && <div className="image-editor-close-button" role="button" onClick={this.onDoneClick}>
+                        {!editingTile && !hideCloseButton && <div className="image-editor-close-button" role="button" onClick={this.onCancelClick}>
                             <i className="ui icon close"/>
                         </div>}
                     </div>
@@ -242,6 +243,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     init(value: U, close: () => void, options?: any) {
+        this.isCancelled = false;
         this.closeEditor = close;
         this.setState({ options });
         this.lightMode = options.lightMode;
@@ -303,6 +305,9 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     getValue() {
+        if (this.isCancelled) {
+            return null;
+        }
         if (this.ref) {
             return this.ref.getAsset() as U;
         }
@@ -625,8 +630,14 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
     }
 
     protected onDoneClick = () => {
+        this.isCancelled = false;
         if (this.closeEditor) this.closeEditor();
         if (this.props.doneButtonCallback) this.props.doneButtonCallback();
+    }
+
+    protected onCancelClick = () => {
+        this.isCancelled = true;
+        if (this.closeEditor) this.closeEditor();
     }
 
     protected setImageEditorShortcutsEnabled(enabled: boolean) {

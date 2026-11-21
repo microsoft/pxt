@@ -550,6 +550,7 @@ declare namespace pxt {
         embedBlocksInSnapshot?: boolean; // embed blocks xml in right-click snapshot
         identity?: boolean; // login with identity providers
         assetEditor?: boolean | AssetConfig; // enable asset editor view (in blocks/text toggle)
+        requireAssetName?: boolean; // require a non-empty, valid asset name before saving in the asset field editor
         disableMemoryWorkspaceWarning?: boolean; // do not warn the user when switching to in memory workspace
         embeddedTutorial?: boolean;
         disableBlobObjectDownload?: boolean; // use data uri downloads instead of object urls
