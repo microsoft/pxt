@@ -50,6 +50,11 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     declare context: React.ContextType<typeof AssetEditorContext>;
 
     protected shortcutLock: number;
+    protected nameInput: HTMLInputElement;
+
+    protected handleNameInputRef = (ref: HTMLInputElement) => {
+        this.nameInput = ref;
+    }
 
     constructor(props: BottomBarProps) {
         super(props);
@@ -136,6 +141,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                     {!hideAssetName &&
                         <>
                             <input className="image-editor-input"
+                                ref={this.handleNameInputRef}
                                 title={lf("Asset Name")}
                                 value={assetNameState}
                                 placeholder={lf("Asset Name")}
@@ -187,7 +193,7 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
                         className="image-editor-confirm"
                         title={lf("Done")}
                         label={lf("Done")}
-                        onClick={onDoneClick}
+                        onClick={this.onDoneButtonClick}
                     />
                 }
             </div>
@@ -259,6 +265,9 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         const charCode = (typeof event.which == "number") ? event.which : event.keyCode
         if (charCode === 13) {
             event.currentTarget.blur();
+            if (pxt.appTarget?.appTheme?.requireAssetName) {
+                this.onDoneButtonClick();
+            }
         }
     }
 
@@ -268,10 +277,10 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         const name = event.target.value || "";      // don't trim the state otherwise they won't be able to type spaces
         const trimmedName = name.trim();            // validate using the trimmed name
 
-        if (!pxt.validateAssetName(trimmedName)) {
+        if (trimmedName && !pxt.validateAssetName(trimmedName)) {
             errorMessage = lf("Names may only contain letters, numbers, '-', '_', and space");
         }
-        else if (isNameTaken(trimmedName, this.context) && trimmedName !== this.props.assetName) {
+        else if (trimmedName && isNameTaken(trimmedName, this.context) && trimmedName !== this.props.assetName) {
             errorMessage = lf("This name is already used elsewhere in your project");
         }
 
@@ -281,11 +290,20 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
     protected handleAssetNameBlur = () => {
         const { dispatchChangeAssetName, assetName } = this.props;
 
+        if (this.state.assetNameMessage) {
+            // Keep the error message and the typed name visible so it cannot be bypassed
+            this.setShortcutsEnabled(true);
+            return;
+        }
+
         if (this.state.assetName) {
             let newName = this.state.assetName.trim();
 
             if (newName !== assetName && pxt.validateAssetName(newName) && !isNameTaken(newName, this.context)) {
                 dispatchChangeAssetName(newName);
+            } else if (newName !== assetName) {
+                this.setShortcutsEnabled(true);
+                return;
             }
         }
         this.setState({ assetName: null, assetNameMessage: null });
@@ -307,6 +325,40 @@ export class BottomBarImpl extends React.Component<BottomBarProps, BottomBarStat
         }
         else if (!enabled && !this.shortcutLock) {
             this.shortcutLock = obtainShortcutLock();
+        }
+    }
+
+    protected onDoneButtonClick = () => {
+        const { onDoneClick, dispatchChangeAssetName, assetName } = this.props;
+
+        let currentName = (this.state.assetName != null ? this.state.assetName : (assetName || "")).trim();
+
+        if (pxt.appTarget?.appTheme?.requireAssetName && !currentName) {
+            this.setState({
+                assetNameMessage: lf("Please enter a name for this asset")
+            });
+            this.nameInput?.focus();
+            return;
+        }
+
+        if (this.state.assetNameMessage || (currentName && !pxt.validateAssetName(currentName)) || (currentName && isNameTaken(currentName, this.context) && currentName !== assetName)) {
+            if (!this.state.assetNameMessage) {
+                if (!pxt.validateAssetName(currentName)) {
+                    this.setState({ assetNameMessage: lf("Names may only contain letters, numbers, '-', '_', and space") });
+                } else {
+                    this.setState({ assetNameMessage: lf("This name is already used elsewhere in your project") });
+                }
+            }
+            this.nameInput?.focus();
+            return;
+        }
+
+        if (currentName && currentName !== assetName && pxt.validateAssetName(currentName) && !isNameTaken(currentName, this.context)) {
+            dispatchChangeAssetName(currentName);
+        }
+
+        if (onDoneClick) {
+            onDoneClick();
         }
     }
 }
