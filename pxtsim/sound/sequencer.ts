@@ -13,7 +13,7 @@ namespace pxsim.music {
     export type SequencerEvent = "tick" | "play" | "stop" | "loop" | "state-change" | "looped";
 
     export class Sequencer {
-        protected metronome: Metronome;
+        protected metronome: audiohost.Metronome;
         protected _currentTick = 0;
         protected _state: SequencerState = "stop";
         protected currentlyPlaying: pxt.assets.music.Song;
@@ -23,7 +23,7 @@ namespace pxsim.music {
         protected trackVolumes: number[] = [];
         protected drumTrackVolumes: number[][] = [];
 
-        protected spatialAudioPlayer: AudioContextManager.SpatialAudioPlayer;
+        protected spatialAudioPlayer: audiohost.SpatialAudioPlayer;
 
         protected currentCancelToken = { cancelled: false };
 
@@ -36,7 +36,7 @@ namespace pxsim.music {
                 return;
             }
 
-            this.metronome = new Metronome();
+            this.metronome = audiohost.audio().createMetronome();
             await this.metronome.initAsync();
             this.metronome.addTickListener(this.onTick);
         }
@@ -156,7 +156,7 @@ namespace pxsim.music {
             this.drumTrackVolumes[trackIndex][drumIndex] = volume;
         }
 
-        setSpatialAudioPlayer(player: AudioContextManager.SpatialAudioPlayer) {
+        setSpatialAudioPlayer(player: audiohost.SpatialAudioPlayer) {
             this.spatialAudioPlayer = player;
         }
 
@@ -253,26 +253,26 @@ namespace pxsim.music {
     }
 
     export async function playNoteAsync(note: number, instrument: pxt.assets.music.Instrument, time: number, isCancelled?: () => boolean, volume = 100) {
-        await pxsim.AudioContextManager.playInstructionsAsync(
+        await audiohost.audio().playInstructionsAsync(
             pxsim.music.renderInstrument(instrument, frequencies[note], time, volume),
             isCancelled
         )
     }
 
     export async function playDrumAsync(drum: pxt.assets.music.DrumInstrument, isCancelled?: () => boolean, volume = 100) {
-        await pxsim.AudioContextManager.playInstructionsAsync(
+        await audiohost.audio().playInstructionsAsync(
             pxsim.music.renderDrumInstrument(drum, volume),
             isCancelled
         )
     }
 
-    async function playNoteAtSpatialAudioPlayerAsync(player: AudioContextManager.SpatialAudioPlayer, note: number, instrument: pxt.assets.music.Instrument, time: number, volume = 100) {
+    async function playNoteAtSpatialAudioPlayerAsync(player: audiohost.SpatialAudioPlayer, note: number, instrument: pxt.assets.music.Instrument, time: number, volume = 100) {
         await player.playInstructionsAsync(
             pxsim.music.renderInstrument(instrument, frequencies[note], time, volume)
         )
     }
 
-    async function playDrumAtSpatialAudioPlayerAsync(player: AudioContextManager.SpatialAudioPlayer, drum: pxt.assets.music.DrumInstrument, volume = 100) {
+    async function playDrumAtSpatialAudioPlayerAsync(player: audiohost.SpatialAudioPlayer, drum: pxt.assets.music.DrumInstrument, volume = 100) {
         await player.playInstructionsAsync(
             pxsim.music.renderDrumInstrument(drum, volume),
         )
