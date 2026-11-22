@@ -287,7 +287,7 @@ namespace pxsim.visuals {
             return this.wireFactory.addWire(inst.start, inst.end, inst.color);
         }
 
-        public addAll(allocRes: AllocatorResult) {
+        public addAll(allocRes: AllocatorResult<IBoardPart<any>, Wire>) {
             allocRes.partsAndWires.forEach(pAndWs => {
                 const wires = pAndWs.wires;
                 const wiresOk = wires && wires.every(w => this.wireFactory.checkWire(w.start, w.end));
