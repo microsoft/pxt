@@ -148,7 +148,7 @@ namespace pxsim {
         // false means last frame
         frame: () => boolean;
         whenDone?: (cancelled: boolean) => void;
-        setTimeoutHandle?: any;
+        setTimeoutHandle?: host.TimerHandle;
     }
 
     export class AnimationQueue {
@@ -168,12 +168,12 @@ namespace pxsim {
                     this.queue.shift();
                     // if there is already something in the queue, start processing
                     if (this.queue[0]) {
-                        this.queue[0].setTimeoutHandle = setTimeout(this.process, this.queue[0].interval);
+                        this.queue[0].setTimeoutHandle = host.timers().setTimeout(this.process, this.queue[0].interval);
                     }
                     // this may push additional stuff
                     top.whenDone(false);
                 } else {
-                    top.setTimeoutHandle = setTimeout(this.process, top.interval);
+                    top.setTimeoutHandle = host.timers().setTimeout(this.process, top.interval);
                 }
             }
         }
@@ -184,7 +184,7 @@ namespace pxsim {
             for (let a of q) {
                 a.whenDone(true)
                 if (a.setTimeoutHandle) {
-                    clearTimeout(a.setTimeoutHandle);
+                    host.timers().clearTimeout(a.setTimeoutHandle);
                 }
             }
         }
@@ -195,7 +195,7 @@ namespace pxsim {
                 this.queue.shift();
                 top.whenDone(true);
                 if (top.setTimeoutHandle) {
-                    clearTimeout(top.setTimeoutHandle);
+                    host.timers().clearTimeout(top.setTimeoutHandle);
                 }
             }
         }

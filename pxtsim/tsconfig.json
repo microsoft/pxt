@@ -18,5 +18,11 @@
         ],
         "incremental": true,
         "skipLibCheck": true
-    }
+    },
+    "files": [
+        "host.ts"
+    ],
+    "include": [
+        "**/*.ts"
+    ]
 }
