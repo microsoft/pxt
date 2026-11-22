@@ -1,5 +1,3 @@
-/// <reference path="./audiohost.ts" />
-
 namespace pxsim.AudioContextManager {
     export type SoundOscilloscopeData = audiohost.SoundOscilloscopeData;
     export type SoundSnapshotData = audiohost.SoundSnapshotData;
@@ -20,11 +18,6 @@ namespace pxsim.AudioContextManager {
     export function isAudioElementActive() {
         return AudioToneSource.isActive();
     }
-
-    export let soundEventCallback: (ev: audiohost.SoundEvent, data?: Uint8Array) => void;
-
-    // Passes sound events on to soundEventCallback. A target that sets its own handler replaces this.
-    audiohost.setSoundEventHandler((ev, data) => { if (soundEventCallback) soundEventCallback(ev, data); });
 
     function context(): AudioContext {
         if (!_context) {
