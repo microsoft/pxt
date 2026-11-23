@@ -1245,18 +1245,6 @@ declare namespace ts.pxtc {
         appVariant?: string;
         outputPrefix?: string;
         disabledDeps?: string;
-
-        projectCompileSha?: string;
-        projectCompileData?: string;
-    }
-
-    interface ProjectCompileData {
-        files: {[index: string]: string};
-        target: string;
-        variant: string;
-        versions: pxt.TargetVersions;
-        // enabled compile switches that affect the native build (e.g. "gcDebug")
-        compileSwitches?: string[];
     }
 
     interface ExtensionTarget {
