@@ -276,6 +276,24 @@ function cachedBuiltinCategories(): pxt.Map<BuiltinCategoryDefinition> {
                 paramDefl: {}
             }
         };
+        if (pxt.appTarget.runtime && pxt.appTarget.runtime.ternaryBlock) {
+            _cachedBuiltinCategories[CategoryNameID.Logic].blocks.push({
+                name: "logic_ternary",
+                snippetName: "ternary",
+                attributes: {
+                    blockId: "logic_ternary",
+                    group: lf("Conditionals"),
+                    weight: 30
+                },
+                blockXml: `<block type="logic_ternary" gap="8">
+                <value name="IF">
+                    <shadow type="logic_boolean">
+                        <field name="BOOL">TRUE</field>
+                    </shadow>
+                </value>
+            </block>`
+            });
+        }
         _cachedBuiltinCategories[CategoryNameID.Variables] = {
             name: lf("{id:category}Variables"),
             nameid: CategoryNameID.Variables,

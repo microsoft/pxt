@@ -210,6 +210,7 @@ declare namespace pxt {
         pauseUntilBlock?: BlockOptions;
         breakBlock?: boolean;
         continueBlock?: boolean;
+        ternaryBlock?: boolean;
         extraBlocks?: BlockToolboxDefinition[];  // deprecated
         assetExtensions?: string[];
         palette?: string[];
