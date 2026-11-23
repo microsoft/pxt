@@ -318,7 +318,7 @@ namespace pxsim {
 
         export type AudioMessage = MessageBase & {
             content: "Audio";
-            instruction: "playinstructions" | "muteallchannels";
+            instruction: audiohost.SoundEvent;
             soundbuf?: Uint8Array;
         };
 
@@ -445,11 +445,11 @@ namespace pxsim {
         }
 
         function mute(mute: boolean) {
-            AudioContextManager.mute(mute);
+            audiohost.audio().mute(mute);
         }
 
         function stopSound() {
-            AudioContextManager.stopAll();
+            audiohost.audio().stopAll();
         }
 
         function queue(msg: SimulatorMessage) {
