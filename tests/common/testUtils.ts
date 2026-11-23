@@ -18,9 +18,7 @@ export const testAppTarget: pxt.TargetBundle = {
     id: "core",
     name: "Microsoft MakeCode",
     title: "Microsoft MakeCode",
-    versions: {
-        target: "0.0.0"
-    },
+    versions: undefined,
     description: "A toolkit to build JavaScript Blocks editors.",
     bundleddirs: [],
     compile: {
