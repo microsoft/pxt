@@ -1,0 +1,127 @@
+# The DOM-free simulator core
+
+The simulator is two TypeScript projects in one `pxsim` namespace.
+
+- `pxtsimcore/` is the runtime, board state, sound and host layers. It compiles without the `dom`
+  lib, so a core file that uses `document` or `window` fails to build.
+- `pxtsim/` is the embed, SVG views, Web Audio and iframes. It compiles against `pxtsimcore.d.ts`.
+
+Consumers still load one `built/pxtsim.js`: core first, then the DOM code.
+
+## Layout
+
+A file belongs to the project whose directory contains it.
+
+```
+pxtsimcore/runtime.ts                      the VM, Runtime and the board base classes
+pxtsimcore/host.ts, virtualhost.ts         the host layer and its virtual implementation
+pxtsimcore/sound/audiohost.ts              the audio host layer
+pxtsim/embed.ts                            receives editor messages and starts each run
+pxtsim/domhost.ts, sound/audiohostdom.ts   install the browser hosts
+pxtsim/simdriver.ts                        SimulatorDriver, which the editor uses to run simulators
+pxtsim/visuals/                            BoardHost, the breadboard, generic parts and wiring
+```
+
+The gulp `pxtsim` task compiles core to `built/pxtsimcore.js`, compiles the DOM project against it,
+and concatenates the two into `built/pxtsim.js` and `built/pxtsim.d.ts`. It also copies
+`globals.d.ts` to `built/pxtsimcore-globals.d.ts`; a target's DOM-free code compiles against
+`pxtsimcore.d.ts` and that file. All of these ship in pxt-core.
+
+## The boundary
+
+Core sees its own declarations, `pxtsimcore/globals.d.ts` and the `localtypings/` files it
+references, and nothing from `pxtsim/`. `globals.d.ts` declares by hand what browsers, workers and
+Node all have. A global that only some hosts have is typed as possibly undefined, so core checks
+before calling it:
+
+```ts
+requestFrame: fn => typeof requestAnimationFrame !== "undefined"
+    ? requestAnimationFrame(fn) : setTimeout(fn, FRAME_MS),
+```
+
+Time, timers and random numbers come from `pxsim.host`, and sound goes through `pxsim.audiohost`.
+The one exception is the serial timestamp, which stays on `Date.now()` because the serial view
+shows wall-clock time.
+
+Each project compiles to one script, so a file used by another at load time must come first. A
+reference pins the order. `libgeneric.ts` needs `RefObject` from `langsupport.ts` for its
+`RefCollection` class, so it starts with:
+
+```ts
+/// <reference path="./langsupport.ts" />
+```
+
+## Host layers
+
+`pxsim.host` is what differs between a browser and Node: `Environment` (messaging the editor),
+`Clock`, `Timers` and `RandomSource`. Each has a default that works without a browser.
+
+```ts
+const t = host.clock().now();                  // instead of Date.now()
+const id = host.timers().setTimeout(fn, 20);   // instead of setTimeout(fn, 20)
+host.setClock({ now: () => fakeNow });         // replace one member; the rest keep their defaults
+```
+
+The browser installs its environment in `pxtsim/domhost.ts`:
+
+```ts
+setEnvironment({
+    postToParent: data => window.parent.postMessage(data, "*"),
+    locationHref: () => window.location.href,
+    ...
+});
+```
+
+`pxsim.audiohost` does the same for sound. Core plays through `audiohost.audio()`, and
+`pxtsim/sound/audiohostdom.ts` registers the Web Audio implementation with `setAudioHost`. Without
+it, core uses a silent host that plays nothing but takes the same time, so the metronome still
+ticks.
+
+## The virtual host
+
+`createVirtualHost()` in `virtualhost.ts` returns a host whose clock advances only when the caller
+advances it. Timers wait on a queue in virtual time and random numbers come from a seed, so runs
+with the same seed are deterministic.
+
+```ts
+const vh = pxsim.host.createVirtualHost({ seed: 1 });
+vh.use();                           // install it as the current host
+await vh.advance(1000);             // fire everything due in the next second; no real time passes
+await vh.runUntil(() => finished);  // fire queued callbacks one at a time until finished is true
+vh.stop();
+```
+
+`advance` and `runUntil` yield to the event loop around each callback, so promises settle as they
+would in a browser. The runtime yields about every 20 ms of host time. Virtual time does not advance
+inside a busy loop, so the runtime also yields after a fixed number of checks on an unchanged clock,
+and a stuck program yields to the caller instead of hanging Node.
+
+## Board state and view
+
+A board is a state, `runtime.board`, and an optional view, `runtime.boardView`. The state is
+everything a program can read or change. The view draws it and turns user input into state changes.
+With no view, the runtime skips every view call, so screenshots and recordings are no-ops.
+
+State code never calls the view. It requests a redraw, and the runtime calls the view's `updateView`
+between steps:
+
+```ts
+runtime.queueDisplayUpdate();
+```
+
+A target sets both entry points. In pxt-microbit the view bundle sets one and the core bundle the
+other:
+
+```ts
+// sim/visuals/dalboardview.ts: state and view
+if (!pxsim.initCurrentRuntime) pxsim.initCurrentRuntime = initRuntimeWithDalBoard;
+// sim/core/headless.ts: state only
+if (!pxsim.initHeadlessRuntime) pxsim.initHeadlessRuntime = initHeadlessDalBoard;
+```
+
+Shims and state code access the board through the target's `board()` accessor, and only view code
+uses `boardView()`. Most states extend `CoreBoard`, which keeps part states in `builtinParts` and
+stops sound on `kill`. A view implements `RuntimeBoardView`. The embed calls its `initAsync` after
+the board's, and the program starts when both resolve. A view with breadboard parts passes its
+`builtinVisuals` and the board state to `visuals.BoardHost`, which pairs each part view with its
+state by simulation behavior.
