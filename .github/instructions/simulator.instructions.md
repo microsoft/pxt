@@ -15,6 +15,8 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,sim/**/*.ts,**/sim/*.ts"
 - New runtime, board-state and synthesis code belongs to `pxtsimcore`; only view code belongs to `pxtsim`
 - Globals the core may use are declared in `pxtsimcore/globals.d.ts`; never add the `dom` lib to core
 - Consumers load `built/pxtsim.js`, which is core followed by the DOM code; keep the `pxsim` namespace
+- A target's or library's DOM-free simulator files live in its `core/` folder, and its `tsconfig.core.json` globs that folder
+- A lib's or target's full simulator config compiles only its view files against the core bundle's `.d.ts` and prepends the core bundle, so `sim.js` is `simcore.js` followed by the view code; a view file never references a core source file, only the core declarations
 
 ## Host Abstractions
 
