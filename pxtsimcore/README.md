@@ -6,7 +6,8 @@ The simulator is two TypeScript projects in one `pxsim` namespace.
   lib, so a core file that uses `document` or `window` fails to build.
 - `pxtsim/` is the embed, SVG views, Web Audio and iframes. It compiles against `pxtsimcore.d.ts`.
 
-Consumers still load one `built/pxtsim.js`: core first, then the DOM code.
+Core also contains the DOM-free core of the simulator driver. Consumers still load one
+`built/pxtsim.js`: core first, then the DOM code.
 
 ## Layout
 
@@ -16,9 +17,11 @@ A file belongs to the project whose directory contains it.
 pxtsimcore/runtime.ts                      the VM, Runtime and the board base classes
 pxtsimcore/host.ts, virtualhost.ts         the host layer and its virtual implementation
 pxtsimcore/sound/audiohost.ts              the audio host layer
+pxtsimcore/simcoordinator.ts, simframe.ts  the DOM-free core of the simulator driver
 pxtsim/embed.ts                            receives editor messages and starts each run
 pxtsim/domhost.ts, sound/audiohostdom.ts   install the browser hosts
 pxtsim/simdriver.ts                        SimulatorDriver, which the editor uses to run simulators
+pxtsim/simframedom.ts                      DomSimFrameHost, which creates and manages the iframes
 pxtsim/visuals/                            BoardHost, the breadboard, generic parts and wiring
 ```
 
@@ -125,6 +128,43 @@ stops sound on `kill`. A view implements `RuntimeBoardView`. The embed calls its
 the board's, and the program starts when both resolve. A view with breadboard parts passes its
 `builtinVisuals` and the board state to `visuals.BoardHost`, which pairs each part view with its
 state by simulation behavior.
+
+## Simulator frames
+
+`SimulatorDriver` runs in the editor page and runs each simulator in an iframe. Everything it does
+without the DOM is `SimulatorCoordinator` in core: starting and stopping runs, opening a second
+board or a simulator extension frame, routing messages between frames, the debugger protocol and
+origin checks. The coordinator accesses frames and the page only through two interfaces:
+
+```ts
+// simframe.ts: whatever holds the frames
+interface SimFrameHost {
+    frames(skipLoaned?: boolean): SimFrame[];
+    createFrame(spec: SimFrameSpec, position: SimFramePosition): SimFrame;
+    removeFrame(frame: SimFrame, onComplete?: () => void): void;
+    post(frame: SimFrame, msg: SimulatorMessage): void;
+    ...
+}
+// simcoordinator.ts: the page or process around the coordinator
+interface SimEnvironment {
+    readonly origin: string;
+    parentTarget(): SimMessageTarget | undefined;
+    addMessageListener(listener: (origin: string, data: any, source: unknown) => void): () => void;
+    ...
+}
+```
+
+In the browser, `pxtsim/simframedom.ts` implements `SimFrameHost` with iframes, and
+`SimulatorDriver` in `pxtsim/simdriver.ts` is the coordinator wired to it, plus `loanSimulator`,
+which hands an iframe to another part of the page:
+
+```ts
+export class SimulatorDriver extends SimulatorCoordinator {
+    constructor(public container: HTMLElement, public options: SimulatorDriverOptions = {}) {
+        super(new DomSimFrameHost(container, options), new DomSimEnvironment(), options);
+    }
+}
+```
 
 ## Target core bundles
 
