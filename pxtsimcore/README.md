@@ -125,3 +125,41 @@ stops sound on `kill`. A view implements `RuntimeBoardView`. The embed calls its
 the board's, and the program starts when both resolve. A view with breadboard parts passes its
 `builtinVisuals` and the board state to `visuals.BoardHost`, which pairs each part view with its
 state by simulation behavior.
+
+## Target core bundles
+
+A target ships a DOM-free bundle by adding `sim/tsconfig.core.json`, which compiles `sim/core/` to
+`built/simcore.js` without the `dom` lib. `sim/tsconfig.json` then compiles only the view files and
+prepends the core bundle. pxt-microbit's pair, trimmed:
+
+```jsonc
+// sim/tsconfig.core.json -> built/simcore.js
+{
+    "compilerOptions": { "outFile": "../built/simcore.js", "declaration": true,
+                         "lib": ["es2017"], "types": [] },
+    "files": [
+        "../node_modules/pxt-core/built/pxtsimcore.d.ts",
+        "../node_modules/pxt-core/built/pxtsimcore-globals.d.ts"
+    ],
+    "include": ["core/**/*.ts", "../node_modules/pxt-common-packages/libs/radio/sim/core/*.ts"]
+}
+// sim/tsconfig.json -> built/sim.js, which is simcore.js followed by the view code
+{
+    "compilerOptions": { "outFile": "../built/sim.js", "declaration": true,
+                         "lib": ["dom", "es2017"] },
+    "files": ["../node_modules/pxt-core/built/pxtsim.d.ts", "../built/simcore.d.ts"],
+    "include": ["visuals/**/*.ts", "../node_modules/pxt-common-packages/libs/core/sim/neopixel.ts"],
+    "prepend": ["../built/simcore.js"]
+}
+```
+
+`prepend` is a pxt key, allowed only in `tsconfig.json`. pxt concatenates the listed files ahead of
+the output, and their `.d.ts` files ahead of the declarations, so the browser loads `sim.js` as
+before. `pxt buildtarget` and `pxt rebundle` build the core config first. A sim installed from npm
+at `node_modules/pxt-<target>-sim` writes to its own `built/`, and pxt copies the outputs into the
+target's `built/`. pxt-common-packages keeps each library's DOM-free files in `libs/<lib>/sim/core/`
+and builds `common-simcore.js` and `common-sim.js`, which `pxt buildtarget` copies the same way.
+
+To run in a browser, load `pxtsim.js` and `sim.js`. To run without a DOM, load `pxtsimcore.js` and
+`simcore.js`. Never load both pairs: `pxtsim.js` already contains core.
+
