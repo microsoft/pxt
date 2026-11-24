@@ -31,6 +31,7 @@ import * as pyconv from './pyconv';
 import * as gitfs from './gitfs';
 import * as crowdin from './crowdin';
 import * as youtube from './youtube';
+import * as simtest from './simtest';
 import { SUB_WEBAPPS } from './subwebapp';
 
 const rimraf: (f: string, opts: any, cb: (err: Error, res: any) => void) => void = require('rimraf');
@@ -4501,17 +4502,21 @@ function getApiInfoAsync() {
         })
 }
 
-function findTestFile() {
+/**
+ * Returns the main package's only .ts file. Fails with an error naming `command` when the package
+ * has none or more than one.
+ */
+function findTestFile(command: string) {
     let tsFiles = mainPkg.getFiles().filter(fn => U.endsWith(fn, ".ts"))
     if (tsFiles.length != 1)
-        U.userError("need exactly one .ts file in package to 'testdir'")
+        U.userError(`need exactly one .ts file in package to '${command}'`)
     return tsFiles[0]
 }
 
 function prepTestOptionsAsync() {
     return prepBuildOptionsAsync(BuildOption.Test)
         .then(opts => {
-            let tsFile = findTestFile()
+            let tsFile = findTestFile("testdir")
             delete opts.fileSystem[tsFile]
             opts.sourceFiles = opts.sourceFiles.filter(f => f != tsFile)
             return opts
@@ -4585,7 +4590,7 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
             if (currBase != ti.base) {
                 U.userError("Base directory: " + ti.base + " not found.")
             } else {
-                let tsf = findTestFile()
+                let tsf = findTestFile("testdir")
                 let files = mainPkg.config.files
                 let idx = files.indexOf(tsf)
                 U.assert(idx >= 0)
@@ -4644,6 +4649,92 @@ function testDirAsync(parsed: commandParser.ParsedCommand) {
                 console.log("All OK.")
             }
         })
+}
+
+function simtestFiles(args: string[]): string[] {
+    const files: string[] = [];
+    for (const arg of args.length ? args : ["."]) {
+        const full = path.resolve(arg);
+        if (nodeutil.existsDirSync(full))
+            fs.readdirSync(full).sort()
+                .filter(f => f[0] != "." && /\.ts$/.test(f))
+                .forEach(f => files.push(path.join(full, f)));
+        else
+            files.push(full);
+    }
+    return files;
+}
+
+/**
+ * Runs `pxt simtest`. Each test program is compiled on top of a base project and run headless
+ * against the target's simulator bundle. A test passes when it finishes in time without a runtime error.
+ * If it has `// @serial: text` comments, it must also write exactly those lines to the serial port.
+ */
+async function simtestAsync(parsed: commandParser.ParsedCommand) {
+    const targetDir = process.cwd();
+    const base = path.resolve(parsed.flags["base"] as string || ".");
+    // Use the DOM-free bundles with --core. Without --core or --sim, use them if the target has
+    // built simcore.js.
+    const core = !!parsed.flags["core"] || (!parsed.flags["sim"] && fs.existsSync(path.join("built", "simcore.js")));
+    const simBundle = path.resolve(parsed.flags["sim"] as string || path.join("built", core ? "simcore.js" : "sim.js"));
+    const coreBundle = path.join(nodeutil.pxtCoreDir, "built", core ? "pxtsimcore.js" : "pxtsim.js");
+    const timeoutMs = (parsed.flags["timeout"] as number) || 5000;
+    const settleMs = parsed.flags["settle"] === undefined ? 300 : parsed.flags["settle"] as number;
+
+    if (!fs.existsSync(coreBundle))
+        U.userError(`simulator bundle not found: ${coreBundle}`);
+    if (!fs.existsSync(simBundle)) {
+        if (core && !parsed.flags["sim"])
+            U.userError(`DOM-free simulator bundle not found: ${simBundle}; the target has no sim/tsconfig.core.json, or has not been built with 'pxt buildtarget'. 'pxt simtest' without --core runs against the full simulator bundle when the target has no DOM-free one.`);
+        U.userError(`simulator bundle not found: ${simBundle}`);
+    }
+    if (!fs.existsSync(path.join(base, pxt.CONFIG_NAME)))
+        U.userError(`no ${pxt.CONFIG_NAME} in base project ${base}; use --base <dir>`);
+
+    const tests = simtestFiles(parsed.args);
+    if (!tests.length)
+        U.userError("no test programs found");
+
+    process.chdir(base);
+    mainPkg = new pxt.MainPackage(new Host());
+    const failures: string[] = [];
+    try {
+        for (const file of tests) {
+            const name = path.basename(file);
+            const source = fs.readFileSync(file, "utf8");
+            let failure: string;
+            try {
+                await mainPkg.loadAsync();
+                // the test replaces the base project's only .ts file
+                (mainPkg.host() as Host).fileOverrides = { [findTestFile("simtest")]: source };
+                const opts = await prepBuildOptionsAsync(BuildOption.Run, true);
+                const res = pxtc.compile(opts);
+                if (!res.success || !res.outfiles[pxtc.BINARY_JS]) {
+                    reportDiagnostics(res.diagnostics);
+                    failure = "compilation failed";
+                } else {
+                    const result = await simtest.runHeadlessAsync(res.outfiles[pxtc.BINARY_JS], [coreBundle, simBundle], { timeoutMs, settleMs });
+                    failure = simtest.checkRun(result, simtest.parseSerialExpectations(source));
+                }
+            } catch (e) {
+                failure = String(e && e.message || e);
+            }
+            // each test starts from the base project's original file list
+            mainPkg = new pxt.MainPackage(new Host());
+            if (failure) {
+                failures.push(name);
+                console.log(`FAIL ${name}: ${failure}`);
+            } else {
+                console.log(`ok   ${name}`);
+            }
+        }
+    } finally {
+        process.chdir(targetDir);
+    }
+
+    console.log(`${tests.length - failures.length}/${tests.length} simulator tests passed`);
+    if (failures.length)
+        process.exit(1);
 }
 
 function replaceFileExtension(file: string, extension: string) {
@@ -7724,6 +7815,37 @@ ${pxt.crowdin.KEY_VARIABLE} - crowdin key
     advancedCommand("test", "run tests on current package", testAsync);
     advancedCommand("testassembler", "test the assemblers", testAssemblers);
     advancedCommand("testdir", "compile files in directory one by one", testDirAsync, "<dir>");
+    p.defineCommand({
+        name: "simtest",
+        help: "run programs headless against the target's simulator bundle (DOM-free bundles with --core)",
+        argString: "<file|dir>...",
+        advanced: true,
+        flags: {
+            base: {
+                description: "project to compile each test on top of (default: current directory)",
+                argument: "dir",
+                type: "string"
+            },
+            sim: {
+                description: "the target's simulator bundle (default: built/simcore.js when 'pxt buildtarget' has emitted it from sim/tsconfig.core.json, else built/sim.js)",
+                argument: "file",
+                type: "string"
+            },
+            core: {
+                description: "require the DOM-free simulator bundles, pxtsimcore.js and the target's built/simcore.js, and stop when the target has not built one"
+            },
+            timeout: {
+                description: "real milliseconds a run may take, settling included (default: 5000)",
+                argument: "ms",
+                type: "number"
+            },
+            settle: {
+                description: "virtual milliseconds the program runs after its top-level code finishes (default: 300)",
+                argument: "ms",
+                type: "number"
+            }
+        }
+    }, simtestAsync);
     advancedCommand("testpkgconflicts", "tests package conflict detection logic", testPkgConflictsAsync);
     advancedCommand("testdbg", "tests hardware debugger", dbgTestAsync);
 

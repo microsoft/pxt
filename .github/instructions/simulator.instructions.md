@@ -1,6 +1,6 @@
 ---
 description: "Instructions for PXT simulator development"
-applyTo: "pxtsim/**/*.ts,pxtsimcore/**,sim/**/*.ts,**/sim/*.ts"
+applyTo: "pxtsim/**/*.ts,pxtsimcore/**,cli/simtest.ts,tests/simcore-test/**,sim/**/*.ts,**/sim/*.ts"
 ---
 
 # PXT Simulator Development Instructions
@@ -28,7 +28,7 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,sim/**/*.ts,**/sim/*.ts"
 ## Board State and View
 
 - `board()` is the state, used by shims and `state/*`; `boardView()` is for view code; state files never reference `visuals`
-- A board state must construct and run with no view
+- A board state must construct and run with no view, because headless runs and `pxt simtest` build it that way
 - Tests inject input through the board state the same way the visuals do, not by raising DAL events by id
 
 ## Audio/Media Handling
@@ -38,6 +38,13 @@ applyTo: "pxtsim/**/*.ts,pxtsimcore/**,sim/**/*.ts,**/sim/*.ts"
 - Handle browser compatibility issues (Chrome, Firefox, Safari)
 - Use MediaStream API for recording functionality
 - Always clean up audio resources when stopping simulation
+
+## Headless Runs
+
+- `pxt simtest` and the simcore tests run on the virtual host (`pxsim.host.createVirtualHost`) and the silent audio host, so pauses take no real time and runs are repeatable
+- After the top-level code finishes, a run advances virtual time by `--settle` and stops; it never waits for the program to go idle, and its timeout watchdog stays on real time
+- Fixtures are TypeScript under `tests/simcore-test/fixtures/`, compiled by the test project; do not generate them at test time or embed them as strings
+- A target ships a DOM-free simulator bundle by adding `sim/tsconfig.core.json`, which `pxt buildtarget` compiles to `built/simcore.js`
 
 ## Visual Components
 

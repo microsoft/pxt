@@ -163,3 +163,64 @@ and builds `common-simcore.js` and `common-sim.js`, which `pxt buildtarget` copi
 To run in a browser, load `pxtsim.js` and `sim.js`. To run without a DOM, load `pxtsimcore.js` and
 `simcore.js`. Never load both pairs: `pxtsim.js` already contains core.
 
+## Porting a target
+
+pxt-microbit was the first target to ship a DOM-free bundle, and its `sim/core/` is the example.
+These are the steps it took, in order.
+
+1. Partition the code. State, shims and runtime calls go to `sim/core/`. Anything that uses
+   `document`, `window`, a canvas, an SVG or an audio context goes to `sim/visuals/`. When one
+   member does both, keep the state and the decision in core and move the drawing to the view.
+2. Split the board. A state class extends `CoreBoard`, a view class implements `RuntimeBoardView`,
+   and a small `boardaccess.ts` in core declares the board class the shims name:
+   ```ts
+   export class DalBoard extends DalBoardState { }
+   export function board(): DalBoard { return runtime.board as DalBoard; }
+   export function boardView(): RuntimeBoardView | undefined { return runtime.boardView; }
+   ```
+3. Set the entry points as under "Board state and view", each only if it is still unset.
+4. Where the old board redrew after a state change, call `runtime.queueDisplayUpdate()` and redraw
+   in the view's `updateView`.
+5. Replace every direct use of the clock and timers left in core with `host.clock()` and
+   `host.timers()`. Headless runs install a virtual host that replaces both; a global call left in
+   core bypasses it and breaks determinism.
+6. A shim that needs the DOM, such as audio recording, calls an interface in core whose default
+   reports the feature as unsupported. The view bundle installs the DOM version when it loads.
+7. Write the two configs as under "Target core bundles". Both include files from
+   pxt-common-packages: the core config the state files from `libs/<lib>/sim/core/`, and the view
+   config the matching view files from `libs/<lib>/sim/`.
+8. Add a `/// <reference path>` wherever a file extends or calls another file as the bundle loads.
+   `headless.ts` references `boardaccess.ts` for this reason.
+9. Every shim the simulator defines must be in `simcore.js`, or a headless run fails at that call.
+   List them before the split and check each against the core bundle's `.d.ts` after.
+10. Build with `pxt buildtarget`, exercise every input of the browser simulator by hand, and add
+    `pxt simtest` programs under `tests/sim/` to the target's CI.
+
+## Running programs headless
+
+`pxt simtest` runs test programs in Node with no browser, through `runHeadlessAsync` in
+`cli/simtest.ts`. A test is an ordinary program with its expected serial output in comments:
+
+```ts
+// tests/sim/audio-pin.ts in pxt-microbit
+// @serial: tone played
+pins.setAudioPinEnabled(false)
+music.playTone(262, 100)
+console.log("tone played")
+```
+
+It passes when it compiles, runs without an error, finishes before the timeout and, if it has
+`// @serial:` lines, writes exactly those lines in order.
+
+```sh
+pxt simtest --base libs/blocksprj tests/sim        # pxt-microbit's CI step, in the target directory
+pxt simtest --core tests/sim                       # require the DOM-free pair; fail without one
+pxt simtest --timeout 10000 --settle 0 tests/sim/buttons.ts
+```
+
+Each test replaces the one `.ts` file in the `--base` project, which defaults to the current
+directory. The run loads `pxtsimcore.js` and `simcore.js` when the target has built `simcore.js`,
+and `pxtsim.js` and `sim.js` otherwise. Every run installs a virtual host and the silent audio host,
+so `pause(1000)` takes no real time. The program runs until its top-level code finishes, then for
+`--settle` more virtual milliseconds (default 300), and never waits for it to go idle, so a
+`forever` loop still passes. `--timeout` is real time and defaults to 5 seconds.
