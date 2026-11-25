@@ -10,6 +10,7 @@ import { obtainShortcutLock, releaseShortcutLock } from "./ImageEditor/keyboardS
 import { GalleryTile, ImageEditorStore, setTelemetryFunction } from './ImageEditor/store/imageReducer';
 import { FilterPanel } from './FilterPanel';
 import { fireClickOnEnter } from "../util";
+import { sortGalleryTags } from "../galleryTags";
 import { EditorToggle } from "../../../react-common/components/controls/EditorToggle";
 import { MusicFieldEditor } from "./MusicFieldEditor";
 import { classList } from "../../../react-common/components/util";
@@ -371,7 +372,7 @@ export class ImageFieldEditor<U extends pxt.Asset> extends React.Component<Image
                 });
             })
 
-            return collectedTags;
+            return sortGalleryTags(collectedTags, tag => pxtc.U.rlf(tag), pxt.U.userLanguage());
         }
         return [];
 

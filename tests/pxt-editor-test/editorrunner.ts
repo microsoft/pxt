@@ -27,6 +27,7 @@ import {
     getAvailableHomeSearchFilters,
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
+import { sortGalleryTags } from "../../webapp/src/galleryTags";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
 
 pxt.appTarget = {
@@ -1927,3 +1928,20 @@ function createProjectText(): pxt.workspace.ScriptText {
 
     return currentText;
 }
+describe("sortGalleryTags", () => {
+    it("orders tags alphabetically by displayed label without mutating the input", () => {
+        const tags = ["people", "food", "aquatic", "misc"];
+        const sorted = sortGalleryTags(tags, t => t);
+        chai.expect(sorted).deep.equals(["aquatic", "food", "misc", "people"]);
+        chai.expect(tags).deep.equals(["people", "food", "aquatic", "misc"]);
+    });
+
+    it("sorts by the translated label rather than the tag id", () => {
+        const labels: { [tag: string]: string } = { animals: "Zebras", food: "Apples", people: "Mice" };
+        chai.expect(sortGalleryTags(["animals", "food", "people"], t => labels[t])).deep.equals(["food", "people", "animals"]);
+    });
+
+    it("breaks label ties by tag so the order is deterministic", () => {
+        chai.expect(sortGalleryTags(["b", "a"], () => "same")).deep.equals(["a", "b"]);
+    });
+});
