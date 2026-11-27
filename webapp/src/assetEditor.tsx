@@ -58,7 +58,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
 
                 this.sendResponse({
                     id: request.id,
-                    type: request.type
+                    type: request.type,
+                    success: true
                 });
                 break;
             case "open":
@@ -73,7 +74,8 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 this.sendResponse({
                     id: request.id,
-                    type: request.type
+                    type: request.type,
+                    success: true
                 });
                 break;
             case "duplicate":
@@ -85,14 +87,16 @@ export class AssetEditor extends React.Component<{}, AssetEditorState> {
                 });
                 this.sendResponse({
                     id: request.id,
-                    type: request.type
+                    type: request.type,
+                    success: true,
                 });
                 break;
             case "save":
                 this.sendResponse({
                     id: request.id,
                     type: request.type,
-                    files: this.saveProjectFiles()
+                    files: this.saveProjectFiles(),
+                    success: true
                 });
                 break;
         }
