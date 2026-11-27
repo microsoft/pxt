@@ -17,7 +17,7 @@ Adding a catalog never changes the code a block generates or the value it saves.
 | **Tag** | A short label attached to a choice, such as `undead` or `group-swords`. Tags are how catalogs, tabs, groups, and filters decide which choices they include. |
 | **Catalog** | A description of how to organize a picker: its tabs, its groups, and their display names. It lives in a JRES file and can be shared by many blocks. |
 | **Tab** | A page across the top of the picker, such as *Construction* or *Animals*. A tab shows the choices that have all of its tags. |
-| **All tab** | A final tab marked `flat: true` that lists every allowed choice, without grouping. Nothing can hide a choice from it. |
+| **All tab** | A final tab marked `flat: true` that lists every allowed choice, without grouping. Nothing can hide a choice from it. Typing in the search box switches to it automatically. |
 | **Group** | A set of related choices, such as *Swords* or *Planks*, shown as one tile that expands to reveal its members. This keeps big tabs short. |
 | **Filter** | A restriction set on a block, not in the catalog. For example, a "choose a rider" block can allow only choices tagged `rider`. Tabs, groups, and search never show choices outside the block's filter. |
 | **Weight** | An optional number that controls display order. Higher weights appear first. |
@@ -245,6 +245,9 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
   keys may use either the TypeScript parameter name or its name in the block
   definition, and both sets are combined. If both set the same key, the block
   definition name wins.
+- When an input uses an identity grid picker as its shadow, an enum member and
+  its `enumIdentity` constant alias both use that picker if the choice matches
+  its enum sources and tag filter. Other values keep their normal blocks.
 - Field options are read as strings, so `fixedInstances` is only on when set to
   `true` (or `1`). `fixedInstances=false` leaves it off.
 - A receiver (`this`) shown as a grid picker is always a dropdown. Calls on an
@@ -274,6 +277,11 @@ Detailed behavior and edge cases, mainly for contributors and automated agents.
   group reset each time the picker closes.
 - Flat tabs ignore their own `tags`. They always show everything the block's
   filter allows.
+- When the search box goes from empty to non-empty, the picker switches to the
+  first flat tab, if the catalog has one, so search covers every choice. Emptying
+  the search box switches back to the tab it came from. Picking a tab by hand
+  while searching keeps the search on that tab and cancels the switch back.
+  Catalogs without a flat tab search within the current tab.
 
 ### Groups
 

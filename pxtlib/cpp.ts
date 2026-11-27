@@ -1,5 +1,6 @@
 /// <reference path="../localtypings/pxtarget.d.ts"/>
 /// <reference path="shared/extensioninfo.ts"/>
+/// <reference path="shared/extensionrequest.ts"/>
 
 namespace pxt {
     declare let require: any;
@@ -278,8 +279,6 @@ namespace pxt.hexloader {
     }
 
     function downloadHexInfoCoreAsync(extInfo: pxtc.ExtensionInfo): Promise<pxtc.HexInfo> {
-        let hexurl = ""
-
         showLoading(pxt.U.lf("Compiling (this may take a minute)..."));
         pxt.tickEvent("cppcompile.start")
         return downloadHexInfoLocalAsync(extInfo)
@@ -290,12 +289,26 @@ namespace pxt.hexloader {
                     return hex;
                 }
                 return getCdnUrlAsync()
-                    .then(url => {
-                        hexurl = url + "/compile/" + extInfo.sha
-                        return U.httpGetTextAsync(hexurl + ".hex")
+                    .then(async url => {
+                        const urls = [
+                            url + "/compile/" + extInfo.sha + ".hex",
+                            url + "/compile/project/" + extInfo.projectCompileSha + ".hex"
+                        ];
+
+                        for (const toTry of urls) {
+                            try {
+                                const result = await U.httpGetTextAsync(toTry);
+                                return result;
+                            }
+                            catch (e) {
+                                // 404 expected if this hex hasn't been built yet
+                            }
+                        }
+
+                        throw new Error("Hex file missing");
                     })
                     .then(r => r, e =>
-                        Cloud.privatePostAsync("compile/extension", { data: extInfo.compileData }, true)
+                        Cloud.privatePostAsync("compile/extension/project", { data: extInfo.projectCompileData }, true)
                             .then(ret => new Promise<string>((resolve, reject) => {
                                 let retry = 0;
                                 const delay = 8000; // ms
@@ -309,12 +322,14 @@ namespace pxt.hexloader {
                                         resolve(null);
                                         return null;
                                     }
-                                    let url = ret.hex.replace(/\.hex/, ".json")
-                                    pxt.log(`polling C++ build ${url} (attempt #${retry})`)
+                                    const resultUrl = ret.hex;
+                                    const resultStatus = resultUrl.replace(/\.hex/, ".json");
+                                    const resultLog = resultUrl.replace(/\.hex/, ".log");
+                                    pxt.log(`polling C++ build ${resultStatus} (attempt #${retry})`)
                                     pxt.tickEvent("cppcompile.poll", { retry })
-                                    return Util.httpGetJsonAsync(url)
+                                    return Util.httpGetJsonAsync(resultStatus)
                                         .then(json => {
-                                            pxt.log(`build log ${url.replace(/\.json$/, ".log")}`);
+                                            pxt.log(`build log ${resultLog}`);
                                             pxt.tickEvent("cppcompile.done", {
                                                 success: json?.success ? 1 : 0,
                                                 retry,
@@ -327,8 +342,8 @@ namespace pxt.hexloader {
                                                 resolve(null);
                                             }
                                             else {
-                                                pxt.log("fetching " + hexurl + ".hex")
-                                                resolve(U.httpGetTextAsync(hexurl + ".hex"))
+                                                pxt.log("fetching " + resultUrl)
+                                                resolve(U.httpGetTextAsync(resultUrl))
                                             }
                                         },
                                             e => {

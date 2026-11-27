@@ -136,11 +136,22 @@ namespace pxt.cpp {
      * Generates native extension files from pxt.json and project files, with dependencies
      * under pxt_modules/<directory>/. Dependencies resolve by directory, pxt.json name,
      * or their prefix before "---".
+     * Bundled packages supply missing Makefile, sdkconfig.defaults, and CMakeLists.txt files.
+     * Supplied compile switches replace the target's variant switches.
      * The target must not have variant overrides applied.
-     * @example getExtensionInfo({ "pxt.json": config, "main.cpp": source }, target, "v2", host)
+     * @example getExtensionInfo(request.files, target, request.variant, host, request.compileSwitches)
      */
-    export function getExtensionInfo(files: Map<string>, target: TargetBundle, variant: string, host: ExtensionInfoHost): pxtc.ExtensionInfo {
+    export function getExtensionInfo(
+        files: Map<string>,
+        target: TargetBundle,
+        variant: string,
+        host: ExtensionInfoHost,
+        compileSwitches?: pxtc.CompileSwitches
+    ): pxtc.ExtensionInfo {
         const appTarget = getAppTargetVariant(target, variant);
+        if (compileSwitches) appTarget.compile.switches = { ...compileSwitches };
+        const bundledPackages = appTarget.bundledpkgs || {};
+        const bundledBuildFiles = ["Makefile", "sdkconfig.defaults", "CMakeLists.txt"];
         const constsName = "dal.d.ts"
         let sourcePath = "/source/"
         let disabledDeps = ""
@@ -170,8 +181,14 @@ namespace pxt.cpp {
                 U.userError(`extension ${id} matches multiple directories: ${paths.join(", ")}`);
             return paths && paths[0];
         };
-        const readFile = (pkg: ExtensionPackage, name: string): string =>
-            files[pkg.path + name];
+        const readFile = (pkg: ExtensionPackage, name: string): string => {
+            if (bundledBuildFiles.indexOf(name) >= 0 && pkg.path) {
+                const id = pkg.path.slice("pxt_modules/".length, -1);
+                const bundledFile = bundledPackages[id] && bundledPackages[id][name];
+                if (bundledFile != null) return bundledFile;
+            }
+            return files[pkg.path + name];
+        };
         const dependencies = (pkg: ExtensionPackage): Map<string> => packageUtils.getConfigDependencies(
             pkg.config,
             pkg.id == "this",
@@ -192,6 +209,9 @@ namespace pxt.cpp {
                 const config = JSON.parse(configText) as PackageConfig;
                 if (!config.dependencies || !Array.isArray(config.files))
                     U.userError(`Invalid pxt.json in extension ${id}`);
+                packageUtils.removeUnsupportedPackageConfigFields(
+                    config, path + "pxt.json", message => host.logger.log(message)
+                );
                 const packageId = path ? path.slice("pxt_modules/".length, -1) : "this";
                 pkg = packages[path] = { id: packageId, path, config, files: [], version };
             }
@@ -214,6 +234,14 @@ namespace pxt.cpp {
                 id => !!runtimePackages[resolvePath(id)],
                 condition => host.logger.log(`invalid dependency expression: ${condition} in ${pkg.id}`)
             );
+            if (pkg.path) {
+                const id = pkg.path.slice("pxt_modules/".length, -1);
+                const bundledFiles = bundledPackages[id];
+                for (const name of bundledBuildFiles) {
+                    if (bundledFiles && bundledFiles[name] != null && pkg.files.indexOf(name) < 0)
+                        pkg.files.push(name);
+                }
+            }
         }
 
         const mainDeps: ExtensionPackage[] = [];
@@ -920,14 +948,6 @@ namespace pxt.cpp {
         const codalLibraries: pxt.Map<github.ParsedRepo> = {}
 
         function parseJson(pkg: ExtensionPackage) {
-            const j0 = pkg.config.platformio
-            if (j0 && j0.dependencies) {
-                U.jsonCopyFrom(res.platformio.dependencies, j0.dependencies)
-            }
-
-            if (res.npmDependencies && pkg.config.npmDependencies)
-                U.jsonCopyFrom(res.npmDependencies, pkg.config.npmDependencies)
-
             const codal = pkg.config.codal
             if (isCodal && codal) {
                 for (const lib of codal.libraries || []) {
@@ -1138,11 +1158,6 @@ namespace pxt.cpp {
         } else if (isPlatformio) {
             const iniLines = compileService.platformioIni.slice()
             // TODO merge configjson
-            iniLines.push("lib_deps =")
-            U.iterMap(res.platformio.dependencies, (pkg, ver) => {
-                let pkgSpec = /[@#\/]/.test(ver) ? ver : pkg + "@" + ver
-                iniLines.push("  " + pkgSpec)
-            })
             res.generatedFiles["/platformio.ini"] = iniLines.join("\n") + "\n"
         } else {
             res.yotta.config = configJson;

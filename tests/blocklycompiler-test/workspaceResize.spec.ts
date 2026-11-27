@@ -17,7 +17,7 @@ describe("block editor workspace resizing", () => {
         return event;
     }
 
-    function createHarness(hasCategories: boolean, dragging: boolean) {
+    function createHarness(hasCategories: boolean, dragging: boolean, blockDragging = true) {
         const div = document.createElement("div");
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         div.appendChild(svg);
@@ -27,6 +27,7 @@ describe("block editor workspace resizing", () => {
         const workspace = {
             options: { hasCategories },
             isDragging: () => dragging,
+            getAllBlocks: () => [{ isDragging: () => dragging && blockDragging }],
             getParentSvg: () => svg,
             getCachedParentSvgSize: () => ({ width: 0, height: 0 }),
             setCachedParentSvgSize: () => { },
@@ -92,6 +93,14 @@ describe("block editor workspace resizing", () => {
 
     it("preserves categorized-toolbox resizing during dragging", () => {
         const harness = createHarness(true, true);
+        harness.editor.resize();
+
+        harness.assertResizeCount(1);
+        chai.assert.isFalse(harness.editor.pendingResize);
+    });
+
+    it("resizes pinned flyouts during workspace panning", () => {
+        const harness = createHarness(false, true, false);
         harness.editor.resize();
 
         harness.assertResizeCount(1);

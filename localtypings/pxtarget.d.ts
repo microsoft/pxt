@@ -1287,6 +1287,9 @@ declare namespace ts.pxtc {
         appVariant?: string;
         outputPrefix?: string;
         disabledDeps?: string;
+
+        projectCompileData?: string;
+        projectCompileSha?: string;
     }
 
     interface ExtensionTarget {
