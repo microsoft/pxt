@@ -358,6 +358,25 @@ function startReader() {
     pumpTimer = setInterval(pump, 50);
 }
 
+// DAPLink parses the incoming hex as a stream and cannot tolerate blocks
+// arriving out of order, but a buffered copy lets the page cache reorder
+// them -- the drive's FAIL.TXT then reads "File sent out of order by PC".
+// Writing sequential chunks and syncing each before the next forces
+// on-device order.
+const FLASH_CHUNK = 4096;
+function copyHexInOrder(src, dest) {
+    const data = fs.readFileSync(src);
+    const fd = fs.openSync(dest, "w");
+    try {
+        for (let off = 0; off < data.length; off += FLASH_CHUNK) {
+            fs.writeSync(fd, data, off, Math.min(FLASH_CHUNK, data.length - off));
+            fs.fsyncSync(fd);
+        }
+    } finally {
+        fs.closeSync(fd);
+    }
+}
+
 // One full flash-and-capture cycle: copy the hex, wait for the board to come
 // back, open its serial device and read until a verdict or the timeout. Returns
 // the outcome for report(). Host and board problems still exit through fail()
@@ -380,7 +399,7 @@ async function attempt() {
 
     process.stdout.write("run-capture: flashing " + hex + " -> " + volumePath + "\n");
     try {
-        fs.copyFileSync(hex, path.join(volumePath, path.basename(hex)));
+        copyHexInOrder(hex, path.join(volumePath, path.basename(hex)));
     } catch (e) {
         fail("copy to " + volumePath + " failed");
     }
