@@ -139,6 +139,11 @@ export class Editor implements IEditor {
         return true
     }
 
+    /** Whether the editor toolbar shows undo, redo and zoom for this editor. */
+    hasEditorToolbarEditingControls() {
+        return true
+    }
+
     filterToolbox(showCategories?: boolean) {
     }
 

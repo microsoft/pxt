@@ -6,6 +6,15 @@ import * as dmp from "diff-match-patch";
 import * as pxteditor from "../../pxteditor";
 import { getTextAtTime, HistoryFile, parseHistoryFile, updateHistory } from "../../pxteditor/history";
 import {
+    SimxEditorHost,
+    SimxEditorRegistration,
+} from "../../webapp/src/simxEditorHost";
+import {
+    getEditorToggleLayout,
+    EditorToggleLayoutInput,
+} from "../../webapp/src/editorToggleLayout";
+import { SimxEditorSimulatorState } from "../../pxtservices/simxeditor";
+import {
     addSimulatorThemeToFiles,
     getProjectSimulatorThemePreference,
     getSimulatorThemePresetId,
@@ -23,11 +32,70 @@ import { resetEditorThemesAsync } from "../../react-common/components/theming/th
 import { projectToolsPinnedOnLoad, shouldShowProjectTools } from "../../webapp/src/projectToolsState";
 import { decodeWhiteboard, MAX_PROJECT_NOTE_LENGTH, ProjectNotesSaveQueue, validateProjectNotes } from "../../webapp/src/projectNotes";
 import {
+    applyUserEdit,
+    isValidRelativeName,
+    PROJFS_FOLDER_QUOTA_BYTES,
+    PROJFS_NOTIFY_DEBOUNCE_MS,
+    PROJFS_RATE_LIMIT,
+    PROJFS_RATE_WINDOW_MS,
+    ProjfsEditor,
+    ProjfsFrame,
+    ProjfsHost,
+    ProjfsPackage,
+    ProjfsPackageFile,
+    ProjfsProject,
+    writeProjectFileAsync,
+} from "../../webapp/src/projfsHost";
+import {
+    ProjfsClient,
+    ProjfsContentReply,
+    ProjfsErrorCode,
+    ProjfsErrorReply,
+    ProjfsNotification,
+    ProjfsReply,
+    ProjfsRequest,
+} from "../../pxtservices/projfs";
+import {
+    createProjassetsConfig,
+    getImageAssets,
+    getTileAssets,
+    ProjassetsAccountTheme,
+    ProjassetsConfig,
+    ProjassetsFrame,
+    ProjassetsHost,
+    ProjassetsOpenProject,
+    PROJASSETS_NOTIFY_DEBOUNCE_MS,
+} from "../../webapp/src/projassetsHost";
+import {
+    ProjassetsAssetsReply,
+    ProjassetsClient,
+    ProjassetsImage,
+    ProjassetsNotification,
+    ProjassetsReply,
+    ProjassetsRequest,
+} from "../../pxtservices/projassets";
+import {
+    getProgramDiagnostics,
+    ProjprogramBuild,
+    ProjprogramCompileOutcome,
+    ProjprogramHost,
+    ProjprogramOpenProject,
+} from "../../webapp/src/projprogramHost";
+import {
+    ProjprogramClient,
+    ProjprogramErrorCode,
+    ProjprogramErrorReply,
+    ProjprogramReply,
+    ProjprogramRequest,
+} from "../../pxtservices/projprogram";
+import {
     filterHomeSearchCards,
     getAvailableHomeSearchFilters,
     getHomeSearchFilterOptionCounts,
 } from "../../webapp/src/homeSearchFilters";
 import { projectMayDeclareBlocks } from "../../webapp/src/cachedApiInfo";
+import { getInstanceDropdownOptions, FieldInstanceDropdown } from "../../pxtblocks/fields/field_instancedropdown";
+import type { FieldCustomDropdownOptions } from "../../pxtblocks/fields/field_utils";
 
 pxt.appTarget = {
     versions: {
@@ -1042,6 +1110,1209 @@ describe("simulator themes", () => {
     });
 });
 
+describe("sliding window admission", () => {
+    it("admits an event over the limit after the window with the default delay", async () => {
+        const admission = new pxt.Util.SlidingWindowAdmission(1, 5);
+        await admission.admitAsync("folder");
+        await admission.admitAsync("folder");
+    });
+});
+
+describe("projfs guard", () => {
+    it("rejects names that are not relative paths or have empty, . or .. segments", () => {
+        const names: unknown[] = [
+            "", "..", "../x", "a/../b", "a/..", "a\\..\\b", "/abs", "\\abs",
+            "a//b", "a/", "./a", "a/./b", ".", 42, undefined, null, ["a"],
+        ];
+        for (const name of names)
+            chai.expect(isValidRelativeName(name), JSON.stringify(name)).equals(false);
+    });
+});
+
+// lets every queued promise reaction run
+function settle() {
+    return new Promise(resolve => setTimeout(resolve, 0));
+}
+
+/** A clock for a host under test, whose delays resolve only as a test advances it. */
+class FakeClock {
+    time = 1000000;
+    private timers: { at: number, resolve: () => void }[] = [];
+
+    now = () => this.time;
+
+    delay = (ms: number) => new Promise<void>(resolve => this.timers.push({ at: this.time + ms, resolve }));
+
+    /** Moves the time forward by `ms`, resolves the delays that have passed, and lets their reactions run. */
+    async advance(ms: number) {
+        this.time += ms;
+        const due = this.timers.filter(t => t.at <= this.time);
+        this.timers = this.timers.filter(t => t.at > this.time);
+        due.forEach(t => t.resolve());
+        await settle();
+    }
+}
+
+describe("projfs host", () => {
+    const FOLDER = "owner/repo";
+
+    class FakeProject implements ProjfsProject {
+        calls: string[] = [];
+        // when set, each write waits for it before storing
+        writeGate: Promise<void> | undefined;
+
+        /** Holds every write until the returned function is called. */
+        holdWrites(): () => void {
+            let release!: () => void;
+            this.writeGate = new Promise<void>(resolve => release = resolve);
+            return release;
+        }
+
+        constructor(public files: pxt.Map<string>) {
+        }
+
+        loadedAsync() {
+            return Promise.resolve();
+        }
+
+        getFiles() {
+            return { ...this.files };
+        }
+
+        // like the editor package: a new file is stored and reported, and an existing
+        // one is reported only when its content changes
+        async writeFileAsync(name: string, content: string) {
+            await this.writeGate;
+            this.calls.push(`write ${name}`);
+            this.storeContent(name, content);
+        }
+
+        // like the editor package: the removal is reported, then the pxt.json change
+        async deleteFileAsync(name: string) {
+            this.calls.push(`delete ${name}`);
+            delete this.files[name];
+            this.notify(name);
+            this.updateListing(name, false);
+        }
+
+        async setListedAsync(name: string, listed: boolean) {
+            this.calls.push(`${listed ? "list" : "unlist"} ${name}`);
+            this.updateListing(name, listed);
+        }
+
+        // like the editor package, changes nothing while pxt.json is malformed or lists no files
+        private updateListing(name: string, listed: boolean) {
+            const config = pxt.Util.jsonTryParse(this.files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+            if (!Array.isArray(config?.files)) return;
+            config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
+            if (!listed && config.testFiles) config.testFiles = config.testFiles.filter(f => f !== name);
+            this.storeContent(pxt.CONFIG_NAME, JSON.stringify(config));
+        }
+
+        private storeContent(name: string, content: string) {
+            const changes = !Object.prototype.hasOwnProperty.call(this.files, name) || this.files[name] !== content;
+            this.files[name] = content;
+            if (changes) this.notify(name);
+        }
+
+        changeListeners = new Set<(name: string | undefined) => void>();
+
+        addChangeListener(listener: (name: string | undefined) => void) {
+            this.changeListeners.add(listener);
+        }
+
+        removeChangeListener(listener: (name: string | undefined) => void) {
+            this.changeListeners.delete(listener);
+        }
+
+        private notify(name: string | undefined) {
+            this.changeListeners.forEach(listener => listener(name));
+        }
+
+        /** Saves `content` to the file `name` as the editor package's setContentAsync does for a user's edit: a new file is listed first. */
+        save(name: string, content: string) {
+            if (!Object.prototype.hasOwnProperty.call(this.files, name)) {
+                this.files[name] = "";
+                if (name !== pxt.CONFIG_NAME) this.updateListing(name, true);
+            }
+            this.storeContent(name, content);
+        }
+
+        /** Stores a file as the editor package's setFile does, leaving pxt.json unchanged. */
+        setFile(name: string, content: string) {
+            this.files[name] = content;
+            this.notify(name);
+        }
+
+        dirtied: { name: string, content: string | undefined, stored: string | undefined }[] = [];
+
+        markDirty(name: string, content: string | undefined) {
+            this.calls.push(`dirty ${name}`);
+            this.dirtied.push({ name, content, stored: this.files[name] });
+        }
+
+        listed() {
+            return (JSON.parse(this.files[pxt.CONFIG_NAME]) as pxt.PackageConfig).files;
+        }
+    }
+
+    let project: FakeProject;
+    let clock: FakeClock;
+    let host: ProjfsHost;
+    let nextId: number;
+
+    function advance(ms: number) {
+        return clock.advance(ms);
+    }
+
+    // sends a request without waiting for its reply, which lands in `replies`
+    function post(msg: any, replies: ProjfsReply[], key = FOLDER): Promise<void> {
+        return host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r as ProjfsReply), testFrame());
+    }
+
+    function newProject(files: pxt.Map<string> = {}) {
+        return new FakeProject({
+            [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", files: [pxt.MAIN_TS, "owner/repo/listed.txt"] }),
+            [pxt.MAIN_TS]: "let x = 1",
+            [pxt.SIMSTATE_JSON]: "{}",
+            "owner/repo/listed.txt": "hello",
+            ...files
+        });
+    }
+
+    async function send(msg: any, key = FOLDER): Promise<ProjfsReply> {
+        const replies: ProjfsReply[] = [];
+        await host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, ...msg }, r => replies.push(r as ProjfsReply), testFrame());
+        chai.expect(replies.length).equals(1);
+        return replies[0];
+    }
+
+    async function writeMany(count: number, key = FOLDER) {
+        for (let i = 0; i < count; i++)
+            await send({ subtype: "write", name: `f${i}.txt`, content: "x" }, key);
+    }
+
+    async function expectError(msg: any, code: ProjfsErrorCode, key = FOLDER) {
+        const reply = await send(msg, key);
+        chai.expect(reply.subtype).equals("error");
+        chai.expect((reply as ProjfsErrorReply).code).equals(code);
+        return reply as ProjfsErrorReply;
+    }
+
+    beforeEach(() => {
+        project = newProject();
+        clock = new FakeClock();
+        nextId = 0;
+        host = new ProjfsHost(() => project, clock.now, clock.delay);
+    });
+
+    it("reaches no file outside the folder", async () => {
+        for (const name of [pxt.MAIN_TS, pxt.CONFIG_NAME, pxt.SIMSTATE_JSON, "owner/repo/listed.txt"])
+            await expectError({ subtype: "read", name }, "NOT_FOUND");
+    });
+
+    it("writes a new file under the folder and lists it", async () => {
+        const reply = await send({ subtype: "write", name: "notes/today.txt", content: "hi" });
+        chai.expect(reply).deep.include({ subtype: "ack", name: "notes/today.txt" });
+        chai.expect(project.files["owner/repo/notes/today.txt"]).equals("hi");
+        chai.expect(project.listed()).deep.equals([pxt.MAIN_TS, "owner/repo/listed.txt", "owner/repo/notes/today.txt"]);
+        chai.expect(project.calls).deep.equals(["write owner/repo/notes/today.txt", "list owner/repo/notes/today.txt"]);
+    });
+
+    it("refuses writing an asset file, at any depth and letter case, without touching the project", async () => {
+        for (const name of ["a.jres", "sub/A.JRES", "a/b/c.jres"]) {
+            await expectError({ subtype: "write", name, content: "{}" }, "INVALID_NAME");
+        }
+        chai.expect(project.calls).deep.equals([]);
+    });
+
+    it("stores every write under the frame's folder, whatever the message names", async () => {
+        const reply = await send({ subtype: "write", name: "other/repo/x.ts", content: "x", channel: "other/repo", scope: "other/repo" });
+        chai.expect(reply).deep.include({ subtype: "ack", name: "other/repo/x.ts" });
+        chai.expect(project.files["owner/repo/other/repo/x.ts"]).equals("x");
+        chai.expect(Object.keys(project.files).filter(n => n.startsWith("other/"))).deep.equals([]);
+    });
+
+    describe("subscriptions", () => {
+        /** Subscribes `frame` of `key` and returns what it receives from then on, the subscription's ack checked and cleared. */
+        async function subscribe(key = FOLDER, frame: ProjfsFrame = testFrame()): Promise<(ProjfsReply | ProjfsNotification)[]> {
+            const received: (ProjfsReply | ProjfsNotification)[] = [];
+            await host.handleMessageAsync(key, { type: "projfs", id: "" + nextId++, subtype: "subscribe" }, r => received.push(r), frame);
+            chai.expect(received.map(r => r.subtype)).deep.equals(["ack"]);
+            received.length = 0;
+            return received;
+        }
+
+        function changed(...names: string[]): ProjfsNotification {
+            return { type: "projfs", subtype: "changed", names };
+        }
+
+        /** Advances the clock to the end of the notification window of a change made now, sending the notification it holds. */
+        function passNotifyWindow(): Promise<void> {
+            return advance(PROJFS_NOTIFY_DEBOUNCE_MS);
+        }
+
+        /** Returns a pxt.json listing `names` as well as main.ts. */
+        function pxtJson(...names: string[]): string {
+            return JSON.stringify({ name: "test", files: [pxt.MAIN_TS, ...names] });
+        }
+
+        it("notifies a user's save through the editor package", async () => {
+            const received = await subscribe();
+            project.save("owner/repo/listed.txt", "edited in the text editor");
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([changed("listed.txt")]);
+        });
+
+        it("notifies nothing for changes outside the folder", async () => {
+            const received = await subscribe();
+            project.save(pxt.MAIN_TS, "let y = 2");
+            project.setFile("owner/repo2/sibling.txt", "sibling");
+            project.setFile("other/repo/theirs.txt", "theirs");
+            project.save(pxt.CONFIG_NAME, pxtJson("owner/repo/listed.txt", "other/repo/theirs.txt"));
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([]);
+        });
+    });
+
+    describe("quota", () => {
+        // what the folder holds before a test writes: listed.txt, its name and its content
+        const HELD = pxt.Util.toUTF8Array("listed.txt").length + pxt.Util.toUTF8Array("hello").length;
+
+        it("refuses a write one byte over the quota, whole", async () => {
+            const content = "x".repeat(PROJFS_FOLDER_QUOTA_BYTES - HELD - pxt.Util.toUTF8Array("big.txt").length + 1);
+            const before = { ...project.files };
+            await expectError({ subtype: "write", name: "big.txt", content }, "QUOTA_EXCEEDED");
+            chai.expect(project.calls).deep.equals([]);
+            chai.expect(project.files).deep.equals(before);
+        });
+    });
+
+    describe("name rules", () => {
+        it("refuses a written name whose last segment is pxt.json, at any depth and in any letter case, without touching the project", async () => {
+            for (const name of [pxt.CONFIG_NAME, `sub/${pxt.CONFIG_NAME}`, "a/b/PXT.JSON"])
+                await expectError({ subtype: "write", name, content: "{}" }, "INVALID_NAME");
+            chai.expect(project.calls).deep.equals([]);
+            chai.expect((await send({ subtype: "write", name: `${pxt.CONFIG_NAME}.txt`, content: "{}" })).subtype).equals("ack");
+        });
+    });
+
+    describe("rate limit", () => {
+        it("holds writes and deletes over the limit, unanswered and unapplied, until the window allows them", async () => {
+            await writeMany(PROJFS_RATE_LIMIT);
+            const replies: ProjfsReply[] = [];
+            const held = [
+                post({ subtype: "write", name: "extra.txt", content: "x" }, replies),
+                post({ subtype: "delete", name: "f0.txt" }, replies),
+            ];
+            await settle();
+            chai.expect(replies).deep.equals([]);
+            chai.expect(project.files).not.to.have.property("owner/repo/extra.txt");
+            chai.expect(project.files).to.have.property("owner/repo/f0.txt");
+
+            await advance(PROJFS_RATE_WINDOW_MS - 1);
+            chai.expect(replies).deep.equals([]);
+            await advance(1);
+            await Promise.all(held);
+            chai.expect(replies.map(r => r.subtype)).deep.equals(["ack", "ack"]);
+            chai.expect(project.files["owner/repo/extra.txt"]).equals("x");
+            chai.expect(project.files).not.to.have.property("owner/repo/f0.txt");
+        });
+    });
+
+    describe("project switches", () => {
+        it("refuses a request whose project closed before its turn, touching neither project", async () => {
+            const first = project;
+            await writeMany(PROJFS_RATE_LIMIT);
+            const replies: ProjfsReply[] = [];
+            const held = post({ subtype: "write", name: "extra.txt", content: "x" }, replies);
+            project = newProject();
+            await advance(PROJFS_RATE_WINDOW_MS);
+            await held;
+            chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(first.files).not.to.have.property("owner/repo/extra.txt");
+            chai.expect(project.calls).deep.equals([]);
+        });
+    });
+
+    describe("dirty", () => {
+        it("passes a flagged write through the edit pipeline after saving and listing it", async () => {
+            const reply = await send({ subtype: "write", name: "code.ts", content: "let b = 1", dirty: true });
+            chai.expect(reply).deep.include({ subtype: "ack", name: "code.ts" });
+            chai.expect(project.calls).deep.equals(["write owner/repo/code.ts", "list owner/repo/code.ts", "dirty owner/repo/code.ts"]);
+            chai.expect(project.dirtied).deep.equals([{ name: "owner/repo/code.ts", content: "let b = 1", stored: "let b = 1" }]);
+        });
+
+        it("refuses a flagged write whose project closed while it was saved, with the write saved in that project", async () => {
+            const first = project;
+            const release = first.holdWrites();
+            const replies: ProjfsReply[] = [];
+            const applying = post({ subtype: "write", name: "a.ts", content: "x", dirty: true }, replies);
+            await settle();
+            project = newProject();
+            release();
+            await applying;
+            chai.expect((replies[0] as ProjfsErrorReply).code).equals("PROJECT_CLOSED");
+            chai.expect(first.files["owner/repo/a.ts"]).equals("x");
+            chai.expect(first.dirtied).deep.equals([]);
+            chai.expect(project.calls).deep.equals([]);
+        });
+    });
+
+    // The editor reloads a project by replacing its editor package, whose
+    // files arrive from the workspace, as the workspace stored them when the
+    // load began, only once the load reads them; until then the package holds
+    // no files and no pxt.json. This group drives the host through that load.
+    describe("reload window", () => {
+        // per project header: the files the workspace stores
+        let stored: pxt.Map<pxt.Map<string>>;
+        let current: ProjfsProject;
+
+        /**
+         * Opens the project stored under `header` as the editor's load does,
+         * its project reaching the editor package's files as the webapp's
+         * does: a new file is saved on its own, a delete unlists the file and
+         * saves every file the package holds, and a pxt.json change saves
+         * every file too, and does nothing without a pxt.json.
+         */
+        function beginLoad(header: string): { finish: () => void } {
+            const read = { ...stored[header] };
+            const files: pxt.Map<string> = {};
+            const loaded = pxt.Util.defer<void>();
+            const setListedAsync = async (name: string, listed: boolean) => {
+                if (!files[pxt.CONFIG_NAME]) return;
+                const config = JSON.parse(files[pxt.CONFIG_NAME]) as pxt.PackageConfig;
+                config.files = listed ? [...config.files, name] : config.files.filter(f => f !== name);
+                files[pxt.CONFIG_NAME] = JSON.stringify(config);
+                stored[header] = { ...files };
+            };
+            current = {
+                getFiles: () => ({ ...files }),
+                writeFileAsync: async (name, content) => {
+                    files[name] = content;
+                    stored[header][name] = content;
+                },
+                deleteFileAsync: async name => {
+                    delete files[name];
+                    await setListedAsync(name, false);
+                    stored[header] = { ...files };
+                },
+                setListedAsync,
+                loadedAsync: () => loaded.promise,
+                addChangeListener: () => { },
+                removeChangeListener: () => { },
+            };
+            return {
+                finish: () => {
+                    Object.keys(files).forEach(name => delete files[name]);
+                    Object.assign(files, read);
+                    loaded.resolve(undefined);
+                },
+            };
+        }
+
+        /** The files of a project holding the listed folder files `inFolder`, by relative name. */
+        function projectFiles(inFolder: pxt.Map<string>): pxt.Map<string> {
+            const names = Object.keys(inFolder).map(name => `${FOLDER}/${name}`);
+            const files: pxt.Map<string> = { [pxt.CONFIG_NAME]: JSON.stringify({ name: "test", files: [pxt.MAIN_TS, ...names] }), [pxt.MAIN_TS]: "" };
+            Object.keys(inFolder).forEach(name => files[`${FOLDER}/${name}`] = inFolder[name]);
+            return files;
+        }
+
+        beforeEach(() => {
+            stored = { first: projectFiles({ "items.ts": "holds a, b" }) };
+            beginLoad("first").finish();
+            host = new ProjfsHost(() => current, clock.now, clock.delay);
+        });
+
+        it("applies a write that arrives while the project loads once it has loaded, and keeps it", async () => {
+            const load = beginLoad("first");
+            const replies: ProjfsReply[] = [];
+            const answered = post({ subtype: "write", name: "pushed.ts", content: "pushed" }, replies);
+            await settle();
+            load.finish();
+            await answered;
+            chai.expect(replies.map(r => r.subtype)).deep.equals(["ack"]);
+            chai.expect(current.getFiles()[`${FOLDER}/pushed.ts`]).equals("pushed");
+            chai.expect(stored.first[`${FOLDER}/pushed.ts`]).equals("pushed");
+            chai.expect(((await send({ subtype: "read", name: "pushed.ts" })) as ProjfsContentReply).content).equals("pushed");
+            chai.expect(((await send({ subtype: "read", name: "items.ts" })) as ProjfsContentReply).content).equals("holds a, b");
+        });
+    });
+});
+
+describe("projfs user edits", () => {
+    class FakeEditor implements ProjfsEditor {
+        calls: string[] = [];
+        openFile: string | undefined = "owner/repo/code.ts";
+        active: "text" | "blocks" | "other" = "text";
+
+        isOpenFile(name: string) {
+            return name === this.openFile;
+        }
+
+        isTextEditor() {
+            return this.active === "text";
+        }
+
+        isBlocksEditor() {
+            return this.active === "blocks";
+        }
+
+        overrideTypescriptFile(text: string) {
+            this.calls.push(`override text ${text}`);
+        }
+
+        overrideBlocksFile(text: string) {
+            this.calls.push(`override blocks ${text}`);
+        }
+
+        setSimulatorDirty() {
+            this.calls.push("sim dirty");
+        }
+
+        typecheckNow() {
+            this.calls.push("typecheck");
+        }
+    }
+
+    let editor: FakeEditor;
+
+    beforeEach(() => {
+        editor = new FakeEditor();
+    });
+
+    it("replaces the text editor's content when it shows the file, then dirties and typechecks", () => {
+        applyUserEdit(editor, "owner/repo/code.ts", "let b = 2");
+        chai.expect(editor.calls).deep.equals(["override text let b = 2", "sim dirty", "typecheck"]);
+    });
+});
+
+describe("projfs project writes", () => {
+    class FakeFile implements ProjfsPackageFile {
+        writes: { content: string, force: boolean }[] = [];
+
+        constructor(public content: string) {
+        }
+
+        async setContentAsync(content: string, force?: boolean) {
+            this.content = content;
+            this.writes.push({ content, force: !!force });
+        }
+    }
+
+    class FakePackage implements ProjfsPackage {
+        files: pxt.Map<FakeFile> = {
+            "owner/repo/code.ts": new FakeFile("let b = 1"),
+        };
+
+        setFile(name: string, content: string) {
+            this.files[name] = new FakeFile(content);
+        }
+
+        async saveFileAsync(name: string) {
+        }
+    }
+
+    function editorShowing(openFile: string, active: "text" | "blocks" = "text"): ProjfsEditor {
+        return {
+            isOpenFile: name => name === openFile,
+            isTextEditor: () => active === "text",
+            isBlocksEditor: () => active === "blocks",
+            overrideTypescriptFile: () => { },
+            overrideBlocksFile: () => { },
+            setSimulatorDirty: () => { },
+            typecheckNow: () => { },
+        };
+    }
+
+    let epkg: FakePackage;
+
+    beforeEach(() => {
+        epkg = new FakePackage();
+    });
+
+    it("forces the write of the file the text editor shows, so the editor reloads it", async () => {
+        await writeProjectFileAsync(epkg, editorShowing("owner/repo/code.ts"), "owner/repo/code.ts", "let b = 2");
+        chai.expect(epkg.files["owner/repo/code.ts"].writes).deep.equals([{ content: "let b = 2", force: true }]);
+    });
+});
+
+// the origin the fake editor's messages come from in the client suites
+const EDITOR_ORIGIN = "https://editor.example";
+
+describe("projfs client", () => {
+    class FakeParent {
+        requests: ProjfsRequest[] = [];
+
+        postMessage(msg: ProjfsRequest, targetOrigin: string) {
+            this.requests.push(msg);
+        }
+    }
+
+    class FakeSelf {
+        listeners: ((ev: MessageEvent) => void)[] = [];
+
+        addEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners.push(listener);
+        }
+
+        removeEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners = this.listeners.filter(l => l !== listener);
+        }
+
+        deliver(source: unknown, data: unknown, origin: string) {
+            this.listeners.forEach(l => l({ source, data, origin } as MessageEvent));
+        }
+    }
+
+    let parent: FakeParent;
+    let self: FakeSelf;
+    let client: ProjfsClient;
+
+    function lastRequest() {
+        return parent.requests[parent.requests.length - 1];
+    }
+
+    function replyTo(request: ProjfsRequest, body: object, source: unknown = parent, origin = EDITOR_ORIGIN) {
+        self.deliver(source, { type: "projfs", id: request.id, ...body }, origin);
+    }
+
+    beforeEach(() => {
+        parent = new FakeParent();
+        self = new FakeSelf();
+        client = new ProjfsClient({ target: parent, listener: self, search: "" });
+    });
+
+    afterEach(() => client.dispose());
+
+    it("ignores replies from another origin while it posts to the editor's origin", async () => {
+        client.dispose();
+        client = new ProjfsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
+        const read = client.read("main.ts");
+        replyTo(lastRequest(), { subtype: "content", name: "main.ts", content: "forged" }, parent, "https://elsewhere.example");
+        replyTo(lastRequest(), { subtype: "content", name: "main.ts", content: "real" });
+        chai.expect(await read).equals("real");
+    });
+});
+
+/** Returns a bitmap of the given size whose pixel at (x, y) has color (x + 2y) % 16. */
+function testBitmap(width: number, height: number): pxt.sprite.BitmapData {
+    const bitmap = new pxt.sprite.Bitmap(width, height);
+    for (let x = 0; x < width; x++)
+        for (let y = 0; y < height; y++)
+            bitmap.set(x, y, (x + 2 * y) % 16);
+    return bitmap.data();
+}
+
+/** Replaces the pixels of `image` with `bitmap`, as the image editor's result does. */
+function withBitmap(image: pxt.ProjectImage, bitmap: pxt.sprite.BitmapData): pxt.ProjectImage {
+    return { ...image, bitmap, jresData: pxt.sprite.base64EncodeBitmap(bitmap) };
+}
+
+describe("tilemap project change listeners", () => {
+    let project: pxt.TilemapProject;
+    let changes: number;
+    const listener = () => changes++;
+
+    beforeEach(() => {
+        project = new pxt.TilemapProject();
+        project.addProjectChangeListener(listener);
+        changes = 0;
+    });
+
+    it("hears assets of every kind created, duplicated and removed", () => {
+        const steps: [string, () => void][] = [
+            ["image", () => project.createNewProjectImage(testBitmap(2, 2), "picture")],
+            ["tile", () => project.createNewTile(testBitmap(16, 16), undefined, "grass")],
+            ["animation", () => project.createNewAnimationFromData([testBitmap(2, 2)], 100, "walk")],
+            ["song", () => project.createNewSong(pxt.assets.music.getEmptySong(2), "tune")],
+            ["duplicate", () => project.duplicateAsset(project.getAssets(pxt.AssetType.Image)[0], "copy")],
+            ["remove", () => project.removeAsset(project.getAssets(pxt.AssetType.Image)[0])],
+        ];
+        for (const [name, step] of steps) {
+            changes = 0;
+            step();
+            chai.expect(changes, name).greaterThan(0);
+        }
+    });
+
+    it("reports a listener that throws, and applies the change and calls the other listeners", () => {
+        const reported: unknown[] = [];
+        const report = pxt.reportException;
+        pxt.reportException = e => { reported.push(e); };
+        const throwing = () => { throw new Error("listener failed"); };
+        project.removeProjectChangeListener(listener);
+        project.addProjectChangeListener(throwing);
+        project.addProjectChangeListener(listener);
+        try {
+            project.createNewProjectImage(testBitmap(2, 2), "hero");
+        } finally {
+            pxt.reportException = report;
+        }
+        chai.expect(reported.length).greaterThan(0);
+        chai.expect(changes).greaterThan(0);
+        chai.expect(project.getAssets(pxt.AssetType.Image).map(i => i.meta.displayName)).deep.equals(["hero"]);
+    });
+});
+
+/** The pxt.json of a project with no dependencies or files, plus the fields of `extra`. */
+function testPxtJson(extra: object = {}): string {
+    return JSON.stringify({ name: "test", dependencies: {}, files: [], ...extra });
+}
+
+/** A main package whose package host serves `files`, its pxt.json loaded. */
+function testMainPackage(files: pxt.Map<string>): pxt.MainPackage {
+    const mainPkg = new pxt.MainPackage({ readFile: (_pkg: pxt.Package, name: string) => files[name] } as any);
+    mainPkg.loadConfig(true);
+    return mainPkg;
+}
+
+const TARGET_PALETTE = ["#000000", "#ffffff", "#ff2121", "#ff93c4"];
+const PROJECT_PALETTE = ["#000000", "#123456", "#abcdef"];
+
+/** Runs each test with `palette` as the target's palette and `presets` as its simulator theme presets. */
+function withTargetVisuals(palette: string[], presets: pxt.SimulatorThemePreset[] | undefined) {
+    let saved: { runtime: pxt.RuntimeOptions, simulator: pxt.AppSimulator };
+    beforeEach(() => {
+        saved = { runtime: pxt.appTarget.runtime, simulator: pxt.appTarget.simulator };
+        pxt.appTarget.runtime = { palette: palette.slice() } as pxt.RuntimeOptions;
+        pxt.appTarget.simulator = { themePresets: presets } as pxt.AppSimulator;
+    });
+    afterEach(() => {
+        pxt.appTarget.runtime = saved.runtime;
+        pxt.appTarget.simulator = saved.simulator;
+    });
+}
+
+const ACCOUNT_THEME: pxt.SimulatorTheme = { ...simulatorTheme, "background-color": "#0000aa" };
+/** The user's simulator theme as the asset host watches it. */
+class FakeAccountTheme implements ProjassetsAccountTheme {
+    listeners = new Set<() => void>();
+
+    constructor(public theme: pxt.SimulatorTheme = ACCOUNT_THEME) {
+    }
+
+    get() {
+        return this.theme;
+    }
+
+    addChangeListener(listener: () => void) {
+        this.listeners.add(listener);
+    }
+
+    removeChangeListener(listener: () => void) {
+        this.listeners.delete(listener);
+    }
+}
+
+/** A frame a request comes from, connected to the document. */
+function testFrame(): ProjassetsFrame & { isConnected: boolean } {
+    return { isConnected: true };
+}
+
+const THEME_PRESETS: pxt.SimulatorThemePreset[] = [
+    { id: "default", name: "Default", theme: simulatorTheme },
+    { id: "purple", name: "Purple", theme: { ...simulatorTheme, "background-color": "#660066" } },
+];
+
+describe("projassets image listing", () => {
+    let project: pxt.TilemapProject;
+
+    beforeEach(() => {
+        project = new pxt.TilemapProject();
+    });
+
+    it("describes an image by its asset file id, display name, kind, size and encoded pixels", () => {
+        const bitmap = testBitmap(5, 3);
+        project.createNewProjectImage(bitmap, "hero");
+        const listed = getImageAssets(project);
+        chai.expect(listed).deep.equals([{
+            kind: "image",
+            id: "image1",
+            displayName: "hero",
+            width: 5,
+            height: 3,
+            data: pxt.sprite.base64EncodeBitmap(bitmap),
+        }]);
+        const decoded = pxt.sprite.getBitmapFromJResURL(`data:${pxt.IMAGE_MIME_TYPE};base64,${listed[0].data}`).data();
+        chai.expect(pxt.sprite.bitmapEquals(decoded, bitmap)).equals(true);
+    });
+});
+
+describe("projassets host", () => {
+    const SCOPE = "owner/repo";
+
+    withTargetVisuals(TARGET_PALETTE, THEME_PRESETS);
+
+    let project: pxt.TilemapProject | undefined;
+    let configFiles: pxt.Map<string>;
+    let mainPkg: pxt.MainPackage;
+    let accountTheme: FakeAccountTheme;
+    let config: ProjassetsConfig;
+    let open: ProjassetsOpenProject | undefined;
+    let clock: FakeClock;
+    let host: ProjassetsHost;
+    let nextId: number;
+
+    /** An open project that has loaded. */
+    function loadedProject(): ProjassetsOpenProject {
+        return { loadedAsync: () => Promise.resolve() };
+    }
+
+    beforeEach(() => {
+        project = new pxt.TilemapProject();
+        project.createNewProjectImage(testBitmap(2, 2), "hero");
+        configFiles = { [pxt.CONFIG_NAME]: testPxtJson() };
+        mainPkg = testMainPackage(configFiles);
+        accountTheme = new FakeAccountTheme();
+        config = createProjassetsConfig(mainPkg, accountTheme);
+        open = loadedProject();
+        clock = new FakeClock();
+        host = new ProjassetsHost(() => open, () => project, () => config, clock.now, clock.delay);
+        nextId = 0;
+    });
+
+    /** Advances the clock to the end of the notification window of a change made now, sending the notification it holds. */
+    function passNotifyWindow(): Promise<void> {
+        return clock.advance(PROJASSETS_NOTIFY_DEBOUNCE_MS);
+    }
+
+    /** Replaces the project's pxt.json with one holding `extra`, and loads it as the editor does after a config edit. */
+    function editConfig(extra: object) {
+        configFiles[pxt.CONFIG_NAME] = testPxtJson(extra);
+        mainPkg.loadConfig(true);
+    }
+
+    // sends a request from `frame` whose replies, and notifications if it subscribes, land in `received`
+    function post(msg: any, received: (ProjassetsReply | ProjassetsNotification)[], key = SCOPE, frame: ProjassetsFrame = testFrame()): Promise<void> {
+        return host.handleMessageAsync(key, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r), frame);
+    }
+
+    async function send(msg: any): Promise<ProjassetsReply> {
+        const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+        await post(msg, received);
+        chai.expect(received.length).equals(1);
+        return received[0] as ProjassetsReply;
+    }
+
+    /** Subscribes `frame` of `key`, checks the ack, and returns what the frame receives after it. */
+    async function subscribe(key = SCOPE, frame: ProjassetsFrame = testFrame()): Promise<(ProjassetsReply | ProjassetsNotification)[]> {
+        const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+        await post({ subtype: "subscribe" }, received, key, frame);
+        chai.expect(received.map(r => r.subtype)).deep.equals(["ack"]);
+        received.length = 0;
+        return received;
+    }
+
+    const CHANGED = { type: "projassets", subtype: "changed" };
+
+    it("joins each tileset tile to the project's or an extension's tile, and lists an id naming neither alone", async () => {
+        const stone = testBitmap(16, 16);
+        project.loadAssetsJRes({
+            "*": { mimeType: pxt.IMAGE_MIME_TYPE, dataEncoding: "base64", namespace: "castle" },
+            stone: { data: pxt.sprite.base64EncodeBitmap(stone), tilemapTile: true },
+        } as any, true);
+        const grass = testBitmap(16, 16);
+        const own = project.createNewTile(grass, undefined, "grass");
+        const removed = project.createNewTile(testBitmap(16, 16), undefined, "lava");
+        const data = project.blankTilemap(16, 4, 3);
+        data.tileset.tiles.push(own, project.resolveTile("castle.stone"), removed);
+        project.createNewTilemapFromData(data, "level");
+        project.deleteTile(removed.id);
+        const reply = await send({ subtype: "list", kind: "tilemap" }) as ProjassetsAssetsReply<"tilemap">;
+        chai.expect(reply.assets.length).equals(1);
+        const tileset = reply.assets[0].tileset;
+        chai.expect(tileset.map(t => t.id)).deep.equals(["myTiles.transparency16", "myTiles.tile1", "castle.stone", "myTiles.tile2"]);
+        for (const tile of tileset.slice(0, 3)) {
+            chai.expect(Object.keys(tile).sort(), tile.id).deep.equals(["data", "height", "id", "width"]);
+            chai.expect([tile.width, tile.height], tile.id).deep.equals([16, 16]);
+            chai.expect(tile.data, tile.id).to.be.a("string").and.not.equal("");
+        }
+        chai.expect(tileset[1].data).equals(pxt.sprite.base64EncodeBitmap(grass));
+        chai.expect(tileset[2].data).equals(pxt.sprite.base64EncodeBitmap(stone));
+        chai.expect(tileset[3]).deep.equals({ id: "myTiles.tile2" });
+        chai.expect(getTileAssets(project).map(t => t.id)).not.to.include("castle.stone");
+    });
+
+    describe("subscriptions", () => {
+        it("notifies a subscribed extension once after a burst of changes", async () => {
+            const received = await subscribe();
+            const image = project.getAssets(pxt.AssetType.Image)[0];
+            project.updateAsset(withBitmap(image, testBitmap(4, 4)));
+            project.createNewProjectImage(testBitmap(2, 2), "villain");
+            chai.expect(received).deep.equals([]);
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+
+        it("notifies once after the project's palette changes", async () => {
+            const received = await subscribe();
+            editConfig({ palette: PROJECT_PALETTE });
+            chai.expect(received).deep.equals([]);
+            await passNotifyWindow();
+            chai.expect(received).deep.equals([CHANGED]);
+        });
+    });
+
+    // The editor reloads a project by replacing its main package and editor
+    // package, then loading the new package's files and dependencies; the
+    // editor package's asset project is built from the main package on its
+    // first use and kept. This group drives the host through that load.
+    describe("reload window", () => {
+        /** The editor's hold on an open project: its editor package, as the asset host waits on it. */
+        interface OpenProject extends ProjassetsOpenProject {
+            mainPkg: pxt.MainPackage;
+            files: pxt.Map<string>;
+            tilemapProject?: pxt.TilemapProject;
+        }
+
+        // per project header: the files the workspace stores
+        let stored: pxt.Map<pxt.Map<string>>;
+        let current: OpenProject;
+        let reloadHost: ProjassetsHost;
+
+        // the editor's asset project getter: built from the main package on first use, then kept
+        function getTilemapProject(): pxt.TilemapProject {
+            if (!current.tilemapProject) {
+                current.tilemapProject = new pxt.TilemapProject();
+                current.tilemapProject.loadPackage(current.mainPkg);
+            }
+            return current.tilemapProject;
+        }
+
+        /** The files of a project whose asset file holds an image named by each of `names`. */
+        function projectFiles(names: string[]): pxt.Map<string> {
+            const seed = new pxt.TilemapProject();
+            names.forEach((name, i) => seed.createNewProjectImage(testBitmap(i + 2, i + 2), name));
+            return {
+                [pxt.CONFIG_NAME]: testPxtJson({ files: [pxt.IMAGES_JRES] }),
+                [pxt.IMAGES_JRES]: JSON.stringify(seed.getProjectAssetsJRes()),
+            };
+        }
+
+        /**
+         * Opens the project stored under `header` as the editor's load does:
+         * the new editor package is open at once, and its files and pxt.json
+         * arrive when the returned load is finished, which settles its
+         * loadedAsync.
+         */
+        function beginLoad(header: string): { finish: () => void } {
+            const files: pxt.Map<string> = {};
+            const mainPkg = new pxt.MainPackage({ readFile: (_pkg: pxt.Package, name: string) => files[name] } as any);
+            const loaded = pxt.Util.defer<void>();
+            current = { loadedAsync: () => loaded.promise, mainPkg, files };
+            return {
+                finish: () => {
+                    Object.assign(files, stored[header]);
+                    mainPkg.loadConfig(true);
+                    loaded.resolve(undefined);
+                },
+            };
+        }
+
+        /** The names of the images the editor's asset project holds, which its next asset build writes. */
+        function builtImageNames(): string[] {
+            return getImageAssets(getTilemapProject()).map(i => i.displayName);
+        }
+
+        // sends a request to the reload host; resolves with its one reply
+        async function sendReload(msg: any): Promise<ProjassetsReply> {
+            const received: (ProjassetsReply | ProjassetsNotification)[] = [];
+            await reloadHost.handleMessageAsync(SCOPE, { type: "projassets", id: "" + nextId++, ...msg }, r => received.push(r), testFrame());
+            chai.expect(received.length).equals(1);
+            return received[0] as ProjassetsReply;
+        }
+
+        beforeEach(async () => {
+            stored = { first: projectFiles(["hero", "villain"]) };
+            beginLoad("first").finish();
+            reloadHost = new ProjassetsHost(
+                () => current,
+                getTilemapProject,
+                () => createProjassetsConfig(current.mainPkg, new FakeAccountTheme()),
+                clock.now,
+                clock.delay);
+            chai.expect((await sendReload({ subtype: "subscribe" })).subtype).equals("ack");
+        });
+
+        /** Applies a palette to a project as the palette editor does: stores the edited pxt.json, then reloads it into the package. */
+        function applyPalette(edited: OpenProject, header: string) {
+            const edit = testPxtJson({ files: [pxt.IMAGES_JRES], palette: PROJECT_PALETTE });
+            stored[header][pxt.CONFIG_NAME] = edit;
+            edited.files[pxt.CONFIG_NAME] = edit;
+            edited.mainPkg.loadConfig(true);
+        }
+
+        it("keeps every image when a palette change lands while the project reloads", async () => {
+            const edited = current;
+            const load = beginLoad("first");
+            applyPalette(edited, "first");
+            await passNotifyWindow();
+            chai.expect(current.tilemapProject).equals(undefined);
+            load.finish();
+            chai.expect(builtImageNames()).deep.equals(["hero", "villain"]);
+            chai.expect(Object.keys(getTilemapProject().getProjectAssetsJRes()).filter(k => k !== "*").length).equals(2);
+
+            const listed = await sendReload({ subtype: "list", kind: "image" }) as ProjassetsAssetsReply;
+            chai.expect(listed.assets.map(a => a.displayName)).deep.equals(["hero", "villain"]);
+            chai.expect(listed.palette).deep.equals(PROJECT_PALETTE);
+        });
+    });
+});
+
+describe("projassets client", () => {
+    class FakeParent {
+        requests: ProjassetsRequest[] = [];
+
+        postMessage(msg: ProjassetsRequest, targetOrigin: string) {
+            this.requests.push(msg);
+        }
+    }
+
+    class FakeSelf {
+        listeners: ((ev: MessageEvent) => void)[] = [];
+
+        addEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners.push(listener);
+        }
+
+        removeEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners = this.listeners.filter(l => l !== listener);
+        }
+
+        deliver(source: unknown, data: unknown, origin: string) {
+            this.listeners.forEach(l => l({ source, data, origin } as MessageEvent));
+        }
+    }
+
+    const IMAGE: ProjassetsImage = { kind: "image", id: "image1", displayName: "hero", width: 2, height: 2, data: "AAAA" };
+    const NAME = "My Platformer";
+    const PALETTE = ["#000000", "#ffffff"];
+
+    let parent: FakeParent;
+    let self: FakeSelf;
+    let client: ProjassetsClient;
+
+    function lastRequest() {
+        return parent.requests[parent.requests.length - 1];
+    }
+
+    function replyTo(request: ProjassetsRequest, body: object, source: unknown = parent, origin = EDITOR_ORIGIN) {
+        self.deliver(source, { type: "projassets", id: request.id, ...body }, origin);
+    }
+
+    beforeEach(() => {
+        parent = new FakeParent();
+        self = new FakeSelf();
+        client = new ProjassetsClient({ target: parent, listener: self, search: "" });
+    });
+
+    afterEach(() => client.dispose());
+
+    it("ignores replies from another origin while it posts to the editor's origin", async () => {
+        client.dispose();
+        client = new ProjassetsClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
+        const listed = client.list("image");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [{ ...IMAGE, id: "forged" }], name: NAME, palette: PALETTE }, parent, "https://elsewhere.example");
+        replyTo(lastRequest(), { subtype: "assets", kind: "image", assets: [IMAGE], name: NAME, palette: PALETTE });
+        chai.expect((await listed).assets).deep.equals([IMAGE]);
+    });
+});
+
+/** A promise a test settles when it chooses. */
+interface Deferred<T> {
+    promise: Promise<T>;
+    resolve: (value: T) => void;
+    reject: (error: unknown) => void;
+}
+
+function deferred<T>(): Deferred<T> {
+    let resolve: (value: T) => void;
+    let reject: (error: unknown) => void;
+    const promise = new Promise<T>((res, rej) => {
+        resolve = res;
+        reject = rej;
+    });
+    return { promise, resolve, reject };
+}
+
+/** A program a test's fake compiler returns, told apart from others by `n`. */
+function testProgram(n = 0): ProjprogramBuild {
+    return {
+        code: `(function () { return ${n}; })`,
+        options: { parts: ["led"], fnArgs: {}, mute: false, aspectRatio: 1.22, storedState: { n } } as pxsim.SimulatorRunOptions,
+    };
+}
+
+/** A compile result holding no simulator JavaScript, with an error in a file and one that concerns no file. */
+function failedCompile(): pxtc.CompileResult {
+    return {
+        success: false,
+        times: {},
+        breakpoints: [],
+        outfiles: {},
+        diagnostics: [
+            {
+                fileName: "main.ts", start: 10, length: 3, line: 2, column: 4,
+                code: 2304, category: ts.pxtc.DiagnosticCategory.Error, messageText: "Cannot find name 'foo'.",
+            },
+            {
+                fileName: undefined, start: 0, length: 0,
+                code: 9200, category: ts.pxtc.DiagnosticCategory.Warning,
+                messageText: { messageText: "outer", category: ts.pxtc.DiagnosticCategory.Warning, code: 9200, next: { messageText: "inner", category: ts.pxtc.DiagnosticCategory.Warning, code: 9201 } } as any,
+            },
+        ],
+    };
+}
+
+describe("projprogram host", () => {
+    const SCOPE = "owner/repo";
+
+    let open: ProjprogramOpenProject | undefined;
+    // the arguments of each call of the compile function, in order
+    let compileCalls: unknown[][];
+    // what the compile function returns for the call it is given the index of
+    let compileImpl: (call: number) => Promise<ProjprogramCompileOutcome>;
+    let clock: FakeClock;
+    let host: ProjprogramHost;
+    let nextId: number;
+
+    /** An open project that has loaded. */
+    function loadedProject(): ProjprogramOpenProject {
+        return { loadedAsync: () => Promise.resolve() };
+    }
+
+    beforeEach(() => {
+        open = loadedProject();
+        compileCalls = [];
+        compileImpl = call => Promise.resolve(testProgram(call));
+        clock = new FakeClock();
+        host = new ProjprogramHost(() => open, (...args: unknown[]) => {
+            compileCalls.push(args);
+            return compileImpl(compileCalls.length - 1);
+        }, clock.now, clock.delay);
+        nextId = 0;
+    });
+
+    // sends a request whose reply lands in `received`
+    function post(msg: any, received: ProjprogramReply[], key = SCOPE): Promise<void> {
+        return host.handleMessageAsync(key, { type: "projprogram", id: "" + nextId++, ...msg }, r => received.push(r));
+    }
+
+    async function send(msg: any, key = SCOPE): Promise<ProjprogramReply> {
+        const received: ProjprogramReply[] = [];
+        await post(msg, received, key);
+        chai.expect(received.length).equals(1);
+        return received[0];
+    }
+
+    async function expectError(msg: any, code: ProjprogramErrorCode, key = SCOPE): Promise<ProjprogramErrorReply> {
+        const reply = await send(msg, key);
+        chai.expect(reply.subtype).equals("error");
+        chai.expect((reply as ProjprogramErrorReply).code).equals(code);
+        return reply as ProjprogramErrorReply;
+    }
+
+    /** Returns each reply's subtype, or its code for an error. */
+    function outcomes(replies: ProjprogramReply[]): string[] {
+        return replies.map(r => r.subtype === "error" ? r.code : r.subtype);
+    }
+
+    it("replies with the program the compile function returns, under the request's id", async () => {
+        const received: ProjprogramReply[] = [];
+        await host.handleMessageAsync(SCOPE, { type: "projprogram", id: "abc", subtype: "compile" }, r => received.push(r));
+        const program = testProgram(0);
+        chai.expect(received).deep.equals([{ type: "projprogram", id: "abc", subtype: "program", code: program.code, options: program.options }]);
+    });
+
+    it("replies with COMPILE_FAILED and the compile's diagnostics when the compile produces no program", async () => {
+        const failed = failedCompile();
+        compileImpl = () => Promise.resolve({ failed });
+        const reply = await expectError({ subtype: "compile" }, "COMPILE_FAILED");
+        chai.expect(reply.diagnostics).deep.equals(getProgramDiagnostics(failed));
+        chai.expect(reply.diagnostics.map(({ message, ...rest }) => rest)).deep.equals([
+            { fileName: "main.ts", line: 2, column: 4, code: 2304, category: "error" },
+            { code: 9200, category: "warning" },
+        ]);
+        for (const diagnostic of reply.diagnostics)
+            chai.expect(diagnostic.message).to.be.a("string").and.not.equal("");
+    });
+
+    describe("project switches", () => {
+        it("refuses a request whose project switches during its compile with PROJECT_CLOSED, never sending its program, and refuses the requests queued behind it without compiling", async () => {
+            const compile = deferred<ProjprogramCompileOutcome>();
+            compileImpl = () => compile.promise;
+            const received: ProjprogramReply[] = [];
+            const compiling = post({ subtype: "compile" }, received);
+            const queued = post({ subtype: "compile" }, received);
+            await settle();
+            open = loadedProject();
+            compile.resolve(testProgram(1));
+            await Promise.all([compiling, queued]);
+            chai.expect(outcomes(received)).deep.equals(["PROJECT_CLOSED", "PROJECT_CLOSED"]);
+            chai.expect(compileCalls.length).equals(1);
+        });
+    });
+});
+
+describe("projprogram client", () => {
+    class FakeParent {
+        requests: ProjprogramRequest[] = [];
+
+        postMessage(msg: ProjprogramRequest, targetOrigin: string) {
+            this.requests.push(msg);
+        }
+    }
+
+    class FakeSelf {
+        listeners: ((ev: MessageEvent) => void)[] = [];
+
+        addEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners.push(listener);
+        }
+
+        removeEventListener(type: "message", listener: (ev: MessageEvent) => void) {
+            this.listeners = this.listeners.filter(l => l !== listener);
+        }
+
+        deliver(source: unknown, data: unknown, origin: string) {
+            this.listeners.forEach(l => l({ source, data, origin } as MessageEvent));
+        }
+    }
+
+    const PROGRAM = { code: "(function () {})", options: { parts: ["led"], mute: false } };
+
+    let parent: FakeParent;
+    let self: FakeSelf;
+    let client: ProjprogramClient;
+
+    function lastRequest() {
+        return parent.requests[parent.requests.length - 1];
+    }
+
+    function replyTo(request: ProjprogramRequest, body: object, source: unknown = parent, origin = EDITOR_ORIGIN) {
+        self.deliver(source, { type: "projprogram", id: request.id, ...body }, origin);
+    }
+
+    beforeEach(() => {
+        parent = new FakeParent();
+        self = new FakeSelf();
+        client = new ProjprogramClient({ target: parent, listener: self, search: "" });
+    });
+
+    afterEach(() => client.dispose());
+
+    it("ignores replies from another origin while it posts to the editor's origin", async () => {
+        client.dispose();
+        client = new ProjprogramClient({ target: parent, listener: self, search: "?parentOrigin=https%3A%2F%2Feditor.example" });
+        const compiled = client.compile();
+        replyTo(lastRequest(), { subtype: "program", code: "forged", options: {} }, parent, "https://elsewhere.example");
+        replyTo(lastRequest(), { subtype: "program", ...PROGRAM });
+        chai.expect(await compiled).deep.equals(PROGRAM);
+    });
+});
+
 const versions = [
     "Here is some text",
     "Here is some more text", // 100
@@ -1246,8 +2517,6 @@ const ONE_HOUR = ONE_MINUTE * 60;
 const ONE_DAY = ONE_HOUR * 24;
 
 const testProject = createProjectText();
-
-console.log((JSON.parse(testProject[pxt.HISTORY_FILE]) as HistoryFile).entries.map(e => new Date(e.timestamp).toLocaleString()).join("\n"));
 
 
 describe("updateHistory", () => {
@@ -1745,7 +3014,7 @@ describe("pxt.github local repositories", () => {
     });
 
     it("does not consult a server that is not on localhost", async () => {
-        serveAt("https://arcade.makecode.com/");
+        serveAt("https://editor.example/");
         await pxt.github.initLocalReposAsync();
         chai.expect(requests).deep.equals([]);
         chai.expect(pxt.github.isLocalRepo("owner/mono")).equals(false);
@@ -1927,3 +3196,347 @@ function createProjectText(): pxt.workspace.ScriptText {
 
     return currentText;
 }
+
+describe("fixed-instance dropdown options", () => {
+    // the values of `options`, a separator standing as "separator"
+    function values(options: ReturnType<typeof getInstanceDropdownOptions>) {
+        return options.map(o => o === "separator" ? o : o[1]);
+    }
+
+    // a fixed-instance symbol `ns.<name>` of the type `retType`
+    function instanceSymbol(name: string, retType: string, attributes: pxtc.CommentAttrs = {} as pxtc.CommentAttrs): pxtc.SymbolInfo {
+        return {
+            name,
+            namespace: "ns",
+            qName: `ns.${name}`,
+            fileName: "main.ts",
+            kind: pxtc.SymbolKind.Variable,
+            parameters: [],
+            retType,
+            attributes: { ...attributes, fixedInstance: true },
+        };
+    }
+
+    // a fixed-instance type `ns.<name>` extending `extendsTypes`
+    function typeSymbol(name: string, extendsTypes?: string[]): pxtc.SymbolInfo {
+        return {
+            name,
+            namespace: "ns",
+            qName: `ns.${name}`,
+            fileName: "main.ts",
+            kind: pxtc.SymbolKind.Class,
+            parameters: [],
+            retType: `ns.${name}`,
+            extendsTypes,
+            attributes: { fixedInstances: true } as pxtc.CommentAttrs,
+        };
+    }
+
+    // API info declaring the fixed-instance type `ns.Thing` and `symbols`
+    function thingBlocksInfo(symbols: pxtc.SymbolInfo[]): pxtc.BlocksInfo {
+        const byQName: pxt.Map<pxtc.SymbolInfo> = { "ns.Thing": typeSymbol("Thing") };
+        for (const symbol of symbols) byQName[symbol.qName] = symbol;
+        return { apis: { byQName }, blocks: [], blocksById: {}, enumsByName: {}, kindsByName: {} };
+    }
+
+    // builds a `FieldInstanceDropdown` of `ns.Thing` with `options`
+    function instanceField(options: Partial<FieldCustomDropdownOptions>) {
+        return new FieldInstanceDropdown("", { type: "ns.Thing", blocksInfo: undefined, ...options });
+    }
+
+    // the values of the options of a `FieldInstanceDropdown` of `ns.Thing`
+    // built with `options`, read as its dropdown opens
+    function openedValues(options: Partial<FieldCustomDropdownOptions>) {
+        return values(instanceField(options).getOptions(false));
+    }
+
+    it("lists the instances the live API info declares as the field's dropdown opens, not those captured when the field was built", () => {
+        const opened = openedValues({
+            data: [["old", "ns.old"]],
+            getBlocksInfo: () => thingBlocksInfo([instanceSymbol("new", "ns.Thing")]),
+        });
+        chai.expect(opened).to.include("ns.new");
+        chai.expect(opened).to.not.include("ns.old");
+    });
+
+    it("keeps the field's value when the live API info no longer declares it", () => {
+        let blocksInfo: pxtc.BlocksInfo | undefined;
+        const field = instanceField({ data: [["old", "ns.old"]], getBlocksInfo: () => blocksInfo });
+        chai.expect(field.getValue()).equals("ns.old");
+        blocksInfo = thingBlocksInfo([instanceSymbol("new", "ns.Thing")]);
+        chai.expect(values(field.getOptions(false))).deep.equals(["ns.new"]);
+        chai.expect(field.getValue()).equals("ns.old");
+    });
+});
+
+describe("editor toggle layout", () => {
+    // the fields of `value` that `expected` names, for comparing a part of a layout
+    function pick<T>(value: T, expected: Partial<T>): Partial<T> {
+        const picked: Partial<T> = {};
+        for (const k of Object.keys(expected) as (keyof T)[]) picked[k] = value[k];
+        return picked;
+    }
+
+    function expectLayout(actual: ReturnType<typeof getEditorToggleLayout>, expected: Partial<ReturnType<typeof getEditorToggleLayout>>) {
+        chai.expect(pick(actual, expected)).deep.equals(expected);
+    }
+
+    function layout(extra: Partial<EditorToggleLayoutInput> = {}) {
+        return getEditorToggleLayout({
+            python: true,
+            showJavaScript: true,
+            showPython: true,
+            showBlocks: true,
+            pythonIsActive: false,
+            isJavaScriptActive: false,
+            isPythonActive: false,
+            extensionEditors: [],
+            activeExtensionEditor: undefined,
+            lastExtensionEditor: undefined,
+            ...extra,
+        });
+    }
+
+    it("keeps the toggle's own layout when no extension tab is offered", () => {
+        chai.expect(layout()).deep.equals({
+            trigger: { language: "javascript" }, second: undefined, showDropdown: true, dropdownActive: false,
+            dropdownLanguages: ["javascript", "python"], dropdownSeparator: false, dropdownExtensions: [],
+        });
+        expectLayout(layout({ pythonIsActive: true, isPythonActive: true }), { trigger: { language: "python" }, dropdownActive: true });
+        expectLayout(layout({ showBlocks: false }), { trigger: { language: "javascript" }, second: { language: "python" }, showDropdown: false, dropdownLanguages: [] });
+        expectLayout(layout({ showPython: false, python: false }), { trigger: { language: "javascript" }, second: undefined, showDropdown: false });
+    });
+});
+
+describe("simulator extension editor tab host", () => {
+    const ORIGIN = "https://sim.example";
+    const EXT = "someorg/pxt-ext";
+    const OTHER = "otherorg/pxt-other";
+
+    interface Posted {
+        msg: any;
+        origin: string;
+        transfer: unknown[] | undefined;
+    }
+
+    class FakeWindow {
+        posted: Posted[] = [];
+        postMessage(msg: any, origin: string, transfer?: unknown[]) {
+            this.posted.push({ msg, origin, transfer });
+        }
+    }
+
+    // the parts of an element the host touches; a removed frame loses its content window, as in the browser
+    class FakeElement {
+        style: pxt.Map<string> = {};
+        dataset: pxt.Map<string> = {};
+        attributes: pxt.Map<string> = {};
+        children: FakeElement[] = [];
+        parentElement: FakeElement | undefined;
+        // the window of the frame's page, which outlives the frame's removal
+        readonly window = new FakeWindow();
+        contentWindow: FakeWindow | null = this.window;
+        className = "";
+        title = "";
+        src = "";
+        textContent = "";
+        allowFullscreen = false;
+        get isConnected() { return !!this.parentElement; }
+        setAttribute(name: string, value: string) { this.attributes[name] = value; }
+        focus() { }
+        appendChild(child: FakeElement) {
+            this.children.push(child);
+            child.parentElement = this;
+            return child;
+        }
+        removeChild(child: FakeElement) {
+            this.children = this.children.filter(c => c !== child);
+            child.parentElement = undefined;
+            child.contentWindow = null;
+            return child;
+        }
+    }
+
+    interface FakeChannel {
+        port1: { id: string };
+        port2: { id: string };
+    }
+
+    let container: FakeElement;
+    let simulatorColumn: FakeElement;
+    let simulatorFrames: pxt.Map<FakeElement>;
+    let channels: FakeChannel[];
+    let state: SimxEditorSimulatorState;
+    let host: SimxEditorHost;
+
+    function registration(key: string, extra: Partial<SimxEditorRegistration> = {}): SimxEditorRegistration {
+        return { key, label: key + " label", url: `${ORIGIN}/simx/${key}/-/index.html`, ...extra };
+    }
+
+    const params = { parentOrigin: "https://editor.example", target: "arcade", project: "p1", language: "en" };
+
+    // the simulator frame of `key`, created and loaded as the driver does it
+    function loadSimulatorFrame(key: string): FakeElement {
+        const frame = new FakeElement();
+        frame.src = `${ORIGIN}/simx/${key}/-/simx/index.html?channel=${encodeURIComponent(key)}`;
+        simulatorColumn.appendChild(frame);
+        simulatorFrames[key] = frame;
+        host.simulatorFrameLoaded(key, frame as unknown as HTMLIFrameElement);
+        return frame;
+    }
+
+    function tab(key: string): FakeElement {
+        return host.getFrame(key) as unknown as FakeElement;
+    }
+
+    function ready(key: string, extra: { source?: unknown, origin?: string } = {}) {
+        host.handleMessage({ data: { type: "simxeditor", event: "ready" }, source: tab(key).contentWindow, origin: ORIGIN, ...extra });
+    }
+
+    function events(frame: FakeElement) {
+        return frame.window.posted.filter(p => p.msg.type === "simxeditor").map(p => p.msg);
+    }
+
+    function ports(frame: FakeElement) {
+        return frame.window.posted.filter(p => p.msg.type === "simxeditorport");
+    }
+
+    beforeEach(() => {
+        container = new FakeElement();
+        simulatorColumn = new FakeElement();
+        simulatorFrames = {};
+        channels = [];
+        state = "Running";
+        let nextPort = 0;
+        host = new SimxEditorHost({
+            createFrame: () => new FakeElement() as unknown as HTMLIFrameElement,
+            createLoader: label => {
+                const loader = new FakeElement();
+                loader.textContent = label;
+                return loader as unknown as HTMLElement;
+            },
+            // as the editor wires it
+            framePermissions: grants => pxsim.simulatorFramePermissions(grants),
+            startSimulatorExtension: key => {
+                return simulatorFrames[key] as unknown as HTMLIFrameElement;
+            },
+            addTabFrame: () => { },
+            removeTabFrame: () => { },
+            getSimulatorState: () => state,
+            createChannel: () => {
+                const channel = { port1: { id: "p" + nextPort++ }, port2: { id: "p" + nextPort++ } };
+                channels.push(channel);
+                return channel as unknown as MessageChannel;
+            },
+        });
+    });
+
+    function show(key: string, extra: Partial<SimxEditorRegistration> = {}) {
+        host.show(registration(key, extra), container as unknown as HTMLElement, params);
+    }
+
+    describe("the tab frame", () => {
+        it("loads the tab's page with the simulator frame's parameters and the editor role, under the registration's grants", () => {
+            show(EXT, { allowPopups: true, allowClipboard: true, allowDownloads: true });
+            const frame = tab(EXT);
+            const url = new URL(frame.src);
+            chai.expect(url.origin + url.pathname).equals(`${ORIGIN}/simx/${EXT}/-/index.html`);
+            const query: pxt.Map<string> = {};
+            url.searchParams.forEach((value, name) => query[name] = value);
+            chai.expect(query).deep.equals({
+                parentOrigin: "https://editor.example", channel: EXT, role: "editor", apiLevel: pxsim.SIMX_API_LEVEL.toString(),
+                target: "arcade", project: "p1", language: "en",
+            });
+            chai.expect(frame.attributes).deep.equals({
+                sandbox: "allow-same-origin allow-scripts allow-popups allow-popups-to-escape-sandbox allow-downloads",
+                allow: "autoplay;microphone;clipboard-read;clipboard-write",
+            });
+            chai.expect(frame.allowFullscreen).equals(true);
+            chai.expect(frame.dataset).deep.equals({ simxkey: EXT, simxrole: "editor", origin: ORIGIN });
+            chai.expect(frame.parentElement).equals(container);
+        });
+
+        it("accepts the ready event only from the tab frame's window and origin", () => {
+            show(EXT);
+            ready(EXT, { origin: "https://elsewhere.example" });
+            ready(EXT, { source: new FakeWindow() });
+            host.handleMessage({ data: { type: "simxeditor", event: "ready" }, source: undefined, origin: ORIGIN });
+            chai.expect(host.isReady(EXT)).equals(false);
+            ready(EXT);
+            chai.expect(host.isReady(EXT)).equals(true);
+        });
+
+        it("removes every tab frame when its project closes or reloads, posting nothing first", () => {
+            show(EXT);
+            ready(EXT);
+            show(OTHER);
+            const frames = [tab(EXT), tab(OTHER)];
+            const before = events(frames[0]).length;
+            host.close();
+            chai.expect([tab(EXT), tab(OTHER)]).deep.equals([undefined, undefined]);
+            chai.expect(frames.map(f => f.parentElement)).deep.equals([undefined, undefined]);
+            chai.expect(events(frames[0]).length).equals(before);
+            chai.expect(events(frames[1])).deep.equals([]);
+
+            show(EXT);
+            chai.expect(tab(EXT)).not.equals(frames[0]);
+        });
+    });
+
+    describe("lifecycle events", () => {
+        it("posts the tab its visibility and the simulator's state once it is ready, then shown and hidden on every switch", () => {
+            show(EXT);
+            const frame = tab(EXT);
+            chai.expect(events(frame)).deep.equals([]);
+            ready(EXT);
+            host.hide();
+            show(OTHER);
+            show(EXT);
+            show(EXT);
+            chai.expect(events(frame)).deep.equals([
+                { type: "simxeditor", event: "shown" },
+                { type: "simxeditor", event: "simulatorstate", state: "Running" },
+                { type: "simxeditor", event: "fullscreen", enabled: false },
+                { type: "simxeditor", event: "hidden" },
+                { type: "simxeditor", event: "shown" },
+            ]);
+            chai.expect(frame.contentWindow.posted.every(p => p.origin === ORIGIN)).equals(true);
+        });
+    });
+
+    describe("actions", () => {
+        const create = (qName: string) => ({ type: "simxeditor", event: "action", action: "create", qName } as const);
+
+        it("posts an action requested before the tab is ready right after the events that follow its ready event", () => {
+            host.requestAction(EXT, create("ext.Thing"));
+            show(EXT);
+            loadSimulatorFrame(EXT);
+            chai.expect(events(tab(EXT))).deep.equals([]);
+            ready(EXT);
+            chai.expect(events(tab(EXT))).deep.equals([
+                { type: "simxeditor", event: "shown" },
+                { type: "simxeditor", event: "simulatorstate", state: "Running" },
+                { type: "simxeditor", event: "fullscreen", enabled: false },
+                create("ext.Thing"),
+            ]);
+            chai.expect(ports(tab(EXT)).length).equals(1);
+        });
+    });
+
+    describe("port brokering", () => {
+        function brokered(key: string, simulatorFrame: FakeElement) {
+            return { tab: ports(tab(key)), simulator: ports(simulatorFrame) };
+        }
+
+        it("brokers a port pair when the tab becomes ready after its simulator frame loaded", () => {
+            const simulatorFrame = loadSimulatorFrame(EXT);
+            show(EXT);
+            chai.expect(brokered(EXT, simulatorFrame).tab).deep.equals([]);
+            ready(EXT);
+            const { tab: tabPorts, simulator } = brokered(EXT, simulatorFrame);
+            chai.expect(channels.length).equals(1);
+            chai.expect(simulator).deep.equals([{ msg: { type: "simxeditorport", key: EXT }, origin: ORIGIN, transfer: [channels[0].port1] }]);
+            chai.expect(tabPorts).deep.equals([{ msg: { type: "simxeditorport", key: EXT }, origin: ORIGIN, transfer: [channels[0].port2] }]);
+        });
+    });
+});

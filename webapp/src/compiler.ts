@@ -157,7 +157,12 @@ export function emptyCompileResult(): pxtc.CompileResult {
     }
 }
 
-export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
+/**
+ * Compiles the open project. Differs from compileAsync in that it doesn't have
+ * any side effects like setting the global diagnostics or writing the resulting
+ * files to the main package.
+ */
+export function compileProjectAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
     let trg = pkg.mainPkg.getTargetOptions()
     trg.isNative = options.native
     return pkg.mainEditorPkg().buildAssetsAsync()
@@ -183,6 +188,18 @@ export function compileAsync(options: CompileOptions = {}): Promise<pxtc.Compile
             return opts;
         })
         .then(compileCoreAsync)
+        .then(resp => ensureApisInfoAsync()
+            .then(() => {
+                if (!resp.usedSymbols || !cachedApis) return resp
+                for (let k of Object.keys(resp.usedSymbols)) {
+                    resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
+                }
+                return resp
+            }))
+}
+
+export function compileAsync(options: CompileOptions = {}): Promise<pxtc.CompileResult> {
+    return compileProjectAsync(options)
         .then(resp => {
             let outpkg = pkg.mainEditorPkg().outputPkg
 
@@ -214,14 +231,7 @@ ${resp.outfiles[pxtc.BINARY_JS]}`;
             pkg.mainEditorPkg().outputPkg.setFiles(resp.outfiles)
             setDiagnostics("compile", resp.diagnostics)
 
-            return ensureApisInfoAsync()
-                .then(() => {
-                    if (!resp.usedSymbols || !cachedApis) return resp
-                    for (let k of Object.keys(resp.usedSymbols)) {
-                        resp.usedSymbols[k] = U.lookup(cachedApis.byQName, k)
-                    }
-                    return resp
-                })
+            return resp
         })
         .catch(catchUserErrorAndSetDiags(noOpAsync))
 }
